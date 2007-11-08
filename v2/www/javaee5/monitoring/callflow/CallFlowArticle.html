@@ -1,0 +1,597 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+  <meta name="author" content="Harpreet Singh">
+  <meta name="GENERATOR"
+ content="Mozilla/4.79 [en] (Windows NT 5.0; U) [Netscape]">
+  <title>CallFlow Tech Tip</title>
+</head>
+<body>
+<h1>
+CallFlow Monitoring in GlassFish</h1>
+<h2>
+1.0 Introduction:</h2>
+CallFlow framework (henceforth CallFlow) enables a application
+developer/server administrator to monitor
+the behaviour of applications deployed in the application server. A
+developer can
+use this feature at development time to see the application behaviour
+An administrator can use this feature to see the behaviour
+of deployed applications in the server.
+<p>CallFlow collects runtime information about an application, like the
+user principal, transaction id, application name, method name,
+exceptions, time spent in various containers and time spent in
+application code.
+Call is monitored as it flows through various containers in the
+application server and through the user application code.
+For e.g: Consider a servlet that calls an ejb (method foo). In this
+particular
+scenario, CallFlow framework will monitor the request as it enters the
+web container, servlet.service method,&nbsp; ejb container and finally
+ejb method foo. The collected information is written to a persistent
+store.
+</p>
+<p>Once information is collected, a user turns off CallFlow monitoring.
+The user can look at the mined data about requests hitting the
+application. A user can look at a particular request to drill down to
+get
+more information like the call stack and time spent in various
+containers
+as well as the application code.
+<br>
+&nbsp;
+</p>
+<h2>2.0 Setup</h2>
+You application server must be running in order to utilize the callflow
+monitoring feature in the appserver.&nbsp; To start the application
+server,
+use the CLI command.
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; % <i>cd
+&lt;install-dir&gt;/bin</i>
+<br>
+<i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; % asadmin
+start-domain
+domain1</i>
+<p>After the server has started up, you can access the Admin Console by
+entering this URL :
+<br>
+<font color="#000000">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+http://localhost:4848</font>
+</p>
+<p><i>&nbsp;&nbsp;&nbsp; *</i> localhost is used if the both the
+browser
+and the Application Server are running on the same system. If the
+Application
+Server is running on another system, substitute the name of that system
+in the URL.
+</p>
+<p>&nbsp;&nbsp;&nbsp; * 4848 is the Admin Console's default port
+number.
+If you are not sure about the port number, you can also refer to the
+messages
+given out by the asadmin start-domain command when starting up the
+server.
+</p>
+<p>After you logged into the Admin Console, you can then configure the
+server to enable call flow monitoring and/or look at the datas
+collected.
+</p>
+<h2>3.0 Turning on CallFlow</h2>
+<h3>
+&nbsp;<a name="gui-configure-callflow"></a>3.1 Using Admin Console</h3>
+Once you are logged into the Admin Console, follow these stesp to
+configure
+call flow monitoring.
+<p>&nbsp;&nbsp; 1. In the tree component, select the Application Server
+node.
+<br>
+&nbsp;&nbsp; 2. Click the Monitor tab.
+<br>
+&nbsp;&nbsp; 3. Click the Call Flow tab.&nbsp; The Call Flow
+configuration
+page displays.
+<br>
+&nbsp;&nbsp; 4. Select Enabled to initiate call flow monitoring for
+the server.
+<br>
+&nbsp;&nbsp; 5. Specify the client host IP address and user ID for
+which you want to enable monitoring.
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; You can specify either the client host
+IP address or the user's ID. Specify both IP address and user ID to
+filter
+for an exact match of user ID and IP address.
+<br>
+&nbsp;&nbsp; 6. Click Save
+</p>
+<p><img src="imageD7K.JPG" height="784" width="857"><br>
+&nbsp;
+</p>
+<p>Note that you have to turn on call flow monitoring every time you
+start
+the server.&nbsp; This value does not persist upon server re-start.
+<br>
+To Turn off Call Flow Monitoring,&nbsp;&nbsp; Deselect the Enabled
+check box.<br>
+</p>
+<h3>&nbsp;&nbsp;&nbsp; 3.2 Using Admin cli</h3>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; % <i>cd
+&lt;install-dir&gt;/bin</i>
+<br>
+<i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; % asadmin
+start-callflow-monitoring server</i>
+<p></p>
+<h3>&nbsp;&nbsp;&nbsp; 3.3 Using AMX Mbean</h3>
+You can <span style="font-style: italic;">optionally</span> use the
+application server AMX (<a
+ href="https://glassfish.dev.java.net/javaee5/amx/">Appserver
+Management Extension</a>) API's to interact with the callflow
+monitoring feature. CallFlow monitoring is exposed as an AMX MBean (<a
+ href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/monitor/CallFlowMonitor.html">javadoc</a>).
+<br>
+<br>
+The CallFlowMonitor object is used to enable/disable callflow
+monitoring
+for application server instances and to obtain request/response
+callflow
+information. You can get the handle for CallFlowMonitor object using
+the
+following code sample.
+<p>Connect to the JMX server in the application server instance using
+your
+Domain Application Server (DAS) username , password , jmx port number
+(by
+default it is 8686) and hostname
+</p>
+<p><i>&nbsp;TLSParams tlsParams=null;</i>
+<br>
+<i>AppserverConnectionSource conn = new AppserverConnectionSource(
+AppserverConnectionSource.PROTOCOL_RMI, "localhost", 8686,
+"admin_user",
+"admin_password", tlsParams, null);</i>
+<br>
+<i>conn.getJMXConnector( true );</i>
+<br>
+<i>DomainRoot mDomainRoot&nbsp;&nbsp;&nbsp;&nbsp; =
+conn.getDomainRoot();</i>
+</p>
+<p>Now you have got the top level domain root handle , from which you
+can
+get the CallFlowMonitor object&nbsp; and set the callflow monitoring
+enabled
+flag to true.
+</p>
+<p><i>Map&lt;String,ServerRootMonitor&gt; serverRootMonitorMap =
+mDomainRoot.getMonitoringRoot().getServerRootMonitorMap();</i>
+<br>
+<i>ServerRootMonitor serverRootMonitor =
+serverRootMonitorMap.get("server");</i>
+<br>
+<i>serverRootMonitor.getCallFlowMonitor();</i>
+<br>
+<i>CallFlowMonitor cfm = getCallFlowMonitor();</i>
+<br>
+<i>cfm.setEnabled (true);</i>
+<br>
+&nbsp;
+</p>
+<h2>4.0 Excercising Application</h2>
+We will be using stateless-simple.ear , a sample application that comes
+with your server installation to demo the call flow monitoring
+feature.&nbsp;
+You can find it under
+&lt;install-dir&gt;\samples\ejb\stateless\apps\simple\stateless-simple.ear.&nbsp;&nbsp;
+If it is not available, you can download <a
+ href="https://glassfish.dev.java.net/javaee5/monitoring/callflow/stateless-simple.ear">stateless-simple.ear
+from here</a>.
+<br>
+To experience how call flow monitoring works, and see the data
+collected,&nbsp;
+follow these steps:
+<blockquote>
+  <h4>4.1. Refer to <a href="#gui-configure-callflow">Section 3.1</a>
+on how
+to turn on call flow using Admin Console</h4>
+  <h4>
+4.2 Deploy the sample application</h4>
+#&nbsp; In the left pane, click the Applications node to expand it.
+  <br>
+#&nbsp; Click Enterprise&nbsp; Applications.
+  <br>
+#&nbsp; on the Enterprise Applications page, click Deploy.
+  <br>
+#&nbsp; Select the Package file to be uploaded&nbsp; to the Application
+Server option and click Browse.
+  <br>
+#&nbsp; Navigate to the
+&lt;install-dir&gt;/samples/ejb/stateless/apps/simple
+directory or the directory where you have downloaded the ear file, and
+select stateless-simple.ear
+  <br>
+#&nbsp; Click Next.
+  <p><img src="image7Q1.JPG" height="466" width="847"><br>
+&nbsp;
+  </p>
+  <p># On Deploy Enterprise Application (Step 2 of 2) page,&nbsp;
+accept
+all the defaults, and click Finish.
+  </p>
+  <p><img src="image8D7.JPG" height="711" width="867"><br>
+&nbsp;
+  <br>
+&nbsp;
+  </p>
+  <p># Admin Console will comes back with the Enterprise Applications
+table,
+listing the applications that has been successfully deployed.
+  </p>
+  <p><img src="imageVPC.JPG" height="489" width="987"><br>
+&nbsp;
+  <br>
+&nbsp;
+  </p>
+  <h4>4.3. Run the application</h4>
+Now that the application has been deployed, we can run it by entering
+the
+following URL in another browser window.
+  <br>
+http://localhost:8080/helloworld
+  <p><img src="imageGPC.JPG" height="259" width="782"></p>
+  <p><img src="imageGDP.JPG" height="259" width="782"><br>
+&nbsp;
+  <br>
+&nbsp;
+  </p>
+  <h4>4.4.&nbsp; Turn off CallFlow using Admin GUI<br>
+  </h4>
+After executing the application and the call flow data has been
+collected,
+you can turn off call flow monitoring by following these steps:
+  <br>
+&nbsp;&nbsp; 1. In the tree component, select the Application Server
+node.
+  <br>
+&nbsp;&nbsp; 2. Click the Monitor tab.
+  <br>
+&nbsp;&nbsp; 3. Click the Call Flow tab.&nbsp; The Call Flow
+configuration
+page displays.
+  <br>
+&nbsp;&nbsp; 4. De-Select Enabled checkbox to turn off call flow
+monitoring
+for the server.
+  <br>
+&nbsp;&nbsp; 5. Click Save.
+  <p><img src="imageIT8.JPG" height="674" width="856"></p>
+</blockquote>
+<h4>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; 4.5 Turn Off CallFlow using
+admin cli</h4>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp; % <i>cd
+&lt;install-dir&gt;/bin</i>
+<br>
+<i>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; % asadmin
+stop-callflow-monitoring server</i><br>
+&nbsp;
+<h2>5.0 Viewing Results:</h2>
+&nbsp;&nbsp;&nbsp;&nbsp; CallFlow Monitoring data is primarily to be
+viewed via the admin gui. You can optionally use AMX api to get the
+information programmatically. Call Flow monitoring data is available
+regardless
+of call flow monitoring is on or off.&nbsp; This data will be saved
+until
+user explicitly click the "Clear Data" button on the Call Flow monitor
+page.
+<h3>&nbsp;&nbsp;&nbsp; 5.1 Accessing CallFlow Results via Admin GUI<br>
+</h3>
+&nbsp;&nbsp;&nbsp; Admin Console shows the call flow monitoring data in
+a tabular format, allowing you to only view the data thats of interest
+to you.&nbsp;&nbsp; To view the data, go to the Call Flow Monitoring
+page.
+<br>
+&nbsp;&nbsp; 1. In the tree component, select the Application Server
+node.
+<br>
+&nbsp;&nbsp; 2. Click the Monitor tab.
+<br>
+&nbsp;&nbsp; 3. Click the Call Flow tab.
+<br>
+&nbsp; The Call Flow&nbsp; page displays.&nbsp; Scroll down to the
+Call Flow Data section, and you will see the data being collected.
+<br>
+&nbsp;
+<p><img src="imageCCH.JPG" height="842" width="871"></p>
+<p>The table shows all the requests that have been sent to the server. <br>
+</p>
+<p>If you want to delete any particular request,&nbsp; select the check
+box
+of that row, and&nbsp; Click the Delete button.&nbsp; This will remove
+the data permanently.
+<br>
+There is a drop down box that allows you to Filter the request.&nbsp;
+By default, it will show you all the requests.&nbsp;&nbsp; You can pull
+down the list, and see that you can filter the data based on
+</p>
+<ul>
+  <li>
+&nbsp;&nbsp; Response:&nbsp;&nbsp; The final status of a particular
+request : <tt>Success</tt> or <tt>Failure</tt></li>
+  <li>
+&nbsp;&nbsp; Start Container:&nbsp; The container that a particular
+request entered in from. <tt>WEB, Web Services, EJB, Timer
+EJB and Aysnchronous Message.</tt></li>
+</ul>
+Filtering will not remove the data, it will only affect the display of
+the table.
+<p>For detail information of each request,&nbsp; Click on the&nbsp; <tt>Time
+Stamp&nbsp;</tt> column of that request,&nbsp; this will show you the
+Call
+Flow Detail page.
+</p>
+<p><img src="image6RV.JPG" height="962" width="872"><br>
+&nbsp;
+</p>
+<p>The table shows you the all the methods that has been called with
+this
+request, based on the calling sequence.
+<br>
+To see this in a hierarchical view.&nbsp; Click on the View Tree
+button.
+<br>
+A window will pop up that shows each of the method&nbsp; in a
+parent/child
+hierarchy
+</p>
+<p><img src="image3DS.JPG" height="190" width="789"><br>
+&nbsp;
+</p>
+<p>Refe to <a href="#interpret">Section 6.0</a> for details on how to
+interpret
+the call flow monitoring data.
+<br>
+&nbsp;
+</p>
+<h3>&nbsp;&nbsp;&nbsp; 5.2 AMX MBean</h3>
+To obtain the callflow monitoring data get the CallFlowMonitor object
+as
+mentioned in the section 3.2 and use the following code sample.
+<br>
+After you get the list of all requests through this method you can
+iterate the list to obtain individual request info.
+<p>List requeststack = cfm.queryRequestInformation ();
+<br>
+Iterator reqit = requeststack.iterator();
+<br>
+String request;
+<br>
+while(reqit.hasNext()){
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; request=reqit.next().toString();
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; System.out.println("Request
+:&nbsp;
+"+ request +"\n");
+<br>
+}
+</p>
+<p>The output of the above code will be something like this and it is
+simply
+the request received by the j2ee server instance.
+</p>
+<p>{MethodName=/callflowapp/standalonewebmod1_Servlet1:standalonewebmod1_Servlet1.service,
+Exception=, TimeStampMillis=1138485885323,
+RequestID=90b482e8-f44c-4572-bacd-235da6e4b171,
+ClientHost=100.50.78.19, RequestType=REMOTE_WEB,
+ApplicationName=URI:/callflowapp/standalonewebmod1_Servlet1,
+User=anonymous, ResponseTime=39122000}
+<br>
+&nbsp;
+</p>
+<p>To obtain the response stack for a request you need to use the
+RequestID
+field as obtained above to query the response stack. The following code
+will illustrate this.
+</p>
+<p>String RequestID=90b482e8-f44c-4572-bacd-235da6e4b171;
+</p>
+<p>List&lt;Map&lt;String, String&gt;&gt; responsestack =
+cfm.queryCallStackForRequest
+(CallFlowUtil.getRequestID(RequestID));
+<br>
+if(responsestack != null){
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp; Iterator resit =&nbsp;
+responsestack.iterator();
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp; while(resit.hasNext()){
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+System.out.println(resit.next().toString());
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }
+<br>
+}
+</p>
+<p>The above code will result in something like this
+</p>
+<p>{TimeStampMillis=1138485885323,
+RequestID=90b482e8-f44c-4572-bacd-235da6e4b171,
+RequestType=REMOTE_WEB, TimeStamp=164763933715400, CallStackRowType=<b>RequestStart</b>}
+</p>
+<p>{MethodName=/callflowapp/standalonewebmod1_Servlet1:standalonewebmod1_Servlet1.service,
+ModuleName=/callflowapp, Status=false, Exception=,
+ComponentName=standalonewebmod1_Servlet1,
+TimeStampMillis=0, RequestID=90b482e8-f44c-4572-bacd-235da6e4b171,
+ContainerType=SERVLET,ApplicationName=URI:/callflowapp/standalonewebmod1_Servlet1,
+TimeStamp=164763940488200, CallStackRowType=<b>MethodStart</b>}
+</p>
+<p>{Status=false, Exception=java.lang.NullPointerException,
+TimeStampMillis=0,
+RequestID=90b482e8-f44c-4572-bacd-235da6e4b171,
+TimeStamp=164763945591400,
+CallStackRowType=<b>MethodEnd</b>}
+</p>
+<p>{TimeStampMillis=0, RequestID=90b482e8-f44c-4572-bacd-235da6e4b171,
+TimeStamp=164763972837400, CallStackRowType=<b>RequestEnd</b>}
+<br>
+&nbsp;
+</p>
+<h2><a name="interpret"></a>6.0 Interpreting Results</h2>
+<h3>&nbsp; 6.1 Main CallFlow View Page:</h3>
+The main callflow page shows the list of all requests that have hit the
+application server.<br>
+<br>
+<p><img src="imagePH8.JPG" height="278" width="927"><br>
+&nbsp;
+<br>
+&nbsp; The requests are in a chronological order and show the following
+information:<br>
+</p>
+<ul>
+  <li>TimeStamp: the time stamp when a particular request made it into
+the Application Server.</li>
+  <li>User : the principal used to send the request. e.g: A call that
+is made without any user principal shows up as "anonymous".</li>
+  <li>Application: The application name that the request has been sent
+to.<br>
+  </li>
+  <li>Start Container: The container that the request entered into the
+application server from. There are 5 starting containers:</li>
+  <ul>
+    <li>Web, EJB, Web Services, Timer EJB: e.g: a web request to the
+application statless-simple started from the "WEB" container.</li>
+    <li>Asynchronous Message: MDB and JMS requests entering the
+Application Server are qualified as "Asynchronous Message" container.</li>
+  </ul>
+  <li>Response Time in milli-seconds</li>
+  <li>Response Status: Success or Failure.</li>
+  <li>Client Host: The hostname of the client where the request came in
+from.</li>
+</ul>
+To get detailed information of a particular request, you need to click
+on the "Time Stamp" to go to the detailed view for that request.<br>
+<h3>6.3 Detailed View Page:</h3>
+The following image is for a request that was successfully serviced. <br>
+<ul>
+  <li>Request Information:</li>
+  <li>Request Time Distribution: <br>
+  </li>
+  <ul>
+    <li>This table displays that the time taken by various containers
+under each container that the call flowed through. We see that the "Web
+Container" took about 3.882 ms, the "EJB Container" took about "14.149
+ms" and the "ORB Container" took about 96.448 ms. The data tells us
+that the major portion of the call servicing happened in the "Web
+Application" code and to improve performance that is what we should
+focus on. (Future version will actually tell us the time taken by each
+individual method). A surprising result was the "ORB Container" code as
+our application did not have remote method calls. We realized that
+"Name Lookup" for ejbs do make it to the CosNaming Service and thus
+exercise the ORB code.</li>
+  </ul>
+  <li>Call Flow Steps: This lists the flow of the call.</li>
+  <ul>
+    <li>The "Calling Sequence" lists the sequence of the call.</li>
+    <li>The "Container" lists the containers that were exercised
+directly by the application. We see that there were 2 containers
+involved here "SERVLET" and the "STATELESS_SESSION_BEAN" container.
+CallFlow does not lists containers that the user code has no influence
+on. e.g: The "ORB CONTAINER". The rationale being the user can look at
+the method and the module to improve upon his code but we do not want
+to obscure the user with information that they cannot directly
+influence.<br>
+    </li>
+    <li>Module: The module name that serviced the call.</li>
+    <li>Component: the component name that serviced the call.</li>
+    <li>Method : the method name that serviced the call.</li>
+  </ul>
+</ul>
+If you click the view tree, you see that the call originated in the
+"SERVLET" container and was initially serviced by
+"/helloworld/GreeterServlet:samples.ejb.stateless.simple.servlet.service"
+method. This&nbsp; method then called the "The Greeter" ejb, this is a
+"STATELESS_SESSION_BEAN" and the method called is "getGreeting" and it
+is a remote method. This method returned successfully and then the
+GreeterServlet called a jsp and the call was serviced by the
+"JSPServlet"<br>
+<br>
+<p></p>
+<p><img src="imageUFO.JPG" height="666" width="886"><br>
+&nbsp;
+<br>
+&nbsp;
+<br>
+&nbsp;The following shows the data for the same application wherein
+there was an exception in the top servlet. The request has failed due
+to a "java.lang.NullPointerException". In the "Call Flow Steps" table
+we see that the call did not proceed beyond the
+"standalonewebmod1_Servlet1", thus pointing to us that the call failed
+in that particular service method.<br>
+</p>
+<p><img src="imageNMJ.JPG" height="485" width="923"><br>
+&nbsp;
+<br>
+&nbsp;
+</p>
+<h2>7.0 CallFlow vs Profiler</h2>
+<ol>
+Callflow monitoring operates non-intrusively; that is, the runtime
+overhead is negligible. Whereas a profiler typically intrudes into and
+changes the timing characteristics of application threads.
+  <p>Callflow monitoring implementation has an intimate relationship
+with
+the container, and so it is able to collect information such as
+application
+name, module name, component name, component type, transaction id,
+security
+principal, et cetera. Such information is not readily available to a
+profiler.
+  </p>
+  <p>Callflow monitoring implementation collects the call flow data and
+stores
+them in a database. In a future release, this raw data may be accessed
+by third-party data mining tools, in order to slice and dice the data
+in
+infinite ways to project useful information in the form of graphs, pick
+up trends, et cetera.
+  </p>
+  <p>Callflow monitoring provides the ability to monitor calls that
+originate
+specifically from a remote client and a user id. This allows selective
+monitoring of requests, without unnecessarily intruding into other
+parts
+of the runtime system. This is very useful while running large scale
+application
+services such as internet sites that support thousands of concurrent
+client.</p>
+</ol>
+<h2>
+8.0 Conclusion</h2>
+Use CallFlow monitoring during development time to understand the
+behcviour
+of your application. Determine the time spent by your application in
+various
+containers and the application code. Determine if the application
+behaves
+as expected as the call flows through various containers.
+<p>Use CallFlow monitoring during production time to look at unexpected
+behaviour and catch problematic applications. For e.g: say a request is
+failing, you can drill down into the request and see the exception that
+particular request fails with, identify the user making the request etc.<br>
+</p>
+<p>CallFlow framework is currently being used by the Application Server
+Self Management code to receive events that trigger self-management
+rules. It is also being used by the Application Verification Kit to
+verify that applications conform to Java EE apis.<br>
+<br>
+CallFlow is a tool that can make your development and debugging easier.
+For more information head to the <a
+ href="https://glassfish.dev.java.net/javaee5/monitoring/callflow/callflow.html">CallFlow
+homepage</a>.<br>
+</p>
+</body>
+</html>

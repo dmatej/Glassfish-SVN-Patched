@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>4.&nbsp;&nbsp;Frequently Asked Questions
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Troubleshooting Guide</A>&nbsp;<br>
+<A HREF="abgjs.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Next</A><br>
+            <!--startindex--><A NAME="abgkd"></A><b>Chapter&nbsp;4</b><h1>Frequently Asked Questions</h1>
+<p>This section covers some common questions asked about the Application Server:</p>
+<ul><li><p><A HREF="abgkd.html#abgke">What Happens When No Server Side Realm is Configured?</A></p>
+</li>
+<li><p><A HREF="abgkd.html#fxyax">Can I Use a PKCS12 Certificate for My Client Certificate?</A></p>
+</li>
+<li><p><A HREF="abgkd.html#fxyat">Can I See the TLS/SSL Handshake Information for an SSL Client?</A></p>
+</li>
+<li><p><A HREF="abgkd.html#fxybd">Can I Change the Keystore Password?</A></p>
+</li>
+<li><p><A HREF="abgkd.html#fxybb">How Do I Maintain a Session in JAX-RPC?</A></p>
+</li>
+<li><p><A HREF="abgkd.html#fxxzr">How Do I Access the Naming Service From a Standalone Java Client?</A></p>
+</li>
+<li><p><A HREF="abgkd.html#fxxzt">Are RMI-IIOP Stubs Needed to Access Remote EJBs?</A></p>
+</li>
+<li><p><A HREF="abgkd.html#fxxzq">How Do I Change the Log Level for an Application Logger?</A></p>
+</li>
+</ul>
+<A NAME="abgke"></A><h2>What Happens When No Server Side Realm is Configured?</h2>
+<p>When the application is configured (within XML files), but no server side realm
+is configured, the application is authenticated in the default realm. No error is
+thrown that indicates "No such realm."</p>
+<A NAME="fxyax"></A><h2>Can I Use a PKCS12 Certificate for My Client Certificate?</h2>
+<p>Is there a way to use my PKCS12 certificate for an SSL the application client
+or standalone client during mutual authentication?</p>
+<p>No. You cannot use a PKCS12 certificate directly, but you can write your own
+client using the JSSE, which supports <tt>storetype=PKCS12</tt> (read only,
+no write to keystore).</p>
+<A NAME="fxyat"></A><h2>Can I See the TLS/SSL Handshake Information for an SSL Client?</h2>
+<p>Yes. Set the Java debugging property on the JVM. To see the handshake information
+from the application client, append the following:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>-Djavax.net.debug=ssl,handshake to the VMARGS variable.</pre>
+</td></table><br><A NAME="fxybd"></A><h2>Can I Change the Keystore Password?</h2>
+<p>Yes. Use the following J2SE properties to change the keystore password:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>-Djavax.net.ssl.keyStorePassword=password
+-Djavax.net.ssl.trustStorePassword=password</pre>
+</td></table><br><p>Note that the keystore password must match the individual key passwords to perform
+operations on the keys, so you will need to change the keystore password with the
+property mentioned above and then change the password to each key to match that password.</p>
+<A NAME="fxybb"></A><h2>How Do I Maintain a Session in JAX-RPC?</h2>
+<p>Clients cannot maintain sessions with JAX-RPC endpoints. There is a client and
+server aspect to sessions, and it is not obvious how to set this up.</p>
+<p>The situation is that a client makes a call to the service, and the server responds
+and sets a cookie on the connection. From then on, the client sends back that same
+cookie with each call and the server can check it.</p>
+<p>A JAX-RPC stub normally ignores the cookie that comes back. When the <tt>SESSION_MAINTAIN_PROPERTY</tt> is set to <tt>true</tt>, it sends back
+whatever cookie the server set on it.</p>
+<p>On the server side, you need to add one field to your class and a method that
+sets it. The endpoint must implement <tt>javax.xml.rpc.server.ServiceLifecycle</tt>., and two methods must be added: <tt>destroy()</tt> (which can
+be empty) and <tt>init(Object context)</tt>.</p>
+<p>Add a <tt>ServletEndpointContext</tt> object to the endpoint; for
+example <tt>myServletEndpointContext</tt>. The <tt>init(Object context)</tt> method can be set as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>myServletEndpointContext = (ServletEndpointContext) context;</pre>
+</td></table><br><p>From then on, the business methods can access to the <tt>HttpSession</tt> with <tt>myServletEndpointContext.getHttpSession()</tt>. The first call to <tt>getHttpSession</tt> creates the session, if one does not already exist.</p>
+<p>With this model, any method the client calls can get the session, set session
+attributes, get values from it, and so on. From then on, the client will send back
+the same cookie information.</p>
+<p>For more information on the <tt>HttpSession</tt> object, see <A HREF="http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpSession.html">http://java.sun.com/j2ee/1.4/docs/api/javax/servlet/http/HttpSession.html</A></p>
+<A NAME="fxxzr"></A><h2>How Do I Access the Naming Service From a Standalone Java
+Client?</h2>
+<A NAME="fxxpc"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To access the naming service from an application client</h3>
+<h5>Steps</h5><ol><li><p><b>Include <tt>appserv-rt.jar</tt> in the <tt>CLASSPATH</tt> when
+starting the client Java VM.</b></p><p>The JNDI bootstrapping machinery looks for
+a file called <tt>jndi.properties,</tt> which is located in <tt>appserv-rt.jar</tt>. This file contains all the bootstrapping properties for the Application Server's
+naming service. It is better to have these properties read from <tt>appserv-rt.jar</tt> than to hard-code them in either the client startup script or in the application
+code.</p>
+</li>
+<li><p><b>When accessing remote EJBs from a standalone client, it is not necessary
+to retrieve the client JAR from the deployment or to put it in the client JVM's <tt>CLASSPATH</tt>, because static RMI-IIOP stubs are not needed when using the Application Server naming
+service. This removes a step that was required in previous releases. (See <A HREF="abgkd.html#fxxzt">Are RMI-IIOP Stubs Needed to Access Remote EJBs?</A> for more details).</b></p></li>
+<li><p><b>Code the client to use the default constructor <tt>InitialContext</tt> that does not require an argument. For example:</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>InitialContext ic = new InitialContext();</pre>
+</td></table><br><p>It is a common misconception that the client should be coded to explicitly reference
+the <tt>CosNaming</tt> service.  <tt>CosNaming</tt> is only used
+for some kinds of Application Server objects, so doing this will not provide access to
+many of the kinds of resources you might need in the client such as JMS queues, connection
+factories, and so on. Furthermore, explicit use of <tt>CosNaming</tt> bypasses
+the Application Server's naming service code. This often means that the client cannot
+take advantage of desirable value-added behavior built in to the Application Server's
+naming service.</p>
+</li>
+<li><p><b>Use the global JNDI name of the target resource when doing the lookup. <tt>java:comp/env</tt> cannot be used from standalone Java clients, because by definition
+such clients run outside of a J2EE container. The only client component in which <tt>java:comp/env</tt> can be used is in a J2EE Application Client.             
+     </b></p></li>
+<li><p><b>If the client is running on a different host machine than the server instance,
+set the following system property when starting the Java VM:</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>-Dorg.omg.CORBA.ORBInitialHost=<i>hostname_of_target_server</i></pre>
+</td></table><br><p>This value defaults to <tt>localhost</tt> so it is only needed if
+the client and server instance are not colocated. For example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>java -Dorg.omg.CORBA.ORBInitialHost=server1 ... com.foo.MyMainClass</pre>
+</td></table><br></li>
+<li><p><b>By default, the client attempts to contact port <tt>3700</tt> to
+access the naming service in the server. Since <tt>3700</tt> is the default
+naming service port used by the Application Server, there is no additional port configuration
+needed in the client. In some cases, due to port conflicts, the server instance uses
+a different naming service port. The naming service port used by the server instance
+is listed in the <tt>&lt;iiop-listener id="orb-listener-1" port="3700"\></tt> element
+in <tt>domain.xml</tt>.</b></p><p>To change the naming service port used
+by the client, set the following system property when starting the client Java VM:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>-Dorg.omg.CORBA.ORBInitialPort=<i>naming_port_of_target_server</i></pre>
+</td></table><br></li>
+</ol><A NAME="fxxzt"></A><h2>Are RMI-IIOP Stubs Needed to Access Remote EJBs?</h2>
+<p>No. Unlike previous releases of the Application Server, the current version does
+not require static RMI-IIOP stubs at runtime.</p>
+<p>Removing this requirement provides the following benefits:</p>
+<ul><li><p>Faster deployment and redeployment time for applications containing
+remote EJBs or clients of remote EJBs</p>
+</li>
+<li><p>Fewer runtime errors caused by stub <tt>CLASSPATH</tt> configuration
+problems</p>
+<p>In addition, the Application Server achieves these benefits without
+significant impact on runtime performance, while maintaining full RMI-IIOP interoperability.</p>
+<p>The only scenario where RMI-IIOP stubs are still required is for standalone
+clients that explicitly instantiate an <tt>InitialContext</tt> for the <tt>CosNaming</tt> naming service. This is <i>not</i> the recommended
+approach for using the naming service in the Application Server. However, to maintain compatibility
+for these kinds of standalone clients, there is a deployment-time option that forces
+the generation of RMI-IIOP stubs in a way that matches previous releases. To use it,
+set</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>--generatermistubs=true</pre>
+</td></table><br><p>when deploying with <tt>asadmin</tt> or the Administration Console.
+The RMI-IIOP stubs are placed in the <tt>client.jar</tt> file, just as they
+were in previous releases.</p>
+</li>
+</ul>
+<A NAME="fxxzq"></A><h2>How Do I Change the Log Level for an Application Logger?</h2>
+<p>Each application uses its own application logger to log messages. To configure
+the log level for a particular application, use one of two options:</p>
+<ul><li><p>In the Admin GUI Log Level configuration page add a property with
+a property <tt>name</tt> representing the logger name, and the <tt>value</tt> representing one of seven log levels (<tt>FINEST</tt>, <tt>FINER</tt>, <tt>FINE</tt>, <tt>CONFIG</tt>, <tt>INFO</tt>, <tt>WARNING</tt>, <tt>SEVERE</tt>) or <tt>OFF</tt>.</p>
+<p>For example, to change the log level of application logger
+named <tt>com.X.Y</tt> to <tt>FINEST</tt>, the property <tt>name</tt> would be <tt>com.X.Y</tt> and the property <tt>value</tt> would be <tt>FINEST</tt>. The change is reflected in the <tt>domain.xml</tt> file, and takes effect immediately. No Server restart is required.</p>
+</li>
+<li><p>Directly add the property to the <tt>&lt;module-log-levels\></tt> element in <tt>domain.xml</tt>, as shown below.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;module-log-levels admin="INFO" classloader="INFO" cmp="INFO"
+cmp-container="INFO" configuration="INFO" connector="INFO" 
+corba="INFO" deployment="INFO" ejb-container="INFO" javamail="INFO" 
+jaxr="INFO" jaxrpc="INFO" jdo="INFO" jms="INFO" jta="INFO" 
+jts="INFO" mdb-container="INFO" naming="INFO" node-agent="INFO"
+resource-adapter="INFO" root="INFO" saaj="INFO" security="INFO" 
+server="INFO" synchronization="INFO" util="INFO" verifier="INFO" 
+web-container="INFO"\>
+    &lt;property name="com.X.Y" value="FINEST" /\>
+&lt;/module-log-levels\></pre>
+</td></table><br></li>
+</ul>
+
+            <!--stopindex-->
+<br>
+<A HREF="abgjs.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Next</A>
+</body>
+</html>

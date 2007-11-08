@@ -1,0 +1,401 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>9.&nbsp;&nbsp;iBank Application Specification
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 2006Q1 Upgrade and Migration Guide</A>&nbsp;<br>
+<A HREF="abmex.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Next</A><br>
+            <!--startindex--><A NAME="abmfd"></A><b>Chapter&nbsp;9</b><h1>iBank Application Specification</h1>
+<p>The iBank application is used as the migration sample. This application simulates
+a basic online banking service with the following functionality:</p>
+<ul><li><p>Log on to the online banking service</p>
+</li>
+<li><p>View/edit personal details and branch details</p>
+</li>
+<li><p>Summary view of accounts showing cleared balances</p>
+</li>
+<li><p>Facility to drill down by account to view individual transaction history</p>
+</li>
+<li><p>Money transfer service, allowing online transfer of funds between
+accounts</p>
+</li>
+<li><p>Compound interest earnings projection over a number of years for a
+given principal and annual yield rate</p>
+</li>
+</ul>
+<p>The application is designed after the MVC (Model-View-Controller) model where:</p>
+<ul><li><p>EJBs are used to define the business and data model components of
+the application</p>
+</li>
+<li><p>JavaServer Pages handle the presentation logic and represent the View.</p>
+</li>
+<li><p>Servlets play the role of Controllers and handle application logic,
+taking charge of calling the business logic components and accessing business data
+via EJBs (the Model), and dispatching processed data for display to JavaServer Pages
+(the View).</p>
+</li>
+</ul>
+<p>Standard J2EE methods are used for assembling and deploying the application
+components. This includes the definition of deployment descriptors and assembling
+the application components within the archive files:</p>
+<ul><li><p>A web application archive (WAR) file for the Web application including
+HTML pages, images, Servlets, JSP files and custom tag libraries, and ancillary server-side
+Java classes.</p>
+</li>
+<li><p>EJB-JAR archive files for the assembling of one or more EJBs, including
+deployment descriptor, bean class and interfaces, stub and skeleton classes, and other
+helper classes as required.</p>
+</li>
+<li><p>An enterprise application archive (EAR) archive file for the packaging
+of the enterprise application module that includes the Web application module and
+the EJB modules used by the application.</p>
+</li>
+</ul>
+<p>Use standard J2EE assembling methods to determine any differences between Sun
+ONE Application Server 6.x/7.x and Sun Java System Application Server 9.</p>
+<A NAME="abmfe"></A><h2>Database Schema</h2>
+<A NAME="indexterm-56"></A><p>The iBank database schema is derived from the following business rules:</p>
+<ul><li><p>The iBank company has local branches in major cities.</p>
+</li>
+<li><p>A Branch manages all customers within its regional area.</p>
+</li>
+<li><p>A Customer has one or more accounts held at their regional branch.</p>
+</li>
+<li><p>A customer Account is uniquely identified by the branch code and account
+number, and also holds the number of the customer to which it belongs. The current
+cleared balance available is also stored with the account.</p>
+</li>
+<li><p>Accounts are of a particular Account Type that is used to distinguish
+between several kinds of accounts (checking account, savings account, etc.).</p>
+</li>
+<li><p>Each Account Type stores a number of particulars that apply to all
+accounts of this type (regardless of branch or customer) such as interest rate and
+allowed overdraft limit.</p>
+</li>
+<li><p>Every time a customer receives or pays money into/from one of their
+accounts, the transaction is recorded in a global transaction log, the Transaction
+History.</p>
+</li>
+<li><p>The Transaction History stores details about individual transactions,
+such as the relevant branch code and account number, the date the transaction was
+posted (recorded), a code identifying the type of transaction and a complementary
+description of the particular transaction, and the amount for the transaction.</p>
+</li>
+<li><p>Transaction types allow different types of transactions to be distinguished,
+such as cash deposit, credit card payment, fund transfer between accounts, and so
+on.</p>
+</li>
+</ul>
+<p>The entity-relationship diagram shown below illustrates these business rules.</p>
+<p>This graphic is currently unavailable.</p>
+<A NAME="gaekb"></A><p><b>Figure 9-1 </b>Database Schema</p>
+<IMG src="figures/dbschema.gif" class="figure"  alt="Database Schema" title="Database Schema"><A NAME="gaetn"></A><h3>iBank Database Schema Tables</h3>
+<p>This section lists the tables in the iBank database schema.</p>
+<A NAME="gaeuq"></A><p><b>Table 9-1 </b>BRANCH Table</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col" valign="top"><p>Column Name</p></th><th scope="col" valign="top"><p>Datatype</p></th><th scope="col" valign="top"><p>Nullable/Default</p></th><th scope="col" valign="top"><p>Description</p></th></tr>
+<tr><td><p>BRANCH_CODE</p></td><td><p>CHAR(4)</p></td><td><p>NOT NULL</p></td><td><p>4-digit code identifying the branch</p></td></tr>
+<tr><td><p>BRANCH_NAME</p></td><td><p>VARCHAR(40)</p></td><td><p>NOT NULL</p></td><td><p>Name of the branch</p></td></tr>
+<tr><td><p>BRANCH_ADDRESS1</p></td><td><p>VARCHAR(60)</p></td><td><p>NOT NULL</p></td><td><p>Branch postal address, street address, 1st line</p></td></tr>
+<tr><td><p>BRANCH_ADDRESS2</p></td><td><p>VARCHAR(60)</p></td><td>&nbsp;</td><td><p>Branch postal address, street address, 2nd line</p></td></tr>
+<tr><td><p>BRANCH_CITY</p></td><td><p>VARCHAR(30)</p></td><td><p>NOT NULL</p></td><td><p>Branch postal address, City</p></td></tr>
+<tr><td><p>BRANCH_ZIP</p></td><td><p>VARCHAR(10)</p></td><td><p>NOT NULL</p></td><td><p>Branch postal address, Zip code</p></td></tr>
+<tr><td><p>BRANCH_STATE</p></td><td><p>CHAR(2)</p></td><td><p>NOT NULL</p></td><td><p>Branch postal address, State abbreviation</p></td></tr>
+</table><A NAME="gaeub"></A><p><b>Table 9-2 </b>CUSTOMER Table</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col" valign="top"><p>Column Name</p></th><th scope="col" valign="top"><p>Datatype</p></th><th scope="col" valign="top"><p>Nullable/Default</p></th><th scope="col" valign="top"><p>Description</p></th></tr>
+<tr><td><p>CUST_NO</p></td><td><p>INT</p></td><td><p>NOT NULL</p></td><td><p>iBank customer number (global)</p></td></tr>
+<tr><td><p>BRANCH_CODE</p></td><td><p>CHAR(4)</p></td><td><p>NOT NULL</p></td><td><p>References this customer's branch</p></td></tr>
+<tr><td><p>CUST_USERNAME</p></td><td><p>VARCHAR(16)</p></td><td><p>NOT NULL</p></td><td><p>Customer's login username</p></td></tr>
+<tr><td><p>CUST_PASSWORD</p></td><td><p>VARCHAR(10)</p></td><td><p>NOT NULL</p></td><td><p>Customer's login password</p></td></tr>
+<tr><td><p>CUST_EMAIL</p></td><td><p>VARCHAR(40)</p></td><td>&nbsp;</td><td><p>Customer's e-mail address</p></td></tr>
+<tr><td><p>CUST_TITLE</p></td><td><p>VARCHAR(3)</p></td><td><p>NOT NULL</p></td><td><p>Customer's courtesy title</p></td></tr>
+<tr><td><p>CUST_GIVENNAMES</p></td><td><p>VARCHAR(40)</p></td><td><p>NOT NULL</p></td><td><p>Customer's given names</p></td></tr>
+<tr><td><p>CUST_SURNAME</p></td><td><p>VARCHAR(40)</p></td><td><p>NOT NULL</p></td><td><p>Customer's family name</p></td></tr>
+<tr><td><p>CUST_ADDRESS1</p></td><td><p>VARCHAR(60)</p></td><td><p>NOT NULL</p></td><td><p>Customer postal address, street address, 1st line</p></td></tr>
+<tr><td><p>CUST_ADDRESS2</p></td><td><p>VARCHAR(60)</p></td><td>&nbsp;</td><td><p>Customer postal address, street address, 2nd line</p></td></tr>
+<tr><td><p>CUST_CITY</p></td><td><p>VARCHAR(30)</p></td><td><p>NOT NULL</p></td><td><p>Customer postal address, City</p></td></tr>
+<tr><td><p>CUST_ZIP</p></td><td><p>VARCHAR(10)</p></td><td><p>NOT NULL</p></td><td><p>Customer postal address, Zip code</p></td></tr>
+<tr><td><p>CUST_STATE</p></td><td><p>CHAR(2)</p></td><td><p>NOT NULL</p></td><td><p>Customer postal address, State abbreviation</p></td></tr>
+</table><A NAME="gaeug"></A><p><b>Table 9-3 </b>ACCOUNT_TYPE Table</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col" valign="top"><p>Column Name</p></th><th scope="col" valign="top"><p>Datatype</p></th><th scope="col" valign="top"><p>Nullable/Default</p></th><th scope="col" valign="top"><p>Description</p></th></tr>
+<tr><td><p>ACCTYPE_ID</p></td><td><p>CHAR(3)</p></td><td><p>NOT NULL</p></td><td><p>3-letter account type code</p></td></tr>
+<tr><td><p>ACCTYPE_DESC</p></td><td><p>VARCHAR(30)</p></td><td><p>NOT NULL</p></td><td><p>Account type description</p></td></tr>
+<tr><td><p>ACCTYPE_INTERESTRATE</p></td><td><p>DECIMAL(4,2)</p></td><td><p>DEFAULT 0.0</p></td><td><p>Annual interest rate</p></td></tr>
+</table><A NAME="gaevh"></A><p><b>Table 9-4 </b>ACCOUNT Table</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col" valign="top"><p>Column Name</p></th><th scope="col" valign="top"><p>Datatype</p></th><th scope="col" valign="top"><p>Nullable/Default</p></th><th scope="col" valign="top"><p>Description</p></th></tr>
+<tr><td><p>ACCOUNT</p></td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+<tr><td><p>BRANCH_CODE</p></td><td><p>CHAR(4)</p></td><td><p>NOT NULL</p></td><td><p>branch code (primary-key part 1)</p></td></tr>
+<tr><td><p>ACC_NO</p></td><td><p>CHAR(8)</p></td><td><p>NOT NULL</p></td><td><p>account no. (primary-key part 2)</p></td></tr>
+<tr><td><p>CUST_NO</p></td><td><p>INT</p></td><td><p>NOT NULL</p></td><td><p>Customer to whom accounts belongs</p></td></tr>
+<tr><td><p>ACCTYPE_ID</p></td><td><p>CHAR(3)</p></td><td><p>NOT NULL</p></td><td><p>Account type, references ACCOUNT_TYPE</p></td></tr>
+<tr><td><p>ACC_BALANCE</p></td><td><p>DECIMAL(10,2)</p></td><td><p>DEFAULT 0.0</p></td><td><p>Cleared balance available</p></td></tr>
+</table><A NAME="gaeul"></A><p><b>Table 9-5 </b>TRANSACTION_TYPE Table</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col" valign="top"><p>Column Name</p></th><th scope="col" valign="top"><p>Datatype</p></th><th scope="col" valign="top"><p>Nullable/Default</p></th><th scope="col" valign="top"><p>Description</p></th></tr>
+<tr><td><p>TRANSTYPE_ID</p></td><td><p>CHAR(4)</p></td><td><p>NOT NULL</p></td><td><p>A 4-letter transaction type code</p></td></tr>
+<tr><td><p>TRANSTYPE_DESC</p></td><td><p>VARCHAR(40)</p></td><td><p>NOT NULL</p></td><td><p>Human-readable description of code</p></td></tr>
+</table><A NAME="gaeux"></A><p><b>Table 9-6 </b>TRANSACTION_HISTORY Table</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col" valign="top"><p>Column Name</p></th><th scope="col" valign="top"><p>Datatype</p></th><th scope="col" valign="top"><p>Nullable/Default</p></th><th scope="col" valign="top"><p>Description</p></th></tr>
+<tr><td><p>TRANS_ID</p></td><td><p>LONGINT</p></td><td><p>NOT NULL</p></td><td><p>Global transaction serial no</p></td></tr>
+<tr><td><p>BRANCH_CODE</p></td><td><p>CHAR(4)</p></td><td><p>NOT NULL</p></td><td><p>key referencing ACCOUNT part 1</p></td></tr>
+<tr><td><p>ACC_NO</p></td><td><p>CHAR(8)</p></td><td><p>NOT NULL</p></td><td><p>key referencing ACCOUNT part 2</p></td></tr>
+<tr><td><p>TRANSTYPE_ID</p></td><td><p>CHAR(4)</p></td><td><p>NOT NULL</p></td><td><p>References TRANSACTION_TYPE</p></td></tr>
+<tr><td><p>TRANS_POSTDATE</p></td><td><p>TIMESTAMP</p></td><td><p>NOT NULL</p></td><td><p>Date &amp; time transaction was posted</p></td></tr>
+<tr><td><p>TRANS_DESC</p></td><td><p>VARCHAR(40)</p></td><td>&nbsp;</td><td><p>Additional details for the transaction</p></td></tr>
+<tr><td><p>TRANS_AMOUNT</p></td><td><p>DECIMAL(10,2)</p></td><td><p>NOT NULL</p></td><td><p>Money amount for this transaction</p></td></tr>
+</table><p>The TRANSACTION_HISTORY table is shown below.</p>
+<A NAME="gaeus"></A><p><b>Table 9-7 </b>TRANSACTION_HISTORY Table</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col" valign="top"><p>Column Name</p></th><th scope="col" valign="top"><p>Datatype</p></th><th scope="col" valign="top"><p>Nullable/Default</p></th><th scope="col" valign="top"><p>Description</p></th></tr>
+<tr><td><p>TRANS_ID</p></td><td><p>LONGINT</p></td><td><p>NOT NULL</p></td><td><p>Global transaction serial no</p></td></tr>
+<tr><td><p>BRANCH_CODE</p></td><td><p>CHAR(4)</p></td><td><p>NOT NULL</p></td><td><p>key referencing ACCOUNT part 1</p></td></tr>
+<tr><td><p>ACC_NO</p></td><td><p>CHAR(8)</p></td><td><p>NOT NULL</p></td><td><p>key referencing ACCOUNT part 2</p></td></tr>
+<tr><td><p>TRANSTYPE_ID</p></td><td><p>CHAR(4)</p></td><td><p>NOT NULL</p></td><td><p>References TRANSACTION_TYPE</p></td></tr>
+<tr><td><p>TRANS_POSTDATE</p></td><td><p>TIMESTAMP</p></td><td><p>NOT NULL</p></td><td><p>Date &amp; time transaction was posted</p></td></tr>
+<tr><td><p>TRANS_DESC</p></td><td><p>VARCHAR(40)</p></td><td>&nbsp;</td><td><p>Additional details for the transaction</p></td></tr>
+<tr><td><p>TRANS_AMOUNT</p></td><td><p>DECIMAL(10,2)</p></td><td><p>NOT NULL</p></td><td><p>Money amount for this transaction</p></td></tr>
+</table><A NAME="abmff"></A><h2>Application Navigation and Logic</h2>
+<A NAME="indexterm-57"></A><p>The following figure provides a high-level view of iBank application navigation.</p>
+<p>This graphic is currently unavailable.</p>
+<A NAME="gaejt"></A><p><b>Figure 9-2 </b>iBank Application Navigation and Logic</p>
+<IMG src="figures/applogic.gif" class="figure"  alt="Application Navigation and Logic" title="Application Navigation and Logic"><A NAME="abmfg"></A><h3>iBank Login Process</h3>
+<p>The following figure shows the login process used in the iBank application.</p>
+<p>This graphic is currently unavailable.</p>
+<A NAME="gaeiw"></A><p><b>Figure 9-3 </b>iBank Login Process</p>
+<IMG src="figures/loginprocess.gif" class="figure"  alt="Login Process" title="Login Process"><A NAME="abmfh"></A><h3>View/Edit Details</h3>
+<p>The following figure shows the view/edit details process used in the iBank application.</p>
+<p>This graphic is currently unavailable.</p>
+<A NAME="gaejv"></A><p><b>Figure 9-4 </b>View/Edit Details Process</p>
+<IMG src="figures/details.gif" class="figure"  alt="View/Edit Details Process" title="View/Edit Details Process"><A NAME="abmfi"></A><h3>Account Summary and Transaction History</h3>
+<p>The following figure  shows how the account summary and transaction history
+work in the iBank application.</p>
+<p>This graphic is currently unavailable.</p>
+<A NAME="gaejk"></A><p><b>Figure 9-5 </b>Account Summary and Transaction History</p>
+<IMG src="figures/transhis.gif" class="figure"  alt="Account Summary and Transaction History" title="Account Summary and Transaction History"><A NAME="abmfj"></A><h3>Fund Transfer</h3>
+<p>The following figure  shows how funds are transferred in the iBank application.</p>
+<p>This graphic is currently unavailable.</p>
+<A NAME="gaeke"></A><p><b>Figure 9-6 </b>Fund Transfer</p>
+<IMG src="figures/fundtransfer.gif" class="figure"  alt="Fund Transfer" title="Fund Transfer"><A NAME="abmfk"></A><h3>Interest Calculation</h3>
+<p>The following figure shows how interest is calculated in the iBank application.</p>
+<p>This graphic is currently unavailable.</p>
+<A NAME="gaevo"></A><p><b>Figure 9-7 </b>Interest Calculation</p>
+<IMG src="figures/intcalc.gif" class="figure"  alt="Interest Calculation" title="Interest Calculation"><A NAME="abmfl"></A><h2>Application Components</h2>
+<A NAME="indexterm-58"></A><A NAME="abmfm"></A><h3>Data Components</h3>
+<p>Each table in the database schema is encapsulated as an entity bean:</p>
+
+<table cellspacing="5" border="1">
+<tr><td><p>Entity Bean</p></td><td><p>Database Table</p></td></tr>
+<tr><td><p>Account</p></td><td><p>ACCOUNT table</p></td></tr>
+<tr><td><p>AccountType</p></td><td><p>ACCOUNT_TYPE table</p></td></tr>
+<tr><td><p>Branch</p></td><td><p>BRANCH table</p></td></tr>
+<tr><td><p>Customer</p></td><td><p>CUSTOMER table</p></td></tr>
+<tr><td><p>Transaction</p></td><td><p>TRANSACTION_HISTORY table</p></td></tr>
+<tr><td><p>TransactionType</p></td><td><p>TRANSACTION_TYPE table</p></td></tr>
+</table><p>All entity beans use container-managed persistence (CMP), except <tt>Customer</tt>, which uses bean-managed persistence (BMP).</p>
+<p>Currently, the application only makes use of the <tt>Account, AccountType,
+Branch,</tt> and <tt>Customer</tt> beans.</p>
+<A NAME="abmfn"></A><h3>Business Components</h3>
+<p>Business components of the application are encapsulated by session beans.</p>
+<p>The <tt>BankTeller</tt> bean is a stateful session bean that encapsulates
+all interaction between the customer and the system. <tt>BankTeller</tt> is
+notably in charge of the following activities:</p>
+<ul><li><p>Authenticating a customer through the <tt>authCheck()</tt> method</p>
+</li>
+<li><p>Giving the list of accounts for the customer through the <tt>getAccountSummary()</tt> method</p>
+</li>
+<li><p>Transferring funds between accounts on behalf of the customer through
+the <tt>transferFunds()</tt> method</p>
+</li>
+</ul>
+<p>The <tt>InterestCalculator</tt> bean is a stateless session bean that
+encapsulates financial calculations. It is responsible for providing the compound
+interest projection calculations, through the <tt>projectEarnings()</tt> method.</p>
+<A NAME="abmfo"></A><h3>Application Logic Components (Servlets)</h3>
+
+<table cellspacing="5" border="1">
+<tr><td><p>Component name</p></td><td><p>Purpose</p></td></tr>
+<tr><td><p>LoginServlet</p></td><td><p>Authenticates the user with the BankTeller session bean (<tt>authCheck()</tt> method), creates the HTTP session and saves information pertaining to the
+user in the session.Upon successful authentication, forwards request to the main menu
+page (<tt>UserMenu.jsp</tt>)</p></td></tr>
+<tr><td><p>CustomerProfileServlet</p></td><td><p>Retrieves customer and branch details from the Customer and Branch entity beans
+and forwards request to the view/edit details page (<tt>CustomerProfile.jsp</tt>).</p></td></tr>
+<tr><td><p>UpdateCustomerDetailsServlet</p></td><td><p>Attempts to effect customer details changes amended in <tt>CustomerProfile.jsp</tt> by updating the Customer entity bean after checking validity of changes.
+Redirects to <tt>UpdatedDetails.jsp</tt> if success, or to <tt>DetailsUpdateFailed.jsp</tt> in case of incorrect input.</p></td></tr>
+<tr><td><p>ShowAccountSummaryServlet</p></td><td><p>Retrieves the list of customer accounts from the BankTeller session bean (<tt>getAccountSummary()</tt> method) and forwards request to <tt>AccountSummary.jsp</tt> for display.</p></td></tr>
+<tr><td><p>TransferFundsServlet</p></td><td><p>Retrieves the list of customer accounts from the BankTeller session bean (<tt>getAccountSummary()</tt> method) and forwards request to <tt>TransferFunds.jsp</tt> allowing the user to set up the transfer operation.</p></td></tr>
+<tr><td><p>CheckTransferServlet</p></td><td><p>Checks the validity of source and destination accounts selected by the user
+for transfer and the amount entered. Calls the <tt>transferFunds()</tt> method
+of the BankTeller session bean to perform the transfer operation. Redirects the user
+to <tt>CheckTransferFailed.jsp</tt> in case of input error or processing
+error, or to <tt>TransferSuccess.jsp</tt> if the operation was successfully
+carried out.</p></td></tr>
+<tr><td><p>ProjectEarningsServlet</p></td><td><p>Retrieves the interest calculation parameters defined by the user in InterestCalc.jsp
+and calls the <tt>projectEarnings()</tt> method of the InterestCalculator
+stateless session bean to perform the calculation, and forwards results to the <tt>ShowProjectionResults.jsp</tt> page for display. In case of invalid input, redirects
+to <tt>BadIntCalcInput.jsp</tt></p></td></tr>
+</table><A NAME="abmfp"></A><h3>Presentation Logic Components (JSP Pages)</h3>
+
+<table cellspacing="5" border="1">
+<tr><td><p>Component name</p></td><td><p>Purpose</p></td></tr>
+<tr><td><p><tt>index.jsp</tt></p></td><td><p>Index page to the application that also serves as the login page.</p></td></tr>
+<tr><td><p><tt>LoginError.jsp</tt></p></td><td><p>Login error page displayed in case of invalid user credentials supplied. Prints
+an indication as to why login was unsuccessful.</p></td></tr>
+<tr><td><p><tt>Header.jsp</tt></p></td><td><p>Page header that is dynamically included in every HTML page of the application</p></td></tr>
+<tr><td><p><tt>CheckSession.jsp</tt></p></td><td><p>This page is statically included in every page in the application and serves
+to verify whether the user is logged in (i.e. has a valid HTTP session). If no valid
+session is active, the user is redirected to the <tt>NotLoggedIn.jsp</tt> page.</p></td></tr>
+<tr><td><p><tt>NotLoggedIn.jsp</tt></p></td><td><p>Page that the user gets redirected to when they try to access an application
+page without having gone through the login process first.</p></td></tr>
+<tr><td><p><tt>UserMenu.jsp</tt></p></td><td><p>Main application menu page that the user gets redirected to after successfully
+logging in. This page provides links to all available actions.</p></td></tr>
+<tr><td><p><tt>CustomerProfile.jsp</tt></p></td><td><p>Page displaying editable customer details and static branch details. This page
+allows the customer to amend their correspondence address.</p></td></tr>
+<tr><td><p><tt>UpdatedDetails.jsp</tt></p></td><td><p>Page where the user gets redirected to after successfully updating their details.</p></td></tr>
+<tr><td><p><tt>DetailsUpdateFailed.jsp</tt></p></td><td><p>Page where the user gets redirected if an input error prevents their details
+to be updated.</p></td></tr>
+<tr><td><p><tt>AccountSummaryPage.jsp</tt></p></td><td><p>This page displays the list of accounts belonging to the customer in tabular
+form listing the account no, account type and current balance. Clicking on an account
+no. in the table causes the application to present a detailed transaction history
+for the selected account.</p></td></tr>
+<tr><td><p><tt>ShowTransactionHistory.jsp</tt></p></td><td><p>This page prints the detailed transaction history for a particular account no.
+The transaction history is printed using a custom tag library.</p></td></tr>
+<tr><td><p><tt>TransferFunds.jsp</tt></p></td><td><p>This page allows the user to set up a transfer from one account to another for
+a specific amount of money.</p></td></tr>
+<tr><td><p><tt>TransferCheckFailed.jsp</tt></p></td><td><p>When the user chooses incorrect settings for fund transfer, they get redirected
+to this page.</p></td></tr>
+<tr><td><p><tt>TransferSuccess.jsp</tt></p></td><td><p>When the fund transfer set-up by the user can successfully be carried out, this
+page will be displayed, showing a confirmation message.</p></td></tr>
+<tr><td><p><tt>InterestCalc.jsp</tt></p></td><td><p>This page allows the user to enter parameters for a compound interest calculation.</p></td></tr>
+<tr><td><p><tt>BadIntCalcInput.jsp</tt></p></td><td><p>If the parameters for compound interest calculation are incorrect, the user
+gets redirected to this page.</p></td></tr>
+<tr><td><p><tt>ShowProjectionResults.jsp</tt></p></td><td><p>When an interest calculation is successfully carried out, the user is redirected
+to this page that displays the projection results in tabular form.</p></td></tr>
+<tr><td><p><tt>Logout.jsp</tt></p></td><td><p>Exit page of the application. This page removes the stateful session bean associated
+with the user and invalidates the HTTP session.</p></td></tr>
+<tr><td><p><tt>Error.jsp</tt></p></td><td><p>In case of unexpected application error, the user will be redirected to this
+page that will print details about the exception that occurred.</p></td></tr>
+</table><A NAME="abmfq"></A><h2>Potential Migration Issues</h2>
+<A NAME="indexterm-59"></A><p>While many of application design choices made are certainly debatable especially
+in the "real-world" context, care was taken to ensure that these choices
+enable the sample application to encompass as many potential issues as possible as
+one would face in the process of migrating a typical J2EE application.</p>
+<p>This section will go through the potential issues that you might face when migrating
+a J2EE application, and the corresponding component of iBank that was included to
+check for this issue during the migration process.</p>
+<p>With respect to the selected migration areas to address, this section specifically
+looks at the following technologies:</p>
+<A NAME="abmfr"></A><h3>Servlets</h3>
+<p>The iBank application includes a number of servlets, that enable us to detect
+potential issues with:</p>
+<ul><li><p>The use of generic functionality of the Servlet API</p>
+</li>
+<li><p>Storage/retrieval of attributes in the HTTP session and HTTP request</p>
+</li>
+<li><p>Retrieval of servlet context initialization parameters</p>
+</li>
+<li><p>Page redirection</p>
+</li>
+</ul>
+<A NAME="abmfs"></A><h3>JavaServer Pages</h3>
+<p>With respect to the JSP specification, the following aspects have been addressed:</p>
+<ul><li><p>Use of JSP declarations, scriptlets, expressions, and comments</p>
+</li>
+<li><p>Static includes (<tt>&lt;%@ include file="..." %></tt>):
+notably tested with the inclusion of the <tt>CheckSession.jsp</tt> file
+in every page)</p>
+</li>
+<li><p>Dynamic includes (<tt>&lt;jsp:include page=... /></tt>):
+this is catered for by the dynamic inclusion of <tt>Header.jsp</tt> in every
+page</p>
+</li>
+<li><p>Use of custom tag libraries: a custom tag library is used in the file <tt>ShowTransactionHistory.jsp</tt></p>
+</li>
+<li><p>Error pages for JSP exception handling: the <tt>Error.jsp</tt> page
+is the application error redirection page</p>
+</li>
+</ul>
+<A NAME="abmft"></A><h3>JDBC</h3>
+<p>The iBank application accesses a database via a connection pool and the data
+source, both programmatically (BMP entity bean, BankTeller session bean, custom tag
+library) and declaratively (with the CMP entity beans).</p>
+<A NAME="abmfu"></A><h3>Enterprise Java Beans</h3>
+<p>The iBank application uses a variety of Enterprise Java Beans.</p>
+<A NAME="abmfv"></A><h4>Entity Beans</h4>
+<p>Bean-managed persistence (<tt>Customer</tt> bean): allows us to test
+the following:</p>
+<ul><li><p>JNDI lookup of initial context</p>
+</li>
+<li><p>Pooled data source access via JDBC</p>
+</li>
+<li><p>Definition of a BMP custom finder (<tt>findByCustUsername()</tt>)</p>
+</li>
+</ul>
+<p>Container-managed persistence (<tt>Account</tt> and <tt>Branch</tt> beans): allow us to test the following:</p>
+<ul><li><p>Object/Relational mapping with the development tool and within the
+deployment descriptor</p>
+</li>
+<li><p>Use of composite primary keys (<tt>Account</tt>)</p>
+</li>
+<li><p>Definition of custom CMP finders (with the <tt>Account</tt> bean,
+and its <tt>findOrderedAccountsForCustomer()</tt> method). This is the occasion
+to look at differences in declaring the query logic in the deployment descriptor,
+and also to have a complex example returning a collection of objects.</p>
+</li>
+</ul>
+<A NAME="abmfw"></A><h4>Session Beans</h4>
+<p>Stateless session beans: <tt>InterestCalculator</tt> allows us to
+test the following:</p>
+<ul><li><p>Using and deploying a stateless session bean</p>
+</li>
+<li><p>Calling a business method for calculations</p>
+</li>
+</ul>
+<p>Stateful session beans: <tt>BankTeller</tt> allows us to test the
+following:</p>
+<ul><li><p>Looking up various interfaces using JNDI and initial contexts</p>
+</li>
+<li><p>Using JDBC to perform database queries</p>
+</li>
+<li><p>Using various transactional attributes on bean methods</p>
+</li>
+<li><p>Using container-demarcated transactions</p>
+</li>
+<li><p>Maintaining conversational state between calls</p>
+</li>
+<li><p>Business methods acting as front-ends to entity beans (e.g., the "<tt>getAccountSummary()</tt>" method)</p>
+</li>
+</ul>
+<A NAME="abmfx"></A><h3>Application Assembly</h3>
+<p>The iBank application is assembled by following the J2EE standard procedures.
+It contains the following components:</p>
+<ul><li><p>A Web application archive file for the Web application module, and
+EJB-JAR archives for the EJBs</p>
+</li>
+<li><p>An enterprise application archive file (EAR file) for the final packaging
+of the Web application and EJB modules</p>
+</li>
+</ul>
+
+            <!--stopindex-->
+<br>
+<A HREF="abmex.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Next</A>
+</body>
+</html>

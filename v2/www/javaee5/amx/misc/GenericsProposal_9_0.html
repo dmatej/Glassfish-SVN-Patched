@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>Proposal: AMX Java Generics API Changes</title>
+<link href="../amx.css" rel="stylesheet" type="text/css">
+</head>
+
+<body><div align="center">
+<table width="640" border="0" cellpadding="0" cellspacing="0" bordercolor="#333333" id="OUTER">
+  <tr>
+    <td><h1 align="center">Proposal: AMX Java Generics API Changes for AppServer 9.0 </h1>
+        <p align="center">by Lloyd L Chambers<br>
+        28 Feb 2006 </p>
+      <p class="SectionHeader">1. Introduction</p>
+      <p class="Body">[<em>This change has already been approved by asarch at its Feb 14, 2006 meeting. The author feels that the proposal is inappropriate for  CCC review, but is submitting it per request</em>].</p>
+      <p class="Body">This is a proposal to make a variety of &quot;changes&quot; to the AMX API involving the  correct use of JDK 1.5 <a href="http://java.sun.com/j2se/1.5/pdf/generics-tutorial.pdf" target="_blank">generic types</a>. The word &quot;changes&quot; is quoted because  the API is not changed semantically. This proposal affects only AppServer 9.0; it does not affect prior versions. </p>
+      <p class="Body">The proposal is in essence a bug-fix, because the current API:</p>
+      <ul>
+        <li class="Body">uses generic types incorrectly in a number of cases; <br>
+        </li>
+        <li class="Body">does not use generic types in all appropriate cases.</li>
+      </ul>      
+      <p class="Body">See the specifics of the <a href="#Proposal">Proposal</a> further on as well as the <a href="#ImpactSummary">Impact Summary</a> and <a href="#Conclusion">Conclusion</a>. </p>
+      <p class="Body">The benefits of this proposal include:</p>
+      <ul>
+        <li>compile-time parameter-type checking, reducing programmer errors; </li>
+        <li>better documentation  as to the semantics of the AMX APIs;</li>
+        <li>greater programmer convenience in being able to use the correct data types without the use of  casts.</li>
+      </ul>
+      <p class="SubSection">1.1 Method signatures (background) </p>
+      <p class="Body">Prior to JDK 1.5, generic types were not available, and all AMX methods were declared using &quot;blind&quot; Maps, Sets, etc:</p>
+      <p><span class="Code">CustomMBeanConfig    createCustomMBeanConfig( ..., Map reserved );<br>
+        <br>
+        Map    getCustomMBeanConfigMap();</span><br>
+        <br>
+        <span class="Code">public Set	queryJ2EETypeSet( String j2eeTypeValue );</span></p>
+      <p class="Body">With JDK 1.5, type-safe declarations may be utlized, thus allowing both more informative method signatures, as well as compile-time type checking: </p>
+      <p class="Code"> CustomMBeanConfig    createCustomMBeanConfig(..., Map&lt;String,String&gt; reserved);<br>
+        <br>
+public Map&lt;String,CustomMBeanConfig&gt;    getCustomMBeanConfigMap();<br>
+<br>
+public &lt;T extends AMX&gt; Set&lt;T&gt;	queryJ2EETypeSet( String j2eeTypeValue );</p>
+      <p class="SubSection">1.2 Example of incorrect usage of generics </p>
+      <p class="Body">During the course of AppServer 9.0 development, some of the method signatures began to employ Generics. This had no effect on clients except for compiler warnings, as intended per the designers of Java Generics. Unfortunately, an inappropriate data type was used for many of these method signatures. For example, the following pre-9.0 style:</p>
+      <p class="Code">CustomMBeanConfig    createCustomMBeanConfig( ..., Map reserved );</p>
+      <p class="Body">was changed to:</p>
+      <p class="Code">CustomMBeanConfig    createCustomMBeanConfig( ..., Map&lt;String,Object&gt; reserved );  </p>
+      <p class="Body">Due to the design of generics, a <span class="Code">Map&lt;String,String&gt;</span> cannot be passed to the above method! (See the <a href="http://java.sun.com/j2se/1.5/pdf/generics-tutorial.pdf" target="_blank">Tutorial</a> if you'd like to understand why). </p>
+      <p class="SectionHeader"><a name="Proposal"></a>2. Proposal</p>
+      <p class="SubSection">2.1 Require Map&lt;String,String&gt; for all create() methods</p>
+      <p class="Body">Change all <span class="Code"> create()</span> methods with a signature using <span class="Code">Map</span> or <span class="Code">Map&lt;String,Object&gt;</span> to use <span class="Code">Map&lt;String,String&gt;</span>. The <span class="Code">Map</span> used in the <span class="Code"> create()</span>  methods is used <em>only for optional parameters</em>; all required ones are  already explicit parameters. Example:</p>
+      <p class="Code">Something	createSomething( String name, <strong>Map</strong> optional)<br>
+      Something	createSomething( String name, <strong>Map&lt;String,Object&gt;</strong> optional)<br>
+        =&gt; Something	createSomething( String name, <strong>Map&lt;String,String&gt;</strong> optional )</p>
+      <p><span class="Body"> This change allows the most common type of invocation of </span><span class="Code">create()</span><span class="Body"> to compile (and to compile without warnings).&nbsp; Currently, the following  (correct) code will <strong>not</strong> compile due to the use of </span><span class="Code">Map&lt;String,Object&gt;</span><span class="Body">: </span>
+      <p><span class="Code"> Map&lt;String,String&gt; optional = ....;<br>
+        Something&nbsp; newItem&nbsp;&nbsp;&nbsp; = createSomething( ..., optional );</span>
+      <p>This API change restricts optional parameters to <span class="Code">String</span>. Values other than <span class="Code">String</span> were  allowed before (though they were ultimately all converted to <span class="Code">String</span> anyway). Server-side code continues to accept such parameters (since the JDK doesn't and can't enforce the actual types inside a Map). 
+      <p class="Body">[Background note: The types <span class="Code"> Boolean</span>, <span class="Code">Long</span> and <span class="Code">Integer</span> are  infrequently used in the AMX API; our templated <span class="Code">domain.xml ${...}</span> approach doesn't allow for anything but <span class="Code">String</span> in most  cases anyway; this &quot;restriction&quot; merely enforces what is already a requirement--and ultimately, everything becomes a String in <span class="Code">domain.xml</span>.&nbsp; Furthermore, it is not possible to declare a <span class="Code">Map</span> which  accounts for the actual semantics,&nbsp; which were "only the  following Serializable types: <span class="Code">String, Integer,    Long and Boolean</span>".]
+      <p><span class="Body"> A further advantage of using </span><span class="Code">Map&lt;String,String&gt;</span><span class="Body"> is that  it allows for a future, backward compatible change to:</span>
+      <p> <span class="Code">&lt;T extends Serializable&gt; Abc createAbc(  ...,  Map&lt;String,T&gt; );</span>
+      <p>The <strong>impact</strong> of this change is as follows:      
+      <ul>
+        <li>8.1/8.2 clients upgrading to 9.0: no impact; such users would see a compiler warning either way.</li>
+        <li>9.0 clients which have converted to using generics (<em>probably no such clients</em>): code must be changed to use <span class="Code">Map&lt;String,String&gt;</span> instead of <span class="Code">Map&lt;String,Object&gt;</span>. </li>
+        </ul>
+      <p>It should be emphasized there 9.0 has not shipped and <strong>therefore the number of 9.0 AMX clients is necessarily low</strong>, possibly zero. In short, there should be little or no impact. </p>
+      <p><span class="SubSection"> 2.2 To fix all other AMX APIs which have similar Generics issues.</span>
+      <p><span class="Body">Various other places employ </span><span class="Code">Map</span><span class="Body">, </span><span class="Code">Set</span><span class="Body"> and </span><span class="Code">List</span><span class="Body">. All such sites would be modified to use generics.</span>      
+      <p><span class="Body">Examples:</span>
+      <p>        <span class="Code">Map asMap()<br>
+        =&gt; Map&lt;String,Serializable&gt; asMap()</span><p><span class="Code">
+        Iterator getSubStages()<br>
+        =&gt; Iterator&lt;Map&lt;String,Serializable&gt;&gt; getSubStages(</span><span class="Code">)<br>
+        <br>
+        Map getAdditionalStatus() <br>
+        </span><span class="Code">=&gt; Map&lt;String,Serializable&gt; getAdditionalStatus()</span>
+      
+      <p> <span class="Code">void startDeploy(Object  deployID, Map source, Map plan,  Map options)<br>
+        =&gt; &lt;T extends  Serializable&gt; void startDeploy(Object deployID, Map&lt;String,T&gt;  source, Map&lt;String,T&gt; plan, Map&lt;String,String&gt; options)</span>
+      <p><span class="Code"> public Map getFinalDeploymentStatus(Object deployID)<br>
+        =&gt;        public  Map&lt;String,Serializable&gt; getFinalDeploymentStatus(Object deployID) </span>
+      <p><span class="Code"> public Map undeploy(String moduleID, Map&lt;String,Object&gt;  optionalParams)<br>
+          =&gt;        public Map&lt;String,Serializable&gt;  undeploy(String moduleID, Map&lt;String,String&gt; optionalParams)</span><br>
+    </p>      
+        <p class="SectionHeader"><a name="ImpactSummary"></a>3. Impact summary </p>
+    <p class="Body">Client using AMX in 8.1 or 8.2 who move their code to 9.0 would not be impacted by this change because Java Generics are backward compatible. The javac compiler issues warnings, but the code compiles and runs as before. In short, this change is irrelevant to such users.</p>
+    <p class="Body">Clients using AMX in 9.0 without Java Generics are impacted the same way as 8.1 and 8.2 clients: compiler warnings are the only side-effect. Clients which have started using Java Generics against the 9.0 AMX APIs would be impacted by needing to make trivial code changes to use the correct data type. Code already compiled would continue to work.</p>
+    <p class="SectionHeader"><a name="Conclusion"></a>4. Conclusion</p>
+    <p class="Body">The impact is trivial to non-existent, depending on the specific case. </p>
+    <p class="Body">Failure to move ahead with this change introduces semi-permanent ugliness into the AMX APIs in which AMX clients will be forced to use the wrong data types and/or excessive casts to make code compile.</p>
+    <p class="Body">There are no support issues involved, nor are any tools needed for this change. Programmers using the AMX APIs who do not understand generics need to educate themselves just as they do when using the JDK itself.</p>
+    <p class="Body">&nbsp; </p>
+    <p class="Body">&nbsp;</p>
+    <p class="Body">&nbsp;</p>
+    <p class="Body">&nbsp;</p>
+    <p class="Body">&nbsp;</p>
+    <p class="Body">&nbsp; </p>
+    <p class="Body">&nbsp; </p>
+    <p class="Body">&nbsp;</p>    </td>
+  </tr>
+</table></div>
+</body>
+</html>

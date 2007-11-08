@@ -1,0 +1,487 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * The contents of this file are subject to the terms <a name="line.2"></a>
+<FONT color="green">003</FONT>     * of the Common Development and Distribution License <a name="line.3"></a>
+<FONT color="green">004</FONT>     * (the License).  You may not use this file except in<a name="line.4"></a>
+<FONT color="green">005</FONT>     * compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * <a name="line.6"></a>
+<FONT color="green">007</FONT>     * You can obtain a copy of the license at <a name="line.7"></a>
+<FONT color="green">008</FONT>     * https://glassfish.dev.java.net/public/CDDLv1.0.html or<a name="line.8"></a>
+<FONT color="green">009</FONT>     * glassfish/bootstrap/legal/CDDLv1.0.txt.<a name="line.9"></a>
+<FONT color="green">010</FONT>     * See the License for the specific language governing <a name="line.10"></a>
+<FONT color="green">011</FONT>     * permissions and limitations under the License.<a name="line.11"></a>
+<FONT color="green">012</FONT>     * <a name="line.12"></a>
+<FONT color="green">013</FONT>     * When distributing Covered Code, include this CDDL <a name="line.13"></a>
+<FONT color="green">014</FONT>     * Header Notice in each file and include the License file <a name="line.14"></a>
+<FONT color="green">015</FONT>     * at glassfish/bootstrap/legal/CDDLv1.0.txt.  <a name="line.15"></a>
+<FONT color="green">016</FONT>     * If applicable, add the following below the CDDL Header, <a name="line.16"></a>
+<FONT color="green">017</FONT>     * with the fields enclosed by brackets [] replaced by<a name="line.17"></a>
+<FONT color="green">018</FONT>     * you own identifying information: <a name="line.18"></a>
+<FONT color="green">019</FONT>     * "Portions Copyrighted [year] [name of copyright owner]"<a name="line.19"></a>
+<FONT color="green">020</FONT>     * <a name="line.20"></a>
+<FONT color="green">021</FONT>     * Copyright 2006 Sun Microsystems, Inc. All rights reserved.<a name="line.21"></a>
+<FONT color="green">022</FONT>     */<a name="line.22"></a>
+<FONT color="green">023</FONT>    package com.sun.appserv.management.util.j2ee;<a name="line.23"></a>
+<FONT color="green">024</FONT>    <a name="line.24"></a>
+<FONT color="green">025</FONT>    import java.util.Map;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import java.util.HashMap;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import java.util.Set;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import java.util.HashSet;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.util.List;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.util.ArrayList;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import java.util.Collections;<a name="line.31"></a>
+<FONT color="green">032</FONT>    <a name="line.32"></a>
+<FONT color="green">033</FONT>    import java.lang.reflect.Method;<a name="line.33"></a>
+<FONT color="green">034</FONT>    <a name="line.34"></a>
+<FONT color="green">035</FONT>    import javax.management.openmbean.CompositeType;<a name="line.35"></a>
+<FONT color="green">036</FONT>    import javax.management.openmbean.CompositeData;<a name="line.36"></a>
+<FONT color="green">037</FONT>    import javax.management.openmbean.CompositeDataSupport;<a name="line.37"></a>
+<FONT color="green">038</FONT>    import javax.management.openmbean.OpenType;<a name="line.38"></a>
+<FONT color="green">039</FONT>    import javax.management.openmbean.OpenDataException;<a name="line.39"></a>
+<FONT color="green">040</FONT>    <a name="line.40"></a>
+<FONT color="green">041</FONT>    import javax.management.j2ee.statistics.*;<a name="line.41"></a>
+<FONT color="green">042</FONT>    <a name="line.42"></a>
+<FONT color="green">043</FONT>    import com.sun.appserv.management.util.jmx.OpenMBeanUtil;<a name="line.43"></a>
+<FONT color="green">044</FONT>    import com.sun.appserv.management.util.misc.GSetUtil;<a name="line.44"></a>
+<FONT color="green">045</FONT>    import com.sun.appserv.management.util.misc.CollectionUtil;<a name="line.45"></a>
+<FONT color="green">046</FONT>    import com.sun.appserv.management.util.jmx.JMXUtil;<a name="line.46"></a>
+<FONT color="green">047</FONT>    <a name="line.47"></a>
+<FONT color="green">048</FONT>    import com.sun.appserv.management.j2ee.statistics.MapStatistic;<a name="line.48"></a>
+<FONT color="green">049</FONT>    import com.sun.appserv.management.j2ee.statistics.StringStatistic;<a name="line.49"></a>
+<FONT color="green">050</FONT>    import com.sun.appserv.management.j2ee.statistics.NumberStatistic;<a name="line.50"></a>
+<FONT color="green">051</FONT>    <a name="line.51"></a>
+<FONT color="green">052</FONT>    /**<a name="line.52"></a>
+<FONT color="green">053</FONT>            J2EE JSR 77 utilities<a name="line.53"></a>
+<FONT color="green">054</FONT>     */<a name="line.54"></a>
+<FONT color="green">055</FONT>    public class J2EEUtil<a name="line.55"></a>
+<FONT color="green">056</FONT>    {<a name="line.56"></a>
+<FONT color="green">057</FONT>            private final static String     GET             = "get";<a name="line.57"></a>
+<FONT color="green">058</FONT>            <a name="line.58"></a>
+<FONT color="green">059</FONT>            private J2EEUtil()      {}<a name="line.59"></a>
+<FONT color="green">060</FONT>            <a name="line.60"></a>
+<FONT color="green">061</FONT>            <a name="line.61"></a>
+<FONT color="green">062</FONT>            private static final Set&lt;String&gt;  IGNORE  =<a name="line.62"></a>
+<FONT color="green">063</FONT>                GSetUtil.newUnmodifiableStringSet( "getClass" );<a name="line.63"></a>
+<FONT color="green">064</FONT>            <a name="line.64"></a>
+<FONT color="green">065</FONT>            /**<a name="line.65"></a>
+<FONT color="green">066</FONT>                    Convert the Statistic into a Map containing all the name/value pairs<a name="line.66"></a>
+<FONT color="green">067</FONT>                    obtained by finding method names that match a getter pattern<a name="line.67"></a>
+<FONT color="green">068</FONT>                    getXXX().  Any Statistic can thus be converted into a Map which preserves<a name="line.68"></a>
+<FONT color="green">069</FONT>                    all its members.<a name="line.69"></a>
+<FONT color="green">070</FONT>                    <a name="line.70"></a>
+<FONT color="green">071</FONT>                    @param statistic any Statistic or subclass<a name="line.71"></a>
+<FONT color="green">072</FONT>             */<a name="line.72"></a>
+<FONT color="green">073</FONT>                    public static Map&lt;String,Object&gt;<a name="line.73"></a>
+<FONT color="green">074</FONT>            statisticToMap( Statistic statistic )<a name="line.74"></a>
+<FONT color="green">075</FONT>            {<a name="line.75"></a>
+<FONT color="green">076</FONT>                    final Map&lt;String,Object&gt;  result  = new HashMap&lt;String,Object&gt;();<a name="line.76"></a>
+<FONT color="green">077</FONT>                    <a name="line.77"></a>
+<FONT color="green">078</FONT>                    if ( statistic instanceof MapStatistic )<a name="line.78"></a>
+<FONT color="green">079</FONT>                    {<a name="line.79"></a>
+<FONT color="green">080</FONT>                            result.putAll( ((MapStatistic)statistic).asMap() );<a name="line.80"></a>
+<FONT color="green">081</FONT>                    }<a name="line.81"></a>
+<FONT color="green">082</FONT>                    else<a name="line.82"></a>
+<FONT color="green">083</FONT>                    {<a name="line.83"></a>
+<FONT color="green">084</FONT>                            // get all public methods<a name="line.84"></a>
+<FONT color="green">085</FONT>                            final Method[]  methods = statistic.getClass().getMethods();<a name="line.85"></a>
+<FONT color="green">086</FONT>    <a name="line.86"></a>
+<FONT color="green">087</FONT>                            for( int i = 0; i &lt; methods.length; ++i )<a name="line.87"></a>
+<FONT color="green">088</FONT>                            {<a name="line.88"></a>
+<FONT color="green">089</FONT>                                    final Method    method          = methods[ i ];<a name="line.89"></a>
+<FONT color="green">090</FONT>                                    final String    methodName      = method.getName();<a name="line.90"></a>
+<FONT color="green">091</FONT>                                    <a name="line.91"></a>
+<FONT color="green">092</FONT>                                    if ( methodName.startsWith( GET ) &amp;&amp;<a name="line.92"></a>
+<FONT color="green">093</FONT>                                                    ! IGNORE.contains( methodName ) &amp;&amp;<a name="line.93"></a>
+<FONT color="green">094</FONT>                                                    method.getParameterTypes().length == 0 &amp;&amp;<a name="line.94"></a>
+<FONT color="green">095</FONT>                                                    method.getExceptionTypes().length == 0 &amp;&amp;<a name="line.95"></a>
+<FONT color="green">096</FONT>                                                    method.getReturnType() != Void.class )<a name="line.96"></a>
+<FONT color="green">097</FONT>                                    {<a name="line.97"></a>
+<FONT color="green">098</FONT>                                            try<a name="line.98"></a>
+<FONT color="green">099</FONT>                                            {<a name="line.99"></a>
+<FONT color="green">100</FONT>                                                    final Object    value = method.invoke( statistic, (Object[])null );<a name="line.100"></a>
+<FONT color="green">101</FONT>                                                    <a name="line.101"></a>
+<FONT color="green">102</FONT>                                                    final String name       = methodName.substring( GET.length(), methodName.length() );<a name="line.102"></a>
+<FONT color="green">103</FONT>                                                    result.put( name, value );<a name="line.103"></a>
+<FONT color="green">104</FONT>                                            }<a name="line.104"></a>
+<FONT color="green">105</FONT>                                            catch( Exception e )<a name="line.105"></a>
+<FONT color="green">106</FONT>                                            {<a name="line.106"></a>
+<FONT color="green">107</FONT>                                                    // ignore<a name="line.107"></a>
+<FONT color="green">108</FONT>                                            }<a name="line.108"></a>
+<FONT color="green">109</FONT>                                    }<a name="line.109"></a>
+<FONT color="green">110</FONT>                            }<a name="line.110"></a>
+<FONT color="green">111</FONT>                    }<a name="line.111"></a>
+<FONT color="green">112</FONT>    <a name="line.112"></a>
+<FONT color="green">113</FONT>                    return( result );<a name="line.113"></a>
+<FONT color="green">114</FONT>            }<a name="line.114"></a>
+<FONT color="green">115</FONT>            <a name="line.115"></a>
+<FONT color="green">116</FONT>            <a name="line.116"></a>
+<FONT color="green">117</FONT>            /**<a name="line.117"></a>
+<FONT color="green">118</FONT>                    Get the type name for a Statistic.<a name="line.118"></a>
+<FONT color="green">119</FONT>             */<a name="line.119"></a>
+<FONT color="green">120</FONT>                    public static String<a name="line.120"></a>
+<FONT color="green">121</FONT>            getStatisticType( Statistic statistic )<a name="line.121"></a>
+<FONT color="green">122</FONT>            {<a name="line.122"></a>
+<FONT color="green">123</FONT>                    String  type    = getType( STATISTIC_CLASSES, statistic );<a name="line.123"></a>
+<FONT color="green">124</FONT>                    <a name="line.124"></a>
+<FONT color="green">125</FONT>                    if ( type == null )<a name="line.125"></a>
+<FONT color="green">126</FONT>                    {<a name="line.126"></a>
+<FONT color="green">127</FONT>                            type    = statistic.getClass().getName();<a name="line.127"></a>
+<FONT color="green">128</FONT>                    }<a name="line.128"></a>
+<FONT color="green">129</FONT>    <a name="line.129"></a>
+<FONT color="green">130</FONT>                    return( type );<a name="line.130"></a>
+<FONT color="green">131</FONT>            }<a name="line.131"></a>
+<FONT color="green">132</FONT>            <a name="line.132"></a>
+<FONT color="green">133</FONT>            <a name="line.133"></a>
+<FONT color="green">134</FONT>            /**<a name="line.134"></a>
+<FONT color="green">135</FONT>                    Get the type matching the object.<a name="line.135"></a>
+<FONT color="green">136</FONT>             */<a name="line.136"></a>
+<FONT color="green">137</FONT>                    private static String<a name="line.137"></a>
+<FONT color="green">138</FONT>            getType( Class[] classes, Object o )<a name="line.138"></a>
+<FONT color="green">139</FONT>            {<a name="line.139"></a>
+<FONT color="green">140</FONT>                    String  type    = null;<a name="line.140"></a>
+<FONT color="green">141</FONT>                    <a name="line.141"></a>
+<FONT color="green">142</FONT>                    for( int i = 0; i &lt; classes.length; ++i )<a name="line.142"></a>
+<FONT color="green">143</FONT>                    {<a name="line.143"></a>
+<FONT color="green">144</FONT>                            final Class     theClass        = classes[ i ];<a name="line.144"></a>
+<FONT color="green">145</FONT>                            <a name="line.145"></a>
+<FONT color="green">146</FONT>                            if ( theClass.isInstance( o ) )<a name="line.146"></a>
+<FONT color="green">147</FONT>                            {<a name="line.147"></a>
+<FONT color="green">148</FONT>                                    type    = theClass.getName();<a name="line.148"></a>
+<FONT color="green">149</FONT>                                    break;<a name="line.149"></a>
+<FONT color="green">150</FONT>                            }<a name="line.150"></a>
+<FONT color="green">151</FONT>                    }<a name="line.151"></a>
+<FONT color="green">152</FONT>                    return( type );<a name="line.152"></a>
+<FONT color="green">153</FONT>            }<a name="line.153"></a>
+<FONT color="green">154</FONT>            <a name="line.154"></a>
+<FONT color="green">155</FONT>            private static final Class[] STATISTIC_CLASSES  = <a name="line.155"></a>
+<FONT color="green">156</FONT>            {<a name="line.156"></a>
+<FONT color="green">157</FONT>                    BoundaryStatistic.class,<a name="line.157"></a>
+<FONT color="green">158</FONT>                    BoundedRangeStatistic.class,<a name="line.158"></a>
+<FONT color="green">159</FONT>                    TimeStatistic.class,<a name="line.159"></a>
+<FONT color="green">160</FONT>                    RangeStatistic.class,<a name="line.160"></a>
+<FONT color="green">161</FONT>                    CountStatistic.class,<a name="line.161"></a>
+<FONT color="green">162</FONT>                    StringStatistic.class,<a name="line.162"></a>
+<FONT color="green">163</FONT>                    NumberStatistic.class,<a name="line.163"></a>
+<FONT color="green">164</FONT>                    MapStatistic.class,<a name="line.164"></a>
+<FONT color="green">165</FONT>            };<a name="line.165"></a>
+<FONT color="green">166</FONT>            <a name="line.166"></a>
+<FONT color="green">167</FONT>            <a name="line.167"></a>
+<FONT color="green">168</FONT>            <a name="line.168"></a>
+<FONT color="green">169</FONT>                    private static CompositeType<a name="line.169"></a>
+<FONT color="green">170</FONT>            statisticMapToCompositeType( final String statisticType, final Map&lt;String,?&gt; map )<a name="line.170"></a>
+<FONT color="green">171</FONT>                    throws OpenDataException<a name="line.171"></a>
+<FONT color="green">172</FONT>            {<a name="line.172"></a>
+<FONT color="green">173</FONT>                    final String    description     = "J2EE management statistic " + statisticType;<a name="line.173"></a>
+<FONT color="green">174</FONT>                    <a name="line.174"></a>
+<FONT color="green">175</FONT>                    return( OpenMBeanUtil.mapToCompositeType( statisticType, description, map, null) );<a name="line.175"></a>
+<FONT color="green">176</FONT>            }<a name="line.176"></a>
+<FONT color="green">177</FONT>            <a name="line.177"></a>
+<FONT color="green">178</FONT>            <a name="line.178"></a>
+<FONT color="green">179</FONT>            /**<a name="line.179"></a>
+<FONT color="green">180</FONT>                    Get the JMX OpenMBean CompositeType corresponding to the Statistic.<a name="line.180"></a>
+<FONT color="green">181</FONT>             */<a name="line.181"></a>
+<FONT color="green">182</FONT>                    public static CompositeType<a name="line.182"></a>
+<FONT color="green">183</FONT>            statisticToCompositeType( Statistic statistic )<a name="line.183"></a>
+<FONT color="green">184</FONT>                    throws OpenDataException<a name="line.184"></a>
+<FONT color="green">185</FONT>            {<a name="line.185"></a>
+<FONT color="green">186</FONT>                    final String    statisticType   = getStatisticType( statistic );<a name="line.186"></a>
+<FONT color="green">187</FONT>                    final Map&lt;String,Object&gt;    map = statisticToMap( statistic );<a name="line.187"></a>
+<FONT color="green">188</FONT>                    <a name="line.188"></a>
+<FONT color="green">189</FONT>                    return( statisticMapToCompositeType( statisticType, map ) );<a name="line.189"></a>
+<FONT color="green">190</FONT>            }<a name="line.190"></a>
+<FONT color="green">191</FONT>            <a name="line.191"></a>
+<FONT color="green">192</FONT>            /**<a name="line.192"></a>
+<FONT color="green">193</FONT>                    Convert a Statistic into a JMX CompositeDataSupport.<a name="line.193"></a>
+<FONT color="green">194</FONT>                    <a name="line.194"></a>
+<FONT color="green">195</FONT>                    @param statistic any Statistic or subclass<a name="line.195"></a>
+<FONT color="green">196</FONT>             */<a name="line.196"></a>
+<FONT color="green">197</FONT>                    public static CompositeDataSupport<a name="line.197"></a>
+<FONT color="green">198</FONT>            statisticToCompositeData( Statistic statistic )<a name="line.198"></a>
+<FONT color="green">199</FONT>                    throws OpenDataException<a name="line.199"></a>
+<FONT color="green">200</FONT>            {<a name="line.200"></a>
+<FONT color="green">201</FONT>                    final String                    statisticType   = getStatisticType( statistic );<a name="line.201"></a>
+<FONT color="green">202</FONT>                    <a name="line.202"></a>
+<FONT color="green">203</FONT>                    final Map&lt;String,Object&gt;    map = statisticToMap( statistic );<a name="line.203"></a>
+<FONT color="green">204</FONT>            <a name="line.204"></a>
+<FONT color="green">205</FONT>                    final CompositeType             type    = statisticMapToCompositeType( statisticType, map );<a name="line.205"></a>
+<FONT color="green">206</FONT>                    <a name="line.206"></a>
+<FONT color="green">207</FONT>                    return( new CompositeDataSupport( type, map ) );<a name="line.207"></a>
+<FONT color="green">208</FONT>            }<a name="line.208"></a>
+<FONT color="green">209</FONT>            <a name="line.209"></a>
+<FONT color="green">210</FONT>            <a name="line.210"></a>
+<FONT color="green">211</FONT>            private static final Class[] STATS_CLASSES      = <a name="line.211"></a>
+<FONT color="green">212</FONT>            {<a name="line.212"></a>
+<FONT color="green">213</FONT>                    EJBStats.class,<a name="line.213"></a>
+<FONT color="green">214</FONT>                    MessageDrivenBeanStats.class,<a name="line.214"></a>
+<FONT color="green">215</FONT>                    SessionBeanStats.class,<a name="line.215"></a>
+<FONT color="green">216</FONT>                    StatefulSessionBeanStats.class,<a name="line.216"></a>
+<FONT color="green">217</FONT>                    StatelessSessionBeanStats.class,<a name="line.217"></a>
+<FONT color="green">218</FONT>                    EntityBeanStats.class,<a name="line.218"></a>
+<FONT color="green">219</FONT>                    JavaMailStats.class,<a name="line.219"></a>
+<FONT color="green">220</FONT>                    JCAConnectionStats.class,<a name="line.220"></a>
+<FONT color="green">221</FONT>                    JCAConnectionPoolStats.class,<a name="line.221"></a>
+<FONT color="green">222</FONT>                    JDBCConnectionPoolStats.class,<a name="line.222"></a>
+<FONT color="green">223</FONT>                    JCAStats.class,<a name="line.223"></a>
+<FONT color="green">224</FONT>                    JDBCConnectionPoolStats.class,<a name="line.224"></a>
+<FONT color="green">225</FONT>                    JDBCStats.class,<a name="line.225"></a>
+<FONT color="green">226</FONT>                    JMSConnectionStats.class,<a name="line.226"></a>
+<FONT color="green">227</FONT>                    JMSConsumerStats.class,<a name="line.227"></a>
+<FONT color="green">228</FONT>                    JMSEndpointStats.class,<a name="line.228"></a>
+<FONT color="green">229</FONT>                    JMSProducerStats.class,<a name="line.229"></a>
+<FONT color="green">230</FONT>                    JMSSessionStats.class,<a name="line.230"></a>
+<FONT color="green">231</FONT>                    JMSStats.class,<a name="line.231"></a>
+<FONT color="green">232</FONT>                    JVMStats.class,<a name="line.232"></a>
+<FONT color="green">233</FONT>                    ServletStats.class,<a name="line.233"></a>
+<FONT color="green">234</FONT>                    URLStats.class<a name="line.234"></a>
+<FONT color="green">235</FONT>            };<a name="line.235"></a>
+<FONT color="green">236</FONT>            <a name="line.236"></a>
+<FONT color="green">237</FONT>            /**<a name="line.237"></a>
+<FONT color="green">238</FONT>                    Get the type for use in a {@link CompositeType} type.<a name="line.238"></a>
+<FONT color="green">239</FONT>             */<a name="line.239"></a>
+<FONT color="green">240</FONT>                    public static String<a name="line.240"></a>
+<FONT color="green">241</FONT>            getStatsType( Stats stats )<a name="line.241"></a>
+<FONT color="green">242</FONT>            {<a name="line.242"></a>
+<FONT color="green">243</FONT>                    String  type    = getType( STATS_CLASSES, stats );<a name="line.243"></a>
+<FONT color="green">244</FONT>                    <a name="line.244"></a>
+<FONT color="green">245</FONT>                    if ( type == null )<a name="line.245"></a>
+<FONT color="green">246</FONT>                    {<a name="line.246"></a>
+<FONT color="green">247</FONT>                            type    = stats.getClass().getName();<a name="line.247"></a>
+<FONT color="green">248</FONT>                    }<a name="line.248"></a>
+<FONT color="green">249</FONT>                    <a name="line.249"></a>
+<FONT color="green">250</FONT>                    return( type );<a name="line.250"></a>
+<FONT color="green">251</FONT>            }<a name="line.251"></a>
+<FONT color="green">252</FONT>            <a name="line.252"></a>
+<FONT color="green">253</FONT>            <a name="line.253"></a>
+<FONT color="green">254</FONT>            /**<a name="line.254"></a>
+<FONT color="green">255</FONT>                    Convert a Stats object into a CompositeDataSupport, which is a standard<a name="line.255"></a>
+<FONT color="green">256</FONT>                    type in JMX which can be serialized.<a name="line.256"></a>
+<FONT color="green">257</FONT>                    &lt;p&gt;<a name="line.257"></a>
+<FONT color="green">258</FONT>                    The CompositeData entries will keyed by the name of the Statistic.  The value<a name="line.258"></a>
+<FONT color="green">259</FONT>                    of each Statistic will also be a CompositeData, keyed by the value names<a name="line.259"></a>
+<FONT color="green">260</FONT>                    found in that statistic.<a name="line.260"></a>
+<FONT color="green">261</FONT>                    &lt;p&gt;<a name="line.261"></a>
+<FONT color="green">262</FONT>                    For example, the JVMStats object would be converted into a CompositeData with the entries:<a name="line.262"></a>
+<FONT color="green">263</FONT>                    &lt;p&gt;<a name="line.263"></a>
+<FONT color="green">264</FONT>                    &lt;ul&gt;<a name="line.264"></a>
+<FONT color="green">265</FONT>                    &lt;li&gt;HeapSize&lt;/li&gt;<a name="line.265"></a>
+<FONT color="green">266</FONT>                            &lt;ul&gt;<a name="line.266"></a>
+<FONT color="green">267</FONT>                            &lt;li&gt;Description&lt;/li&gt;<a name="line.267"></a>
+<FONT color="green">268</FONT>                            &lt;li&gt;LastSampleTime&lt;/li&gt;<a name="line.268"></a>
+<FONT color="green">269</FONT>                            &lt;li&gt;Name&lt;/li&gt;<a name="line.269"></a>
+<FONT color="green">270</FONT>                            &lt;li&gt;StartTime&lt;/li&gt;<a name="line.270"></a>
+<FONT color="green">271</FONT>                            &lt;li&gt;Unit&lt;/li&gt;<a name="line.271"></a>
+<FONT color="green">272</FONT>                            &lt;li&gt;LowerBound&lt;/li&gt;<a name="line.272"></a>
+<FONT color="green">273</FONT>                            &lt;li&gt;UpperBound&lt;/li&gt;<a name="line.273"></a>
+<FONT color="green">274</FONT>                            &lt;li&gt;HighWaterMark&lt;/li&gt;<a name="line.274"></a>
+<FONT color="green">275</FONT>                            &lt;li&gt;LowWaterMark&lt;/li&gt;<a name="line.275"></a>
+<FONT color="green">276</FONT>                            &lt;li&gt;Current&lt;/li&gt;<a name="line.276"></a>
+<FONT color="green">277</FONT>                            &lt;/ul&gt;<a name="line.277"></a>
+<FONT color="green">278</FONT>                    &lt;li&gt;UpTime&lt;/li&gt;<a name="line.278"></a>
+<FONT color="green">279</FONT>                            &lt;ul&gt;<a name="line.279"></a>
+<FONT color="green">280</FONT>                            &lt;li&gt;Description&lt;/li&gt;<a name="line.280"></a>
+<FONT color="green">281</FONT>                            &lt;li&gt;LastSampleTime&lt;/li&gt;<a name="line.281"></a>
+<FONT color="green">282</FONT>                            &lt;li&gt;Name&lt;/li&gt;<a name="line.282"></a>
+<FONT color="green">283</FONT>                            &lt;li&gt;StartTime&lt;/li&gt;<a name="line.283"></a>
+<FONT color="green">284</FONT>                            &lt;li&gt;Unit&lt;/li&gt;<a name="line.284"></a>
+<FONT color="green">285</FONT>                            &lt;li&gt;Count&lt;/li&gt;<a name="line.285"></a>
+<FONT color="green">286</FONT>                            &lt;/ul&gt;<a name="line.286"></a>
+<FONT color="green">287</FONT>                    &lt;/ul&gt;<a name="line.287"></a>
+<FONT color="green">288</FONT>                    <a name="line.288"></a>
+<FONT color="green">289</FONT>                    @param stats any JSR 77 Stats object<a name="line.289"></a>
+<FONT color="green">290</FONT>             */<a name="line.290"></a>
+<FONT color="green">291</FONT>                    public static CompositeDataSupport<a name="line.291"></a>
+<FONT color="green">292</FONT>            statsToCompositeData( final Stats stats )<a name="line.292"></a>
+<FONT color="green">293</FONT>                    throws OpenDataException<a name="line.293"></a>
+<FONT color="green">294</FONT>            {<a name="line.294"></a>
+<FONT color="green">295</FONT>                    final String                    statsType       = getStatsType( stats );<a name="line.295"></a>
+<FONT color="green">296</FONT>                    <a name="line.296"></a>
+<FONT color="green">297</FONT>                    final Statistic[]               statistics      = stats.getStatistics();<a name="line.297"></a>
+<FONT color="green">298</FONT>                    final String[]                  names                   = new String[ statistics.length ];<a name="line.298"></a>
+<FONT color="green">299</FONT>                    final CompositeData[]   datas                   = new CompositeData[ names.length ];<a name="line.299"></a>
+<FONT color="green">300</FONT>                    final String[]                  itemDescriptions        = new String[ names.length ];<a name="line.300"></a>
+<FONT color="green">301</FONT>                    final CompositeType[]   itemTypes                       = new CompositeType[ names.length ];<a name="line.301"></a>
+<FONT color="green">302</FONT>                    <a name="line.302"></a>
+<FONT color="green">303</FONT>                    for( int i = 0; i &lt; names.length; ++i )<a name="line.303"></a>
+<FONT color="green">304</FONT>                    {<a name="line.304"></a>
+<FONT color="green">305</FONT>                            names[ i ]                              = statistics[ i ].getName();<a name="line.305"></a>
+<FONT color="green">306</FONT>                            datas[ i ]                              = statisticToCompositeData( statistics[ i ] );<a name="line.306"></a>
+<FONT color="green">307</FONT>                            itemTypes[ i ]                  = datas[ i ].getCompositeType();<a name="line.307"></a>
+<FONT color="green">308</FONT>                            itemDescriptions[ i ]   = statistics[ i ].getName();<a name="line.308"></a>
+<FONT color="green">309</FONT>                    }<a name="line.309"></a>
+<FONT color="green">310</FONT>                    <a name="line.310"></a>
+<FONT color="green">311</FONT>                    final CompositeType     type    = new CompositeType(<a name="line.311"></a>
+<FONT color="green">312</FONT>                                    statsType,<a name="line.312"></a>
+<FONT color="green">313</FONT>                                    "CompositeData for " + statsType,<a name="line.313"></a>
+<FONT color="green">314</FONT>                                    names,<a name="line.314"></a>
+<FONT color="green">315</FONT>                                    itemDescriptions, <a name="line.315"></a>
+<FONT color="green">316</FONT>                                    itemTypes );<a name="line.316"></a>
+<FONT color="green">317</FONT>                    <a name="line.317"></a>
+<FONT color="green">318</FONT>                    return( new CompositeDataSupport( type, names, datas ) );<a name="line.318"></a>
+<FONT color="green">319</FONT>            }<a name="line.319"></a>
+<FONT color="green">320</FONT>            <a name="line.320"></a>
+<FONT color="green">321</FONT>            <a name="line.321"></a>
+<FONT color="green">322</FONT>            /**<a name="line.322"></a>
+<FONT color="green">323</FONT>                    Turn a Stats object into a Map containing all its Statistics, keyed by Statistic.getName()<a name="line.323"></a>
+<FONT color="green">324</FONT>                    and value of the Statistic.<a name="line.324"></a>
+<FONT color="green">325</FONT>             */<a name="line.325"></a>
+<FONT color="green">326</FONT>                    public static Map&lt;String,Statistic&gt;<a name="line.326"></a>
+<FONT color="green">327</FONT>            statsToMap( final Stats stats )<a name="line.327"></a>
+<FONT color="green">328</FONT>            {<a name="line.328"></a>
+<FONT color="green">329</FONT>                    final Statistic[]               statistics      = stats.getStatistics();<a name="line.329"></a>
+<FONT color="green">330</FONT>                    <a name="line.330"></a>
+<FONT color="green">331</FONT>                    return( statisticsToMap( statistics ) );<a name="line.331"></a>
+<FONT color="green">332</FONT>            }<a name="line.332"></a>
+<FONT color="green">333</FONT>    <a name="line.333"></a>
+<FONT color="green">334</FONT>    <a name="line.334"></a>
+<FONT color="green">335</FONT>            /**<a name="line.335"></a>
+<FONT color="green">336</FONT>                    Convert a Statistic[] into a Map keyed by the name of the Statistic, with<a name="line.336"></a>
+<FONT color="green">337</FONT>                    value being the Statistic.<a name="line.337"></a>
+<FONT color="green">338</FONT>                    <a name="line.338"></a>
+<FONT color="green">339</FONT>                    @return Map keyed by name of the Statistic<a name="line.339"></a>
+<FONT color="green">340</FONT>             */<a name="line.340"></a>
+<FONT color="green">341</FONT>                    public static Map&lt;String,Statistic&gt;<a name="line.341"></a>
+<FONT color="green">342</FONT>            statisticsToMap( final Statistic[] statistics )<a name="line.342"></a>
+<FONT color="green">343</FONT>            {<a name="line.343"></a>
+<FONT color="green">344</FONT>                    final Map&lt;String,Statistic&gt; m     = new HashMap&lt;String,Statistic&gt;();<a name="line.344"></a>
+<FONT color="green">345</FONT>                    <a name="line.345"></a>
+<FONT color="green">346</FONT>                    for( int i = 0; i &lt; statistics.length; ++i )<a name="line.346"></a>
+<FONT color="green">347</FONT>                    {<a name="line.347"></a>
+<FONT color="green">348</FONT>                            final String    name    = statistics[ i ].getName();<a name="line.348"></a>
+<FONT color="green">349</FONT>                            m.put( name, statistics[ i ] );<a name="line.349"></a>
+<FONT color="green">350</FONT>                    }<a name="line.350"></a>
+<FONT color="green">351</FONT>                    <a name="line.351"></a>
+<FONT color="green">352</FONT>                    return( m );<a name="line.352"></a>
+<FONT color="green">353</FONT>            }<a name="line.353"></a>
+<FONT color="green">354</FONT>            <a name="line.354"></a>
+<FONT color="green">355</FONT>            <a name="line.355"></a>
+<FONT color="green">356</FONT>                    public static Method[]<a name="line.356"></a>
+<FONT color="green">357</FONT>            getStatisticGetterMethodsUsingNames( final Stats stats)<a name="line.357"></a>
+<FONT color="green">358</FONT>                    throws NoSuchMethodException<a name="line.358"></a>
+<FONT color="green">359</FONT>            {<a name="line.359"></a>
+<FONT color="green">360</FONT>                    final String[]  statisticNames  = stats.getStatisticNames();<a name="line.360"></a>
+<FONT color="green">361</FONT>                    <a name="line.361"></a>
+<FONT color="green">362</FONT>                    final Class                     statsClass      = stats.getClass();<a name="line.362"></a>
+<FONT color="green">363</FONT>                    final Method[]          methods         = new Method[ statisticNames.length ];<a name="line.363"></a>
+<FONT color="green">364</FONT>                    <a name="line.364"></a>
+<FONT color="green">365</FONT>                    final Set&lt;String&gt;   missing = new HashSet&lt;String&gt;();<a name="line.365"></a>
+<FONT color="green">366</FONT>                    <a name="line.366"></a>
+<FONT color="green">367</FONT>                    for( int i = 0; i &lt; statisticNames.length; ++i )<a name="line.367"></a>
+<FONT color="green">368</FONT>                    {<a name="line.368"></a>
+<FONT color="green">369</FONT>                    //System.out.print( statisticNames[i ] + ", " );<a name="line.369"></a>
+<FONT color="green">370</FONT>                    final String methodName = JMXUtil.GET + statisticNames[ i ];<a name="line.370"></a>
+<FONT color="green">371</FONT>                    try<a name="line.371"></a>
+<FONT color="green">372</FONT>                    {<a name="line.372"></a>
+<FONT color="green">373</FONT>                            methods[ i ]    = statsClass.getMethod( methodName, (Class[])null );<a name="line.373"></a>
+<FONT color="green">374</FONT>                            }<a name="line.374"></a>
+<FONT color="green">375</FONT>                            catch( final NoSuchMethodException e )<a name="line.375"></a>
+<FONT color="green">376</FONT>                            {<a name="line.376"></a>
+<FONT color="green">377</FONT>                                missing.add( methodName );<a name="line.377"></a>
+<FONT color="green">378</FONT>                            }<a name="line.378"></a>
+<FONT color="green">379</FONT>                    }<a name="line.379"></a>
+<FONT color="green">380</FONT>                    <a name="line.380"></a>
+<FONT color="green">381</FONT>                    if ( missing.size() != 0 )<a name="line.381"></a>
+<FONT color="green">382</FONT>                    {<a name="line.382"></a>
+<FONT color="green">383</FONT>                        throw new NoSuchMethodException(<a name="line.383"></a>
+<FONT color="green">384</FONT>                            "Missing methods: in object of class " + stats.getClass().getName() +<a name="line.384"></a>
+<FONT color="green">385</FONT>                            ": " + CollectionUtil.toString( missing, ", ") );<a name="line.385"></a>
+<FONT color="green">386</FONT>                }<a name="line.386"></a>
+<FONT color="green">387</FONT>                <a name="line.387"></a>
+<FONT color="green">388</FONT>                    return( methods );<a name="line.388"></a>
+<FONT color="green">389</FONT>            }<a name="line.389"></a>
+<FONT color="green">390</FONT>            <a name="line.390"></a>
+<FONT color="green">391</FONT>                    public static Method[]<a name="line.391"></a>
+<FONT color="green">392</FONT>            getStatisticGetterMethodsUsingIntrospection( final Stats stats)<a name="line.392"></a>
+<FONT color="green">393</FONT>            {<a name="line.393"></a>
+<FONT color="green">394</FONT>                    final Method[]          candidates              = stats.getClass().getMethods();<a name="line.394"></a>
+<FONT color="green">395</FONT>                    <a name="line.395"></a>
+<FONT color="green">396</FONT>                    final List&lt;Method&gt;        results = new ArrayList&lt;Method&gt;();<a name="line.396"></a>
+<FONT color="green">397</FONT>                    for( int methodIdx = 0; methodIdx &lt; candidates.length; ++methodIdx )<a name="line.397"></a>
+<FONT color="green">398</FONT>                    {<a name="line.398"></a>
+<FONT color="green">399</FONT>                            final Method    method  = candidates[ methodIdx ];<a name="line.399"></a>
+<FONT color="green">400</FONT>                            final String    methodName      = method.getName();<a name="line.400"></a>
+<FONT color="green">401</FONT>                            <a name="line.401"></a>
+<FONT color="green">402</FONT>                            final Class     returnType      = method.getReturnType();<a name="line.402"></a>
+<FONT color="green">403</FONT>                            <a name="line.403"></a>
+<FONT color="green">404</FONT>                            if ( JMXUtil.isGetter( method ) &amp;&amp;<a name="line.404"></a>
+<FONT color="green">405</FONT>                                    Statistic.class.isAssignableFrom( returnType ) &amp;&amp;<a name="line.405"></a>
+<FONT color="green">406</FONT>                                    method.getParameterTypes().length == 0 )<a name="line.406"></a>
+<FONT color="green">407</FONT>                            {<a name="line.407"></a>
+<FONT color="green">408</FONT>                                    results.add( method );<a name="line.408"></a>
+<FONT color="green">409</FONT>                            }<a name="line.409"></a>
+<FONT color="green">410</FONT>                    }<a name="line.410"></a>
+<FONT color="green">411</FONT>            <a name="line.411"></a>
+<FONT color="green">412</FONT>                    return (Method[])results.toArray( new Method[ results.size() ] );<a name="line.412"></a>
+<FONT color="green">413</FONT>            }<a name="line.413"></a>
+<FONT color="green">414</FONT>    <a name="line.414"></a>
+<FONT color="green">415</FONT>    <a name="line.415"></a>
+<FONT color="green">416</FONT>    }<a name="line.416"></a>
+<FONT color="green">417</FONT>    <a name="line.417"></a>
+<FONT color="green">418</FONT>    <a name="line.418"></a>
+<FONT color="green">419</FONT>    <a name="line.419"></a>
+<FONT color="green">420</FONT>    <a name="line.420"></a>
+<FONT color="green">421</FONT>    <a name="line.421"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

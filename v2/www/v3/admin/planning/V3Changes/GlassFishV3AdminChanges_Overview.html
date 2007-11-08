@@ -1,0 +1,358 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<title>GlassFish V3 Admin Changes</title>
+
+
+<link href="styles.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.style2 {font-size: 10px}
+.style3 {	font-size: 24px;
+	font-style: italic;
+}
+-->
+</style>
+</head>
+<body>
+<div align="center"><div id="page">    
+  <h1 align="center" class="title">Glassfish V3 Admin Changes Overview<span class="style3"><br />
+  </span><span class="text-red">DRAFT</span><br />
+    <span class="style1"><a href="mailto:lloyd.chambers@sun.com?subject=GlassFish V3 Admin Changes question/comment">lloyd.chambers@sun.com</a></span><br />
+    <span class="style2" >version 004, 23 October 2007</span></h1>
+    <h1>Table of Contents</h1>
+  <div id="table-of-contents">
+    <p><a href="#Introduction">Introduction</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Glossary">Glossary</a></p>
+    <p><a href="#Goals">Goals</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#HighLevelGoals">High level goals</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#CodeAndDesignChanges">Code and design changes</a></p>
+    <p>&nbsp;&nbsp;&nbsp;<a href="#PlanOfAttack">&nbsp;Development plan of attack</a></p>
+    <p><a href="#TheExistingCodeBase">The existing code base</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#TheMBeanServer">The MeanServer</a> </p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#AdminService">Admin Service</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#AdminServiceActivitiesAtInitialization">AdminService activities at initialization</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#TheLowLevelConfigAPI">The low-level Config API</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#com_sun_appserv_ConfigMBeans">The com.sun.appserv config MBeans</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#com_sun_appserv_MonitoringAndRuntimeMBeans">The com.sun.appserv monitoring and runtime MBeans</a></p>
+    <p><a href="#ImpactsOnAdmin">Impacts on admin area</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Impacts_GUI_CLI">Admin GUI and CLI impacts</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Impacts_SpecialCaseMBeans">Special-cased MBeans</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Impacts_Validator">Validator code</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Impacts_AMXDependencies">AMX Dependencies</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Impacts_ExtendingAMX">Extending AMX</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Impacts_PushingConfigChanges">Pushing config changes to remote servers</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Impacts_SemanticsOfConfigChanges">Semantics of configuration changes</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Impacts_BackupRestore">Backup/restore</a></p>
+    <p><a href="#NewFeatures">New features</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<strong><a href="#NewFeatures_SupportForExternalModules">Support for external modules</a></strong></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#NewFeatures_NewTechnologiesAndStandards">New technologies and standards</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#NewFeatures_ConfigurationRollback">Configuration rollback</a></p>
+    <p><a href="#Conclusions">Conclusions</a></p>
+  </div>
+    
+    <div id="main-body">
+      <h1><a name="Introduction" id="Introduction"></a>Introduction</h1>
+      <p>This document collects the strategy and implementation issues in moving the administration-related code forward
+        in GlassFish V3. It is intended as a basis for discussion among the admin team.</p>
+      <p>See also  <a href="GlassFishV3AdminChanges_CodeCommentary.html"><em>Code Commentary</em></a>.</p>
+      <h3><a name="Glossary" id="Glossary"></a>Glossary</h3>
+        <div class="glossary">
+          <div class="glossary-entry"><span class="glossary-term"><a name="AdminCode" id="AdminCode"></a>Admin, Admin Code</span><span class="glossary-term-def">&mdash;All
+              the GlassFish code related to administration, monitoring, JSR 77, MBeans, GUI, CLI, etc.</span></div>
+          <div class="glossary-entry"><span class="glossary-term"><a name="HK2" id="HK2"></a>HK2</span><span class="glossary-term-def">&mdash;&ldquo;Hundred
+              Kilobytes Kernel&rdquo; &mdash;&nbsp;the <a href="https://hk2.dev.java.net/" target="_blank">modularized framework</a> upon
+              which GlassFish V3 is organized.</span></div>
+          <div class="glossary-entry"><span class="glossary-term"><a name="MBeanServer" id="MBeanServer"></a>MBeanServer</span><span class="glossary-term-def">&mdash;a </span><span class="code"><a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServer.html" target="_blank">javax.management.MBeanServer</a></span><span class="glossary-term-def"> and/or
+              a class the implements it with additional behavior.</span></div>
+          </div>
+      
+        <h1><a name="Goals" id="Goals"></a>Goals</h1>
+      <h2><a name="HighLevelGoals" id="HighLevelGoals"></a>High-level Goals</h2>
+      <p>High level goals for Admin in GlassFish V3 include:</p>
+      <ul>
+        <li><strong>Run inside process</strong>&mdash;making it possible to run GlassFish inside another JVM (eg the JVM
+          of a NetBeans project). And, ideally, making it possible to run more than one GlassFish instance withing the same
+          JVM (a testing and possibly production feature);</li>
+        <li><strong>Manage remotely</strong>&mdash;As with the CLI, the GUI should be able to manage any number of GlassFish domains remotely (today,
+          the GUI must run in-process with the DAS server instance of the domain it&rsquo;s managing).</li>
+        <li><strong>AMX support for HK2 modules</strong>&mdash;AMX support for configuration of GlassFish HK2 modules, along with
+          support for related MBeans, such as monitoring.</li>
+        <li><strong>On-demand management</strong>&mdash;management infrastructure (eg AMX) should load when needed (but with granularity
+          to be determined).</li>
+        <li><strong>New features</strong>&mdash;To be determined. However, the author&rsquo;s view is that restructuring the admin code
+          base will leave little or no time for major new features. Long deferred, the code base badly needs a refresh to
+        allow rapid implementation of new features, and easier maintainance of old ones.</li>
+      </ul>
+      <h2><a name="CodeAndDesignChanges" id="CodeAndDesignChanges"></a>Code and design changes</h2>
+      <p>Many changes  must be made for the Admin code in GlassFish V3. These changes include the following (and likely more):</p>
+      <ul>
+        <li>Making the MBeanServer independent of the Admin code;</li>
+        <li>Reimplementation/redesign of the low-level configuration API, the <span class="code">com.sun.appserv</span> MBeans,
+          and the AMX configuration MBeans in light of changes to underlying configuration;</li>
+        <li>Decomposing the AdminService into one or more GlassFish HK2 modules;</li>
+        <li>Ensuring that all  admin code loads as needed &ldquo;lazily&rdquo; (without introducing undue complexity or testing issues);</li>
+        <li>Ensuring that the GUI and CLI can operate using 100% public APS (eg AMX);</li>
+        <li>Ability to programmatically start GlassFish via AMX (this dovetails with the ability to run within a process
+          also);</li>
+        <li>Extending the AMX API to support  configuration of GlassFish V3 modules as well as related monitoring and
+          runtime MBeans;</li>
+      </ul>
+      <h2><a name="PlanOfAttack" id="PlanOfAttack"></a>Development plan of attack</h2>
+      <p>The contemplated changes have broad impact. Please see also the <a href="GlassFishV3AdminChanges_Presentation1.pdf" target="_blank">presentation</a> on this topic.</p>
+      <p>The approach can be separated
+        into three phases&mdash;</p>
+      <h3>Phase one &mdash; Research and simplify</h3>
+      <p>All existing mechanisms must be fully understood. This includes in particular the validator code, how configuration
+        is pushed to remote servers, the extent to which the non-public <span class="code">com.sun.appserv:category=config</span> MBeans are used by
+        admin GUI and CLI, etc.</p>
+      <p>Concurrently with the research, code in <span class="code">SunoneInterceptor</span>, <span class="code">AdminService</span> and <span class="code">ConfigInterceptor</span> should
+        be minimized, stripping out all defunct and superfluous code, so that the task of converting can be understood (see
+        <a href="GlassFishV3AdminChanges_CodeCommentary.html" target="_blank"><em>Code Commentary</em></a>).</p>
+      <p>The low-level config API (&ldquo;injection&rdquo;) approach should be agreed upon, in a final form that addresses its many issues,
+      including thread safety, how MBean interact with it, persistence, whether a DTD is used, how valiation works, etc.</p>
+      <p>A written plan should be written for how the existing AdminService, AMX and low level config API converge into a
+      cooperative whole.</p>
+      <h3>Phase two &mdash; Implement</h3>
+      <p>The development should be broken into teams. Key tasks include:</p>
+      <ul>
+        <li>AMX loader integration with new low-level configuration API concurrent with the removal of <span class="code">category=config</span> MBeans;</li>
+        <li>Formalization of all module configuration APIs, with high-quality javadoc and unit test cases;</li>
+        <li>Design and implementation of configuration &ldquo;push&rdquo; to remote servers (in the intermediate term, forced restarts
+          might be acceptable).</li>
+        <li>GUI and CLI structural work to accomodate user-supplied HK2 modules</li>
+        <li>AMX extensions to support user-supplied HK2 modules.</li>
+      </ul>
+      <h3>Phase three &mdash; Ongoing development</h3>
+      <p>This phase brings new features forward, and makes sure all existing functionality is carried forward, especially
+        in multi-server and/or clustered environments.</p>
+      <h1><a name="TheExistingCodeBase" id="TheExistingCodeBase"></a>The existing code base</h1>
+      <h2><a name="TheMBeanServer" id="TheMBeanServer"></a>The MBeanServer</h2>
+      <p>The MBeanServer is a system-wide facility which until late in the GlassFish V2 development cycle could only be created
+        correctly by the AdminService. A modification was made to &ldquo;wrap&rdquo; the MBeanServer differently so that
+        it could be initialized in main() (PEMain), with subsequent internal state changes upon initialization of the AdminService.
+        See
+        <a href="SunoneInterceptorChanges.html" target="_blank"><em>Initialization of the MBeanServer in Glassfish&mdash;Fixing
+        the SunoneInterceptor initialization</em></a> for details, keeping in mind that the changes actually made deviate
+        from the proposed ones in significant respects.</p>
+      <h3>MBeanServer code</h3>
+      <p>As of September 2007, the code relevant to the MBeanServer was:</p>
+      <table class="table100 table-hover">
+        <tr>
+          <th width="39%">File</th>
+          <th width="61%">Comments</th>
+        </tr>
+        <tr>
+          <td><span class="code">com.sun.enterprise.server.PEMain.<br />
+              <strong>LoadMBeanServer</strong></span></td>
+          <td>Our &ldquo;wrapper&rdquo; around the MBeanServer.</td>
+        </tr>
+        <tr>
+          <td><span class="code">com.sun.enterprise.interceptor.<br />
+              <strong>DynamicInterceptor</strong></span></td>
+          <td>Initializes the MBeanServer at startup.</td>
+        </tr>
+        <tr>
+          <td class="code">com.sun.enterprise.admin.server.core.<br />
+              <strong>AdminService</strong></td>
+          <td>Tweaks <span class="code">DynamicInterceptor</span> so that <span class="code">SunoneInterceptor</span> is inserted into the invocation chain (for some methods).</td>
+        </tr>
+        <tr>
+          <td class="code"> com.sun.enterprise.admin.server.core.jmx.<br />
+          <strong>SunoneInterceptor</strong></td>
+          <td>The internal wrapper that implements the tracking of config changes and also dynamic loading of certain (apparently
+          exactly 1) MBean.<br />
+          <br />
+          A key implementation detail is the call to <span class="code">adminContext.getMBeanServerInterceptor()</span> in
+          its constructor.<br />
+          <br />
+          Methods like generateEntryContext() need investigation.</td>
+        </tr>
+        <tr>
+          <td class="code">com.sun.enterprise.admin.server.core.<br />
+            <strong>ConfigInterceptor[Impl]</strong></td>
+          <td>There code is used to implement a proxy which is used by the <span class="code">SunoneInterceptor</span>. There seems to be a lot of
+          unused/dead code here and it&rsquo;s not even clear whether this class performs a useful function any longer.</td>
+        </tr>
+      </table>
+     
+      <p>The only thing preventing the change to use the standard MBeanServer is the code within <span class="code">SunoneInterceptor</span>,
+        which maintains (indirectly) a list of config changes, a crude sort of transactional operation (see the <a href="GlassFishV3AdminChanges_CodeCommentary.html#ConfigInterceptor" target="_blank">code
+        commentary on <span class="code">ConfigInterceptor</span></a>). It&rsquo;s
+        unclear if <span class="code">ConfigInterceptor</span> has significant value, because it is unsafe when multiple
+        clients operate (though this might be detected causing a failure), and client GUI and CLI code make <em>repeated</em> changes,
+        each of which enters this code freshly each time, thus defeating any semi-atomic semantics.</p>
+      <h2><a name="AdminService" id="AdminService"></a>The AdminService</h2>
+      <h3><a name="AdminServiceActivitiesAtInitialization" id="AdminServiceActivitiesAtInitialization"></a>AdminService activities at initialization (GlassFish V2)</h3>
+      <p>The expression &ldquo;everything but the kitchen sink&rdquo; applies to  <span class="code">com.sun.enterprise.admin.server.core.AdminService</span>,
+        a <span class="code">ServerLifecycle</span> which over time has been modified to include a wide variety of initialization
+        code on an ad-hoc basis, with little thought given to dependencies or modularization. There also exists code that
+        serves no useful purpose.</p>
+      <p class="sidebar">The first step in transitioning to GlassFish V3 is to strip out code that no longer serves a useful
+        function; this reduces the confusion that arises trying to read &ldquo;kitchen sink&rdquo; code. Examples include the <span class="code">ENABLE_PERFORMANCE_THREAD</span>        code
+        in <span class="code">AdminService</span>, the <span class="code">HOT_CONFIG_METHOD_NAME</span> and related code
+        (no-op in practice) in <span class="code">SunoneInterceptor</span>, etc.</p>
+      <p>Initialization responsibilities as of Sept 2007 include:</p>
+      <ul class="ul-small">
+        <li >Installing (enabling) the SunoneInterceptor within DynamicInterceptor;</li>
+        <li >Enabling AMX logging;</li>
+        <li >initializing CallFlow;</li>
+        <li >Registering config MBeans;</li>
+        <li >Initializing the JKS keystore if they do not exist (&quot;key3.db&quot;, etc) ;</li>
+        <li >Registering the JSR 77 <span class="code">J2EEDomain</span>  <span class="code">com.sun.appserv:category=runtime</span> MBeans.</li>
+        <li >Creating the admin temp directory and setting the admin instanced properties such as ADMIN_JAVAROOT, PLUGIN_JAVAROOT.</li>
+        <li >Miscellaneous utility methods like <span class="code">getTempDirPath()</span>.</li>
+        <li >Starting the AutoDeployer code;</li>
+        <li >Initializing Dotted Names;</li>
+        <li >Registering TransactionsRecovery even listener and MBean;</li>
+        <li >Initializing the LogManager reconfig support, event listener, MBean, etc;</li>
+        <li >Registering the System Services MBean;</li>
+        <li >Initializing the AMX MBeans;</li>
+        <li >Initializing custom MBean loading;</li>
+        <li >Creating and registering the DASDiagnosticMBean;</li>
+        <li >Registering the JVMMonitoring MBeans;</li>
+        <li >Notifying the node agents;</li>
+        <li >Publishing the process ID (PID).</li>
+      </ul>
+      <p>Each of these items should be examined. A few items might naturally become part of a distinct module. For example,
+        the auto-deployment code makes sense as a module, as does AMX itself. An AdminService module makes sense, and it
+        might still be responsible for initializing a number of administration-related facilities&mdash;but the code should be
+        restructured such that the AdminService is a more general purpose &ldquo;umbrella&rdquo; supporting a number of smaller services.</p>
+      <h2><a name="TheLowLevelConfigAPI" id="AdminService2"></a>The low-level Config API</h2>
+      <p>The so-called &ldquo;Config API&rdquo; is the API used internally, and by the <span class="code">com.sun.appserv:category=config</span> MBeans.
+        This API is due for replacement with one that can support arbitrary configuration for user-supplied modules. </p>
+      <p>By reengineering this low-level API, we might be able to produce a system where the &ldquo;config bean&rdquo; and the AMX MBean
+        are one and the same, and also used by HK2 modules. That would greatly simplify the current structure, in which AMX
+        calls a <span class="code">com.sun.apperv:category=config</span> MBean, which in turn calls the Config API.</p>
+      <p class="sidebar">As of October 2007, the HK2 proposal calls for &ldquo;injection&rdquo; of configuration value-by-value
+        into a module&rsquo;s configuration
+        object.</p>
+      <h2><a name="com_sun_appserv_ConfigMBeans" id="com_sun_appserv_ConfigMBeans"></a>The <span class="code">com.sun.appserv:category=config</span>        MBeans</h2>
+      <p><strong>Elimination of these MBeans should be a priority</strong>:</p>
+      <ul>
+        <li>they take considerable time to initialize</li>
+        <li>they
+          are not part of any public API</li>
+        <li>they are not even used internally to the server (except as delegates for the
+          AMX <span class="code">Delegate </span> implementation)</li>
+      </ul>
+      <p>It is a natural time to remove them, given that the low-level <a href="#TheLowLevelConfigAPI">Config
+          API</a> is due for an overhaul. Unfortunately, some of these MBeans do more the configuration; they perform operations
+          as well&mdash;and a few of them are not &ldquo;config&rdquo; at all, but rather operational MBeans that operate on configuration.
+          There is a mess here and cleaning it up will take some work.</p>
+      <h2><a name="com_sun_appserv_MonitoringAndRuntimeMBeans" id="com_sun_appserv_ConfigMBeans2"></a>The <span class="code">com.sun.appserv:category=monitor</span>        and runtime MBeans</h2>
+      <p>The <span class="code">com.sun.appserv:category=monitor</span> MBeans should also be eliminated. The AMX monitoring
+        MBeans (<span class="code">amx:j2eeTytpe=X-*Monitor</span>) can be <strong>registered directly</strong> by the code
+        that generates the monitoring information.</p>
+      <p class="sidebar">A generic interface similar to the AMX Delegate interface should be used to decouple the AMX monitoring MBeans from
+        implementation. It is particularly important to formalize this contract in the context of user supplied HK2 modules.<br />
+      </p>
+      <h1><a name="ImpactsOnAdmin" id="ImpactsOnAdmin"></a>Impacts on admin area</h1>
+      <p>Considerable impact is felt throughout the admin area due to this change. GlassFish V2 makes use of the &ldquo;Config
+        API&rdquo; (XPath-based) upon which is layered the complex <span class="code">com.sun.appserv</span> MBean layer.
+        AMX in turn depends on the <span class="code">com.sun.appserv</span> MBeans, using them as Delegates for its config
+        MBeans. The admin GUI and CLI depend on all of these MBeans.</p>
+      <h2><a name="Impacts_GUI_CLI" id="Impacts_GUI_CLI"></a>Admin GUI and CLI impacts</h2>
+      <p>While the admin GUI and CLI uses AMX for 90-95% of their code base, some code might still depend on <span class="code">com.sun.appserv:category=config</span> MBeans
+        that provide <strong>operations</strong> (not just configuration). There might also exist implicit side effects which
+        will &ldquo;go away&rdquo; when the underlying implementation is changed.</p>
+      <p class="action"><strong>ACTION</strong>: GUI and CLI teams to assess whether they depend on undocumented/unspecified
+        behavior when modifying configuration, deploying applications that also modifies configurations, etc.</p>
+      <p>AMX is expected to stay largely compatible, so the bulk of the GUI and CLI code will remain viable. However, both
+        the GUI and CLI will need enhancements to support administration of pluggable modules. Modules that include hierarchical
+        configuration pose the biggest challenge, particularly for creating and deleting configuration.</p>
+      <h2><a name="Impacts_SpecialCaseMBeans" id="Impacts_SpecialCaseMBeans"></a>Special-cased MBeans</h2>
+      <p>There exist special case <span class="code">com.sun.appserv:category=config</span> MBeans that process certain types
+        of configuration that require special handling, such as passwords. This functionality will need to reside somewhere,
+        possibly in (revised) AMX MBeans.</p>
+      <p class="action"><strong>ACTION</strong>: GUI and CLI teams to survey code for non-AMX usage as well as operations
+        invoked on category=config MBeans.</p>
+      <h2><a name="Impacts_Validator" id="Impacts_Validator"></a>Validator code</h2>
+      <p>The validator code (code that verifies legality of changes to configuration) is currently hooked into the GlassFish
+        V2 &ldquo;Config API&rdquo;. In addition, the <span class="code">com.sun.appserv:category=config</span> MBeans might
+        contain special-case checks for certain configuration changes.</p>
+      <p class="action"><strong>ACTION</strong>: understand at what level the validation code hooks into the GlassFish V2
+        Config API, and how it would hook into the new configuration paradigm.</p>
+      <h2><a name="Impacts_AMXDependencies" id="Impacts_AMXDependencies"></a>AMX Dependencies</h2>
+      <p> For configuration support, <a href="https://glassfish.dev.java.net/javaee5/amx/index.html" target="_blank">AMX</a> depends
+        on <span class="code">com.sun.appserv:category=config</span> MBeans via its <span class="code">Delegate</span> interface,
+        an effective means of decoupling itself from underlying implementation.</p>
+      <p>AMX even contains an undocumented feature whereby it can replace its usual <span class="code">Delegate</span> with
+        on that uses the GlassFish V2 Config API directly, all <em>without change to the AMX MBeans themselves</em>. Therefore,
+        the odds are excellent that the same could be done with the GlassFish V3 Config API. Indeed, the <span class="code">Delegate</span> interface
+        could be a direct link implemented by the V3 Config API itself to eliminate the &ldquo;middleman&rdquo;.</p>
+      <h2><a name="Impacts_ExtendingAMX" id="Impacts_ExtendingAMX"></a>Extending AMX</h2>
+      <p>AMX needs to be extensible such that additional modules automatically gain AMX MBeans for their configuration. These
+        MBeans must be accessible through mechanisms that are generic (since they cannot be known in advance). Currently
+        in AMX the <span class="code">Container</span> interface is part of any AMX MBean that is logically an enclosing
+        scope around other MBeans. For example, the <span class="code">DomainConfig</span> interface logicallyl encloses
+        all configuration interfaces (MBeans) for the domain, as a configuration tree.</p>
+      <h2><a name="Impacts_PushingConfigChanges" id="Impacts_PushingConfigChanges"></a>Pushing config changes to remote servers</h2>
+      <p>In GlassFish V2, there is a <span class="code"><a href="GlassFishV3AdminChanges_CodeCommentary.html#ConfigInterceptor">ConfigInterceptor</a></span><a href="GlassFishV3AdminChanges_CodeCommentary.html"> hook</a> inserted
+        into the MBean call chain such that changes to configuration are recorded (on an entry/exit basis taking recursion
+        into account, but not different threads). The purpose seems to be to push changes to non-DAS server instances.</p>
+      <p>Some suitable equivalent will need to be found, preferably via a general purpose mechanism that does not require
+        use of a customized MBeanServer. Perhaps the new configuration mechanism in V3 can provide a suitable facility at
+        higher efficiency and no side effects (in contrast to today&rsquo;s implementation).</p>
+      <h2><a name="Impacts_SemanticsOfConfigChanges" id="Impacts_SemanticsOfConfigChanges"></a>Semantics of configuration
+        changes</h2>
+      <p>Through GlassFish V2, the semantics of configuration have been largely assumed/implicit. For GlassFish V3, configuration
+        APIs should be documented as being:</p>
+      <ul>
+        <li>synchronous or asynchronous</li>
+        <li>requiring (or not) restart</li>
+        <li>persisted to disk (immediately, lazily)</li>
+        <li>fail-all or partial failure</li>
+        <li>transactional (or not) semantics</li>
+        <li>exclusive access/locking (or not) per client</li>
+      </ul>
+      <h2><a name="Impacts_BackupRestore" id="Impacts_BackupRestore"></a>Backup/restore</h2>
+      <p>When does configuration get overwritten? How does it get backed up? </p>
+      <h1><a name="NewFeatures" id="NewFeatures"></a>New features</h1>
+      <p class="warning">New features should be added to this section as they are contemplated.<strong></strong></p>
+      <h2><strong><a name="Changes_HK2" id="SupportForExternalModules2"></a>Changes forced by V3 &ldquo;HK2&rdquo; module
+          and configuration changes</strong></h2>
+      <p>Configuration changes drive tremendous change within the admin area. Please see <a href="GlassFishV3AdminChanges_HK2config_Analysis.html" target="_blank"><em>HK2
+            Configuration (&ldquo;Injection&rdquo;)</em></a>.</p>
+      <h2><strong><a name="NewFeatures_SupportForExternalModules" id="NewFeatures_SupportForExternalModules"></a>Support for external modules</strong></h2>
+      <p>Support for user-defined modules must be added to AMX. Configuration, monitoring and runtime MBean support should
+        be available via AMX so that user modules can be first class citizens in GlassFish V3. An HK2 module should be able
+        to:</p>
+      <ul>
+        <li>Obtain its configuration from an Object (that might also be an MBean). It remains to be seen wether HK2 modules
+          should be required to use an MBean for configuration&mdash;perhaps a good idea.</li>
+        <li>Ask AMX for the MBean(s) representing its configuration.</li>
+        <li>Ask AMX to register a monitoring MBean on its behalf (subject to certain requirements/conventions).</li>
+        <li>Ask AMX to register a runtime MBean on its behalf (subject to certain requirements/conventions).</li>
+      </ul>
+      <p class="sidebar">A generic interface similar to the AMX Delegate interface should be used to decouple the AMX monitoring
+        MBeans from implementation. It is particularly important to formalize this contract in the context of user supplied
+      HK2 modules.<br />
+          <br />
+        Also, HK2 modules should be able to extend a base class that implements the module statistics, the request that an
+      AMX monitoring MBean be created.</p>
+      <h2><strong><a name="NewFeatures_ConfigurationRollback" id="SupportForExternalModules3"></a>Configuration rollback</strong> and/or
+      backup</h2>
+      <p>Loss of configuration can be a major headache in production environments. A first-class &ldquo;rollback&rdquo; feature
+        should be considered for V3, along with GUI support, such that domain configuration can be rolled back to any previous
+        state. This could also be useful for development efforts, especially when testing new modules. For specific thoughts
+        on this, please see Byron Nevin&rsquo;s <a href="http://blogs.sun.com/foo/entry/new_backup_restore_for_v3" target="_blank">blog entry</a>.</p>
+      <h2><a name="NewFeatures_NewTechnologiesAndStandards" id="NewFeatures_NewTechnologiesAndStandards"></a>New technologies and standards</h2>
+      <h3>New JMXConnectors (JSR 262 Web Services Connector)</h3>
+      <p><a href="https://ws-jmx-connector.dev.java.net/" target="_blank">JSR 262</a> defines a new <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/remote/JMXConnector.html" target="_blank">JMXConnector</a> based
+        on Web Services (<a href="http://java.sun.com/javase/technologies/core/mntr-mgmt/javamanagement/index.jsp" target="_blank">JMX</a> consists of the original API and a remote API). Here the hype and delivery time frame most likely
+        outweigh any value. However, if the standard becomes final, it might be worth our effort to support this as an alternative
+        connector for through-the-firewall management clients.</p>
+      <p>Our time is probably better spent evolving our existing http-based connector to run with Grizzly. High performance
+        is still an issue to/from the DAS and to/from server instances. The Web Services JMXConnector will apparently underperform
+        even the JMX RMI-based JMXConnector.</p>
+      <h1><a name="Conclusions" id="Conclusions"></a>Conclusions</h1>
+      <p>There is a lot of work ahead, with many issues undecided. Please send your thoughts to <a href="mailto:admin@glassfish.dev.java.net?subject=GlassFish V3 admin changes">admin@glassfish.dev.java.net</a>,
+      or directly to the author (as appropriate).</p>
+      <p><a href="index.html"><strong>Back to Start Page</strong></a></p>
+    </div>
+</div></div>
+
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>12.&nbsp;&nbsp;Configuring the HTTP Service
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9 Administration Guide</A>&nbsp;<br>
+<A HREF="ablsn.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="gbbjk.html">Next</A><br>
+            <!--startindex--><A NAME="ablsw"></A><b>Chapter&nbsp;12</b><h1>Configuring the HTTP Service</h1>
+<p>The HTTP service is the component of the Application Server that provides facilities
+for deploying web applications and for making deployed web applications accessible
+by HTTP clients. These facilities are provided by means of two kinds of related objects,
+virtual servers and HTTP listeners.</p>
+<ul><li><p><A HREF="ablsw.html#ablsz">Virtual Servers</A></p>
+</li>
+<li><p><A HREF="ablsw.html#ablta">HTTP Listeners</A></p>
+</li>
+</ul>
+<A NAME="ablsz"></A><h2>Virtual Servers</h2>
+<A NAME="indexterm-288"></A><A NAME="indexterm-289"></A><p>A virtual server, sometimes called a virtual host, is an object that allows
+the same physical server to host multiple Internet domain names. All virtual servers
+hosted on the same physical server share the Internet Protocol (IP) address of that
+physical server. A virtual server associates a domain name for a server (such as <tt>www.aaa.com</tt>) with the particular server on which the Application Server is running.</p>
+<p><hr size="1" noshade><p><b>Note - </b>Do not confuse an Internet domain with the administrative domain of the Application Server.</p>
+<hr size="1" noshade></p><p>For instance, assume you want to host these domains on your physical server:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>www.aaa.com
+www.bbb.com
+www.ccc.com</pre>
+</td></table><br><p>Assume also that <tt>www.aaa.com</tt>, <tt>www.bbb.com</tt>,
+and <tt>www.ccc.com</tt> have web modules <tt>web1</tt>, <tt>web2</tt>, and <tt>web3</tt>, respectively, associated with them.</p>
+<p>This means that all of these URLs are handled by your physical server:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>http://www.aaa.com:8080/web1
+http://www.bbb.com:8080/web2
+http://www.ccc.com:8080/web3</pre>
+</td></table><br><p>The first URL is mapped to virtual host <tt>www.aaa.com</tt>, the
+second URL is mapped to virtual host <tt>www.bbb.com</tt>, and the third
+is mapped to virtual host <tt>www.ccc.com</tt>.</p>
+<p>On the other hand, the following URL results in a 404 return code, because <tt>web3</tt> isn't registered with <tt>www.bbb.com</tt>:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>http://www.bbb.com:8080/web3</pre>
+</td></table><br><p>For this mapping to work, make sure that <tt>www.aaa.com</tt>, <tt>www.bbb.com</tt>, and <tt>www.ccc.com</tt> all resolve to your physical
+server's IP address. They need to be registered with the DNS server for your
+network. In addition, on a UNIX system, add these domains to your <tt>/etc/hosts</tt> file (if the setting for <tt>hosts</tt> in your <tt>/etc/nsswitch.conf</tt> file includes <tt>files</tt>).</p>
+<p>When the Application Server is started, it starts the following virtual servers automatically:</p>
+<ul><li><p>A virtual server named <tt>server</tt>, which hosts all
+user-defined web modules</p>
+</li>
+<li><p>A virtual server named <tt>__asadmin</tt>, which hosts all
+administration-related web modules (specifically, the Admin Console). This server
+is restricted; you cannot deploy web modules to this virtual server.</p>
+</li>
+</ul>
+<p>For development, testing, and deployment of web services in a non-production
+environment, <tt>server</tt> is often the only virtual server required.
+In a production environment, additional virtual servers provide hosting facilities
+for users and customers so that each appears to have its own web server, even though
+there is only one physical server.</p>
+<p>See Also:</p>
+<ul><li><p><A HREF="ablsw.html#ablta">HTTP Listeners</A></p>
+</li>
+<li><p>LINK REMOVED To create a virtual server.</p>
+</li>
+</ul>
+<A NAME="ablta"></A><h2>HTTP Listeners</h2>
+<A NAME="indexterm-290"></A><A NAME="indexterm-291"></A><p>Each virtual server provides connections between the server and clients through
+one or more HTTP listeners. Each HTTP listener is a listen socket that has an IP address,
+a port number, a server name, and a default virtual server.</p>
+<p>HTTP listeners must have a unique combination of port number and IP address.
+For example, an HTTP listener can listen on all configured IP addresses on a given
+port for a machine by specifying the IP address 0.0.0.0. Alternatively, the HTTP listener
+can specify a unique IP address for each listener, but use the same port.</p>
+<p>Since an HTTP listener is a combination of IP address and port number, you can
+have multiple HTTP listeners with the same IP address and different port numbers (for
+example, 1.1.1.1:8081 and 1.1.1.1:8082), or with different IP addresses and the same
+port number (for example, 1.1.1.1:8081 and 1.2.3.4:8081, if your machine was configured
+to respond to both these addresses).</p>
+<p>However, if an HTTP listener uses the 0.0.0.0 IP address, which listens on all
+IP addresses on a port, you cannot create HTTP listeners for additional IP addresses
+that listen on the same port for a specific IP address. For example, if an HTTP listener
+uses 0.0.0.0:8080 (all IP addresses on port 8080), another HTTP listener cannot use
+1.2.3.4:8080.</p>
+<p>Because the system running the Application Server typically has access to only one
+IP address, HTTP listeners typically use the 0.0.0.0 IP address and different port
+numbers, with each port number serving a different purpose. If the system does have
+access to more than one IP address, each address can serve a different purpose.</p>
+<p>By default, when the Application Server starts, it has the following HTTP listeners:</p>
+<ul><li><p>Two HTTP listeners named <tt>http-listener-1</tt> and <tt>http-listener-2</tt>, associated with the virtual server named <tt>server</tt>. The listener named <tt>http-listener-1</tt> does not have security
+enabled; <tt>http-listener-2</tt> has security enabled.</p>
+</li>
+<li><p>An HTTP listener named <tt>admin-listener</tt>, associated
+with the virtual server named <tt>__asadmin</tt>. This listener does
+not have security enabled.</p>
+</li>
+</ul>
+<p>All these listeners use the IP address 0.0.0.0 and the port numbers specified
+as the HTTP server port numbers during installation of the Application Server. If the Application Server uses
+the default port number values, <tt>http-listener-1</tt> uses port 8080, <tt>http-listener-2</tt> uses port 8181, and <tt>admin-listener</tt> uses
+port 4848.</p>
+<p><A NAME="indexterm-292"></A>Each HTTP listener has a default virtual server. The default virtual server
+is the server to which the HTTP listener routes all request URLs whose host component
+does not match any of the virtual servers that are associated with the HTTP listener
+(a virtual server is associated with an HTTP listener by listing the HTTP listener
+in its <tt>http-listeners</tt> attribute).</p>
+<p><A NAME="indexterm-293"></A><A NAME="indexterm-294"></A>In addition, specify the number of acceptor threads in the HTTP listener.
+Acceptor threads are threads that wait for connections. The threads accept connections
+and put them in a queue, where they
+are then picked up by worker threads. Configure enough acceptor threads so that there
+is always one available when a new request comes in, but few enough so that they do
+not provide too much of a burden on the system. In the Application Server, there is no
+distinction between acceptor and request processing (worker) threads: each HTTP listener
+thread is responsible for accepting and processing requests. For this reason, the
+HTTP listeners in the Application Server's default configuration use 50 acceptor
+threads.</p>
+<p>The HTTP listener's server name is the host name that appears in the URLs
+the server sends to the client as part of a redirect. This attribute affects URLs
+the server automatically generates; it does not affect the URLs for directories and
+files stored in the server. This name is normally the alias name if the server uses
+an alias. If a client sends a <tt>Host:</tt> header, that host name supersedes
+the HTTP listener's server name value in redirects.</p>
+<p>Specify a redirect port to use a different port number from that specified in
+the original request. A <i>redirect</i> occurs in one of these situations:</p>
+<ul><li><p>If a client tries to access a resource that no longer exists at the
+specified URL (that is, the resource has moved to another location), the server redirects
+the client to the new location (instead of returning a 404), by returning a designated
+response code and including the new location in the response's Location header.</p>
+</li>
+<li><p>If a client tries to access a resource that is protected (for example,
+SSL) on the regular HTTP port, the server redirects the request to the SSL-enabled
+port. In this case, the server returns a new URL in the Location response header,
+in which the original insecure port has been replaced with the SSL-enabled port. The
+client then connects to this new URL.</p>
+</li>
+</ul>
+<p>Specify also whether security is enabled for an HTTP listener and what kind
+of security is used (for example, which SSL protocol and which ciphers).</p>
+<p>To access a web application deployed on the Application Server, use the URL <tt>http://localhost:8080/</tt> (or <tt>https://localhost:8181/</tt> if
+it is a secure application), along with the context root specified for the web application.
+To access the Admin Console, use the URL <tt>http://localhost:4848/</tt> or <tt>http://localhost:4848/asadmin/</tt> (its default context root).</p>
+<p>Because a virtual server must specify an existing HTTP listener, and because
+it cannot specify an HTTP listener that is already being used by another virtual server,
+create at least one HTTP listener before creating a new virtual server.</p>
+
+            <!--stopindex-->
+<br>
+<A HREF="ablsn.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="gbbjk.html">Next</A>
+</body>
+</html>

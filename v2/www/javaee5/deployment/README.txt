@@ -1,0 +1,1 @@
+The two .odg files are in OpenOffice drawing format.  They are the "source" for the two .jpg images used on the page.

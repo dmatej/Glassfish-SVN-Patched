@@ -1,0 +1,263 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<title>GlassFish V3 Admin Changes: Assessing the Dependency Injection Proposal</title>
+
+
+<link href="styles.css" rel="stylesheet" type="text/css" />
+<style type="text/css">
+<!--
+.style2 {font-size: 10px}
+.style3 {
+	font-size: 24px;
+	font-style: italic;
+}
+-->
+</style>
+</head>
+<body>
+<div align="center"><div id="page">    
+  <h1 align="center" class="title">Glassfish V3 Admin Changes<br />
+    <span class="style3">Analysis of the Dependency Injection Proposal<br />
+    </span><span class="text-red">DRAFT</span><br />
+    <span class="style1"><a href="mailto:lloyd.chambers@sun.com?subject=GlassFish V3 Admin Changes question/comment">lloyd.chambers@sun.com</a></span><br />
+    <span class="style2" >version 004, 23 October 2007</span></h1>
+  <h1>Table of Contents</h1>
+  <div id="table-of-contents">
+    <p><a href="#Introduction">Introduction</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#DependencyInjection">Dependency injection</a></p>
+    <p><a href="#InjectionProposalAnalysis">Analysis of proposed injection approach</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ConfigurationProvidersAndConsumers">Configuration providers and configuration consumers</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#LazyInitialization">Lazy initialization</a></p>
+    <p>&nbsp;&nbsp;&nbsp;<a href="#DTDOrNoDTD">&nbsp;DTD or no DTD</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ConcreteClasses">Concrete classes for @Configured</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#AlternativesToConcreteClasses">Alternatives to concrete classes</a></p>
+    <p><a href="#ProposedChanges">Proposed alternative/changes to injection design</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#SimpleThings">&nbsp;Simple things should be really simple</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ConcreteClass">A concrete class</a></p>
+    <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#TheInterfaceAlternative">The interface alternative</a></p>
+    <p><a href="#Conclusions">Conclusions</a></p>
+  </div>
+    
+    <div id="main-body">
+      <h1><a name="Introduction" id="Introduction"></a>Introduction</h1>
+      <p>Today&rsquo;s GlassFish V2 offers only &ldquo;2nd class citizenship&rdquo; for externally-written modules/plugins.
+        GlassFish V3 proposes to change that by restructuring the GlassFish runtime to be module-based (<a href="https://hk2.dev.java.net/" target="_blank">HK2</a>),
+        such that the runtime consists of a set of modules, many of which could (in theory at least) be written <em>after
+        the fact</em> by users and customers.</p>
+      <p>Necessary to achieving the &ldquo;any and all modules&rdquo; goal is support for configuration of user/customer-supplied
+        modules. This includes the domain.xml persistence mechanism (a file), the code that parses domain.xml, and all code
+        higher in the chain that uses the configuration, including the modules themselves as well as management MBeans and
+        ultimately management clients such as the CLI and GUI.</p>
+      <p>This page assesses the existing low-level dependency injection proposal (<a href="GlassFish_v3_low_level_config.pdf" target="_blank">PDF</a>)
+        and provides suggestions for improvements.</p>
+      <p class="sidebar"><a name="DependencyInjection" id="DependencyInjection"></a>The <strong>dependency injection</strong> design
+        pattern supplies configuration (or objects supplying functionality) to a subsystem indirectly; a subsystem designates
+        a configuration object or objects that are to be populated with configuration values for use by that subsystem. The
+        particular mechanism by which those values of objects are obtained is opaque to the module. Furthermore, the configuration
+        object(s) need not populated with values (or even instantiated) until such time as the dependent subsystem makes
+        use of them. Thus, the injection mechanism accomplishes two purposes: it <strong>decouples</strong> the configuration
+        value storage mechanism from the subsystem(s) which use those values and it allows <strong>deferral</strong> of initialization
+        (&ldquo;lazy&rdquo;
+        initialization).</p>
+      <h1><a name="InjectionProposalAnalysis" id="InjectionProposalAnalysis"></a>Analysis of proposed injection approach</h1>
+      <h2><a name="ConfigurationProvidersAndConsumers" id="ConfigurationProvidersAndConsumers"></a>Configuration <em>providers</em> and configuration <em>consumers</em></h2>
+      <p>The injection approach proposed by the vanguard of the GlassFish V3 team utilizes the concept of <strong>configuration</strong> object(s)
+          and <strong>configured</strong> object(s). Java annotations are used to designate such objects; these include the
+          annotations <span class="code">@Configured</span> and <span class="code">@ConfiguredBy.</span></p>
+        <p class="sidebar">The Annotation name <span class="code">@Configured</span> might be gramattically confusing for
+          some; it's actually the <em>configuration itself</em>, <strong>not</strong> the thing <em>being configured</em>.
+          A naming change would disambiguate the term, perhaps <span class="code">@Configuration</span> and <span class="code">@ConfiguredFrom</span> or
+          <span class="code">@ConfigurationProvider</span> and <span class="code">@ConfigurationConsumer</span> &mdash; terms that
+          make the relationship clear.</p>
+        <h2><a name="ImplicitlyMutable" id="LazyInitialization3"></a>Implicitly mutable</h2>
+        <p>The proposal contemplates the use of mutable classes (hence the thread-safety issues), with the module consuming
+          the configuration (the <strong>Consumer</strong>) defining the configuration class. This
+          laissez-faire approach include in which those in which the runtime module itself is the configuration object.</p>
+        <h2><a name="LazyInitialization" id="LazyInitialization"></a>Lazy initialization</h2>
+      <p>The proposal contemplates injecting (modifying) fields of an <span class="code">@Configured</span> class with
+          values obtained through domain.xml, which is parsed as part of the HK2 startup sequence. The injection need not
+          occur unless/until the <span class="code">@Configured</span> class is actually instantiated, which need happen
+          until the <span class="code">@ConfiguredBy</span> class is instantiated eg the service actually needs to run.</p>
+        <h2><a name="DTDOrNoDTD" id="LazyInitialization2"></a>DTD or no DTD</h2>
+        <p>In GlassFish V2, the <span class="code">domain.xml</span> took precedence&mdash;the DTD was modified or extended, and
+          code changes were made accordingly. This approach cannot work in a system where new modules can be loaded at will
+          (except to provide the facility of dynamically generating the &ldquo;DTD du jour&rdquo;). Indeed, the DTD could change minute-by-minute!</p>
+        <p>In GlassFish V3, the situation reverses: modules define configuration which in turn is stored in XML. The question
+          arises as to whether a DTD is a requirement, or indeed of any value whatsoever: it would be quite possible to parse
+          the XML purely according to XML syntax, avoiding the DTD altogether. This approach would omit certain  validity
+          checks for fields, but sidesteps the need to constantly regenerate a DTD&mdash;a real chore if modules are slightly different
+          and/or dynamically loaded on a regular basis.</p>
+        <p>Another question that arises is how to generate XML without a DTD describing the elements to be generated. One
+          could sidestep the DTD and use the same facilities that propose to generate a DTD, and instead simply generate
+          XML directly from the Java configuration objects.</p>
+        <h2><a name="ConcreteClasses" id="ConcreteClasses"></a>Concrete classes for <span class="code">@Configured</span></h2>
+      <p>The proposal suggests that values will be injected into a concrete <span class="code">@Configured</span> class
+          (instance). This class is part of and written by the module (service) developer. It contains additional annotations
+          including <span class="code">Attribute</span> (confusingly the same as a javax.management.Attribute). There is
+          nothing that precludes a module developer from mixing &ldquo;apples with oranges&rdquo;; an <span class="code">@Configured</span> class therefore could
+          be a mix of configured values, other non-configured values, and an arbitrary number of methods (static or otherwise),
+          etc.</p>
+        <p>The flexibility of using concrete classes for configuration does offer <strong>one key advantage</strong>: the
+          concrete class can easily insert &ldquo;reactive&rdquo; or &ldquo;preventive&rdquo; code into setting methods.
+          For example, a setPort() method could insert code that rejects port numbers outside a certain range and/or actively
+          closes down the current port and opens another one.</p>
+        <p>On the negative side, a concrete class offers a great deal of rope for the developer to hang him/herself with:</p>
+        <ol>
+          <li><strong>thread-safety</strong> &mdash; is left to the developer.</li>
+          <li><strong>field access</strong> &mdash; can be <span class="code">public</span>, <span class="code">protected</span> or <span class="code">private</span>;
+            security risks might exist with public fields, but at the very least dubious programming is not discouraged.</li>
+          <li><strong>state consistency</strong> &mdash; the HK2 infrastructure cannot necessarily assume that the <span class="code">@Configured</span> object
+            cannot or will not change fields on its own accord, leading to inconsistency of disk/memory state, along with
+            failure to notify external interested parties of such changes;</li>
+        </ol>
+        <h2><a name="AlternativesToConcreteClasses" id="AlternativesToConcreteClasses"></a>Alternatives to concrete classes</h2>
+      <p>A Java <span class="code"><strong>interface</strong></span> offers a clear alternative to the use of concrete
+          <span class="code">@Configured</span> class. Use of an interface brings with it the ability to change the implementation
+          at-will without impacting the module itself; the resulting flexibility offers a number of advantages:</p>
+        <ol>
+          <li>One need not annotate the getter/setter methods in the interface; they can be assumed.</li>
+          <li>The <em>implementation</em> can be supplied by the module framework, eliminating the need for the module developer
+            to write an implementation.</li>
+          <li>Thread-safety can be guaranteed by the framework-supplied implementation.</li>
+          <li>Semantics of changes with respect to the data store can centralized.</li>
+          <li>Alternative paths to changing the configured become impossible (good!).</li>
+          <li>Hooks can be supplied so that both the module (service) can take intercept and/or take action when changes
+            to configuration are attempted.</li>
+          <li>A generic implementation can avoid the need for the complexity of general purpose injection; the only needed
+            injected vague would be the implementation of the configuration.</li>
+        </ol>
+        <p>The last item above is of <strong>particular interest to the administrative area</strong>: the ability to implement the following
+          features could make use of such a hook for various purposes:</p>
+        <ul>
+          <li><strong>pseudo-transactional operation</strong> &mdash; it is desirable to be able to &ldquo;bulk set&rdquo; attributes
+            where all values are either accepted or rejected as a group. This is not feasible when values are mutated one
+            by one, or <span class="code">setAttr1()</span>, <span class="code">setAttr2()</span>, etc is invoked, say in
+            a loop.</li>
+          <li><strong>MBeans by nature</strong> &mdash; today&rsquo;s AMX layer is the top level of 3 layers (not counting
+            other intermediate hooks). An implementation of a configuration interface need not limit itself to that functionality;
+            it could <strong>simultaneously</strong> be an MBean (for example).</li>
+        </ul>
+        <h1><a name="ProposedChanges" id="ProposedChanges"></a>Proposed  changes to dependency injection design</h1>
+      <p>The <a href="#InjectionProposalAnalysis">preceding</a> analysis of the existing injection proposal should
+        be prior to reading this section.</p>
+      <p>The real advantages of the dependency injection approach  and include:</p>
+      <ul>
+        <li>the decoupling of configuration management and
+          storage from the <em>consumer</em> of that configuration.</li>
+        <li>an ability for a module to describe its own configuration conveniently in Java classes, without regard for any
+          exterior structure or storage format;</li>
+        <li>the means by which a general-purpose framework can accommodate new modules or services generically within its
+          own configuration methodology.</li>
+      </ul>
+      <p>Easily  forgotten is that the  ability of an exterior framework to dynamically inject (&ldquo;whack&rdquo;)
+        configuration at any time is a <strong>design liability</strong>, resulting in thread-safety and notification issues.</p>
+      <p>While the <a href="GlassFish_v3_low_level_config.pdf" target="_blank">existing proposal</a> contemplates concrete
+        classes, and these are desirable in some ways, concrete classes introduce thread-safety issues, notification issues,
+        force a layering in order to implement MBean and administration support, and generally incur the expense of more
+        complicated code in order to perform the injection stage. None of this is necessary or desirable, nor does it achieve
+        greater benefits.</p>
+      <p>Proposed changes to the design offer several advantages:</p>
+      <ul>
+        <li>a guarantee of thread-safe changes to configuration;</li>
+        <li>a means by which injected values can be validated prior to injection;</li>
+        <li> a means by which notification is  provided to the Dependant when values have been injected;</li>
+        <li>minimal effort by the developer to specify configuration</li>
+      </ul>
+      <h2><a name="SimpleThings" id="SimpleThings"></a>Simple things should be really simple</h2>
+      <p>Doing something basic should require minimal effort, so long as it does not sacrifice important principles. The
+        most basic configuration should include:</p>
+      <ul>
+        <li>&ldquo;friendly&rdquo; access eg get() and set() methods;</li>
+        <li>thread safety;</li>
+        <li>ability to detect (and reject)  changes to configuration;</li>
+      </ul>
+      <p><strong>Annotations</strong> defy the simplicity principle; many developers have never used them (and they ought
+        not to have to).
+        <strong>Thread-safety</strong> is even less well-understood, and much harder for some developers to grasp, let alone
+        get right. <strong>Validating</strong> configuration  is highly desirable, as is the ability <strong>notify</strong> the consumer
+        of the configuration, as well as 3rd party code which might alter its behavior in response.</p>
+      <h3><a name="ConcreteClass" id="ConcreteClass"></a>A concrete class</h3>
+      <p>Suppose a developer wishes to expose two configuration values, <span class="code">host</span> and <span class="code">port</span>.
+        The simplest approach is to   use  a concrete class, declaring fields for all desired values.</p>
+      <pre class="code-block">@Configured public final class MyConfig {
+    String host;
+    int port;
+    int min, max, default;      //  min &lt;= default &lt;= max
+    String notForInjection;	    // internal stuff, not for injection
+}</pre>
+      <p>The concrete <em>class</em> shown above neatly captures the intent but suffers from multiple issues:</p>
+      <ul>
+        <li>thread-safety
+          in the face of later changes, both individual fields as well as &ldquo;visibility&rdquo; across multiple changes;</li>
+        <li>inability to validate values that might depend on each other (eg min/default/max);</li>
+        <li>the framework
+          must <em>layer</em> something
+          on top of this class for MBean and other support, etc;</li>
+        <li>if the class has a member which is <em>not</em> intended
+          for injection, then <em>all</em> items must be annotated in order to distinguish the injected vs non-injected
+          items.</li>
+        <li>the class can include all sorts of irrelevant state which is not related to configuration;</li>
+        <li>there can be a mix of fields and method (eg int port; setPort(), getPort()). These become ambiguous.</li>
+      </ul>
+      <p>Some of the above shortcomings can be addressed by using immutable classes eg ones where the fields are <span class="code">final</span>,
+        substituting entirely new objects each time configuration changes. But this raises the complexity of the injection
+        code, requiring dynamic code generation of <em>constructors</em> in order to accommodate <span class="code">final</span> fields.</p>
+      <h3><a name="TheInterfaceAlternative" id="TheInterfaceAlternative"></a>The interface alternative</h3>
+      <p>A Java interface allows the framework to deliver the same configuration data
+        in a way that solves all the issues, while requiring essentially the same work from the module developer. It allows
+        get/set methods for use by both the module and anything else familiar with that interface.</p>
+      <pre class="code-block">@Configured public interface MyConfig {
+    String getName();	// immutable
+
+    String getHost();
+    void setHost( String host );
+
+    int getPort();
+    void setPort( int port );
+}</pre>
+      <p>As a Java <em>interface</em>, the framework can (lazily) provide an implementation (possibly more than one!) that
+        supplies the required configuration values in a <strong>thread-safe
+        manner at any time</strong>. The implementation could be dynamic, it could be an immutable object, etc. Such flexibility
+        might prove useful in a pseudo-transactional system, or a bulk-set system.</p>
+      <p>Changing (setting) a parameter by <em>anything</em> from <em>anywhere</em> will be seen
+        by the framework (since it supplies the implementation); compare that power to a concrete class implemented by the
+        module itself; &ldquo;internal&rdquo; changes
+        simply cannot be detected by the framework without polling the configuration object for new values.</p>
+      <p>Note that annotations (eg <span class="code">@FromAttribute)</span> are <strong>not needed</strong> here; this goes
+        back to the simplicity principle. With concrete classes, annotating all methods or fields might be required simply
+        because there is one field which is not to be injected. The use of an interface sidesteps that issue; by implication <em>all</em> items
+        in the interface are destined for dependency injection, and thus do not require any annotation. There might be 
+        exceptions for sub-elements
+        which are other <span class="code">@Configured</span> objects  (though a smart implementation
+        might simply detect that situation).</p>
+      <p>An interface
+        can also state that a particular value is immutable by declaring only the <span class="code">get()</span> method,
+        and no corresponding <span class="code">set()</span>        method. This requirement exists today, where the names
+        of many items are indeed immutable (at least in the current implementation); the name is set once the time the XML
+        element is first created.</p>
+      <p>By extending some specific base interface, modules could also gain useful generic functionality; for example <span class="code">MyConfig</span>        could
+        extend a framework-supplied interface <span class="code">GlassFishConfig</span> which adds the ability to iterate
+        through the available configuration:</p>
+      <pre class="code-block">public interface GlassFishConfig {
+    List&lt;String&gt; getValueNames();
+    Object       getValue( String valueName );
+    Object       getDefaultValue( String valueName );
+    void         setValue( Object value );
+}</pre>
+      <p>The implementation of an interface can be <strong>generic</strong>, and it can simultaneously
+        be an <strong>MBean</strong>.
+        It can provide facilities for internal hooks for <strong>validation</strong>. It can support &ldquo;pushing&rdquo; configuration
+      changes to remote servers. Some of those things can be done with concrete classes, but additional layering is required.</p>
+      <p class="warning">MORE TO COME &mdash; NOT YET COMPLETE</p>
+      <h1><a name="Conclusions" id="Conclusions"></a>Conclusions</h1>
+      <p>Dependency injection is a more complicated topic than it might first seem. In a complex managed environment such
+        as GlassFish, the particular implementation of injection <em>matters</em>; making the right choice can pre-solve
+        many problems.</p>
+      <p><a href="index.html"><strong>Back to Start Page</strong></a></p>
+    </div>
+</div></div>
+
+</body>
+</html>

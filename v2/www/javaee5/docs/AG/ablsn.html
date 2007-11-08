@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>11.&nbsp;&nbsp;Transactions
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9 Administration Guide</A>&nbsp;<br>
+<A HREF="ablrk.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="ablsw.html">Next</A><br>
+            <!--startindex--><A NAME="ablsn"></A><b>Chapter&nbsp;11</b><h1>Transactions</h1>
+<p><A NAME="indexterm-265"></A>By enclosing one or more steps in an indivisible unit of work, a transaction
+ensures data integrity and consistency. This chapter contains the following sections:</p>
+<ul><li><p><A HREF="ablsn.html#ablso">About Transactions</A></p>
+</li>
+<li><p><A HREF="ablsn.html#ablsr">Admin Console Tasks for Transactions</A></p>
+</li>
+</ul>
+<A NAME="ablso"></A><h2>About Transactions</h2>
+<ul><li><p><A HREF="ablsn.html#ablsp">What is a Transaction?</A></p>
+</li>
+<li><p><A HREF="ablsn.html#ablsq">Transactions in J2EE Technology</A></p>
+</li>
+<li><p><A HREF="ablsn.html#gatel">Workarounds for Specific Databases</A></p>
+</li>
+</ul>
+<A NAME="ablsp"></A><h3>What is a Transaction?</h3>
+<p>A transaction is a series of discreet actions in an application that must all
+complete successfully or else all the changes in each action are backed out. For example,
+to transfer funds from a checking account to a savings account is a transaction with
+the following steps:</p>
+<ol Type="1"><li><p>Check to see if the checking account has enough money to cover the
+transfer.</p>
+</li>
+<li><p>If there's enough money in the checking account debit the amount
+from the checking account.</p>
+</li>
+<li><p>Credit the money to the savings account.</p>
+</li>
+<li><p>Record the transfer to the checking account log.</p>
+</li>
+<li><p>Record the transfer to the savings account log.</p>
+</li>
+</ol>
+<p>If any of these steps fails, all changes from the preceding steps must be backed
+out, and the checking account and savings account must be in the same state as they
+were before the transaction started. This event is called a <A NAME="indexterm-266"></A><A NAME="indexterm-267"></A><i>rollback</i>. If all the steps complete successfully,
+the transaction is in a <A NAME="indexterm-268"></A><i>committed</i> state. Transactions end in either a commit
+or a rollback.</p>
+<p>See Also:</p>
+<ul><li><p><A HREF="ablsn.html#ablsq">Transactions in J2EE Technology</A></p>
+</li>
+<li><p><A HREF="ablsn.html#ablss">Configuring Transactions</A></p>
+</li>
+</ul>
+<A NAME="ablsq"></A><h3>Transactions in J2EE Technology</h3>
+<p>Transaction processing in J2EE technology involves the following five participants:</p>
+<ul><li><p><A NAME="indexterm-269"></A><A NAME="indexterm-270"></A>Transaction Manager</p>
+</li>
+<li><p>Application Server</p>
+</li>
+<li><p><A NAME="indexterm-271"></A>Resource Manager(s)</p>
+</li>
+<li><p><A NAME="indexterm-272"></A>Resource Adapter(s)</p>
+</li>
+<li><p>User Application.</p>
+</li>
+</ul>
+<p>Each of these entities contribute to reliable transaction processing by implementing
+the different APIs and functionalities, discussed below:</p>
+<ul><li><p>The Transaction Manager provides the services and management functions
+required to support transaction demarcation, transactional resource management, synchronization,
+and transaction context propagation.</p>
+</li>
+<li><p>The Application Server provides the infrastructure required to support
+the application runtime environment that includes transaction state management.</p>
+</li>
+<li><p>The Resource Manager (through a resource adapter) provides the application
+access to resources. The resource manager participates in <A NAME="indexterm-273"></A>distributed transactions by implementing a transaction resource interface
+used by the transaction manager to communicate <A NAME="indexterm-274"></A>transaction association, <A NAME="indexterm-275"></A>transaction completion and <A NAME="indexterm-276"></A>recovery work. An example of such a resource manager is a relational database
+server.</p>
+</li>
+<li><p>A Resource Adapter is a system level software library that is used
+by the application server or client to connect to a Resource Manager. A Resource Adapter
+is typically specific to a Resource Manager. It is available as a library and is used
+within the address space of the client using it. An example of such a resource adapter
+is a <A NAME="indexterm-277"></A>JDBC driver.</p>
+</li>
+<li><p>A Transactional User Application developed to operate in an application
+server environment looks up transactional data sources and, optionally, the transaction
+manager, using JNDI. The application may use declarative <A NAME="indexterm-278"></A>transaction attribute settings for enterprise beans or explicit programmatic <A NAME="indexterm-279"></A>transaction demarcation.</p>
+</li>
+</ul>
+<p>See Also:</p>
+<ul><li><p><A HREF="ablsn.html#ablsp">What is a Transaction?</A></p>
+</li>
+<li><p><A HREF="ablsn.html#ablss">Configuring Transactions</A></p>
+</li>
+</ul>
+<A NAME="gatel"></A><h3>Workarounds for Specific Databases</h3>
+<p>The Application Server provides workarounds for some known issues with the recovery
+implementations of the following JDBC drivers. These workarounds are used unless explicitly
+disabled.</p>
+<ul><li><p><A NAME="indexterm-280"></A>Oracle thin driver - The <tt>XAResource.recover</tt> method
+repeatedly returns the same set of in-doubt Xids regardless of the input flag. According
+to the XA specifications, the Transaction Manager initially calls this method with
+TMSTARTSCAN and then with TMNOFLAGS repeatedly until no Xids are returned. The <tt>XAResource.commit</tt> method also has some issues.</p>
+<p>To disable the Application Server workaround,
+set the <A NAME="indexterm-281"></A><tt>oracle-xa-recovery-workaround</tt> property value to <tt>false</tt>. For details about how to set a property, see <A HREF="ablsn.html#ablst">To configure how the Application Server recovers from transactions</A>.</p>
+</li>
+</ul>
+<p><hr size="1" noshade><p><b>Note - </b>These workarounds do not imply support for any particular JDBC driver.</p>
+<hr size="1" noshade></p><A NAME="ablsr"></A><h2>Admin Console Tasks for Transactions</h2>
+<p>The Application Server handles transactions based on the settings in the Admin Console.</p>
+<A NAME="ablss"></A><h3>Configuring Transactions</h3>
+<p>This section explains how to configure transaction settings:</p>
+<ul><li><p><A HREF="ablsn.html#ablst">To configure how the Application Server recovers from transactions</A></p>
+</li>
+<li><p><A HREF="ablsn.html#ablsu">To set a transaction timeout value</A></p>
+</li>
+<li><p><A HREF="ablsn.html#ablsv">To set the location of the transaction logs</A></p>
+</li>
+<li><p><A HREF="ablsn.html#fxcjf">To set the keypoint interval</A></p>
+</li>
+</ul>
+<p>For additional information about transactions, see these sections:</p>
+<ul><li><p><A HREF="ablsn.html#ablsp">What is a Transaction?</A></p>
+</li>
+<li><p><A HREF="ablsn.html#ablsq">Transactions in J2EE Technology</A></p>
+</li>
+</ul>
+<A NAME="ablst"></A><h4><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To configure how the Application Server recovers from transactions</h4>
+<A NAME="indexterm-282"></A><p>Transactions might be incomplete either because the server crashed or a resource
+manager crashed. It is essential to complete these stranded transactions and recover
+from the failures. Application Server is designed to recover from these failures and complete
+the transactions upon server startup.</p>
+<p>While performing the recovery, if some of the resources are unreachable the
+server restart may be delayed as it tries to recover the transactions.</p>
+<p>When the transaction spans across servers, the server that started the transaction
+can contact the other servers to get the outcome of the transactions. If the other
+servers are unreachable, the transaction uses the Heuristic Decision field to determine
+the outcome.</p>
+<h5>Steps</h5><ol><li><p><b>In the tree component select the Configuration node.
+                     </b></p></li>
+<li><p><b>Select the Transaction Service node.</b></p></li>
+<li><p><b>To enable the recovery of incomplete transactions, check the Recover in
+the On Restart field.</b></p></li>
+<li><p><b>Set the amount of time, in seconds, the Application Server tries to connect
+to the unreachable server in the Retry Timeout field. The default value is 10 minutes
+(600 seconds).</b></p></li>
+<li><p><b>Set the policy for unreachable servers in a transaction in the Heuristic
+Decision field.</b></p><p>Unless there is a good reason to set this field to Commit,
+leave Heuristic Decision set to Rollback. Committing indeterminate transactions can
+compromise the data integrity of your application.</p>
+</li>
+<li><p><b>Set any needed properties.</b></p><p>Click the Add Properties button,
+type values in the Name and Value fields, and check the box to the left of the Name
+to activate the property.</p>
+</li>
+<li><p><b>Click Save.</b></p></li>
+<li><p><b>Restart the Application Server.</b></p></li>
+</ol><A NAME="ablsu"></A><h4><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To set a transaction timeout value</h4>
+<A NAME="indexterm-283"></A><p>By default, the server does not timeout a transaction. That is, the server waits
+indefinitely for a transaction to complete. If you set a timeout value for transactions,
+if a transaction isn't completed within the configured time, the Application Server rolls
+back the transaction.</p>
+<h5>Steps</h5><ol><li><p><b>In the tree component, select the Configuration node.
+                     </b></p></li>
+<li><p><b>Select the Transaction Service node.</b></p></li>
+<li><p><b>Enter the number of seconds before the transaction times out, in the Transaction
+Timeout field.</b></p><p>The default value of Transaction Timeout is 0 seconds.
+This disables transaction timeouts.</p>
+</li>
+<li><p><b>Click Save.</b></p></li>
+<li><p><b>Restart the Application Server.</b></p></li>
+</ol><A NAME="ablsv"></A><h4><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To set the location of the transaction logs</h4>
+<A NAME="indexterm-284"></A><A NAME="indexterm-285"></A><p>The transaction log records the information about each transaction in order
+to maintain the data integrity of the resources involved and to recover from failures.
+Transaction logs are kept in the <tt>tx</tt> subdirectory of the directory
+specified by the Transaction Log Location field. These logs are not human readable.</p>
+<h5>Steps</h5><ol><li><p><b>In the tree component, select the Configuration node.
+                     </b></p></li>
+<li><p><b>Select the Transaction Service node. </b></p></li>
+<li><p><b>Enter the location of the transaction logs in the Transaction Log Location
+field.</b></p><p>A <tt>tx</tt> subdirectory is created and transaction
+logs are kept under that directory.</p>
+</li>
+<li><p><b>Click Save. </b></p></li>
+<li><p><b>Restart the Application Server.</b></p></li>
+</ol><A NAME="fxcjf"></A><h4><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To set the keypoint interval</h4>
+<p><A NAME="indexterm-286"></A>Keypoint operations compress the transaction log file. The <A NAME="indexterm-287"></A>keypoint interval is the number of transactions between keypoint operations
+on the log. Keypoint operations can reduce the size of the transaction log files.
+A larger number of keypoint intervals (for example, 2048) results in larger transaction
+log files, but fewer keypoint operations, and potentially better performance. A smaller
+keypoint interval (for example, 256) results in smaller log files but slightly reduced
+performance due to the greater frequency of keypoint operations.</p>
+<h5>Steps</h5><ol><li><p><b>In the tree component select the Configuration node.
+                     </b></p></li>
+<li><p><b>Select the Transaction Service node.</b></p></li>
+<li><p><b>Enter the number of transactions between keypoint operations in the Keypoint
+Interval field.</b></p></li>
+<li><p><b>Click Save.</b></p></li>
+<li><p><b>Restart the Application Server.</b></p></li>
+</ol>
+            <!--stopindex-->
+<br>
+<A HREF="ablrk.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="ablsw.html">Next</A>
+</body>
+</html>

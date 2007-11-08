@@ -1,0 +1,365 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"><title>GlassFish Connectors implementation and design</title>
+  
+
+
+  <meta name="author" content=" Sivakumar Thyagarajan"></head>
+
+<body>
+
+<font size="+1"><span style="font-weight: bold;">GlassFish
+Project - J2EE Connectors Home Page</span></font><br>
+
+<br>
+
+&nbsp;<a href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New
+to GlassFish</a> | <a href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community
+Guidelines&nbsp;</a>
+| <a href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads
+</a>| <a href="https://glassfish.dev.java.net/public/faq/index.html">
+FAQ</a> |&nbsp;<a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo">
+How-Tos</a>
+<br>
+
+<br>
+
+<!--StartFragment --><br>
+
+Welcome to the J2EE Connectors home page. This page is
+dedicated to
+discussing&nbsp;the implementation of the J2EE Connectors container
+in GlassFish.<br>
+
+<h3>Connectors News</h3>
+
+Some of the new features in GlassFish, related to Connectors, are :<br>
+
+<ul>
+
+  <li>added support for transaction recovery of inbound
+transactions</li>
+
+  <li>added additional monitoring statistics for Connector
+Connection Pools</li>
+
+  <li>Connection Pool enhancements like Lazy connection
+association,
+associating a connection with a thread </li>
+
+  <li>Integrated <a href="https://genericra.dev.java.net">Generic
+RA for JMS</a> in the application
+server.</li>
+
+</ul>
+
+<h3>Page Contents</h3>
+
+<ul>
+
+  <li><a href="#Java_Connector_Architecture">J2EE
+Connector Architecture</a></li>
+
+  <li><a href="#Unit_Tests">Unit/Acceptance
+Tests</a></li>
+
+  <li><a href="#Supporting_Documentation">Supporting
+Documentation</a></li>
+
+  <li><a href="#ToDo_List">ToDo
+List</a></li>
+
+</ul>
+
+<br>
+
+<table bgcolor="#ffff66" border="0" width="100%">
+
+  <tbody>
+
+    <tr>
+
+      <td scope="col">The majority of the <span class="twikiLink">GlassFish</span> code is available under the <b><a href="https://glassfish.dev.java.net/public/CDDLv1.0.html">Common
+Development and Distribution License (CDDL) v1.0</a></b>&nbsp; The following <a href="http://wiki.java.net/bin/view/Projects/GlassFishCodeDependencies">page</a> contains details about the components in <span class="twikiLink">GlassFish</span> and the licenses under which they are covered. </td>
+
+    </tr>
+
+  </tbody>
+</table>
+
+<br>
+
+<h3><a name="Java_Connector_Architecture"></a>
+J2EE Connector Architecture</h3>
+
+The Connectors implementation for both the Connectors 1.0 and
+Connectors 1.5 specification is available off the appserv-core module.
+The backend implementation is interspersed within the following
+packages of the appserv-core module.<br>
+
+<br>
+
+<a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/connectors"><span style="font-style: italic;">com.sun.enterprise.connectors</span></a>
+- Houses all the major connector implementation classes<br>
+
+<ul>
+
+  <li>inflow - message inflow related classes</li>
+
+  <li>authentication - provides authentication and principal
+mapping services using</li>
+
+  <li>security maps</li>
+
+  <li>system - MQ integration related classes</li>
+
+  <li>util - Configuration parsing and other utilities used
+within the connector</li>
+
+  <li>subsystem</li>
+
+  <li>work - Work Management implementation classes</li>
+
+  <ul>
+
+    <li>Monitor - Monitoring level change listeners and
+statsImpls for work related Stats</li>
+
+  </ul>
+
+</ul>
+
+<a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/resource"><span style="font-style: italic;">com.sun.enterprise.resource</span></a>
+- Resource deployers and the pool implementation related classes<br>
+
+<ul>
+
+  <li>monitor - Monitoring level change handlers and stats impls
+for pool related Stats</li>
+
+</ul>
+
+<a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/server"><span style="font-style: italic;">com.sun.enterprise.server</span></a>
+- Resource loaders and ResourcesUtil<br>
+
+<br>
+
+The JDBC RA is available under a separate module "jdbcra". The Generic
+RA for JMS is integrated as a binary component, and this integration is
+done from the binaries available off the <a href="https://genericra.dev.java.net">Generic RA for JMS</a>
+community
+page.<br>
+
+<br>
+
+In GlassFish, Connectors are the preferred integration mechanism for
+all application server provided services like JMS/JDBC/JAXR access etc.
+The primary design philosophy is to provide a unified connector based
+architecture for all AS provided services. From a user's point of view,
+resources would continue to be shown as JDBC or JMS resources, but
+behind-the-scenes all these resources are connector resources. This
+plumbing of application server provided services like JDBC/JMS to
+connectors is achieved via System resource adapters. These system
+resource adapters are pre-installed/pre-configured and lazily loaded on
+first resource access. As explained in the Connection Pooling page,
+there is a single connection pool infrastructure for JDBC/JMS/EIS
+resources, thanks to this connector-centric architecture. <br>
+
+<br>
+
+Non transactional access to connector resources is supported in
+application clients. This is achieved by binding the pool, MCF and
+resource adapter configuration in JNDI and looking up this
+configuration in the client VM to create pools. Non-ACC clients [as in
+standalone java clients] also work. <br>
+
+<br>
+
+Here is a brief description of the major classes in the
+Connectors&nbsp; implementation.<br>
+
+<br>
+
+<span style="font-style: italic;">Core connector
+implementation
+classes</span><br>
+
+<ul>
+
+  <li>ConnectorRuntime - gateway into all the services offered by
+the
+connector backend - allows creation/deletion/reconfiguration of the
+run-time representation of resources and provides methods to get
+configuration information of a connector module or its resources - This
+class merely delegates to other specialized services &#8211;
+Singleton</li>
+
+  <li>XXXService classes - extends ConnectorServiceImpl class and
+provide implementations to specific backend tasks</li>
+
+  <li>ActiveOutboundResourceAdapter - abstracts the runtime
+representation of a 1.0 RAR - allows creation of a MCF instance</li>
+
+  <li>ActiveInboundResourceAdapter - abstracts the runtime
+representation of a 1.5 resource adapter - is a subclass of
+ActiveOutboundResourceAdapter</li>
+
+  <li>BootstrapContextImpl - AS implementation of the
+BootstrapContext
+interface specified in the connectors spec - provided to the resource
+adapter on ResourceAdapter.start() Allows a RA to create a Timer, get a
+handle to the AS WorkManager implementation and the XATerminator</li>
+
+  <li>ConnectionManagerImpl - AS implementation of the
+ConnectionManager interface - allocateConnection,
+allocateNonTxConnection - uses the internal pool to allocate a
+connection. - internalGetConnection uses the appropriate Allocator
+subclass to allocate the connection&nbsp;</li>
+
+  <li>ConnectorRegistry - internal datastructure to cache and
+reuse
+implementation classes [MCF, RA instance, Security Maps, Resource
+Adapter Configs]</li>
+
+  <li>SetMethodAction : Executes a mutator method on the resource
+adapter or other RA provided JavaBeans [an important class for
+debugging issues - better FINE logging in 8.1+ to enable easier
+debugging]</li>
+
+</ul>
+
+<span style="font-style: italic;">Message Inflow</span>
+<ul>
+
+  <li>ConnectorRARClassloader : new classloader scheme in 8.0 to
+enable connector redeployment</li>
+
+  <li>ConnectorMessageBeanClient &#8211; Manages MDB
+deployment. This
+is the implementation of<br>
+
+EndpointFactory interface specified by connector specification.</li>
+
+  <li>MessageEndpointInvocationHandler &#8211; Proxy object
+that is
+used by resource adapter to pass messages to<br>
+
+MDBs.</li>
+
+  <li>BasicResourceAllocator &#8211; Dummy resource allocator
+used for inbound resources.</li>
+
+</ul>
+
+<span style="font-style: italic;">Work Management </span>
+<ul>
+
+  <li>CommonWorkManager : AS Work Managerimplementation - uses
+ORB thread pool - if none specified, uses the default Thread Pool</li>
+
+  <li>WorkCoordinator: Handles the execution and coordination of
+a work instance</li>
+
+  <li>OneWork: Simple JavaBean that captures the state of a
+single work instance.</li>
+
+  <li>WorkManagerFactory: Allows pluggability custom WorkManager
+implementations. Default work manager with AS8.x is CommonWorkManager</li>
+
+</ul>
+
+<br>
+
+<br>
+
+<a name="Unit_Tests"></a><span style="font-weight: bold;">Unit/Acceptance Tests</span>
+<p><a href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Quicklook_Tests">Running
+the
+Quicklook</a> tests is required in
+this section. In addition to the Quicklook tests other components have
+unit tests developed which need to pass prior to checking in
+any code. The setup for running unit tests is the same as the
+Quicklook tests. </p>
+
+<p>Running J2EE Connector Architecture unit tests:<br>
+
+To run the connector developer tests do the following<br>
+
+</p>
+
+<ul>
+
+  <li>Checkout the glassfish/appserv-test module</li>
+
+  <li>goto devtests/connector</li>
+
+  <li>ant all</li>
+
+</ul>
+
+Please read the readme file for more instructions on
+configuring/running the tests
+<h3><font face="Arial, sans-serif"><font size="3"><a name="Supporting_Documentation"></a>&nbsp;
+Supporting
+Documentation</font></font></h3>
+
+<p><font face="Arial, sans-serif"><font size="3">This
+section
+contains
+pointers to useful documents and information
+about the Integration technologies in GlassFish.</font></font></p>
+
+<p><span style="font-weight: bold;">Specifications:</span>
+</p>
+
+<font face="Arial, sans-serif"><font size="3"><strong></strong></font></font>
+<p><font><font face="Arial, sans-serif" size="3"><a href="http://java.sun.com/j2ee/connector/download.html">JSR
+112
+- J2EE Connector Architecture 1.5 Specification</a><br>
+
+&nbsp;<span style="font-weight: bold;"></span></font></font></p>
+
+<font face="Arial, sans-serif"><font size="3"><strong></strong></font></font>
+<p><strong>General information:</strong></p>
+
+<a href="http://java.sun.com/j2ee/connector/">The J2EE
+Connector
+Architecture page</a> at <a href="http://java.sun.com">http://java.sun.com</a><br>
+
+<br>
+
+Creating Resource Adapters with J2EE Connector Architecture 1.5 by
+Binod PG/Alejandro Murillo<br>
+
+<a href="http://developers.sun.com/prodtech/appserver/reference/techart/resource_adapters.html">http://developers.sun.com/prodtech/appserver/reference/techart/resource_adapters.html</a><br>
+
+<br>
+
+Getting Started with Connectors in SJSAS 8.0 by Sivakumar Thyagarajan <br>
+
+<a href="http://developers.sun.com/prodtech/appserver/reference/techart/as8_connectors">http://developers.sun.com/prodtech/appserver/reference/techart/as8_connectors</a><br>
+
+<br>
+
+GlassFish documentation sections on Connectors<br>
+
+<a href="https://glassfish.dev.java.net/javaee5/docs/AG/abllp.html">https://glassfish.dev.java.net/javaee5/docs/AG/abllp.html</a><br>
+
+<a href="https://glassfish.dev.java.net/javaee5/docs/DG/bealk.html"><span style="text-decoration: underline;">https://glassfish.dev.java.net/javaee5/docs/DG/bealk.html</span></a><br>
+
+<br>
+
+<h3><a name="ToDo_List"></a>ToDo List</h3>
+
+<p>ToDo list will be maintained using Issue Tracker <code>Task</code>
+issue
+type. You can query Issue Tracker using issue type <code>Task</code>
+or
+click <a href="https://glassfish.dev.java.net/issues/buglist.cgi?Submit+query=Submit+query&amp;issue_type=TASK&amp;issue_status=UNCONFIRMED&amp;issue_status=NEW&amp;issue_status=STARTED&amp;issue_status=REOPENED&amp;email1=&amp;emailtype1=exact&amp;emailassigned_to1=1&amp;email2=&amp;emailtype2=exact&amp;emailreporter2=1&amp;issueidtype=include&amp;issue_id=&amp;changedin=&amp;votes=&amp;chfieldfrom=&amp;chfieldto=Now&amp;chfieldvalue=&amp;short_desc=&amp;short_desc_type=substring&amp;long_desc=&amp;long_desc_type=substring&amp;issue_file_loc=&amp;issue_file_loc_type=substring&amp;status_whiteboard=&amp;status_whiteboard_type=substring&amp;keywords=&amp;keywords_type=anytokens&amp;field0-0-0=noop&amp;type0-0-0=noop&amp;value0-0-0=&amp;cmdtype=doit&amp;newqueryname=&amp;order=Reuse+same+sort+as+last+time">here</a>
+to check out the ToDo list. "jms" and "jca" are
+subcomponent types.<br>
+
+</p>
+
+</body></html>

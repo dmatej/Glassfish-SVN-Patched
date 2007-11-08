@@ -1,0 +1,366 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>1.&nbsp;&nbsp;Application Server Compatibility Issues
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Upgrade and Migration
+Guide</A>&nbsp;<br>
+<A HREF="p1.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="abmbj.html">Next</A><br>
+            <!--startindex--><A NAME="abmaq"></A><b>Chapter&nbsp;1</b><h1>Application Server Compatibility Issues</h1>
+<p>Application Server 9) is upward binary compatible with Application Server 8.x and with Application Server 7 2004Q2
+except for the incompatibilities noted below. J2EE applications that run on versions
+7 and 8 also work on version 9 except for the incompatibilities listed in
+this chapter. </p>
+<p>The topics discussed in this chapter include incompatibilities in the following
+areas:</p>
+<ul><li><p><A HREF="abmaq.html#gbsrj">HTTP File Caching</A></p>
+</li>
+<li><p><A HREF="abmaq.html#gbsrr">Classpath Changes</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmar">Web Server Features</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmas">Security Realms</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmat">Sun Deployment Descriptor: <tt>sun-web.xml</tt></A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmau">The <tt>encodeCookies</tt> Property</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmav">CORBA Performance Option</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmaw">File Formats</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmax">Tools Interoperability</A></p>
+</li>
+<li><p><A HREF="abmaq.html#gbkkh">Security Policy</A></p>
+</li>
+<li><p><A HREF="abmaq.html#gbkiu">Implicit URL Rewriting</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmaz">Primary Key Attribute Values</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmbb">Command Line Interface: start-appserv and stop-appserv</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmbc">Command Line Interface: asadmin</A></p>
+</li>
+</ul>
+<A NAME="gbsrj"></A><h2>HTTP File Caching</h2>
+<p>HTTP file caching has been re-introduced in Application Server 9. This feature
+was present in Application Server 8.1 Enterprise Edition but was discontinued in Application Server 8.2. </p>
+<A NAME="gbsrr"></A><h2>Classpath Changes</h2>
+<p>In Application Server 7.x and 8.x, most of the Application Server core classes were
+loaded by the by the System Classloader, which also loaded JVM classes. In Application Server 9,
+the System Classloader loads JVM classes but most of the Application Server core classes
+have been moved to the new Shared ChainClassloader. </p>
+<p>In the Migration Tool, on the JVM Settings page, under the Configuration component,
+there is a new field called System Classpath. This contains the JVM classes. Classes
+cannot be deleted from this field, but they can be added. The Server Classpath field
+no longer shows the Application Server core classes, and its use is discouraged. Use
+Classpath suffix instead.</p>
+<A NAME="abmar"></A><h2>Web Server Features</h2>
+<p> As a result, the following web server-specific features are no longer supported
+in Application Server 9:</p>
+<ul><li><p><tt>cgi-bin</tt>, <tt>shtml</tt></p>
+</li>
+<li><p>Simple Network Management Protocol (SNMP) support</p>
+</li>
+<li><p>Netscape API (NSAPI) plugin APIs</p>
+</li>
+<li><p>Native-content-handling features</p>
+</li>
+<li><p>Web server tools (<tt>flexanlg</tt>, <tt>htpasswd</tt>)</p>
+</li>
+<li><p>HTTP QoS</p>
+</li>
+<li><p>Web server configuration files (<tt>*.conf</tt>, <tt>*.acl</tt>, <tt>mime.types</tt>)</p>
+</li>
+<li><p>Web server-specific log rotation facility</p>
+</li>
+<li><p>Watch dog process (<tt>appserv-wdog</tt>)</p>
+</li>
+</ul>
+<A NAME="abmas"></A><h2>Security Realms</h2>
+<p>The package names of the security realm implementations have been renamed from <tt>com.iplanet.ias.security.auth.realm</tt> in Application Server 7 to <tt>com.sun.enterprise.security.auth.realm</tt> in Application Server 9. Custom realms written using the <tt>com.iplanet.*</tt> classes must be modified.</p>
+<p>The <tt>com.sun.enterprise.security.AuthenticationStatus</tt> class
+has been removed.</p>
+<p>The <tt>com.sun.enterprise.security.auth.login.PasswordLoginModule</tt> <tt>authenticate</tt> method implementation has changed as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>/**
+    * Perform authentication decision.
+    * &lt;P> Note: AuthenticationStatus and AuthenticationStatusImpl
+    * classes have been removed.
+    * Method returns silently on success and returns a LoginException
+    * on failure.
+    *
+    * @return void authenticate returns silently on 
+    *               successful authentication.
+    * @throws LoginException on authentication failure.
+    *
+    */
+abstract protected void authenticate()
+    throws LoginException;</pre>
+</td></table><br><p>For more information, see:</p>
+<p><A HREF="http://developers.sun.com/prodtech/appserver/reference/techart/as8_authentication/index.html">http://developers.sun.com/prodtech/appserver/reference/techart/as8_authentication/index.html</A></p>
+<A NAME="abmat"></A><h2>Sun Deployment Descriptor: <tt>sun-web.xml</tt></h2>
+<p>In Application Server 7, the default value for the optional attribute <tt>delegate</tt> was false. In Application Server 9, this attribute defaults to true.
+This change means that by default the Web application classloader first delegates
+to the parent classloader before attempting to load a class by itself. For details,
+see <A HREF="abmbj.html#abmbp">Application Server 9 Options Contrary to J2EE 1.4 Specification Recommendations</A>.</p>
+<A NAME="abmau"></A><h2>The <tt>encodeCookies</tt> Property</h2>
+<p>URL encoding of cookies is performed, if the <tt>encodeCookies</tt> property
+of the <tt>sun-web-app</tt> element in the <tt>sun-web.xml</tt> file
+is set to true. In Application Server 7, the default value of the <tt>encodeCookies</tt> property was true. This property was not present in Application Server 8. In Application Server 9,
+the default value is false.</p>
+<p> URL encoding of cookies is unnecessary. Setting this property to true is strongly
+discouraged. This property is provided only for those rare applications that depended
+on this behavior in Application Server 7. </p>
+<A NAME="abmav"></A><h2>CORBA Performance Option</h2>
+<p>In Application Server 7, users were able to specify the following system property
+to optionally turn on some Object Request Broker (ORB) performance optimization:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>-Djavax.rmi.CORBA.UtilClass=com.iplanet.ias.util.orbutil.IasUtilDelegate</pre>
+</td></table><br><p>The ORB performance optimization is turned on by default in Application Server 9.
+If you are using the preceding system property reference, you must remove it to avoid
+interfering with the default optimization.</p>
+<A NAME="abmaw"></A><h2>File Formats</h2>
+<p>In Application Server 9, <tt>domain.xml</tt> is the main server configuration
+file. In Application Server 7, the main server configuration file was <tt>server.xml</tt>. The DTD file of <tt>domain.xml</tt> is found in <tt>lib/dtds/sun-domain_1_1.dtd</tt>. The upgrade tool included in Application Server 9 can
+be used to migrate the <tt>server.xml</tt> from Application Server 7 to <tt>domain.xml</tt> for Application Server 9.</p>
+<p>The <tt>lib/dtds/sun-domain_1_1.dtd</tt> file for Application Server 9 is
+fully backward compatible with the corresponding file for Application Server 8, <tt>sun-domain_1_0.dtd</tt>.</p>
+<p>In general, the configuration file formats are <i>not</i> backward
+compatible. The following configuration files are <i>not</i> supported:</p>
+<ul><li><p><tt>*.conf</tt></p>
+</li>
+<li><p><tt>*.acl</tt></p>
+</li>
+<li><p><tt>mime.types</tt></p>
+</li>
+<li><p><tt>server.xml</tt> (replaced with <tt>domain.xml</tt>)</p>
+</li>
+</ul>
+<A NAME="abmax"></A><h2>Tools Interoperability</h2>
+<p>As a general rule, tools are not interoperable between Application Server 7 and 9.
+Users must upgrade their Application Server 7 tools to work with Application Server 9.</p>
+<A NAME="gbkkh"></A><h2>Security Policy</h2>
+<p>You cannot change the security policy of Application Server 9. In Application Server 7,
+you could change the security policy because the read/write permission <tt>java.util.PropertyPermission</tt> is <tt>"*", "read,write";</tt>. In Application Server 9the read/write
+permission for <tt>java.util.PropertyPermission</tt> is <tt>"*", "read";</tt>.</p>
+<A NAME="gbkiu"></A><h2>Implicit URL Rewriting</h2>
+<p>Application Server 6.x supported implicit URL rewriting, in which the web connector
+plug-in parsed the HTML stream being sent to the browser and appended session IDs
+to attributes such as <tt>href=</tt> and <tt>frame=</tt>. In Application Server 7/
+8 and Application Server 9, this feature is not available. You need to review your applications
+and use <tt>encodeURL</tt> and <tt>encodeRedirectURL</tt> on every
+URL that the applications present to clients (such as mobile phones) that do not support
+cookies.</p>
+<A NAME="abmaz"></A><h2>Primary Key Attribute Values</h2>
+<p>In Application Server 7, it was possible to change any field (in the Administration
+Console) or attribute (in the Command Line Interface (CLI)). In Application Server 9,
+a field or attribute that is the primary key of an item cannot be changed. However,
+an item can be deleted and then recreated with a new primary key value. In most cases,
+the primary key is a name, ID, reference, or JNDI name. The following table lists
+the primary keys that cannot be changed.</p>
+<p><hr size="1" noshade><p><b>Note - </b>In the <tt>domain.xml</tt> file, a field or attribute is called
+an <i>attribute</i>, and an item is called an <i>element</i>.
+For more information about <tt>domain.xml</tt>, see the <A HREF="http://docs.sun.com/app/docs/doc/819-3661">Chapter 1, "The domain.xml File," in <i>Sun Java System Application Server Platform Edition 9.0 Administration Reference</i></A>.</p>
+<hr size="1" noshade></p><A NAME="gaein"></A><p><b>Table 1-1 </b>Primary Key Attributes</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Item                      </p></th><th scope="col"><p>Primary Key Field or Attribute                      </p></th></tr>
+<tr><td><p><tt>admin-object-resource</tt></p></td><td><p><tt>jndi-name</tt></p></td></tr>
+<tr><td><p><tt>alert-subscription</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>appclient-module</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>application-ref</tt></p></td><td><p><tt>ref</tt></p></td></tr>
+<tr><td><p><tt>audit-module</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>auth-realm</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>cluster-ref</tt></p></td><td><p><tt>ref</tt></p></td></tr>
+<tr><td><p><tt>cluster</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>config</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>connector-connection-pool</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>connector-module</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>connector-resource</tt></p></td><td><p><tt>jndi-name</tt></p></td></tr>
+<tr><td><p><tt>custom-resource</tt></p></td><td><p><tt>jndi-name</tt></p></td></tr>
+<tr><td><p><tt>ejb-module</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>external-jndi-resource</tt></p></td><td><p><tt>jndi-name</tt></p></td></tr>
+<tr><td><p><tt>http-listener</tt></p></td><td><p><tt>id</tt></p></td></tr>
+<tr><td><p><tt>iiop-listener</tt></p></td><td><p><tt>id</tt></p></td></tr>
+<tr><td><p><tt>j2ee-application</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>jacc-provider</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>jdbc-connection-pool</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>jdbc-resource</tt></p></td><td><p><tt>jndi-name</tt></p></td></tr>
+<tr><td><p><tt>jms-host</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>jmx-connector</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>lb-config</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>lifecycle-module</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>mail-resource</tt></p></td><td><p><tt>jndi-name</tt></p></td></tr>
+<tr><td><p><tt>message-security-config</tt></p></td><td><p><tt>auth-layer</tt></p></td></tr>
+<tr><td><p><tt>node-agent</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>profiler</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>element-property</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>provider-config</tt></p></td><td><p><tt>provider-id</tt></p></td></tr>
+<tr><td><p><tt>resource-adapter-config</tt></p></td><td><p><tt>resource-adapter-name</tt></p></td></tr>
+<tr><td><p><tt>resource-ref</tt></p></td><td><p><tt>ref</tt></p></td></tr>
+<tr><td><p><tt>security-map</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>server</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>server-ref</tt></p></td><td><p><tt>ref</tt></p></td></tr>
+<tr><td><p><tt>system-property</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>thread-pool</tt></p></td><td><p><tt>thread-pool-id</tt></p></td></tr>
+<tr><td><p><tt>virtual-server</tt></p></td><td><p><tt>id</tt></p></td></tr>
+<tr><td><p><tt>web-module</tt></p></td><td><p><tt>name</tt></p></td></tr>
+<tr><td><p><tt>persistence-manager-factory-resource</tt></p></td><td><p><tt>jndi-name</tt></p></td></tr>
+</table><A NAME="abmbb"></A><h2>Command Line Interface: start-appserv and stop-appserv</h2>
+<p>The <tt>start-appserv</tt> and <tt>stop-appserv</tt> commands
+are deprecated. Use of these commands results in a warning. Use<tt>asadmin start-domain</tt> and <tt>asadmin stop-domain</tt> instead.</p>
+<p>In Application Server 9, the Log Messages to Standard Error field has been removed
+from the Administration Console. The <tt>log-to-console</tt> attribute in
+the <tt>domain.xml</tt> file is deprecated and ignored. The <tt>asadmin set</tt> command has no effect on the <tt>log-to-console</tt> attribute.
+Use the <tt>---verbose</tt> option of the <tt>asadmin start-domain</tt> command
+to print messages to the window in which you executed the <tt>asadmin start-domain</tt> command. This option works only if you execute the <tt>asadmin start-domain</tt> command on the machine that has the domain you are starting.</p>
+<A NAME="abmbc"></A><h2>Command Line Interface: asadmin</h2>
+<p>The following sections describe changes to the command line utility <tt>asadmin</tt>:</p>
+<ul><li><p><A HREF="abmaq.html#abmbd">Subcommands</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmbe">Error Codes for Start and Stop Subcommands</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmbf">Options</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmbg">Dotted Names</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmbh">Tokens in Attribute Values</A></p>
+</li>
+<li><p><A HREF="abmaq.html#abmbi">Nulls in Attribute Values</A></p>
+</li>
+</ul>
+<p>For more information about the <tt>asadmin</tt> commands, see the <A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 Reference Manual</i></A>.</p>
+<A NAME="abmbd"></A><h3>Subcommands</h3>
+<p>Subcommands are backward compatible except as noted below.</p>
+<p>The <tt>reconfig</tt>subcommand is deprecated and ignored.</p>
+<p>The following subcommands are no longer supported in Application Server 9. The
+software license key and web core were removed, and Application Server 9 no longer supports
+controlled functions from web server features. </p>
+<ul><li><p><tt>install-license</tt></p>
+</li>
+<li><p><tt>display-license</tt></p>
+</li>
+<li><p><tt>create-http-qos</tt></p>
+</li>
+<li><p><tt>delete-http-qos</tt></p>
+</li>
+<li><p><tt>create-mime</tt></p>
+</li>
+<li><p><tt>delete-mime</tt></p>
+</li>
+<li><p><tt>list-mime</tt></p>
+</li>
+<li><p><tt>create-authdb</tt></p>
+</li>
+<li><p><tt>delete-authdb</tt></p>
+</li>
+<li><p><tt>list-authdbs</tt></p>
+</li>
+</ul>
+<A NAME="abmbe"></A><h3>Error Codes for Start and Stop Subcommands</h3>
+<p>For Application Server 7, the error codes for the <tt>start</tt> and <tt>stop</tt> subcommands of the <tt>asadmin</tt> command were based on
+the desired end state. For example, for <tt>asadmin start-domain</tt>, if
+the domain was already running, the exit code was 0 (success). If domain startup failed,
+the exit code was 1 (error).</p>
+<p>For Application Server 9, the exit codes are based on whether the commands execute
+as expected. For example, the <tt>asadmin start-domain</tt> command returns
+exit code 1 if the domain is already running or if domain startup fails. Similarly, <tt>asadmin stop-domain</tt> returns exit code 1 if the domain is already not running
+or cannot be stopped.</p>
+<A NAME="abmbf"></A><h3>Options</h3>
+<p>Options in the following table are deprecated or no longer supported.</p>
+<A NAME="gaeki"></A><p><b>Table 1-2 </b>Deprecated and
+Unsupported <tt>asadmin</tt> Options</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Option                         </p></th><th scope="col"><p>Deprecated or Unsupported in Subcommands                         </p></th></tr>
+<tr><td><p><tt>--acceptlang</tt></p></td><td><p>Deprecated for the <tt>create-virtual-server</tt> subcommand.</p></td></tr>
+<tr><td><p><tt>--acls</tt></p></td><td><p>Deprecated for the <tt>create-virtual-server</tt> subcommand.</p></td></tr>
+<tr><td><p><tt>--adminpassword</tt></p></td><td><p>Deprecated for all relevant subcommands. Use <tt>--passwordfile</tt> instead.</p></td></tr>
+<tr><td><p><tt>--blockingenabled</tt></p></td><td><p>Deprecated for the <tt>create-http-listener</tt> subcommand.</p></td></tr>
+<tr><td><p><tt>--configfile</tt></p></td><td><p>Deprecated for the <tt>create-virtual-server</tt> subcommand.</p></td></tr>
+<tr><td><p><tt>--defaultobj</tt></p></td><td><p>Deprecated for the <tt>create-virtual-server</tt> subcommand.</p></td></tr>
+<tr><td><p><tt>--domain</tt></p></td><td><p>Deprecated for the <tt>stop-domain</tt> subcommand.</p></td></tr>
+<tr><td><p><tt>--family</tt></p></td><td><p>Deprecated for the <tt>create-http-listener</tt> subcommand.</p></td></tr>
+<tr><td><p><tt>--instance</tt></p></td><td><p>Deprecated for all remote subcommands. Use <tt>--target</tt> instead.</p></td></tr>
+<tr><td><p><tt>--mime</tt></p></td><td><p>Deprecated for the <tt>create-virtual-server</tt> subcommand.</p></td></tr>
+<tr><td><p><tt>--optionsfile</tt></p></td><td><p>No longer supported for any commands.</p></td></tr>
+<tr><td><p><tt>--password</tt></p></td><td><p>Deprecated for all remote subcommands. Use <tt>--passwordfile</tt> instead.</p></td></tr>
+<tr><td><p><tt>--path</tt></p></td><td><p>Deprecated for the <tt>create-domain</tt> subcommand. Use <tt>--domaindir</tt> instead.</p></td></tr>
+<tr><td><p><tt>--resourcetype</tt></p></td><td><p>Deprecated for all relevant subcommands. Use <tt>--restype</tt> instead.</p></td></tr>
+<tr><td><p><tt>--storeurl</tt></p></td><td><p>No longer supported for any commands.</p></td></tr>
+<tr><td><p><tt>--target</tt></p></td><td><p>Deprecated for all <tt>jdbc-connection-pool</tt>, <tt>connector-connection-pool</tt>, <tt>connector-security-map</tt>, and <tt>resource-adapter-config</tt> subcommands.</p></td></tr>
+<tr><td><p><tt>--type</tt></p></td><td><p>Deprecated for all relevant subcommands.</p></td></tr>
+</table><A NAME="abmbg"></A><h3>Dotted Names</h3>
+<p>All dotted names used in versions 8.1 or 8.2 are supported in Application Server 9.
+The following use of dotted names in <tt>asadmin get</tt> and <tt>set</tt> subcommands are not backward compatible:</p>
+<ul><li><p>The default server name is <tt>server</tt> instead of <tt>server1</tt></p>
+</li>
+<li><p><tt>.resource</tt> becomes <tt>domain.resources.resource</tt></p>
+</li>
+<li><p><tt>.app-module</tt> becomes <tt>domain.applications.app-module</tt></p>
+</li>
+<li><p>Attributes names format is different. For example,<tt>poolResizeQuantity</tt> is now <tt>pool-resize-quantity</tt>.</p>
+</li>
+<li><p>Some aliases supported in Application Server 7 are not supported in Application Server 9 </p>
+</li>
+</ul>
+<p>In Application Server 9, the <tt>---passwordfile</tt> option of the <tt>asadmin</tt> command does not read the <tt>password.conf</tt> file,
+and the upgrade tool does not upgrade this file. For information about creating a
+password file in Application Server 9, see the <A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A>.</p>
+<p>This table displays a one-to-one mapping of the incompatibilities in dotted
+names between Application Server 7 and 9. The compatible dotted names are not
+listed in this table.</p>
+<A NAME="gaegy"></A><p><b>Table 1-3 </b>Incompatible Dotted Names
+Between Versions</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Application Server 7 Dotted Names</p></th><th scope="col"><p>Application Server 9 Dotted Names</p></th></tr>
+<tr><td><p><i>server_instance</i><tt>.http-listener.</tt><i>listener_idserver_instance</i><tt>.http-service.http-listener.</tt><i>listener_id</i></p></td><td><p><tt>.http-service.http-listener.</tt><i>listener_id</i><tt>.http-service.http-listener.</tt><i>listener_id</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.orb</tt><i>server_instance</i><tt>.iiop-service</tt></p></td><td><p><tt>.iiop-service</tt><tt>.iiop-service</tt></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.orblistener</tt><i>server_instance</i><tt>.iiop-listener</tt></p></td><td><p><tt>.iiop-service.iiop-listener.</tt><i>listener_id</i><tt>.iiop-service.iiop-listener.</tt><i>listener_id</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.jdbc-resource.</tt><i>jndi_name</i></p></td><td><p><tt>.resources.jdbc-resource.</tt><i>jndi_name</i><tt>domain.resources.jdbc-resource.</tt><i>jndi_name</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.jdbc-connection-pool.</tt><i>pool_id</i></p></td><td><p><tt>.resources.jdbc-connection-pool.</tt><i>pool_id</i><tt>domain.resources.jdbc-connection-pool.</tt><i>pool_id</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.external-jndi-resource.</tt><i>jndi_nameserver_instance</i><tt>.jndi-resource.</tt><i>jndi_name</i></p></td><td><p><tt>.resources.external-jndi-resource.</tt><i>jndi_name</i><tt>domain.resources.external.jndi-resource.</tt><i>jndi_name</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.custom-resource.</tt><i>jndi_name</i></p></td><td><p><tt>.resources.custom-resource.</tt><i>jndi_name</i><tt>domain.resources.custom-resource.</tt><i>jndi_name</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.web-container.logLevel</tt></p><p>(see note below)</p></td><td><p><tt>.log-service.module-log-levels.web-container</tt><tt>.log-service.module-log-levels.web-container</tt></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.web-container.monitoringEnabled</tt></p><p>(see note below)</p></td><td><p><tt>.monitoring-service.module-monitoring-levels.web-container</tt><tt>.monitoring-service.module-monitoring-levels.web-container</tt></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.j2ee-application.</tt><i>application_nameserver_instance</i><tt>.application.</tt><i>application_name</i></p></td><td><p><tt>.applications.j2ee-application.</tt><i>application_name</i><tt>domain.applications.j2ee-application.</tt><i>application_name</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.ejb-module.</tt><i>ejb-module_name</i></p></td><td><p><tt>.applications.ejb-module.</tt><i>ejb-module_name</i><tt>domain.applications.ejb-module.</tt><i>ejb-module_name</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.web-module.</tt><i>web-module_name</i></p></td><td><p><tt>.applications.web-module.</tt><i>web-module_name</i><tt>domain.applications.web-module.</tt><i>web-module_name</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.connector-module.</tt><i>connector_module_name</i></p></td><td><p><tt>.applications.connector-module.</tt><i>connector_module_name</i><tt>domain.applications.connector-module.</tt><i>connector_module_name</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.lifecycle-module.</tt><i>lifecycle_module_name</i></p></td><td><p><tt>.applications.lifecycle-module.</tt><i>lifecycle_module_name</i><tt>domain.application.lifecycle-module.</tt><i>lifecycle_module_name</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.virtual-server-class</tt></p></td><td><p>N/A*</p></td></tr>
+<tr><td><p><i>server_instance</i>.<tt>virtual-server</tt>.<i>virtual-server_id</i></p></td><td><p><tt>.</tt>http-service.virtual-server.virtual-server_id.http-service.virtual-server.virtual-server_id</p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.mime</tt>.<i>mime_id</i></p></td><td><p>N/A*</p></td></tr>
+<tr><td><p><i>server_instance</i>.<tt>acl</tt>.<i>acl_id</i></p></td><td><p>N/A*</p></td></tr>
+<tr><td><p><i>server_instance</i>.<tt>virtual-server</tt>.<i>virtual-server_id</i>.<tt>auth-db</tt>.<i>auth-db_id</i></p></td><td><p>N/A*</p></td></tr>
+<tr><td><p><i>server_instance</i>.<tt>authrealm</tt>.<i>realm_idserver_instance</i>.<tt>security-service.authrealm</tt>.<i>realm_id</i></p></td><td><p><tt>.security-service.auth-realm.</tt><i>realm_id</i><tt>.security-service-auth-realm.</tt><i>realm_id</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.persistence-manager-factory-resource.</tt><i>jndi_nameserver_instance</i><tt>.resources.persistence-manager-factory-resource.</tt><i>jndi_name</i></p></td><td><p><tt>.resources.persistence-manager-factory-resource.</tt><i>jndi_name</i><tt>domain.resources.persistence-manager-factory-resource.</tt><i>jndi_name</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.http-service.acl.</tt><i>acl_id</i></p></td><td><p>N/A*</p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.mail-resource.</tt><i>jndi_name</i></p></td><td><p><tt>.resources.mail-resource.</tt><i>jndi_name</i><tt>domain.resources.mail-resource.</tt><i>jndi_name</i></p></td></tr>
+<tr><td><p><i>server_instance</i><tt>.profiler</tt></p></td><td><p><tt>.java-config.profiler</tt><tt>.java-config.profiler</tt></p></td></tr>
+</table><p>* -- These attribute names in Application Server 7 do not correspond directly
+with Application Server 8.2 dotted names.</p>
+<A NAME="abmbh"></A><h3>Tokens in Attribute Values</h3>
+<p>The <tt>asadmin</tt> <tt>get</tt> command shows raw values
+in Application Server 9 instead of resolved values as in Application Server 8. These raw
+values may be tokens. For example, executing the following command:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin get domain.log-root</pre>
+</td></table><br><p>The preceding command displays the following value:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>${com.sun.aas.instanceRoot}/logs</pre>
+</td></table><br><A NAME="abmbi"></A><h3>Nulls in Attribute Values</h3>
+<p>In Application Server 8, attributes with no values contained null. This caused problems
+in attributes that specified paths. In Application Server 9, attributes with no values
+contain empty strings, as they did in Application Server 7.</p>
+
+            <!--stopindex-->
+<br>
+<A HREF="p1.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="abmbj.html">Next</A>
+</body>
+</html>

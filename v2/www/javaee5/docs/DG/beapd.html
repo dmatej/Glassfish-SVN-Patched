@@ -1,0 +1,924 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>19.&nbsp;&nbsp;Using the Java Management Extensions (JMX) API
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Developer's Guide</A>&nbsp;<br>
+<A HREF="beaow.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Next</A><br>
+            <!--startindex--><A NAME="beapd"></A><b>Chapter&nbsp;19</b><h1>Using the Java Management Extensions (JMX) API</h1>
+<A NAME="indexterm-773"></A><A NAME="indexterm-774"></A><p>The Sun Java System Application Server uses Java Management eXtensions (JMX&#153;)
+technology for monitoring, management and notification purposes. Management
+and monitoring of the Application Server is performed by the Application Server Management
+eXtensions (AMX), which exposes managed resources for remote management via
+the JMX Application Programming Interface (API).</p>
+<p><A NAME="indexterm-775"></A><A NAME="indexterm-776"></A>The Application Server incorporates the JMX 1.2 Reference Implementation,
+which was developed by the Java Community Process as <A HREF="http://jcp.org/en/jsr/detail?id=3">Java Specification Request (JSR) 3</A>, and the JMX Remote
+API 1.0 Reference Implementation , which is <A HREF="http://jcp.org/en/jsr/detail?id=160">JSR 160</A>.</p>
+<p>This chapter assumes some familiarity with the JMX technology, but the
+AMX interfaces can be used for the most part without understanding JMX.</p>
+<p>The JMX specifications and Reference Implementations are available for
+download at <A HREF="http://java.sun.com/products/JavaManagement/download.html">http://java.sun.com/products/JavaManagement/download.html</A>.</p>
+<p>For information about creating custom MBeans, see <A HREF="gbdzi.html#gbdzi">Chapter&nbsp;13, Developing Custom MBeans</A>.</p>
+<p>This chapter contains the following topics:</p>
+<ul><li><p><A HREF="beapd.html#beapf">About AMX</A></p>
+</li>
+<li><p><A HREF="beapd.html#beapg">AMX MBeans</A></p>
+</li>
+<li><p><A HREF="beapd.html#beapo">Proxies</A></p>
+</li>
+<li><p><A HREF="beapd.html#beapp">Connecting to the Domain Administration Server</A></p>
+</li>
+<li><p><A HREF="beapd.html#beapq">Examining AMX Code Samples</A></p>
+</li>
+<li><p><A HREF="beapd.html#beaqe">Running the AMX Samples</A></p>
+</li>
+</ul>
+<A NAME="beapf"></A><h2>About AMX</h2>
+<A NAME="indexterm-777"></A><A NAME="indexterm-778"></A><A NAME="indexterm-779"></A><p>This section describes the Application Server Management eXtensions (AMX).
+AMX is an API that exposes all of the Application Server configuration and
+monitoring MBeans as easy-to-use client-side dynamic proxies implementing
+the AMX interfaces.</p>
+<p>Full API documentation for the AMX API is provided in the following
+Application Server package:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>com.sun.appserv.management</pre>
+</td></table><br><p>The Application Server is based around the concept of <i>administration
+domains</i>, which consist of one or more <i>managed resources</i>. A managed resource can be an Application Server or a manageable entity within a server.
+A managed resource is of a particular type, and each resource type exposes
+a set of attributes and administrative operations that change the resource's
+state.</p>
+<p>Managed resources are exposed as JMX <i>management beans</i>,
+or <i>MBeans</i>. While the MBeans can be accessed via standard
+JMX APIs (for example, <tt>MBeanServerConnection</tt>), most users
+find the use of the AMX client-side dynamic proxies much more convenient.</p>
+<p>All the vital components of the Application Server are visible for monitoring
+and management via AMX. You can use third-party tools to perform all common
+administrative tasks programmatically, based on the JMX and JMX Remote API
+standards.</p>
+<p>The AMX API consists of a set of proxy interfaces. MBeans are registered
+in the JMX runtime contained in the Domain Administration Server (DAS). AMX
+provides routines to obtain proxies for MBeans, starting with a root-level
+domain MBean.</p>
+<p>You can navigate generically through the MBean hierarchy using the <tt>com.sun.appserv.management.base.Container</tt> interface. When using
+AMX, the interfaces defined are implemented by client-side dynamic proxies,
+but they also implicitly define the <tt>MBeanInfo</tt> that is made
+available by the MBean or MBeans corresponding to it. Certain operations defined
+in the interface might have a different return type or a slightly different
+name when accessed through the MBean directly. This results from the fact
+that direct access to JMX requires the use of <tt>ObjectName</tt>,
+whereas use of the AMX interfaces is via strongly typed proxies implementing
+the interface(s).</p>
+<A NAME="beapg"></A><h2>AMX MBeans</h2>
+<A NAME="indexterm-780"></A><A NAME="indexterm-781"></A><A NAME="indexterm-782"></A><p>All AMX MBeans are represented as interfaces in a subpackage of <tt>com.sun.appserv.management</tt> and are implemented by dynamic proxies
+on the client-side. While you can access AMX MBeans directly through standard
+JMX APIs, most users find the use of AMX interface (proxy) classes to be most
+convenient.</p>
+<p>An AMX MBean belongs to an application server domain. There is exactly
+one domain per DAS. Thus all MBeans accessible through the DAS belong to a
+single Application Server administrative domain. All MBeans in an Application
+Server administrative domain, and hence within the DAS, belong to the JMX
+domain <tt>amx</tt>. Any MBeans that do not have the JMX domain <tt>amx</tt> are not part of AMX, and are neither documented nor supported
+for use by clients. All AMX MBeans can be reached navigationally through the <tt>DomainRoot</tt>.</p>
+<p>AMX defines different types of MBean, namely, <i>configuration</i> MBeans, <i>monitoring</i> MBeans, <i>utility</i> MBeans and <A HREF="http://jcp.org/en/jsr/detail?id=77">Java EE management (JSR 77)</A> MBeans. These MBeans are logically related
+in the following ways:</p>
+<ul><li><p>They all implement the <tt>com.sun.appserv.management.base.AMX</tt> interface.</p>
+</li>
+<li><p>They all have a <tt>j2eeType</tt> and <tt>name</tt> property within their <tt>ObjectName</tt> (see <tt>com.sun.appserv.management.base.XTypes</tt> and <tt>com.sun.appserv.management.j2ee.J2EETypes</tt> for the available values of the <tt>j2eeType</tt> property).</p>
+</li>
+<li><p>All MBeans that logically contain other MBeans implement the <tt>com.sun.appserv.management.base.Container</tt> interface.</p>
+</li>
+<li><p>JSR 77 MBeans that have a corresponding configuration or monitoring
+peer expose it via <tt>getConfigPeer()</tt> or <tt>getMonitoringPeer()</tt>. However, there are many configuration and monitoring MBeans that
+do not correspond to JSR 77 MBeans.</p>
+</li>
+</ul>
+<A NAME="beaph"></A><h3>Configuration MBeans</h3>
+<A NAME="indexterm-783"></A><p>Configuration information for a given Application Server domain is stored
+in a central repository that is shared by all instances in that domain. The
+central repository can only be written to by the DAS. However, configuration
+information in the central repository is made available to administration
+clients via AMX MBeans.</p>
+<p>The configuration MBeans are those that modify the underlying <tt>domain.xml</tt> or related files. Collectively, they form a model representing
+the configuration and deployment repository and the operations that can be
+performed on them.</p>
+<p>The <tt>Group</tt> Attribute of configuration MBeans, obtained
+from <tt>getGroup()</tt>, has a value of <tt>com.sun.appserv.management.base.AMX.GROUP_CONFIGURATION</tt>.</p>
+<A NAME="beapi"></A><h3>Monitoring MBeans</h3>
+<A NAME="indexterm-784"></A><p>Monitoring MBeans provide transient monitoring information about all
+the vital components of the Application Server.</p>
+<p>The <tt>Group</tt> Attribute of monitoring MBeans, obtained
+from <tt>getGroup()</tt>, has a value of <tt>com.sun.appserv.management.base.AMX.GROUP_MONITORING</tt>.</p>
+<A NAME="beapj"></A><h3>Utility MBeans</h3>
+<A NAME="indexterm-785"></A><p>Utility MBeans provide commonly used services to the Application Server.</p>
+<p>The <tt>Group</tt> Attribute of utility MBeans, obtained from <tt>getGroup()</tt>, has a value of <tt>com.sun.appserv.management.base.AMX.GROUP_UTILITY</tt>.</p>
+<A NAME="beapk"></A><h3>Java EE Management MBeans</h3>
+<A NAME="indexterm-786"></A><A NAME="indexterm-787"></A><p>The Java EE management MBeans implement, and in some cases extend, the
+management hierarchy as defined by <A HREF="http://jcp.org/en/jsr/detail?id=77">JSR 77</A>, which specifies the management model for the
+whole Java EE platform. One of the management APIs implemented in JSR 77 is
+the JMX API.</p>
+<p>The implementation of JSR 77 in AMX offers access to and monitoring
+of MBeans via Java EE management MBeans, by using the <tt>getMonitoringPeer()</tt> and <tt>getConfigPeer()</tt> methods.</p>
+<p>The Java EE management MBeans can be thought of as the central hub from
+which other MBeans are obtained.</p>
+<p>The <tt>Group</tt> Attribute of Java EE management MBeans,
+obtained from <tt>getGroup()</tt>, has a value of <tt>com.sun.appserv.management.base.AMX.GROUP_JSR77</tt>.</p>
+<A NAME="beapl"></A><h3>Other MBeans</h3>
+<A NAME="indexterm-788"></A><p>MBeans that do not fit into one of the above four categories have the
+value <tt>com.sun.appserv.management.base.AMX.GROUP_OTHER</tt>.
+One such example is <tt>com.sun.appserv.management.deploy.DeploymentMgr</tt>.</p>
+<A NAME="beapm"></A><h3>MBean Notifications</h3>
+<A NAME="indexterm-789"></A><p>All AMX MBeans that emit Notifications place a <tt>java.util.Map</tt> within the <tt>userData</tt> field of a standard Notification,
+which can be obtained via <tt>Notification.getUserData()</tt>. Within
+the map are zero or more items, which vary according to the Notification type.
+Each Notification type, and the data available within the Notification, is
+defined in its respective MBean or in an appropriate place.</p>
+<p>Note that certain standard Notifications, such as <tt>javax.management.AttributeChangeNotification</tt> do not and cannot follow this behavior.</p>
+<A NAME="beapn"></A><h3>Access to MBean Attributes</h3>
+<A NAME="indexterm-790"></A><p>An AMX MBean <tt>Attribute</tt> is accessible in three ways<i>:</i></p>
+<ul><li><p>Dotted names via <tt>MonitoringDottedNames</tt> and <tt>ConfigDottedNames</tt></p>
+</li>
+<li><p>Attributes on MBeans via <tt>getAttribute(s)</tt> and <tt>setAttributes(s)</tt> (from the standard JMX API)</p>
+</li>
+<li><p>Getters/setters within the MBean's interface class,
+for example, <tt>getPort()</tt>, <tt>setPort()</tt>, and
+so on.</p>
+</li>
+</ul>
+<p>All dotted names that are accessible via the command line interface
+are available as Attributes within a single MBean. This includes properties,
+which are Attributes beginning with the prefix <tt>property.</tt>,
+for example, <tt>server.property.myproperty</tt>.</p>
+<p><hr size="1" noshade><p><b>Note - </b>Certain attributes that may be of a specific type, such as <tt>int</tt>, are declared as <tt>java.lang.String</tt>. This is
+because the value of the attribute may be a template of a form such as <tt>${HTTP_LISTENER_PORT}</tt>.</p>
+<hr size="1" noshade></p><A NAME="beapo"></A><h2>Proxies</h2>
+<A NAME="indexterm-791"></A><A NAME="indexterm-792"></A><A NAME="indexterm-793"></A><p>Proxies are an important part of the AMX API, and enhance ease-of-use
+for the programmer.</p>
+<p>While JMX MBeans can be used directly, client-side proxies are offered
+to facilitate navigation through the MBean hierarchy. In some cases, proxies
+also function as support or helper objects to simplify the use of the MBeans.</p>
+<p>See the API documentation for the <tt>com.sun.appserv.management</tt> package and its sub-packages for more information about using proxies.
+The API documentation explains the use of AMX with proxies. If you are using
+JMX directly (for example, via <tt>MBeanServerConnection</tt>),
+the return type, argument types and method names might vary as needed for
+the difference between a strongly-typed proxy interface and generic <tt>MBeanServerConnection/ObjectName</tt> interface.</p>
+<A NAME="beapp"></A><h2>Connecting to the Domain Administration Server</h2>
+<A NAME="indexterm-794"></A><A NAME="indexterm-795"></A><p>As stated in <A HREF="beapd.html#beaph">Configuration MBeans</A>,
+the AMX API allows client applications to connect to Application Server instances
+via the DAS. All AMX connections are established to the DAS only: AMX does
+not support direct connections to individual server instances. This makes
+it simple to interact with all servers, clusters, and so on, with a single
+connection.</p>
+<p>Sample code for connecting to the DAS is shown in <A HREF="beapd.html#beaps">Connecting to the DAS</A>.</p>
+<A NAME="beapq"></A><h2>Examining AMX Code Samples</h2>
+<A NAME="indexterm-796"></A><p>The following example uses of AMX are discussed in this document:</p>
+<ul><li><p><A HREF="beapd.html#beapt">Starting an Application Server</A></p>
+</li>
+<li><p><A HREF="beapd.html#beapu">Deploying an Archive</A></p>
+</li>
+<li><p><A HREF="beapd.html#beapv">Displaying the AMX MBean Hierarchy</A></p>
+</li>
+<li><p><A HREF="beapd.html#beapw">Setting Monitoring States</A></p>
+</li>
+<li><p><A HREF="beapd.html#beapx">Accessing AMX MBeans</A></p>
+</li>
+<li><p><A HREF="beapd.html#beapy">Accessing and Displaying the Attributes of an AMX MBean</A></p>
+</li>
+<li><p><A HREF="beapd.html#beapz">Listing AMX MBean Properties</A></p>
+</li>
+<li><p><A HREF="beapd.html#beaqa">Querying</A></p>
+</li>
+<li><p><A HREF="beapd.html#beaqb">Monitoring Attribute Changes</A></p>
+</li>
+<li><p><A HREF="beapd.html#beaqc">Undeploying Modules</A></p>
+</li>
+<li><p><A HREF="beapd.html#beaqd">Stopping an Application Server</A></p>
+</li>
+</ul>
+<A NAME="beaps"></A><h3>Connecting to the DAS</h3>
+<p>The connection to the DAS is shown in the following code.</p>
+<A NAME="fvynr"></A><p><b>Example 19-1 </b>Connecting to the DAS</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+public static AppserverConnectionSource
+    connect(
+        final String host,
+        final int port,
+        final String user,
+        final String password,
+        final TLSParams tlsParams )
+        throws IOException
+        {
+            final String info = "host=" + host + ", port=" + port +
+                ", user=" + user + ", password=" + password +
+                ", tls=" + (tlsParams != null);
+
+            SampleUtil.println( "Connecting...:" + info );
+
+            final AppserverConnectionSource conn    =
+                new AppserverConnectionSource(
+                    AppserverConnectionSource.PROTOCOL_RMI,
+                    host, port, user, password, tlsParams, null);
+
+            conn.getJMXConnector( false );
+
+            SampleUtil.println( "Connected: " + info );
+
+            return( conn );
+        }
+[...]</pre>
+</td></table><br><p>A connection to the DAS is obtained via an instance of the <tt>com.sun.appserv.management.client.AppserverConnectionSource</tt> class.
+For the connection to be established, you must know the name of the host and
+port number on which the DAS is running, and have the correct user name, password
+and TLS parameters.</p>
+<p>Once the connection to the DAS is established, <tt>DomainRoot</tt> is
+obtained as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>DomainRoot domainRoot = appserverConnectionSource.getDomainRoot();</pre>
+</td></table><br><p>This <tt>DomainRoot</tt> instance is a client-side dynamic
+proxy to the MBean <tt>amx:j2eeType=X-DomainRoot,name=amx</tt>.</p>
+<p>See the API documentation for <tt>com.sun.appserv.management.client.AppserverConnectionSource</tt> for further details about connecting to the DAS using the <tt>AppserverConnectionSource</tt> class<tt>.</tt></p>
+<p>However, if you prefer to work with standard JMX, instead of getting <tt>DomainRoot</tt>, you can get the <tt>MBeanServerConnection</tt> or <tt>JMXConnector</tt>, as shown:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>MBeanServerConnection conn =
+appserverConnectionSource.getMBeanServerConnection( false );
+JMXConnector jmxConn =
+appserverConnectionSource.getJMXConnector( false );</pre>
+</td></table><br><A NAME="beapt"></A><h3>Starting an Application Server</h3>
+<p>The <tt>startServer()</tt> method
+demonstrates how to start an Application Server.</p>
+<A NAME="fvynp"></A><p><b>Example 19-2 </b>Starting an Application Server</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+startServer( final String serverName )
+{
+    final J2EEServer server    = getJ2EEServer( serverName );
+
+    server.start();
+}
+[...]</pre>
+</td></table><br><p>This method retrieves and starts an application server instance named <tt>server</tt>. The <tt>server</tt> is an instance of the <tt>com.sun.appserv.management.j2se.J2EEServer</tt> interface, and is obtained
+by calling another method, <tt>getJ2EEServer()</tt>, shown in the following code.</p>
+<A NAME="fvyni"></A><p><b>Example 19-3 </b>Obtaining a Named Java EE server instance</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+getJ2EEServer( final String serverName )
+{
+    final J2EEDomain j2eeDomain = getDomainRoot().getJ2EEDomain();
+    final Map servers = j2eeDomain.getServerMap();
+    final J2EEServer server = (J2EEServer)servers.get( serverName );
+        if ( server == null )
+        {
+            throw new IllegalArgumentException( serverName );
+        }
+    return( server );
+}
+[...]</pre>
+</td></table><br><p>To obtain a Java EE server instance, the <tt>getJ2EEServer()</tt> method
+first of all obtains an instance of the <tt>J2EEDomain</tt> interface
+by calling the <tt>com.sun.appserv.management.base.AMX.getDomainRoot()</tt> and <tt>com.sun.appserv.management.DomainRoot.getJ2EEDomain()</tt> methods. The two methods called establish the following:</p>
+<ul><li><p><tt>AMX.getDomainRoot()</tt> obtains the Application
+Server domain to which <tt>j2eeDomain</tt> belongs.</p>
+</li>
+<li><p><tt>DomainRoot.getJ2EEDomain()</tt> obtains the
+Java EE domain for <tt>j2eeDomain</tt>.</p>
+</li>
+</ul>
+<p>The <tt>J2EEServer</tt> instance is then started by a call
+to the <tt>start()</tt> method. The <tt>com.sun.appserv.management.j2ee.StateManageable.start()</tt> method can be used to start any state manageable object.</p>
+<A NAME="beapu"></A><h3>Deploying an Archive</h3>
+<p>The <tt>uploadArchive()</tt> and <tt>deploy()</tt> methods demonstrate how to upload and deploy a Java EE
+archive file.</p>
+<A NAME="fvynf"></A><p><b>Example 19-4 </b>Uploading an archive</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+uploadArchive ( final File archive  ) throws IOException
+{
+    final FileInputStream input = new FileInputStream( archive );
+    final long length = input.available();
+    final DeploymentMgr mgr = getDomainRoot().getDeploymentMgr();
+    final Object uploadID = mgr.initiateFileUpload( length );
+    try
+    {
+        [...]
+    }
+    finally
+    {
+        input.close();
+    }
+    return( uploadID );
+}
+[...]</pre>
+</td></table><br><p>The <tt>uploadArchive()</tt> method creates a standard Java <tt>FileInputStream</tt> instance called <tt>input</tt>, to upload
+the archive <tt>archive</tt>. It then obtains the AMX deployment
+manager running in the application server domain, by calling the <tt>DomainRoot.getDeploymentMgr()</tt> method.</p>
+<p>A call to <tt>com.sun.appserv.management.deploy.initiateFileUpload</tt> starts the upload of <tt>archive</tt>. The <tt>initiateFileUpload()</tt> method automatically issues an upload ID, that <tt>uploadArchive()</tt> returns when it is called by <tt>deploy()</tt>.</p>
+<A NAME="fvyog"></A><p><b>Example 19-5 </b>Deploying an archive</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+deploy ( final File archive ) throws IOException
+{
+    final Object uploadID = uploadArchive(archive);
+    final DeploymentMgr mgr    = getDomainRoot().getDeploymentMgr();
+    final Object deployID = mgr.initDeploy( );
+    final DeployNotificationListener myListener =
+        new DeployNotificationListener( deployID);
+    mgr.addNotificationListener( myListener, null, null);
+    try
+    {
+        final Map    options  = new HashMap();
+        options.put( DeploymentMgr.DEPLOY_OPTION_VERIFY_KEY,
+            Boolean.TRUE.toString() );
+        options.put( DeploymentMgr.DEPLOY_OPTION_DESCRIPTION_KEY,
+            "description" );
+        mgr.startDeploy( deployID, uploadID, null, null);
+        while ( ! myListener.isCompleted() )
+        {
+            try
+            {
+                println( "deploy: waiting for deploy of " + archive);
+                Thread.sleep( 1000 );
+            }
+            catch( InterruptedException e )
+            {
+            }
+        }
+        final DeploymentStatus status = myListener.getDeploymentStatus();
+        println( "Deployment result: " + getStageStatusString(
+            status.getStageStatus() ) );
+        if ( status.getStageThrowable() != null )
+        {
+            status.getStageThrowable().printStackTrace();
+        }
+    }
+    finally
+    {
+        try
+        {
+            mgr.removeNotificationListener( myListener );
+        }
+        catch( Exception e )
+        {
+        }
+    }
+}
+[...]</pre>
+</td></table><br><p>The <tt>deploy()</tt> method calls <tt>uploadArchive</tt> to get the upload ID for <tt>archive</tt>. It then identifies
+the deployment manager by calling <tt>DomainRoot.getDeploymentMgr()</tt>.
+A call to <tt>DeploymentMgr.initDeploy()</tt> initializes the deployment
+and obtains a deployment ID, which is used to track the progress of the deployment.</p>
+<p>A JMX notification listener, <tt>myListener</tt>, is created and activated to listen for notifications
+regarding the deployment of <tt>deployID</tt>.</p>
+<p>Deployment is started by calling the <tt>DeploymentMgr.startDeploy()</tt> method and providing it with the <tt>deployID</tt> and <tt>uploadID</tt>.</p>
+<p>While the deployment is continuing, <tt>myListener</tt> listens
+for the completion notification and <tt>DeploymentStatus</tt> keeps
+you informed of the status of the deployment by regularly calling its <tt>getStageStatus()</tt> method. Once the deployment is complete, the listener
+is closed down.</p>
+<hr size="1" noshade><p><IMG ALT="Caution" src="graphics/caution.gif">  <b>Caution - </b>Some of the behavior of the <tt>com.sun.appserv.management.deploy</tt> API is unpredictable, and it should be used with caution.</p><hr size="1" noshade><A NAME="beapv"></A><h3>Displaying the AMX MBean Hierarchy</h3>
+<p><A NAME="indexterm-797"></A><A NAME="indexterm-798"></A>The <tt>displayAMX()</tt> method demonstrates how to
+display the AMX MBean hierarchy.</p>
+<A NAME="fvyng"></A><p><b>Example 19-6 </b>Displaying the AMX MBean Hierarchy</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+displayAMX(
+    final AMX amx,
+    final int indentCount )
+{
+    final String indent = getIndent( indentCount );
+    final String j2eeType = amx.getJ2EEType();
+    final String name = amx.getName();
+    if ( name.equals( AMX.NO_NAME ) )
+    {
+        println( indent + j2eeType );
+    }
+    else
+    {
+        println( indent + j2eeType + "=" + name );
+    }
+}
+private void
+displayHierarchy(
+    final Collection amxSet,
+    final int indentCount )
+{
+    final Iterator    iter    = amxSet.iterator();
+    while ( iter.hasNext() )
+    {
+        final AMX amx = (AMX)iter.next();
+        displayHierarchy( amx, indentCount );
+    }
+}
+public void
+displayHierarchy(
+    final AMX amx,
+    final int    indentCount )
+{
+    displayAMX( amx, indentCount );
+    if ( amx instanceof Container )
+    {
+        final Map m = ((Container)amx).getMultiContaineeMap( null );
+        final Set deferred = new HashSet();
+        final Iterator mapsIter = m.values().iterator();
+        while ( mapsIter.hasNext() )
+        {
+            final Map instancesMap = (Map)mapsIter.next();
+            final AMX first = (AMX)instancesMap.values().iterator().next();
+            if ( first instanceof Container )
+            {
+                deferred.add( instancesMap );
+            }
+            else
+            {
+                displayHierarchy( instancesMap.values(), indentCount + 2);
+            }
+        }
+        // display deferred items
+        final Iterator iter = deferred.iterator();
+        while ( iter.hasNext() )
+        {
+            final Map instancesMap = (Map)iter.next();
+            displayHierarchy( instancesMap.values(), indentCount + 2);
+        }
+    }
+}
+public void displayHierarchy()
+{
+    displayHierarchy( getDomainRoot(), 0);
+}
+public void
+displayHierarchy( final String j2eeType )
+{
+    final Set items = getQueryMgr().queryJ2EETypeSet( j2eeType );
+    if ( items.size() == 0 )
+    {
+        println( "No {@link AMX} of j2eeType "
+            + SampleUtil.quote( j2eeType ) + " found" );
+    }
+    else
+    {
+        displayHierarchy( items, 0);
+    }
+}
+[...]</pre>
+</td></table><br><p><A NAME="indexterm-799"></A><A NAME="indexterm-800"></A>The <tt>displayAMX()</tt> method obtains the Java EE
+type and the name of an AMX MBean by calling <tt>AMX.getJ2EEType</tt> and <tt>AMX.getName</tt> respectively.</p>
+<p>The <tt>displayHierarchy()</tt> method defines a standard
+Java <tt>Collection</tt> instance, <tt>amxSet</tt>, which
+collects instances of AMX MBeans.</p>
+<p>To display the hierarchy of MBeans within a particular MBean in the
+collection, <tt>displayHierarchy()</tt> checks whether the MBean
+is an instance of <tt>Container</tt>. If so, it creates a set of
+the MBeans it contains by calling the <tt>com.sun.appserv.management.base.Container.getMultiContaineeMap()</tt> method.</p>
+<p>The MBean hierarchy for a particular Java EE type is displayed by calling
+the <tt>com.sun.appserv.management.base.QueryMgr.queryJ2EETypeSet()</tt>,
+and passing the result to <tt>displayHierarchy()</tt>.</p>
+<p>To display the entire AMX MBean hierarchy in a domain, <tt>displayHierarchy()</tt> calls <tt>getDomainRoot()</tt> to obtain the root AMX
+MBean in the domain.</p>
+<A NAME="beapw"></A><h3>Setting Monitoring States</h3>
+<p><A NAME="indexterm-801"></A>The <tt>setMonitoring()</tt> method
+demonstrates how to set monitoring states.</p>
+<A NAME="fvyny"></A><p><b>Example 19-7 </b>Setting Monitoring States</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+private static final Set LEGAL_MON =
+    Collections.unmodifiableSet( SampleUtil.newSet( new String[]
+{
+    ModuleMonitoringLevelValues.HIGH,
+    ModuleMonitoringLevelValues.LOW,
+    ModuleMonitoringLevelValues.OFF,
+} ));
+public void setMonitoring(
+    final String configName,
+    final String state )
+{
+    if ( ! LEGAL_MON.contains( state ) )
+    {
+        throw new IllegalArgumentException( state );
+    }
+    final ConfigConfig config =
+        (ConfigConfig)getDomainConfig().
+        getConfigConfigMap().get( configName );
+    final ModuleMonitoringLevelsConfig mon =
+        config.getMonitoringServiceConfig().
+        getModuleMonitoringLevelsConfig();
+    mon.setConnectorConnectionPool( state );
+    mon.setThreadPool( state );
+    mon.setHTTPService( state );
+    mon.setJDBCConnectionPool( state );
+    mon.setORB( state );
+    mon.setTransactionService( state );
+    mon.setWebContainer( state );
+    mon.setEJBContainer( state );
+}
+[...]</pre>
+</td></table><br><p>The AMX API defines three levels of monitoring in <tt>com.sun.appserv.management.config.ModuleMonitoringLevelValues</tt>, namely, <tt>HIGH</tt>, <tt>LOW</tt>, and <tt>OFF</tt>.</p>
+<p>In this example, the configuration element being monitored is named <tt>configName</tt>. The <tt>com.sun.appserv.management.config.ConfigConfig</tt> interface is used to configure the <tt>config</tt> element
+for <tt>configName</tt> in the <tt>domain.xml</tt> file.</p>
+<p>An instance of <tt>com.sun.appserv.management.config.ModuleMonitoringLevelsConfig</tt> is created to configure the <tt>module-monitoring-levels</tt> element
+for <tt>configName</tt> in the <tt>domain.xml</tt> file.</p>
+<p>The <tt>ModuleMonitoringLevelsConfig</tt> instance created
+then calls each of its set methods to change their states to <tt>state</tt>.</p>
+<p>The above is performed by running the <tt>set-monitoring</tt> command
+when you run <tt>SimpleMain</tt>, stating the name of the configuration
+element to be monitored and the monitoring <tt>state</tt> to one
+of <tt>HIGH</tt>, <tt>LOW</tt> or <tt>OFF</tt>.</p>
+<A NAME="beapx"></A><h3>Accessing AMX MBeans</h3>
+<A NAME="indexterm-802"></A><p>The <tt>handleList()</tt> method
+demonstrates how to access many (but not all) configuration elements.</p>
+<A NAME="fvyoj"></A><p><b>Example 19-8 </b>Accessing AMX MBeans</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+handleList()
+{
+    final DomainConfig dcp = getDomainConfig();
+    println( "\n--- Top-level --- \n" );
+    displayMap( "ConfigConfig", dcp.getConfigConfigMap() );
+    displayMap( "ServerConfig", dcp.getServerConfigMap() );
+    displayMap( "StandaloneServerConfig",
+        dcp.getStandaloneServerConfigMap() );
+    displayMap( "ClusteredServerConfig",
+        dcp.getClusteredServerConfigMap() );
+    displayMap( "ClusterConfig", dcp.getClusterConfigMap() );
+    println( "\n--- DeployedItems --- \n" );
+    displayMap( "J2EEApplicationConfig",
+        dcp.getJ2EEApplicationConfigMap() );
+    displayMap( "EJBModuleConfig",
+        dcp.getEJBModuleConfigMap() );
+    displayMap( "WebModuleConfig",
+        dcp.getWebModuleConfigMap() );
+    displayMap( "RARModuleConfig",
+        dcp.getRARModuleConfigMap() );
+    displayMap( "AppClientModuleConfig",
+        dcp.getAppClientModuleConfigMap() );
+    displayMap( "LifecycleModuleConfig",
+        dcp.getLifecycleModuleConfigMap() );
+    println( "\n--- Resources --- \n" );
+    displayMap( "CustomResourceConfig",
+        dcp.getCustomResourceConfigMap() );
+    displayMap( "PersistenceManagerFactoryResourceConfig",
+        dcp.getPersistenceManagerFactoryResourceConfigMap() );
+    displayMap( "JNDIResourceConfig",
+        dcp.getJNDIResourceConfigMap() );
+    displayMap( "JMSResourceConfig",
+        dcp.getJMSResourceConfigMap() );
+    displayMap( "JDBCResourceConfig",
+        dcp.getJDBCResourceConfigMap() );
+    displayMap( "ConnectorResourceConfig",
+        dcp.getConnectorResourceConfigMap() );
+    displayMap( "JDBCConnectionPoolConfig",
+        dcp.getJDBCConnectionPoolConfigMap() );
+    displayMap( "PersistenceManagerFactoryResourceConfig",
+        dcp.getPersistenceManagerFactoryResourceConfigMap() );
+    displayMap( "ConnectorConnectionPoolConfig",
+        dcp.getConnectorConnectionPoolConfigMap() );
+    displayMap( "AdminObjectResourceConfig",
+        dcp.getAdminObjectResourceConfigMap() );
+    displayMap( "ResourceAdapterConfig",
+        dcp.getResourceAdapterConfigMap() );
+    displayMap( "MailResourceConfig",
+        dcp.getMailResourceConfigMap() );
+    final ConfigConfig config =
+        (ConfigConfig)dcp.getConfigConfigMap().get( "server-config" );
+    println( "\n--- HTTPService --- \n" );
+    final HTTPServiceConfig httpService = config.getHTTPServiceConfig();
+    displayMap( "HTTPListeners",
+        httpService.getHTTPListenerConfigMap() );
+    displayMap( "VirtualServers",
+        httpService.getVirtualServerConfigMap() );
+}
+[...]</pre>
+</td></table><br><p><A NAME="indexterm-803"></A>The <tt>handleList()</tt> method makes use of the <tt>displayMap()</tt> method, which simply prints out the key value pairs.</p>
+<p>The <tt>handleList()</tt> method identifies the configuration
+for a domain by calling the <tt>DomainRoot.getDomainConfig()</tt> method.
+This <tt>DomainConfig</tt> instance then calls each of its <tt>getXXXMap()</tt> methods in turn, to obtain a <tt>Map</tt> for
+each type of AMX MBean. The <tt>Map</tt> returned by each getter
+is displayed by <tt>displayMap()</tt>.</p>
+<p>Similarly, the AMX MBeans representing the <tt>http-service</tt> element
+are displayed as <tt>Maps</tt> by calling the <tt>getXXXMap()</tt> methods of the <tt>com.sun.appserv.management.config.HTTPServiceConfig</tt> interface, and passing them to <tt>displayMap()</tt>.</p>
+<A NAME="beapy"></A><h3>Accessing and Displaying the Attributes of an AMX
+MBean</h3>
+<A NAME="indexterm-804"></A><p>The <tt>displayAllAttributes()</tt> method
+demonstrates how to access and display the attributes of an AMX MBean.</p>
+<A NAME="fvyof"></A><p><b>Example 19-9 </b>Accessing and Displaying the Attributes of an AMX
+MBean</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+displayAllAttributes( final AMX item )
+{
+    println( "\n--- Attributes for " + item.getJ2EEType() +
+        "=" + item.getName() + " ---" );
+    final Extra extra = Util.getExtra( item );
+    final Map attrs    = extra.getAllAttributes();
+    final Iterator iter = attrs.keySet().iterator();
+    while ( iter.hasNext() )
+    {
+        final String name = (String)iter.next();
+        final Object value = attrs.get( name );
+        println( name + "=" + toString( value ) );
+    }
+}
+public void
+displayAllAttributes( final String j2eeType )
+{
+    final Set items = queryForJ2EEType( j2eeType );
+    if ( items.size() == 0 )
+    {
+        println( "No {@link AMX} of j2eeType "
+            + SampleUtil.quote( j2eeType ) + " found" );
+    }
+    else
+    {
+        final Iterator iter= items.iterator();
+        while ( iter.hasNext() )
+        {
+            final AMX amx = (AMX)iter.next();
+            displayAllAttributes( amx );
+            println( "" );
+        }
+    }
+}
+[...]</pre>
+</td></table><br><p><A NAME="indexterm-805"></A>The <tt>displayAllAttributes()</tt> method calls the <tt>AMX.getName()</tt> and <tt>AMX.getJ2EEType()</tt> methods for
+an AMX MBean and prints the results onscreen. It then gets all the attributes
+for that MBean by calling <tt>com.sun.appserv.management.base.Extra.getAllAttributes()</tt> on the <tt>Extra</tt> instance returned by <tt>com.sun.appserv.management.base.Util.getExtra()</tt>. This is repeated
+for every MBean.</p>
+<p>The attributes of AMX MBeans of a certain Java EE type can be displayed
+by specifying the Java EE type when the command is run. In this case, <tt>displayAllAttributes()</tt> calls <tt>queryForJ2EEType()</tt>. The <tt>queryForJ2EEType()</tt> method calls the <tt>com.sun.appserv.management.base.QueryManager.queryPropSet()</tt> method
+on the specified Java EE type to identify all elements of that type in the
+domain.</p>
+<A NAME="beapz"></A><h3>Listing AMX MBean Properties</h3>
+<p><A NAME="indexterm-806"></A>The <tt>displayAllProperties()</tt> demonstrates how to list AMX MBean properties.</p>
+<A NAME="fvynz"></A><p><b>Example 19-10 </b>Listing AMX MBean Properties</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+getProperties( final PropertiesAccess pa )
+{
+    final HashMap m = new HashMap();
+    final String[] names = pa.getPropertyNames();
+    for( int i = 0; i &lt; names.length; ++i )
+    {
+        m.put( names[ i ], pa.getPropertyValue( names[ i ] ) );
+    }
+    return( m );
+}
+public void
+displayAllProperties( )
+{
+    final Iterator iter    = getQueryMgr().queryAllSet().iterator();
+    while ( iter.hasNext() )
+    {
+        final AMX amx = (AMX)iter.next();
+        if ( amx instanceof PropertiesAccess )
+        {
+            final PropertiesAccess pa = (PropertiesAccess)amx;
+            final Map    props    = getProperties( pa );
+            if ( props.keySet().size() != 0 )
+            {
+                println( "\nProperties for:
+                    " + Util.getObjectName( AMX)pa ) );
+                println( SampleUtil.mapToString(getProperties(pa), "\n") );
+            }
+        }
+    }
+}
+[...]</pre>
+</td></table><br><p><A NAME="indexterm-807"></A>The <tt>displayAllProperties()</tt> method uses another <tt>Samples</tt> method, <tt>getProperties()</tt>. This method creates an instance of the <tt>com.sun.appserv.management.config.PropertiesAccess</tt> interface, and calls its <tt>getPropertyNames()</tt> method
+to obtain the names of all the properties for a given AMX MBean. For each
+property name obtained, its corresponding value is obtained by calling <tt>PropertiesAccess.getPropertyValue()</tt>.</p>
+<p>The <tt>displayAllProperties()</tt> method calls the <tt>com.sun.appserv.management.base.QueryMgr.queryAllSet()</tt> method to
+obtain a set of all the AMX MBeans present in the domain. All AMX MBeans that
+have properties obligatorily extend the <tt>PropertiesAccess</tt> interface.
+Any MBean found to extend <tt>PropertiesAccess</tt> is passed to
+the <tt>getProperties()</tt> method, and the list of property values
+returned is printed onscreen.</p>
+<A NAME="beaqa"></A><h3>Querying</h3>
+<A NAME="indexterm-808"></A><A NAME="indexterm-809"></A><p>The <tt></tt><tt>demoQuery()</tt> method demonstrates how to issue queries.</p>
+<p>The <tt>demoQuery()</tt> method uses other methods that are
+defined by <tt>Samples</tt>, namely <tt>displayWild()</tt>,
+and <tt>displayJ2EEType()</tt>. The <tt>displayWild()</tt> method
+is shown in the following code.</p>
+<A NAME="fvynk"></A><p><b>Example 19-11 </b>Querying and displaying wild cards</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+queryWild(
+    final String propertyName,
+    final String propertyValue)
+{
+    final String[] propNames = new String[] { propertyName };
+    final String[] propValues = new String[]{ propertyValue };
+    final Set amxs = getQueryMgr().queryWildSet( propNames, propValues );
+    return( amxs );
+}
+public Set
+displayWild(
+    final String propertyName,
+    final String propertyValue)
+{
+    final Set items = queryWild( propertyName, propertyValue );
+    println( "\n--- Queried for " + propertyName + "="
+        + propertyValue + " ---" );
+    final Iterator    iter    = items.iterator();
+    while ( iter.hasNext() )
+    {
+        final AMX    item    = (AMX)iter.next();
+        println( "j2eeType=" + item.getJ2EEType() + ",
+            " + "name=" + item.getName() );
+    }
+}
+[...]</pre>
+</td></table><br><p><A NAME="indexterm-810"></A>The <tt>displayWild()</tt> method calls <tt>queryWild()</tt>, to obtain all the AMX MBeans that have object names matching <tt>propertyName</tt> and <tt>propertyValue</tt>. To do so, <tt>queryWild()</tt> calls the <tt>com.sun.appserv.management.base.QueryMgr.queryWildSet()</tt> method. The <tt>queryWildSet()</tt> method returns the
+list of AMX MBeans with object names matching the wild card strings.</p>
+<p>For each MBean returned, the <tt>displayWild()</tt> calls <tt>AMX.getJ2EEType()</tt> to identify its Java EE type, and prints the result
+onscreen.</p>
+<p>In code that is not shown here, the <tt>displayJ2EEType()</tt> method
+calls the <tt>queryForJ2EEType()</tt> method, which was seen in <A HREF="beapd.html#beapy">Accessing and Displaying the Attributes of an AMX MBean</A>, to identify MBeans of a certain Java EE type and print their object
+names onscreen.</p>
+<A NAME="fvynt"></A><p><b>Example 19-12 </b>Querying</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+demoQuery()
+{
+    displayWild( AMX.J2EE_TYPE_KEY, "X-*ResourceConfig" );
+    displayWild( AMX.J2EE_TYPE_KEY, "X-*ServerConfig" );
+    displayJ2EEType( XTypes.SSL_CONFIG );
+    displayJ2EEType( XTypes.CLUSTER_CONFIG );
+}
+[...]</pre>
+</td></table><br><p>In the <tt>demoQuery()</tt> method, the <tt>displayWild()</tt> and <tt>displayJ2EEType()</tt> methods are called to
+find the following MBeans:</p>
+<ul><li><p><tt>J2EE_TYPE_KEY</tt> MBeans called <tt>ResourceConfig</tt></p>
+</li>
+<li><p><tt>J2EE_TYPE_KEY</tt> MBeans called <tt>ServerConfig</tt></p>
+</li>
+<li><p>All <tt>SSL_CONFIG</tt> MBeans</p>
+</li>
+<li><p>All <tt>CLUSTER_CONFIG</tt> MBeans</p>
+</li>
+</ul>
+<A NAME="beaqb"></A><h3>Monitoring Attribute Changes</h3>
+<p>The <tt>demoJMXMonitor()</tt> demonstrates
+how to monitor attribute changes.</p>
+<A NAME="fvyoh"></A><p><b>Example 19-13 </b>Monitoring Attribute Changes</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+demoJMXMonitor() throws InstanceNotFoundException, IOException
+{
+    final JMXMonitorMgr mgr = getDomainRoot().getJMXMonitorMgr();
+    final String attrName = "SampleString";
+    final String attrValue = "hello";
+    final SampleListener sampleListener = new SampleListener();
+    final MBeanServerConnection conn =
+        Util.getExtra( mgr ).getConnectionSource()
+        .getExistingMBeanServerConnection();
+    conn.addNotificationListener(
+        getMBeanServerDelegateObjectName(),
+        sampleListener, null, null );
+    final Sample sample = (Sample)getDomainRoot()
+        .getContainee( XTypes.SAMPLE );
+    final String monitorName = "SampleStringMonitor";
+    AMXStringMonitor mon = null;
+    try
+    {
+        try { mgr.remove( monitorName ); }
+        catch( Exception e ) {}
+        mon = mgr.createStringMonitor( monitorName );
+        waitMBeanServerNotification( sampleListener,
+            MBeanServerNotification.REGISTRATION_NOTIFICATION,
+            Util.getObjectName( mon ) );
+        sample.addAttribute( attrName, attrValue );
+        mon.addNotificationListener( sampleListener, null, null);
+        mon.setObservedAttribute( attrName );
+        mon.setStringToCompare( attrValue );
+        mon.setNotifyDiffer( true );
+        mon.setNotifyMatch( true );
+        mon.addObservedObject( Util.getObjectName( sample ) );
+        final StdAttributesAccess attrs = Util.getExtra( sample);
+        attrs.setAttribute( new Attribute(attrName, "goodbye") );
+        attrs.setAttribute( new Attribute(attrName, attrValue) );
+        sample.removeAttribute( attrName );
+        final Map notifs = sampleListener.getNotifsReceived();
+        waitNumNotifs( notifs,
+            AttributeChangeNotification.ATTRIBUTE_CHANGE, 4 );
+    }
+    catch( Throwable t )
+    {
+        t.printStackTrace();
+    }
+    finally
+    {
+        try
+        {
+            mon.removeNotificationListener( sampleListener );
+            if ( mon != null )
+            {
+                mgr.remove( mon.getName() );
+                waitMBeanServerNotification( sampleListener,
+                    MBeanServerNotification
+                    .UNREGISTRATION_NOTIFICATION,
+                    Util.getObjectName( mon ) );
+            }
+            conn.removeNotificationListener(
+            getMBeanServerDelegateObjectName(),
+            sampleListener );
+        }
+        catch( ListenerNotFoundException e )
+        {
+        }
+    }
+}
+[...]</pre>
+</td></table><br><p><A NAME="indexterm-811"></A>The <tt>demoJmx()</tt> method demonstrates the implementation
+of a JMX monitor MBean, that listens for changes in a certain attribute. This
+is achieved in the following stages:</p>
+<ol Type="1"><li><p>A <tt>com.sun.appserv.management.monitor.JMXMonitorMgr</tt> instance is obtained using the <tt>DomainRoot.getJMXMonitorMgr()</tt> method.                      </p>
+</li>
+<li><p>A <tt>SampleListener</tt> JMX notification listener
+that is provided in the sample package is instantiated.                  
+   </p>
+</li>
+<li><p>A connection to the domain's MBean server is obtained
+by calling <tt>com.sun.appserv.management.client.ConnectionSource</tt>. <tt>getExistingMBeanServerConnection()</tt> on the <tt>JMXMonitorMgr</tt> instance's <tt>Extra</tt> information.        
+             </p>
+</li>
+<li><p>The <tt>SampleListener</tt> notification listener
+is added to the MBean server connection, with an MBean server delegate obtained
+from <tt>getMBeanServerDelegateObject()</tt>.
+The notification listener is now in place on the MBean server connection.
+                     </p>
+</li>
+<li><p>An AMX MBean, <tt>sample</tt>, of the type <tt>SAMPLE</tt> is obtained by calling the <tt>com.sun.appserv.management.base.Container.getContainee()</tt> method on an instance of the <tt>Sample</tt> interface.
+The <tt>Sample</tt> interface defines a basic AMX MBean.       
+              </p>
+</li>
+<li><p>An <tt>AMXStringMonitor</tt>, an AMX-compatible
+JMX <tt>StringMonitorMBean</tt>, is instantiated by calling <tt>createStringMonitor</tt> on the <tt>JMXMonitorMgr</tt> instance
+created above. The <tt>AMXStringMonitor</tt> instance then calls <tt>waitMBeanServerNotification()</tt>. The <tt>waitMBeanServerNotification()</tt> method waits
+for MBean server notifications of the type <tt>REGISTRATION_NOTIFICATION</tt> from the <tt>SampleListener</tt> instance that is listening
+on the MBean server connection.                      </p>
+</li>
+<li><p>An attribute of name <tt>attrName</tt> and value <tt>attrValue</tt> is added to the AMX MBean <tt>sample</tt>. 
+                    </p>
+</li>
+<li><p>Various methods of the <tt>AMXStringMonitor</tt> instance
+are called, to add a listener, and to set the value to be observed, the object
+to be observed, and so on.                      </p>
+</li>
+<li><p>Access to the <tt>sample</tt> MBean's attributes
+is obtained by passing the <tt>sample</tt> MBean's <tt>Extra</tt> information to an instance of <tt>com.sun.appserv.management.base.StdAttributesAccess</tt>. The <tt>StdAttributesAccess.setAttribute()</tt> method
+is then called to change the values of these attributes.                 
+    </p>
+</li>
+<li><p>The <tt>AMXStringMonitor</tt> then calls the sample
+notification listener's <tt>getNotifsReceived()</tt> method
+to retrieve the notifications that resulted from the calls to <tt>setAttribute()</tt> above. The <tt>waitNumNotifs()</tt> method
+waits until four <tt>ATTRIBUTE_CHANGE</tt> notifications have been
+received before exiting.                      </p>
+</li>
+<li><p>The notification listener is then removed and the monitor
+is closed down.</p>
+</li>
+</ol>
+<A NAME="beaqc"></A><h3>Undeploying Modules</h3>
+<A NAME="indexterm-812"></A><p>The <tt>undeploy()</tt> method demonstrates
+how to undeploy a module.</p>
+<A NAME="fvyoc"></A><p><b>Example 19-14 </b>Undeploying Modules</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>[...]
+undeploy ( final String moduleName ) throws IOException
+{
+    final DeploymentMgr mgr = getDomainRoot().getDeploymentMgr();
+
+    final Map statusData = mgr.undeploy( moduleName, null );
+    final DeploymentStatus status =
+        DeploymentSupport.mapToDeploymentStatus( statusData );
+    println( "Undeployment result: "
+        + getStageStatusString(status.getStageStatus()));
+    if ( status.getStageThrowable() != null )
+    {
+        status.getStageThrowable().printStackTrace();
+    }
+}
+[...]</pre>
+</td></table><br><p>The <tt>undeploy()</tt> method obtains the <tt>DeploymentMgr</tt> instance for the domain in the same way that <tt>deploy()</tt> does so. It then calls the <tt>DeploymentMgr.undeploy()</tt> method
+for a named module.</p>
+<A NAME="beaqd"></A><h3>Stopping an Application Server</h3>
+<A NAME="indexterm-813"></A><A NAME="indexterm-814"></A><p>The <tt>stopServer()</tt> method
+demonstrates how to stop an application server. The <tt>stopServer()</tt> method simply calls the <tt>getJ2EEServer()</tt> method on a given server instance, and then calls <tt>J2EEServer.stop()</tt>.</p>
+<A NAME="beaqe"></A><h2>Running the AMX Samples</h2>
+<p>To set up your development environment for using AMX, you must ensure
+that your Java classpath contains the following Java archive (JAR) files:</p>
+<ul><li><p><tt>appserv-admin.jar</tt> - The JAR file containing
+the AMX interfaces needed for your client. This file is found in <i>install-dir</i><tt>/lib/</tt>. No other classes from this JAR file should be used by your program.</p>
+</li>
+<li><p><tt>jmxri.jar</tt> - The runtime libraries for the
+JMX Reference Implementation. If you are using JDK 1.5, these are already
+in the JDK.</p>
+</li>
+<li><p><tt>jmxremote.jar</tt> - The runtime libraries for
+the JMX Remote API. If you are using JDK 1.5, these are already in the JDK.</p>
+</li>
+<li><p><tt>j2ee.jar</tt> - The runtime libraries for the
+Java EE Platform. This file is found in <i>install-dir</i><tt>/lib/</tt>.
+This JAR file is needed only if you intend to use any of the Java EE Management
+Statistic classes (<tt>javax.management.j2ee.*</tt>).</p>
+</li>
+</ul>
+<p>Start your Java application in a manner similar to this:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>export JAR_PATH=<i>install-dir</i>/lib/
+export CP="$JAR_PATH/j2ee.jar:$JAR_PATH/appserv-admin.jar"
+java -cp $CP com.mycompany.MyClientMain</pre>
+</td></table><br>
+            <!--stopindex-->
+<br>
+<A HREF="beaow.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Next</A>
+</body>
+</html>

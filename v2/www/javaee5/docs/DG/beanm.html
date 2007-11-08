@@ -1,0 +1,154 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>15.&nbsp;&nbsp;Using the Transaction Service
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Developer's Guide</A>&nbsp;<br>
+<A HREF="beamj.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="beanr.html">Next</A><br>
+            <!--startindex--><A NAME="beanm"></A><b>Chapter&nbsp;15</b><h1>Using the Transaction Service</h1>
+<A NAME="indexterm-652"></A><A NAME="indexterm-653"></A><A NAME="indexterm-654"></A><A NAME="indexterm-655"></A><p>The Java EE platform provides several abstractions that simplify development
+of dependable transaction processing for applications. This chapter discusses Java
+EE transactions and transaction support in the Sun Java System Application Server.</p>
+<p>This chapter contains the following sections:</p>
+<ul><li><p><A HREF="beanm.html#beann">Transaction Resource Managers</A></p>
+</li>
+<li><p><A HREF="beanm.html#beano">Transaction Scope</A></p>
+</li>
+<li><p><A HREF="beanm.html#beanp">Configuring the Transaction Service</A></p>
+</li>
+<li><p><A HREF="beanm.html#gaxit">Accessing the Transaction Manager and UserTransaction</A></p>
+</li>
+<li><p><A HREF="beanm.html#beanq">Transaction Logging</A></p>
+</li>
+<li><p><A HREF="beanm.html#gaxig">Recovery Workarounds</A></p>
+</li>
+</ul>
+<p>For more information about the Java&#153; Transaction API (JTA)
+and Java&#153; Transaction Service (JTS), see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i> and the following
+sites: <A HREF="http://java.sun.com/products/jta/">http://java.sun.com/products/jta/</A> and <A HREF="http://java.sun.com/products/jts/">http://java.sun.com/products/jts/</A>.</p>
+<p>You might also want to read the chapter on transactions in the <i>Java
+EE 5 Tutorial</i> at <A HREF="http://java.sun.com/j2ee/1.4/docs/tutorial/doc/index.html">http://java.sun.com/j2ee/1.4/docs/tutorial/doc/index.html</A>.</p>
+<A NAME="beann"></A><h2>Transaction Resource Managers</h2>
+<A NAME="indexterm-656"></A><A NAME="indexterm-657"></A><p>There are three types of transaction resource managers:</p>
+<ul><li><p><A NAME="indexterm-658"></A>Databases - Use of transactions prevents databases from being left in
+inconsistent states due to incomplete updates. For information about JDBC transaction
+isolation levels, see <A HREF="beamj.html#beamv">Using JDBC Transaction Isolation Levels</A>.</p>
+<p>The Application Server supports a variety of JDBC XA drivers. For
+a list of the JDBC drivers currently supported by the Application Server, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3653"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Release Notes</i></A></i>.
+For configurations of supported and other drivers, see <A HREF="http://docs.sun.com/app/docs/doc/819-3658">"Configurations for Specific JDBC Drivers" in <i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A>.</p>
+</li>
+<li><p><A NAME="indexterm-659"></A>Java Message Service (JMS) Providers - Use of transactions ensures that
+messages are reliably delivered. The Application Server is integrated with Sun Java System Message Queue,
+a fully capable JMS provider. For more information about transactions and the JMS
+API, see <A HREF="beaob.html#beaob">Chapter&nbsp;17, Using the Java Message Service</A>.</p>
+</li>
+<li><p><A NAME="indexterm-660"></A>Java EE Connector Architecture (CA) components - Use of transactions prevents
+legacy EIS systems from being left in inconsistent states due to incomplete updates.
+For more information about connectors, see <A HREF="bealk.html#bealk">Chapter&nbsp;11, Developing Connectors</A>.</p>
+</li>
+</ul>
+<p>For details about how transaction resource managers, the transaction service,
+and applications interact, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+<A NAME="beano"></A><h2>Transaction Scope</h2>
+<A NAME="indexterm-661"></A><A NAME="indexterm-662"></A><p>A <i>local</i> transaction involves only one non-XA resource and
+requires that all participating application components execute within one process.
+Local transaction optimization is specific to the resource manager and is transparent
+to the Java EE application.</p>
+<p>In the Application Server, a JDBC resource is non-XA if it meets any of the following
+criteria:</p>
+<ul><li><p>In the JDBC connection pool configuration, the DataSource class does
+not implement the <tt>javax.sql.XADataSource</tt> interface.</p>
+</li>
+<li><p>The Global Transaction Support box is not checked, or the Resource
+Type setting does not exist or is not set to <tt>javax.sql.XADataSource</tt>.</p>
+</li>
+</ul>
+<p>A transaction remains local if the following conditions remain true:</p>
+<ul><li><p>One and only one non-XA resource is used. If any additional non-XA
+resource is used, the transaction is aborted.</p>
+</li>
+<li><p>No transaction importing or exporting occurs.</p>
+</li>
+</ul>
+<p><A NAME="indexterm-663"></A>Transactions that involve multiple resources or multiple participant processes
+are <i>distributed</i> or <i>global</i> transactions.
+A global transaction can involve one non-XA resource if last agent optimization is
+enabled. Otherwise, all resourced must be XA. The <tt>use-last-agent-optimization</tt> property is set to <tt>true</tt> by default. For details about
+how to set this property, see <A HREF="beanm.html#beanp">Configuring the Transaction Service</A>.</p>
+<p>If only one XA resource is used in a transaction, one-phase commit occurs, otherwise
+the transaction is coordinated with a two-phase commit protocol.</p>
+<p>A two-phase commit protocol between the transaction manager and all the resources
+enlisted for a transaction ensures that either all the resource managers commit the
+transaction or they all abort. When the application requests the commitment of a transaction,
+the transaction manager issues a <tt>PREPARE_TO_COMMIT</tt> request to all
+the resource managers involved. Each of these resources can in turn send a reply indicating
+whether it is ready for commit (<tt>PREPARED</tt>) or not (<tt>NO</tt>).
+Only when all the resource managers are ready for a commit does the transaction manager
+issue a commit request (<tt>COMMIT</tt>) to all the resource managers. Otherwise,
+the transaction manager issues a rollback request (<tt>ABORT</tt>) and the
+transaction is rolled back.</p>
+<A NAME="beanp"></A><h2>Configuring the Transaction Service</h2>
+<A NAME="indexterm-664"></A><p>You can configure the transaction service in the Application Server in the following
+ways:</p>
+<ul><li><p><A NAME="indexterm-665"></A>To configure the transaction service using the Admin Console, open the
+Transaction Service component under the relevant configuration. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+</li>
+<li><p><A NAME="indexterm-666"></A>To configure the transaction service, use the <tt>asadmin set</tt> command
+to set the following attributes:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.transaction-service.automatic-recovery = false
+server.transaction-service.heuristic-decision = rollback
+server.transaction-service.keypoint-interval = 2048
+server.transaction-service.retry-timeout-in-seconds = 600
+server.transaction-service.timeout-in-seconds = 0
+server.transaction-service.tx-log-dir = <i>domain-dir</i>/logs</pre>
+</td></table><br><p>You can also set these properties:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.transaction-service.property.oracle-xa-recovery-workaround = false
+server.transaction-service.property.disable-distributed-transaction-logging = false
+server.transaction-service.property.xaresource-txn-timeout = 600
+server.transaction-service.property.pending-txn-cleanup-interval = 60
+server.transaction-service.property.use-last-agent-optimization = true</pre>
+</td></table><br><p><A NAME="indexterm-667"></A>You can use the <tt>asadmin get</tt> command to list all the
+transaction service attributes and properties. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A></i>.</p>
+</li>
+</ul>
+<A NAME="gaxit"></A><h2>Accessing the Transaction Manager and UserTransaction</h2>
+<A NAME="indexterm-668"></A><p>You can access the Application Server transaction manager, a <tt>javax.transaction.TransactionManager</tt> implementation, using the JNDI subcontext <tt>java:appserver/TransactionManager</tt>. You can also access <tt>java:comp/UserTransaction</tt>. For
+more information, see <A HREF="beanr.html#beant">Naming Environment for Java EE Application Components</A>.</p>
+<A NAME="beanq"></A><h2>Transaction Logging</h2>
+<A NAME="indexterm-669"></A><p>The transaction service writes transactional activity into transaction logs
+so that transactions can be recovered. You can control transaction logging in these
+ways:</p>
+<ul><li><p><A NAME="indexterm-670"></A>Set the location of the transaction log files using the Transaction Log
+Location setting in the Admin Console, or set the <tt>tx-log-dir</tt> attribute
+using the <tt>asadmin set</tt> command.</p>
+</li>
+<li><p>Turn off transaction logging by setting the <tt>disable-distributed-transaction-logging</tt> property to <tt>true</tt> and the <tt>automatic-recovery</tt> attribute to <tt>false</tt>. Do this <i>only</i> if
+performance is more important than transaction recovery.</p>
+</li>
+</ul>
+<A NAME="gaxig"></A><h2>Recovery Workarounds</h2>
+<p>The Application Server provides workarounds for some known issues with the recovery
+implementations of the following JDBC drivers. These workarounds are used unless explicitly
+disabled.</p>
+<ul><li><p><A NAME="indexterm-671"></A>Oracle thin driver - The <tt>XAResource.recover</tt> method
+repeatedly returns the same set of in-doubt Xids regardless of the input flag. According
+to the XA specifications, the Transaction Manager initially calls this method with
+TMSTARTSCAN and then with TMNOFLAGS repeatedly until no Xids are returned. The <tt>XAResource.commit</tt> method also has some issues.</p>
+<p><A NAME="indexterm-672"></A>To disable the Application Server workaround, set the <tt>oracle-xa-recovery-workaround</tt> property value to <tt>false</tt>. For details about how to set
+this property, see <A HREF="beanm.html#beanp">Configuring the Transaction Service</A>.</p>
+</li>
+</ul>
+<p><hr size="1" noshade><p><b>Note - </b>These workarounds do not imply support for any particular JDBC driver.</p>
+<hr size="1" noshade></p>
+            <!--stopindex-->
+<br>
+<A HREF="beamj.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="beanr.html">Next</A>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>13.&nbsp;&nbsp;Developing Custom MBeans
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Developer's Guide</A>&nbsp;<br>
+<A HREF="beamc.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="fvyam.html">Next</A><br>
+            <!--startindex--><A NAME="gbdzi"></A><b>Chapter&nbsp;13</b><h1>Developing Custom MBeans</h1>
+<A NAME="indexterm-616"></A><A NAME="indexterm-617"></A><A NAME="indexterm-618"></A><A NAME="indexterm-619"></A><p>An MBean is a managed Java object, similar to a JavaBean&#153;,
+that follows the design patterns set forth in the instrumentation level of
+the Java&#153; Management Extensions (JMX&#153;)
+specification. An MBean can represent a device, an application, or any resource
+that needs to be managed. MBeans expose a management interface: a set of readable
+and/or writable attributes and a set of invokable operations, along with a
+self-description. The management interface does not change throughout the
+life of an MBean instance. MBeans can also emit notifications when certain
+defined events occur. Unlike other components, MBeans have no annotations
+or deployment descriptors.</p>
+<p>The Sun Java System Application Server supports the development of custom
+MBeans as part of the self-management infrastructure or as separate applications.
+All types of MBeans (standard, dynamic, open, and model) are supported. For
+more about self-management, see <A HREF="beapd.html#beapd">Chapter&nbsp;19, Using the Java Management Extensions (JMX) API</A> and the <A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A>.</p>
+<p>For general information about JMX technology, including how to download
+the JMX specification, see <A HREF="http://java.sun.com/products/JavaManagement/index.jsp">http://java.sun.com/products/JavaManagement/index.jsp</A>.</p>
+<p>For a useful overview of JMX technology, see <A HREF="http://java.sun.com/j2se/1.5.0/docs/guide/jmx/overview/JMXoverviewTOC.html">http://java.sun.com/j2se/1.5.0/docs/guide/jmx/overview/JMXoverviewTOC.html</A>.</p>
+<p>For a tutorial of JMX technology, see <A HREF="http://java.sun.com/j2se/1.5.0/docs/guide/jmx/tutorial/tutorialTOC.html">http://java.sun.com/j2se/1.5.0/docs/guide/jmx/tutorial/tutorialTOC.html</A>.</p>
+<p>This chapter includes the following topics:</p>
+<ul><li><p><A HREF="gbdzi.html#gbfcp">MBean Class Loading</A></p>
+</li>
+<li><p><A HREF="gbdzi.html#gbfdm">Creating, Deleting, and Listing MBeans</A></p>
+</li>
+<li><p><A HREF="gbdzi.html#gbfec">The MBeanServer in the Application Server</A></p>
+</li>
+<li><p><A HREF="gbdzi.html#gbfeu">Enabling and Disabling MBeans</A></p>
+</li>
+<li><p><A HREF="gbdzi.html#gbfgn">Handling MBean Attributes</A></p>
+</li>
+</ul>
+<A NAME="gbfcp"></A><h2>MBean Class Loading</h2>
+<A NAME="indexterm-620"></A><p>After you develop a custom MBean, copy its class files (or JAR file)
+into the MBean Classloader directory, <i>domain-dir</i><tt>/applications/mbeans</tt>. You have two choices of where to place any dependent classes:</p>
+<ul><li><p>Common Classloader -- Copy the classes into the <i>domain-dir</i><tt>/lib</tt> or <i>domain-dir</i><tt>/lib/classes</tt> directory. The
+classes are loaded when you restart the Application Server. The classes are available
+to all other MBeans and all deployed applications and modules.</p>
+</li>
+<li><p>MBean Classloader -- Copy the classes into the <i>domain-dir</i><tt>/applications/mbeans</tt> directory. No restart is required. The classes
+are available to all other MBeans, but <i>not</i> to all deployed
+applications and modules.</p>
+</li>
+</ul>
+<p>After copying the classes, register the MBean using the <A HREF="gbdzi.html#gbfgb">asadmin create-mbean</A> command.</p>
+<p>For general information about Application Server classloaders, see <A HREF="beade.html#beade">Chapter&nbsp;2, Class Loaders</A>.</p>
+<A NAME="gbfdm"></A><h2>Creating, Deleting, and Listing MBeans</h2>
+<p>This section describes the following commands:</p>
+<ul><li><p>Use <A HREF="gbdzi.html#gbfgb">asadmin create-mbean</A> to
+deploy, or <i>register</i>, an MBean.</p>
+</li>
+<li><p>Use <A HREF="gbdzi.html#gbffj">asadmin delete-mbean</A> to
+undeploy an MBean.</p>
+</li>
+<li><p>Use <A HREF="gbdzi.html#gbffl">asadmin list-mbeans</A> to
+list deployed MBeans.</p>
+</li>
+</ul>
+<p>To perform these tasks using the Admin Console, open the Custom MBeans
+component. For details, see the <A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A>.</p>
+<A NAME="gbfgb"></A><h3>asadmin create-mbean</h3>
+<A NAME="indexterm-621"></A><p>After copying the MBean code as explained in <A HREF="gbdzi.html#gbfcp">MBean Class Loading</A>, use the <tt>asadmin create-mbean</tt> command to deploy the MBean. This registers the MBean in the <tt>MBeanServer</tt> that is part of the Application Server runtime environment.
+For more information about the <tt>MBeanServer</tt>, see <A HREF="gbdzi.html#gbfec">The MBeanServer in the Application Server</A>.</p>
+<p>Here is a simple example of an <tt>asadmin create-mbean</tt> command
+in which <tt>TextPatterns</tt> is the implementation class. The <tt>--attributes</tt> argument is optional.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin create-mbean --user joeuser --attributes color=red:font=Times 
+TextPatterns</pre>
+</td></table><br><p>Other optional arguments not shown here are <tt>--name</tt>, <tt>--object-name</tt>, and <tt>--enabled</tt>. All arguments must
+precede the implementation class. For more information about these arguments,
+see <A HREF="gbdzi.html#gbffl">asadmin list-mbeans</A>.</p>
+<p>For full details on the <tt>asadmin create-mbean</tt> command,
+see the <A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A>.</p>
+<p>For more information about MBean attributes, see <A HREF="gbdzi.html#gbfgn">Handling MBean Attributes</A>.</p>
+<p><hr size="1" noshade><p><b>Note - </b><A NAME="indexterm-622"></A>To redeploy an MBean, simply copy its new code into the Application Server as
+described in <A HREF="gbdzi.html#gbfcp">MBean Class Loading</A>.</p>
+<hr size="1" noshade></p><A NAME="gbffj"></A><h3>asadmin delete-mbean</h3>
+<A NAME="indexterm-623"></A><p>To undeploy an MBean, use the <tt>asadmin delete-mbean</tt> command.
+This removes its registration from the <tt>MBeanServer</tt>, but
+does not delete its code. Here is an example <tt>asadmin delete-mbean</tt> command in which <tt>TextPatterns</tt> is the implementation
+class. </p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin delete-mbean --user joeuser  TextPatterns</pre>
+</td></table><br><p>For full details on the <tt>asadmin delete-mbean</tt> command,
+see the <A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A>.</p>
+<A NAME="gbffl"></A><h3>asadmin list-mbeans</h3>
+<A NAME="indexterm-624"></A><p>To list MBeans that have been deployed, use the <tt>asadmin list-mbeans</tt> command. Here is an example <tt>asadmin list-mbeans</tt> command. </p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin list-mbeans --user joeuser </pre>
+</td></table><br><p>The output of the <tt>asadmin list-mbeans</tt> command lists
+the following information:</p>
+<ul><li><p>Implementation class -- The name of the implementation
+class without the extension.</p>
+</li>
+<li><p>Name -- The name of the registered MBean, which defaults
+to but may be different from the implementation class name.</p>
+</li>
+<li><p>Object name -- The object name of the MBean, which by
+default is <tt>user:impl-class-name=</tt><i>impl-class</i><tt>,name=</tt><i>name</i><tt>,server=server</tt> if the <tt>MBeanRegistration</tt> interface
+is <i>not</i> implemented.</p>
+<p>If the <tt>MBeanRegistration</tt> interface is implemented, the object name defined in the <tt>preregister()</tt> method is used. The MBean domain must be <tt>user:</tt>. Do not define a <tt>server</tt> property. The Application Server automatically
+appends <tt>server=server</tt> to the object name.</p>
+</li>
+<li><p>Object type -- For custom MBeans, the object type is
+always <tt>user</tt>. System MBeans have other object types.</p>
+</li>
+<li><p>Enabled -- Whether the MBean is enabled. MBeans are enabled
+by default. See <A HREF="gbdzi.html#gbfeu">Enabling and Disabling MBeans</A>.</p>
+</li>
+</ul>
+<p>For full details on the <tt>asadmin list-mbeans</tt> command,
+see the <A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A>.</p>
+<A NAME="gbfec"></A><h2>The MBeanServer in the Application Server</h2>
+<A NAME="indexterm-625"></A><p>Custom MBeans are registered in the <tt>PlatformMBeanServer</tt> returned
+by the <tt>java.lang.management.ManagementFactory.getPlatformMBeanServer()</tt> method. This <tt>MBeanServer</tt> is a standard RMI/JMX
+connector.</p>
+<p>You can use any JMX connector to look up MBeans in this <tt>MBeanServer</tt> just as you would any other <tt>MBeanServer</tt>. If
+your JMX connector is remote, you can connect to this <tt>MBeanServer</tt> using the following information:</p>
+<ul><li><p>Host name of the Application Server machine</p>
+</li>
+<li><p><tt>MBeanServer</tt> port, which is <tt>8686</tt> by default</p>
+</li>
+<li><p>Administrator username</p>
+</li>
+<li><p>Administrator password</p>
+</li>
+</ul>
+<p><A NAME="indexterm-626"></A>For example, if you use JConsole, you can enter this information
+under the Remote tab. JConsole is a generic JMX connector you can use to look
+up and manage MBeans. For more information about JConsole, see <A HREF="http://java.sun.com/developer/technicalArticles/J2SE/jconsole.html">http://java.sun.com/developer/technicalArticles/J2SE/jconsole.html</A> or the JMX tutorial at <A HREF="http://java.sun.com/j2se/1.5.0/docs/guide/jmx/tutorial/tutorialTOC.html">http://java.sun.com/j2se/1.5.0/docs/guide/jmx/tutorial/tutorialTOC.html</A>.</p>
+<p>The connection to this <tt>MBeanServer</tt> is non-SSL
+by default. </p>
+<p>Look up the MBean by its name. By default, the name is the same as the
+implementation class. </p>
+<p>Only an RMI/JMX connector can look up MBeans registered in the Application Server.
+You cannot look up these MBeans using services such as SLP, Jini<sup>SM</sup>, JNDI, or LDAP.</p>
+<p>You can reconfigure the <tt>MBeanServer</tt> port in one of
+the following ways:</p>
+<ul><li><p>In the Admin Console, open the Admin Service component under
+the relevant configuration, select the system subcomponent, edit the Port
+field, and select Save. For details, see the <A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A>.</p>
+</li>
+<li><p>Use the <tt>asadmin set</tt> command as in the following
+example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin set server.admin-service.jmx-connector.system.port=8687</pre>
+</td></table><br><p>For details, see the <A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A>.</p>
+</li>
+</ul>
+<A NAME="gbfeu"></A><h2>Enabling and Disabling MBeans</h2>
+<A NAME="indexterm-627"></A><p>A custom MBean is enabled by default. You can disable an MBean during
+deployment by using the <A HREF="gbdzi.html#gbfgb">asadmin create-mbean</A> command's
+optional <tt>--enabled=false</tt> argument. </p>
+<p>After deployment, you can disable an MBean using the <tt>asadmin
+set</tt> command. For example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin set server.applications.mbean.TextPatterns.enabled=false</pre>
+</td></table><br><p>If the MBean name is different from the implementation class, you must
+use the name in the <tt>asadmin set</tt> command. In this example,
+the name is <tt>TextPatterns</tt>.</p>
+<p>For full details on the <tt>asadmin set</tt> command, see
+the <A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A>.</p>
+<A NAME="gbfgn"></A><h2>Handling MBean Attributes</h2>
+<A NAME="indexterm-628"></A><p>You can set MBean attribute values that are not read-only in the following
+ways:</p>
+<ul><li><p>In the MBean code itself</p>
+</li>
+<li><p>During deployment using the <A HREF="gbdzi.html#gbfgb">asadmin create-mbean</A> command</p>
+</li>
+<li><p>Using a JMX connector such as JConsole</p>
+</li>
+<li><p>Using the <tt>asadmin set</tt> command</p>
+</li>
+</ul>
+<p>In the Application Server configuration, MBean attributes are stored as properties.
+Therefore, using the <tt>asadmin set</tt> command means editing
+properties. For example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin set server.applications.mbean.TextPatterns.property.color=blue</pre>
+</td></table><br><p>If the MBean name is different from the implementation class, you must
+use the name in the <tt>asadmin set</tt> command. In this example,
+the name is <tt>TextPatterns</tt>.</p>
+<p>For full details on the <tt>asadmin set</tt> command, see
+the <A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A>.</p>
+
+            <!--stopindex-->
+<br>
+<A HREF="beamc.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="fvyam.html">Next</A>
+</body>
+</html>

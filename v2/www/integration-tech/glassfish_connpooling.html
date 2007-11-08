@@ -1,0 +1,237 @@
+<!DOCTYPE html PUBLIC "-//Tigris//DTD XHTML 1.0 Transitional//EN" "http://style.tigris.org/nonav/tigris_transitional.dtd">
+<html>
+<head>
+  <title>GlassFish Project - Connection Pooling</title>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+<!--
+@page { size: 8.27in 11.69in; margin: 0.79in }
+P { margin-bottom: 0.08in }
+-->
+</head>
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<font face="Arial, sans-serif" size="2">
+<div id="projecthome" class="app"><!--StartFragment --><font
+ face="Arial, sans-serif"><font size="+1"><span
+ style="font-weight: bold;">GlassFish
+Project - Connection Pooling</span></font></font><br>
+<br>
+&nbsp;<a
+ href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New
+to GlassFish</a> | <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community
+Guidelines&nbsp;</a>
+| <a href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads
+</a>| <a href="https://glassfish.dev.java.net/public/faq/index.html">
+FAQ</a> |&nbsp;
+<a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo">How-Tos</a>
+<br>
+<br>
+<!--StartFragment --><span style="font-weight: bold;"><br>
+</span>Welcome to the Connection Pooling home page. Connection Pooling
+is a technique used for sharing server resources among requesting
+clients. Creating a new connection for each request takes a long time.
+This delay can be minimized by pooling connections. Hence for each
+request, a connection from the pool is served and when the client is
+finished with the connection, the connection is returned to the pool
+which will be re-used for further requests. Connection Pooling thus
+improves the response time for the application to get, use and close
+the connection, as the actual connections to the data store are managed
+by the pool.
+<p>GlassFish Application Server provides Connection Pooling mechanism
+for resources such as EIS Server, JMS Server, Database Server which
+follow J2EE Connector Architecture - Common Client Interface standard.</p>
+<h3><font face="Arial, sans-serif" size="3">Connection Pooling News</font></h3>
+New features of connection pooling introduced in GlassFish :
+<ul>
+  <li>Lazy Connection Enlistment - Enlist a resource to the transaction
+only when it is actually used.</li>
+  <li>Lazy Connection Association - Connections are lazily associated
+when an operation is performed on them. Also they are disassociated
+when transaction is completed and a component method ends, which helps
+to reuse the physical connections.</li>
+  <li>Associate With Thread - Associate a connection with the thread
+such that when the same thread is in need of a connection, it can reuse
+the connection which reduces the time of getting the connection from
+the connection pool.</li>
+</ul>
+<h3><font face="Arial, sans-serif" size="3">Page Contents</font></h3>
+<ul>
+  <li><a href="#Technologies">Technologies</a></li>
+  <li><a href="#UnitAcceptance_Tests">Unit/Acceptance
+Tests</a></li>
+  <li><a href="#Supporting_Documentation">Supporting
+Documentation</a></li>
+  <li><a href="#ToDo_List">ToDo List</a></li>
+</ul>
+<h3><font face="Arial, sans-serif" size="3"><a name="Technologies"></a>Technologies</font></h3>
+<table bgcolor="#ffff66" border="0" width="100%">
+  <tbody>
+    <tr>
+      <td scope="col">Several different software
+components including
+source and binary,
+support the GlassFish project.&nbsp; The source components are
+released
+under the <b><a
+ href="https://glassfish.dev.java.net/public/CDDLv1.0.html">Common
+Development and Distribution License (CDDL) v1.0</a></b>
+whereas the
+binary components are covered under the <b> <a
+ href="https://glassfish.dev.java.net./public/BinariesLicense.html">binary
+license</a></b>. You must agree to these licenses as part
+of
+installation before viewing and/or using the code. </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+Connection Pooling implementation can be found in <a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/">appserv-core</a>
+module.<br>
+<br>
+<u>Packages related to connection pooling </u> <br>
+<br>
+<span style="font-style: italic;">com.sun.enterprise.connectors</span>
+- Connection manager implementation.<br>
+<span style="font-style: italic;">com.sun.enterprise.resource</span> -
+Resources, ResourceManager, ResourceDeployer, ConnectionEventListeners
+implementation.<br>
+<span style="font-style: italic;">com.sun.enterprise.resource.monitor</span>
+- connection pool monitoring / statistics implementation.<br>
+<br>
+<u>Significant classes</u>
+<ul>
+  <li>ConnectionManagerImpl - Entry point for pooling infrastructure</li>
+  <li>PoolManagerImpl - Handles creation and deletion of pools. Entry
+point for connection related requests. Handles transaction related
+callbacks for a connection.</li>
+  <li>ResourcePool, AbstractResourcePool, SJSASResourcePool - Provides
+essential functionalities of connection pool, represents a connection
+pool as a whole.</li>
+  <li>ResourceManagerImpl - Serves all resource request from a
+component.</li>
+  <li>ResourceSpec - Pool Manager uses this specification to select a
+particular Resource Manager.</li>
+  <li>XXXAllocator - holds information about the RA and act as wrapper
+around MCF.</li>
+  <li>ResourceHandle - Wrapper for all physical connections, holding
+resource's current state information [busy/free, enlisted/delisted]</li>
+  <li>ConnectorXAResource - XAResource object wrapper for a local
+transaction capable connector resource - handles association of 1
+physical connection with multiple logical handles in a transaction.</li>
+</ul>
+<u>Features </u>:
+<ul>
+  <li>One resource adapter each for XA, DataSource and
+ConnectionPoolDataSource.</li>
+  <li>Facility for an application component to get to the vendor
+implementation of JDBC Connection.</li>
+  <li>JDBC resources can be configured as XA or non-XA.</li>
+  <li>getNonTxConnections : Connections obtained are not enlisted as
+part of transaction which saves performance overhead of enlisting and
+delisting in a transaction.</li>
+  <li>Connection Sharing : When multiple connections acquired by an
+application use the same JDBC resource, the connection pool provides
+connection sharing within the same transaction scope</li>
+  <li>Monitoring : To measure performance and resource usage at
+runtime. Aids to find how connection pool is releasing and creating
+connections, how many threads are waiting to get a connection. This
+will help the administrator to fine-tune/ re-configure the pool
+according to the application's need.</li>
+</ul>
+<h3><font face="Arial, sans-serif" size="3"><a
+ name="UnitAcceptance_Tests"></a>Unit/Acceptance
+Tests</font></h3>
+Running the <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#look_Tests">Quicklook
+tests</a> is required in this section.<br>
+In addition to the Quicklook tests the connection pooling module has
+unit tests developed which need to pass prior to check-in.<br>
+<br>
+To run just the unit tests do the following:
+<ul>
+  <li>Checkout the appserv-tests module. </li>
+  <li>Go to devtests/jdbc</li>
+  <li>"ant all" will run the tests This will build and run all the jdbc
+unit tests. </li>
+  <li>In addition, connector module uses connector-connection-pools.
+These tests can be found at devtests/connector.</li>
+  <li>"ant all" will run the tests.This will build and run all the
+connector unit tests.</li>
+</ul>
+<p>See the README file in the appserv-tests directory to get more
+information about configuring the server and database if needed.</p>
+<h3><font face="Arial, sans-serif"><font size="3"><a
+ name="Supporting_Documentation"></a> Supporting
+Documentation</font></font></h3>
+<p><font face="Arial, sans-serif"><font size="2">This
+section contains
+pointers to useful documents and information
+about the connection pooling module</font></font></p>
+1) JSR 112 - <a href="http://java.sun.com/j2ee/connector/download.html">
+J2EE Connector Architecture 1.5 Specification </a><br>
+<br>
+2) Commands - Sun Java System Application Server Platform Edition - <a
+ href="http://docs.sun.com/app/docs/doc/819-0082">Reference Manual</a><br>
+<ul>
+  <li>create-connector-connection-pool</li>
+  <li>delete-connector-connection-pool</li>
+  <li>list-connector-connection-pools</li>
+  <br>
+  <li>create-jdbc-connection-pool</li>
+  <li>delete-jdbc-connection-pool</li>
+  <li>list-jdbc-connection-pools</li>
+  <br>
+  <li>ping-connection-pool</li>
+</ul>
+3) Sun Java System Application Server Platform Edition - <a
+ href="https://glassfish.dev.java.net/javaee5/docs/DG/toc.html">Developer
+Guide</a><br>
+<ul>
+  <li>Chapter 13 &gt; Using the JDBC API for Database Access
+&gt;General Steps for Creating a JDBC Resource</li>
+</ul>
+4) Sun Java System Application Server Platform Edition - <a
+ href="https://glassfish.dev.java.net/javaee5/docs/AG/toc.html">Administration
+Guide</a><br>
+<ul>
+  <li>Chapter 3 &gt; JDBC Resources &gt; About JDBC Connection Pools</li>
+  <li>Chapter 3 &gt; JDBC Resource &gt; Configuration for Specific JDBC
+Drivers</li>
+  <li>Chapter 7 &gt; Connector Resources</li>
+  <li>Chapter 17 &gt; Monitoring Components and Services &gt; About
+Statistics for Monitored Components &gt; JDBC Connection Pool Statistics</li>
+  <li>Chapter 17 &gt; Monitoring Components and Services &gt; About
+Statistics for Monitored Components &gt; JMS/ Connector Service
+Statistics</li>
+  <li>Chapter 17 &gt; Admin Console Tasks for Enabling, Disabling,
+Viewing Monitoring </li>
+</ul>
+5) <a href="http://java.sun.com/j2ee/1.4/docs/tutorial/doc/index.html">J2EE
+Tutorial</a>
+<ul>
+  <li>Chapter 31 &gt; Resource Connections</li>
+</ul>
+6) <a href="http://java.sun.com/products/jdbc/download.html">JDBC
+Specification</a>
+<h3><font face="Arial, sans-serif" size="3"><a name="ToDo_List"></a>ToDo
+List</font></h3>
+ToDo list will be maintained using Issue Tracker <code>Task</code>
+issue
+type. You can query Issue Tracker using issue type <code>Task</code>
+or
+click <a
+ href="https://glassfish.dev.java.net/issues/buglist.cgi?Submit+query=Submit+query&amp;issue_type=TASK&amp;issue_status=UNCONFIRMED&amp;issue_status=NEW&amp;issue_status=STARTED&amp;issue_status=REOPENED&amp;email1=&amp;emailtype1=exact&amp;emailassigned_to1=1&amp;email2=&amp;emailtype2=exact&amp;emailreporter2=1&amp;issueidtype=include&amp;issue_id=&amp;changedin=&amp;votes=&amp;chfieldfrom=&amp;chfieldto=Now&amp;chfieldvalue=&amp;short_desc=&amp;short_desc_type=substring&amp;long_desc=&amp;long_desc_type=substring&amp;issue_file_loc=&amp;issue_file_loc_type=substring&amp;status_whiteboard=&amp;status_whiteboard_type=substring&amp;keywords=&amp;keywords_type=anytokens&amp;field0-0-0=noop&amp;type0-0-0=noop&amp;value0-0-0=&amp;cmdtype=doit&amp;newqueryname=&amp;order=Reuse+same+sort+as+last+time">here</a>
+to
+check out the ToDo list. "jdbc" is the sub component type.<br>
+Please use the dev@glassfish.dev.java.net
+mailing list for sending your comments/ideas to the connection pooling
+team.<br>
+<br>
+</div>
+</font>
+</body>
+</html>

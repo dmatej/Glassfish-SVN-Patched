@@ -1,0 +1,144 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <title>GlassFish Project - Configuration Management</title>
+   <!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+	-->
+</head>
+
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+   <div id="projecthome" class="app">
+   <!--StartFragment -->
+   <span style="font-weight: bold;">
+      <font size=+1>
+         GlassFish Project - Configuration Management home page
+      </font>
+   </span>
+<p>
+<span style="font-weight: bold;">|</span> 
+<a href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">
+   New to GlassFish
+</a> | <a href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">
+   Community Guidelines&nbsp; </a> | 
+<a href="https://glassfish.dev.java.net/public/downloadsindex.html">
+   Downloads </a>| 
+<a href="https://glassfish.dev.java.net/public/faq/index.html">
+   FAQ</a>| 
+<a href="https://glassfish.dev.java.net/public/Resource.html">
+   Resources </a> | 
+<a href="https://glassfish.dev.java.net/index.html">
+GlassFish Project Home </a> |
+<a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo">
+How-Tos</a> |
+
+<p>
+<!--StartFragment -->
+<br>Welcome to the Configuration Management page. This page is dedicated
+to discussing the Configuration Management features in GlassFish.
+The source code for these features is part of this cvs repository.
+
+<h3>Configuration News</h3>
+New Config Validator uses now the same infrastructure and metadata for both Dynamic (runtime) and Static (“verify config” command) validation. Schematron is not using for static validation any more. See below for more information on the design and implementation of these features.
+
+<h3>Page Contents</h3>
+<ul>
+   <ul>
+      <li><a href="#Overview">Overview</a></li>
+      <li><a href="#Configuration_metadata">Configuration_metadata</a></li>
+      <li><a href="#Code_walkthrough">Code Walk-through</a></li>
+      <li><a href="#Unit_Acceptance_Tests">Unit/Acceptance Tests</a></li>
+      <li><a href="#Supporting_Documentation">Supporting Documentation</a></li>
+      <li><a href="#ToDo_List">ToDo List</a></li>
+   </ul>
+</ul>
+
+<P><br>
+<h3><a NAME="Overview"></a>Overview</h3>
+Domain configuration in AS 9.x is essential part of GlassFish and it provides for configuration, administration, and management. Most configuration information resides in the domain.xml file(located in {installation-dir}/domains/{domain-name}/config/ directory). 
+AS Admin provides the following configuration support for backend and remote clients :
+<ul>
+   <li><b>ConfigBeans:</b> Basic  backend configuration access and modification. This is a low level API consisting of get/set/create/delete operations for configuration  elements, attributes, and  properties;</li>
+   <li><b>Admin MBeans:</b> API for JMX clients – GUI/CLI/HTML adapters/remote apps;</li>
+   <li><b>Admin Validator:</b>  admin tool for verifying the configuration and preventing illegal configuration changes;</li>
+   <li><b>Dynamic-reconfig:</b> API for emiting,delivering and handling of dynamic reconfig requests;</li>
+
+   <p><img SRC="Config1.gif"/>
+   <br><u>Figure 1: Configuration Management Components</u>
+
+</ul>
+
+<P><br><br><br>
+<h3><a NAME="Configuration_metadata"></a>Configuration metadata</h3>
+
+<p>There are quite a lot of different metadata files for Configuration Management. Many of them are auto-generated, some created and some are created and handled manually. 
+<p>Config-api sub module contains a directory with schema files for each config element. These schemas use Relax NG syntax with some proprietary extensions (extensions are defined in separate name space).  
+<p>Three different kinds of files are generated directly from these schemas: 
+<ul>
+   <li> sun-domain-1_2.dtd,
+   <li> ConfigBeans (one for each configuration element), 
+   <li> and Validation Descriptors file (stored in admin/Validator sub module).
+</ul>
+The process of file generation is not part of every build, so snap-shot of these generated files is checked into glassfish repository as well. 
+<p>Another manually handled metadata file is the Admin MBeans Descriptors file, which contains info about all potential Admin Configuration MBeans, their interfaces, naming, and bindings with Configuration Beans. This file along with the correspondent Config Beans and Custom MBeans implementations provide all necessary information for MBeans instantiation and forming of their MBeanInfo.
+<br><br><br>
+<ul>
+   <img SRC="Config2.gif">
+   <br><u>Figure 2:  Configuration metadata</u>
+</ul>
+
+<P><br><br><br>
+<h3>
+<a NAME="Code_walkthrough"></a>Code-Walkthrough</h3>
+
+
+<ul>
+<h4>Config Beans.</h4>
+<P>ConfigBeans infrastructure code is located in <a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-commons/src/java/com/sun/enterprise/config/">commons configuration sub module</a> in the repository  and  contains codes for the server beans base class, interfaces and implementations for ConfigConext,  ConigChanges, and ConfigEvent classes and listeners.
+<P>Server beans are auto-generated from sun-domain_1_2.dtd. Server beans represent domain.xml elements and properties. They are located in <a href="https://glassfish.dev.java.net/source/browse/glassfish/admin-core/config-api/src/java/com/sun/enterprise/config/serverbeans">config-api sub module</a> of admin-core.
+<P>The <a href="https://glassfish.dev.java.net/source/browse/glassfish/admin-core/config-api/src/java/com/sun/enterprise/config/serverbeans">same sub module</a> also contains some manually coded helper classes ApplicationsHelper, ClustersHelper, ResourcesHelper etc.
+
+<h4>Admin MBeans.</h4>
+<P>Generic Admin MBeans are instantiated and handled by admin infrastructure according to <a href="https://glassfish.dev.java.net/source/browse/glassfish/admin-core/admin/dtds/"> Admin MBean descriptors file</a>. Usually, there is one AdminMBean per configuration element.
+<P>Such MBeans provide access of JMX connected clients (CLI/GUI/HTML-adapters etc.) to basic configuration operations.  You can find Admin MBeans infrastructure classes in <a href="https://glassfish.dev.java.net/source/browse/glassfish/admin-core/admin/dtds/">admin sub module of admin-core  in the repository</a>.
+<P>Custom Admin MBean classes are situated in 
+<a href="https://glassfish.dev.java.net/source/browse/glassfish/admin/mbeans/">mbeans sub module</a>. They contain additional operations for Admin MBeans and overridings of the generic basic operations.
+
+
+<h4>Config Validator.</h4>
+
+Config Validator component is designed as the ConfigContext's ChangeEvent listener. Its role is to  prevent updates from creating a configuration inconsistencies. Code for this component is located in 
+<a href="https://glassfish.dev.java.net/source/browse/glassfish/admin/validator/">validator sub module of admin module</a>.
+There are three types of files there:
+<ul>
+<li><a href="https://glassfish.dev.java.net/source/browse/glassfish/admin/validator/src/java/com/sun/enterprise/config/serverbeans/validation/config">Validation metadata files;</a></li> 
+<li><a href="https://glassfish.dev.java.net/source/browse/glassfish/admin/validator/src/java/com/sun/enterprise/config/serverbeans/validation/">Validator infrastructure classes;</a></li>
+<li><a href="https://glassfish.dev.java.net/source/browse/glassfish/admin/validator/src/java/com/sun/enterprise/config/serverbeans/validation/config">Custom config elements test classes;</a></li>
+</ul>
+
+</ul>
+
+<h3>
+<a NAME="Unit_Acceptance_Tests"></a>Unit/Acceptance Tests</h3>
+<a href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Quicklook_Tests">Running
+the Quicklook</a> tests is required in this section. 
+
+<br>&nbsp;
+<h3>
+<a NAME="Supporting_Documentation"></a>Supporting Documentation</h3>
+This section will be updated soon with useful documents and information
+about the Configuration Services Management - Tutorials, Blogs and other useful links.
+<h3>
+<a NAME="ToDo_List"></a>ToDo List</h3>
+<ul>
+   <li>Off-line Configuration manager (CLI only)</li>
+   <li>"deep" generic validation for adding compound elements</li>
+   <li>name-domains.xml auto-generation from rng-files</li>
+</ul>
+   
+</div>
+
+</body>
+</html>

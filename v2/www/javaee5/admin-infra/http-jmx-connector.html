@@ -1,0 +1,145 @@
+ 
+<!DOCTYPE html PUBLIC "-//Tigris//DTD XHTML 1.0 Transitional//EN" "http://style.tigris.org/nonav/tigris_transitional.dtd">
+<html><!-- #BeginTemplate "/Templates/tech_page_template.dwt" --><head>
+<!-- #BeginEditable "doctitle" --> 
+<title>GlassFish Project - HTTP/S JMX Connectors</title>
+<!-- #EndEditable -->
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"><!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+	--></head><body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<div id="projecthome" class="app"> 
+  <!--StartFragment -->
+  <font size="+1"><span style="font-weight: bold;">GlassFish Project -<!-- #BeginEditable "title" --><font size="+1"><span style="font-weight: bold;"> 
+  HTTP/S JMX Connector </span></font><!-- #EndEditable --> home page</span></font><br>
+  <br>
+  &nbsp;<a href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New 
+  to GlassFish</a> | <a href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community 
+  Guidelines&nbsp;</a> | <a href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads 
+  </a>| <a href="https://glassfish.dev.java.net/public/faq/index.html"> FAQ</a> 
+  |&nbsp; <a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo"> How-Tos</a> 
+  <br>
+  <br>
+  <!--StartFragment -->
+  <br>
+  <!-- #BeginEditable "intro" --> 
+  <p>The Administrative Infrastructure of Glassfish Application Server revolves 
+    around JMX. A key component of JMX is being able to remotely connect to the 
+    MBeanServer. <a href="http://jcp.org/en/jsr/detail?id=160">JSR 160</a> (which 
+    is now<a href="http://jcp.org/en/jsr/detail?id=255"> JSR 255</a>) is an extension 
+    of <a href="http://jcp.org/en/jsr/detail?id=003">JSR 003</a> that dealt with 
+    this problem alone. Because of the far reaching impact of this development 
+    in <i>management of Java</i>, JMX and JSR 160 were <a href="http://java.sun.com/j2se/1.5.0/docs/guide/management/index.html">incorporated 
+    into Java 5 SE</a>.</p>
+  <p>Introduction of JMX in Java 5 SE however, mandated that the remote management 
+    of a JMX-instrumented VM be done over RMI/JRMP as a standard. Though RMI is 
+    a well known protocol, unfortunately it is not accepted as an industry standard 
+    if HTTP can be utilized. Application Server's administration has been done 
+    over HTTP and HTTP/S and that was the basic reason why we had to come up with 
+    a proprietary implementation of JSR 160 over HTTP/S.</p>
+  <!-- #EndEditable --><br>
+  <h3><!-- #BeginEditable "newstitle" --><font size="+1"><span style="font-weight: bold;"><font size="+1"><span style="font-weight: bold;">HTTP/S 
+    JMX Connector</span></font></span></font><!-- #EndEditable --> News<br>
+  </h3>
+  <!-- #BeginEditable "news" --> 
+  <ul>
+    <li>It will soon be possible to connect to Glassfish Administration Infrastructure 
+      over HTTP/S using JConsole. Watch out for the details ...</li>
+    <li>Remote Notification support is added to the HTTP/S JMX Connector recently.</li>
+  </ul>
+  <!-- #EndEditable --> 
+  <h3>&nbsp; </h3>
+  <h3>Page Contents</h3>
+  <ul>
+    <li><a href="#WebTier_Technologies">Technologies</a></li>
+    <li><a href="#UnitAcceptance_Tests">Unit/Acceptance Tests</a></li>
+    <li><a href="#Supporting_Documentation">Supporting Documentation</a></li>
+    <li><a href="#ToDo_List">ToDo List</a></li>
+  </ul>
+  <h3><a name="WebTier_Technologies"></a>Technologies</h3>
+  <br>
+  <table bgcolor="#ffff66" border="0" width="100%">
+    <tbody> 
+    <tr> 
+      <td scope="col">Several different software components including source and 
+        binary, support the GlassFish project.&nbsp; The source components are 
+        released under the <b><a href="https://glassfish.dev.java.net/public/CDDLv1.0.html">Common 
+        Development and Distribution License (CDDL) v1.0</a></b> whereas the binary 
+        components are covered under the <b> <a href="https://glassfish.dev.java.net./public/BinariesLicense.html">binary 
+        license</a></b>. You must agree to these licenses as part of installation 
+        before viewing and/or using the code. </td>
+    </tr>
+    </tbody> 
+  </table>
+  <p><!-- #BeginEditable "technology" -->The basic reason why we had to do a Glassfish-proprietary 
+    implementation of JSR 160 specification over HTTP is twofold: 
+    <ul>
+      <li>Reuse the administration port that is known to a human administrator. 
+        It is important that the administrator has to remember one single port 
+        for administration independent of the tool he uses to manage. The tool 
+        can be a command line interface, HTML Graphical user interface (GUI) or 
+        an IDE. If we had used the RMI/JRMP connector server, it would have needed 
+        its own port, whereas the HTML pages that GUI needs are served by the 
+        web-container. </li>
+      <li>HTTP allows remote administration of an appserver domain from other 
+        machines (especially outside the secure firewall) more seamlessly (than 
+        RMI, for HTTP tunneling of RMI would be needed).</li>
+    </ul>
+    <!-- #EndEditable --><br>
+  </p>
+  <!-- #BeginEditable "technology2" --> 
+  <p>It is interesting to see how Glassfish resolves the need for multiple ports 
+    of administration. At its core, the server side implementation alleviates 
+    the need for a TCP Server Socket by the virtue of a servlet that is running 
+    on the web-container port. Since we know that multiple web applications can 
+    be served by the web-container simultaneously, a special web application can 
+    act as a server side implementation of JSR 160. The following structure emerges:</p>
+  <ul>
+    <li>A servlet reads its standard input stream (decorated to be an ObjectInputStream) 
+      for Serialized Java Objects.</li>
+    <li>The client side implementation is retrofitted into the JSR 160 standard 
+      to use proprietary protocols named &quot;<i>s1ashttp</i>&quot; and &quot;<i>s1ashttps</i>&quot; 
+      to denote and search the appropriate handlers.</li>
+    <li>The client side then opens HttpURLConnection and HttpsURLConnection to 
+      write to servlet's input stream.</li>
+    <li>The connection is authenticated using HTTP Basic-Auth.</li>
+    <li>Servlet deserializes the Objects it receives on its InputStream, invokes 
+      the MBeanServer associated and returns the results in exactly the same manner 
+      that it read. The client side reads the response, deserializes it and returns 
+      the values or throws the exceptions that were thrown by MBeanServer invocation.</li>
+  </ul>
+  <!-- #EndEditable --> 
+  <p>&nbsp; </p>
+  <h3><a name="UnitAcceptance_Tests"></a>Unit/Acceptance Tests</h3>
+  <!-- #BeginEditable "unittests" --> 
+  <ul>
+    <li>Quicklook tests should be run as all the <i>asadmin</i> client commands 
+      depend on this layer.</li>
+    <li><a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-tests/devtests/admin/pe/">Admin 
+      devtests</a> should be run.</li>
+    <li>Extra care must be exercised to make sure that there are no regressions 
+      as this code is shared by other products as well.</li>
+  </ul>
+  <!-- #EndEditable --> 
+  <h3><font face="Arial, sans-serif"><font size="3"><a name="Supporting_Documentation"></a> 
+    Supporting Documentation</font></font></h3>
+  <!-- #BeginEditable "docs" --> 
+  <ul>
+    <li>The server side code is at: <a href="https://glassfish.dev.java.net/source/browse/glassfish/jmx-remote/rjmx-impl/src/java/com/sun/enterprise/admin/jmx/remote/server/">jmx-remote/rjmx-impl/.../server</a>.</li>
+    <li>The client side code is at: <a href="https://glassfish.dev.java.net/source/browse/glassfish/jmx-remote/rjmx-impl/src/java/com/sun/enterprise/admin/jmx/remote/#dirlist">jmx-remote/rjmx-impl 
+      subpackages excluding server</a>.</li>
+  </ul>
+  <!-- #EndEditable --> 
+  <p><font face="Arial, sans-serif"><font size="3"><strong>Specifications:</strong></font></font><span style="font-family: arial,sans-serif;"><br>
+    <!-- #BeginEditable "specs" -->
+    <ul>
+      <li>JSR 160</li>
+      <li>JSR 255</li>
+    </ul>
+    <!-- #EndEditable --> </span> </p>
+  <p><strong>General information:</strong></p>
+  <!-- #BeginEditable "general" --><!-- #EndEditable --> 
+  <h3><a name="ToDo_List"></a>ToDo List</h3>
+</div>
+</body><!-- #EndTemplate --></html>

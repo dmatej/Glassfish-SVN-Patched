@@ -1,0 +1,249 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>2.&nbsp;&nbsp;Class Loaders
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Developer's Guide</A>&nbsp;<br>
+<A HREF="beaaq.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="beaep.html">Next</A><br>
+            <!--startindex--><A NAME="beade"></A><b>Chapter&nbsp;2</b><h1>Class Loaders</h1>
+<p>Understanding Application Server <A NAME="indexterm-23"></A>class loaders can help you determine where and how you can position
+supporting JAR and resource files for your modules and applications.</p>
+<p>In a Java Virtual Machine (JVM), the class loaders dynamically load
+a specific Java class file needed for resolving a dependency. For example,
+when an instance of <tt>java.util.Enumeration</tt> needs to be created,
+one of the class loaders loads the relevant class into the environment. This
+section includes the following topics:</p>
+<ul><li><p><A HREF="beade.html#beadf">The Class Loader Hierarchy</A></p>
+</li>
+<li><p><A HREF="beade.html#beadg">Class Loader Universes</A></p>
+</li>
+<li><p><A HREF="beade.html#gatej">Application-Specific Class Loading</A></p>
+</li>
+<li><p><A HREF="beade.html#beadh">Circumventing Class Loader Isolation</A></p>
+</li>
+</ul>
+<A NAME="beadf"></A><h2>The Class Loader Hierarchy</h2>
+<A NAME="indexterm-24"></A><p>Class loaders in the Application Server runtime follow a hierarchy that is
+illustrated in the following figure and fully described in <A HREF="beade.html#fvxzq">Table 2-1</A>.</p>
+<A NAME="fvyfa"></A><p><b>Figure 2-1 </b>Class loader runtime hierarchy</p>
+<IMG src="figures/dgdeploy2.gif" class="figure"  alt="Figure shows the class loader runtime hierarchy." title="Figure shows the class loader runtime hierarchy."><A NAME="fvxzq"></A><p><b>Table 2-1 </b>Sun Java System Application Server Class
+Loaders</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Classloader</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><A NAME="indexterm-25"></A>Bootstrap</p></td><td><p>The Bootstrap Classloader loads all the JDK classes. It is parent to
+the System Classloader.</p></td></tr>
+<tr><td><p><A NAME="indexterm-26"></A>System</p></td><td><p>The System Classloader loads the JVM classes. It is parent to the Common
+Classloader. It is created based on the <A NAME="indexterm-27"></A><tt>system-classpath</tt> attribute of the <A NAME="indexterm-28"></A><tt>java-config</tt> element in the <A NAME="indexterm-29"></A><tt>domain.xml</tt> file. See <A HREF="http://docs.sun.com/app/docs/doc/819-3661">"java-config" in <i>Sun Java System Application Server Enterprise Edition 9.0 2006Q1
+Administration Reference</i></A>.</p></td></tr>
+<tr><td><p><A NAME="indexterm-30"></A>Common</p></td><td><p>The Common Classloader loads classes in the <i>domain-dir</i><A NAME="indexterm-31"></A><A NAME="indexterm-32"></A><tt>/lib/classes</tt> directory, followed by JAR and
+ZIP files in the <i>domain-dir</i><tt>/lib</tt> directory. It is parent
+to the MBean Classloader and the Shared Chain Classloader. No special classpath
+settings are required. The existence of these directories is optional; if
+they don't exist, the Common Classloader is not created.</p></td></tr>
+<tr><td><p><A NAME="indexterm-33"></A>MBean</p></td><td><p>The MBean Classloader loads the MBean implementation classes. See <A HREF="gbdzi.html#gbfcp">MBean Class Loading</A>.</p></td></tr>
+<tr><td><p>Shared Chain</p></td><td><p><A NAME="indexterm-34"></A><A NAME="indexterm-35"></A><A NAME="indexterm-36"></A><A NAME="indexterm-37"></A><A NAME="indexterm-38"></A><A NAME="indexterm-39"></A><A NAME="indexterm-40"></A>The Shared Chain Classloader loads most of the core Application Server classes.
+It is parent to the Connector Classloader. Classes specified by the <tt>classpath-prefix</tt>, <tt>server-classpath</tt>, and <tt>classpath-suffix</tt> attributes of the <tt>java-config</tt> element
+in the <tt>domain.xml</tt> file are added to this class loader.
+The environment classpath is included if <tt>env-classpath-ignored="false"</tt> is set in the <tt>java-config</tt> element. </p></td></tr>
+<tr><td><p><A NAME="indexterm-41"></A>Connector</p></td><td><p>The Connector Classloader is a single class loader instance that loads
+individually deployed connector modules, which are shared across all applications.
+It is parent to the LifeCycleModule Classloader and the Application Classloader.</p></td></tr>
+<tr><td><p><A NAME="indexterm-42"></A>LifeCycleModule</p></td><td><p>The LifeCycleModule Classloader is the parent class loader for lifecycle
+modules. Each lifecycle module's classpath is used to construct its
+own class loader.</p></td></tr>
+<tr><td><p><A NAME="indexterm-43"></A>Application</p></td><td><p>The Application Classloader consists of all libraries specified in the
+directory pointed to by the <tt>library-directory</tt> element in
+the <tt>application.xml</tt> deployment descriptor. One instance
+of this class loader is present in each class loader universe. It is parent
+to the EJB Classloader.</p><p>Application libraries are included in the Application Classloader if
+the <tt>--libraries</tt> option is used during deployment.
+For more information, see <A HREF="beade.html#gatej">Application-Specific Class Loading</A>.</p></td></tr>
+<tr><td><p><A NAME="indexterm-44"></A>EJB</p></td><td><p>The EJB Classloader loads the enabled EJB classes in a specific enabled
+EJB module or Java EE application. One instance of this class loader is present
+in each class loader universe. The EJB Classloader is created with a list
+of URLs that point to the locations of the classes it needs to load. It is
+parent to the Web Classloader.</p></td></tr>
+<tr><td><p><A NAME="indexterm-45"></A>Web</p></td><td><p>The Web Classloader loads the servlets and other classes in a specific
+enabled web module or Java EE application. One instance of this class loader
+is present in each class loader universe. The Web Classloader is created with
+a list of URLs that point to the locations of the classes it needs to load.
+It is parent to the JSP Engine Classloader.</p></td></tr>
+<tr><td><p><A NAME="indexterm-46"></A>JSP Engine</p></td><td><p>The JSP Engine Classloader loads compiled JSP classes of enabled JSP
+files. One instance of this class loader is present in each class loader universe.
+The JSP Engine Classloader is created with a list of URLs that point to the
+locations of the classes it needs to load.</p></td></tr>
+</table><p><A NAME="indexterm-47"></A>Note that this is not a Java inheritance hierarchy, but a delegation
+hierarchy. In the delegation design, a class loader delegates classloading
+to its parent before attempting to load a class itself. A class loader parent
+can be either the System Classloader or another custom class loader. If the
+parent classloader can't load a class, the classloader attempts to load the
+class itself. In effect, a class loader is responsible for loading only the
+classes not available to the parent. Classes loaded by a classloader higher
+in the hierarchy cannot refer to classes available lower in the hierarchy.</p>
+<p><A NAME="indexterm-48"></A><A NAME="indexterm-49"></A><A NAME="indexterm-50"></A>The Servlet specification recommends that the Web Classloader
+look in the local class loader before delegating to its parent. You can make
+the Web Classloader follow the delegation inversion model in the Servlet specification
+by setting <tt>delegate="false"</tt> in the <tt>class-loader</tt> element of the <tt>sun-web.xml</tt> file. It's
+safe to do this only for a web module that does not interact with any other
+modules. For details, see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"class-loader" in <i>Sun Java
+System Application Server Enterprise Edition 9.0 2006Q1 Application Deployment
+Guide</i></A>.</p>
+<p>The default value is <tt>delegate="true"</tt>, which causes
+the Web Classloader to delegate in the same manner as the other class loaders.
+You must use <tt>delegate="true"</tt> for a web application that
+accesses EJB components or that acts as a web service client or endpoint.
+For details about <tt>sun-web.xml</tt>, see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"The sun-web.xml File" in <i>Sun Java System Application Server Enterprise Edition 9.0 2006Q1
+Application Deployment Guide</i></A>.</p>
+<A NAME="beadg"></A><h2>Class Loader Universes</h2>
+<A NAME="indexterm-51"></A><A NAME="indexterm-52"></A><p>Access to components within applications and modules installed on the
+server occurs within the context of isolated class loader universes, each
+of which has its own Application, EJB, Web, and JSP Engine Classloaders.</p>
+<ul><li><p><b>Application Universe:</b> Each
+Java EE application has its own class loader universe, which loads the classes
+in all the modules in the application.</p>
+</li>
+<li><p><b>Individually Deployed Module Universe:</b> Each individually deployed EJB JAR, web WAR, or lifecycle module
+has its own class loader universe, which loads the classes in the module.</p>
+</li>
+</ul>
+<p><hr size="1" noshade><p><b>Note - </b>A resource such as a file that is accessed by a servlet, JSP,
+or EJB component must be in one of the following locations:</p>
+<ul><li><p>A directory pointed to by the <tt>--libraries</tt> option
+used during deployment.</p>
+</li>
+<li><p>A directory pointed to by the <tt>library-directory</tt> element
+in the <tt>application.xml</tt> deployment descriptor.</p>
+</li>
+<li><p>A directory pointed to by the class loader's classpath.
+For example, the web class loader's classpath includes these directories:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre><i>module-name</i>/WEB-INF/classes
+<i>module-name</i>/WEB-INF/lib</pre>
+</td></table><br></li>
+</ul>
+<hr size="1" noshade></p><p><hr size="1" noshade><p><b>Note - </b>In iPlanet Application Server 6.<i>x</i>, individually
+deployed modules shared the same class loader. In subsequent Application Server versions,
+each individually deployed module has its own class loader universe.</p>
+<hr size="1" noshade></p><A NAME="gatej"></A><h2>Application-Specific Class Loading</h2>
+<p>You can specify application-specific library classes during deployment
+in one of the following ways:</p>
+<ul><li><p>Use the Admin Console. Open the Applications component, then
+go to the page for the type of application or module. Type the path in the
+Libraries field. For details, see the <A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Enterprise Edition 9.0 2006Q1
+Administration Guide</i></A>.</p>
+</li>
+<li><p>Use the <tt>asadmin deploy</tt> command with the <tt>--libraries</tt> option. For details, see the <i>Sun Java System Application Server Enterprise Edition
+9.0 2006Q1 Reference Manual</i>.</p>
+</li>
+</ul>
+<p>Application libraries are included in the Application Classloader. Paths
+to libraries can be relative or optional. A relative path is relative to <i>domain-dir</i><tt>/lib/applibs</tt>. If the path is absolute, the path must be accessible
+to the domain administration server (DAS). The Application Server automatically
+synchronizes these libraries to all remote cluster instances.</p>
+<p>If multiple applications or modules refer to the same libraries, classes
+in those libraries are automatically shared. This can reduce the memory footprint
+and allow sharing of static information. However, applications or modules
+using application-specific libraries are not portable. Other ways to make
+libraries available are described in <A HREF="beade.html#beadh">Circumventing Class Loader Isolation</A>.</p>
+<p>For general information about deployment, see the <A HREF="http://docs.sun.com/app/docs/doc/819-3660"><i>Sun Java System Application Server Enterprise Edition 9.0 2006Q1
+Application Deployment Guide</i></A>.</p>
+<A NAME="beadh"></A><h2>Circumventing Class Loader Isolation</h2>
+<p>Since each application or individually deployed module <A NAME="indexterm-53"></A><A NAME="indexterm-54"></A>class loader universe is isolated, an application or module cannot
+load classes from another application or module. This prevents two similarly
+named classes in different applications from interfering with each other.</p>
+<p>To circumvent this limitation for <A NAME="indexterm-55"></A>libraries, <A NAME="indexterm-56"></A>utility classes, or individually deployed modules accessed by
+more than one application, you can include the relevant path to the required
+classes in one of these ways:</p>
+<ul><li><p><A HREF="beade.html#beadi">Using the System Classloader</A></p>
+</li>
+<li><p><A HREF="beade.html#beadj">Using the Common Classloader</A></p>
+</li>
+<li><p><A HREF="beade.html#beadk">Using the Java Optional Package Mechanism</A></p>
+</li>
+<li><p><A HREF="beade.html#beadl">Packaging the Client JAR for One Application in Another Application</A></p>
+</li>
+</ul>
+<A NAME="beadi"></A><h3>Using the System Classloader</h3>
+<p>To use the <A NAME="indexterm-57"></A>System Classloader, do one of the following, then restart the
+server:</p>
+<ul><li><p>Use the Administration <A NAME="indexterm-58"></A>Console. Select the JVM Settings component under the relevant
+configuration, select the Path Settings tab, and edit the System Classpath
+field. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Enterprise Edition 9.0 2006Q1
+Administration Guide</i></A></i>.</p>
+</li>
+<li><p>Edit the <tt>system-classpath</tt> attribute of
+the <tt>java-config</tt> element in the <A NAME="indexterm-59"></A><tt>domain.xml</tt> file. For details about <tt>domain.xml</tt>, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3661"><i>Sun Java System Application Server Enterprise Edition 9.0 2006Q1
+Administration Reference</i></A></i>.</p>
+</li>
+</ul>
+<p>Using the System Classloader makes an application or module accessible
+to any other application or module across the domain.</p>
+<A NAME="beadj"></A><h3>Using the Common Classloader</h3>
+<p>To use the <A NAME="indexterm-60"></A>Common Classloader, copy the JAR and ZIP files into the <i>domain-dir</i><tt>/lib</tt> directory or copy the <tt>.class</tt> files into
+the <i>domain-dir</i><tt>/lib/classes</tt> directory, then restart the
+server.</p>
+<p>Using the Common Classloader makes an application or module accessible
+to any other application or module across the domain.</p>
+<A NAME="beadk"></A><h3>Using the Java Optional Package Mechanism</h3>
+<p>To use the <A NAME="indexterm-61"></A>Java optional package mechanism, copy the JAR and ZIP files into
+the <i>domain-dir</i><tt>/lib/ext</tt> directory, then restart the server.</p>
+<p>Using the Java optional package mechanism makes an application or module
+accessible to any other application or module across the domain. </p>
+<p>For example, this is the recommended way of adding JDBC drivers to the Application Server.
+For a list of the JDBC drivers currently supported by the Application Server, see
+the <i><i>Sun Java System Application Server Enterprise Edition 9.0 2006Q1 Release Notes</i></i>. For configurations of supported and other
+drivers, see <A HREF="http://docs.sun.com/app/docs/doc/819-3658">"Configurations for Specific JDBC Drivers" in <i>Sun Java System Application Server Enterprise Edition 9.0 2006Q1 Administration
+Guide</i></A>.</p>
+<A NAME="beadl"></A><h3>Packaging the Client JAR for One Application in Another
+Application</h3>
+<p>By packaging the <A NAME="indexterm-62"></A><A NAME="indexterm-63"></A>client JAR for one application in a second application, you allow
+an <A NAME="indexterm-64"></A>EJB or web component in the second application to call an EJB
+component in the first (dependent) application, without making either of them
+accessible to any other application or module.</p>
+<p>As an alternative for a production environment, you can have the Common
+Classloader load client JAR of the dependent application as described in <A HREF="beade.html#beadj">Using the Common Classloader</A> restart the server
+to make the dependent application accessible, and it is accessible across
+the domain.</p>
+<A NAME="fvyab"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To package the client JAR for one application in another
+application</h3>
+<h5>Steps</h5><ol><li><p><b>Deploy the dependent application.</b></p></li>
+<li><p><b>Add the dependent application's client JAR file to the calling
+application.</b></p><ul><li><p>For a calling EJB component, add the client JAR file at the
+same level as the EJB component. Then add a <tt>Class-Path</tt> entry
+to the <tt>MANIFEST.MF</tt> file of the calling EJB component. The <tt>Class-Path</tt> entry has this syntax:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>Class-Path: <i>filepath1</i>.jar <i>filepath2</i>.jar ...</pre>
+</td></table><br><p>Each <i>filepath</i> is relative to the directory
+or JAR file containing the <tt>MANIFEST.MF</tt> file. For details,
+see the Java EE specification, section 8.1.1.2, "Dependencies."</p>
+</li>
+<li><p>For a calling web component, add the client JAR file under
+the <tt>WEB-INF/</tt><A NAME="indexterm-65"></A><tt>lib</tt> directory.</p>
+</li>
+</ul>
+</li>
+<li><p><b>If you need to package the client JAR with both the EJB and web
+components, set <tt>delegate="true"</tt> in the <tt>class-loader</tt> element of the <tt>sun-web.xml</tt> file. </b></p><p>This changes the Web Classloader so it follows the standard class loader delegation
+model and delegates to its parent before attempting to load a class itself. </p>
+<p>For most applications, packaging the client JAR file with the
+calling EJB component is sufficient. You do not need to package the client
+JAR file with both the EJB and web components unless the web component is
+directly calling the EJB component in the dependent application.</p>
+</li>
+<li><p><b>Deploy the calling application.</b></p><p>The calling EJB or
+web component must specify in its <tt>sun-ejb-jar.xml</tt> or <tt>sun-web.xml</tt> file the <A NAME="indexterm-66"></A><A NAME="indexterm-67"></A>JNDI name of the EJB component in the dependent application. Using
+an <tt>ejb-link</tt> mapping does not work when the EJB component
+being called resides in another application.</p>
+</li>
+</ol>
+            <!--stopindex-->
+<br>
+<A HREF="beaaq.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="beaep.html">Next</A>
+</body>
+</html>

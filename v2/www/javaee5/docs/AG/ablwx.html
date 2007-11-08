@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>21.&nbsp;&nbsp;Automatically Restarting a Domain
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9 Administration Guide</A>&nbsp;<br>
+<A HREF="ablws.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="ablxb.html">Next</A><br>
+            <!--startindex--><A NAME="ablwx"></A><b>Chapter&nbsp;21</b><h1>Automatically Restarting a Domain</h1>
+<p>If your domain is stopped unexpectedly (for example, if you need to restart your machine),
+you can configure your system to automatically restart the domain.</p>
+<p>This Appendix contains the following topics:</p>
+<ul><li><p><A HREF="ablwx.html#ablwy">Restarting Automatically on UNIX Platforms</A></p>
+</li>
+<li><p><A HREF="ablwx.html#ablwz">Restarting Automatically on the Microsoft Windows Platform</A></p>
+</li>
+<li><p><A HREF="ablwx.html#ablxa">Security for Automatic Restarts</A></p>
+</li>
+</ul>
+<A NAME="ablwy"></A><h2>Restarting Automatically on UNIX Platforms</h2>
+<p>To restart your domain on a UNIX platform, add a line of text to the <tt>/etc/inittab</tt> file.</p>
+<p>If you use <tt>/etc/rc.local,</tt> or your system's equivalent, place a line in <tt>/etc/rc.local</tt> that calls the desired <tt>asadmin</tt> command.</p>
+<p>For example, to restart <tt>domain1</tt> for an Application Server installed
+in the <tt>opt/SUNWappserver</tt> directory, using a password file called <tt>password.txt</tt>:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>das:3:respawn:/opt/SUNWappserver/bin/asadmin start-domain --user admin 
+--passwordfile /opt/SUNWappserver/password.txt domain1</pre>
+</td></table><br><p>Put the text on one line. The first three letters are a unique designator for
+the process and can be altered.</p>
+<A NAME="ablwz"></A><h2>Restarting Automatically on the Microsoft Windows Platform</h2>
+<p>To restart automatically on Microsoft Windows, create a Windows Service. Use
+the <tt>appservService.exe</tt> and <tt>appserverAgentService.exe</tt> executable
+files shipped with the Sun Java System Application Server in conjunction with the Service
+Control command (<tt>sc.exe</tt>) provided by Microsoft.</p>
+<p>The <tt>sc.exe</tt> command comes with Windows XP and is either located
+in the <tt>C:\windows\system32</tt> directory or <tt>C:\winnt\system32</tt> directory. As of this writing, the Windows 2000 <tt>sc.exe</tt> is
+available for download at <A HREF="http:// ftp://ftp.microsoft.com/reskit/win2000/sc.zip">http:// ftp://ftp.microsoft.com/reskit/win2000/sc.zip</A>. For more information on using <tt>sc.exe</tt>, see <A HREF="http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dndllpro/html/msdn_scmslite.asp">http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dndllpro/html/msdn_scmslite.asp</A>.</p>
+<p>Use <tt>appservService.exe</tt> and <tt>appservAgentService.exe</tt> as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>C:\winnt\system32\sc.exe create <i>service-name</i> binPath= \"<i>fully-qualified-path-to-appservService.exe</i> 
+\"<i>fully-qualified-path-to-asadmin.bat start-command</i>\" 
+\"<i>fully-qualified-path-to-asadmin.bat stop-command</i>\"" 
+start= auto DisplayName= "<i>display-name</i>"</pre>
+</td></table><br><p>For example, to create a service called <tt>SunJavaSystemAppServer DOMAIN1</tt> that starts and stops the domain <tt>domain1</tt>, using a password
+file <tt>C:\Sun\AppServer\password.txt</tt>:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>C:\windows\system32\sc.exe create domain1 binPath= 
+"C:\Sun\AppServer\lib\appservService.exe \"C:\Sun\AppServer\bin\asadmin.bat 
+start-domain --user admin --passwordfile C:\Sun\AppServer\password.txt domain1\" 
+\"C:\Sun\AppServer\bin\asadmin.bat stop-domain domain1\"" start= auto 
+DisplayName= "SunJavaSystemAppServer DOMAIN1"</pre>
+</td></table><br><p><hr size="1" noshade><p><b>Note - </b>The start and stop commands entered as part of the <tt>binPath=</tt> parameter
+must have the correct syntax. To test, run the commands from the command prompt. 
+If the commands do not properly start or stop the domain, the service does not work correctly.</p>
+<hr size="1" noshade></p><p><hr size="1" noshade><p><b>Note - </b>Don't use a mixture of <tt>asadmin start</tt> and <tt>stop</tt> commands and service start and stops. Mixing the two can cause the
+server status to be out of sync. For example, the service might not show that the
+component has started even though the component is not running.  To avoid this situation,
+always use the <tt>sc.exe</tt> command to start and stop the component when
+using services.</p>
+<hr size="1" noshade></p><A NAME="ablxa"></A><h2>Security for Automatic Restarts</h2>
+<p>Handle the password and master password required when starting in one of the
+following ways:</p>
+<ul><li><p>On Microsoft Windows, configure the service to ask the user for the
+password.</p>
+<ol Type="1"><li><p>In the Services Control Panel, double-click the service you created.</p>
+</li>
+<li><p>In the Properties window, click the Log On tab.</p>
+</li>
+<li><p>Check "Allow service to interact with desktop" to prompt
+for the required passwords when starting the component.</p>
+<p>You have to log
+in to see the prompts, and entries are not echoed back as you type them.  This method
+is the most secure way to use the services option, but user interaction is required
+before the  service  becomes available.</p>
+<p>If the "interact with desktop"
+option is not set, the service stays in a "start-pending" state and appears
+to hang.  Kill the service process to recover from this state.</p>
+</li>
+</ol>
+</li>
+<li><p>On Windows or UNIX, create a domain using the <tt>--savemasterpassword=true</tt> option and create a password file to store the admin password.  When starting
+the component, use the <tt>--passwordfile</tt> option to point to the file
+that contains the password. The admin password can also be added by
+using the <tt>--password</tt> option of the <tt>asadmin start</tt> command.
+Be aware that this method is less secure because the admin password is stored in clear
+text.</p>
+<p>For example:</p>
+<ol Type="1"><li><p>Create domain with a saved master password. In this syntax, you are
+prompted for the admin password and master password:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin create-domain --adminport 4848 --adminuser admin 
+--savemasterpassword=true --instanceport 8080 domain1</pre>
+</td></table><br></li>
+<li><p>On Windows, create a service using a password file to populate the
+admin password:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>C:\windows\system32\sc.exe create domain1 binPath= 
+"C:\Sun\AppServer\lib\appservService.exe \"C:\Sun\AppServer\bin\asadmin.bat 
+start-domain --user admin --passwordfile C:\Sun\AppServer\password.txt domain1\" 
+\"C:\Sun\AppServer\bin\asadmin.bat stop-domain domain1\"" start= auto 
+DisplayName= "SJESAS_PE8.1 DOMAIN1"</pre>
+</td></table><br><p>The path to the password file <tt>password.txt</tt> is <tt>C:\Sun\AppServer\password.txt</tt>. It contains the password in the following format</p>
+<p><tt>AS_ADMIN_password=</tt><i>password</i></p>
+<p>For example,
+for a password <tt>adminadmin</tt>:</p>
+<p><tt>AS_ADMIN_password=adminadmin</tt></p>
+</li>
+<li><p>On UNIX, use the  <tt>--passwordfile</tt> option in the
+line you add to the <tt>inittab</tt> file:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>das:3:respawn:/opt/SUNWappserver/bin/asadmin start-domain --user admin 
+--passwordfile /opt/SUNWappserver/password.txt domain1</pre>
+</td></table><br><p>The path to the password file <tt>password.txt</tt> is <tt>/opt/SUNWappserver/password.txt</tt>. It contains the password in the following format</p>
+<p><tt>AS_ADMIN_password=</tt><i>password</i></p>
+<p>For example,
+for a password <tt>adminadmin</tt>:</p>
+<p><tt>AS_ADMIN_password=adminadmin</tt></p>
+</li>
+</ol>
+</li>
+<li><p>Creating a service using a password that
+is  populated from a command line option:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>C:\windows\system32\sc.exe create domain1 binPath= 
+"C:\Sun\AppServer\lib\appservService.exe \"C:\Sun\AppServer\bin\asadmin.bat 
+start-domain --user admin --password adminadmin domain1\" 
+\"C:\Sun\AppServer\bin\asadmin.bat stop-domain domain1\"" start= auto 
+DisplayName= "SJESAS_PE8.1 DOMAIN1"</pre>
+</td></table><br></li>
+</ul>
+<A NAME="gbtvx"></A><h2>Executing Local Admin CLI Commands without Admin Password</h2>
+<p>Sun Java System Application Server supports three local commands for which the administrator
+password need not be specified in clear text anymore. Instead the admin password can
+be defined as an alias in the passwordfile. The  asadmin command invokes this passwordfile
+through "--passwordfile" option. This feature is also useful when a domain or a server
+has to be automatically restarted. The commands currently supported by this feature
+are <tt>start-domain</tt>, <tt>start-appserv</tt>, and <tt>start-node-agent</tt>.</p>
+<A NAME="gbtwr"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To create the password alias</h3>
+<h5>Steps</h5><ol><li><p><b>Ensure that the domain is running.</b></p></li>
+<li><p><b>Create the alias for the admin user. To do this, from the directory where
+the domain.xml file resides (install_dir/domains/domain_dir/config by default), run
+the following asadmin command:</b></p><p><tt> create-password-alias --port
+4848 --user admin --password adminadmin --aliaspassword adminadmin adminalias</tt></p>
+</li>
+<li><p><b>Insert the alias in a passwordfile</b></p><p><tt>$cat passwordfile</tt></p>
+<p><tt>AS_ADMIN_PASSWORD=${ALIAS=adminalias}</tt></p>
+</li>
+</ol><A NAME="gbtvi"></A><h5>Example 21-1 &nbsp;&nbsp;for start-domain</h5>
+<p>Here's an example of the <tt>start-domain</tt> command used with the
+password alias.</p>
+<p><tt><b>asadmin start-domain --user admin --passwordfile passwordfile domain1 </b></tt></p>
+
+            <!--stopindex-->
+<br>
+<A HREF="ablws.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="ablxb.html">Next</A>
+</body>
+</html>

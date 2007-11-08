@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <meta name="GENERATOR"
+ content="Mozilla/4.76 [en] (X11; U; SunOS 5.8 sun4u) [Netscape]">
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8">
+  <meta name="AUTHOR" content="Rok Sribar">
+  <meta name="CREATED" content="20010729;14240000">
+  <meta name="CHANGED" content="20050410;19562300">
+  <meta name="Author" content="Satish Viswanatham">
+  <title>GlassFish Project - Load Balancer Administration </title>
+<!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+	-->
+  <style>
+	<!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-left: 0.49in; margin-bottom: 0in }
+		P.western { font-family: "Arial", sans-serif; font-size: 12pt; font-weight: medium }
+	-->
+	</style>
+  <style>
+	<!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+	-->
+	</style>
+</head>
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<div id="projecthome" class="app"><!--StartFragment --><span
+ style="font-weight: bold;"><font size="+1">GlassFish
+Project - Load Balancer Administration home page</font></span><br>
+<br>
+<a href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New
+to GlassFish</a> | <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community
+Guidelines&nbsp;</a> | <a
+ href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads
+</a>|
+<a href="https://glassfish.dev.java.net/public/faq/index.html">FAQ</a>
+|&nbsp;<a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo">How-Tos</a>
+<br>
+<p><!--StartFragment --><br>
+Welcome to the Load Balancer Administration page. This page is
+dedicated
+to discussing the Clustering and&nbsp; Load Balancer Administration
+features in
+GlassFish.
+The source code for these features is part of this cvs repository.
+</p>
+<h3>Load Balancer Administration News<br>
+</h3>
+<ul>
+  <li>Load Balancer admin team is meeting every Friday 9 a.m. (U.S Pacific Time) to talk about the status and issues. Please participate. You can check out the <a
+ href="http://wiki.glassfish.java.net/Wiki.jsp?page=LBAdminMeeting"> weekly meeting agenda and mintues. </a> . (October 06, 2006)<br></li>
+  <li>Check out Prashant's article on <a
+ href="
+http://www.sun.com/bigadmin/features/articles/configure_big_ip.html"> Setting up F5 Network's BIG-IP System </a> with Application Server. (September
+25, 2006)<br></li>
+  <li>A <a
+ href="http://blogs.sun.com/sv96363/entry/ssl_setup_of_http_load">Instructions</a> to setup SSL connection between DAS and Load Balancer, so that DAS can update loadbalancer whenever configuration is changed. This avoid manual export and copy of configuration from DAS to Load Balancer. Once this is setup, monitoring information can also be obtained from Load Balancer. (September
+07, 2006)<br>
+  </li>
+  <li>A <a
+ href="http://blogs.sun.com/sv96363/entry/installing_load_balancer_using_aps">blog</a>
+about using APS installer to setup LB plug-in is posted.
+It has less number of steps than the manual configuration of LB plug-in (August
+25, 2006)<br>
+  </li>
+  <li>A <a
+ href="http://wiki.glassfish.java.net/attach/OnePagersOrFunctionalSpecs/lb-admin-next.pdf">presentation</a>
+about clustering and steps to setup HTTP LB plug-in on Sun Web Server.
+It also covers user experience of Load Balancer administration. (August
+24, 2006)<br>
+  </li>
+</ul>
+<h3>Page Contents</h3>
+<ul>
+  <ul>
+    <li> <a href="#Overview">Overview</a></li>
+    <li> <a href="#Configuration_Model">Configuration Model</a></li>
+    <li> <a href="#CLI_commands">CLI Commands</a></li>
+    <li> <a href="#Code_walkthrough">Code Walk-through</a></li>
+    <li> <a href="#Unit_Acceptance_Tests">Unit/Acceptance Tests</a></li>
+    <li> <a href="#Supporting_Documentation">Supporting Documentation</a></li>
+    <li> <a href="#ToDo_List">ToDo List</a></li>
+  </ul>
+</ul>
+<h3>
+<a name="Overview"></a>Overview</h3>
+In order to scale for large amounts of load, it is typical to use multiple server instances in enterprise environments. Typically a load balancer is used in front of these cluster of instances. Please refer to <a href="http://docs.sun.com/app/docs/doc/819-2553">EE quick start guide </a> for more details on clustering. GlassFish does not any place special requirements on the load balancer. Any hardware or software load balancer can be used. GlassFish has documentation on configuring <a href="http://docs.sun.com/app/docs/doc/819-2555/6n4r9qo8g?a=view">Sun HTTP LB plugin </a>(works on Sun Web Server, Microsoft IIS and Apache), <a href="http://weblogs.java.net/blog/jfarcand/archive/2006/03/running_glassfi_1.tml">Apache mod_jk</a>, <a href="http://www.sun.com/products/networking/switches">Sun Secure Application Switch</a> and <a href="http://blogs.sun.com/roller/page/sv96363?entry=setting_up_big_ip_v4">F5 BIG-IP</a>.<br> <br>Sun HTTP LB plug-in has the following features:
+
+<ul>
+  <li>Sticky RR Load Balancing</li>
+  <li>Can support multiple clusters</li>
+  <li>Rapid HTTP request failover (<30 ms)</li>
+  <li>Configurable Health checking to re-enlist server</li>
+  <li>Check for dynamic changes changes to Load Balancer configuration and re-load the changes</li>
+  <li>Support for Quiescence - enables rolling web service upgrade</li>
+  <li>Automatic retry of failed requests for idempotent URLs</li>
+  <li>Configurable error pages</li>
+</ul>
+
+The following picture shows Sun HTTP LB plug-in being used in 2 cluster (4 instances on 4 hosts) configuration. <img src="cluster.jpg"> Sun HTTP LB plug-in stores its configuration in loadbalancer.xml. Instead of asking users to manually edit this loadbalancer.xml, we can generate loadbalancer.xml. This reduces chances of manual errors. In Glassfish, a load balancer configuration is a named configuration in
+the <tt>domain.xml</tt> file. Load balancer configuration can contain clusters or stand alone instances. The following command generates the loadbalancer.xml for cluster by name cluster1. <br>asadmin configure-http-lb-config --target cluster1 "C:\loadbalancer.xml". <br> <br>This command will do the following: <br>
+<ul>
+  <li>asadmin create-http-lb-config --target cluster1 cluster1-lb-config</li>
+  <li>asadmin enable-http-lb-server cluster1  (by default, all server instances are disabled in the load balancer)</li>
+  <li>asadmin enable-http-lb-application --name clusterjsp cluster1  (by default, all applications are disabled in the load balancer)</li>
+  <li>asadmin export-http-lb-config --config cluster1-lb-config "C:\loadbalancer.xml"</li>
+</ul>
+<br> The sample generated xml file can be viewed here: <a href="loadbalancer.xml">loadbalacer.xml</a>. GUI can alse be used to export the LB configuration file. From GUI select HTTP Load Balancers, select New, choose name and targets of the load balancer. You can skip step 2 screen. It is optional and click finish. To export click on the newly created load balancer, choose export tab and click on Export Now button. GUI shows the location where the loadbalancer.xml is generated. Screenshots can be viewed here - <a href="create-lb-config.jpg"> creating a load balancer configuration</a> and <a href="export-lb-config.jpg"> exporting a load balancer configuration</a>. Once this loadbalancer.xml is copied to Sun HTTP LB installation directory, this configuration is reloaded and the load balancer is ready to forward clusterjsp application requests to the cluster (cluster1).
+<br><br>  Load balancer configuration is extremely
+flexible:
+<ul>
+  <li>
+    Each load balancer configuration can have multiple load
+balancers
+associated with it, though each load balancer has only one load
+balancer configuration.</p>
+  </li>
+  <li>
+    A load balancer services only one domain, though a domain can
+have
+multiple load balancers associated with it.</p>
+  </li>
+</ul>
+ <br>
+</div>
+<div id="projecthome" class="app">
+<h3><a name="Configuration_Model"></a>The Configuration Model</h3>
+<font color="#000000">New element called&nbsp; policy and attributes
+called policy-module and weight are added.
+For </font>the complete load balancer configuration model, please<font
+ color="#000000">
+refer to </font><a
+ href="http://fisheye5.cenqua.com/browse/glassfish/admin-ee/lb-admin/dtds/sun-loadbalancer_1_2.dtd?r=1.1.1.1">sun-loadbalancer_1_2.dtd</a>
+<h3><a name="CLI_commands"></a>CLI Commands</h3>
+Please refer to <a href="lb_admin_cli_commands.htm">CLI command
+reference page</a> for the list of commands
+available
+for Load Balancer Administration.
+<h3><a name="Code_walkthrough"></a>Code-Walkthrough</h3>
+The GlassFish Load Balancer Administration code is located in <a
+ href="http://fisheye5.cenqua.com/browse/glassfish/admin-ee/lb-admin">lb-admin
+sub module</a> in the repository. The following describes all the sub
+packages
+in this module.
+<p>The <span style="text-decoration: underline;"><a
+ href="http://fisheye5.cenqua.com/browse/glassfish/admin-ee/lb-admin/src/java/com/sun/enterprise/ee/admin/lbadmin/mbeans">Mbeans</a></span>
+sub-package, contains the MBean interface and implementation to manage
+Load Balancer configuration. CLI and GUI talks to these MBeans.
+</p>
+<p><a
+ href="http://fisheye5.cenqua.com/browse/glassfish/admin-ee/lb-admin/src/java/com/sun/enterprise/ee/admin/lbadmin/reader">Reader</a>
+sub-package contains the code that reads the config elements in
+domain.xml. These class file use Reader pattern. api package contains
+the API for the readers and impl package contains the implementation.<br>
+</p>
+<p><a
+ href="http://fisheye5.cenqua.com/browse/glassfish/admin-ee/lb-admin/src/java/com/sun/enterprise/ee/admin/lbadmin/transform">Transform</a>&nbsp;
+contains the code the implements the Visitors, which visit the above
+readers and populate the elements in loadbalancer.xml. <br>
+</p>
+<p>We read information from loadbalancer.xml using schema2beans. These
+generated schema2beans are in&nbsp; <a
+ href="http://fisheye5.cenqua.com/browse/glassfish/admin-ee/lb-admin/src/java/com/sun/enterprise/ee/admin/lbadmin/beans">Beans</a>
+directory.<br>
+&nbsp;<br>
+The logic to the configuration to loadbalancer.xml is in <a
+ href="http://fisheye5.cenqua.com/browse/glassfish/admin-ee/lb-admin/src/java/com/sun/enterprise/ee/admin/lbadmin/writer">Writer</a>.
+</p>
+<h3><a name="Unit_Acceptance_Tests"></a>Unit/Acceptance Tests</h3>
+<a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Quicklook_Tests">Running
+the Quicklook</a> tests is required in this section. In addition to the
+Quicklook tests the Load Balancer Administration module has unit tests
+developed
+which need to pass prior to checking in any code. The setup for running
+unit tests is the same as the Quicklook tests. To run just the Load
+Balancer Administration unit tests do the following:
+<blockquote>Go to <a
+ href="http://fisheye5.cenqua.com/browse/glassfish/admin-ee/lb-admin">glassfish/admin-ee/lb-admin</a>
+  <br>
+ant run-all-tests <br>
+  <a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/admin/mbeanapi-impl/tests/amx-unit-tests.html?view=markup"></a></blockquote>
+This will build and run all the all the Load Balancer Administration
+unit tests including the
+tests
+in&nbsp; <a
+ href="http://fisheye5.cenqua.com/browse/glassfish/admin-ee/lb-admin/tests/com/sun/enterprise/ee/admin/lbadmin">tests/com/sun/enterprise/ee/admin/lbadmin</a>
+.<br>
+&nbsp;
+<h3><a name="Supporting_Documentation"></a>Supporting Documentation</h3>
+This section will be updated with useful documents and information
+about the Load Balancer Administration - Tutorials, Blogs and other
+useful
+links.<br>
+<ul>
+  <li><a
+ href="http://docs.sun.com/app/docs/doc/819-2555/6n4r9qo8c?a=view">Configuring
+Load Balancing and Failover in Application Server 8.1</a></li>
+  <li><a
+ href="http://wiki.glassfish.java.net/attach/OnePagersOrFunctionalSpecs/LB-onepager.txt">Load
+Balancer Administration - One Pager</a><br>
+  </li>
+</ul>
+<h3><a name="ToDo_List"></a>ToDo List</h3>
+The following is non-comprehensive list of developer friendly&nbsp;
+Load Balancer Administration ToDo features. Please email <a
+ href="mailto:dev@glassfish.dev.java.net">us</a>
+if you have questions about current implementation or would like to
+contribute towards future ToDo list.<br>
+<ul>
+<li>From GUI, we should provide feature to enable/disable applications and instances in LB.</li>
+<li>Last export time should be displayed in GUI</li>
+<li>Disable "Apply Changes Now" button, when Application Server can not communicate with LB or When is LB host information is not configured.</li>
+<li>Auto Apply should not be enabled by default.</li>
+</ul>
+<br>
+</div>
+</body>
+</html>

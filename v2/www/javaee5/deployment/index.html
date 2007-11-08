@@ -1,0 +1,469 @@
+<!DOCTYPE HTML PUBLIC "-//Tigris//DTD XHTML 1.0 Transitional//EN" "http://style.tigris.org/nonav/tigris_transitional.dtd">
+<html>
+<head>
+  <title>GlassFish Project - Deployment</title>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+<!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+	-->
+</head>
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<div id="projecthome" class="app">
+<!--StartFragment --><font size="+1"><span style="font-weight: bold;">GlassFish
+Project - Deployment home page</span></font><br>
+<br>
+&nbsp;<a
+ href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New
+to GlassFish</a> | <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community
+Guidelines&nbsp;</a> | <a
+ href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads
+</a>| <a href="https://glassfish.dev.java.net/public/faq/index.html">FAQ</a>
+|&nbsp; <a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo">How-Tos</a>
+<br>
+<br>
+<!--StartFragment --><br>
+Welcome to the Deployment page where you can find an overview of
+deployment's design, implementation, and testing as well as general
+discussion about the component.
+<p>Deployment is the process by which administrators and developers
+place applications into service within the app server (as in &#8220;The
+deployment of my new application worked!&#8221;). Within the GlassFish
+project the term &#8220;deployment&#8221; also refers to the code itself that
+accomplishes this (as in &#8220;I am starting to read through the deployment
+code.&#8221;) You will see further distinctions as you explore the process
+and the code in more detail. </p>
+<p>The main purpose of this page is to give you an overall view of how
+the deployment component is built and to let you know where in the
+codebase to look for the details of a particular part of deployment. We
+hope to add more information over time but hope that this gives you a
+good start if you are interested in learning about deployment and its
+implementation.</p>
+<h3>Deployment News</h3>
+<ul>
+  <li>
+    <p>Some of the latest work on deployment has involved annotations
+and dependency injection, new features in Java EE 5. </p>
+  </li>
+  <li>
+    <p>Beginning with the GlassFish implementation, remote tools such
+as user-written deployers do not depend on the large appserv-rt.jar
+library. Instead, you can run such tools with only the smaller
+appserv-deployment-client.jar, appserv-ext.jar, javaee.jar, and
+jmx-remote-opt.jar library jar files.</p>
+  </li>
+  <li>
+    <p>Because the GlassFish project implements Java EE 5, users can
+build and deploy applications that have <b><i>no </i></b>deployment
+descriptors!</p>
+  </li>
+</ul>
+<h3>Page Contents</h3>
+<ul>
+  <li><a href="#Technologies">Technologies</a>
+    <ul>
+      <li><a href="#0.0.0.0.Deployment%20Architecture%7Coutline">Deployment
+Architecture</a> </li>
+      <li><a href="#0.0.0.0.Deploying%20Applications%7Coutline">Deploying
+Applications</a> </li>
+      <li><a
+ href="#0.0.0.0.Packaging%20Applications%20for%20Deployment%7Coutline">Packaging
+Applications for Deployment</a> </li>
+      <li><a href="#0.0.0.0.JSR-88%20Implementation%7Coutline">JSR-88
+Implementation</a> </li>
+      <li><a href="#0.0.0.0.Back-end%20Deployment%20Phases%7Coutline">Back-end
+Deployment Phases</a> </li>
+      <li><a href="#0.0.0.0.Organization%20of%20the%20Code%7Coutline">Organization
+of the Deployment Code</a> </li>
+    </ul>
+  </li>
+  <li><a href="#UnitAcceptance_Tests">Unit/Acceptance Tests</a> </li>
+  <li><a href="#Supporting_Documentation">Supporting Documentation</a> </li>
+  <li><a
+ href="http://wiki.glassfish.java.net/Wiki.jsp?page=GFv2DeploymentPlan">Glassfish
+v2 Deployment Plan</a> </li>
+</ul>
+<h3><a name="Technologies"></a>Technologies</h3>
+<table bgcolor="#ffff66" border="0" cellpadding="2" cellspacing="2"
+ width="100%">
+  <tbody>
+    <tr>
+      <td>
+      <p>The majority of the <span class="twikiLink">GlassFish</span>
+code is available under the <b><a
+ href="https://glassfish.dev.java.net/public/CDDLv1.0.html">Common
+Development and Distribution License (CDDL) v1.0</a></b>&nbsp; The
+following <a
+ href="http://wiki.java.net/bin/view/Projects/GlassFishCodeDependencies">page</a>
+contains details about the components in <span class="twikiLink">GlassFish</span>
+and the licenses under which they are covered. </p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<h4><a name="0.0.0.0.Deployment Architecture|outline"></a>Deployment
+Architecture</h4>
+<p>The deployment infrastructure has a (possibly) remote client-side
+part and a server-side part, each of which contains or works with
+additional components. [Click on areas of the diagram to jump to
+related descriptions on this page.]</p>
+<p><span id="Frame1"
+ style="border: medium none ; padding: 0in; background: rgb(255, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial; float: left; width: 7.24in; height: 3.83in;"
+ dir="ltr">
+<p style="margin-top: 0.08in; margin-bottom: 0.08in;"><map name="MAP1">
+<area shape="POLY"
+ coords="224,46,303,46,305,139,464,141,464,187,304,187,305,352,222,355,222,47,302,48,224,46"
+ href="#RemoteJMXMessaging" target="_self" alt="RemoteJMXMessaging">
+<area shape="RECT" coords="53,315,222,355" href="#DeploymentFacility"
+ target="_self" alt="DeploymentFacility">
+<area shape="RECT" coords="52,154,223,197" href="#DeploymentFacility"
+ target="_self" alt="DeploymentFacility">
+<area shape="RECT" coords="54,78,223,118" href="#DeploymentFacility"
+ target="_self" alt="DeploymentFacility">
+<area shape="RECT" coords="553,43,677,229" href="#ServerSide"
+ target="_self" alt="Server-side Implementation">
+<area shape="RECT" coords="464,43,553,229" href="#DeploymentService"
+ target="_self" alt="DeploymentService">
+<area shape="RECT" coords="367,43,464,141" href="#Autodeployment"
+ target="_self" alt="Auto-deployer">
+<area shape="RECT" coords="367,45,367,141" nohref="">
+<area shape="POLY"
+ coords="53,272,53,355,32,353,32,250,202,250,202,273,53,273,53,272"
+ href="#JSR88" target="_self" alt="JSR-88 API">
+<area shape="RECT" coords="36,203,207,250" href="#UserWrittenDeployer"
+ target="_self" alt="User-written deployer">
+<area shape="POLY"
+ coords="54,193,32,194,32,125,205,125,204,153,52,153,54,195,54,193"
+ href="#AdminGUI" target="_self" alt="Admin GUI">
+<area shape="POLY"
+ coords="55,115,32,116,32,45,203,45,202,78,54,77,54,115,55,115"
+ href="#AdminCLI" target="_self" alt="Admin CLI">
+</map>
+<img src="overview.jpg" name="graphics3" usemap="#MAP1" align="left"
+ border="0" width="100%"><br clear="left">
+<font size="2"><i>Illustration 1: Architectural Overview of Deployment</i></font></p>
+</span><br clear="left">
+<br>
+<br>
+</p>
+<p><a name="RemoteJMXMessaging"></a><a name="DeploymentFacility"></a>
+Each deployment client communicates with the server using remote JMX
+messages. The DeploymentFacility component provides an easy-to-use
+internal API for performing common deployment tasks, relieving the
+clients themselves from the details of exchanging JMX messaging with
+the back-end. All deployment clients use the DeploymentFacility.</p>
+<p><a name="ServerSide"></a><a name="DeploymentService"></a>On the
+server side, the admin infrastructure receives and interprets the
+incoming JMX messages and invokes the appropriate method on the
+DeploymentService (an interface). The PEDeploymentService class
+implements this interface and responds to each incoming JMX message
+that related to deployment. It executes the <a
+ href="#0.0.0.0.Back-end%20Deployment%20Phases%7Coutline">phases</a>
+that should run for each operation, delegating work to the deployer
+class tailored to the particular type of module involved in the
+operation (enterprise app, web app, app client, etc.).</p>
+<h4><a name="0.0.0.0.Deploying Applications|outline"></a>Deploying
+Applications</h4>
+<p>Users can deploy applications in several ways.</p>
+<ol>
+  <li>
+    <p><a name="AdminCLI"></a>Admin CLI &#8211; Several commands available
+through the command line interface are related to deployment.<br>
+    <br>
+deploy &#8211; deploys a new application or redeploys a previously-deployed
+application<br>
+undeploy &#8211; removes a previously-deployed application from the app server<br>
+get-client-stubs &#8211; retrieves the client stubs jar file that was
+generated during a previous deployment<br>
+deploydir &#8211; deploys a new application contained in a directory rather
+than an archive file (see <a
+ href="#0.0.0.0.Packaging%20Applications%20for%20Deployment%7Coutline">Packaging</a>
+below)</p>
+  </li>
+  <li>
+    <p><a name="AdminGUI"></a><span id="AdminGUITypesOfAppsFrame"
+ style="border: medium none ; padding: 0in; background: rgb(255, 255, 255) none repeat scroll 0% 50%; -moz-background-clip: initial; -moz-background-inline-policy: initial; -moz-background-origin: initial; float: right; width: 2.54in; height: 2.75in;"
+ dir="ltr">
+    <p style="margin-top: 0.08in; margin-bottom: 0.08in;"><img
+ src="GUITypesOfApps.jpg" name="graphics2" align="left" border="0"
+ height="224" width="236"><br clear="left">
+    <font size="2"><i>Illustration 2: Admin GUI Types of Applications</i></font></p>
+    </span>Admin GUI &#8211; The graphical admin console provides GUI access
+to the same basic deployment functions. For each of the different types
+of applications (see the <a href="#AdminGUITypesOfAppsFrame%7Cframe">illustration</a>)
+the GUI has a screen that lists all apps of that type and also provides
+buttons to deploy or undeploy apps of that type. </p>
+  </li>
+  <li>
+    <p><a name="UserWrittenDeployer"></a>User-written deployer &#8211; JSR-88
+defines a standard API that tools can use to deploy applications to any
+app server that complies with the standard (as the GlassFish project
+does).</p>
+  </li>
+  <li>
+    <p><a name="Autodeployment"></a>Auto-deployment &#8211; Users may copy an
+application's archive file into a known directory which the app server
+monitors. The app server deploys any new file deposited there, and
+undeploys any application that was previously auto-deployed if the user
+removes the file from this directory. The auto-deploy directory is <i>install-path</i>/domains/<i>domain-name</i>/autodeploy.</p>
+  </li>
+  <li>
+    <p>Custom ant tasks (not illustrated) &#8211; The app server also
+includes several custom ant tasks. Two of these &#8211;
+sun&nbsp;appserv&nbsp;deploy and sun&nbsp;appserv&nbsp;undeploy &#8211; allow
+developers to deploy and undeploy applications. See the Developer's
+Guide &gt;&gt; Developing and Deploying Applications &gt;&gt;
+Assembling and Deploying Applications &gt;&gt; asant Assembly and
+Deployment Tool for more information.</p>
+  </li>
+</ol>
+<h4><a name="0.0.0.0.Packaging Applications for Deployment|outline"></a><a
+ name="0.0.0.0.Packaging Applications for Deployment|outline"></a>
+Packaging Applications for Deployment</h4>
+<p>The Java EE and other related specifications describe how archives
+should be assembled (such as an .ear for an enterprise app, a .war for
+a Web app, etc.) for deployment to compliant app servers. The GlassFish
+project honors those formats but also provides for <b>directory
+deployment</b>, in which users prepare a properly-structured directory
+which organizes the files that would otherwise be inside an archive.
+Although an expanded directory like this is more cumbersome to move
+from one place to another, using directory deployment might be a
+particularly good approach for certain situations, particularly IDEs.
+Using directory deployment saves the IDE from having to construct the
+archive file from the input files, and the app server itself does not
+need to go through the step of expanding the archive file into its own
+directory.</p>
+<p>One way to understand the directory structure that GlassFish expects
+is to deploy an application you have packaged as an archive and then
+look at the directory the app server creates for that application in
+the app server's <i>install-path</i>/domains/<i>domain-name</i>/applications
+directory. You will find subdirectories for j2ee-apps (containing a
+directory for each deployed enterprise app) and j2ee-modules
+(containing a directory for each deployed Web app). (Note that you
+should not change the contents of these directories or otherwise depend
+on their structure. The layout and contents of these directories is
+private to the GlassFish implementation and could change between
+releases.)</p>
+<p style="font-style: normal;">The general structure of these
+directories is fairly straightforward. The directory should contain
+whatever files you would otherwise have included in the archive &#8211; in
+the correct subdirectory &#8211; with the exception that any embedded
+archives (such as a Web app or an application client embedded inside an
+.ear file) must themselves be expanded. The name of the subdirectory
+for such sub-modules should be the file name of the archive with the
+&#8220;.&#8221; that separates the name from the type replaced with an underscore
+(&#8220;_&#8221;). For example, suppose an enterprise app contains an embedded Web
+app that would normally be packaged inside the .ear archive as
+myWebApp.war. A directory structure that could be used for directory
+deployment might look something like this:</p>
+<pre><i>top-level-directory</i>
+    META-INF
+        application.xml
+        Manifest.xml
+    myWebApp_war
+        index.jsp
+        META-INF
+            Manifest.mf
+        WEB-INF
+            classes
+                MyClass.class</pre>
+<p style="margin-bottom: 0in;"> <br>
+</p>
+<p>Note how the contents of the myWebApp_war subdirectory mirrors the
+contents you would expect to find in the corresponding Web application
+archive file.</p>
+<p>If you prepare a directory according to these naming conventions,
+you can use it for directory deployment.</p>
+<h4><a name="JSR88"></a><a name="0.0.0.0.JSR-88 Implementation|outline"></a>
+JSR-88 Implementation</h4>
+<p>The GlassFish project includes an implementation of the JSR-88 API.
+This allows any tool that complies with JSR-88 to deploy applications
+to and undeploy applications from the app server. </p>
+<p>The JSR-88 implementation in the GlassFish project exposes several
+classes to the tool writer. One of the main ones is the
+SunDeploymentManager which implements the JSR-88 DeploymentManager
+interface. It bridges the JSR-88 API to the DeploymentFacility shared
+by all GlassFish project deployment clients. If you are interested in
+exploring the JSR-88 implementation, this class is a good place to
+start. It and other classes related to the JSR-88 implementation reside
+in the appserv-core/src/java/com/sun/enterprise/deployapi branch of the
+source code repository.</p>
+<h4><a name="0.0.0.0.Back-end Deployment Phases|outline"></a><a
+ name="0.0.0.0.Back-end Deployment Phases|outline"></a> Back-end
+Deployment Phases</h4>
+<p>On the server side, deployment is implemented as a sequence of
+phases. Each phase tracks the changes it makes in the app server's data
+structures and directories so it can roll back those changes in case of
+an error during deployment. The classes in <br>
+<br>
+appserv-core/src/java/com/sun/enterprise/deployment/phasing <br>
+<br>
+implement this phased behavior. This table gives an overview of the
+phases and their general responsibilities. Consult the source code for
+further details.</p>
+<table border="1" cellpadding="4" cellspacing="3" width="100%">
+  <col width="49*"> <col width="207*"> <thead> <tr valign="top">
+    <th bgcolor="#00cccc" width="19%">
+    <p>Phase</p>
+    </th>
+    <th bgcolor="#00cccc" width="81%">
+    <p>Purpose</p>
+    </th>
+  </tr>
+  </thead> <tbody>
+    <tr valign="top">
+      <td bgcolor="#ccffff" width="19%">
+      <p>Configuration</p>
+      </td>
+      <td bgcolor="#ccffff" width="81%">
+      <p>J2EECPhase &#8211; Delegates to appropriate *Deployer classes to
+handle the specific actions for each type of application. This includes
+any necessary code generation, for example to support web services.</p>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td bgcolor="#ccffff" width="19%">
+      <p>Associate</p>
+      </td>
+      <td bgcolor="#ccffff" width="81%">
+      <p>Associates the application being deployed with the target
+server where it is to actually run.</p>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td bgcolor="#ccffff" width="19%">
+      <p>Pre-resource creation</p>
+      </td>
+      <td bgcolor="#ccffff" width="81%">
+      <p>Creates resources needed before resource adapter(s)
+initialization.</p>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td bgcolor="#ccffff" width="19%">
+      <p>RA start</p>
+      </td>
+      <td bgcolor="#ccffff" width="81%">
+      <p>Starts resource adapter(s).</p>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td bgcolor="#ccffff" width="19%">
+      <p>Post-resource creation</p>
+      </td>
+      <td bgcolor="#ccffff" width="81%">
+      <p>Creates resources needed after resource adapter(s)
+initialization.</p>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td bgcolor="#ccffff" width="19%">
+      <p>Start</p>
+      </td>
+      <td bgcolor="#ccffff" width="81%">
+      <p>Starts the application, loading it into the app server so it
+is ready to handle incoming requests.</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<h4><a name="0.0.0.0.Organization of the Code|outline"></a>Organization
+of the Code</h4>
+<p>The deployment code resides in these general areas:</p>
+<table border="1" cellpadding="4" cellspacing="3" width="100%">
+  <col width="108*"> <col width="148*"> <thead> <tr valign="top">
+    <th bgcolor="#00cccc" width="42%">
+    <p>Area in the GlassFish project repository</p>
+    </th>
+    <th bgcolor="#00cccc" width="58%">
+    <p>Deployment content</p>
+    </th>
+  </tr>
+  </thead> <tbody>
+    <tr valign="top">
+      <td bgcolor="#ccffff" width="42%">
+      <p><a
+ href="http://glassfish.dev.java.net/source/browse/glassfish/appserv-commons/src/java/com/sun/enterprise/deployment">appserv-commons/src/java/com/sun/enterprise/deployment/...</a></p>
+      </td>
+      <td bgcolor="#ccffff" width="58%">
+      <p>Elements of deployment shared across more than one component</p>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td bgcolor="#ccffff" width="42%">
+      <p><a
+ href="http://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/deployapi">appserv-core/src/java/com/sun/enterprise/deployapi</a></p>
+      </td>
+      <td bgcolor="#ccffff" width="58%">
+      <p>The implementation of the JSR-88 API, a specification for a
+deployment API that is independent of particular app server
+implementations</p>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td bgcolor="#ccffff" width="42%">
+      <p><a
+ href="http://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/deployment/client">appserv-core/src/java/com/sun/enterprise/deployment/client/...</a></p>
+      </td>
+      <td bgcolor="#ccffff" width="58%">
+      <p>Client-side implementation of the deployment architecture</p>
+      </td>
+    </tr>
+    <tr valign="top">
+      <td bgcolor="#ccffff" width="42%">
+      <p><a
+ href="http://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/deployment">appserv-core/src/java/com/sun/enterprise/deployment/...</a></p>
+      </td>
+      <td bgcolor="#ccffff" width="58%">
+      <p>Server-side implementation of the deployment architecture</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<h4>Unit/Acceptance Tests</h4>
+<p>In addition to running the project-wide QuickLook tests required
+before any check-in, you should also run the deployment unit tests.
+Consult the README file in <a
+ href="http://glassfish.dev.java.net/source/browse/glassfish/appserv-tests/devtests/deployment">appserv-tests/devtests/deployment</a>
+for complete instructions for preparing and executing the unit tests.</p>
+<h3><a name="Supporting_Documentation"></a><font
+ face="Arial, sans-serif"><font size="3">Supporting Documentation</font></font></h3>
+This section contains pointers to useful documents and information.<br>
+<p><b>F.A.Q. about deploying applications in GlassFish</b></p>
+&nbsp; <a
+ href="https://glassfish.dev.java.net/javaee5/deployment/deployment_faq.html">Deployment
+FAQ</a><br>
+<p><strong><font face="Arial, sans-serif">Specifications: </font></strong>
+</p>
+<p><a href="http://www.jcp.org/en/jsr/detail?id=244">JSR-244: Java&#8482;
+Platform, Enterprise Edition 5 (Java EE 5) Specification</a><a
+ href="http://www.jcp.org/en/jsr/detail?id=88"><br>
+JSR-88: J2EE Application Deployment</a><br>
+<a href="http://www.jcp.org/en/jsr/detail?id=250">JSR-250: Common
+Annotations for the Java&#8482; Platform</a></p>
+<p><strong>General information:</strong></p>
+<p><strong></strong>Lots of good general information on deployment can
+be found in the following documents.<br>
+</p>
+<p><a href="http://glassfish.dev.java.net/javaee5/docs/ADG/toc.html">Application
+Deployment Guide</a> &#8211; describes how to deploy applications<br>
+<a href="http://glassfish.dev.java.net/javaee5/docs/AG/toc.html">Administration
+Guide</a> &#8211; see especially the <i>Deploying Applications</i> section</p>
+<p>You can find the entire documentation set at the GlassFish project <a
+ href="http://glassfish.dev.java.net/javaee5/docs/DocsIndex.html">documentation
+page</a>.<br>
+</p>
+<p><b>Presentations/Articles:</b></p>
+<p>Presentation talked about jndi name mapping <a
+ href="file:///home/hzhang/files/workspaces/sjsas91/glassfish/www/javaee5/ejb/compdependencies_xmlforum_nov15.pdf">Component
+Dependencies and Ease Of Development Improvements in Java EE 5/App
+Server 9</a></p>
+<ul>
+</ul>
+</div>
+</body>
+</html>

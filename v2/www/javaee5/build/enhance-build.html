@@ -1,0 +1,69 @@
+<html>
+<head>
+<title>Ideas to Enhance GlassFish Build</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
+
+<body bgcolor="#FFFFFF" text="#000000">
+<h2 align="center">Ideas to Enhance GlassFish Build</h2>
+<h6 align="left"><a href="#toc">Table of Contents</a></h6>
+<h3>1 Introduction<a name="intro"></a></h3>
+<h3>2 Ideas<a name="ideas"></a></h3>
+<h4>2.1 Idea1 --- Feb 2006<a name="idea1"></a></h4>
+<p>One of the main strengths of today's build is it is developer friendly once 
+  the base build from the top-level module is done. Once the user does maven checkout 
+  bootstrap-all build configure-runtime, a runtime (appserver domain) that uses 
+  the build is ready to go. </p>
+<p>The top level build is shown in the diagram below.</p>
+<p><img src="images/gf-build-jan-2006.jpg" width="767" height="1012"></p>
+<p>Here is the most frequent scenario after the user does the build and runtime 
+  configuration <i>once</i>. </p>
+<ol>
+  <li>I want to change my code in module foo.</li>
+  <li>cd glassfish/foo</li>
+  <li>change code</li>
+  <li>maven build</li>
+</ol>
+<p>After that, user just has to restart the GlassFish Server by doing asadmin 
+  stop-domain and start-domain.</p>
+<p>So far so good.</p>
+<p><b>A problem perceived by many developers is the update of the mammoth appserv-rt.jar 
+  (which contains most of the appserver's runtime classes/interfaces) during the 
+  build process.</b></p>
+<p>The idea to improve here is to do the following:</p>
+<ul>
+  <li>Build the sources from top-level once. The build process is separated from 
+    the assembly process. Thus the top level build will first call build on all 
+    the modules. Then, the assembly will be done explicitly.</li>
+  <li>Each module's build used to do the assembly in the same &quot;build&quot; 
+    target. This will change.</li>
+  <li>Each module's build only builds the classes in &lt;module-dir&gt;/build 
+    and copies those classes to ${GF_ROOT}/lib/classes</li>
+  <li>The top-level call to the build will be something like &quot;build-but-don't-copy&quot; 
+    so that the top-level build never creates any classes in lib/classes.</li>
+  <li>During the configure-rutime goal, we only add &quot;${com.sun.aas.installRoot}/lib/classes&quot; 
+    to the classpath-prefix of appserver VM. This way, classes built by the developers 
+    take the precedence over the other versions of the same classes in say appserv-rt.jar.</li>
+</ul>
+<p><img src="images/gf-build-after-jan-2006.jpg" width="767" height="1012"></p>
+<p>Advantages:</p>
+<ul>
+  <li>No change to the nightly build. In general, no major change.</li>
+  <li>If the developer wants to be absolutely sure, they just do &quot;maven clean 
+    clobber bootstrap build configure-runtime&quot; from glassfish/bootstrap. 
+    When the developer does this, it will <i>not</i> generate the temporary lib/classes 
+    directory and hence it will mimic a clean product build.</li>
+</ul>
+<p>Disadvantages:</p>
+<ul>
+  <li>A slight disadvantage is copying of classes to two locations upon building 
+    it from separate modules. But that's OK and safe, I think.</li>
+</ul>
+<h4>TOC<a name="toc"></a></h4>
+<p><a href="#intro">Introduction</a><br>
+  <a href="#ideas">Ideas</a><br>
+  <a href="#idea1">Idea1</a></p>
+<p>$Author: km105526 $<br>
+  $Id: enhance-build.html,v 1.1 2006/02/04 02:06:06 km105526 Exp $</p>
+</body>
+</html>

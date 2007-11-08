@@ -1,0 +1,427 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>5.&nbsp;&nbsp;Migrating from EJB 2.0 to EJB 3.0
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Upgrade and Migration
+Guide</A>&nbsp;<br>
+<A HREF="abmbz.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="abmcz.html">Next</A><br>
+            <!--startindex--><A NAME="abmcj"></A><b>Chapter&nbsp;5</b><h1>Migrating from EJB 2.0 to EJB 3.0</h1>
+<p>Although the EJB 1.1 and EJB 2.0 specification will continue to be supported
+in Sun Java System Application Server 9, the use of the EJB 3.0 architecture is recommended to leverage
+its enhanced capabilities.</p>
+<p>To migrate a number of modifications are required, including within the source
+code of components.</p>
+<p>The modifications required to migrate from EJB 2.0 to EJB 3.0 are related to
+the differences between EJB 2.0 and EJB 2.0. These differences are described in the
+following topics.</p>
+<ul><li><p><A HREF="abmcj.html#gbtmc">Metadata Annotations</A></p>
+</li>
+<li><p><A HREF="abmcj.html#abmck">EJB Query Language</A></p>
+</li>
+<li><p><A HREF="abmcj.html#abmcl">Local Interfaces</A></p>
+</li>
+<li><p><A HREF="abmcj.html#abmcm">EJB 3.0 Entity Model </A></p>
+</li>
+<li><p><A HREF="abmcj.html#abmcq">Migrating EJB Client Applications</A></p>
+</li>
+<li><p><A HREF="abmcj.html#abmcv">Migrating CMP Entity EJBs</A></p>
+</li>
+</ul>
+<A NAME="gbtmc"></A><h2>Metadata Annotations</h2>
+<p>An annotation consists of the <tt>@</tt> sign preceding the annotation
+type, followed by a parenthesized list of element-value pairs. The EJB 3.0 Specification
+defines a variety of annotation types such as those that specify a bean's type (<tt>@Stateless, @Stateful, @MessageDriven, @Entity</tt>), whether a bean is remotely
+or locally accessible (<tt>@Remote, @Local</tt>), transaction attributes
+(<tt>@TransactionAttribute</tt>), and security and method permissions (<tt>@MethodPermissions, @Unchecked, @SecurityRoles</tt>). </p>
+<p>Annotations for the EJB 3.0 annotation types generate interfaces required by
+the class as well as references to objects in the environment.  In many cases, defaults
+can be used instead of explicit metadata annotation elements. In these cases, a developer
+doesn't have to completely specify a metadata annotation to obtain the same result
+as if the annotation was fully specified. For example, by default, an entity bean
+(annotated by <tt>@Entity</tt>) has a default entity type of <tt>CMP</tt>, indicating that it has container-managed persistence. These defaults can
+make annotating enterprise beans very simple. In fact, in many cases, defaults are
+assumed when an annotation is not specified. In those cases, the defaults represent
+the most common specifications. For example, container-managed transaction demarcation
+(where the container, as opposed to the bean, manages the commitment or rollback of
+a unit of work to a database) is assumed for an enterprise bean if no annotation is
+specified. These defaults illustrate the "coding by exception" approach that guides
+EJB 3.0 technology. The intent is to simplify things for developers by forcing them
+to code things only where defaults are not adequate. </p>
+<A NAME="abmck"></A><h2>EJB Query Language</h2>
+<A NAME="indexterm-19"></A><p>EJB 3.0 has made enhancements to EJB QL to provide additional functionality.
+Addition of projection, explicit inner and outer join operations, bulk update and
+delete, subqueries, and group-by. Addition of a dynamic query capability and support
+for native SQL queries.</p>
+<p>The EJB 2.0 specification introduces a query language called <i>EJB
+Query Language</i>, or <i>EJB QL</i> to correct many
+of these inconsistencies and shortcomings. EJB QL is based on SQL92. It defines query
+methods, in the form of both finder and select methods, specifically for entity beans
+with container-managed persistence. EJB QL's principal advantage over SQL is
+its portability across EJB containers and its ability to navigate entity bean relationships.</p>
+<p>The EJB 1.1 specification left the manner and language for forming and expressing
+queries for finder methods to each individual application server. While many application
+server vendors let developers form queries using SQL, others use their own proprietary
+language specific to their particular application server product. This mixture of
+query implementations causes inconsistencies between application servers.</p>
+<A NAME="abmcl"></A><h2>Local Interfaces</h2>
+<p>Under the EJB 3.0 API, the business interface of an enterprise bean is a plain
+Java interface, not an <tt>EJBObject</tt> or <tt>EJBLocalObject</tt> interface.
+However, usage of the earlier  <tt>EJBObject</tt> and <tt>EJBLocalObject</tt>interface types continues to be supported under EJB 3.0.</p>
+<p>With EJB 2.0, session beans and entity beans can expose their methods to clients
+through two types of interfaces: a <i>remote interface</i> and
+a <i>local interface</i>. The 2.0 remote interface is identical
+to the remote interface used in the 1.1 architecture, whereby, the bean inherits from
+RMI, exposes its methods across the network tier, and has the same capability to interact
+with distributed clients.</p>
+<p>However, the local interfaces for session and entity beans provide support for
+lightweight access from EJBs that are local clients; that is, clients co-located in
+the same EJB container. The EJB 2.0 specification further requires that EJBs that
+use local interfaces be within the same application. That is, the deployment descriptors
+for an application's EJBs using local interfaces must be contained within one <tt>ejb-jar</tt> file<tt>.</tt></p>
+<p>In the EJB 1.1 architecture, session and entity beans have one type of interface,
+a remote interface, through which they can be accessed by clients and other application
+components. The remote interface is designed such that a bean instance has remote
+capabilities; the bean inherits from RMI and can interact with distributed clients
+across the network.</p>
+<p>The local interface is a standard Java interface. It does not inherit from RMI.
+An enterprise bean uses the local interface to expose its methods to other beans that
+reside within the same container. By using a local interface, a bean may be more tightly
+coupled with its clients and may be directly accessed without the overhead of a remote
+method call.</p>
+<p>In addition, local interfaces permit values to be passed between beans with
+pass by reference semantics. Because you are now passing a reference to an object,
+rather than the object itself, this reduces the overhead incurred when passing objects
+with large amounts of data, resulting in a performance gain.</p>
+<A NAME="abmcm"></A><h2>EJB 3.0 Entity Model </h2>
+<A NAME="indexterm-20"></A><p>To create the session bean, a developer only needs to code a bean class and
+annotate it with appropriate metadata. A session bean need not home interface, remote
+interface, or deployment descriptor to code. All that is required in addition to the
+bean class is a business interface, and that can be generated by default. The bean
+class is coded as a plain old Java object (POJO) rather than a class that implements
+an interface such as <tt>javax.ejb.SessionBean</tt>. Because the bean class
+does not implement an interface such as javax.ejb.SessionBean, a developer no longer
+has to implement methods such as <tt>ejbRemove, ejbActivate</tt>, or <tt>ejbPassivate</tt> in the bean class. However a developer can implement any or
+all of these callbacks if they are needed. If the bean class implements one of these
+callbacks, the EJB container calls it just as it does for EJB 2.1 technology.</p>
+<p>The new Java Persistence API in EJB 3.0 defines a new single model for implementing
+persistence in the Java platform. In EJB 3.0 technology, an entity bean class is a
+concrete class. It's no longer an abstract class. </p>
+<p>The EJB 2.0 specification uses the CMP model. It expanded the existing CMP to
+allow multiple entity beans to have relationships among themselves. This is referred
+to as <i>Container-Managed Relationships</i> (CMR). The container
+manages the relationships and the referential integrity of the relationships.According
+to the EJB 2.0 specification, the implementation class for an entity bean that uses
+CMP is now defined as an abstract class.</p>
+<p>The EJB 1.1 specification presented a more limited CMP model. The EJB 1.1 architecture
+limited CMP to data access that is independent of the database or resource manager
+type. It allowed you to expose only an entity bean's instance state through
+its remote interface; there is no means to expose bean relationships. The EJB 1.1
+version of CMP depends on mapping the instance variables of an entity bean class to
+the data items representing their state in the database or resource manager. The CMP
+instance fields are specified in the deployment descriptor, and when the bean is deployed,
+the deployer uses tools to generate code that implements the mapping of the instance
+fields to the data items.</p>
+<p>The following topics are discussed in this section:</p>
+<ul><li><p><A HREF="abmcj.html#abmcn">Defining Persistent Fields</A></p>
+</li>
+<li><p><A HREF="abmcj.html#abmco">Dependency Injection</A></p>
+</li>
+<li><p><A HREF="abmcj.html#abmcp">Message-Driven Beans</A></p>
+</li>
+</ul>
+<A NAME="abmcn"></A><h3>Defining Persistent Fields</h3>
+<p>In EJB 3.0, <tt>get</tt> and <tt>set</tt> methods are concrete,
+not abstract. In addition, these methods can include logic, something that was not
+possible previously. This is useful for actions such as validating fields. Another
+improvement is that access to the persistence fields is not limited to the get and
+set methods. The persistence fields are also accessible through a bean class's business
+methods. One restriction however is that in EJB 3.0 technology, only methods within
+the class can access persistence fields -- in other words, you cannot expose the instance
+variables outside of the class.</p>
+<p>The EJB 2.0 specification lets you designate an entity bean's instance
+variables as CMP fields or CMR fields. You define these fields in the deployment descriptor.
+CMP fields are marked with the element <tt>cmp-field</tt>, while container-managed
+relationship fields are marked with the element <tt>cmr-field</tt>.</p>
+<A NAME="abmco"></A><h3>Dependency Injection</h3>
+<A NAME="indexterm-21"></A><p> Previous versions of the EJB architecture forced the developer into complying
+with the requirements of the EJB container in terms of providing classes and implementing
+interfaces. By comparison, In EJB 3.0, dependency injection reflects the fact that
+the bean tells the EJB container what it needs, and then container satisfies those
+needs.</p>
+<A NAME="abmcp"></A><h3>Message-Driven Beans</h3>
+<A NAME="indexterm-22"></A><p>EJB 3.0 enhances message-driven beans with support for interceptors. </p>
+<p>Message-driven beans were a new feature introduced by the EJB 2.0 architecture.
+Message-driven beans are transaction-aware components that process asynchronous messages
+delivered through the Java Message Service (JMS).</p>
+<A NAME="abmcq"></A><h2>Migrating EJB Client Applications</h2>
+<A NAME="indexterm-23"></A><p>Existing EJB 2.1 and earlier applications are supported to run unchanged in
+EJB 3.0 containers. All EJB 3.0 implementations support EJB 1.1, EJB 2.0, and EJB
+2.1 deployment descriptors for applications written to earlier versions. </p>
+<ul><li><p><A HREF="abmcj.html#abmcr">Clients written to the new EJB 3.0 API</A></p>
+</li>
+<li><p><A HREF="abmcj.html#gbtof">Declaring EJBs in the JNDI Context</A></p>
+</li>
+<li><p><A HREF="abmcj.html#gbtos">Recap on Using EJB JNDI References</A></p>
+</li>
+</ul>
+<A NAME="abmcr"></A><h3>Clients written to the new EJB 3.0 API</h3>
+<A NAME="indexterm-24"></A><p>A client written to the EJB 3.0 API may be a client of a component written to
+the EJB 2.1 or earlier API. Such clients may access components written to the EJB
+3.0 APIs and components written to the earlier EJB APIs within the same transaction.
+Such clients access components written to the earlier EJB APIs using the EJB 2.1 client
+view home and component interfaces. The <tt>EJB</tt> annotation may be used
+for the injection of home interfaces into components that are clients of beans written
+to the earlier EJB client view.</p>
+<A NAME="gbtof"></A><h3>Declaring EJBs in the JNDI Context</h3>
+<A NAME="indexterm-25"></A><p>In Application Server 9, EJBs are systematically mapped to the JNDI sub-context <i>ejb/</i>. If you attribute the JNDI name <i>Account</i> to
+an EJB, theApplication Server 9 automatically creates the reference <i>ejb/Account</i> in the global JNDI context. The clients of this EJB therefore have
+to look up <i>ejb/Account</i> to retrieve the corresponding home
+interface.</p>
+<p>Let us examine the code for a servlet method deployed in Sun ONE Application
+Server 6.x.</p>
+<p>The servlet presented here calls on a stateful session bean, BankTeller, mapped
+to the root of the JNDI context. The method whose code you are considering is responsible
+for retrieving the home interface of the EJB, to enable a BankTeller object to be
+instantiated, and a remote interface for this object to be retrieved, so that you
+can make business method calls to this component.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>/**
+   * Look up the BankTellerHome interface using JNDI.
+   */
+private BankTellerHome lookupBankTellerHome(Context ctx)
+      throws NamingException
+{
+    try
+    {
+      Object home = (BankTellerHome) ctx.lookup("ejb/BankTeller");
+      return (BankTellerHome) PortableRemoteObject.narrow(home, 
+	              BankTellerHome.class);
+    }
+    catch (NamingException ne)
+    {
+      log("lookupBankTellerHome: unable to lookup BankTellerHome" +
+          "with JNDI name 'BankTeller': " + ne.getMessage() );
+      throw ne;
+    }
+}</pre>
+</td></table><br><p>As the code already uses <tt>ejb/BankTeller</tt> as an argument for
+the lookup, there is no need for modifying the code to be deployed on Application Server 9.</p>
+<A NAME="gbtos"></A><h3>Recap on Using EJB JNDI References</h3>
+<p>This section summarizes the considerations when using EJB JNDI references. Where
+noted, the consideration details are specific to a particular source application server
+platform.</p>
+<A NAME="gbtok"></A><h4>Placing EJB References in the JNDI Context</h4>
+<p>It is only necessary to modify the name of the EJB references in the JNDI context
+mentioned above (moving these references from the JNDI context root to the sub-context <i>ejb/</i>) when the EJBs are mapped to the root of the JNDI context in the
+existing WebLogic application.</p>
+<p>If these EJBs are already mapped to the JNDI sub-context <tt>ejb/</tt> in
+the existing application, no modification is required.</p>
+<p>However, when configuring the JNDI names of EJBs in the deployment descriptor
+within the Sun Java Studio IDE, it is important to avoid including the prefix <tt>ejb/</tt> in the JNDI name of an EJB. Remember that these EJB references are <i>automatically</i> placed in the JNDI <tt>ejb/</tt> sub-context
+with Application Server 9. So, if an EJB is given to the JNDI name <i>BankTeller</i> in its deployment descriptor, the reference to this EJB will be translated
+byApplication Server 9 into <tt>ejb/BankTeller</tt>, and this is the JNDI
+name that client components of this EJB must use when carrying out a lookup.</p>
+<A NAME="gbtnt"></A><h4>Global JNDI context versus local JNDI context</h4>
+<p>Using the global JNDI context to obtain EJB references is a perfectly valid,
+feasible approach with Application Server 9. Nonetheless, it is preferable to stay as
+close as possible to the J2EE specification, and retrieve EJB references through the
+local JNDI context of EJB client applications. When using the local JNDI context,
+you must first declare EJB resource references in the deployment descriptor of the
+client part (<tt>web.xml</tt> for a Web application, <tt>ejb-jar.xml</tt> for an EJB component).</p>
+<A NAME="abmcv"></A><h2>Migrating CMP Entity EJBs</h2>
+<p>With the introduction of EJB 3.0, you can use JDO (in addition to CMP 2.0),
+which is an architecture that provides a standard way to transparently persist plain
+Java objects. </p>
+<p>EJB 2.x and EJB 3.0 uses CMP 2.0. In order to migrate a CMP 1.1 bean to CMP
+2.0, we first need to verify if a particular bean can be migrated. The steps to perform
+this verification are as follows.</p>
+<A NAME="gaejd"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To Verify if a Bean Can be Migrated</h3>
+<h5>Steps</h5><ol><li><p><b>From the <tt>ejb-jar.xml</tt> file, go to the <tt>&lt;cmp-fields></tt> names and check if the optional tag <tt>&lt;prim-key-field></tt> is
+present in the <tt>ejb-jar.xml file</tt> and has an indicated value. If
+it does, go to next step.</b></p><p>Look for the <tt>&lt;prim-key-class></tt> field
+name in the <tt>ejb-jar.xml</tt>, get the class name and get the <tt>public instance variables</tt> declared in the class. Now see if the signature
+(name and case) of these variables matches with the <tt>&lt;cmp-field></tt> names
+above. Segregate the ones that are found. In these segregated fields, check if some
+of them start with an upper case letter. If any of them do, then migration cannot
+be performed.</p>
+</li>
+<li><p><b>Look into the bean class source code and obtain the java types of all
+the <tt>&lt;cmp-field></tt> variables.</b></p></li>
+<li><p><b>Change all the <tt>&lt;cmp-field></tt> names to lowercase and
+construct accessors from them. For example if the original field name is <tt>Name</tt> and its java type is <tt>String</tt>, the accessor method
+signature will be:</b></p><p><tt>Public void setName(String name)Public String
+getName()</tt></p>
+</li>
+<li><p><b>Compare these accessor method signatures with the method signatures in
+the bean class. If there is an exact match found, migration is not possible.</b></p></li>
+<li><p><b>Get the custom finder methods signatures and their corresponding SQLs.
+Check if there is a "Join' or "Outer join' or an "OrderBy'
+in the SQL, if yes, we cannot migrate, as EJB QL does not support "joins', "Outer
+join' and "OrderBy'.</b></p></li>
+<li><p><b>Any CMP 1.1 finder, which used <tt>java.util.Enumeration,</tt> must
+now use <tt>java.util.Collection</tt>. Change your code to reflect this.
+CMP2.0 finders cannot return j<tt>ava.util.Enumeration</tt>.</b></p><p><A HREF="abmcj.html#abmcw">Migrating the Bean Class</A> explains how to perform the actual
+migration process.</p>
+</li>
+</ol><A NAME="abmcw"></A><h3>Migrating the Bean Class</h3>
+<A NAME="indexterm-26"></A><p>This section describes the steps required to migrate the bean class to Sun Java System Application Server 9.</p>
+<A NAME="gaejw"></A><h4><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To Migrate the Bean Class</h4>
+<h5>Steps</h5><ol><li><p><b>Prepend the bean class declaration with the keyword <tt>abstract</tt>. </b></p><p>For example if the bean class declaration was:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>Public class CabinBean implements EntityBean // before modification</pre>
+</td></table><br><p>change it to:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>abstract Public class CabinBean implements EntityBean // after 
+modification</pre>
+</td></table><br></li>
+<li><p><b>Prefix the accessors with the keyword <tt>abstract</tt>.</b></p></li>
+<li><p><b>Insert all the accessors after modification into the source(.java) file
+of the bean class at class level.</b></p></li>
+<li><p><b>Comment out all the <tt>cmp</tt> fields in the source file of
+the bean class.</b></p></li>
+<li><p><b>Construct protected instance variable declarations from the <tt>cmp-field</tt> names in lowercase and insert them at the class level.</b></p></li>
+<li><p><b>Read up all the <tt>ejbCreate()</tt> method bodies (there could
+be more than one <tt>ejbCreate</tt>). </b></p><p>Look for the pattern "<tt>&lt;cmp-field>=</tt><i>some value or local variable</i>',
+and replace it with the expression "abstract mutator method name (<i>same value or local variable</i>)'. </p>
+<p>For example, if the <tt>ejbCreate</tt> body before migration is:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>public MyPK ejbCreate(int id, String name) {
+   this.id = 10*id;
+   Name = name;   //1
+   return null;
+}</pre>
+</td></table><br><p>Change it to:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>public MyPK ejbCreate(int id, String name) {
+   setId(10*id);
+   setName(name);   //1
+   return null;
+}</pre>
+</td></table><br><p>Note that the method signature of the abstract accessor in <tt>//1</tt> is
+as per the Camel Case convention mandated by the EJB 2.0 specification. Also, the
+keyword "<i>this</i>' may or may not be present in
+the original source, but it <i>must be removed</i> from the modified
+source file.</p>
+</li>
+<li><p><b>Initialize all the protected variables declared in the <tt>ejbPostCreate()</tt>methods in step 5. </b></p><p>The protected variables will be equal in
+number with the <tt>ejbCreate()</tt> methods. This initialization will be
+done by inserting the initialization code in the following manner:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>protected String name;  //from step 5
+protected int id;  //from step 5
+public void ejbPostCreate(int id, String name) {
+   name = getName();    /*abstract accessor*/ //inserted in this step
+   id  = getId();        /*abstract accessor*/ //inserted in this step
+}</pre>
+</td></table><br></li>
+<li><p><b>Inside the <tt>ejbLoad</tt> method, set the protected variables
+to the beans' database state. </b></p><p>To do so, insert the following lines
+of code:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>public void ejbLoad() {
+   name = getName();    // inserted in this step
+   id = getId();        // inserted in this step
+   ...                  // existing code
+}</pre>
+</td></table><br></li>
+<li><p><b>Similarly, update the beans' state inside <tt>ejbStore()</tt>so
+that its database state gets updated. </b></p><p>But remember, you are not allowed
+to update the setters that correspond to the primary key outside the <tt>ejbCreate()</tt>, so do not include them inside this method. Insert the following lines
+of code:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>public void ejbStore() {
+    setName(name);       //inserted in this step
+    setId(id);           //Do not insert this if it is a part 
+                           of the primary key
+    ...                  //already present code
+}</pre>
+</td></table><br></li>
+<li><p><b>Replace all occurrences of any <tt>&lt;cmp-field></tt> variable
+names with the equivalent protected variable name (as declared in step 5).</b></p><p>If you do not migrate the bean, at the minimum you need to insert the <tt>&lt;cmp-version>1.</tt><i>x</i><tt>&lt;/cmp-version></tt> tag inside the <tt>ejb-jar.xml</tt> file at the appropriate place,
+so that the unmigrated bean still works on Sun Java System Application Server 9.</p>
+</li>
+</ol><A NAME="abmcx"></A><h3>Migration of ejb-jar.xml</h3>
+<A NAME="indexterm-27"></A><A NAME="indexterm-28"></A><p>To migrate the file <tt>ejb-jar.xml</tt> to Sun Java System Application Server 9, perform
+the following steps:</p>
+<A NAME="gaejl"></A><h4><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To Migrate the EJB Deployment Descriptor</h4>
+<p>To migrate the EJB deployment descriptor file, <tt>ejb-jar.xml</tt>,
+edit the file and make the following changes.</p>
+<h5>Steps</h5><ol><li><p><b>Convert all <tt>&lt;cmp-fields></tt> to lowercase.</b></p></li>
+<li><p><b>Insert the tag <tt>&lt;abstract-schema-name></tt> after the <tt>&lt;reentrant></tt> tag. </b></p><p>The schema name will be the name of the
+bean as in the <tt>&lt; ejb-name></tt> tag, prefixed with "ias_".</p>
+</li>
+<li><p><b>Insert the following tags after the <tt>&lt;primkey-field></tt> tag:</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;security-identity>
+   &lt;use-caller-identity/>
+&lt;/security-identity></pre>
+</td></table><br></li>
+<li><p><b>Use the SQL obtained above to construct the EJB QL from SQL.</b></p></li>
+<li><p><b>Insert the <tt>&lt;query></tt> tag and all its nested child
+tags with all the required information just after the <tt>&lt;security-identity></tt> tag.</b></p></li>
+</ol><A NAME="abmcy"></A><h3>Custom Finder Methods</h3>
+<A NAME="indexterm-29"></A><p>The custom finder methods are the <tt>findBy</tt>... methods (other
+than the default <tt>findByPrimaryKey</tt> method), which can be defined
+in the home interface of an entity bean. Since the EJB 1.1 specification does not
+stipulate a standard for defining the logic of these finder methods, EJB server vendors
+are free to choose their implementations. As a result, the procedures used to define
+the methods vary considerably between the different implementations chosen by vendors.</p>
+<p>Sun ONE Application Server 6.x uses standard SQL to specify the finder logic.</p>
+<p>Information concerning the definition of this finder method is stored in the
+enterprise bean's persistence descriptor (<tt>Account-ias-cmp.xml)</tt> as
+follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;bean-property>
+  &lt;property>
+    &lt;name>findOrderedAccountsForCustomerSQL&lt;/name>
+    &lt;type>java.lang.String&lt;/type>
+    &lt;value>
+       SELECT BRANCH_CODE,ACC_NO FROM ACCOUNT where CUST_NO = ?
+    &lt;/value>
+    &lt;delimiter>,&lt;/delimiter>
+  &lt;/property>
+&lt;/bean-property>
+&lt;bean-property>
+  &lt;property>
+    &lt;name>findOrderedAccountsForCustomerParms&lt;/name>
+    &lt;type>java.lang.Vector&lt;/type>
+    &lt;value>CustNo&lt;/value>
+    &lt;delimiter>,&lt;/delimiter>
+  &lt;/property>
+&lt;/bean-property></pre>
+</td></table><br><p>Each <tt>findXXX</tt> finder method therefore has two corresponding
+entries in the deployment descriptor (SQL code for the query, and the associated parameters).</p>
+<p>In Sun Java System Application Server 9 the custom finder method logic is also declarative, but
+is based on the EJB query language EJB QL.</p>
+<p>The EJB-QL language cannot be used on its own. It has to be specified inside
+the file <tt>ejb-jar.xml</tt>, in the <tt>&lt;ejb-ql></tt> tag.
+This tag is inside the <tt>&lt;query></tt> tag, which defines a query (finder
+or select method) inside an EJB. The EJB container can transform each query into the
+implementation of the finder or select method. Here's an example of an <tt>&lt;ejb-ql></tt> tag:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;ejb-jar>   
+  &lt;enterprise-beans>     
+    &lt;entity>
+      &lt;ejb-name>hotelEJB&lt;/ejb-name>       
+      ...       
+      &lt;abstract-schema-name>TMBankSchemaName&lt;/abstract-schema-name>       
+      &lt;cmp-field>
+      ...       
+      &lt;query>         
+        &lt;query-method>           
+          &lt;method-name>findByCity&lt;/method-name> 
+            &lt;method-params>             
+              &lt;method-param>java.lang.String&lt;/method-param> 
+            &lt;/method-params>         
+        &lt;/query-method>         
+        &lt;ejb-ql>           
+          &lt;![CDATA[SELECT OBJECT(t) FROM TMBankSchemaName 
+                                    AS t WHERE t.city = ?1]]&gt;
+        &lt;/ejb-ql>       
+      &lt;/query>     
+    &lt;/entity>   
+    ...   
+  &lt;/enterprise-beans> ... 
+&lt;/ejb-jar></pre>
+</td></table><br>
+            <!--stopindex-->
+<br>
+<A HREF="abmbz.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="abmcz.html">Next</A>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>17.&nbsp;&nbsp;Using the Java Message Service
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Developer's Guide</A>&nbsp;<br>
+<A HREF="beanr.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="beaow.html">Next</A><br>
+            <!--startindex--><A NAME="beaob"></A><b>Chapter&nbsp;17</b><h1>Using the Java Message Service</h1>
+<p><A NAME="indexterm-708"></A><A NAME="indexterm-709"></A>This chapter describes how to use the Java&#153; Message
+Service (JMS) API. The Sun Java&#153; System Application Server has
+a fully integrated JMS provider: the Sun Java&#153; System Message Queue software.</p>
+<p>For general information about the JMS API, see the <i>Java EE
+5 Tutorial</i> at <A HREF="http://java.sun.com/j2ee/1.4/docs/tutorial/doc/JMS.html#wp84181">http://java.sun.com/j2ee/1.4/docs/tutorial/doc/JMS.html#wp84181</A>.</p>
+<p>For detailed information about JMS concepts and JMS support in the Application Server,
+see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+<p>This chapter contains the following sections:</p>
+<ul><li><p><A HREF="beaob.html#beaoc">The JMS Provider</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaod">Message Queue Resource Adapter</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaoe">Administration of the JMS Service</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaol">Restarting the JMS Client After JMS Configuration</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaom">JMS Connection Features</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaoq">Transactions and Non-Persistent Messages</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaor">ConnectionFactory Authentication</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaos">Message Queue varhome Directory</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaot">Delivering SOAP Messages Using the JMS API</A></p>
+</li>
+</ul>
+<A NAME="beaoc"></A><h2>The JMS Provider</h2>
+<A NAME="indexterm-710"></A><A NAME="indexterm-711"></A><p>The Application Server support for JMS messaging, in general, and for message-driven
+beans, in particular, requires messaging middleware that implements the JMS
+specification: a JMS provider. The Application Server uses the Sun Java System Message Queue software
+as its native JMS provider. The Message Queue software is tightly integrated
+into theApplication Server, providing transparent JMS messaging support. This support
+is known within Application Server as the <i>JMS Service</i>. The
+JMS Service requires only minimal administration.</p>
+<p>The relationship of the Message Queue software to the Application Server can
+be one of these types: <tt>EMBEDDED</tt>, <tt>LOCAL</tt>,
+or <tt>REMOTE</tt>. The effects of these choices on the Message Queue broker
+life cycle are as follows:</p>
+<ul><li><p>If the type is <tt>EMBEDDED</tt>, the Application Server and Message Queue software
+run in the same JVM. The Message Queue broker is started and stopped automatically
+by the Application Server. This is the default. </p>
+<p>Lazy initialization starts the
+default embedded broker on the first access of JMS services rather than at Application Server startup.</p>
+</li>
+<li><p>If the type is <tt>LOCAL</tt>, the Message Queue broker
+starts when the Application Server starts.</p>
+</li>
+<li><p>If the type is <tt>REMOTE</tt>, the Message Queue broker
+must be started separately. For information about starting the broker, see
+the <A HREF="http://docs.sun.com/app/docs/doc/819-4467"><i>Sun Java System Message Queue 3 2006Q2 Administration Guide</i></A>.</p>
+</li>
+</ul>
+<p>For more information about setting the type and the default JMS host,
+see <A HREF="beaob.html#beaof">Configuring the JMS Service</A>.</p>
+<p>For more information about the Message Queue software, refer to
+the documentation at <A HREF="http://docs.sun.com/db/prod/s1.s1msgqu#hic">http://docs.sun.com/db/prod/s1.s1msgqu#hic</A>.</p>
+<p>For general information about the JMS API, see the JMS web page at <A HREF="http://java.sun.com/products/jms/index.html">http://java.sun.com/products/jms/index.html</A>.</p>
+<A NAME="beaod"></A><h2>Message Queue Resource Adapter</h2>
+<p>The <A NAME="indexterm-712"></A>Sun Java System Message Queue software is integrated into the Application Server using
+a resource adapter that is compliant with the Connector 1.5 specification.
+The module name of this system resource adapter is <A NAME="indexterm-713"></A><A NAME="indexterm-714"></A><tt>jmsra</tt>. Every JMS resource is converted to a
+corresponding connector resource of this resource adapter as follows:</p>
+<ul><li><p><b>Connection Factory:</b> A connector
+connection pool with a <tt>max-pool-size</tt> of <tt>250</tt> and
+a corresponding connector resource.</p>
+</li>
+<li><p><b>Destination (Topic or Queue):</b> A
+connector administered object.</p>
+</li>
+</ul>
+<p>You use connector configuration tools to manage JMS resources. For more
+information, see <A HREF="bealk.html#bealk">Chapter&nbsp;11, Developing Connectors</A>.</p>
+<A NAME="beaoe"></A><h2>Administration of the JMS Service</h2>
+<p>To configure the <A NAME="indexterm-715"></A>JMS Service and prepare JMS resources for use in applications
+deployed to the Application Server, you must perform these tasks:</p>
+<ul><li><p><A HREF="beaob.html#beaof">Configuring the JMS Service</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaog">The Default JMS Host</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaoh">Creating JMS Hosts</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaoi">Checking Whether the JMS Provider Is Running</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaoj">Creating Physical Destinations</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaok">Creating JMS Resources: Destinations and Connection Factories</A></p>
+</li>
+</ul>
+<p>For more information about JMS administration tasks, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i> and
+the <A HREF="http://docs.sun.com/app/docs/doc/819-4467"><i>Sun Java System Message Queue 3 2006Q2 Administration Guide</i></A>.</p>
+<A NAME="beaof"></A><h3>Configuring the JMS Service</h3>
+<p>The JMS Service configuration is available to all inbound and outbound
+connections pertaining to the Application Server.
+You can edit the <A NAME="indexterm-716"></A>JMS Service configuration in the following ways:</p>
+<ul><li><p>To edit the JMS Service configuration using the <A NAME="indexterm-717"></A>Admin Console, open the Java Message Service component under
+the relevant configuration. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+</li>
+<li><p>To configure the JMS service, use the <A NAME="indexterm-718"></A><tt>asadmin set</tt> command to set the following attributes:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.jms-service.init-timeout-in-seconds = 60
+server.jms-service.type = EMBEDDED
+server.jms-service.start-args =
+server.jms-service.default-jms-host = default_JMS_host
+server.jms-service.reconnect-interval-in-seconds = 5
+server.jms-service.reconnect-attempts = 3
+server.jms-service.reconnect-enabled = true
+server.jms-service.addresslist-behavior = random
+server.jms-service.addresslist-iterations = 3
+server.jms-service.mq-scheme = mq
+server.jms-service.mq-service = jms</pre>
+</td></table><br><p>You can also set these properties:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.jms-service.property.instance-name = imqbroker
+server.jms-service.property.instance-name-suffix =
+server.jms-service.property.append-version = false</pre>
+</td></table><br><p>You can use the <A NAME="indexterm-719"></A><tt>asadmin get</tt> command to list all the JMS service
+attributes and properties. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A></i>.</p>
+</li>
+</ul>
+<p>You can override the JMS Service configuration using JMS connection
+factory settings. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+<p><hr size="1" noshade><p><b>Note - </b>The Application Server must be restarted
+after configuration of the JMS Service.</p>
+<hr size="1" noshade></p><A NAME="beaog"></A><h3>The Default JMS Host</h3>
+<p>A <A NAME="indexterm-720"></A>JMS host refers to a Sun Java System Message Queue broker.
+A default JMS host for the JMS service is provided, named <tt>default_JMS_host</tt>. This is the JMS host that the Application Server uses for performing
+all Message Queue broker administrative operations, such as creating and
+deleting JMS destinations.</p>
+<p>If you have created a multi-broker cluster in the Message Queue software,
+delete the default JMS host, then add the Message Queue cluster's
+brokers as JMS hosts. In this case, the default JMS host becomes the first
+JMS host in the <A NAME="indexterm-721"></A><tt>AddressList</tt>. (For more information about the <tt>AddressList</tt>, see <A HREF="beaob.html#beaom">JMS Connection Features</A>. You can also explicitly set the default JMS host; see <A HREF="beaob.html#beaof">Configuring the JMS Service</A>.</p>
+<p>When the Application Server uses a Message Queue cluster, it executes Message Queue specific
+commands on the default JMS host. For example, when a physical destination
+is created for a Message Queue cluster of three brokers, the command to
+create the physical destination is executed on the default JMS host, but the
+physical destination is used by all three brokers in the cluster.</p>
+<A NAME="beaoh"></A><h3>Creating JMS Hosts</h3>
+<p>You can create additional <A NAME="indexterm-722"></A>JMS hosts in the following ways:</p>
+<ul><li><p>Use the <A NAME="indexterm-723"></A>Admin Console. Open the Java Message Service component under
+the relevant configuration, then select the JMS Hosts component. For details,
+see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+</li>
+<li><p>Use the <A NAME="indexterm-724"></A><tt>asadmin create-jms-host</tt> command. For details, see the <A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A>.</p>
+</li>
+</ul>
+<p>For machines having more than one host, use the Host field in the <A NAME="indexterm-725"></A>Admin Console or the <tt>--mqhost</tt> option
+of <tt>create-jms-host</tt> to specify the address to which the
+broker binds.</p>
+<A NAME="beaoi"></A><h3>Checking Whether the JMS Provider Is Running</h3>
+<A NAME="indexterm-726"></A><p>You can use the <tt>asadmin jms-ping</tt> command to check
+whether a <A NAME="indexterm-727"></A>Sun Java System Message Queue instance is running. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A></i>.</p>
+<A NAME="beaoj"></A><h3>Creating Physical Destinations</h3>
+<p>Produced messages are delivered for routing and subsequent delivery
+to consumers using <A NAME="indexterm-728"></A><A NAME="indexterm-729"></A><i>physical destinations</i> in the JMS provider.
+A physical destination is identified and encapsulated by an administered object
+(a <tt>Topic</tt> or <tt>Queue</tt> destination resource)
+that an application component uses to specify the destination of messages
+it is producing and the source of messages it is consuming.</p>
+<p>If a message-driven bean is deployed and the physical destination it
+listens to doesn't exist, the Application Server automatically creates the
+physical destination. However, it is good practice to
+create the physical destination beforehand.</p>
+<p>You can create a JMS physical destination in the following ways:</p>
+<ul><li><p>Use the <A NAME="indexterm-730"></A>Admin Console. Open the Resources component, open the JMS Resources
+component, then select Physical Destinations. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+</li>
+<li><p>Use the <A NAME="indexterm-731"></A><tt>asadmin create-jmsdest</tt> command. This command
+acts on the default JMS host. For details, see the <A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A>.</p>
+</li>
+</ul>
+<p><A NAME="indexterm-732"></A>To purge all messages currently queued at a physical destination,
+use the <tt>asadmin flush-jmsdest</tt> command. This deletes the
+messages before they reach any message consumers. For details, see the <A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A>.</p>
+<p>To create a destination resource, see <A HREF="beaob.html#beaok">Creating JMS Resources: Destinations and Connection Factories</A>.</p>
+<A NAME="beaok"></A><h3>Creating JMS Resources: Destinations and Connection
+Factories</h3>
+<p>You can create two kinds of <A NAME="indexterm-733"></A>JMS resources in the Application Server:</p>
+<ul><li><p><b>Connection Factories:</b> <A NAME="indexterm-734"></A>administered objects that implement the <A NAME="indexterm-735"></A><tt>ConnectionFactory</tt>, <A NAME="indexterm-736"></A><tt>QueueConnectionFactory</tt>, or <A NAME="indexterm-737"></A><tt>TopicConnectionFactory</tt> interfaces.</p>
+</li>
+<li><p><A NAME="indexterm-738"></A><b>Destination Resources:</b> administered
+objects that implement the <A NAME="indexterm-739"></A><tt>Queue</tt> or <A NAME="indexterm-740"></A><tt>Topic</tt> interfaces.</p>
+</li>
+</ul>
+<p>In either case, the steps for creating a JMS resource are the same.
+You can create a JMS resource in the following ways:</p>
+<ul><li><p>To create a JMS resource using the <A NAME="indexterm-741"></A>Admin Console, open the Resources component, then open the JMS
+Resources component. Click Connection Factories to create a connection factory,
+or click Destination Resources to create a queue or topic. For details, see
+the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+</li>
+<li><p>A JMS resource is a type of connector. To create a JMS resource
+using the command line, see <A HREF="bealk.html#bealo">Deploying and Configuring a Stand-Alone Connector Module</A>.</p>
+</li>
+</ul>
+<p><hr size="1" noshade><p><b>Note - </b>All JMS resource properties that used
+to work with version 7 of the Application Server are supported for backward compatibility.</p>
+<hr size="1" noshade></p><A NAME="beaol"></A><h2>Restarting the JMS Client After JMS Configuration</h2>
+<p>When a <A NAME="indexterm-742"></A>JMS client accesses a JMS administered object for the first time,
+the client JVM retrieves the JMS service configuration from the Application Server.
+Further changes to the configuration are not available to the client JVM until
+the client is restarted.</p>
+<A NAME="beaom"></A><h2>JMS Connection Features</h2>
+<A NAME="indexterm-743"></A><p>The Sun Java System Message Queue software supports the following
+JMS connection features:</p>
+<ul><li><p><A HREF="beaob.html#beaon">Connection Pooling</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaoo">Connection Failover</A></p>
+</li>
+</ul>
+<p>Both these features use the <tt>AddressList</tt> configuration,
+which is populated with the hosts and ports of the JMS hosts defined in the Application Server.
+The <tt>AddressList</tt> is updated whenever a JMS host configuration
+changes. The <tt>AddressList</tt> is inherited by any JMS resource
+when it is created and by any MDB when it is deployed.</p>
+<p><hr size="1" noshade><p><b>Note - </b>In the Sun Java System Message Queue software, the <tt>AddressList</tt> property is called <tt>imqAddressList</tt>.</p>
+<hr size="1" noshade></p><A NAME="beaon"></A><h3>Connection Pooling</h3>
+<A NAME="indexterm-744"></A><p>The Application Server pools JMS connections automatically.</p>
+<p>To dynamically modify connection pool properties using the Admin Console,
+go to either the Connection Factories page (see <A HREF="beaob.html#beaok">Creating JMS Resources: Destinations and Connection Factories</A>) or
+the Connector Connection Pools page (see <A HREF="bealk.html#bealo">Deploying and Configuring a Stand-Alone Connector Module</A>).</p>
+<p><A NAME="indexterm-745"></A>To use the command line, use the <tt>asadmin create-connector-connection-pool</tt> command to manage the pool (see <A HREF="bealk.html#bealo">Deploying and Configuring a Stand-Alone Connector Module</A>.</p>
+<p>The <tt>addresslist-behavior</tt> JMS service attribute is
+set to <tt>random</tt> by default. This means that each <tt>ManagedConnection</tt> (physical connection) created from the <tt>ManagedConnectionFactory</tt> selects its primary broker in a random
+way from the <tt>AddressList</tt>. </p>
+<p>The other <tt>addresslist-behavior</tt> alternative is <tt>priority</tt>, which specifies that the first broker in the <tt>AddressList</tt> is selected first. This first broker is the local colocated Message Queue broker.
+If this broker is unavailable, connection attempts are made to brokers in
+the order in which they are listed in the <tt>AddressList</tt>.</p>
+<p>When a JMS connection pool is created, there is one <tt>ManagedConnectionFactory</tt> instance associated with it. If you configure the <tt>AddressList</tt> as a <tt>ManagedConnectionFactory</tt> property, the <tt>AddressList</tt> configuration in the <tt>ManagedConnectionFactory</tt> takes precedence over the one defined in the Application Server.</p>
+<A NAME="beaoo"></A><h3>Connection Failover</h3>
+<A NAME="indexterm-746"></A><A NAME="indexterm-747"></A><p>To specify whether the Application Server tries to reconnect to the primary
+broker if the connection is lost, set the <tt>reconnect-enabled</tt> attribute
+in the JMS service. To specify the number of retries and the time between
+retries, set the <tt>reconnect-attempts</tt> and <tt>reconnect-interval-in-seconds</tt> attributes, respectively.</p>
+<p>If reconnection is enabled and the primary broker goes down, the Application Server tries
+to reconnect to another broker in the <tt>AddressList</tt>. The <tt>AddressList</tt> is updated whenever a JMS host configuration changes.
+The logic for scanning is decided by two JMS service attributes, <tt>addresslist-behavior</tt> and <tt>addresslist-iterations</tt>.</p>
+<p>You can override these settings using JMS connection factory settings.
+For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+<p>The Sun Java System Message Queue software transparently transfers
+the load to another broker when the failover occurs. JMS semantics are maintained
+during failover.</p>
+<A NAME="beaoq"></A><h2>Transactions and Non-Persistent Messages</h2>
+<A NAME="indexterm-748"></A><A NAME="indexterm-749"></A><p>During transaction recovery, non-persistent messages might be lost.
+If the broker fails between the transaction manager's prepare and commit
+operations, any non-persistent message in the transaction is lost and cannot
+be delivered. A message that is not saved to a persistent store is not available
+for transaction recovery.</p>
+<A NAME="beaor"></A><h2>ConnectionFactory Authentication</h2>
+<p>If your web, EJB, or client module has <tt>res-auth</tt> set
+to <tt>Container</tt>, but you use the <tt>ConnectionFactory.createConnection("user","password")</tt> method to get a connection, the Application Server searches the container
+for <A NAME="indexterm-750"></A><A NAME="indexterm-751"></A><A NAME="indexterm-752"></A>authentication information before using the supplied user and
+password. Version 7 of the Application Server threw an exception in this situation.</p>
+<A NAME="beaos"></A><h2>Message Queue varhome Directory</h2>
+<p><A NAME="indexterm-753"></A><A NAME="indexterm-754"></A>The Sun Java System Message Queue software uses a default directory
+for storing data such as persistent messages and its log file. This directory
+is called <tt>varhome</tt>. The Application Server uses <i>domain-dir</i><tt>/imq</tt> as the <tt>varhome</tt> directory. Thus, for the
+default Application Server domain, Message Queue data is stored in the following
+location:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre><i>install-dir</i>/domains/domain1/imq/var/instances/imqbroker</pre>
+</td></table><br><p>Version 7 of the Application Server stored this data in the following location:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre><i>install-dir</i>/imq/var/instances/domain1_server</pre>
+</td></table><br><p>When executing Message Queue scripts such as <i>install-dir</i><tt>/imq/bin/imqusermgr</tt>, use the <tt>-varhome</tt> option.
+For example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>imqusermgr -varhome $AS_INSTALL/domains/domain1/imq add -u testuser 
+-p testpassword</pre>
+</td></table><br><A NAME="beaot"></A><h2>Delivering SOAP Messages Using the JMS API</h2>
+<A NAME="indexterm-755"></A><A NAME="indexterm-756"></A><p>Web service clients use the Simple Object Access Protocol <A NAME="indexterm-757"></A>(SOAP) to communicate with web services.
+SOAP uses a combination of XML-based data structuring and Hyper Text Transfer
+Protocol (HTTP) to define a standardized way of invoking methods in objects
+distributed in diverse operating environments across the Internet.</p>
+<p>For more information about SOAP, see the Apache SOAP web site at <A HREF="http://xml.apache.org/soap/index.html">http://xml.apache.org/soap/index.html</A>.</p>
+<p>You can take advantage of the JMS provider's reliable messaging
+when delivering SOAP messages. You can convert a SOAP message into a JMS message,
+send the JMS message, then convert the JMS message back into a SOAP message.
+The following sections explain how to do these conversions:</p>
+<ul><li><p><A HREF="beaob.html#beaou">To send SOAP messages using the JMS API</A></p>
+</li>
+<li><p><A HREF="beaob.html#beaov">To receive SOAP messages using the JMS API</A></p>
+</li>
+</ul>
+<A NAME="beaou"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To send SOAP messages using the JMS API</h3>
+<h5>Steps</h5><ol><li><p><b>Import the <tt>MessageTransformer</tt> library.</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>import com.sun.messaging.xml.MessageTransformer;</pre>
+</td></table><br><p>This is the utility whose methods you use to convert SOAP messages to
+JMS messages and the reverse. You can then send a JMS message containing a
+SOAP payload as if it were a normal JMS message.</p>
+</li>
+<li><p><b>Initialize the <tt>TopicConnectionFactory</tt>, <tt>TopicConnection</tt>, <tt>TopicSession</tt>, and publisher.</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>tcf = new TopicConnectionFactory();
+tc = tcf.createTopicConnection();
+session = tc.createTopicSession(false,Session.AUTO_ACKNOWLEDGE);
+topic = session.createTopic(topicName);
+publisher = session.createPublisher(topic);</pre>
+</td></table><br></li>
+<li><p><b>Construct a SOAP message using the <A NAME="indexterm-758"></A>SOAP with Attachments API for Java (SAAJ). </b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>*construct a default soap MessageFactory */
+MessageFactory mf = MessageFactory.newInstance();
+* Create a SOAP message object.*/
+SOAPMessage soapMessage = mf.createMessage();
+/** Get SOAP part.*/
+SOAPPart soapPart = soapMessage.getSOAPPart();
+/* Get SOAP envelope. */
+SOAPEnvelope soapEnvelope = soapPart.getEnvelope();
+/* Get SOAP body.*/
+SOAPBody soapBody = soapEnvelope.getBody();
+/* Create a name object. with name space */
+/* http://www.sun.com/imq. */
+Name name = soapEnvelope.createName("HelloWorld", "hw",
+ "http://www.sun.com/imq");
+* Add child element with the above name. */
+SOAPElement element = soapBody.addChildElement(name)
+/* Add another child element.*/
+element.addTextNode( "Welcome to Sun Java System Web Services." );
+/* Create an atachment with activation API.*/
+URL url = new URL ("http://java.sun.com/webservices/");
+DataHandler dh = new DataHandler (url);
+AttachmentPart ap = soapMessage.createAttachmentPart(dh);
+/*set content type/ID. */
+ap.setContentType("text/html");
+ap.setContentId("cid-001");
+/**  add the attachment to the SOAP message.*/
+soapMessage.addAttachmentPart(ap);
+soapMessage.saveChanges();</pre>
+</td></table><br></li>
+<li><p><b>Convert the SOAP message to a JMS message by calling the <tt>MessageTransformer.SOAPMessageintoJMSMessage()</tt> method.</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>Message m = MessageTransformer.SOAPMessageIntoJMSMessage (soapMessage, 
+session );</pre>
+</td></table><br></li>
+<li><p><b>Publish the JMS message.</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>publisher.publish(m);</pre>
+</td></table><br></li>
+<li><p><b>Close the JMS connection.</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>tc.close();</pre>
+</td></table><br></li>
+</ol><A NAME="beaov"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To receive SOAP messages using the JMS API</h3>
+<h5>Steps</h5><ol><li><p><b>Import the <tt>MessageTransformer</tt> library.</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>import com.sun.messaging.xml.MessageTransformer;</pre>
+</td></table><br><p>This is the utility whose methods you use to convert SOAP messages to
+JMS messages and the reverse. The JMS message containing the SOAP payload
+is received as if it were a normal JMS message. </p>
+</li>
+<li><p><b>Initialize the <tt>TopicConnectionFactory</tt>, <tt>TopicConnection</tt>, <tt>TopicSession</tt>, <tt>TopicSubscriber</tt>, and <tt>Topic</tt>.</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>messageFactory = MessageFactory.newInstance();
+tcf = new com.sun.messaging.TopicConnectionFactory();
+tc = tcf.createTopicConnection();
+session = tc.createTopicSession(false, Session.AUTO_ACKNOWLEDGE);
+topic = session.createTopic(topicName);
+subscriber = session.createSubscriber(topic);
+subscriber.setMessageListener(this);
+tc.start();</pre>
+</td></table><br></li>
+<li><p><b>Use the <tt>OnMessage</tt> method to receive the message.
+Use the <tt>SOAPMessageFromJMSMessage</tt> method to convert the
+JMS message to a SOAP message.</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>public void onMessage (Message message) {
+SOAPMessage soapMessage =
+ MessageTransformer.SOAPMessageFromJMSMessage( message,
+ messageFactory ); }</pre>
+</td></table><br></li>
+<li><p><b>Retrieve the content of the SOAP message.</b></p></li>
+</ol>
+            <!--stopindex-->
+<br>
+<A HREF="beanr.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="beaow.html">Next</A>
+</body>
+</html>

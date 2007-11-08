@@ -1,0 +1,590 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * The contents of this file are subject to the terms <a name="line.2"></a>
+<FONT color="green">003</FONT>     * of the Common Development and Distribution License <a name="line.3"></a>
+<FONT color="green">004</FONT>     * (the License).  You may not use this file except in<a name="line.4"></a>
+<FONT color="green">005</FONT>     * compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * <a name="line.6"></a>
+<FONT color="green">007</FONT>     * You can obtain a copy of the license at <a name="line.7"></a>
+<FONT color="green">008</FONT>     * https://glassfish.dev.java.net/public/CDDLv1.0.html or<a name="line.8"></a>
+<FONT color="green">009</FONT>     * glassfish/bootstrap/legal/CDDLv1.0.txt.<a name="line.9"></a>
+<FONT color="green">010</FONT>     * See the License for the specific language governing <a name="line.10"></a>
+<FONT color="green">011</FONT>     * permissions and limitations under the License.<a name="line.11"></a>
+<FONT color="green">012</FONT>     * <a name="line.12"></a>
+<FONT color="green">013</FONT>     * When distributing Covered Code, include this CDDL <a name="line.13"></a>
+<FONT color="green">014</FONT>     * Header Notice in each file and include the License file <a name="line.14"></a>
+<FONT color="green">015</FONT>     * at glassfish/bootstrap/legal/CDDLv1.0.txt.  <a name="line.15"></a>
+<FONT color="green">016</FONT>     * If applicable, add the following below the CDDL Header, <a name="line.16"></a>
+<FONT color="green">017</FONT>     * with the fields enclosed by brackets [] replaced by<a name="line.17"></a>
+<FONT color="green">018</FONT>     * you own identifying information: <a name="line.18"></a>
+<FONT color="green">019</FONT>     * "Portions Copyrighted [year] [name of copyright owner]"<a name="line.19"></a>
+<FONT color="green">020</FONT>     * <a name="line.20"></a>
+<FONT color="green">021</FONT>     * Copyright 2006 Sun Microsystems, Inc. All rights reserved.<a name="line.21"></a>
+<FONT color="green">022</FONT>     */<a name="line.22"></a>
+<FONT color="green">023</FONT>     <a name="line.23"></a>
+<FONT color="green">024</FONT>    /*<a name="line.24"></a>
+<FONT color="green">025</FONT>     * $Header: /cvs/glassfish/admin-core/mbeanapi/src/java/com/sun/appserv/management/client/AppserverConnectionSource.java,v 1.8 2006/03/09 20:30:21 llc Exp $<a name="line.25"></a>
+<FONT color="green">026</FONT>     * $Revision: 1.8 $<a name="line.26"></a>
+<FONT color="green">027</FONT>     * $Date: 2006/03/09 20:30:21 $<a name="line.27"></a>
+<FONT color="green">028</FONT>     */<a name="line.28"></a>
+<FONT color="green">029</FONT>    <a name="line.29"></a>
+<FONT color="green">030</FONT>    package com.sun.appserv.management.client;<a name="line.30"></a>
+<FONT color="green">031</FONT>    <a name="line.31"></a>
+<FONT color="green">032</FONT>    import java.util.HashMap;<a name="line.32"></a>
+<FONT color="green">033</FONT>    import java.util.Map;<a name="line.33"></a>
+<FONT color="green">034</FONT>    import java.util.logging.Logger;<a name="line.34"></a>
+<FONT color="green">035</FONT>    <a name="line.35"></a>
+<FONT color="green">036</FONT>    import java.io.IOException;<a name="line.36"></a>
+<FONT color="green">037</FONT>    import java.io.File;<a name="line.37"></a>
+<FONT color="green">038</FONT>    <a name="line.38"></a>
+<FONT color="green">039</FONT>    import java.net.MalformedURLException;<a name="line.39"></a>
+<FONT color="green">040</FONT>    <a name="line.40"></a>
+<FONT color="green">041</FONT>    import java.security.KeyStore;<a name="line.41"></a>
+<FONT color="green">042</FONT>    import javax.net.ssl.X509TrustManager;<a name="line.42"></a>
+<FONT color="green">043</FONT>    import javax.net.ssl.HandshakeCompletedListener;<a name="line.43"></a>
+<FONT color="green">044</FONT>    <a name="line.44"></a>
+<FONT color="green">045</FONT>    import javax.management.MBeanServerConnection;<a name="line.45"></a>
+<FONT color="green">046</FONT>    import javax.management.remote.JMXConnector;<a name="line.46"></a>
+<FONT color="green">047</FONT>    import javax.management.remote.JMXServiceURL;<a name="line.47"></a>
+<FONT color="green">048</FONT>    import javax.management.remote.JMXConnectorFactory;<a name="line.48"></a>
+<FONT color="green">049</FONT>    import javax.management.remote.JMXConnectionNotification;<a name="line.49"></a>
+<FONT color="green">050</FONT>    import javax.management.Notification;<a name="line.50"></a>
+<FONT color="green">051</FONT>    import javax.management.NotificationListener;<a name="line.51"></a>
+<FONT color="green">052</FONT>    <a name="line.52"></a>
+<FONT color="green">053</FONT>    <a name="line.53"></a>
+<FONT color="green">054</FONT>    import com.sun.appserv.management.client.ConnectionSource;<a name="line.54"></a>
+<FONT color="green">055</FONT>    import com.sun.appserv.management.util.jmx.JMXConnectorConnectionSource;<a name="line.55"></a>
+<FONT color="green">056</FONT>    import com.sun.appserv.management.util.misc.MapUtil;<a name="line.56"></a>
+<FONT color="green">057</FONT>    <a name="line.57"></a>
+<FONT color="green">058</FONT>    import com.sun.appserv.management.DomainRoot;<a name="line.58"></a>
+<FONT color="green">059</FONT>    <a name="line.59"></a>
+<FONT color="green">060</FONT>    <a name="line.60"></a>
+<FONT color="green">061</FONT>    /**<a name="line.61"></a>
+<FONT color="green">062</FONT>            Supports connectivity to Sun Appserver 8.1 and later (not available<a name="line.62"></a>
+<FONT color="green">063</FONT>            prior to 8.1).<a name="line.63"></a>
+<FONT color="green">064</FONT>            This is the only official way<a name="line.64"></a>
+<FONT color="green">065</FONT>            to get a connection to the appserver.<a name="line.65"></a>
+<FONT color="green">066</FONT>            &lt;p&gt;<a name="line.66"></a>
+<FONT color="green">067</FONT>            Helper methods to simplify connecting are available in<a name="line.67"></a>
+<FONT color="green">068</FONT>            {@link com.sun.appserv.management.helper.Connect}.<a name="line.68"></a>
+<FONT color="green">069</FONT>            &lt;p&gt;<a name="line.69"></a>
+<FONT color="green">070</FONT>            If the server is running with TLS enabled, then you must use the constructor<a name="line.70"></a>
+<FONT color="green">071</FONT>            that includes TLSParams. Here is an example of how to connect using TLS:<a name="line.71"></a>
+<FONT color="green">072</FONT>    &lt;pre&gt;<a name="line.72"></a>
+<FONT color="green">073</FONT>    final File trustStore   = new File( "~/.keystore" );<a name="line.73"></a>
+<FONT color="green">074</FONT>            final char[] trustStorePassword = "changeme".toCharArray();     // or whatever it is<a name="line.74"></a>
+<FONT color="green">075</FONT>    final HandshakeCompletedListener listener = new HandshakeCompletedListenerImpl();<a name="line.75"></a>
+<FONT color="green">076</FONT>    final TrustStoreTrustManager trustMgr = new TrustStoreTrustManager( trustStore, trustStorePassword);<a name="line.76"></a>
+<FONT color="green">077</FONT>    trustMgr.setPrompt( true );<a name="line.77"></a>
+<FONT color="green">078</FONT>    <a name="line.78"></a>
+<FONT color="green">079</FONT>    final TLSParams tlsParams = new TLSParams( new X509TrustManager[] { trustMgr }, listener );<a name="line.79"></a>
+<FONT color="green">080</FONT>    final AppserverConnectionSource src     =<a name="line.80"></a>
+<FONT color="green">081</FONT>            new AppserverConnectionSource( AppserverConnectionSource.PROTOCOL_RMI,<a name="line.81"></a>
+<FONT color="green">082</FONT>                    "localhost", 8686, "admin", "admin123",<a name="line.82"></a>
+<FONT color="green">083</FONT>                    tlsParams,<a name="line.83"></a>
+<FONT color="green">084</FONT>                    null );<a name="line.84"></a>
+<FONT color="green">085</FONT>    final DomainRoot domainRoot     = src.getDomainRoot();<a name="line.85"></a>
+<FONT color="green">086</FONT>    &lt;/pre&gt;<a name="line.86"></a>
+<FONT color="green">087</FONT>            If security is not an  issue, it is recommended to simply disable TLS on the<a name="line.87"></a>
+<FONT color="green">088</FONT>            server.  However, you can also connect using TLS whereby the <a name="line.88"></a>
+<FONT color="green">089</FONT>            server certificate is blindly trusted:<a name="line.89"></a>
+<FONT color="green">090</FONT>    &lt;pre&gt;<a name="line.90"></a>
+<FONT color="green">091</FONT>    final TLSParams tlsParams = new TLSParams( TrustAnyTrustManager.getInstanceArray(), null );<a name="line.91"></a>
+<FONT color="green">092</FONT>    final AppserverConnectionSource src     =<a name="line.92"></a>
+<FONT color="green">093</FONT>            new AppserverConnectionSource( AppserverConnectionSource.PROTOCOL_RMI,<a name="line.93"></a>
+<FONT color="green">094</FONT>                    "localhost", 8686, "admin", "admin123",<a name="line.94"></a>
+<FONT color="green">095</FONT>                    tlsParams,<a name="line.95"></a>
+<FONT color="green">096</FONT>                    null );<a name="line.96"></a>
+<FONT color="green">097</FONT>    final DomainRoot domainRoot     = src.getDomainRoot();<a name="line.97"></a>
+<FONT color="green">098</FONT>    &lt;/pre&gt;<a name="line.98"></a>
+<FONT color="green">099</FONT>            <a name="line.99"></a>
+<FONT color="green">100</FONT>            <a name="line.100"></a>
+<FONT color="green">101</FONT>            @see com.sun.appserv.management.client.TrustStoreTrustManager<a name="line.101"></a>
+<FONT color="green">102</FONT>            @see com.sun.appserv.management.client.TrustAnyTrustManager<a name="line.102"></a>
+<FONT color="green">103</FONT>            @see com.sun.appserv.management.client.HandshakeCompletedListenerImpl<a name="line.103"></a>
+<FONT color="green">104</FONT>            @see com.sun.appserv.management.client.TLSParams<a name="line.104"></a>
+<FONT color="green">105</FONT>     */<a name="line.105"></a>
+<FONT color="green">106</FONT>    public final class AppserverConnectionSource<a name="line.106"></a>
+<FONT color="green">107</FONT>            implements NotificationListener, ConnectionSource<a name="line.107"></a>
+<FONT color="green">108</FONT>    {<a name="line.108"></a>
+<FONT color="green">109</FONT>            private final String                    mHost;<a name="line.109"></a>
+<FONT color="green">110</FONT>            private final int                               mPort;<a name="line.110"></a>
+<FONT color="green">111</FONT>            private final String                    mProtocol;<a name="line.111"></a>
+<FONT color="green">112</FONT>            private final String                    mUser;<a name="line.112"></a>
+<FONT color="green">113</FONT>            private final String                    mPassword;<a name="line.113"></a>
+<FONT color="green">114</FONT>            private final TLSParams                 mTLSParams;<a name="line.114"></a>
+<FONT color="green">115</FONT>            private final Map&lt;String,String&gt; mReserved;<a name="line.115"></a>
+<FONT color="green">116</FONT>            <a name="line.116"></a>
+<FONT color="green">117</FONT>            protected JMXConnector                  mJMXConnector;<a name="line.117"></a>
+<FONT color="green">118</FONT>            <a name="line.118"></a>
+<FONT color="green">119</FONT>            /**<a name="line.119"></a>
+<FONT color="green">120</FONT>                    FIXME FIXME FIXME<a name="line.120"></a>
+<FONT color="green">121</FONT>                    This should be removed after the http connector supports the HandshakeCompletedListener<a name="line.121"></a>
+<FONT color="green">122</FONT>             */<a name="line.122"></a>
+<FONT color="green">123</FONT>            private static final boolean DISABLE_HANDSHAKE_COMPLETED_CHECK = true;<a name="line.123"></a>
+<FONT color="green">124</FONT>    <a name="line.124"></a>
+<FONT color="green">125</FONT>                    private boolean <a name="line.125"></a>
+<FONT color="green">126</FONT>            disableHandShakeCompletedCheck()<a name="line.126"></a>
+<FONT color="green">127</FONT>            {<a name="line.127"></a>
+<FONT color="green">128</FONT>                    return( DISABLE_HANDSHAKE_COMPLETED_CHECK &amp;&amp; mProtocol.equals( PROTOCOL_HTTP ) );<a name="line.128"></a>
+<FONT color="green">129</FONT>            }<a name="line.129"></a>
+<FONT color="green">130</FONT>            <a name="line.130"></a>
+<FONT color="green">131</FONT>            <a name="line.131"></a>
+<FONT color="green">132</FONT>            /**<a name="line.132"></a>
+<FONT color="green">133</FONT>                @return true if the specified protocol is supported.<a name="line.133"></a>
+<FONT color="green">134</FONT>             */<a name="line.134"></a>
+<FONT color="green">135</FONT>                    public static boolean<a name="line.135"></a>
+<FONT color="green">136</FONT>            isSupportedProtocol( final String protocol )<a name="line.136"></a>
+<FONT color="green">137</FONT>            {<a name="line.137"></a>
+<FONT color="green">138</FONT>                    return( protocol != null &amp;&amp;<a name="line.138"></a>
+<FONT color="green">139</FONT>                                    (<a name="line.139"></a>
+<FONT color="green">140</FONT>                                            protocol.equals( PROTOCOL_HTTP ) ||<a name="line.140"></a>
+<FONT color="green">141</FONT>                                            protocol.equals( PROTOCOL_RMI )<a name="line.141"></a>
+<FONT color="green">142</FONT>                                    )<a name="line.142"></a>
+<FONT color="green">143</FONT>                            );<a name="line.143"></a>
+<FONT color="green">144</FONT>            }<a name="line.144"></a>
+<FONT color="green">145</FONT>            <a name="line.145"></a>
+<FONT color="green">146</FONT>            <a name="line.146"></a>
+<FONT color="green">147</FONT>            /**<a name="line.147"></a>
+<FONT color="green">148</FONT>                    [used internally]<a name="line.148"></a>
+<FONT color="green">149</FONT>             */<a name="line.149"></a>
+<FONT color="green">150</FONT>            public final static String      TRUST_MANAGERS_KEY      = "TRUST_MANAGER_KEY";<a name="line.150"></a>
+<FONT color="green">151</FONT>            <a name="line.151"></a>
+<FONT color="green">152</FONT>            /**<a name="line.152"></a>
+<FONT color="green">153</FONT>                    [used internally]<a name="line.153"></a>
+<FONT color="green">154</FONT>             */<a name="line.154"></a>
+<FONT color="green">155</FONT>            public final static String      HANDSHAKE_COMPLETED_LISTENER_KEY        = "HandshakeCompletedListener";<a name="line.155"></a>
+<FONT color="green">156</FONT>            <a name="line.156"></a>
+<FONT color="green">157</FONT>            <a name="line.157"></a>
+<FONT color="green">158</FONT>            private static final String     PROTOCOL_PREFIX = "sun-as-";<a name="line.158"></a>
+<FONT color="green">159</FONT>            <a name="line.159"></a>
+<FONT color="green">160</FONT>            /**<a name="line.160"></a>
+<FONT color="green">161</FONT>                    RMI protocol to the Appserver.<a name="line.161"></a>
+<FONT color="green">162</FONT>                    &lt;b&gt;Do not use the literal value of this constant in your code;<a name="line.162"></a>
+<FONT color="green">163</FONT>                    it is subject to change&lt;/b&gt;<a name="line.163"></a>
+<FONT color="green">164</FONT>             */<a name="line.164"></a>
+<FONT color="green">165</FONT>            public final static String      PROTOCOL_RMI            = PROTOCOL_PREFIX + "rmi";<a name="line.165"></a>
+<FONT color="green">166</FONT>            /**<a name="line.166"></a>
+<FONT color="green">167</FONT>                    Default protocol to the Appserver eg PROTOCOL_RMI.<a name="line.167"></a>
+<FONT color="green">168</FONT>             */<a name="line.168"></a>
+<FONT color="green">169</FONT>            public final static String      DEFAULT_PROTOCOL        = PROTOCOL_RMI;<a name="line.169"></a>
+<FONT color="green">170</FONT>            <a name="line.170"></a>
+<FONT color="green">171</FONT>            /**<a name="line.171"></a>
+<FONT color="green">172</FONT>                    Internal unsupported protocol.  Not supported for external use.<a name="line.172"></a>
+<FONT color="green">173</FONT>                    &lt;b&gt;Do not use the literal value of this constant in your code;<a name="line.173"></a>
+<FONT color="green">174</FONT>                    it is subject to change&lt;/b&gt;<a name="line.174"></a>
+<FONT color="green">175</FONT>             */<a name="line.175"></a>
+<FONT color="green">176</FONT>            public final static String      PROTOCOL_HTTP           = PROTOCOL_PREFIX + "http";<a name="line.176"></a>
+<FONT color="green">177</FONT>            <a name="line.177"></a>
+<FONT color="green">178</FONT>            private static final String     INTERNAL_HTTP   = "s1ashttp";<a name="line.178"></a>
+<FONT color="green">179</FONT>            private static final String     INTERNAL_HTTPS  = "s1ashttps";<a name="line.179"></a>
+<FONT color="green">180</FONT>            <a name="line.180"></a>
+<FONT color="green">181</FONT>            /**<a name="line.181"></a>
+<FONT color="green">182</FONT>                    Packages for http(s) JMXConnectorProvider.<a name="line.182"></a>
+<FONT color="green">183</FONT>             */<a name="line.183"></a>
+<FONT color="green">184</FONT>            private final static String HTTP_FACTORY_PACKAGES       =<a name="line.184"></a>
+<FONT color="green">185</FONT>                    "com.sun.enterprise.admin.jmx.remote.protocol";<a name="line.185"></a>
+<FONT color="green">186</FONT>            <a name="line.186"></a>
+<FONT color="green">187</FONT>            /**<a name="line.187"></a>
+<FONT color="green">188</FONT>                    Name of the default TrustStore file, located in the client's<a name="line.188"></a>
+<FONT color="green">189</FONT>                    home directory.<a name="line.189"></a>
+<FONT color="green">190</FONT>                    <a name="line.190"></a>
+<FONT color="green">191</FONT>              */<a name="line.191"></a>
+<FONT color="green">192</FONT>            public static final String      DEFAULT_TRUST_STORE_NAME        = ".asadmintruststore";<a name="line.192"></a>
+<FONT color="green">193</FONT>            <a name="line.193"></a>
+<FONT color="green">194</FONT>            /**<a name="line.194"></a>
+<FONT color="green">195</FONT>                    The default pasword for {@link #DEFAULT_TRUST_STORE_NAME}.<a name="line.195"></a>
+<FONT color="green">196</FONT>             */<a name="line.196"></a>
+<FONT color="green">197</FONT>            public static final String      DEFAULT_TRUST_STORE_PASSWORD    = "changeit";<a name="line.197"></a>
+<FONT color="green">198</FONT>            <a name="line.198"></a>
+<FONT color="green">199</FONT>            /**<a name="line.199"></a>
+<FONT color="green">200</FONT>                    Create a new instance using the default protocol without TLS.<a name="line.200"></a>
+<FONT color="green">201</FONT>                    <a name="line.201"></a>
+<FONT color="green">202</FONT>                    @param host     hostname or IP address<a name="line.202"></a>
+<FONT color="green">203</FONT>                    @param port     port to which to connect<a name="line.203"></a>
+<FONT color="green">204</FONT>                    @param user username<a name="line.204"></a>
+<FONT color="green">205</FONT>                    @param userPassword password for specified username<a name="line.205"></a>
+<FONT color="green">206</FONT>                    @param reserved  reserved for future use<a name="line.206"></a>
+<FONT color="green">207</FONT>             */<a name="line.207"></a>
+<FONT color="green">208</FONT>                    public<a name="line.208"></a>
+<FONT color="green">209</FONT>            AppserverConnectionSource(<a name="line.209"></a>
+<FONT color="green">210</FONT>                    String          host,<a name="line.210"></a>
+<FONT color="green">211</FONT>                    int                     port,<a name="line.211"></a>
+<FONT color="green">212</FONT>                    String          user,<a name="line.212"></a>
+<FONT color="green">213</FONT>                    String          userPassword,<a name="line.213"></a>
+<FONT color="green">214</FONT>                    final Map&lt;String,String&gt;  reserved)<a name="line.214"></a>
+<FONT color="green">215</FONT>            {<a name="line.215"></a>
+<FONT color="green">216</FONT>                    this( DEFAULT_PROTOCOL, host, port, user, userPassword, reserved);<a name="line.216"></a>
+<FONT color="green">217</FONT>            }<a name="line.217"></a>
+<FONT color="green">218</FONT>    <a name="line.218"></a>
+<FONT color="green">219</FONT>    <a name="line.219"></a>
+<FONT color="green">220</FONT>            /**<a name="line.220"></a>
+<FONT color="green">221</FONT>                    Create a new instance connecting to the specified host/port with<a name="line.221"></a>
+<FONT color="green">222</FONT>                    the specified protocol without TLS.<a name="line.222"></a>
+<FONT color="green">223</FONT>                    &lt;p&gt;<a name="line.223"></a>
+<FONT color="green">224</FONT>                    &lt;b&gt;Note:&lt;/b&gt;The only supported protocol is {@link #PROTOCOL_RMI}.<a name="line.224"></a>
+<FONT color="green">225</FONT>                    Use of any other protocol is not supported and these protocols are<a name="line.225"></a>
+<FONT color="green">226</FONT>                    subject to change or removal at any time.<a name="line.226"></a>
+<FONT color="green">227</FONT>                    <a name="line.227"></a>
+<FONT color="green">228</FONT>                    @param protocol protocol to use eg PROTOCOL_RMI<a name="line.228"></a>
+<FONT color="green">229</FONT>                    @param host     hostname or IP address<a name="line.229"></a>
+<FONT color="green">230</FONT>                    @param port     port to which to connect<a name="line.230"></a>
+<FONT color="green">231</FONT>                    @param user username<a name="line.231"></a>
+<FONT color="green">232</FONT>                    @param userPassword password for specified username<a name="line.232"></a>
+<FONT color="green">233</FONT>                    @param reserved  reserved for future use<a name="line.233"></a>
+<FONT color="green">234</FONT>             */<a name="line.234"></a>
+<FONT color="green">235</FONT>                    public<a name="line.235"></a>
+<FONT color="green">236</FONT>            AppserverConnectionSource(<a name="line.236"></a>
+<FONT color="green">237</FONT>                    final String            protocol,<a name="line.237"></a>
+<FONT color="green">238</FONT>                    final String            host,<a name="line.238"></a>
+<FONT color="green">239</FONT>                    final int                       port,<a name="line.239"></a>
+<FONT color="green">240</FONT>                    final String            user,<a name="line.240"></a>
+<FONT color="green">241</FONT>                    final String            userPassword,<a name="line.241"></a>
+<FONT color="green">242</FONT>                    final Map&lt;String,String&gt;                  reserved )<a name="line.242"></a>
+<FONT color="green">243</FONT>            {<a name="line.243"></a>
+<FONT color="green">244</FONT>                    this ( protocol, host, port, user, userPassword, null, reserved );<a name="line.244"></a>
+<FONT color="green">245</FONT>            }<a name="line.245"></a>
+<FONT color="green">246</FONT>            <a name="line.246"></a>
+<FONT color="green">247</FONT>            /**<a name="line.247"></a>
+<FONT color="green">248</FONT>                    Create a new instance which will use TLS for security if specified.<a name="line.248"></a>
+<FONT color="green">249</FONT>                    <a name="line.249"></a>
+<FONT color="green">250</FONT>                    @param protocol protocol to use eg PROTOCOL_RMI<a name="line.250"></a>
+<FONT color="green">251</FONT>                    @param host     hostname or IP address<a name="line.251"></a>
+<FONT color="green">252</FONT>                    @param port     port to which to connect<a name="line.252"></a>
+<FONT color="green">253</FONT>                    @param user username<a name="line.253"></a>
+<FONT color="green">254</FONT>                    @param userPassword password for specified username<a name="line.254"></a>
+<FONT color="green">255</FONT>                    @param tlsParams (may be null if TLS is not desired)<a name="line.255"></a>
+<FONT color="green">256</FONT>                    @param reserved  reserved for future use<a name="line.256"></a>
+<FONT color="green">257</FONT>                    <a name="line.257"></a>
+<FONT color="green">258</FONT>                    @see com.sun.appserv.management.client.TLSParams<a name="line.258"></a>
+<FONT color="green">259</FONT>             */<a name="line.259"></a>
+<FONT color="green">260</FONT>                    public<a name="line.260"></a>
+<FONT color="green">261</FONT>            AppserverConnectionSource(<a name="line.261"></a>
+<FONT color="green">262</FONT>                    final String            protocol,<a name="line.262"></a>
+<FONT color="green">263</FONT>                    final String            host,<a name="line.263"></a>
+<FONT color="green">264</FONT>                    final int                       port,<a name="line.264"></a>
+<FONT color="green">265</FONT>                    final String            user,<a name="line.265"></a>
+<FONT color="green">266</FONT>                    final String            userPassword,<a name="line.266"></a>
+<FONT color="green">267</FONT>                    final TLSParams         tlsParams,<a name="line.267"></a>
+<FONT color="green">268</FONT>                    final Map&lt;String,String&gt; reserved )<a name="line.268"></a>
+<FONT color="green">269</FONT>            {<a name="line.269"></a>
+<FONT color="green">270</FONT>                    if ( reserved != null &amp;&amp; reserved.keySet().size() != 0 )<a name="line.270"></a>
+<FONT color="green">271</FONT>                    {<a name="line.271"></a>
+<FONT color="green">272</FONT>                            throw new IllegalArgumentException( "No parameters may be passed in 'reserved' Map" );<a name="line.272"></a>
+<FONT color="green">273</FONT>                    }<a name="line.273"></a>
+<FONT color="green">274</FONT>                    <a name="line.274"></a>
+<FONT color="green">275</FONT>                    if ( isSupportedProtocol( protocol ) )<a name="line.275"></a>
+<FONT color="green">276</FONT>                    {<a name="line.276"></a>
+<FONT color="green">277</FONT>                            mHost           = host;<a name="line.277"></a>
+<FONT color="green">278</FONT>                            mPort           = port;<a name="line.278"></a>
+<FONT color="green">279</FONT>                            mProtocol       = protocol;<a name="line.279"></a>
+<FONT color="green">280</FONT>                            mUser           = user;<a name="line.280"></a>
+<FONT color="green">281</FONT>                            mPassword       = userPassword;<a name="line.281"></a>
+<FONT color="green">282</FONT>                            mTLSParams      = tlsParams;<a name="line.282"></a>
+<FONT color="green">283</FONT>                            mReserved       = reserved;<a name="line.283"></a>
+<FONT color="green">284</FONT>                    }<a name="line.284"></a>
+<FONT color="green">285</FONT>                    else<a name="line.285"></a>
+<FONT color="green">286</FONT>                    {<a name="line.286"></a>
+<FONT color="green">287</FONT>                            throw new IllegalArgumentException( "unsupported protocol: " + protocol +<a name="line.287"></a>
+<FONT color="green">288</FONT>                                    ", use either PROTOCOL_RMI or PROTOCOL_HTTP" );<a name="line.288"></a>
+<FONT color="green">289</FONT>                    }<a name="line.289"></a>
+<FONT color="green">290</FONT>            }<a name="line.290"></a>
+<FONT color="green">291</FONT>            <a name="line.291"></a>
+<FONT color="green">292</FONT>                    private Object<a name="line.292"></a>
+<FONT color="green">293</FONT>            envGet( final String key )<a name="line.293"></a>
+<FONT color="green">294</FONT>            {<a name="line.294"></a>
+<FONT color="green">295</FONT>                    return( mReserved == null ? null : mReserved.get( key ) );<a name="line.295"></a>
+<FONT color="green">296</FONT>            }<a name="line.296"></a>
+<FONT color="green">297</FONT>            <a name="line.297"></a>
+<FONT color="green">298</FONT>                    private final boolean<a name="line.298"></a>
+<FONT color="green">299</FONT>            useTLS()<a name="line.299"></a>
+<FONT color="green">300</FONT>            {<a name="line.300"></a>
+<FONT color="green">301</FONT>                    return( mTLSParams != null  );<a name="line.301"></a>
+<FONT color="green">302</FONT>            }<a name="line.302"></a>
+<FONT color="green">303</FONT>            <a name="line.303"></a>
+<FONT color="green">304</FONT>                    private final X509TrustManager[]<a name="line.304"></a>
+<FONT color="green">305</FONT>            getTrustManagers()<a name="line.305"></a>
+<FONT color="green">306</FONT>            {<a name="line.306"></a>
+<FONT color="green">307</FONT>                    return( mTLSParams == null ? null : mTLSParams.getTrustManagers() );<a name="line.307"></a>
+<FONT color="green">308</FONT>            }<a name="line.308"></a>
+<FONT color="green">309</FONT>            <a name="line.309"></a>
+<FONT color="green">310</FONT>                    private final HandshakeCompletedListener<a name="line.310"></a>
+<FONT color="green">311</FONT>            getSuppliedHandshakeCompletedListener()<a name="line.311"></a>
+<FONT color="green">312</FONT>            {<a name="line.312"></a>
+<FONT color="green">313</FONT>                    return( mTLSParams == null ? null : mTLSParams.getHandshakeCompletedListener() );<a name="line.313"></a>
+<FONT color="green">314</FONT>            }<a name="line.314"></a>
+<FONT color="green">315</FONT>            <a name="line.315"></a>
+<FONT color="green">316</FONT>            <a name="line.316"></a>
+<FONT color="green">317</FONT>                    private Map&lt;String,Object&gt;<a name="line.317"></a>
+<FONT color="green">318</FONT>            getCredentialsEnv(<a name="line.318"></a>
+<FONT color="green">319</FONT>                    final String    user,<a name="line.319"></a>
+<FONT color="green">320</FONT>                    final String    password )<a name="line.320"></a>
+<FONT color="green">321</FONT>            {<a name="line.321"></a>
+<FONT color="green">322</FONT>                    final HashMap&lt;String,Object&gt;      env     = new HashMap&lt;String,Object&gt;();<a name="line.322"></a>
+<FONT color="green">323</FONT>                            <a name="line.323"></a>
+<FONT color="green">324</FONT>                    final String[]  credentials     = new String[] { mUser, mPassword };<a name="line.324"></a>
+<FONT color="green">325</FONT>                    <a name="line.325"></a>
+<FONT color="green">326</FONT>                    env.put( JMXConnector.CREDENTIALS, credentials );<a name="line.326"></a>
+<FONT color="green">327</FONT>                    <a name="line.327"></a>
+<FONT color="green">328</FONT>                    return( env );<a name="line.328"></a>
+<FONT color="green">329</FONT>            }<a name="line.329"></a>
+<FONT color="green">330</FONT>            <a name="line.330"></a>
+<FONT color="green">331</FONT>            private static final String     APPSERVER_JNDI_NAME     = "/management/rmi-jmx-connector";<a name="line.331"></a>
+<FONT color="green">332</FONT>    <a name="line.332"></a>
+<FONT color="green">333</FONT>                    private void<a name="line.333"></a>
+<FONT color="green">334</FONT>            warning( final String msg )<a name="line.334"></a>
+<FONT color="green">335</FONT>            {<a name="line.335"></a>
+<FONT color="green">336</FONT>                    System.out.println( "\n***\nWARNING: " + msg );<a name="line.336"></a>
+<FONT color="green">337</FONT>            }<a name="line.337"></a>
+<FONT color="green">338</FONT>            <a name="line.338"></a>
+<FONT color="green">339</FONT>                    private JMXConnector<a name="line.339"></a>
+<FONT color="green">340</FONT>            createNew()<a name="line.340"></a>
+<FONT color="green">341</FONT>                    throws MalformedURLException, IOException<a name="line.341"></a>
+<FONT color="green">342</FONT>            {<a name="line.342"></a>
+<FONT color="green">343</FONT>                    final Map&lt;String,Object&gt;  env     = getCredentialsEnv( mUser, mPassword );<a name="line.343"></a>
+<FONT color="green">344</FONT>                    <a name="line.344"></a>
+<FONT color="green">345</FONT>                    // NetBeans fix; classloader must be more than system classloader<a name="line.345"></a>
+<FONT color="green">346</FONT>                    env.put("jmx.remote.protocol.provider.class.loader",<a name="line.346"></a>
+<FONT color="green">347</FONT>                            this.getClass().getClassLoader()); <a name="line.347"></a>
+<FONT color="green">348</FONT>    <a name="line.348"></a>
+<FONT color="green">349</FONT>                    final HandshakeCompletedListenerImpl    hcListener      =<a name="line.349"></a>
+<FONT color="green">350</FONT>                            new HandshakeCompletedListenerImpl( getSuppliedHandshakeCompletedListener() );<a name="line.350"></a>
+<FONT color="green">351</FONT>                    <a name="line.351"></a>
+<FONT color="green">352</FONT>                    JMXServiceURL   url     = null;<a name="line.352"></a>
+<FONT color="green">353</FONT>                    if ( mProtocol.equals( PROTOCOL_HTTP ) )<a name="line.353"></a>
+<FONT color="green">354</FONT>                    {<a name="line.354"></a>
+<FONT color="green">355</FONT>                            if ( useTLS() )<a name="line.355"></a>
+<FONT color="green">356</FONT>                            {<a name="line.356"></a>
+<FONT color="green">357</FONT>                                    //env.put( TRUST_MANAGERS_KEY, getTrustManagers() );<a name="line.357"></a>
+<FONT color="green">358</FONT>                                    final X509TrustManager[] tms = getTrustManagers();<a name="line.358"></a>
+<FONT color="green">359</FONT>                                    if (tms != null &amp;&amp; tms.length &gt;= 1) {<a name="line.359"></a>
+<FONT color="green">360</FONT>                                        env.put( TRUST_MANAGERS_KEY, tms[0]);<a name="line.360"></a>
+<FONT color="green">361</FONT>                                    }<a name="line.361"></a>
+<FONT color="green">362</FONT>                                    env.put( HANDSHAKE_COMPLETED_LISTENER_KEY, hcListener );<a name="line.362"></a>
+<FONT color="green">363</FONT>                            }<a name="line.363"></a>
+<FONT color="green">364</FONT>                            <a name="line.364"></a>
+<FONT color="green">365</FONT>                            env.put( "com.sun.enterprise.as.http.auth", "BASIC" );<a name="line.365"></a>
+<FONT color="green">366</FONT>                            env.put( "USER", mUser );<a name="line.366"></a>
+<FONT color="green">367</FONT>                            env.put( "PASSWORD", mPassword );<a name="line.367"></a>
+<FONT color="green">368</FONT>                            // so our JMXConnectorProvider may be found<a name="line.368"></a>
+<FONT color="green">369</FONT>                            env.put( JMXConnectorFactory.PROTOCOL_PROVIDER_PACKAGES, HTTP_FACTORY_PACKAGES );<a name="line.369"></a>
+<FONT color="green">370</FONT>                            <a name="line.370"></a>
+<FONT color="green">371</FONT>                            final String    internalProtocol        = useTLS() ? INTERNAL_HTTPS : INTERNAL_HTTP;<a name="line.371"></a>
+<FONT color="green">372</FONT>                            url     = new JMXServiceURL( internalProtocol, mHost, mPort);<a name="line.372"></a>
+<FONT color="green">373</FONT>                    }<a name="line.373"></a>
+<FONT color="green">374</FONT>                    else if ( mProtocol.equals( PROTOCOL_RMI ) )<a name="line.374"></a>
+<FONT color="green">375</FONT>                    {<a name="line.375"></a>
+<FONT color="green">376</FONT>                            if ( useTLS() )<a name="line.376"></a>
+<FONT color="green">377</FONT>                            {<a name="line.377"></a>
+<FONT color="green">378</FONT>                                    // the only way we can communicate with/control the RMI stub is through<a name="line.378"></a>
+<FONT color="green">379</FONT>                                    // this special singleton class<a name="line.379"></a>
+<FONT color="green">380</FONT>                                    final AdminRMISSLClientSocketFactoryEnvImpl     rmiEnv  =<a name="line.380"></a>
+<FONT color="green">381</FONT>                                            AdminRMISSLClientSocketFactoryEnvImpl.getInstance();<a name="line.381"></a>
+<FONT color="green">382</FONT>                                    rmiEnv.setHandshakeCompletedListener( hcListener );<a name="line.382"></a>
+<FONT color="green">383</FONT>                                    rmiEnv.setTrustManagers( getTrustManagers() );<a name="line.383"></a>
+<FONT color="green">384</FONT>                            }<a name="line.384"></a>
+<FONT color="green">385</FONT>                            <a name="line.385"></a>
+<FONT color="green">386</FONT>                            final String s = "service:jmx:rmi:///jndi/rmi://" +<a name="line.386"></a>
+<FONT color="green">387</FONT>                                    mHost + ":" + mPort  + APPSERVER_JNDI_NAME;<a name="line.387"></a>
+<FONT color="green">388</FONT>                             <a name="line.388"></a>
+<FONT color="green">389</FONT>                            url     = new JMXServiceURL( s );<a name="line.389"></a>
+<FONT color="green">390</FONT>                    }<a name="line.390"></a>
+<FONT color="green">391</FONT>                    else<a name="line.391"></a>
+<FONT color="green">392</FONT>                    {<a name="line.392"></a>
+<FONT color="green">393</FONT>                            assert( false );<a name="line.393"></a>
+<FONT color="green">394</FONT>                    }<a name="line.394"></a>
+<FONT color="green">395</FONT>                    <a name="line.395"></a>
+<FONT color="green">396</FONT>                    final JMXConnector conn = JMXConnectorFactory.connect( url, env );<a name="line.396"></a>
+<FONT color="green">397</FONT>                    <a name="line.397"></a>
+<FONT color="green">398</FONT>                    /*<a name="line.398"></a>
+<FONT color="green">399</FONT>                            If the connection was established with RMI, it could have been an insecure<a name="line.399"></a>
+<FONT color="green">400</FONT>                            connection if a on-TLS stub was downloaded.  Verify that the<a name="line.400"></a>
+<FONT color="green">401</FONT>                            a TLS Handshake was actually completed.<a name="line.401"></a>
+<FONT color="green">402</FONT>                     */<a name="line.402"></a>
+<FONT color="green">403</FONT>                    if ( ! disableHandShakeCompletedCheck() )<a name="line.403"></a>
+<FONT color="green">404</FONT>                    {<a name="line.404"></a>
+<FONT color="green">405</FONT>                            if ( useTLS() &amp;&amp; hcListener.getLastEvent() == null )<a name="line.405"></a>
+<FONT color="green">406</FONT>                            {<a name="line.406"></a>
+<FONT color="green">407</FONT>                                    conn.close();<a name="line.407"></a>
+<FONT color="green">408</FONT>                                    throw new IOException( "Connection could not be established using TLS; server is not using TLS" );<a name="line.408"></a>
+<FONT color="green">409</FONT>                            }<a name="line.409"></a>
+<FONT color="green">410</FONT>                    }<a name="line.410"></a>
+<FONT color="green">411</FONT>                    else<a name="line.411"></a>
+<FONT color="green">412</FONT>                    {<a name="line.412"></a>
+<FONT color="green">413</FONT>                            //warning( "HandshakeCompletedCheck is temporarily disabled for PROTOCOL_HTTP" );<a name="line.413"></a>
+<FONT color="green">414</FONT>                            /* This has been commented out -- See CR: 6172198. HTTPS/JMX Connector Implementation<a name="line.414"></a>
+<FONT color="green">415</FONT>                            does not have to accept HandshakeCompletedListener for 8.1*/<a name="line.415"></a>
+<FONT color="green">416</FONT>                    }<a name="line.416"></a>
+<FONT color="green">417</FONT>                    <a name="line.417"></a>
+<FONT color="green">418</FONT>                    conn.addConnectionNotificationListener( this, null, conn );<a name="line.418"></a>
+<FONT color="green">419</FONT>                    <a name="line.419"></a>
+<FONT color="green">420</FONT>                    return( conn );<a name="line.420"></a>
+<FONT color="green">421</FONT>            }<a name="line.421"></a>
+<FONT color="green">422</FONT>            <a name="line.422"></a>
+<FONT color="green">423</FONT>            /**<a name="line.423"></a>
+<FONT color="green">424</FONT>                Used internally as callback for {@link javax.management.NotificationListener}.<a name="line.424"></a>
+<FONT color="green">425</FONT>                &lt;b&gt;DO NOT CALL THIS METHOD&lt;/b&gt;.<a name="line.425"></a>
+<FONT color="green">426</FONT>             */<a name="line.426"></a>
+<FONT color="green">427</FONT>                    public void<a name="line.427"></a>
+<FONT color="green">428</FONT>            handleNotification(<a name="line.428"></a>
+<FONT color="green">429</FONT>                    final Notification      notifIn, <a name="line.429"></a>
+<FONT color="green">430</FONT>                    final Object            handback) <a name="line.430"></a>
+<FONT color="green">431</FONT>            {<a name="line.431"></a>
+<FONT color="green">432</FONT>                    if ( notifIn instanceof JMXConnectionNotification )<a name="line.432"></a>
+<FONT color="green">433</FONT>                    {<a name="line.433"></a>
+<FONT color="green">434</FONT>                            final JMXConnectionNotification notif   = (JMXConnectionNotification)notifIn;<a name="line.434"></a>
+<FONT color="green">435</FONT>                            <a name="line.435"></a>
+<FONT color="green">436</FONT>                            final String    type    = notif.getType();<a name="line.436"></a>
+<FONT color="green">437</FONT>                    <a name="line.437"></a>
+<FONT color="green">438</FONT>                            if ( type.equals( JMXConnectionNotification.FAILED) ||<a name="line.438"></a>
+<FONT color="green">439</FONT>                                    type.equals( JMXConnectionNotification.CLOSED ) )<a name="line.439"></a>
+<FONT color="green">440</FONT>                            {<a name="line.440"></a>
+<FONT color="green">441</FONT>                                    mJMXConnector   = null;<a name="line.441"></a>
+<FONT color="green">442</FONT>                            }<a name="line.442"></a>
+<FONT color="green">443</FONT>                    }<a name="line.443"></a>
+<FONT color="green">444</FONT>            }<a name="line.444"></a>
+<FONT color="green">445</FONT>            <a name="line.445"></a>
+<FONT color="green">446</FONT>            /**<a name="line.446"></a>
+<FONT color="green">447</FONT>                    If the connection has already been created, return the existing JMXConnector<a name="line.447"></a>
+<FONT color="green">448</FONT>                    unless 'forceNew' is true or the connection is currently null.<a name="line.448"></a>
+<FONT color="green">449</FONT>                    <a name="line.449"></a>
+<FONT color="green">450</FONT>                    @param forceNew  if a new connection should be created<a name="line.450"></a>
+<FONT color="green">451</FONT>                    @return JMXConnector <a name="line.451"></a>
+<FONT color="green">452</FONT>             */<a name="line.452"></a>
+<FONT color="green">453</FONT>                    public JMXConnector<a name="line.453"></a>
+<FONT color="green">454</FONT>            getJMXConnector( final boolean forceNew )<a name="line.454"></a>
+<FONT color="green">455</FONT>                    throws IOException<a name="line.455"></a>
+<FONT color="green">456</FONT>            {<a name="line.456"></a>
+<FONT color="green">457</FONT>                    if ( forceNew || mJMXConnector == null )<a name="line.457"></a>
+<FONT color="green">458</FONT>                    {<a name="line.458"></a>
+<FONT color="green">459</FONT>                            mJMXConnector   = createNew();<a name="line.459"></a>
+<FONT color="green">460</FONT>                            getMBeanServerConnection( false );      // make sure it works...<a name="line.460"></a>
+<FONT color="green">461</FONT>                    }<a name="line.461"></a>
+<FONT color="green">462</FONT>                    <a name="line.462"></a>
+<FONT color="green">463</FONT>                    return( mJMXConnector );<a name="line.463"></a>
+<FONT color="green">464</FONT>            }<a name="line.464"></a>
+<FONT color="green">465</FONT>            <a name="line.465"></a>
+<FONT color="green">466</FONT>            <a name="line.466"></a>
+<FONT color="green">467</FONT>                    public MBeanServerConnection<a name="line.467"></a>
+<FONT color="green">468</FONT>            getExistingMBeanServerConnection( )<a name="line.468"></a>
+<FONT color="green">469</FONT>            {<a name="line.469"></a>
+<FONT color="green">470</FONT>                    try<a name="line.470"></a>
+<FONT color="green">471</FONT>                    {<a name="line.471"></a>
+<FONT color="green">472</FONT>                            return( getJMXConnector( false ).getMBeanServerConnection() );<a name="line.472"></a>
+<FONT color="green">473</FONT>                    }<a name="line.473"></a>
+<FONT color="green">474</FONT>                    catch( IOException e )<a name="line.474"></a>
+<FONT color="green">475</FONT>                    {<a name="line.475"></a>
+<FONT color="green">476</FONT>                    }<a name="line.476"></a>
+<FONT color="green">477</FONT>                    return( null );<a name="line.477"></a>
+<FONT color="green">478</FONT>            }<a name="line.478"></a>
+<FONT color="green">479</FONT>            <a name="line.479"></a>
+<FONT color="green">480</FONT>            <a name="line.480"></a>
+<FONT color="green">481</FONT>            /**<a name="line.481"></a>
+<FONT color="green">482</FONT>                    @return getJMXConnector( forceNew ).getMBeanServerConnection() <a name="line.482"></a>
+<FONT color="green">483</FONT>             */<a name="line.483"></a>
+<FONT color="green">484</FONT>                    public MBeanServerConnection<a name="line.484"></a>
+<FONT color="green">485</FONT>            getMBeanServerConnection( final boolean forceNew )<a name="line.485"></a>
+<FONT color="green">486</FONT>                    throws IOException<a name="line.486"></a>
+<FONT color="green">487</FONT>            {<a name="line.487"></a>
+<FONT color="green">488</FONT>                    return( getJMXConnector( forceNew ).getMBeanServerConnection() );<a name="line.488"></a>
+<FONT color="green">489</FONT>            }<a name="line.489"></a>
+<FONT color="green">490</FONT>            <a name="line.490"></a>
+<FONT color="green">491</FONT>        /**<a name="line.491"></a>
+<FONT color="green">492</FONT>            {@link DomainRoot} will be returned.  Upon return, AMX is<a name="line.492"></a>
+<FONT color="green">493</FONT>            ready for use.  If the server has just been started, there<a name="line.493"></a>
+<FONT color="green">494</FONT>            may be a slight delay until AMX is ready for use; this method<a name="line.494"></a>
+<FONT color="green">495</FONT>            returns only once AMX is ready for use.<a name="line.495"></a>
+<FONT color="green">496</FONT>           <a name="line.496"></a>
+<FONT color="green">497</FONT>            @return a DomainRoot<a name="line.497"></a>
+<FONT color="green">498</FONT>         */<a name="line.498"></a>
+<FONT color="green">499</FONT>                    public DomainRoot<a name="line.499"></a>
+<FONT color="green">500</FONT>            getDomainRoot()<a name="line.500"></a>
+<FONT color="green">501</FONT>                    throws IOException<a name="line.501"></a>
+<FONT color="green">502</FONT>            {<a name="line.502"></a>
+<FONT color="green">503</FONT>                    final DomainRoot    domainRoot  =<a name="line.503"></a>
+<FONT color="green">504</FONT>                        ProxyFactory.getInstance( this ).getDomainRoot( true );<a name="line.504"></a>
+<FONT color="green">505</FONT>                    <a name="line.505"></a>
+<FONT color="green">506</FONT>                    return domainRoot;<a name="line.506"></a>
+<FONT color="green">507</FONT>            }<a name="line.507"></a>
+<FONT color="green">508</FONT>            <a name="line.508"></a>
+<FONT color="green">509</FONT>                    public String<a name="line.509"></a>
+<FONT color="green">510</FONT>            toString()<a name="line.510"></a>
+<FONT color="green">511</FONT>            {<a name="line.511"></a>
+<FONT color="green">512</FONT>                    return( <a name="line.512"></a>
+<FONT color="green">513</FONT>                            "protocol=" + mProtocol + <a name="line.513"></a>
+<FONT color="green">514</FONT>                            ", host=" + mHost + <a name="line.514"></a>
+<FONT color="green">515</FONT>                            ", port=" + mPort + <a name="line.515"></a>
+<FONT color="green">516</FONT>                            ", user=" + mUser +<a name="line.516"></a>
+<FONT color="green">517</FONT>                            ", useTLS={" + useTLS() + "}" +<a name="line.517"></a>
+<FONT color="green">518</FONT>                            ", mReserved=" + (mReserved == null ? "null" : MapUtil.toString( mReserved )) );<a name="line.518"></a>
+<FONT color="green">519</FONT>            }<a name="line.519"></a>
+<FONT color="green">520</FONT>            <a name="line.520"></a>
+<FONT color="green">521</FONT>    <a name="line.521"></a>
+<FONT color="green">522</FONT>            <a name="line.522"></a>
+<FONT color="green">523</FONT>    }<a name="line.523"></a>
+<FONT color="green">524</FONT>    <a name="line.524"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

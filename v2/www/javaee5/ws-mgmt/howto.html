@@ -1,0 +1,166 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+</head>
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+
+<h3>Monitoring Web Services</h3>
+<p>by <a href="#Author">Satish Viswnatham and Nazrul Islam</a>
+<p><!--StartFragment --><b></b>
+<p>One of the new technologies introduced in J2EE 1.4 was J2EE Management,
+<a href="http://www.jcp.org/en/jsr/detail?id=77">JSR 77</a>. J2EE Management
+provided a standard management model for exposing and accessing management
+information, operations, and parameters for J2EE components. Together with
+technologies such as Java Management Extensions (JMX), J2EE Management
+gives developers a vendor-neutral way of managing and monitoring resources
+in J2EE servers. (For more information&nbsp; about JMX, see the Tech Tip
+"<a href="http://java.sun.com/developer/EJTechTips/2005/tt0222.html#1">Understanding
+JMX Technology</a>". One of the resources that can be managed and monitored
+through these technologies is a web service. However, in general, tools
+have not taken advantage of these technologies to make web services easy
+to manage and monitor. One recent exception is GlassFish,&nbsp; an open
+source application server implementation of the Java EE 5. In Glassfish,
+web services are first class objects that can be easily managed and monitored.
+In this tip, you'll have the opportunity to try out these GlassFish features
+to monitor and manage a web service.
+<p>In Glassfish Web Services are first class manageable objects, combined
+with detailed monitoring and diagnostics. Glassfish Beta build is used
+to demonstrate the new Web Services monitoring features in this Tech Tip.
+<i>jaxrpc-simple</i>
+sample web service application is chosen to demonstrate the monitoring
+and message trace features.
+<p><b>Web Services As First Class Objects</b>
+<p>Most Java EE Application Servers list the deployed archives (.ear, .war,
+.jar and .rar).&nbsp; But it is very hard to find all the deployed web
+service endpoints in a domain. To manbage web services, user had to dig
+through the deployment descriptors. In Glassfish, all web service endpoints
+are discovered and shown distincly, so that they can be managed. Similar
+to EJBs and Servlets, all Web Services will be listed in the management
+console.
+<p>From the samples directory, lets deploy <i>jaxrpc-simple</i> application.&nbsp;
+Go to the following directory <i>${install_root}/samples/webservices/jaxrpc/apps/simple
+and e</i>xecute the following command. <i>${install_root}</i> is where
+Glassfish is installed.
+<blockquote><font face="Courier New,Courier">ant all</font></blockquote>
+If you log on to the Administration GUI (by default, http://localhost:4848),
+it should show one Servlet web service endpoint inside jaxrpc-simple application.
+The basic information like the type of web service, the application the
+web service belongs to and&nbsp; the WSDL can be also be viewed here.
+<p><img SRC="imgs/afterdeploy.GIF" height=288 width=792>
+<br><i><font size=-1>Figure 1. GUI showing the installed web services</font></i>
+<p>If you click on the HelloIF endpoint, GUI shows the detailed information
+about that web service endpoint - Endpoint URI, Module name this web service
+is packaged in and descriptor information ( WSDL, webservices.xml, mapping.xml
+(for JAX-RPC endpoints), web.xml, sun-web.xml, ejb-jar.xml and sun-ejb-jar.xml).
+<p><img SRC="imgs/ws_general.GIF" height=430 width=508>
+<br><i><font size=-1>Figure 2. GUI showing the details of web service endpoint</font></i>
+<p><b>Monitoring</b>
+<p>Glassfish has the capability to track and graphically show operational
+statistics, such as the number of requests per second, average respone
+time and throughput. Monitoring can be enabled individually per web service
+within an application. Supported monitoring levels are OFF, LOW and HIGH.
+If monitoring is turned on for a web service (meaning LOW or HIGH), it
+is enabled for all operations in that web service.
+<br>&nbsp;
+<blockquote><u>LOW</u>&nbsp; - At this setting, response times, throughput,
+total number of requests and faults are monitored.
+<br><u>HIGH</u> - At this setting, apart from the above mentioned attributes
+Message Trace (Content Visualization) is enabled.
+<br><u>OFF</u>&nbsp;&nbsp; - No monitoring data is collected.</blockquote>
+
+<p><br>By default, monitoring is OFF. If you click on the statistics and
+messages, the tables will be empty because there are no messages collected
+for this end point.
+<p><img SRC="imgs/monitoring_off.GIF" height=360 width=813>
+<br><i><font size=-1>Figure 3. Configuring Web Service Endpoint for Monitoring
+and Message Visualization</font></i>
+<p>To start collecting statistics and messages turn on the monitoring level
+to HIGH and click Save.
+<p>Now send a SOAP&nbsp;request to this application using appclient.
+<blockquote><font face="Courier New,Courier">appclient -client jaxrpc-simpleClient.jar</font></blockquote>
+You should see the output similar to the following:
+<blockquote><font face="Courier New,Courier">Hello Duke!</font></blockquote>
+If you repeat the above step for another two times, the following 8 aggregated
+statistics are shown on the Statistics page.
+<p><img SRC="imgs/stats.GIF" height=588 width=794>
+<br><i><font size=-1>Figure 4. Monitoring Statistics collected for a Web
+Service Endpoint</font></i>
+<p>The same could also be obtained from the CLI command:
+<blockquote><font face="Courier New,Courier"><font size=-1>asadmin get
+-m --port 4848 "server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.*"</font></font></blockquote>
+You should see the output similar to the following. All 8 statistics (averageresponsetime,
+maxresponsetime, minresponsetime, throughput, totalfaults, totalnumsuccessess,
+totalauthfailures and totalauthsucesses). CLI gives some more attribute
+information than GUI about each statistic like description, unit of measurement,
+last time this statistic is updated, name and description of the statistic
+are all displayed.
+<blockquote><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.averageresponsetime-count
+= 269</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.averageresponsetime-description
+= Average response time measured in milliseconds</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.averageresponsetime-lastsampletime
+= 1136333211736</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.averageresponsetime-name
+= AverageResponseTime</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.averageresponsetime-starttime
+= 1135041961846</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.averageresponsetime-unit
+= count</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.dotted-name
+= server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.maxresponsetime-count
+= 783</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.maxresponsetime-description
+= Maximum response time measured in milliseconds</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.maxresponsetime-lastsampletime
+= 1136333211721</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.maxresponsetime-name
+= MaxResponseTime</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.maxresponsetime-starttime
+= 1135041961846</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.maxresponsetime-unit
+= count</font></font>
+<br><font face="Courier New,Courier"><font size=-1>server.applications.jaxrpc-simple.jaxrpc-simple\.war.HelloIF.webservice-endpoint.minresponsetime-count
+= 11</font></font>
+<br><font face="Courier New,Courier"><font size=-1>...</font></font></blockquote>
+
+<p><br><b><font size=-1>Message Trace</font></b>
+<p>When the monitoring is HIGH, it will be possible to see last N (default
+is 25) messages for a web service endpoint. These messages are kept in
+memory of the server instances. Details of SOAP request, response and HTTP
+header information will be available.
+<p>The last three app client executions produces the following message
+traces:
+<p><img SRC="imgs/msg_trace.GIF" height=381 width=787>
+<br><i><font size=-1>Figure 5. Messages collected for Web Service Endpoint</font></i>
+<p>You can view details on each message. Request and Response parameters
+can be viewed on this page. Content can also be viewed in plain xml.
+<p><img SRC="imgs/msg_detail.GIF" height=734 width=456>
+<br><i><font size=-1>Figure 6. Request and Response details for a Web Service
+Message</font></i>
+<br>&nbsp;
+<br>&nbsp;
+<p><b>References</b><b></b>
+<p><a href="http://glassfish.dev.java.net">Project Glassfish</a> (open
+source version of Sun Java System Application Server).
+<br><a href="http://java.sun.com/javaee/5/index.jsp">Java Platform, Enterprise
+Edition (Java EE)&nbsp;5</a>
+<p><a NAME="Author"></a><b><font size=-1>About the Author</font></b>
+<br>&nbsp;<font size=-1></font>
+<p><font size=-1>Satish Viswanathambeen working on J2EE techlogy since
+its inception. He is currently actively working in the effort to make J2EE</font>
+<br><font size=-1>Application Server as the SOA engine. Satish has experience
+in JDBC, EJB/Transactions and Management technologies. Prior to</font>
+<br><font size=-1>SUN, he worked on pre-J2EE application servers such as
+Kiva Application Server and Netscape Web Server. He has applied for</font>
+<br><font size=-1>3 patents during his tenure at Sun.</font><font size=-1></font>
+<p><font size=-1>Nazrul is a senior member of the Application Server's
+Administration and Management team. He has been working in the J2EE group
+for the last 5</font>
+<br><font size=-1>years. He was a key contributor to the Application Server
+Enterprise Edition design and implementation. During his tenure at Sun,
+he has</font>
+<br><font size=-1>applied for 8 patents.</font>
+
+</body>
+</html>

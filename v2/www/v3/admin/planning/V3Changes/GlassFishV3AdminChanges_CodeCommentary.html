@@ -1,0 +1,257 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=ISO-8859-1">
+  <title>GlassFish V3 Admin Changes &#8212; Code Commentary</title>
+  <link href="styles.css" rel="stylesheet" type="text/css">
+  <style type="text/css">
+<!--
+.style2 {color: #FF0000}
+.style5 {font-size: 10px}
+-->
+  </style>
+</head>
+<body>
+<div align="center">
+<div id="page">
+<h1 class="title" align="center">Glassfish V3 Admin Changes&nbsp;&#8212;<br>
+Existing Code Commentary<br>
+<span class="style1"><a
+ href="mailto:lloyd.chambers@sun.com?subject=GlassFish%20V3%20Admin%20Changes%20question/comment">lloyd.chambers@sun.com</a></span><br>
+<span class="style5">version 003, 22 Oct 2007</span></h1>
+<h1>Table of Contents</h1>
+<div id="table-of-contents">
+<p><a href="#Introduction">Introduction</a></p>
+<p><a href="#AdminService">AdminService</a></p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ActsLikeALifecycleModule">Acts
+like a Lifecycle module</a></p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;<a
+ href="#AdminService_InitializesSunoneInterceptor">Initializes
+SunoneInterceptr</a></p>
+<p><a href="#SunoneInterceptor">SunoneInterceptor</a></p>
+<p>&nbsp;&nbsp;&nbsp; <a href="#SunoneInterceptor_DynamicRegistration">Dynamic
+registration</a></p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#SunoneInterceptor_HotConfig">Hot
+config</a></p>
+<p><a href="#ConfigInterceptor">ConfigInterceptor</a></p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#ConfigInterceptor_Insertion">Insertion
+of ConfigInterceptor into the MBeanServer call chain</a></p>
+<p>&nbsp;&nbsp;&nbsp;&nbsp;<a
+ href="#ConfigInterceptor_ConfigurationChanged">ConfigInterceptor&#8217;s
+&#8220;configuration changed&#8221; behavior</a></p>
+<p><a href="#DynamicReconfig">Dynamic Reconfiguration</a></p>
+<p><a href="#Conclusions">Conclusions</a></p>
+</div>
+<div id="main-body">
+<h1><a name="Introduction" id="Introduction"></a>Introduction</h1>
+<p>Various &#8220;interesting&#8221; classes of the GlassFish V2 admin codebase are
+discussed in this document. Areas including the MBeanServer and
+SunoneInterceptor have been previously written up. See <a
+ href="SunoneInterceptorChanges.html" target="_blank"><em>Initialization
+of the MBeanServer in Glassfish&#8212;<br>
+Fixing the SunoneInterceptor Initialization</em></a>.</p>
+<h1><a name="AdminService" id="ConfigInterceptor3"></a>AdminService</h1>
+<p>See the <a
+ href="GlassFishV3AdminChanges_Overview.html#TheMBeanServer">MBeanServer
+discussion</a> for background.</p>
+<p>The AdminService has been the &#8220;kitchen sink&#8221; into which anything
+vaguely admin-related has been dumped. As a result, it has no
+structural integrity, consisting largely of snippets of non-reusable
+special-purpose code, dependencies on very specific initialization
+sequences, etc. That said, much of what the AdminService does will
+likely to be moved into a GlassFish V3 module.</p>
+<p>A rearchitecture in which new sub-features can be added should be
+done with the need AdminInfrastructure module. Examples of sub-features
+include dotted names, transaction recovery, JKS key store, etc&#8212;see <a
+ href="GlassFishV3AdminChanges_Overview.html#AdminServiceActivitiesAtInitialization"
+ target="_blank"><em>AdminService activities at initialization</em></a>.</p>
+<h3><a name="ActsLikeALifecycleModule" id="ActsLikeALifecycleModule"></a>Acts
+like a Lifecycle module</h3>
+<p>The AdminService is invoked like a Lifecycle module, with
+instantiation, <span class="code">init(), start(), ready(), stop()</span>
+and <span class="code">destroy()</span> stages. Due in part to
+build-order dependencies, AdminService is cluttered with messy code
+that has no compile-time sanity checks and no logic for propagating
+failures outside the failed method (leading to unreliable startup if
+initialization fails). An example is shown below.</p>
+<pre class="code-block">    private void initCallFlow() {<br>        try {<br>            final Class cl = Class.forName(<br>                    "com.sun.enterprise.admin.monitor.callflow.AgentImpl");<br>            final Method method = cl.getMethod("getInstance", (Class[])null);<br>            final Agent agent = (Agent) method.invoke(null, (Object[])null);<br>            Switch.getSwitch().setCallFlowAgent(agent);<br>        } catch (Throwable t) {<br>            sLogger.log(Level.SEVERE, "core.callflow_agent_init_failed", t);<br>            Switch.getSwitch().setCallFlowAgent(new AgentAdapter());<br>        }<br>    }<br></pre>
+<p>With dozens of such code blocks, the need for a formal &#8220;sub feature&#8221;
+mechanism is high, for consistent error handling and propagation. Some
+sub features should be factored out into their own modules however
+(such as AMX).</p>
+<h3><a name="AdminService_InitializesSunoneInterceptor"
+ id="AdminService_InitializesSunoneInterceptor"></a>Initializes
+SunoneInterceptr</h3>
+<p><span class="code">AdminService.init()</span> is where <span
+ class="code"><a href="#SunoneInterceptor">SunoneInterceptor</a></span>
+is inserted into the MBeanServer call chain, among other activities.
+Until changes late in the V2 development cycle, <span class="code">init()</span>
+was where the MBeanServer itself was created; changes made by the
+author modified this sequence to create the MBeanServer in <span
+ class="code">PEMain()</span>, with the current code now inserting <span
+ class="code">SunoneInterceptor</span> as a &#8220;hook&#8221; into <span
+ class="code">DynamicInterceptor</span> (itself a wrapper around the
+standard MBeanServer). This convoluted logic exists because of the
+side-effects inserted by <span class="code"><a
+ href="#ConfigInterceptor">ConfigInterceptor</a></span>, which is
+itself inserted by <span class="code">SunoneInterceptor</span>.</p>
+<pre class="code-block"> void init() throws ServerLifecycleException {<br>        if (isDas()) {<br>            RRStateFactory.removeStateFile();<br>        }<br>        adminChannel = new AdminChannelLifecycle();<br>        adminChannel.onInitialization(context);<br><br>        publishPID();        <br><br>        final DynamicInterceptor dyn = (DynamicInterceptor)getMBeanServer();<br>        final MBeanServer delegateMBeanServer = dyn.getDelegateMBeanServer();<br>        adminContext.setMBeanServer( dyn );<br>        <br>        final SunoneInterceptor sunone =<br>            SunoneInterceptor.createInstance(adminContext, dyn, delegateMBeanServer);<br>        dyn.addHook( COM_SUN_APPSERV, sunone );<br>        FeatureAvailability.getInstance().registerFeature(<br>            FeatureAvailability.SUN_ONE_INTERCEPTOR_FEATURE, "true");<br>        AMXLoggingHook.enableLoggingHook();<br>        registerConfigMBeans();<br>            <br>        sLogger.log(Level.INFO, "core.sunone_interceptor_enabled");<br>        initCallFlow();<br><br>        //initialize JKS properties.<br>        setupJKS();<br>    }<br></pre>
+<h1><a name="SunoneInterceptor" id="ConfigInterceptor2"></a>SunoneInterceptor</h1>
+<p>See the <a
+ href="GlassFishV3AdminChanges_Overview.html#TheMBeanServer">MBeanServer
+discussion</a> for background.</p>
+<p>By stripping out unnecessary code (a lot of it in <span class="code">SunoneInterceptor</span>),
+we can reveal and finally understand what really needs to happen, thus
+making it easier to make changes with confidence. In the case of <span
+ class="code">SunoneInterceptor</span>, the code to <a
+ href="#SunoneInterceptor_DynamicRegistration">dynamically load</a>
+MBeans can be stripped out, as can the <a
+ href="#SunoneInterceptor_HotConfig">HotConfig code</a>, reducing <span
+ class="code">SunoneInterceptor</span> to a nearly-empty &#8220;shell&#8221;. This
+should make moving its remaining functionality elsewhere much more
+straightforward.</p>
+<h3><a name="SunoneInterceptor_DynamicRegistration"
+ id="SunoneInterceptor_DynamicRegistration"></a>Dynamic registration</h3>
+<p>The <span class="code">SunoneInterceptor</span>&#8217;s complications
+include the ability to dynamically register &#8220;missing&#8221; MBeans when
+certain MBeanServer calls are made. To the author&#8217;s knowledge, there
+remains only a single MBean for which this logic applies: <span
+ class="code">com.sun.appserv:type=synchronization,category=config</span>,
+an MBean which applies only to multi-server domains (EE). By
+registering this MBean when the <span class="code">AdminService.ready()</span>
+is called, all these creation hooks can be eliminated.</p>
+<p>A number of methods are &#8220;hooked&#8221; and call <span class="code">registerWithPersistenceCheck()</span>
+to initiate dynamic registration of missing MBeans; this is done
+willy-nilly for every MBean of every kind; a crudeand invasive
+approach: </p>
+<pre class="code-block"> registerWithPersistenceCheck(objectName);</pre>
+<h3><a name="SunoneInterceptor_HotConfig"
+ id="SunoneInterceptor_HotConfig"></a>Hot config</h3>
+<p>As far as the author can tell, the &#8220;hot config changes&#8221;&nbsp;code is
+completely defunct and can be safely removed; it appears to do nothing
+at all, as the call path is always a no-op. Below is a typical
+intercepted method:</p>
+<pre class="code-block">   public Object getAttribute(ObjectName objectName, String attributeName) <br>        throws InstanceNotFoundException, AttributeNotFoundException, <br>               MBeanException, ReflectionException {<br>        <span
+ class="text-red">if(isInstanceMBean(objectName)) {<br>            checkHotConfigChanges(objectName);<br>        }</span><br>        registerWithPersistenceCheck(objectName);<br>        //logMBeanInfo(objectName);<br>        Object value = proxyMBeanServer.getAttribute(objectName, attributeName);<br>        return ( value );<br>    }<br></pre>
+<h1><a name="ConfigInterceptor" id="ConfigInterceptor"></a>ConfigInterceptor</h1>
+<p>See the <a
+ href="GlassFishV3AdminChanges_Overview.html#TheMBeanServer">MBeanServer
+discussion</a> for background. The ConfigInterceptor functionality is
+the <em>only</em> reason that the <span class="code">SunoneInterceptor</span>
+cannot be eliminated. <strong>Once eliminated, we no longer have a
+need to use a non-standard MBeanServer</strong>. So this is really a
+key piece of code to understand, and then to rework to meet that goal.</p>
+<h3><a name="ConfigInterceptor_Insertion"
+ id="ConfigInterceptor_Insertion"></a>Insertion of ConfigInterceptor
+into the MBeanServer call chain</h3>
+<p>The <span class="code">ConfigInterceptor</span> is inserted into
+the call chain by <span class="code">SunoneInterceptor</span>, which
+is itself inserted by the <span class="code">AdminService</span>. Once
+this is done, SunoneInterceptor effectively &#8220;hooks&#8221; many MBeanServer
+methods</p>
+<p> <span class="code">SunoneInterceptor</span> utilizes <span
+ class="code">ConfigInterceptor</span> as a proxy which implements <span
+ class="code">MBeanServer</span> (see <span class="code">getMBeanServerInterceptor()</span>
+below). The proxy is stored as the instance variable <span class="code">'proxyMBeanServer,
+and it is</span> used explicitly with a number of MBeanServer calls,
+such as <span class="code">invoke()</span>, <span class="code">getClassLoader()</span>,
+etc. <strong>This is the means by which the <span class="code">ConfigInterceptor</span>
+gets control</strong>. See method <span class="code">getClassLoaderRepository()</span>
+for an example below.</p>
+<pre class="code-block">        <a name="CodeBlock1" id="CodeBlock1"></a>private<br>    SunoneInterceptor(<br>        final AdminContext  adminContextIn,<br>        final MBeanServer   outerMBeanServerIn,<br>        final MBeanServer   delegateMBeanServerIn ) {<br>        adminContext        = adminContextIn;<br>        delegateMBeanServer = delegateMBeanServerIn;<br><br>        outerMBeanServer = outerMBeanServerIn;<br>        <strong>proxyMBeanServer = (MBeanServer)ProxyFactory.createProxy(<br>                    MBeanServer.class, delegateMBeanServer,<br>                    <span
+ class="style2">adminContext.getMBeanServerInterceptor()</span> );</strong> // ***********<br>        logMBeanServerInfo();<br>        try {<br>            initialize(); <br>        } catch( Exception e ) { throw new RuntimeException(e); }<br>    }<br>        private ClassLoaderRepository<br>    getClassLoaderRepository() {<br>		return ( proxyMBeanServer.getClassLoaderRepository() );<br>    }<br></pre>
+<p>Class <span class="code">com.sun.enterprise.admin.server.core.ConfigInterceptor</span>
+is devoid of comments which might explain why it&#8217;s doing what it&#8217;s
+doing. Also, the <strong>audit</strong> code appears to be a
+no-operation; all code which has side-effects has been commented out. </p>
+<h2><a name="ConfigInterceptor_ConfigurationChanged"
+ id="ConfigInterceptor_ConfigurationChanged"></a>ConfigInterceptor&#8217;s
+&#8220;configuration changed&#8221; behavior</h2>
+<p class="action"><strong>Investigate</strong>: When and how
+configuration is actually flushed, and what downstream side effects it
+causes (such as pushing new configuration to remote instances should be
+studied and documented so that equivalent functionality or alternate
+approaches can be used.</p>
+<p>Comments on the code block <a href="#CodeBlock2">shown below </a>&#8212;</p>
+<ol>
+  <li>Use of the <span class="code">CallStack</span> is not really
+needed; all that's needed is to know when the call has actually
+returned, which can be done when the original<span class="code">
+invoke()</span> is done in the interceptor (a recursion-detection
+issue).</li>
+  <li>Method <span class="code">preInvoke()</span> sets up an <span
+ class="code">EventStack</span> in order to track config changes.</li>
+  <li>Another client/thread can enter <span class="code">preInvoke()</span>,
+but with a different call stack and <span class="code">EventStack</span>.
+How that interacts with a singleton <span class="code">AdminContext</span>
+is unclear. Should one of the clients fail? If so, does it actually get
+detected and then fail? There is no thread safety here; the various
+&#8220;if&#8221; tests are made and control flow changes as a result regardless of
+whether conditions change subsequent to the conditional test.</li>
+  <li>The <span class="code">postInvoke()</span> method is responsible
+for doing a <span class="code">flush()</span> and sending
+Notifications if a flush is needed.</li>
+  <li>This whole exercise is pointless on a DAS-only (PE) server, since
+the Notifications are for the benefit of remote instances&#8212;is that true?
+No comments clarify the issue.</li>
+  <li>The code executes for <em>all</em> methods, many of which do not
+change configuration, and many of which operate on MBeans other than
+the <span class="code">com.sun.appserv:category=config</span> ones.</li>
+  <li>The code creates an <span class="code">AdminNotificationHelper</span>
+after even read-only method calls, like <span class="code">getStatistics()</span>.
+(The method <span class="code">isReadonlyInvokeOperation()</span>
+checks for a single specific operation!). While the non-necessity of
+the invocation is detected internally to <span class="code">AdminNotificationHelper.sendNotification()</span>,
+it is wasteful at execution time, and confusing to the reader. </li>
+  <li>The comment block on postInvoke() now seems humorous&#8212;<em>years</em>
+later failure cases are not handled! Perhaps it was meant as &#8220;later by
+the hapless customer&#8221;.</li>
+</ol>
+<pre class="code-block">    <a name="CodeBlock2" id="CodeBlock2"></a>public void preInvoke(CallStack callstack) {<br><br>        if (callstack.getStackSize() == 1) {<br>            EventStack stack = new EventStack();<br>            stack.setConfigContext(adminContext.getAdminConfigContext());<br>            EventContext.setEventStackToThreadLocal(stack);<br>        }<br><br>    }<br>   /**<br>     * We flush configcontext only in the last return of<br>     * setAttribute, setAttributes or invoke. <br>     * Send notification if flush is successfull<br><br>     * Failure cases will be handled later<br>     */<br>    public void postInvoke(CallStack callStack) { <br>        if (callStack.getStackSize() == 1) {<br>            Call call = callStack.getActiveCall();<br>            if (call.getState().isSuccess() &amp;&amp; isFlushNeeded(call)) {<br>                try {<br>                    ConfigContext ctx = adminContext.getAdminConfigContext();<br>                    if (ctx.isChanged()) {<br>                        ctx.flush();<br>                    }<br>                } catch (ConfigException ce) {<br>                    _logger.log(Level.WARNING,<br>                        "core.config_exception_occurred", ce);<br>                }<br>            }<br>            if (isFlushNeeded(call)) {<br>                <span
+ class="text-red">new AdminNotificationHelper(adminContext).sendNotification();</span><br>            }<br>        }<br><br>        if ( AUDIT_STUFF ) {<br>            auditInvocation(callStack.getActiveCall());<br>        }<br>    }<br>    private boolean isFlushNeeded(Call call) {<br>        String methodName = call.getMethod().getName();<br>        if( methodName.equals("setAttribute") ||<br>            methodName.equals("setAttributes") ||<br>            (methodName.equals("invoke") &amp;&amp; !isReadonlyInvokeOperation(call))) {<br>                return true;<br>        }<br>        return false;<br>    } <br></pre>
+<h1><a name="DynamicReconfig" id="DynamicReconfig"></a>Dynamic
+Reconfiguration</h1>
+<p>As we have seen, the postInvoke method of ConfigInterceptor invokes
+sendNotification method of AdminNotificationHelper to inform the local
+server as well as remote servers about the config change. The config
+change is notified in the form of event(s) by the
+AdminEventMulticaster. The multicaster determines the target of the
+event, if it is local server then it processes the event locally or if
+it is remote server(s), it uses EventDispatcher to dispatch the event
+to all target remote servers and waits for the response. The response
+is returned as AdminEventResult. Some times the server may not be able
+to handle certain config changes dynamically and needs to be restarted,
+in that case the server will return a restart status thru
+AdminEventResult<br>
+</p>
+<p>Dynamic Reconfiguration has been one of the critical components in
+the successful operation of enterprise class servers. Like most of the
+other code, it has gone thru stabilization and has its share of tweaks
+and it may be the time for review. For ex. there are ceratin events for
+which no dynamic reconfig is needed and these are now hard coded. The
+code still executes until it determines that no dynamic reconfig is
+needed for this event&nbsp; There is no genric and efficient way of
+knowing in advance if a change needs dynamic reconfiguration. Today it
+can be done but the infrastructure which caters to this needs to be
+modified so that the user customization becomes easy.<br>
+</p>
+<p>We have to rethink dynamic reconfiguration as it will change from
+monolithic code to modular architecture in V3. There should be a
+generic infrastructure to support the publishing of events (locally and
+remotely) and handling of these events by any of the core or external
+modules. External modules need to be treated on par with core modules.
+Perhaps Dynamic Reconfiguration can be architechected as a common
+service. Today, the event handling code waits for the response and we
+have not seen any issues with it. <span style="font-weight: bold;"><br>
+</span></p>
+<h1>Conclusions</h1>
+<p>A thorough understanding the code paths will be needed to maintain
+expected behavior, especially in multi-server domains. However, by
+stripping out defunct or unnecessary code and collapsing multiple
+confusing classes into a single more concise form, the transition to a
+new implementation should be fairly straightforward.</p>
+<p><a href="index.html"><strong>Back to Start Page</strong></a></p>
+</div>
+</div>
+</div>

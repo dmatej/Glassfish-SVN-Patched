@@ -1,0 +1,417 @@
+<!DOCTYPE html PUBLIC "-//Tigris//DTD XHTML 1.0 Transitional//EN" "http://style.tigris.org/nonav/tigris_transitional.dtd">
+<html>
+<head>
+  <title>GlassFish プロジェクト - 始めに</title>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=UTF-8">
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8">
+</head>
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<div id="projecthome" class="app"><font size="+1"><span
+ style="font-weight: bold;">GlassFish プロジェクトのビルド </span></font><br>
+<a href="#pre_req">GlassFish のビルドに必要なもの</a><br>
+<a
+ href="http://wiki.glassfish.java.net/Wiki.jsp?page=BuildInformation#qs">クイックスタートガイド
+</a><span style="font-weight: bold;"></span><br>
+<a href="#Complete_Instructions_on_how_to_Build">ビルドの手順 
+手順</a><br>
+<a href="http://www.netbeans.org/kb/41/glassfish.html">Netbeans IDE での GlassFish ビルド
+</a><br>
+<a href="BuildGlassFish.html#Branch">ブランチからのビルド</a><br>
+<a href="#maven_goals">GlassFish Maven ゴールの概要</a><br>
+<br>
+このドキュメントは GlassFish のビルドについて説明します。&nbsp; 
+<a
+ href="https://glassfish.dev.java.net/public/NewtoGlsasFish.html#Submit_a_Bug">バグの報告
+</a> や <a
+ href="https://glassfish.dev.java.net/public/NewtoGlsasFish.html#Request_a_Feature">新機能の要求
+</a>につかう便利なリンクもあります。ガバナンスのポリシーは<a
+ href="https://glassfish.dev.java.net/public/GovernancePolicy.html">こちらです。</a><br>
+<p><span style="font-weight: bold;"></span></p>
+<h3><a name="Complete_Instructions_on_how_to_Build"></a>GlassFish
+ビルドの手順</h3>
+GlassFish は NetBeans を使って、あるいはコマンドラインオプションを使って
+ビルドできます。&nbsp; 次の記事は<a
+ href="http://www.netbeans.org/kb/41/glassfish.html">NetBeans を使った
+GlassFish プロジェクトのビルドおよび開発</a>についての情報です。&nbsp; コマンドライン
+オプションを使った GlassFish のビルドについては以下を参照してください。<br>
+<br>
+<span style="font-weight: bold;"><a name="pre_req"></a>GlassFish のビルド
+に必要なもの。</span><br>
+<ul>
+  <li><a
+ href="http://maven.apache.org/maven-1.x/start/download.html">Maven</a>
+(1.0.2) をインストールする必要があります: GlassFish の依存関係を保存するローカルリポジトリを Maven が作成するために使われます。
+</li>
+  <li>java.net へのログインと、GlassFish プロジェクトの
+CVS レポジトリへの
+アクセスが必要です。</li>
+  <li>GlassFish CVS レポジトリに一度ログインする必要があります。(CVS
+のパスワードをユーザーのホームディレクトリにある .cvspass ファイルに保存
+するためです)</li>
+  <li><a href="http://java.sun.com/j2se/1.5.0/download.jsp">J2SE 5.0</a>
+(1.5.0_09) がインストールされていて、JAVA_HOME 環境変数が設定されていて、パス環境変数
+も設定されている必要が
+あります。.&nbsp; 
+最新版の J2SE 5.0 を使うことを推奨します。&nbsp; <br>
+  </li>
+  <li>java.net の手順書を見て<a
+ href="https://glassfish.dev.java.net/servlets/ProjectSource#wincvs">
+cvs クライアント</a>を設定します。<br>
+  </li>
+</ul>
+<span style="font-weight: bold;">GlassFish のビルドステップ:</span><br>
+<ol>
+</ol>
+<div style="margin-left: 40px;">最初のステップは、ビルドシステムで使われる
+モジュールの依存関係および共通ファイルのチェックアウトと、
+プロパティファイルの編集です。</div>
+<ol>
+  <pre>% mkdir workspace<br>% cd workspace<br>% cvs -d :pserver:&lt;userid&gt;@cvs.dev.java.net:/cvs checkout glassfish/bootstrap<br></pre>
+上の操作により project.xml、maven.xml、project.properties
+および
+project.xml から参照される共通ファイルをチェックアウトします。<br>
+</ol>
+<div style="margin-left: 40px;">GlassFish ワークスペースの再利用のために&nbsp;
+workspace/glassfish/bootstrap/build.properties を作成するか
+一時的な利用のためには
+${HOME}/build.properties
+(Unix)&nbsp; あるいは %HOMEPATH%\build.properties (Windows) ファイルを作成し、&nbsp; 以下の
+変数を設定します: (%HOMEPATH% 変数は次のコマンドを実行して
+取得できます: echo %HOMEPATH% もしくは "set" を実行し HOMEPATH を参照
+(windows))<br>
+次の２つの glassfish 変数 glassfish.os.name,
+glassfish.cvs.username <a href="BuildGlassFish.html#configuration">を設定
+します</a>.<br>
+glassfish.os.name= &lt;OS 名 - 可能な
+変数は WINNT, SunOS, Linux, SunOS_X86, Darwin&gt;<br>
+glassfish.cvs.username= &lt;java.net id&gt;<br>
+</div>
+<ol>
+（例）Windows XP Professional<br>
+  <code>glassfish.os.name=WINNT<br>
+glassfish.cvs.username=carlavmott<br>
+  </code> <br>
+  <li>次にソースをチェックアウトします。</li>
+  <pre>% cd glassfish/bootstrap<br>% maven checkout<br></pre>
+既知の
+制限事項: GlassFish をビルドするために必要ないくつかのソースが java.net
+上にない場合があります。(例: MQ, ORB, JWSDP
+2.0 など).&nbsp; これらは現時点ではバイナリ依存ファイルとして扱われます。
+(バイナリ依存ファイルの使い方は次のステップを参照してください。)
+次の方法でモジュールサブセットのチェックアウトを行うこともできます:<br>
+  <pre>% maven checkout -Dmodules=<span style="font-family: monospace;">[</span>カンマで区切られたモジュールリスト]   </pre>
+  <p>モジュールリストは<a
+ href="http://wiki.java.net/bin/view/Projects/GlassFishModuleOwners">こちらを参照してください</a>。<span
+ style="font-family: monospace;"></span></p>
+  <li>サーバーイメージの
+ブートストラップ (glassfish を実行するのに必要なスクリプトと jar ファイル
+の
+コレクション)。 開発者は
+あらかじめビルドされたサーバーをダウンロードし、モジュールサブセットをビルドする "bootstrap" 
+を選択できます。別のオプションとして "bootstrap-all" を選択すると
+、初めからサーバーを作成できます。そしてすべてのモジュールをビルドし、
+モジュール間もしくはバイナリ依存ファイルの変更を確認します。<br>
+  </li>
+  <span style="font-weight: bold;"><br>
+  </span><b>bootstrap-all</b> オプション: ソースからすべてのモジュールを
+ビルドします。<br>
+  <pre>% maven bootstrap-all </pre>
+  <b>bootstrap</b> オプション: あらかじめビルドされたサーバーを使って必要なモジュールだけビルドします。
+  <br>
+  <pre>% maven bootstrap</pre>
+次のステップは GlassFish のプロモートビルドをすでにインストールしている場合のオプションです。
+&nbsp; プロモートビルドを使うには
+プロパティを
+glassfish/project.properties に設定します。
+  <pre wrap="">glassfish.image.version=&lt;&lt;build version&gt;&gt;</pre>
+こうすることによってビルドシステムからインストールされている
+Glassfish を指し示すことができます。このプロパティは
+${HOME}/build.properties に追加することもできます。<br>
+  <br>
+  <li>チェックアウトしたソースコードのビルド。コンパイルの指示は
+ステップ２でチェックアウトされた共通構成ファイルによって行われます。
+<strong>このステップは各モジュールのコンパイルが終わった
+時点でインストールイメージのアップデートを行います</strong>。<br>
+  </li>
+  <pre>% maven build<br></pre>
+次の方法でモジュールのサブセットビルドを行うこともできます:<br>
+  <pre>% maven build -Dmodules<i style="font-style: italic;">=</i><span
+ style="font-family: monospace;">[</span>カンマで区切られた module-names のリスト] </pre>
+あるいは ../[module-name] に移動して次のコマンドを実行:<br>
+  <pre>% maven build<br></pre>
+  <li>GlassFish サーバーランタイムの構成。&nbsp; このステップは
+Glassfish サーバーの実行に必要な asadmin スクリプト、
+create-domain の作成などを行い
+ます。<br>
+  </li>
+  <pre>% maven configure-runtime   (Default is silent installation) </pre>
+ポート番号などの共通構成情報を指定したい場合は、
+configure-runtime を verbose モードで使います。
+&nbsp;
+  <pre>% maven configure-runtime -Dinteractive<br></pre>
+一般敵に
+このコマンドの実行は１回だけ行います。&nbsp; ドメインの環境を
+変更するような場合は再構成が必要になります。
+詳細情報 はFAQ を参照してください。&nbsp; ランタイム構成のデフォルト値は
+glassfish/bootstrap/project.properties にあります:<br>
+  <pre>domain.name="domain1"<br>instance.name="server"<br>admin.user="admin"<br>admin.password="adminadmin"<br>admin.port="4848"<br>instance.port"="8080"<br>orb.port="3700"<br>imq.port="7676"<br>https.port="8181" <br></pre>
+Maven 'configure-runtime' は GlassFish V1 のような single-instance ドメイン
+を作成します。GlassFish V2 のクラスターモードドメインを
+作成する場合は、
+次のコマンドを実行してください:<br>
+  <code>% maven configure-cluster</code><br>
+  <li>
+    <p>次のコマンドを使ってサーバーを起動します。すべての GlassFish
+サーバーコマンドは、&lt;glassfish.root&gt;/publish/bin
+directory にあります。&nbsp;
+サーバーの管理に関するドキュメントは
+<a href="http://docs.sun.com/source/819-1004/QuickStart.html">こちらの</a>
+Sun Java System Application Server PE version 8 シリーズを参照してください。&nbsp;
+ここに書かれている大部分のことは version 9 にも適用できます。&nbsp;
+注意:&nbsp; 現在 GlassFish は全プラットフォームでコマンド行オプションのみ
+サポートしています。&nbsp; <br>
+    </p>
+  </li>
+  <pre>% asadmin start-domain</pre>
+  <li>
+    <p>サーバーの消去。&nbsp; <br>
+    </p>
+  </li>
+  <pre>% maven clobber<br></pre>
+このコマンドで、サーバーで使われるすべてのスクリプトと jar ファイルを消去します。
+glassfish.home 以下のすべてを消去するため、一度実行したら
+ステップ２に戻る必要があります。<br>
+  <br>
+  <li>Build/Server の消去<span style="font-weight: bold;">: </span>
+開発のプロセスで３つのゴールいずれも使えます。
+好みの IDE を使ってソースコードの更新、そして次のいずれかのコマンドを使って
+既にビルドされたワークスペースを再ビルドのオリジナルステージのワークスペース
+にし、変更の確認をおこなえます。</li>
+  <ul>
+    <li>.class, .properties といったビルド時に生成されたファイルの削除をし、
+再コンパイルの準備をするには、
+次のコマンドを実行します
+      <pre>% maven clean (あるいは maven -Dmodules=mail,activation clean)</pre>
+    </li>
+    <li>ステップ５でのサーバー構成を消去するには、次のコマンド
+を使ってサーバーの消去 - 管理サーバー、domain1 の削除、
+元のインストールステージのサーバーの状態に戻す - を行います。(新たに
+生成された、トークンを置換してあるファイル -
+${glassfish.home}/bin, config ディレクトリにあるもの - の削除)
+      <pre>% maven clean-config</pre>
+    </li>
+    <li>"maven
+clean-config" コマンドは、domain および管理サーバーの起動に関する
+変更の確認を行うときに使います。"clobber" は、現在のサーバーを
+削除して新しいサーバーを作成するときに使います。"clean" はビルドしたファイル
+削除してコンパイルの準備をするために使います。<br>
+    </li>
+  </ul>
+  <br>
+  <li><span style="font-weight: bold;">Quicklook テストの実行</span>:
+Quicklook テストは、開発者に対して、Application Server の主要な機能
+が動いていて、主要な機能を壊していないことを確認する簡単なテスト
+を提供することを目的としています。<br>
+  </li>
+  <ul>
+    <li>次のように glassfish/appserv-tests から必要なテストファイルの
+チェックアウト。<br>
+    </li>
+    <pre>% cd glassfish/bootstrap<br>% maven checkout-quicklook</pre>
+    <li><code>APS_HOME</code> の設定。ルート名を含む
+チェックアウトしたワークスペースの
+ディレクトリです。(例 <code>/workspace/appserv-tests</code>)</li>
+    <li><code>S1AS_HOME</code>の設定。GlassFish サーバーのインストール
+ディレクトリ (例 <code>/workspace/publish/glassfish</code>)</li>
+    <li>インストール
+プロパティは <code>${APS_HOME}/config.properties</code> 
+にあり、
+インストールしたものと一致しています。 (例 <code>admin.password</code>, <code>http.port</code>,
+etc.) いずれかの値を変更した場合、この config.properties
+を編集します。</li>
+    <li>テスト実行前に、サーバーが起動していないことを確認します。
+起動している場合は、サーバーを止めます。<br>
+    </li>
+    <li>テストの実行:
+      <pre>% cd $APS_HOME<br>% maven runtest<br></pre>
+    </li>
+    <li><code>${APS_HOME}/test_results.html</code> ファイルをブラウザで開き、
+結果を確認します。</li>
+  </ul>
+  <ul>
+    <li>Quicklook テスト実行に関する詳細な方法は、 <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Quicklook_Tests">こちら</a>です。</li>
+  </ul>
+</ol>
+<p>問題が発生したときは、<a
+ href="http://wiki.java.net/bin/view/Projects/GlassFishBuildQuestions">GlassFish
+Build FAQ </a>wiki をチェックしてください。</p>
+<p><b>IDE サポート</b><br>
+<br>
+<font color="#000080"><a href="http://community.java.net/netbeans"><font
+ color="#000080"><img src="image/builds-bestSmaller.png" name="Graphic2"
+ align="bottom" border="1" height="38" width="75"></font></a></font><a
+ href="http://community.java.net/netbeans"> </a>Netbeans 4.1 を使っての<a
+ href="http://www.netbeans.org/kb/41/glassfish.html">
+GlassFish のビルドと開発</a>。<br>
+<br>
+詳細な情報に関しては、<a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Workspace_Guidelines">workspace
+guidelines</a> と <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Commit_Procedures">commit
+procedures</a>をご覧ください。&nbsp; また<a
+ href="http://fisheye.cenqua.com/java.net/viewrep/cvs/glassfish">FishEye</a>
+を使ってワークスペースでどのような変更が行われたのかを調べられます。</p>
+<p><span style="font-weight: bold;"><a name="Branch"></a><big>FCS
+, SJSAS90_FCS_BRANCH の GlassFish のビルド: </big></span><br>
+</p>
+<span style="font-weight: bold;"></span>
+<p>GlassFish ブランチのビルドステップは次の通りです:<br>
+<code>% mkdir workspace<br>
+% cd workspace<br>
+% cvs -d :pserver:&lt;userid&gt;@cvs.dev.java.net:/cvs checkout -r <b>SJSAS90_FCS_BRANCH</b>
+glassfish/bootstrap</code>
+</p>
+<p>SJSAS90_FCS_BRANCH の glassfish/bootstrap/project.properties 
+は
+変数があります。"glassfish.cvstag" は
+"glassfish.cvstag=SJSAS90_FCS_BRANCH" のように設定します。ブランチのソース
+がチェックアウト
+、ビルドされます。
+</p>
+<p>２つの GlassFish 変数 glassfish.os.name,
+glassfish.cvs.username を<a href="BuildGlassFish.html#configuration">
+同様に設定します。</a>.
+</p>
+<p>次に次のコマンドを実行します:<br>
+<code>% cd glassfish/bootstrap<br>
+% maven checkout <b>bootstrap-all</b> build configure-runtime</code>
+</p>
+<p>上のコマンドで、bootstrap と bootstrap-all のどちらを実行するか
+指定できます。詳細については<a
+ href="BuildGlassFish.html#maven_goals">こちら</a>をご覧ください。</p>
+<a name="maven_goals"></a><big><span style="font-weight: bold;">GlassFish
+Maven ゴールの概要:</span></big><br>
+<br>
+<table style="text-align: left; width: 743px; height: 328px;" border="1"
+ cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">Goal
+名<br>
+      </td>
+      <td
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">共通に
+使われるコマンド<br>
+      </td>
+      <td
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">概要<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">bootstrap<br>
+      </td>
+      <td style="vertical-align: top;">maven -Dmodules=admin <span
+ style="font-weight: bold;">bootstrap</span> checkout build<br>
+      </td>
+      <td style="vertical-align: top;"> 
+glassfish-image-SNAPSHOT.jar ファイルをダウンロードし、各モジュールを
+ビルドするため、このファイルを ${glassfish.home}(Server Image) の下に展開。<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">bootstrap-all<br>
+      </td>
+      <td style="vertical-align: top;">maven checkout <span
+ style="font-weight: bold;">bootstrap-all</span> build<br>
+      </td>
+      <td style="vertical-align: top;">バイナリ依存ファイルのみを含むからの
+glassfish イメージをインストールし、
+次に個々のバイナリ依存ファイルを
+ダウンロードして、 ${glassfish.home} に展開し、ソースから
+すべてのモジュールをビルドします。<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">checkout </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">checkout</span><br>
+      </td>
+      <td style="vertical-align: top;"> モジュールのチェックアウト<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">build<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">build</span><br>
+      </td>
+      <td style="vertical-align: top;"> モジュールのビルド</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">configure-runtime</td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">configure-runtime</span><br>
+      </td>
+      <td style="vertical-align: top;">single-instance モードで  ${glassfish.home}
+の構成<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">configure-cluster<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">configure-cluster</span><br>
+      </td>
+      <td style="vertical-align: top;">ドメインを
+GlassFish V2 のクラスタリングモードで構成<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">clean </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">clean</span> clobber<br>
+      </td>
+      <td style="vertical-align: top;"> モジュールの消去</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">clobber<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">clobber</span><br>
+      </td>
+      <td style="vertical-align: top;">GlassFish サーバーイメージ の消去 -
+${glassfish.home ディレクトリの削除。壊れたサーバーイメージを消去し
+新しいイメージを作るには "bootstrap-all"
+コマンドと一緒に使う必要があります。<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">clean-config<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">clean-config</span><br>
+      </td>
+      <td style="vertical-align: top;">サーバーの消去。domain1
+と bin,config にあるトークンを変更したファイルの削除<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">-Dmodules=<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">-Dmodules</span>=admin bootstrap checkout
+build</td>
+      <td style="vertical-align: top;"> 数個のモジュールの消去/チェックアウト/ビルド
+: maven -Dmodules={comma separated list} goal name</td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<br>
+<!--EndFragment--></div>
+<div style="text-align: right;"><span style="font-style: italic;">最終更新日: 2007/03/15</span></div>
+</body>
+</html>

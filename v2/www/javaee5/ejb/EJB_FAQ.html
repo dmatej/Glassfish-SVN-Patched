@@ -1,0 +1,1065 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <title>EJB FAQ</title>
+                                                              
+  <meta http-equiv="content-type"
+ content="text/html; charset=ISO-8859-1">
+</head>
+  <body>
+                 
+<h1 align="center">EJB FAQ</h1>
+         <br>
+               
+<h3>Here are answers to some frequently asked questions about how to use
+Enterprise Java Beans within SUN's Application Server implementations. &nbsp;
+Additional resources can be found <a
+ href="https://glassfish.dev.java.net/javaee5/ejb/#Docs">here</a>. &nbsp;Please
+   send any follow-up questions or comments to <a
+ href="mailto:ejb@glassfish.dev.java.net">ejb@glassfish.dev.java.net</a>.</h3>
+            <br>
+     <br>
+         
+<hr width="100%" size="2">     
+<h2><br>
+       </h2>
+             
+<h3><u>EJB Clients</u></h3>
+     <br>
+             
+<ul>
+        <li>                              
+    <h3><a href="#StandaloneRemoteEJB">How do I access a Remote EJB from
+a stand-alone java client?</a></h3>
+        </li>
+        <li>                              
+    <h3><a href="#AppClientDef">Is a stand-alone Java client portable? &nbsp;What's
+   the difference between a stand-alone Java client and an Application Client
+   component?</a></h3>
+    </li>
+    <li>          
+    <h3><a href="#nonJavaEEwebcontainerRemoteEJB">How do I access a Remote
+ EJB (3.0 or 2.x) from a non-Java EE web container like Tomcat or Resin?</a></h3>
+    </li>
+    <li>          
+    <h3><a href="#cross-appserverremoteref">What if I have multiple instances
+ of the Appserver running and I want to access a Remote EJB between them?</a></h3>
+    </li>
+   
+</ul>
+   
+<h3>       </h3>
+             
+<ul>
+        <li>                              
+    <h3><a href="#RMIStubsNeeded">Do I need RMI stubs to access EJBs from
+   my java client?</a></h3>
+        </li>
+           
+</ul>
+             
+<ul>
+        <li>                              
+    <h3><a href="#CosNaming">What if I have an existing stand-alone java
+client that accesses EJBs through  the CosNaming JNDI provider ? &nbsp;How
+do I get static RMI-IIOP stubs for  it?</a></h3>
+        </li>
+           
+</ul>
+              
+<ul>
+    <li>          
+    <h3><a href="#EJB_ejb-ref_ejb_local_ref">What is the relationship between
+ @EJB and ejb-ref/ejb-local-ref?</a></h3>
+    </li>
+    <li>          
+    <h3><a href="#mappingRemoteejbdependency">I have a Remote ejb dependency
+ (@EJB or ejb-ref) in my Java EE component. &nbsp;How do I control which
+actual  target ejb it refers to?</a>             </h3>
+      <br>
+    </li>
+   
+</ul>
+           
+<h3><u>Local EJB Access</u></h3>
+       &nbsp;&nbsp; &nbsp;&nbsp;&nbsp;&nbsp;             
+<ul>
+  <li>
+    <h3><a href="#POJOLocalEJB">        How do I access a Local EJB from
+a POJO or utility class?</a></h3>
+  </li>
+  <li>
+    <h3><a href="#ClientLocalEJBAccess">I have an EJB with a Local interface. 
+   Can I access it from an Application  Client or a stand-alone java client 
+  ?</a></h3>
+        </li>
+           
+</ul>
+             
+<ul>
+        <li>                              
+    <h3><a href="#CrossAppLocalAccess">I have an EJB with a Local interface. 
+   &nbsp;Can I access it from a web  component in a different application?</a> 
+       </h3>
+        </li>
+           
+</ul>
+             
+<h3><br>
+       </h3>
+             
+<h3><u>Global JNDI names</u></h3>
+     <br>
+     <br>
+             
+<ul>
+        <li>                              
+    <h3><a href="#SessionBeanGlobalJNDINameAssignment">How are Global JNDI
+   names assigned to Session / Entity beans?</a> &nbsp;</h3>
+        </li>
+           
+</ul>
+             
+<ul>
+        <li>                              
+    <h3><a href="#MDBJNDI"><b>How do I specify the Queue or Topic that a
+Message Driven Bean should consume from?</b></a></h3>
+        </li>
+           
+</ul>
+             
+<ul>
+        <li>                              
+    <h3><a href="#MultipleRemoteBusiness">I have a 3.0 Session bean with
+multiple Remote Business interfaces. &nbsp;How do I look up a specific Remote
+Business Interface from a stand-alone java client? &nbsp;</a><br>
+        </h3>
+        </li>
+           
+</ul>
+     <br>
+         
+<hr width="100%" size="2">     
+<h2><br>
+       </h2>
+             
+<h2><a name="StandaloneRemoteEJB"></a>How do I access a Remote EJB from a 
+   stand-alone java client?</h2>
+                 
+<h3>Step 1. &nbsp;Use the no-arg InitialContext() constructor in your code. 
+    </h3>
+         The most common problem developers run into is passing specific
+JNDI   bootstrapping   properties to InitialContext(args).&nbsp; Stand-alone
+java   clients that access Java EE services are by definition non-portable,
+so every  Java EE implementation  has different requirements for how to bootstrap 
+the  naming provider. &nbsp;(See <a href="#AppClientDef">here</a> for more 
+information  on writing <a href="#AppClientDef"><b>portable clients</b></a>). 
+&nbsp;Instead  of requiring the developer to hard-code specific JNDI bootstrapping 
+properties,  we have put a jndi.properties file within appserv-rt.jar. &nbsp; 
+The JNDI  machinery in Java SE automatically detects this file when used in
+conjunction   with no-arg InitialContext() and bootstraps the correct naming
+provider.  &nbsp;<br>
+                 
+<h3>Step 2. &nbsp;Pass the global JNDI name of the Remote EJB to InitialContext.lookup()</h3>
+         Stand-alone java clients do not have access to a component naming
+ environment    (java:comp/env) or to the @EJB annotation, so they must explicitly
+ use the  global JNDI name to lookup the Remote EJB. &nbsp; (See <a
+ href="#SessionBeanGlobalJNDINameAssignment">here</a> for more information 
+   on how global JNDI names are assigned to EJBs) Assuming the global JNDI 
+ name  of the Remote EJB is "FooEJB" :<br>
+         <br>
+         For EJB 3.0 Beans with a Remote Business interface &nbsp;:<br>
+         <br>
+         &nbsp; InitialContext ic = new InitialContext();<br>
+         &nbsp; Foo foo = (Foo) ic.lookup("FooEJB");<br>
+         <br>
+         Note that in the EJB 3.0 case the result of the lookup can be directly 
+   cast  to the remote business interface type without using PortableRemoteObject.narrow().
+    &nbsp; <br>
+  <br>
+         For EJB 2.1 and earlier session/entity beans :<br>
+         <br>
+         &nbsp; InitialContext ic = new InitialContext();<br>
+         &nbsp; Object homeObj = ic.lookup("FooEJB");<br>
+         &nbsp; FooHome fooHome = (FooHome) PortableRemoteObject.narrow(homeObj,
+    FooHome.class); &nbsp; <br>
+         &nbsp; Foo foo = fooHome.create(...)<br>
+         &nbsp; ...<br>
+         <br>
+                 
+<h3><a name="Step_3._Include_appserv-rt.jar_and"></a>Step 3. &nbsp;Include
+ appserv-rt.jar and javaee.jar in the java client's  classpath.</h3>
+         As mentioned in Step 1, appserv-rt.jar is needed to correclty bootstrap
+    the naming provider within our appserver implementation. javaee.jar 
+   contains the API classes for Java EE 5.  E.g., assuming the  application
+ classes are in /home/user1/myclasses and the main client class  is acme.MyClient
+ :<br>
+         <br>
+         &nbsp; java -classpath $APS_HOME/lib/appserv-rt.jar:$APS_HOME/lib/javaee.jar:/home/user1/myclasses 
+    acme.MyClient<br>
+  <br>
+  Note : appserv-rt.jar uses the JAR MANIFEST-CLASSPATH attribute to include
+ other dependent .jars within the lib directory. &nbsp;When setting your
+client  classpath, it is best to directly refer to the appserv-rt.jar within
+the app server lib directory rather &nbsp;than copying it to another location.
+&nbsp;If you do copy appserv-rt.jar, you'll need to copy additional .jars
+such as&nbsp; appserv-deployment-client.jar and appserv-ext.jar. &nbsp;The
+full set of .jars that might be needed by appserv-rt.jar is located in its
+META-INF/MANIFEST.MF file. &nbsp; <br>
+         <br>
+   If your stand-alone client makes use of JMS, you'll also need to add $APS_HOME/lib/install/applications/jmsra/imqjmsra.jar, 
+$APS_HOME/lib/appserv-admin.jar and $APS_HOME/lib/appserv-ws.jar<br>
+   <br>
+   If your stand-alone client makes use of the Java Persistence API (e.g. 
+it  calls a Remote EJB that returns a Java Persistence &nbsp;API entity ), 
+you'll  also need to add $APS_HOME/lib/toplink-essentials.jar<br>
+                 
+<h3>Step 4.&nbsp; Set the server host property, if necessary.</h3>
+         If the stand-alone java client is running on a different host than 
+ the   server,  set the -Dorg.omg.CORBA.ORBInitialHost property when starting 
+ the   client JVM. &nbsp;E.g., assuming the server is running on host com.acme.Host1 
+   :<br>
+         <br>
+         &nbsp; java -Dorg.omg.CORBA.ORBInitialHost=com.acme.Host1 <br>
+         &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;-classpath $APS_HOME/lib/appserv-rt.jar:$APS_HOME/lib/javaee.jar:/home/user1/myclasses 
+    acme.MyClient<br>
+         <br>
+         <br>
+         This property defaults to localhost, so it is not necessary to set
+ it  if  the java client is running on the same machine as the server.<br>
+         <br>
+                 
+<h3>Step 5. &nbsp;Set the naming service port property, if necessary.</h3>
+         The default naming service port in the app server is 3700. &nbsp;
+ If  the   naming service is running on a different port, you'll need to
+set  it  via  the -Dorg.omg.CORBA.ORBInitialPort property when starting the
+client   JVM.  &nbsp; You can double-check the actual naming service port
+for a given   server  instance by looking in the server instace's domain.xml
+for "orb-listener-1".    Alternatively, check the Applications..Configuration..ORB..IIOP 
+Listeners    section of the admin GUI for orb-listener-1. &nbsp;<br>
+        <br>
+        Assuming the server's naming service port is 9876 and the client
+is  on  the  same host as the server :<br>
+         <br>
+          java -Dorg.omg.CORBA.ORBInitialPort=9876 <br>
+          &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;-classpath $APS_HOME/lib/appserv-rt.jar:$APS_HOME/lib/javaee.jar:/home/user1/myclasses 
+    acme.MyClient<br>
+         <br>
+        
+<hr width="100%" size="2"><br>
+           
+<h2><a name="AppClientDef"></a>Is a stand-alone Java client portable? &nbsp;What's
+   the difference between a stand-alone Java client and an Application Client
+   component?</h2>
+      <br>
+      The Java EE platform defines a component that is specially designed 
+to  portably  access Java EE services from a JVM running outside of the Application
+  Server.  &nbsp; It is called a Java EE Application Client and has been
+part   of the  platform since the first release (J2EE 1.2). &nbsp; Like all
+Java   EE components  it runs within a container provided by the vendor's
+implementation.   &nbsp;The  main advantages of the Application Client are
+that it's portable   and that  it allows the developer to use the same programming
+model for defining  and  accessing resources as is used within web components
+and EJBs. &nbsp;It  follows  the overall philosophy of the Java EE platform
+that as much of the  "plumbing"  or system-level work as possible should
+be performed by a container  instead  of being part of the Application code.
+&nbsp; That means a guarantee  that  the no-arg InitialContext constructor
+will work, that a private component   naming context (java:comp/env) is available,
+and in Java EE 5 that platform   annotations and injection are available.
+&nbsp;<br>
+      <br>
+      One of the most common issues faced by developers is how to initialize
+  the  naming context within a client that accesses EJBs. &nbsp; When such
+ a client  is *not* written as an Application Client it is referred to as
+a "stand-alone"  java client. &nbsp;By definition, such stand-alone java
+clients are not portable,  so each vendor defines its own way to bootstrap
+the naming service. This not only makes it more difficult to code the client
+but causes problems when moving between Java EE implementations.<br>
+      <br>
+      Like all Java EE components, there are some additional steps required 
+ to  achieve the portability offerered by the Application Client. &nbsp; E.g.,
+  &nbsp;definining a deployment descriptor, packaging the application client
+  .jar and learning how to run the Application Client container. &nbsp;However,
+   these steps have been simplified as part of the ease-of-use effort in
+Java    EE 5 and SUN's Java EE 5 implementations. &nbsp;<br>
+      <br>
+      See the following for more details on using Application Clients :<br>
+      <br>
+      <a href="http://java.sun.com/javaee/5/docs/tutorial/doc/">Chapter 22
+ (Getting   Started with EJBs) of the Java EE 5 tutorial</a> <br>
+      <br>
+      <a href="https://glassfish.dev.java.net/javaee5/ejb/EJB30.html">Simple
+  EJB  3.0 session / message-driven bean code examples</a> <br>
+      <br>
+      <a
+ href="http://docs.sun.com/app/docs/doc/819-3659/6n5s6m59v?q=java+ee+5&amp;a=view">Client
+   chapter of our Developer's Guide</a> <br>
+      <br>
+   
+<hr width="100%" size="2"><br>
+         
+<h2><a name="nonJavaEEwebcontainerRemoteEJB"></a>How do I access a Remote
+ EJB (3.0 or 2.x) from a non-Java EE web container like Tomcat or Resin?</h2>
+  Accessing a Remote EJB from a non-Java EE web container is similar to the
+ <a href="#StandaloneRemoteEJB">stand-alone java client</a> case. &nbsp;&nbsp;
+ However, the complication is that most Java web servers set the default
+JNDI  name provider for the JVM, which prevents our appserver naming provider
+from  being instantiated when the application uses the no-arg InitialContext()
+constructor. &nbsp; The solution is to explicitly instantiate an InitialContext(Hashtable)
+ with the properties for our naming provider, as contained in appserv-rt.jar's
+ jndi.properties file. &nbsp; <br>
+   
+<h3>Step 1. &nbsp;Instantiate the InitialContext&nbsp;</h3>
+  &nbsp;&nbsp;&nbsp; Properties props = new Properties();<br>
+  &nbsp;&nbsp;&nbsp; props.setProperty("java.naming.factory.initial", <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp; &nbsp;"com.sun.enterprise.naming.SerialInitContextFactory");<br>
+  &nbsp;&nbsp;&nbsp; props.setProperty("java.naming.factory.url.pkgs", <br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp; &nbsp;"com.sun.enterprise.naming");<br>
+  &nbsp;&nbsp;&nbsp; props.setProperty("java.naming.factory.state",<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+ &nbsp; &nbsp;"com.sun.corba.ee.impl.presentation.rmi.JNDIStateFactoryImpl");<br>
+  <br>
+  &nbsp; &nbsp; // optional. &nbsp;Defaults to localhost. &nbsp;Only needed
+ if web server is running <br>
+  &nbsp; &nbsp; // on a different host than the appserver &nbsp;&nbsp; <br>
+  &nbsp; &nbsp; props.setProperty("<font size="2" color="#2a00ff"
+ face="Courier New"><span
+ style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(42,0,255);">org.omg.CORBA.ORBInitialHost</span></font>",
+ "localhost<font size="2" color="#2a00ff" face="Courier New"><span
+ style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(42,0,255);"></span></font>");<br>
+  <br>
+  &nbsp; &nbsp; // optional. &nbsp;Defaults to 3700. &nbsp;Only needed if 
+target orb port is not 3700.<br>
+  &nbsp; &nbsp; props.setProperty("<font size="2" color="#2a00ff"
+ face="Courier New"><span
+ style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: rgb(42,0,255);">org.omg.CORBA.ORBInitialPort</span></font>",
+ "3700");<br>
+  <font size="2" color="black" face="Courier New"><span
+ style="font-size: 10pt; font-family: &quot;Courier New&quot;; color: black;"></span></font><br>
+  &nbsp;&nbsp;&nbsp; InitialContext ic = new InitialContext(props);<br>
+   
+<h3>Step 2. &nbsp;Use the global JNDI name of the target Remote EJB in the
+ lookup.</h3>
+  <br>
+  &nbsp; &nbsp; EJB 3.0 : &nbsp;<br>
+  <br>
+  &nbsp; &nbsp; E.g., assuming a Remote 3.0 EJB with a global JNDI name of
+ com.acme.FooRemoteBusiness<br>
+  <br>
+  &nbsp; &nbsp; FooRemoteBusiness foo = (FooRemoteBusiness) ic.lookup("com.acme.FooRemoteBusiness");<br>
+  <br>
+  <br>
+  <br>
+  &nbsp; &nbsp; EJB 2.x :   
+<h3>       </h3>
+                                &nbsp; &nbsp; E.g., assuming a Remote 2.x 
+EJB with a global JNDI name of com.acme.FooHome<br>
+  <br>
+  &nbsp; &nbsp; Object obj = ic.lookup("com.acme.FooHome");<br>
+  &nbsp; &nbsp; FooHome fooHome = (FooHome) PortableRemoteObject.narrow(obj,
+ FooHome.class);<br>
+  <br>
+   
+<h3>Step 3. &nbsp;Add the necessary appserver code to the web server's classpath.
+ </h3>
+  See <a href="#Step_3._Include_appserv-rt.jar_and">step 3 of stand-alone 
+client access</a> for the list of required .jars. &nbsp; <br>
+  <br>
+   
+<h3>Step 4. &nbsp;For EJB 3.0 Remote access, use at least Glassfish V2 or  
+Java EE 5 SDK(SJS AS 9) Update 1.&nbsp; </h3>
+  Builds from this point on will contain a required bug fix. &nbsp;<br>
+  See<a class="moz-txt-link-freetext"
+ href="https://glassfish.dev.java.net/issues/show_bug.cgi?id=920"> https://glassfish.dev.java.net/issues/show_bug.cgi?id=920</a>&nbsp;
+ for more details.<br>
+  <br>
+   
+<hr width="100%" size="2"><br>
+   
+<h2><a name="cross-appserverremoteref"></a>What if I have multiple instances
+ of the Appserver running and I want to access a Remote EJB between them?</h2>
+  <br>
+  If the two server instances are part of the same cluster, there is no special
+ mapping needed. &nbsp; By definition, a cluster is homogeneous, meaning
+the  exact same set of applications is deployed to all instances. &nbsp;
+Each server instance has the same entries in its global JNDI namespace, so
+the target Remote EJB can always be resolved intra-server. &nbsp;Therefore,
+it would never be a good idea to explicitly refer to a Remote EJB in one
+server instance in the cluster from a different server instance in the same
+cluster. <br>
+  <br>
+  However, if the server instances are either both stand-alone instances
+or  this a cross-cluster access, the only difference is the syntax of the
+global  JNDI name used to resolve the ejb-ref or @EJB. &nbsp; Since the calling
+code  is running within a Java EE component (web or ejb), it should use the
+standard  Java EE programming model for accessing remote EJBs -- @EJB or
+ejb-ref + java:comp/env lookup. &nbsp; The application code and any ejb-ref
+.xml should remain location transparent so that the mapping to physical EJB
+can be changed without affecting any portable code or descriptors.<br>
+  <br>
+  Follow the steps outlined <a href="#mappingRemoteejbdependency">here</a> 
+, but instead of using an unqualified global JNDI name, use the CORBA interoperable
+ naming syntax : &nbsp;<b>corbaname:iiop:&lt;host&gt;:&lt;port&gt;#&lt;global_jndi_name&gt;</b><br>
+  <br>
+  E.g., assume we have a web application running in a non-clustered app server
+ instance on host1 that wants to access a Remote Stateless Session bean in
+ an app server instance on host2. &nbsp;The target Remote EJB has a global
+ JNDI name of Foo.<br>
+  <br>
+  Within servlet : <br>
+  <br>
+  @EJB(name="fooejbref")<br>
+     private FooRemote fooRemote;<br>
+     <br>
+     Within sun-web.xml :<br>
+     <br>
+     &nbsp; &lt;ejb-ref&gt;<br>
+     &nbsp; &nbsp; &lt;ejb-ref-name&gt;fooejbref&lt;/ejb-ref-name&gt;<br>
+     &nbsp; &nbsp; &lt;jndi-name&gt;corbaname:iiop:host2:3700#Foo&lt;/jndi-name&gt;<br>
+     &nbsp; &lt;/ejb-ref&gt;<br>
+  <br>
+   
+<hr width="100%" size="2"><br>
+                 
+<h2><a name="RMIStubsNeeded"></a>Do I need RMI stubs to access EJBs from my
+java client?</h2>
+    <br>
+          No, not in our J2EE 1.4 SDK and Java EE 5 SDK implementations.
+(Glassfish,  Sun  Java   System Application Server 8.x, 9.x) Our implementation
+uses a  feature called "Dynamic RMI-IIOP" that creates    any necessary RMI-IIOP 
+stubs at runtime in a way that is completely hidden from   the application.&nbsp;
+ &nbsp;This makes deployment much faster and avoids   many of the configuration
+ problems that result from having to add static  stubs to your client. &nbsp;
+ However, the dynamic RMI-IIOP feature is only  enabled when the client is
+ using the naming provider from our server implementation.   &nbsp;If the
+client is a stand-alone java client, that means following the   instructions
+<a href="#StandaloneRemoteEJB">here</a> or <a
+ href="#nonJavaEEwebcontainerRemoteEJB">here</a> , or using an Application 
+  Client component. &nbsp; Any explicit use of the CosNaming provider in the
+client will not be able to use the Dynamic RMI-IIOP feature, which is why
+we don't recommend that approach. &nbsp;If you must use CosNaming, see <a
+ href="#CosNaming">here</a>. &nbsp;<br>
+    <br>
+   
+<hr width="100%" size="2"><br>
+                 
+<h2><a name="CosNaming"></a>What if I have an existing stand-alone java client 
+   that accesses EJBs through  the CosNaming JNDI provider ? &nbsp;How do 
+I  get static RMI-IIOP stubs for  it?</h2>
+    <br>
+         First, read about <a href="#AppClientDef">Portable Java EE clients</a>
+   and <a href="#StandaloneRemoteEJB">"How To Write a Stand-alone Client"</a>.
+   &nbsp;The best option would be to change the client  to an Application
+Client   or to follow our stand-alone java client recommendations. &nbsp;If
+that's   not possible, you can request that static RMI-IIOP stubs be generated
+during   deployment by using the &nbsp;--generatermistubs option on the asadmin
+deploy   command. &nbsp;&nbsp; In this case, the static RMI-IIOP stubs will
+be placed   within the client.jar file. &nbsp; E.g.<br>
+         <br>
+         &nbsp; asadmin deploy --generatermistubs --retrieve /home/user1/clientstubdir 
+    &nbsp;fooapp.ear<br>
+         <br>
+         After the command executes, the client.jar containing the static 
+RMI-IIOP     stubs will be in /home/user1/clientstubdir/fooappClient.jar.<br>
+         <br>
+         The reason static RMI-IIOP stubs are still needed in this case is
+ that   if  the CosNaming provider is instantiated, it is not using the client 
+ naming   provider from our appserver implementation. &nbsp;It instead uses 
+ an ORB  from Java SE which does not support dynamic RMI-IIOP.<br>
+         <br>
+   
+<hr width="100%" size="2"><br>
+   
+<h2><a name="EJB_ejb-ref_ejb_local_ref"></a>What is the relationship between
+ @EJB and ejb-ref/ejb-local-ref?</h2>
+    <br>
+    The @EJB annotation and the ejb-ref/ejb-local-ref .xml elements are used 
+ to specify the same semantic information. &nbsp;Specifically, that a Java 
+ EE component has a dependency on a local or remote EJB. &nbsp;Every @EJB 
+can be translated into an equivalent ejb-ref/ejb-local-ref.&nbsp; @EJB is 
+easier to use but it serves the same purpose as ejb-ref/ejb-local-ref. &nbsp; 
+Here's a table with more details :<br>
+    <br>
+      
+<table cellpadding="2" cellspacing="2" border="1" width="100%">
+      <tbody>
+       <tr>
+         <td valign="top">@EJB attribute<br>
+         </td>
+         <td valign="top">description<br>
+         </td>
+         <td valign="top">default value<br>
+         </td>
+         <td valign="top">ejb-ref equivalent<br>
+         </td>
+         <td valign="top">ejb-local-ref equivalent<br>
+         </td>
+       </tr>
+       <tr>
+         <td valign="top">name()<br>
+         </td>
+         <td valign="top">Unique location within the private component namespace(java:comp/env). 
+ &nbsp;<br>
+         </td>
+         <td valign="top">field-level : &lt;fully-qualified name of declaring 
+ class&gt;/&lt;field-name&gt;<br>
+         <br>
+   method-level : &lt;fully-qualified name of declaring class&gt;/&lt;property 
+ name&gt;<br>
+         <br>
+   class level : name() is required. &nbsp;<br>
+         </td>
+         <td valign="top">ejb-ref-name<br>
+         <br>
+         <br>
+         </td>
+         <td valign="top">ejb-ref-name<br>
+         <br>
+         <br>
+         </td>
+       </tr>
+       <tr>
+         <td valign="top">beanInterface()<br>
+         </td>
+         <td valign="top">For EJB 3.0 business interfaces, the Local or Remote 
+ business interface of the session bean.<br>
+         <br>
+   For EJB 2.x, the Home/LocalHome interface of the session/entity bean.<br>
+         </td>
+         <td valign="top">field-level : the type of the declared field.<br>
+         <br>
+   method-level : the type of the single setter parameter<br>
+         <br>
+   class level : beanInterface() is required.<br>
+         <br>
+         <br>
+         </td>
+         <td valign="top">For EJB 3.0 : &lt;remote&gt;<br>
+         <br>
+   For EJB 2.x :<br>
+   &lt;home&gt;<br>
+         </td>
+         <td valign="top">For EJB 3.0 : &lt;local&gt;<br>
+         <br>
+   For EJB 2.x :<br>
+   &lt;local-home&gt;<br>
+         </td>
+       </tr>
+       <tr>
+         <td valign="top">beanName()<br>
+         </td>
+         <td valign="top">ejb-name (*not* global JNDI name) of the target 
+ejb  within the application. &nbsp; This can be used whenever the target ejb
+is  defined within the same application as the referencing component, regardless
+ of local vs. remote. &nbsp; The only time it can't be used is if the @EJB
+ refers to a Remote interface (3.0 or 2.x) that is defined outside the application.
+ &nbsp;<br>
+         </td>
+         <td valign="top">Automatically resolved if there is only one ejb 
+within  the application that exposes&nbsp; the value of beanInterface() <br>
+         </td>
+         <td valign="top">ejb-link<br>
+         </td>
+         <td valign="top">ejb-link<br>
+         </td>
+       </tr>
+       <tr>
+         <td valign="top">mappedName()<br>
+         </td>
+         <td valign="top">Specifies the product-specific name of the target 
+ Remote EJB. &nbsp;In SUN's case, this refers to the global JNDI name of the
+ target Remote EJB. &nbsp;<br>
+         <br>
+   Not applicable for local interfaces because beanName() can always be used. 
+       <br>
+         </td>
+         <td valign="top">If the target ejb is defined within the same application 
+ and the beanName() default applies, no additional mapping is required.<br>
+         <br>
+   Otherwise, the target global JNDI name will be set to the value of beanInterface() 
+       <br>
+         </td>
+         <td valign="top">mapped-name<br>
+         </td>
+         <td valign="top">n/a<br>
+         </td>
+       </tr>
+           
+  </tbody>   
+</table>
+    <br>
+          <br>
+   
+<hr width="100%" size="2"><br>
+      
+<h2><a name="mappingRemoteejbdependency"></a>I have a Remote ejb dependency
+ (@EJB or ejb-ref) in my Java EE component. &nbsp;How do I control which
+actual  target ejb it refers to?             <br>
+   </h2>
+    <br>
+    If the target ejb is defined within the same application as your referencing 
+ component AND there is only one target ejb within the application that exposes 
+ the remote interface associated with your ejb dependency, the mapping will 
+ be done automatically. &nbsp; In this case, there is no need to specify any
+ additional mapping information. <br>
+    <br>
+    Otherwise, there are 3 ways to map the remote ejb dependency to the target 
+ Remote EJB. &nbsp;From highest to lowest precedence, they are :<br>
+    <br>
+     
+<h3> 1. Use the sun-specific deployment descriptor </h3>
+    <br>
+    Map the remote ejb dependency to the global JNDI name of the target ejb
+ within the sun-*.xml {sun-web.xml, sun-application-client.xml, sun-ejb-jar.xml} 
+ file corresponding to the module in which the ejb dependency is defined.
+ &nbsp; <br>
+    <br>
+    E.g. given a remote ejb dependency defined within a servlet (com.acme.MyServlet) 
+ :<br>
+    <br>
+    @EJB(name="fooejbref")<br>
+    private FooRemote fooRemote;<br>
+    <br>
+    To map this remote ejb dependency to an ejb with global JNDI name "Foo"
+ :<br>
+    <br>
+    Within sun-web.xml :<br>
+    <br>
+    &nbsp; &lt;ejb-ref&gt;<br>
+    &nbsp; &nbsp; &lt;ejb-ref-name&gt;fooejbref&lt;/ejb-ref-name&gt;<br>
+    &nbsp; &nbsp; &lt;jndi-name&gt;Foo&lt;/jndi-name&gt;<br>
+    &nbsp; &lt;/ejb-ref&gt;<br>
+    <br>
+    If the @EJB did not use the name() attribute, you would need to refer 
+to  the default name() of the ejb dependency when specifying the sun-*.xml 
+mapping. E.g. :<br>
+    <br>
+    @EJB<br>
+     private FooRemote fooRemote;<br>
+     <br>
+     To map this remote ejb dependency to an ejb with global JNDI name "Foo" 
+ :<br>
+     <br>
+     Within sun-web.xml :<br>
+     <br>
+     &nbsp; &lt;ejb-ref&gt;<br>
+     &nbsp; &nbsp; &lt;ejb-ref-name&gt;com.acme.MyServlet/fooRemote&lt;/ejb-ref-name&gt;<br>
+     &nbsp; &nbsp; &lt;jndi-name&gt;Foo&lt;/jndi-name&gt;<br>
+     &nbsp; &lt;/ejb-ref&gt;<br>
+    &nbsp;&nbsp;<br>
+     
+<h3> 2. Use @EJB mappedName() or the ejb-ref mapped-name element.</h3>
+    <br>
+    For @EJB, specify the global JNDI name of the target ejb using the mappedName() 
+ attribute. &nbsp;E.g.<br>
+    <br>
+    @EJB(name="fooejbref", mappedName="Foo") <br>
+    private FooRemote fooRemote; <br>
+    <br>
+    Note that mappedName() is <b>completely different </b>than name(). &nbsp;name() 
+ refers to a location within the private component environment namespace (java:comp/env)
+ that represents this ejb dependency.&nbsp; &nbsp;mappedName() refers to
+a  location within a product-specific *global* namespace that holds the ejb
+Home / Remote business object. <br>
+    <br>
+    For ejb-ref, specify the global JNDI name of the target ejb using the 
+mapped-name  element. &nbsp;E.g.<br>
+    <br>
+    &lt;ejb-ref&gt;<br>
+    &nbsp; &nbsp;&lt;ejb-ref-name&gt;fooejbref&lt;/ejb-ref-name&gt;<br>
+    &nbsp; &nbsp;&lt;remote&gt;com.acme.FooRemote&lt;/remote&gt;<br>
+    &nbsp; &nbsp;&lt;mapped-name&gt;Foo&lt;/mapped-name&gt;<br>
+    &lt;/ejb-ref&gt;<br>
+    <br>
+    If an ejb-ref and an @EJB are defined for the same ejb dependency(meaning 
+ name() equals ejb-ref-name) in the same component environment, the values 
+ in ejb-ref take precedence. &nbsp;<br>
+    <br>
+     
+<h3> 3. Use @EJB beanName() or ejb-ref ejb-link element.</h3>
+    <br>
+    beanName() and ejb-link only apply if the target remote ejb is defined
+ within the same application as the referencing component. &nbsp; &nbsp;In
+ this case, the value is the <b>ejb-name</b> of the target bean, *not* the
+ global JNDI name. &nbsp;If the target ejb is defined using ejb-jar.xml,
+the  ejb-name is the value of the &lt;session&gt; or &lt;entity&gt; ejb-name
+element.  &nbsp;If the target ejb is defined using annotations, the ejb-name
+is either  the value the @Stateless/@Stateful name() attribute or if name()
+was not specified, the *unqualified* bean class name. &nbsp;  <br>
+    <br>
+    E.g. , assuming our target ejb (com.acme.FooBean) is defined as follows
+ :<br>
+    <br>
+    @Stateless<br>
+    public class FooBean implements FooRemote { ... }<br>
+    <br>
+    To map the servlet ejb dependency using beanName() :<br>
+    <br>
+    @EJB(name="fooejbref", beanName="FooBean")<br>
+    private FooRemote fooRemote;<br>
+    <br>
+    To map the servlet ejb dependency using ejb-link :<br>
+    <br>
+    &lt;ejb-ref&gt;<br>
+     &nbsp; &nbsp;&lt;ejb-ref-name&gt;fooejbref&lt;/ejb-ref-name&gt;<br>
+     &nbsp; &nbsp;&lt;remote&gt;com.acme.FooRemote&lt;/remote&gt;<br>
+     &nbsp; &nbsp;&lt;ejb-link&gt;FooBean&lt;/ejb-link&gt;<br>
+     &lt;/ejb-ref&gt;<br>
+    <br>
+    <br>
+    Note that ejb-name is only guaranteed to be unique within an ejb-jar
+module.  &nbsp; If there are multiple ejb-jars within the .ear that define
+an ejb with the same ejb-name, the following beanName()/ejb-link syntax can
+be used to explicitly refer to the target ejb : &nbsp;&lt;relative ejb-jar
+module uri&gt;#&lt;ejb-name&gt;.<br>
+    <br>
+    E.g., given an application containing ejb1.jar, ejb2.jar, and web1.war,
+ where ejb1.jar and ejb2.jar both define an ejb with ejb-name FooBean :<br>
+    <br>
+    To map the servlet ejb dependency to the ejb in ejb1.jar using beanName() 
+ :<br>
+     <br>
+     @EJB(name="fooejbref", beanName="ejb1.jar#FooBean")<br>
+     private FooRemote fooRemote;<br>
+     <br>
+     To map the servlet ejb dependency to the ejb in ejb1.jar using ejb-link 
+ :<br>
+     <br>
+     &lt;ejb-ref&gt;<br>
+      &nbsp; &nbsp;&lt;ejb-ref-name&gt;fooejbref&lt;/ejb-ref-name&gt;<br>
+      &nbsp; &nbsp;&lt;remote&gt;com.acme.FooRemote&lt;/remote&gt;<br>
+      &nbsp; &nbsp;&lt;ejb-link&gt;ejb1.jar#FooBean&lt;/ejb-link&gt;<br>
+      &lt;/ejb-ref&gt;<br>
+    <br>
+    If an ejb-ref and an @EJB are defined for the same ejb dependency(meaning
+  name() equals ejb-ref-name) in the same component environment, the values
+  in ejb-ref take precedence. &nbsp;<br>
+                 
+<h2> </h2>
+               
+<hr width="100%" size="2"><br>
+                 
+<h2><a name="ClientLocalEJBAccess"></a>I have an EJB with a Local interface. 
+   Can I access it from an Application  Client or a stand-alone java client 
+  ?</h2>
+    <br>
+         No. &nbsp;The EJB Local view is an optimized EJB invocation path 
+that   uses  call-by-reference semantics. &nbsp; It is only available to web
+components     and ejb components that are part of the *same application* 
+as the target    EJB. &nbsp; That's why ejb-local-ref is not even part of 
+the schema for  application-client.xml.   &nbsp; To access EJBs from an Application 
+Client  or stand-alone java client,&nbsp;   you'll need to use either a Remote 
+3.0  Business interface, a 2.x Home interface,  or web services.<br>
+         <br>
+   
+<hr width="100%" size="2"><br>
+                 
+<h2><a name="CrossAppLocalAccess"></a>I have an EJB with a Local interface. 
+   &nbsp;Can I access it from a web  component in a different application?</h2>
+    <br>
+         No, not in our implementation. &nbsp;The EJB spec only requires
+local    ejb  access from within the same application in the same JVM. &nbsp;
+&nbsp;<br>
+         <br>
+<hr width="100%" size="2"><br>
+<h2><a name="POJOLocalEJB"></a>How do I access a Local EJB from a POJO?</h2>
+<br>
+Local EJB access is only portable from within the same application, so the
+POJO class must be called from a component running within the same application
+as the target Local EJB. &nbsp;Injection is not supported for POJO classes,
+so the POJO needs to look up the local EJB reference within the private namespace
+(java:comp/env) of the component within whose scope it is executing. &nbsp;
+&nbsp;<br>
+<br>
+<h3>Step 1. &nbsp;Define the local ejb dependency for the component within
+whose scope the POJO will execute.</h3>
+<br>
+Assume the POJO wants to access a local EJB 3.0 business interface FooLocal
+from the following EJB defined within the same application :<br>
+<br>
+@Stateless <br>
+public class FooBean implements FooLocal { ... }<br>
+<br>
+If the POJO is called from a web application, the java:comp/env namespace
+is shared by the entire .war. &nbsp;So, the local EJB dependency can be defined
+by using an @EJB annotation on any managed class within the .war. &nbsp;
+&nbsp;<br>
+<br>
+E.g.<br>
+<br>
+@EJB(name="fooejbref", beanInterface=FooLocal.class)<br>
+public class MyServlet extends HttpServlet { ...<br>
+<br>
+Likewise, if the POJO is itself called from an EJB, the local EJB dependency
+must be defined within that EJB component. &nbsp;Unlike the .war case, the
+component environment (java:comp/env) is scoped at the bean level for EJBs.<br>
+<br>
+@EJB(name="fooejbref", beanInterface=FooLocal.class)<br>
+@Stateless<br>
+ public class BarBean implements BarLocal { ...<br>
+<br>
+<br>
+Alternatively, the local EJB dependency can be declared within the standard
+deployment descriptor corresponding to the component within whose scope the
+POJO is executing (web.xml / ejb-jar.xml)<br>
+ <br>
+&nbsp; &nbsp;&lt;ejb&gt;<br>
+&nbsp; &nbsp; &nbsp; &lt;ejb-name&gt;BarBean&lt;/ejb-name&gt;<br>
+&nbsp; &nbsp; &nbsp; &lt;ejb-class&gt;com.acme.BarBean&lt;/ejb-class&gt;<br>
+&nbsp;<br>
+&nbsp;&nbsp; &nbsp; &nbsp; <b>...</b><br>
+<br>
+ &nbsp; &nbsp; &nbsp; &nbsp; &lt;ejb-local-ref&gt;<br>
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;ejb-ref-name&gt;fooejbref&lt;/ejb-ref-name&gt;<br>
+ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;local&gt;com.acme.FooLocal&lt;/local&gt;
+<br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;ejb-link&gt;FooBean&lt;/ejb-link&gt;<br>
+ &nbsp; &nbsp; &nbsp; &nbsp; &lt;/ejb-local-ref&gt;<br>
+<br>
+&nbsp; &nbsp; &lt;/ejb&gt;<br>
+<h3>Step 2. &nbsp;In the POJO code, lookup the local EJB dependency within
+java:comp/env</h3>
+<br>
+&nbsp; &nbsp; InitialContext ic = new InitialContext();<br>
+&nbsp; &nbsp; FooLocal foo = (FooLocal) ic.lookup("java:comp/env/fooejbref");<br>
+<br>
+<br>
+Note that if the POJO is called from multiple components, e.g. from both
+the web application and BarBean, you'll need to define the same local EJB
+dependency for both calling components so that it is always defined in the
+currently active component environment when the POJO does its lookup.<br>
+<br>
+<hr width="100%" size="2"><br>
+                 
+<h2><a name="SessionBeanGlobalJNDINameAssignment"></a>How are Global JNDI 
+   names assigned to Session / Entity beans? &nbsp;</h2>
+    <br>
+         First, global JNDI names only apply to Session/Entity beans that 
+have   some  kind of Remote interface. &nbsp; If the Session/Entity bean only
+has   some  combination of Local interfaces and Web Service interfaces, global
+ JNDI names  do <b>not</b> apply. &nbsp;In that case, any specified global
+ JNDI name will  be ignored.<br>
+         <br>
+         In our <i>J2EE 1.4 implementation (Application Server 8.x)</i> , 
+there    is only one way to assign a global JNDI name to a session/entity 
+bean's  Remote  view :<br>
+                 
+<h3>Map the bean's &lt;ejb-name&gt; to a &lt;jndi-name&gt; within the &lt;ejb&gt; 
+    element in sun-ejb-jar.xml. &nbsp;E.g.</h3>
+         &lt;sun-ejb-jar&gt;<br>
+         &nbsp; &lt;enterprise-beans&gt;<br>
+         &nbsp;&nbsp;&nbsp; &lt;ejb&gt;<br>
+         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;ejb-name&gt;FooBean&lt;/ejb-name&gt;<br>
+         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;jndi-name&gt;FooEJB&lt;/jndi-name&gt;<br>
+         &nbsp;&nbsp;&nbsp; &lt;/ejb&gt;<br>
+         &nbsp; &lt;/enterprise-beans&gt;<br>
+         &lt;/sun-ejb-jar&gt;<br>
+         <br>
+         In our <i>Java EE 5 implementation (Application Server 9.x)</i>
+,  there    are four ways to specify JNDI name for a session/entity bean.
+&nbsp;In  decreasing   order of precedence, they are : <br>
+                 
+<h3>1. Use sun-ejb-jar.xml (Same as above)</h3>
+                 
+<h3>2. Specify the bean's global JNDI name using the mapped-name element in
+ejb-jar.xml</h3>
+         <br>
+         &lt;enterprise-beans&gt;<br>
+          &nbsp; &lt;session&gt;<br>
+          &nbsp;&nbsp;&nbsp; &lt;ejb-name&gt;FooBean&lt;/ejb-name&gt;<br>
+          &nbsp; &nbsp; &lt;mapped-name&gt;FooEJB&lt;/mapped-name&gt;<br>
+          &nbsp; &nbsp; ...<br>
+          &nbsp; &lt;/session&gt;<br>
+          &lt;/enterprise-beans&gt;<br>
+                 
+<h3>3. Specify the bean's global JNDI name within the @Stateless/@Stateful 
+    mappedName() attribute. &nbsp;E.g.,</h3>
+         @Stateless(mappedName="FooEJB")<br>
+         public class FooBean implements Foo { ... }<br>
+         <br>
+                 
+<h3>4. If no global JNDI name has been specified, a default global JNDI name 
+    will be generated according to the following table : <br>
+        </h3>
+               
+<table cellpadding="2" cellspacing="2" border="1" width="100%">
+          <tbody>
+            <tr>
+              <td valign="top">Bean has 2.x Home/Remote interfaces<br>
+              </td>
+              <td valign="top">Total # of 3.0 Remote Business interfaces
+      <br>
+              </td>
+              <td valign="top">default JNDI name<br>
+              </td>
+              <td valign="top">example<br>
+              </td>
+            </tr>
+            <tr>
+              <td valign="top">No<br>
+              </td>
+              <td valign="top">0<br>
+              </td>
+              <td valign="top">n/a<br>
+              </td>
+              <td valign="top">n/a<br>
+              </td>
+            </tr>
+            <tr>
+              <td valign="top">Yes<br>
+              </td>
+              <td valign="top">0<br>
+              </td>
+              <td valign="top">fully-qualified name of Home interface<br>
+              </td>
+              <td valign="top">com.acme.FooHome<br>
+              </td>
+            </tr>
+            <tr>
+              <td valign="top">No<br>
+              </td>
+              <td valign="top">1<br>
+              </td>
+              <td valign="top">fully-qualified name Remote Business interface<br>
+              </td>
+              <td valign="top">com.acme.FooBusiness<br>
+              </td>
+            </tr>
+            <tr>
+              <td valign="top">No<br>
+              </td>
+              <td valign="top">2 or more<br>
+              </td>
+              <td valign="top">No default -- JNDI name must be specified<br>
+              </td>
+              <td valign="top">n/a<br>
+              </td>
+            </tr>
+            <tr>
+              <td valign="top">Yes<br>
+              </td>
+              <td valign="top">1 or more<br>
+              </td>
+              <td valign="top">No default -- JNDI name must be specified<br>
+              </td>
+              <td valign="top">n/a<br>
+              </td>
+            </tr>
+                               
+  </tbody>        
+</table>
+        <br>
+         <br>
+   
+<hr width="100%" size="2"><br>
+                 
+<h2><b><a name="MDBJNDI"></a>How do I specify the Queue or Topic that a Message 
+   Driven Bean should consume from?</b></h2>
+        In our <i>J2EE 1.4 implementation (Application Server 8.x) :</i>
+       
+<h3>Map the bean's &lt;ejb-name&gt; to the Global JNDI name of the Queue/Topic's
+    JMS resource in sun-ejb-jar.xml :</h3>
+         &lt;sun-ejb-jar&gt;<br>
+         &nbsp; &lt;enterprise-beans&gt;<br>
+         &nbsp;&nbsp;&nbsp; &lt;ejb&gt;<br>
+         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;ejb-name&gt;FooMessageBean&lt;/ejb-name&gt;<br>
+         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;jndi-name&gt;jms/NotificationQueue&lt;/jndi-name&gt;<br>
+         &nbsp;&nbsp;&nbsp; &lt;/ejb&gt;<br>
+         &nbsp; &lt;/enterprise-beans&gt;<br>
+         &lt;/sun-ejb-jar&gt;<br>
+         <br>
+         In our <i>Java EE 5 implementation (Application Server 9.x)</i>
+,  there    are three ways to do it. &nbsp;In decreasing order of precedence,
+ they are   : <br>
+                 
+<h3>1. Use sun-ejb-jar.xml (Same as above)</h3>
+                 
+<h3>2. Specify the global JNDI of the Queue/Topic JMS Resource using the
+mapped-name element in ejb-jar.xml</h3>
+         <br>
+         &lt;enterprise-beans&gt;<br>
+          &nbsp; &lt;message-driven&gt;<br>
+          &nbsp;&nbsp;&nbsp; &lt;ejb-name&gt;FooMessageBean&lt;/ejb-name&gt;<br>
+          &nbsp; &nbsp; &lt;mapped-name&gt;jms/NotificationQueue&lt;/mapped-name&gt;<br>
+          &nbsp; &nbsp; ...<br>
+          &nbsp; &lt;/message-driven&gt;<br>
+          &lt;/enterprise-beans&gt;<br>
+                 
+<h3>3. Specify the global JNDI name of the Queue/Topic JMS Resource using
+    the @MessageDriven mappedName() attribute. &nbsp;E.g.,</h3>
+         @MessageDriven(mappedName="jms/NotificationQueue")<br>
+         public class FooMessageBean implements javax.jms.MessageListener 
+{  ...   }<br>
+  <br>
+        <br>
+   
+<hr width="100%" size="2"><br>
+        <br>
+                 
+<h2><a name="MultipleRemoteBusiness"></a>I have a 3.0 Session bean with multiple 
+   Remote Business interfaces. &nbsp;How do I look them up from a stand-alone 
+   java client? &nbsp;</h2>
+    <br>
+         Each Remote Business Interface can be looked up using a name derived 
+  from  the combination of the target ejb's global JNDI name and the specific 
+  Remote  Business Interface, separated by a "#". &nbsp;For example, if the 
+  Session  Bean's sun-ejb-jar.xml is :<br>
+        <br>
+          &lt;sun-ejb-jar&gt;<br>
+         &nbsp; &lt;enterprise-beans&gt;<br>
+         &nbsp;&nbsp;&nbsp; &lt;ejb&gt;<br>
+         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;ejb-name&gt;FooBean&lt;/ejb-name&gt;<br>
+         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;jndi-name&gt;FooEJB&lt;/jndi-name&gt;<br>
+         &nbsp;&nbsp;&nbsp; &lt;/ejb&gt;<br>
+         &nbsp; &lt;/enterprise-beans&gt;<br>
+         &lt;/sun-ejb-jar&gt;<br>
+         <br>
+        and it has 2 Remote Business interfaces { com.acme.FooBusiness1,
+com.acme.FooBusiness2     } the stand-alone client would look up each as
+follows :<br>
+        <br>
+        &nbsp; &nbsp;InitialContext ic = new InitialContext();<br>
+        &nbsp; &nbsp;FooBusiness1 bean1 = (FooBusiness1) ic.lookup("FooEJB#com.acme.FooBusiness1");<br>
+        &nbsp; &nbsp;FooBusiness2 bean2 = (FooBusiness2) ic.lookup("FooEJB#com.acme.FooBusiness2");<br>
+        <br>
+        Note that in the typical case of a bean only having one Remote Business 
+   Interface, this fully-qualified form is not needed. In that case, the bean's
+   JNDI name can be used directly :<br>
+        <br>
+        &nbsp; &nbsp;FooBusiness bean = (FooBusiness) ic.lookup("FooEJB");<br>
+        <br>
+          
+<hr width="100%" size="2"><br>
+   
+<h2><br>
+         </h2>
+         <br>
+                  
+<h2><br>
+         </h2>
+                 
+<h2><br>
+         </h2>
+                 
+<h2>&nbsp;&nbsp; &nbsp;</h2>
+                 
+<h2><br>
+         </h2>
+                 
+<h2>&nbsp;&nbsp;</h2>
+         <br>
+         <br>
+         <br>
+         <br>
+        <br>
+       <br>
+      <br>
+     <br>
+    <br>
+   <br>
+  <br>
+ <br>
+</body>
+</html>

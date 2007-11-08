@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//Tigris//DTD XHTML 1.0 Transitional//EN" "http://style.tigris.org/nonav/tigris_transitional.dtd">
+<html><head><title>GlassFish Project - JBI based Java EE Service Engine</title>
+  
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"><!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+	--></head>
+
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<div id="projecthome" class="app">
+<!--StartFragment --><font size="+1"><span style="font-weight: bold;">GlassFish
+Project - JBI based Java EE Service Engine home page</span></font><br>
+<br>
+&nbsp;<a href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New
+to GlassFish</a> | <a href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community
+Guidelines&nbsp;</a>
+| <a href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads
+</a>| <a href="https://glassfish.dev.java.net/public/faq/index.html">
+FAQ</a> |&nbsp;
+<a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo"> How-Tos</a>
+<br>
+<br>
+<!--StartFragment -->Java EE Service Engine acts as a bridge between
+GlassFish and <a href="https://open-esb.dev.java.net/">open-esb</a>
+environment for web service providers and web service consumers
+deployed in GlassFish. It provides numerous benefits including the
+following :<br>
+<ul>
+  <li>EJBs/Servlets packaged as web services and deployed on GlassFish
+are transparently exposed as service providers in JBI Enviroment <br>
+  </li>
+  <li>Java EE Components - EJBs/Servlets can consume services exposed
+in JBI enviroment using the Java EE service engine without being aware
+of the underlying binding/protocol such as SOAP, JMS etc exposing the
+web service. <br>
+  </li>
+  <li>In-process communication between components of application server
+and JBI components to increase request processing speed.</li>
+  <li>Any component that is plugged into ESB can directly communicate
+with Java EE applications. For example, clients of various bindings
+such as SOAP or JMS can communicate with web services developed using
+Java EE via
+open-esb because of Java EE Service Engine. <br>
+  </li>
+</ul>
+<h3>Java EE Service Engine News<br>
+</h3>
+<p>Dev tests are being developed.<br>
+</p>
+<h3>Page Contents</h3>
+<ul>
+  <li><a href="#Overview">Overview</a></li>
+  <li><a href="#Code_Walk-through">Code walk-through</a></li>
+  <li><a href="#CLI_Commands">CLI commands</a><br>
+  </li>
+  <li><a href="#UnitAcceptance_Tests">Unit/Acceptance
+Tests</a></li>
+  <li><a href="#Supporting_Documentation">Supporting Documentation</a></li>
+  <li><a href="#ToDo_List">ToDo List</a></li>
+</ul>
+<h3><a name="Overview"></a>Overview<br>
+</h3>
+<br>
+<table style="width: 989px; height: 73px;" bgcolor="#ffff66" border="0">
+  <tbody>
+    <tr>
+      <td scope="col">The majority of the <span class="twikiLink">GlassFish</span> code is available under the <b><a href="https://glassfish.dev.java.net/public/CDDLv1.0.html">Common
+Development and Distribution License (CDDL) v1.0</a></b>&nbsp; The following <a href="http://wiki.java.net/bin/view/Projects/GlassFishCodeDependencies">page</a> contains details about the components in <span class="twikiLink">GlassFish</span> and the licenses under which they are covered.<br>
+&nbsp;<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<p> <a href="https://open-esb.dev.java.net/">open-esb</a> project is
+Sun' implementation of Enterprise Service Bus (ESB) based on Java
+Business Integration technology, as defined in <a href="http://www.jcp.org/en/jsr/detail?id=208">JSR 208</a>
+specification. open-esb is installed as a LifeCycle module of
+GlassFish. Java EE Service Engine is a JSR 208 compliant service
+engine. The Java EE Service Engine is automatically installed in
+open-esb environment if open-esb is <a href="https://open-esb.dev.java.net/public/install/open-esb-installation.html">installed</a>
+on GlassFish. <br>
+</p>
+<p><br>
+<img src="https://glassfish.dev.java.net/javaee5/jbi-se/Bridge.jpg" title="" alt="Java EE Service Engine acts as a bridge between GlassFish and open-esb environment for web service providers and web service consumers deployed in GlassFish" style="width: 476px; height: 381px;"><br>
+</p>
+<p>Service Engine's functionality can be disabled by&nbsp; setting
+com.sun.enterprise.jbi.se.disable system property to true.<br>
+</p>
+<p><span style="text-decoration: underline;">Service Providers:</span><br>
+</p>
+<p><a href="http://jax-ws.dev.java.net/">JAXWS</a> Web Services
+deployed on Glassfish can be packaged as Servlets or EJBs.&nbsp; The
+service engine automatically activates web service end points in ESB at
+the time of loading of the web service.&nbsp; An endpoint can be
+deactivated from ESB by setting <span style="font-style: italic;">"jbi-enabled"</span>
+property of corresponding <span style="font-style: italic;">&lt;web-service-end-point&gt;</span>
+in <span style="font-style: italic;">domain.xml</span> to <span style="font-style: italic;">false</span> using combination of <span style="font-style: italic;">asadmin configure-webservice-management</span>
+and <span style="font-style: italic;">set</span> <a href="#CLI_Commands">CLI</a> commands.<br>
+</p>
+<p><img src="https://glassfish.dev.java.net/javaee5/jbi-se/ServiceProvider.jpg" title="" alt="Java EE components packaged as web services are automatically exposed in JBI environment." style="width: 607px; height: 473px;"><br>
+</p>
+<p><span style="text-decoration: underline;">Service Consumers :</span><br>
+</p>
+<p>Java EE Service Engine enables Java EE Components - Servlets and
+EJBs
+to route outbound requests through ESB by setting <span style="font-style: italic;">"jbi-enabled"</span> stub property to <span style="font-style: italic;">true</span> in<span style="font-style: italic;"> sun-ejb-jar.xml</span> and <span style="font-style: italic;">sun-web.xml</span> . Below is example of <span style="font-style: italic;">sun-web.xml </span><br>
+</p>
+<p><span style="font-style: italic;">&lt;sun-web-app&gt;<br>
+&lt;service-ref&gt;<br>
+&nbsp;&lt;service-ref-name&gt;sun-web.serviceref/calculator&lt;/service-ref-name&gt;<br>
+&nbsp;&nbsp;&nbsp; &lt;port-info&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;wsdl-port&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;namespaceURI&gt;http://example.web.service/Calculator&lt;/namespaceURI&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;localpart&gt;CalculatorPort&lt;/localpart&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/wsdl-port&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;service-endpoint-interface&gt;service.web.example.calculator.Calculator&lt;/service-endpoint-interface&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;stub-property
+name="jbi-enabled" value="true"/&gt;<br>
+&nbsp;&nbsp;&nbsp; &lt;/port-info&gt;<br>
+&nbsp;&lt;/service-ref&gt;<br>
+&lt;/sun-web-app&gt;<br>
+</span><br>
+</p>
+<p><img src="https://glassfish.dev.java.net/javaee5/jbi-se/ServiceConsumer.jpg" title="" alt="Java EE componenets deployed in GlassFish act as service consumers in JBI environment using service engine." style="width: 582px; height: 449px;"><br>
+</p>
+<h3><a name="Code_Walk-through"></a>Code Walk-through</h3>
+<p>The Java EE Service Engine code is split between <a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/webservice/" style="font-style: italic;">appserv-core</a> and <a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-addons/" style="font-style: italic;">appserv-addons</a>&nbsp; sub modules in
+the CVS repository. <br>
+</p>
+<p>The <span style="font-style: italic;">appserv-core</span> and <a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-addons/core/src/java/com/sun/enterprise/jbi/serviceengine" style="font-style: italic;">appserver-addons/core</a><span style="font-style: italic;"> </span>sub modules <br>
+</p>
+<ul>
+  <li>define contract between appserver and the service engine.</li>
+  <li>include code for enabling and disabling JBI Service Engine
+functionality in JBI.</li>
+</ul>
+<p>The <a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-addons/jbi/src/java/com/sun/enterprise/jbi/serviceengine" style="font-style: italic;">appserv-addons/jbi </a>sub&nbsp;
+module&nbsp; <br>
+</p>
+<ul>
+  <li>provides implementation for&nbsp; the contract between appserver
+and service engine</li>
+  <li>provides implementation of JSR 208 specified interfaces for a JBI
+Component</li>
+</ul>
+<h3><a name="CLI_Commands"></a>CLI Commands <br>
+</h3>
+<p>If an end point is bundled as a war file named <span style="font-style: italic;">jsr-208-webservice.war</span> with a
+endpoint name <span style="font-style: italic;">ws-endpoint</span>,
+following CLI commands need to be executed for deactivating <span style="font-style: italic;">ws-endpoint</span> from JBI environment.<br>
+</p>
+<p><span style="font-style: italic;">asadmin
+configure-webservice-management jsr-208-webservice#ws-endpoint</span><br>
+</p>
+<p><span style="font-style: italic;">asadmin set
+server.applications.web-module.jsr-208-webservice.web-service-endpoint.ws-endpoint.jbi-enabled=false</span><br>
+</p>
+<h3><a name="UnitAcceptance_Tests"></a>Unit/Acceptance Tests</h3>
+The setup for running
+unit tests is the same as the <a href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Quicklook_Tests">Quicklook</a>&nbsp;
+tests. To run just the Service Engine unit tests do the following:
+<br>
+<ul>
+  <li>go to
+glassfish/appserv-tests/devtests/webservice/jbi-serviceengine</li>
+  <li>change jbi_installation property to correctly point to open-esb
+installation folder in jbi_commons.properties file</li>
+  <li>start application server and execute ant all<br>
+  </li>
+</ul>
+<h3><font face="Arial, sans-serif"><font size="3"><a name="Supporting_Documentation"></a> Supporting
+Documentation</font></font></h3>
+<font face="Arial, sans-serif"><font size="3"><a href="https://open-esb.dev.java.net/">open-esb</a> project </font></font><br>
+<a href="https://glassfish.dev.java.net/javaee5/docs/DG/beamc.html"><font face="Arial, sans-serif"><font size="3">LifeCycle listener module</font></font></a><br>
+<a href="http://java.sun.com/developer/EJTechTips/2005/tt1220.html">Developing
+Web Services using JAX-WS</a><br>
+<p><font face="Arial, sans-serif"><font size="3"><strong>Specifications:
+</strong></font></font></p>
+<span style="font-family: arial,sans-serif;"><a href="http://www.jcp.org/en/jsr/detail?id=208">JSR 208</a><br>
+<a href="http://www.jcp.org/en/jsr/detail?id=224">JAX-WS 2.0</a><br>
+</span>
+<h3>ToDo List</h3>
+The Java EE Service Engine currently has support for JAX-WS 2.0 Service
+Providers, need to support JAX-RPC web service providers.<br>
+<br>
+</div>
+</body></html>

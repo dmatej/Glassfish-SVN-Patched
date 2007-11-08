@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+                                                                                                                                               
+  <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
+  <title>GlassFish Project - Self Management</title>
+                                                                                                                                               
+                                                                                                                                               
+  <meta name="author" content=" shalini muthukrishnan">
+                                                                                                                                               
+</head>
+                                                                                                                                               
+                                                                                                                                               
+<body>
+                                                                                                                                               
+<font
+ size="+1"><span style="font-weight: bold;">GlassFish
+Project - Self Management - Example rule and related code </span></font><br>
+      <br>
+&nbsp;<a
+ href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New
+to GlassFish</a> | <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community
+Guidelines&nbsp;</a>
+| <a href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads
+      </a>| <a
+ href="https://glassfish.dev.java.net/public/faq/index.html">
+FAQ</a> |&nbsp;<a
+ href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo"> How-Tos</a>
+      <br>
+      <br>
+<!--StartFragment --><br>
+      <p>Let us take an example of monitoring the free runtime memory
+of the JVM. If the value falls below a certain threshold, a popup
+window is displayed. A monitor type event is created and the monitor
+type chosen is gaugemonitor. Other monitor types are countermonitor and
+stringmonitor. An mBean is created which gets the free memory of the
+JVM at a particular point of time. To register the mbean with the
+application server, either the CLI command <i>create-mbean</i> or the
+GUI could be used. <br>
+      <br>
+A typical mbean will look like the following.&nbsp;</p>
+      <p>&nbsp;&nbsp;&nbsp; package com.sun.example.mbeans;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class Memory implements MemoryMBean {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public Memory() {}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public long
+getFreeMemory() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freeMemory
+= Runtime.getRuntime().freeMemory();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;return
+freeMemory;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;private long freeMemory
+= 0;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      <br>
+      </p>
+      <p>&nbsp;&nbsp;&nbsp; package com.sun.example.mbeans;<br>
+&nbsp;&nbsp;&nbsp; public interface MemoryMBean {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public long
+getFreeMemory();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      <br>
+CLI command to create an mbean:<br>
+      <br>
+&nbsp;&nbsp;asadmin create-mbean --user admin_user --port [4848 | 4849]
+--name MemoryBean com.sun.example.mbeans.Memory <br>
+      <br>
+Creating an mbean using GUI:<br>
+      </p>
+      <ul>
+        <li>Start the domain and open the administration console using
+http://hostname:port</li>
+        <li>Click on "Custom MBeans" link on the left pane</li>
+        <li>Custom MBeans panel is displayed on the right pane. List of
+already existing mbeans are displayed. To create a custom mbean, click
+"Deploy"</li>
+        <li>Specify the location of an application to deploy.
+Applications can be in packaged files, such as .mbean, or in the
+standard Custom MBean directory format. Click "Next" after mentioning
+the details.</li>
+        <li>Enter the custom mbean name and the implementation class
+name, status and other details pertaining to the mbean. Add properties
+if required.</li>
+        <li>Click "Finish"</li>
+      </ul>
+An action mbean is written which will popup a window whenever an event
+is triggered. This mbean implements the NotificationListener interface.
+      <br>
+      <br>
+&nbsp;&nbsp;&nbsp; package com.sun.example.action;<br>
+&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;public class MemoryAction implements
+NotificationListener, MemoryActionMBean {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public Memory() {}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;public synchronized
+void handleNotification(Notification notification,Object handback) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JFrame.setDefaultLookAndFeelDecorated(true);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JFrame
+myFrame = new JFrame("Glassfish");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myFrame.setSize(250,
+180);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myFrame.setLocation(300,200);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if(notification.getType().equals(THRESHOLD_LOW_VALUE_EXCEEDED))
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myFrame.getContentPane().add(new
+Label("Running out of Free Memory",Label.CENTER), BorderLayout.CENTER);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+else {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myFrame.getContentPane().add(new
+Label("More Free Memory than usual",Label.CENTER), BorderLayout.CENTER);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myFrame.setVisible(true);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myFrame.show();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}
+catch (Exception ex) { // Log the exception }<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      <br>
+&nbsp;&nbsp;&nbsp;&nbsp;public interface MemoryActionMBean {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      <br>
+CLI command to create action mbean: <br>
+      <br>
+&nbsp;&nbsp;&nbsp;&nbsp;asadmin create-mbean --user admin_user --port
+4848 --name MemoryActionBean com.sun.example.action.MemoryAction<br>
+      <br>
+Creating Action Mbean using GUI: <br>
+      <br>
+Same procedure as mentioned above is followed for creating the action
+mbean and deploying it on the application server.<br>
+      <br>
+A management rule is created with monitor type as gaugemonitor. Low and
+high threshold values ( values that are checked against the derived
+gauge ) are set in the configuration. Observed object is the mbean
+which gets the free memory of the JVM at any time. (that is,
+com.sun.example.mbeans.Memory) and the attribute we will observe is
+FreeMemory. The action triggered would be that of
+com.sun.example.action.Memory.<br>
+      <br>
+CLI command to create this rule:<br>
+      <br>
+&nbsp;&nbsp;&nbsp;&nbsp;asadmin create-management-rule --port 4848 --user
+admin_user --action MemoryActionBean<br>
+&nbsp;&nbsp;&nbsp;&nbsp;--eventtype monitor --eventloglevel
+WARNING&nbsp;&nbsp;&nbsp; --eventproperties<br>
+monitortype=gaugemonitor:<br>
+lowthreshold=9000000:<br>
+highthreshold=9700000:<br>
+numbertype=long:<br>
+observedobject=user\\:impl\\-class\\-name\\=<br>
+com.sun.example.mbeans.Memory\\,name\\=MemoryMBean\\,server\\=server<br>
+:observedattribute=FreeMemory<br>
+&nbsp;&nbsp;&nbsp;&nbsp;memory_threshold_rule <br>
+      <br>
+
+Note here that the "eventproperties" has an attribute called
+observedobject. The objectName of the mbean that is observed is
+mentioned here. The object name will be created when create-mbean
+command is executed. observedobject could be replaced by observedmbean
+if an mbean name is to be specified. <br>
+      <br>
+Creating a Management Rule using GUI <br>
+      <ul>
+        <li>Expand "Configuration" link on the left pane of the admin
+console.</li>
+        <li>Click on the "Management Rules" link under "Configuration".
+On the right pane, a list of already existing management rules are
+displayed in a table. Details about a specific management rule could be
+viewed by clicking on a rule.</li>
+        <li>Click on "New" to create a new rule.</li>
+        <li>Enter the name of the rule and other details like status
+and rule description. Select an event which will invoke the rule. The
+rule will be invoked if the selected event occurs. Specify the log
+level according to the requirement.</li>
+        <li>Click "Next".</li>
+        <li>Next page is displayed according to the event type chosen.
+Every event has its own properties.</li>
+        <li>Specify the details pertaining to the specific monitor type.</li>
+        <li>Select an action mbean from the drop-down list under Action
+section. In this case, select "MemoryActionBean".</li>
+        <li>Click "Finish".</li>
+      </ul>
+The rule is now successfully created. The configuration file domain.xml
+has these details as follows.<br>
+      <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;management-rules&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;management-rule
+enabled="true" name="memory_gauge_rule"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;event
+level="WARNING" record-event="true" type="monitor"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="monitortype" value="gaugemonitor"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="lowthreshold" value="9000000"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="highthreshold" value="9700000"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="numbertype" value="long"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="observedobject"
+value="user:impl-class-name=com.sun.example.mbeans.Memory,name=MemoryMBean,server=server"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="observedattribute" value="FreeMemory"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/event&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;action
+action-mbean-name="MemoryActionBean"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/management-rule&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/management-rules&gt;<br>
+      <br>
+Once the server is restarted, whenever the free memory of the JVM goes
+below the low threshold, a popup window is displayed saying "Running
+out of free memory". When it goes above the threshold, a popup window
+saying "More free memory than usual" is displayed. The Low and High
+threshold values can be changed accordingly to check the rule. <br>
+</body>
+</html>
+
+

@@ -1,0 +1,390 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <title>
+      GlassFish Project - Config elements names uniqueness and mutual references support.
+    </title>
+   <!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+	-->
+  </head>
+  <body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+    <div id="projecthome" class="app">
+      <!--StartFragment -->
+      <span style="font-weight: bold;"><font size="+1">GlassFish Project - Config elements names uniqueness and mutual references support.</font></span> 
+      <p>
+        <span style="font-weight: bold;">|</span> <a href="https://glassfish.dev.java.net/javaee5/admin-infra/config/configuration.html">Return to GlassFish Configuration Management Page</a> | <a href="https://glassfish.dev.java.net/index.html">GlassFish Project Home</a> | <a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo">How-Tos</a> |
+      </p>
+      <h3>
+        Page Contents
+      </h3>
+      <div style="margin-left: 2em">
+        <ul>
+          <li>
+            <a href="#ElementNames">Element names.</a>
+          </li>
+          <li>
+            <a href="#NameUniquenessScope">Name uniqueness scope.</a>
+          </li>
+          <li>
+            <a href="#NameReferences">Name references.</a>
+          </li>
+          <li>
+            <a href="#ValidatorMetadata">Config Validator's metadata for names uniqueness and references.</a>
+          </li>
+          <li style="list-style: none">
+            <ul>
+              <li>
+                <a href="#PrimaryKeysSupport">Primary keys support.</a>
+              </li>
+              <li>
+                <a href="#NameLists">Name lists.</a>
+              </li>
+              <li>
+                <a href="#NameListScope">Name list scope.</a>
+              </li>
+              <li>
+                <a href="#DonorAndRefDescriptions">Name domain's "donor" and referencing attributes descriptions.</a>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <a href="#NameListImplementation">Name lists implementation and API.</a>
+          </li>
+          <li style="list-style: none">
+            <ul>
+              <li>
+                <a href="#ProperNameList">Discovering the proper name list for testing.</a>
+              </li>
+              <li>
+                <a href="#IgnoringOwn">Ignoring "own" attribute value in name list.</a>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <a href="#NamesValidation">Names validation.</a>
+          </li>
+        </ul>
+      </div>
+
+      <p>
+   GlassFish application server has complex configuraion with the number of restrictions applied to element names and  multiple internal references between elements of different types. Such configuration could be easily corrupted (e.g. by having "unresolved" references, name duplications etc.). The task of validation for such configurations becomes really comlex and difficult to maintain.</p>
+      <p>Proposed method and imlementation provides generic metadata driven way (using name lists) to prevent name and reference inconsistencies. Introduced extentions to XML schema and new  metadata element - name lists (name domains) provide simple way to describe and maintain element integrity of names and references in the configuration. 
+ 
+</p>
+      
+      <h3>
+        <a name="ElementNames"></a> Element names (primary keys).
+      </h3>
+      <p>
+        Many configuration elements defined in domain.xml have primary key attributes ("name", "id", "jndi-name" etc.). We'll use term "element name" or even "name" for referencing to such keys in this document. These names allow distinguishing and addressing of specific elements among their siblings. Two generic validation procedures are related to names: uniqueness/duplication check and integrity of internal references.
+      </p>
+      <br>
+       
+      <h3>
+        <a name="NameUniquenessScope"></a> Name uniqueness scope.
+      </h3>
+      <p>
+        Usually, names should be unique among names of the same type config elements. For example, the value of the "name" attribute for the "server" element is its primary key, and there are no two server elements with the same name. Besides that, Glassfish often requires uniqueness of names among elements which have not the same type (e.g. all types of resources: jdbc, custom, mail etc.) or even belong to different parents. For example, there is consideration that the same name can not be used for any two elements of "server", "config", "cluster", and "node-agent" types (so called "global names"). All names in the following config fragment should be also unique among all web modules, ejb modules, and j2ee applications.
+      </p>
+      <table>
+        <tr>
+          <td width="40">
+          </td>
+          <td bgcolor="#D0D0D0">
+<pre>
+  &lt;applications&gt;
+    &lt;j2ee-application &hellip;  <b>name="<i><font color="RED">MEjbApp</font></i>"</b> object-type="system-all"/&gt;
+    &lt;ejb-module &hellip; <b>name="<i><font color="RED">ludo</font></i>"</b> object-type="user"/&gt;
+    &lt;web-module &hellip; <b>name="<i><font color="RED">adminapp</font></i>"</b> object-type="system-admin" /&gt;
+    &lt;web-module &hellip; <b>name="<i><font color="RED">admingui</font></i>"</b> object-type="system-admin"&gt;
+&hellip;&hellip;&hellip;
+  &lt;/applications&gt;
+</pre>
+          </td>
+        </tr>
+      </table>
+      <p>
+        Name uniqueness support is the Config Validator responsibility. Eeach time a named element is creating, or the name attribute value is about to be changed for existing element, the Validator checks new name value for duplication in its scope.
+      </p>
+      <h3>
+        <a name="NameReferences"></a>Name references.
+      </h3>
+      <p>
+        Another aspect of names validation is providing integrity of internal references in domain.xml configuration file. There are plenty of config elements having the attributes with values equal to names of other elements from the same domain.xml file. Such "foreign" primary keys are called "reference to element" or simply "reference". Examples of references: "pool-name" attribute in "jdbc-resource" element; "default-virtual-server" in "http-listener" element. Some values representing list of references, like "http-listeners" in "virtual-server":
+      </p>
+      <table>
+        <tr>
+          <td width="40">
+          </td>
+          <td bgcolor="#D0D0D0">
+<pre>
+ &lt;virtual-server hosts="${com.sun.aas.hostName}"
+                 http-listeners="http-listener-1,http-listener-2" 
+                 id="server" state="on" /&gt;
+                 
+</pre>
+          </td>
+        </tr>
+      </table>
+      <p>
+        There are special referencing sub-elements which are binding other elements to owner, e.g. resources and applications to server or cluster - resource-ref, cluster-ref:
+      </p>
+      <table>
+        <tr>
+          <td width="40">
+          </td>
+          <td bgcolor="#D0D0D0">
+<pre>
+&lt;server config-ref="server-config" lb-weight="100" name="server"&gt;
+    &lt;application-ref enabled="true" ref="adminapp" virtual-servers="__asadmin"/&gt;
+    &lt;application-ref enabled="true" ref="admingui" virtual-servers="__asadmin"/&gt;
+    &lt;application-ref enabled="true" ref="MEjbApp" virtual-servers="server"/&gt;
+    &hellip;
+    &lt;resource-ref enabled="true" ref="jdbc/__TimerPool"/&gt;
+    &lt;resource-ref enabled="true" ref="jdbc/__CallFlowPool"/&gt;
+    &lt;resource-ref enabled="true" ref="jdbc/__default"/&gt;
+&lt;/server&gt;                 
+</pre>
+          </td>
+        </tr>
+      </table>
+      <p>
+        Every time, when referenced element is added, removed, or its primary key is changed, Config Validator checks if after change done, there will be no unresolved references. Of course, the same check should be performed in the case of change of referencing attribute value.
+      </p>
+      <h3>
+        <a name="ValidatorMetadata"></a> Config Validator's metadata for name uniqueness and reference integrity support.
+      </h3>
+      <p>
+        In GlassFish, every config element is described by its .rng schema file. We use elements' schemas to provide Config Validator with necessary data for most attributes validation test cases. For names validation, we added extensions to those schemas, informing Validator that certain attributes are names and therefore subjects for uniqueness and referencing integrity tests. All such extensions are defined in the separate namespace (xmlns:ias=http://www.sun.com/ias/validation). There are three of such extensional schema attributes related to names validation: ias:type, ias:belongsTo, and ias.referencesTo.
+      </p>
+      <div style="margin-left: 2em">
+        <h4>
+          <a name="PrimaryKeysSupport"></a> Primary keys support.
+        </h4>
+        <p>
+          In the following fragment is the part of jms-host element schema. The attribute "name" is declared as primary key (ias:type="key") for the element and Config Validator will prevent creation of the duplicates among all jms-host elements belonging to the same jms-service element (siblings).
+        </p>
+        <table>
+          <tr>
+            <td width="40">
+            </td>
+            <td bgcolor="#D0D0D0">
+<pre>
+  &lt;define name="jms-host-attlist" combine="interleave"&gt;
+    &lt;attribute name="name" ias:type="key"&gt;
+      &lt;ref name="name-type"/&gt;
+    &lt;/attribute&gt;
+    &hellip;&hellip;&hellip;
+  &lt;/define&gt;
+</pre>
+            </td>
+          </tr>
+        </table>
+        <p>
+          There is one more usage of describing attribute as key. In Glassfish configuration infrastructure, element name is widely used in XPath expressions and MBean ObjectNames. So, to avoid confusions, such attributes can not be changed and will be declared as "read only" attributes in MBeans APIs.
+        </p>
+        <h4>
+          <a name="NameLists"></a>Name lists.
+        </h4>
+        <p>
+          As mentioned before, GlassFish configuration has plenty of name uniqueness requests beyond the scope of only sibling elements. For example, names for configs, servers, clusters, and node agents should be unique in domain among these elements. I.e. for example, it is prohibited to have any server and node agent in domain to have the same name. To maintain such complex requests we introduced "name lists" (in earlier documents - "name domains").
+        </p>
+        <p>
+          Name list - named set of values of certain attributes of specified element types. The following picture presents two name lists defined in the sample configuration - "configs" and "global-names". "Configs" name list in this sample consists of four config names: "server-config", "testServer-config", "myCluster-config", and "default-config". The "global-names" name list has 10 names, representing name values of all servers, configs, clusters, and node-agent elements defined in domain.xml.
+        </p>
+        <p>
+          <img src="ref-support-fig1.gif"><br>
+           <u>Figure 1. "Configs" and "global-names" name lists</u>
+        </p>
+        <p>
+          Name domains are defined in name-domain xml description file. For example, the name lists from above sample can be represented in this file by the following xml elements:
+        </p>
+        <table>
+          <tr>
+            <td width="40">
+            </td>
+            <td bgcolor="#D0D0D0">
+<pre>
+  &lt;name-list  name="global-names"  scope="/"
+              full-name="List of global names - servers, clusters, configs ..."&gt;
+     &lt;forms-from xpath="/domain/configs/config[*]/@name"/&gt;
+     &lt;forms-from xpath="/domain/servers/server[*]/@name"/&gt;
+     &lt;forms-from xpath="/domain/clusters/cluster[*]/@name"/&gt;
+     &lt;forms-from xpath="/domain/node-agents/node-agent[*]/@name"/&gt;
+  &lt;/name-list&gt;
+  
+  &lt;name-list name="servers"  scope="/"
+             full-name="List of config names" &gt;
+     &lt;forms-from xpath="/domain/configs/config[*]/@name"/&gt;
+     &lt;referenced-by xpath="/domain/servers/server[*]/@config-ref"/&gt;
+     &lt;referenced-by xpath="/domain/clusters/cluster[*]/@config-ref"/&gt;
+  &lt;/name-list&gt;
+</pre>
+            </td>
+          </tr>
+        </table>
+        <p>
+          Name list entry can have following attributes and sub-elements:
+        </p>
+        <ul>
+          <li>
+            "name" attribute provides id for describing name domain. It's value could be used in domain.xml elements' schemas ("belongs-to" and "references-to" attributes);
+          </li>
+          <li>
+            "full-name" gives description of the list (print name);
+          </li>
+          <li>
+            "scope" attribute restricts uniqueness and referencing tests only to values from specified config subtree. It's discussed below.
+          </li>
+          <li>
+            "forms-from" sub-elements specify XPathes for attributes, which values are used to form the "global-names" name domain (donor attributes).
+          </li>
+          <li>
+            "referenced-by" sub-elements specify the attributes which values should belong to describing name domain (referencing attributes).
+          </li>
+        </ul>
+        <p>
+          Please note, that the donor attribute for "configs" name list, which forms this name domain, also participates in forming of the "global-names" domain. We will consider both "donor" and "referencing" attributes detailed later in this document.
+        </p>
+      </div>
+        <h3>
+          <a name="NameListScope"></a>Name list scope.
+        </h3>
+        <p>
+          In many cases, both uniqueness and referencing requirements for attribute value are limited only for descendants of the specific node. For example, "virtual-servers" name list should be formed and checked only for elements' attributes belonged to the same config element. Let's see how scope attribute in name-list element allows handling this fact:
+        </p>
+        <table>
+          <tr>
+            <td width="40">
+            </td>
+            <td bgcolor="#D0D0D0">
+<pre>
+&lt;name-list name="virtual-servers" 
+      full-name="list of virtual servers defined in config" 
+      <b>scope="<i><font color="RED">/domain/configs/config/</font></i>"</b>&gt;
+   &lt;forms-from xpath="/domain/configs/config[*]/http-service/virtual-server[*]/@id"/&gt;
+   &lt;referenced-by xpath="/domain/configs/config[*]/http-service/
+                          http-listener[*]/@default-virtual-server"/&gt;
+&lt;/name-list&gt;
+</pre>
+            </td>
+          </tr>
+        </table>
+        <h3>
+          <a name="DonorAndRefDescriptions"></a>Name domain's "donor" and referencing attributes descriptions.
+        </h3>
+        <p>
+          Both "forms-from" and "referenced-by" sub-elements are actually generated entries in the name list description. They are produced by XSLT script from config elements .rng schema files. Two additional extension attributes - "belongs-to" and references-to" are used in config element attribute definition to define name lists' "donor" and referencing attribute values correspondently. The following element schema fragment demonstrates the usage of all three .rng-extension attributes: "type", "belongs-to", and "references-to":
+        </p>
+        <table>
+          <tr>
+            <td width="40">
+            </td>
+            <td bgcolor="#D0D0D0">
+<pre>
+&lt;define name="jdbc-resource-attlist" combine="interleave"&gt;
+    &lt;attribute name="jndi-name" ias:type="key" 
+            <b>ias:belongs-to="<i><font color="RED">jndi-names,jdbc-resources</font></i>"</b>&gt;
+      &lt;ref name='jndi-unique-type'/&gt;
+    &lt;/attribute&gt;
+    &lt;attribute name="pool-name" 
+            <b>ias:references-to="<i><font color="RED">jdbc-connection-pools</font></i>"</b>/&gt;
+&hellip; &hellip; &hellip;
+  &lt;/define&gt;
+</pre>
+            </td>
+          </tr>
+        </table>
+        <br>
+         Note please, that the value of "jndi-name" attribute in above definition belongs to (forms) two different name domains - "jndi-names" and "jdbc-resources". It means that attribute value for such document should be unique in both of them. Attribute "pool-name" value should be present in "jdbc-connection-pools" name domain.<br>
+        <br>
+         
+        <table>
+          <tr>
+            <td width="40">
+            </td>
+            <td bgcolor="#D0D0D0">
+<pre>
+  &lt;define name="server-attlist" combine="interleave"&gt;
+    &lt;attribute name="name"  
+               ias:type="key"
+               <b>ias:belongs-to="<i><font color="RED">global-names,servers</font></i>"</b>&gt;
+  &hellip; &hellip; &hellip; 
+    &lt;/attribute&gt;
+    &lt;optional&gt;
+      &lt;attribute name="config-ref" <b>ias:references-to="<i><font color="RED">configs</font></i>"/</b>&gt;
+    &lt;/optional&gt;
+    &lt;optional&gt;
+      &lt;attribute name="node-agent-ref" 
+                 <b>ias:references-to="<i><font color="RED">node-agents</font></i>"</b>/&gt;
+    &lt;/optional&gt;
+  &hellip; &hellip; &hellip; 
+  &lt;/define&gt;
+</pre>
+            </td>
+          </tr>
+        </table>
+        <h3>
+          <a name="NameListImplementation"></a>Name lists implementation and API.
+        </h3>
+        <p>
+          As mentioned above, Config Validator uses name lists to perform name uniqueness and reference integrity tests. All name lists described in names-domain.xml files are generated and accessed through special manager class - NameListMgr. Basicly, NameListMgr provides the following testing methods to Validator:
+        </p>
+        <ul>
+          <li>
+            public boolean <b>isUniqueValueInNameDomain</b>(String nameDomainName, Object value, String xpath);
+          </li>
+          <li>
+            public boolean <b>isValueInNameDomain</b>(String nameDomainName, Object value, String xpath);
+          </li>
+          <li>
+            public boolean <b>isValueInNameDomainReferenced</b>(String nameDomainName, Object value, String xpath);
+          </li>
+        </ul>
+        <p>
+          Parameter "xpath" in above signatures represents xpath address for attribute providing the value for the test. The value of "xpath" parameter plays two significant roles: to retrieve proper name list for testing and to ignore "own" attribute values in lists.
+        </p>
+      <div style="margin-left: 2em">
+        <h4>
+          <a name="ProperNameList"></a>Discovering the proper name list for testing.
+        </h4>
+        <p>
+          When scope for name list is not equal to "/" or "/domain/" (whole config tree), than one name list description produces a number of separate lists, one for every scope defined sub-tree (for example, if scope for the list is "/domain/configs/config[*]", then separate name list will be created for each config in domain). So, internal name for particular name list will be combination of declared name list (from names-domain.xml) and scope sub-tree root xpath address value (e.g. /domain/configs/config[@name='myConfig'] ). Name list manager uses xpath parameter value to extract sub-tree root address according to list scope.
+        </p>
+        <h4>
+          <a name="IgnoringOwn"></a>Ignoring "own" attribute value in name list.
+        </h4>
+        <p>
+          Sometimes, e.g. during offline validation, testing attribute value could be found in name list, but this is not duplication case, because this value was taken to name list from the same (testing) attribute. To ignore such "duplication with self" cases, values in name lists are stored along with the xpathes of the origin attributes, used for list generation. Strictly speaking, the name lists implementation allows to store more than one instance of the same name value, if their associated xpath addresses are different. So, actual support of uniqueness and reference integrity is responsibility of the Validator.
+        </p>
+      </div>
+        <h3>
+          <a name="NamesValidation"></a> Names validation.
+        </h3>
+        <p>
+          The following three diagrams represent attribute validation process based on name related metadata usage (primary keys and name lists). It is performed by Config Validator before config change for an element is about to be done.
+        </p>
+        <p>
+          <img src="ref-support-fig2.gif"><br>
+           <u>Figure 2. Primary key value validation.</u>
+        </p>
+        <br>
+        <br>
+         
+        <p>
+          <img src="ref-support-fig3.gif"><br>
+           <u>Figure 3. "Donor" attribute validation.</u>
+        </p>
+        <br>
+        <br>
+         
+        <p>
+          <img src="ref-support-fig4.gif"><br>
+           <u>Figure 4. "Referencing" attribute validation.</u>
+        </p>
+    </div>
+  </body>
+</html>

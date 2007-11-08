@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//Tigris//DTD XHTML 1.0 Transitional//EN" "http://style.tigris.org/nonav/tigris_transitional.dtd">
+<html><head><title>GlassFish Project - Webtier</title>
+  
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"><!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+	--></head><body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<div id="projecthome" class="app">
+<!--StartFragment --><font size="+1"><span style="font-weight: bold;">GlassFish
+Project - Web Services Deployment and Dispatching home page</span></font><br>
+<br>&nbsp;<a href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New
+to GlassFish</a> | <a href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community
+Guidelines&nbsp;</a>
+| <a href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads
+</a>| <a href="https://glassfish.dev.java.net/public/faq/index.html">
+FAQ</a> |&nbsp;
+<a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo"> How-Tos</a> 
+<br>
+<br>
+<!--StartFragment --><br>Welcome to the Web Services Deployment and Dispatching page.  This page is dedicated to discussing the Web Services 
+deployment and message dispatching in GlassFish.<br>
+
+<h3>Page Contents</h3>
+<ul>
+  <li><a href="#Annotation">Annotation Processing</a></li>
+  <li><a href="#Servlet">Servlet Endpoint Deployment and Dispatching</a></li>
+  <li><a href="#EJB">EJB Endpoint Deployment and Dispatching</a></li>
+  <li><a href="#Supporting_Documentation">Supporting Documentation</a></li>
+  <li><a href="#ToDo_List">ToDo List</a></li>
+  
+</ul>
+<h3><a name="Annotation"></a>Annotation Processing</h3>
+<p>The classes that process Web Services annotations at deployment time are found in 
+<a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-commons/src/java/com/sun/enterprise/deployment/annotation/handlers">appserv-commons/src/java/com/sun/enterprise/deployment/annotation/handlers</a>.  For example,
+the WebServiceHandler class processes the @WebService annotation.</p>
+
+<p>During deployment of a service, all deployment descriptors (if any) are loaded and
+then the annotations are processed. On seeing an @WebService, for example, the annotation framework
+calls WebServiceHandler which processes the annotation. While processing the annotation,
+we check if there a deployment descriptor entry already available (e.g., from webservices.xml) 
+and if so, the annotation values will not override the equivalent defined in the descriptor. At the end of the
+annotation processing phase, we have all the information required with which we generate
+WSDLs and other portable artifacts (if not packaged).</p>
+
+<h3><a name="Servlet"></a>Servlet Endpoint Deployment and Dispatching</h3>
+<p><span style="font-family: monospace;"></span>While the classes in <a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/deployment/backend">appserv-core/src/java/com/sun/enterprise/deployment/backend</a> take care of generic deployment activities for all artifacts being deployed, the <a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/deployment/backend/WebServiceDeployer.java">appserv-core/src/java/com/sun/enterprise/deployment/backend/WebServiceDeployer.java</a>
+class takes care of webservice specific deployment actions (like
+publishing of WSDL, routing all webservice request through a single
+point of entry as detailed below). The classes in <a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/webservice">appserv-core/src/java/com/sun/enterprise/webservice</a>
+take care of runtime actions for a webservice request (like
+initializing JAXWS runtime, taking care of security, taking care of EJB
+specific features like container managed transactions etc).</p>
+<p>At the time of deployment of a WAR, we generate a web.xml which
+directs the HTTP request containing the payload (SOAP/HTTP or just XML
+in the case of a RESTful service deployed with the XML/HTTP binding) to
+JAXWSServlet. You can see the generatd web.xml and other
+deployment artifacts if you look in
+$GLASSFISH_HOME/domains/domain1/generated/xml/j2ee-modules/<module-name>/WEB-INF</module-name></p>
+
+
+<p>More specifically, in the JAX-WS case, when you deploy a WAR with a servlet endpoint:
+</p><ol>
+  <li>The GlassFish container creates a web.xml to deploy an instance of JAXWSServlet.  If your WAR contained a
+web.xml, the generated web.xml is built from your original web.xml, but the <i>servlet-class</i> is replaced with 
+JAXWSServlet.  In addition, the webservices.xml deployment descriptor is generated (if it doesn't already exist) and 
+the <i>service-endpoint-interface</i> references the class being deployed which you specified in 
+your web.xml's <i>servlet-class</i>.  Note that webservices.xml is not required by JAX-WS, but generated for internal use.</li>
+  <li>When the JAXWSServlet instance is deployed, and initialized, the following happens:
+    <ol type="a">
+      <li>It creates a com.sun.enterprise.webservice.monitoring.WebServiceEngine instance.</li>
+      <li>The
+WebServiceEngine creates an endpoint implementation
+(com.sun.enterprise.webservice.monitoring.JAXWSEndpointImpl) from the
+port-component as defined by the deployment descriptor and annotations.
+The description of this port-component is represented
+internally as an instance of
+com.sun.enterprise.deployment.WebServiceEndpoint. The JAXWSEndpointImpl
+instance is what processes the MessageContext containing the SOAP
+request/response.</li>
+      <li>It registers the endpoint implementation with the JAX-WS runtime.  The registry is an instance of 
+com.sun.enterprise.webservice.JAXWSRuntimeEpiRegistry.  The endpoint object that gets registered is an instance of 
+com.sun.xml.ws.spi.runtimeRuntimeEndpointInfo, and it includes (among other things): an instance of the application defined
+class implementing the endpoint (i.e., the oneclass annotated with @WebService or @WebServiceProvider), 
+a WebServiceContext instance, an associated WSDL file (either packaged or generated from annotations), 
+an instance of the the protocol binding (i.e., javax.xml.ws.Binding), and the handler chain.</li>
+    </ol>
+  </li>
+</ol>
+
+<p>When the JAXWSServlet instance receives a SOAP/HTTP or XML/HTTP message (as HTTPServletRequest), it does the following:
+</p><ol>
+  <li>Creates the MessageContext (including a reference to the ServletContext).</li>
+  <li>Passes the HTTP request/response objects, along with the RuntimeEndpointInfo, to an instance of 
+com.sun.xml.ws.spi.runtime.Tie - the entry point for the JAX-WS runtime system.</li>
+  <li>The JAX-WS runtime decodes the SOAP request, applying the JAX-WS and JAXB XML/Java bindings, to get the 
+parameters that are used to invoke the endpoint implementation class.</li>
+  <li>Then, the flow is reversed and the returned object is serialized back out to the HTTP response.</li>
+</ol>
+
+
+<h3><a name="EJB"></a>EJB Endpoint Deployment and Dispatching</h3>
+<p>The classes that handle the EJB endpoint's runtime behavior are found in the same place as the servlet endpoint classes:
+<a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/webservice">appserv-core/src/java/com/sun/enterprise/webservice</a>.  EjbWebServiceServlet is the class used to handle requests to 
+services deployed as EJB endpoints.  EjbWebServiceServlet uses an instance EjbMessageDispatcher to dispatch HTTP requests
+containing the payload (SOAP/HTTP or just XML in the case of a RESTful service deployed with the XML/HTTP binding)requests to 
+the appropriate endpoint.</p>
+
+<p>At the time of deployment of an EJB-JAR, the webservice endpoint is registered. When the EJB webservice endpoint is 
+registered, there is a listener (an instance of EjbWebServiceRegistryListener)
+that registers the endpoint's path (i.e., the <i>endpoint-address-uri</i> from the generated deployment descriptor) as
+an ad-hoc path with the web container, along with the ad-hoc servlet (i.e., EjbWebServiceServlet) responsible for
+servicing any requests on this path.  An ad-hoc path is the GlassFish term for a servlet path that is mapped to
+a servlet not declared in the web module's deployment descriptor. GlassFish calls a web module all of whose mappings
+are for ad-hoc paths an ad-hoc web module. The EjbWebServiceServlet instance that receives SOAP or XML over HTTP on
+behalf of an EJB endpoint is deployed in an ad-hoc web module.  As a result, you won't find a web.xml for this
+servlet or see it on the Admin Console.
+
+
+</p><p>More specifically, in the JAX-WS case, when you deploy a EJB-JAR with an EJB endpoint, among other things the follow occur:
+</p><ol>
+  <li>The GlassFish container creates the deployment descriptors necessary for deployment, including:
+    <ul>
+      <li>An ejb-jar.xml to deploy your service implementation bean (i.e., the class you have
+annotated with @Stateless and @WebService).  If your EJB-JAR already contains an ejb-jar.xml, the generated
+ejb-jar.xml is built from your original ejb-jar.xml as a starting point. In the generated ejb-jar.xml, the <i>ejb-class</i>
+references your service implementation bean, and the <i>ejb-name</i> is the value specified by @Stateless.name.  ??!! In GlassFish,
+it is also forced to be the name of the web service (wsdl:portType for WSDL 1.1) as specified by the 
+@WebService.name annotation. !!?? </li>
+      <li>A webservices.xml where the <i>service-endpoint-interface</i> references the service implementation bean unless the 
+@WebService.endpointInterface annotation indicates a service endpoint interface.  The <i>port-component-name</i> is the name of 
+the web service and it comes from the @WebService.name annotation (wsdl:portType for WSDL1.1).  Note that webservices.xml is not
+ required by JAX-WS, but generated for internal use.</li>
+      <li>A sun-ejb-jar.xml (created from the one supplied with your EJB-JAR, if any).  The <i>ejb-name</i> is the value specified
+by the @Stateless.name.  The <i>endpoint-address-uri</i>
+specifies the endpoint path. You can change the default deployment path
+of an EJB endpoint by providing a sun-ejb-jar.xml with this information
+in your EJB-JAR. You can also configure security using this
+deployment descriptor. </li></ul>
+  </li><li>An instance of com.sun.enterprise.webservice.EjbContainerPreHandler is created and inserted first in the handler
+chain for the endpoint.  This class performs the security authorization, prior to invoking any deployed handers or the
+endpoint itself.  This is a JSR-109 Section 9 requirement.</li>
+</ol>
+
+<p>When the EjbWebServiceServlet instance receives a SOAP/HTTP or XML/HTTP message (as HTTPServletRequest), it does the following:
+</p><ol>
+  <li>Looks up the endpoint descriptor (EjbRuntimeEndpointInfo) from the EJB endpoint registry (WebServiceEjbEndpointRegistry).</li>
+  <li>Performs authentication as described in JSR-109 Section 9.</li>
+  <li>Passes the HTTPServletRequest and HTTPServletResponse, along with the endpoint descriptor to an appropriate (i.e., either
+JAX-RPC or JAX-WS) dispatcher (EjbMessageDispatcher) for processing</li>
+</ol>
+
+<p>The EjbMessageDispatcher processing is similar to the dispatching performed by JAXWSServlet, and includes the following steps:
+</p><ol>
+  <li>Creates the MessageContext (without a reference to the ServletContext).</li>
+  <li>Passes the HTTP request/response objects, along with the RuntimeEndpointInfo, to an instance of 
+com.sun.xml.ws.spi.runtime.Tie - the entry point for the JAX-WS runtime system.</li>
+  <li>The JAX-WS runtime decodes the SOAP request, applying the JAX-WS and JAXB XML/Java bindings, to get the 
+parameters that are used to invoke the endpoint implementation class.</li>
+  <li>Then, the flow is reversed and the returned object is serialized back out to the HTTP response.</li>
+</ol>
+
+
+<h3><a name="Supporting_Documentation"></a> Supporting Documentation</h3>
+<p><font face="Arial, sans-serif"><font size="3">This sections contains
+pointers to useful documents and information
+about the web services deployment and dispatching technologies in GlassFish.</font></font></p>
+<p><font face="Arial, sans-serif"><font size="3"><strong>Specifications:
+</strong></font></font></p>
+<span style="font-family: arial,sans-serif;">
+<ul>
+  <li><a href="http://www.jcp.org/en/jsr/detail?id=109">JSR 109: Web Services for Java EE, Version 1.2</a> </li>
+  <li><a href="http://www.jcp.org/en/jsr/detail?id=109">JSR 181: Web Services Metadata for the Java Platform</a> </li>
+</ul>
+</span>
+<p><font face="Arial, sans-serif"><font size="3"><strong>Other Links:
+</strong></font></font></p>
+<span style="font-family: arial,sans-serif;">
+<ul>
+  <li>The <tt>sun-ejb-jar.xml</tt> file is described in <a href="http://docs.sun.com/app/docs/doc/819-3660">"The sun-ejb-jar.xml File" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></a>.
+</li></ul>
+</span>
+
+<p><strong>General information:</strong></p>
+<p>Include any documentation that is useful for developers.&nbsp;
+Design docs and functional specs will be stored under the Documents and
+Files link in the left nav bar.&nbsp; There is alot of good
+documentation available on java.sun.com so linclude llinks to that too.</p>
+
+<h3><a name="ToDo_List"></a>ToDo List</h3>
+<p>TBD: Maintain a list of things to do in Issue tracker so all can figure
+out what needs to be done.<br>
+</p>
+<p>ToDo list will be maintained using Issue Tracker <code>Task</code>
+issue type. You can query Issue Tracker using issue type <code>Task</code>
+or
+click <a href="https://glassfish.dev.java.net/issues/buglist.cgi?Submit+query=Submit+query&amp;issue_type=TASK&amp;issue_status=UNCONFIRMED&amp;issue_status=NEW&amp;issue_status=STARTED&amp;issue_status=REOPENED&amp;email1=&amp;emailtype1=exact&amp;emailassigned_to1=1&amp;email2=&amp;emailtype2=exact&amp;emailreporter2=1&amp;issueidtype=include&amp;issue_id=&amp;changedin=&amp;votes=&amp;chfieldfrom=&amp;chfieldto=Now&amp;chfieldvalue=&amp;short_desc=&amp;short_desc_type=substring&amp;long_desc=&amp;long_desc_type=substring&amp;issue_file_loc=&amp;issue_file_loc_type=substring&amp;status_whiteboard=&amp;status_whiteboard_type=substring&amp;keywords=&amp;keywords_type=anytokens&amp;field0-0-0=noop&amp;type0-0-0=noop&amp;value0-0-0=&amp;cmdtype=doit&amp;newqueryname=&amp;order=Reuse+same+sort+as+last+time">here</a>
+to check out the ToDo list.</p>
+
+</div>
+</body></html>

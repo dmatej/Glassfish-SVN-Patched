@@ -1,0 +1,413 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+<meta http-equiv="content-type" content="text/html; charset=ISO-8859-1"><title>GlassFish Project - Self Management</title>
+<meta name="author" content=" shalini muthukrishnan"></head>
+
+<body>
+
+<font size="+1"><span style="font-weight: bold;">GlassFish
+Project - Self Management home page</span></font><br>
+      <br>
+&nbsp;<a href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New
+to GlassFish</a> | <a href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community
+Guidelines&nbsp;</a>
+| <a href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads
+      </a>| <a href="https://glassfish.dev.java.net/public/faq/index.html">
+FAQ</a> |&nbsp;<a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo"> How-Tos</a>
+      <br>
+      <br>
+<!--StartFragment --><br>
+Welcome to the Self Management home page. This page is dedicated to
+discussing the Self Management framework in GlassFish. <br>
+The source code for these features is part of this cvs repository. How
+this framework is built in to perform the following tasks of
+self-configuring/self-tuning/self-healing is discussed here.<br>
+      <br>
+      <h3>Self Management News</h3>
+      <p>SelfManagement in GlassFish is built on simple concept of
+management rules. A management rule is built using standard JMX
+infrastructure. Each management rule is comprised of an event and an
+optional action. Events and Actions are open ended.
+Actions could be one of the pre-defined actions or custom actions
+created by the user. Cumbersome monitoring tasks are monitored by
+performing actions based on an event triggered. See below for more
+information on the design and implementation of this feature.<br>
+      </p>
+      <h3>Page Contents</h3>
+      <ul>
+        <li><a href="#Overview">Overview</a></li>
+        <li><a href="#Design">Design</a></li>
+        <li><a href="#CLICommands">CLI Commands</a></li>
+        <li><a href="#GUI">GUI</a></li>
+        <li><a href="#UnitAcceptance_Tests">Unit/Acceptance
+Tests</a></li>
+        <li><a href="#Supporting_Documentation">Supporting Documentation</a></li>
+        <li><a href="#Example">Example Rule and related code</a></li>
+        <li><a href="#ToDo">ToDo List</a></li>
+      </ul>
+      <h3><a name="Overview"></a>Overview</h3>
+      <table bgcolor="#ffff66" border="0" width="100%">
+        <tbody>
+          <tr>
+            <td scope="col">The majority of the <span class="twikiLink">GlassFish</span> code is available under the <b><a href="https://glassfish.dev.java.net/public/CDDLv1.0.html">Common
+Development and Distribution License (CDDL) v1.0</a></b>&nbsp; The following <a href="http://wiki.java.net/bin/view/Projects/GlassFishCodeDependencies">page</a> contains details about the components in <span class="twikiLink">GlassFish</span> and the licenses under which they are covered. </td>
+          </tr>
+        </tbody>
+      </table>
+      <br>
+      <p>Objectives of SelfManagement&nbsp; framework in GlassFish: </p>
+      <ul>
+        <li>Manage complexity by self-configuring</li>
+        <li>Improve ease-of-use by automating mundane management tasks</li>
+        <li>Improve performance by self-tuning in unpredictable
+run-time conditions</li>
+        <li>Improve availability by preventing and recovering
+(self-healing) from failures</li>
+        <li>Improve security by taking self-protective actions when
+security threats are detected</li>
+      </ul>
+      <br>
+Individual application servers can self-manage the necessary system
+administration tasks such as event management by detecting events and
+performing actions in response to those events.<br>
+<br>
+Packages related to Self Management
+<br><br>
+<a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/admin/event/selfmanagement">
+com.sun.enterprise.admin.event.selfmanagement</a> : Event and Listener interface dealing with management-rule element.
+<br><br>
+<a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/admin/selfmanagement">
+com.sun.enterprise.admin.selfmanagement</a> : Event Factory implementations for the different type of events.
+<br><br>
+<a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/management/selfmanagement">
+com.sun.enterprise.management.selfmanagement</a> : Core class to manage the runtime of the configured management rules
+and for the Self Management service.
+<br><br>
+<a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-core/src/java/com/sun/enterprise/management/selfmanagement/reconfig">
+com.sun.enterprise.management.selfmanagement.reconfig</a> : Handling of dynamic reconfiguration notification 
+related to management-rule creation, update and deletion.
+<br><br>
+<a href="https://glassfish.dev.java.net/source/browse/glassfish/appserv-commons/src/java/com/sun/logging/enterprise/system/core/selfmanagement">
+com.sun.logging.enterprise.system.core.selfmanagement</a> : Log messages used for Self Management.
+<br><br>
+<br>
+
+      <img style="width: 645px; height: 589px;" alt="Management Rules Overview" title="" src="rulessubovw.gif">
+<!--<br
+ style="text-decoration: underline;">-->
+      <div style="text-align: center;">
+<span style="text-decoration: underline;">Figure1: Rules subsystem overview</span>
+<br>
+      </div>
+      <br>
+      <h3><a name="Design"></a>Design</h3>
+The infrastructure is a set of management rules. A Management
+rule comprises of an event, an action and a configuration associated
+with it. Once an event is detected, an action is taken in response to
+the event. The configuration is a set of rules specified by the user.
+The information is populated to a configuration file (viz., domain.xml).
+<br>
+<br>
+      <img src="actevent.gif" title="" alt="Event-Action" align="middle">
+      <!--<br>-->
+      <div style="text-align: center; text-decoration: underline;">Figure
+2: Self Management Rule Components <br>
+      <br>
+      </div>
+      <br>
+The following sections describe each in detail.
+      <ul>
+        <li><a href="#Design_Events">Events</a></li>
+        <li><a href="#Design_Actions">Actions</a></li>
+        <li><a href="#Design_Rules">Rules</a></li>
+      </ul>
+      <h3><a name="Design_Events"></a>Events</h3>
+An event triggers the action to be executed. A set of events are
+provided by default with the glassfish and user could extend the events
+by using JMX Notification mechanism. Events can be customized by
+changing their parameters. &nbsp; Events can be one of the
+following:
+      <ul>
+        <li><a href="#Event_lifecycle">Lifecycle
+events</a></li>
+        <li><a href="#Event_monitor">Monitor
+events</a></li>
+        <li><a href="#Event_logger">Log
+events</a></li>
+        <li><a href="#Event_trace">Trace
+events</a></li>
+        <li><a href="#Event_timer">Timer
+events</a></li>
+        <li><a href="#Event_notification">Notification
+events</a></li>
+      </ul>
+      <h3><a name="Event_lifecycle"></a>Lifecycle events</h3>
+The event type is "lifecycle". <br>
+Required property: "name"<br>
+Possible values: "ready", "shutdown", "termination". <br>
+Event names mean same as the corresponding events in the
+com.sun.appserv.server.LifecycleEvent interface.
+      <h3><a name="Event_monitor"></a>Monitor events</h3>
+Monitoring events provide the capability to monitor an attribute of an
+MBean. This also includes the JSR 77 statistics monitoring. The event
+type is "monitor".<br>
+Properties which are to be set on monitor event type are: <br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>monitortype</strong>: Type of the
+monitor. Valid values are "countermonitor", "gaugemonitor",
+"stringmonitor".<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>observedobject</strong>: object-name of
+the mbean to be monitored. (OR) <strong>observedmbean</strong>: mbean
+name of the object to be monitored.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>observedattribute</strong>: attribute
+of the mbean which will be monitored.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>initthreshold</strong>: Required if the
+monitor is of type CounterMonitor or the JSR 77 Statistic field being
+monitored is of an integral type containing a count value.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>lowthreshold, highthreshold</strong>:
+Required if the monitor is of type GaugeMonitor or the JSR 77 Statistic
+field being monitored is of an integral type containing a gauge value.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>numbertype</strong>: Required if
+monitor is of type CounterMonitor or GaugeMonitor or JSR 77 statistic
+field being monitored is of an integral type containing a count/gauge
+value. Possible values are "long", "double". <br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>stringtocompare, stringtodiffer</strong>:
+Required if monitor is of type StringMonitor. <br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>notifymatch, notifydiffer</strong>:
+Required if monitor is of type StringMonitor. Possible values are
+"true" or "false". <br>
+&nbsp;&nbsp;&nbsp;&nbsp;<strong>granularity</strong>: Granularity at
+which the monitoring data should be collected (optional, defaults to 10
+seconds).
+      <h3><a name="Event_logger"></a>Log events</h3>
+The event type is "log". <br>
+Optional property: "logger", possible values: comma separated list of
+logger names, or "*" for all loggers. Default value is "*".<br>
+Optional property: "level", possible values: log levels as listed in
+java.util.logging.Level. Default value is "INFO".<br>
+When the log event triggers an action, log record and other useful data
+will be provided to the action as userData of the Notification.
+      <h3><a name="Event_trace"></a>Trace events</h3>
+The event type is "trace".<br>
+Required property: "name" , Possible values:
+"ejb_component_method_entry", "ejb_component_method_exit",
+"web_component_method_entry", "web_component_method_exit",
+"request_start", "request_end". <br>
+When a trace event triggers an action, request id, component name and
+other useful data will be provided as userData of the Notification.
+TraceEventNotification helper class is provided to retrieve relevant
+data.
+      <h3><a name="Event_timer"></a>Timer events</h3>
+The event type is "timer". The Notification subclass is
+javax.management.timer.TimerNotification.<br>
+Required property: "datestring", possible values: String - mm/dd/yyyy
+hh:mm:ss <br>
+Optional properties are "pattern" if the date string is specified in
+any other format other than given above."period" - possible values are
+long/integer for
+timer period in milliseconds, "numberofoccurrences" - possible values
+are long/integer, "message" - possible value: String.
+      <h3><a name="Event_notification"></a>Notification events</h3>
+This is a generic JMX event notification mechanism. Any custom MBean,
+which can emit a notification can be a notification event.
+      <h3><a name="Design_Actions"></a>Actions</h3>
+An action is a Java MBean object. Custom actions are created and
+deployed in the server to perform specific tasks. One example of an
+action could be sending the event occurrence to a recipient through an
+email. When an event is triggered, the action object is automatically
+instantiated. Action MBeans implement
+javax.management.NotificationListener interface. An action may be
+invoked concurrently and the action implementation may have to take
+care of threading issues.
+      <h3><a name="Design_Rules"></a>Rules</h3>
+A rule has two parts - an event to be detected, and an optional action
+to
+be performed upon detecting the event. The configuration is a set of
+rules specified by the user. The information is populated in a
+configuration file (viz., domain.xml). The events that are to be
+detected and its corresponding actions are included in the management
+configuration set.<br>
+Following are some examples of rules.<br>
+Example of a gauge type of monitor <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;management-rule name="Rule1"
+enabled="true"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;event level="INFO"
+record-event="true" type="monitor"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="monitortype" value="gaugemonitor"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="lowthreshold" value="10"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="highthreshold" value="90"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="numbertype" value="double"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="observedobject"
+value="com.sun.example.mbeans.JVM,server=server"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;property
+name="observedattribute" value="FreeMemory"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/event&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;action
+action-mbean-name="CustomBean"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/management-rule name&gt;<br>
+      <br>
+Example of a statistic monitor <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;management-rule name="Rule2"
+enabled="true"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;event level="INFO"
+record-event="true" type="monitor"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="monitortype" value="countermonitor"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="initthreshold" value="10"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="numbertype" value="long"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="observedmbean" value="EntityStatsMBean"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="observedattribute" value="ReadyCount.highWaterMark"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/event&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;action
+action-mbean-name="CustomBean"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/management-rule name&gt;<br>
+      <br>
+Example of a Lifecycle event <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;management-rule name="Rule3"
+enabled="true"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;event level="INFO"
+record-event="true" type="lifecycle"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;property
+name="name" value="termination"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/event&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;action
+action-mbean-name="CustomBean"/&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;/management-rule name&gt;<br>
+      <h3><a name="CLICommands"></a>CLI Commands</h3>
+MBeans and rules could be created using a Command Line
+Interface(CLI). To create an MBean, the syntax&nbsp; is as follows <br>
+      <br>
+&nbsp;&nbsp;&nbsp;&nbsp;create-mbean [--terse=false] [--echo=false]
+[--interactive=true] [--host localhost] [--port 4848 | 4849]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;[--secure | -s] --user admin_user
+[--passwordfile file_name] [--name name] [--objectname object-name]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;[--target=server] [--attributes
+name=value[:name=value]*] implementation-class-name <br>
+      <br>
+Example: <br>
+&nbsp;&nbsp;&nbsp;&nbsp;create-mbean --host localhost --port 4848
+--user admin_user --name MyMBean com.sun.example.event.Example <br>
+      <br>
+To create a management rule, the following syntax is followed.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;create-management-rule [--terse=false]
+[--echo=false] [--interactive=true] [--host localhost]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;[--port 4848 | 4849] [--secure | -s] --user
+admin_user [--passwordfile file_name] [--ruleenabled=true]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;[--ruledescription description] [--action
+action-mbean-name]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;--eventtype
+log|timer|trace|monitor|cluster|lifecycle|notification<br>
+&nbsp;&nbsp;&nbsp; [--eventloglevel FINEST | FINER | FINE | CONFIG
+| INFO | WARNING | SEVERE | OFF] [--recordevent=true]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;[--eventdescription description]
+[--eventproperties (property=value[:property=value]*)] [--target
+target] rule-name <br>
+      <br>
+Example: <br>
+&nbsp;&nbsp;&nbsp;&nbsp;create-management-rule --host localhost --port
+4848 --user admin_user --action MyActionMBean<br>
+&nbsp;&nbsp;&nbsp;&nbsp;--eventtype lifecycle --eventloglevel FINE
+--eventproperties name=ready MyRule
+      <h3><a name="GUI"></a>GUI</h3>
+      <p>Management Rules could be created using the Graphical User
+Interface (GUI). The "Management Rules" option within the GUI displays
+the list of existing rules in a tree view. When a rule is clicked
+within the tree view, a panel shows the details related to that rule. <br>
+      <br>
+To create a new rule, Click on the "New" tab in Application Server &gt; Configuration &gt; Management Rules.
+An interactive panel is displayed where details for the fields related
+to the rule could be entered. Choose an appropriate event type from the drop-down list.
+Click "Next" after entering the required details. 
+ <br>
+      <br>
+
+</p><center>
+<p>
+<img src="GUI_NewRule.gif" height="650" width="800">
+<br><u>Figure 3: Create New Rule</u></p>
+</center>
+
+<br>
+In the next
+page, enter the required event properties of the chosen event. 
+Depending on the event type chosen,
+a list of event properties is displayed for the chosen event.
+Different events list different properties.
+In the Action section which is below the Event Properties section, 
+choose an action mbean which is to be called upon rule invocation.
+A drop-down box lists all the available action mbeans deployed in the 
+application server. Any action could be chosen from the list or
+custom actions could be created using CLI/GUI and deployed on the
+application server and could be used. 
+<br>
+To add additional actions, a
+custom mbean should be deployed under Custom MBeans in the left pane in
+admin console(GUI) or create-mbean command is used in CLI.<br>
+      <br>
+Once the details are entered, click "Finish" button to enable the
+rule to be created. The properties of rules, such as rule-name or
+action mbean, could be modified at any time after creating the rule. 
+
+<br>
+<br>
+<center>
+<p>
+<img src="New_Management_Rule_Step2.gif" height="650" width="800">
+<br><u>Figure 4: New Management Rule - Step 2</u></p>
+</center>
+
+<br>
+<p></p>
+      <h3><a name="UnitAcceptance_Tests"></a>Unit/Acceptance Tests</h3>
+      <p>To run the self management unit tests, do the following. </p>
+      <ul>
+        <li>Check out the appserv-tests module if you do not already
+have it.</li>
+        <li>Go to devtests/selfmanagement</li>
+        <li>Run: ant all</li>
+      </ul>
+This will build and run all the selfmanagement unit tests.
+      <h3><font face="Arial, sans-serif"><font size="3"><a name="Supporting_Documentation"></a> Supporting
+Documentation</font></font></h3>
+      <p><font face="Arial, sans-serif"><font size="3">This sections
+contains
+pointers to useful documents and information
+about Self Management in GlassFish.<br>
+      </font></font></p>
+      <p><font face="Arial, sans-serif"><font size="3"><strong>Specifications:
+      </strong></font></font></p>
+      <ul>
+        <font face="Arial, sans-serif"><font size="3"> <li><a href="http://jcp.org/en/jsr/detail?id=3">JSR 3: Java Management
+Extensions Instrumentation and Agent Specification, v1.2</a></li>
+        <li><a href="http://jcp.org/en/jsr/detail?id=160">JSR 160: Java
+Management Extensions Remote API 1.0 Specification</a></li>
+        <li><a href="http://jcp.org/en/jsr/detail?id=77">JSR 77: Java 2
+Platform, Enterprise Edition Management Specification JSR-77</a></li>
+        </font></font>
+      </ul>
+      <p><font face="Arial, sans-serif"><font size="3"><strong>Tech
+Tips: </strong></font></font></p>
+      <ul>
+        <font face="Arial, sans-serif"><font size="3"> <li><a href="http://java.sun.com/developer/EJTechTips/2005/tt0222.html#1">Understanding
+JMX Technology</a></li>
+        </font></font>
+      </ul>
+      <h3><a name="Example"></a>Example rule and related code</h3>
+      <p> Example of Monitoring the free runtime memory of the JVM can be found <a href="selfmanagement_example.html">here</a>.
+</p>
+<br>
+<h3><a name="ToDo"></a>ToDo List</h3>
+<ul>
+  <li>Ideas for events and actions</li>
+  <li>Suggest New Rules</li>
+</ul>
+      <br>
+</body></html>

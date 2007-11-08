@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>Glassfish Build System</title>
+</head>
+<body>
+<div style="text-align: center;"><span style="font-weight: bold;">Glassfish
+Build System Improvements<br>
+</span>
+<div style="text-align: left;"><a href="#objectives"><span
+ style="font-weight: bold;">Objectives</span></a><br
+ style="font-weight: bold;">
+<a href="#constraints"><span style="font-weight: bold;">Constraints</span></a><br
+ style="font-weight: bold;">
+<a href="#current_bld_sys"><span style="font-weight: bold;">Current
+Build System</span></a><br style="font-weight: bold;">
+<a href="#maven1.0.2"><span style="font-weight: bold;">Use of Maven
+1.0.2</span></a><br>
+<a style="font-weight: bold;" href="#m2_pros">Maven 2.0 Pros/Cons</a><br>
+<br>
+<span style="font-weight: bold;"></span></div>
+</div>
+<span style="font-weight: bold;"><a name="objectives"></a>Objectives:</span><br>
+<ol>
+  <li>Fix Maven/Ant mix in current Glassfish workspace. Discuss options
+to resolve this issue of&nbsp;
+Maven/ant mix:</li>
+  <ul>
+    <li>Migrate this to Maven 2, without any ant scripts. <br>
+m2 is entirely independent from maven 1x, it doesn't use any of maven
+1's configuration files. So we can migrate to m2 w/o scarifying the
+working maven 1 build. Following migration path to m2: <br>
+    </li>
+    <ul>
+      <li>Build all glassfish modules with m2, abstracting common
+dependencies, etc. into a "base" project, letting the modules inherit
+from that</li>
+      <li>Assembling the appserver library out of module jars
+previously build, and then build the glassfish image.</li>
+    </ul>
+    <li>If we're not using all/some of the Maven 2.0 features, like
+install/docs/build/jars etc, Ant is an easier/cleaner solution. This
+can easily be driven by Netbeans/Eclipse without any plug in to
+download. <br>
+    </li>
+    <ul>
+      <li>Use the Maven 2.0 Ant task, which can be downloaded from: <br>
+        <a class="moz-txt-link-freetext"
+ href="http://www.apache.org/dyn/closer.cgi/maven/binaries/maven-artifact-ant-2.0.2-dep.jar">http://www.apache.org/dyn/closer.cgi/maven/binaries/maven-artifact-ant-2.0.2-dep.jar</a></li>
+    </ul>
+    <li>Migrate from maven 1.0.2 to maven 1.1. Continue either with the
+current mixed maven/ant approach , or replace ant by using maven.</li>
+    <li>Compile all classes in common ${glassfish.root}/publish/classes
+directory along with module classes directory (build) and use
+"assemble" target to update the server image which will be one-time in
+most of the cases and avoid updating jar files multiple times..</li>
+  </ul>
+  <li>IDE Support (one-click build process to build all modules same as
+CLI) to build from Netbeans/Eclipse.<br>
+  </li>
+  <li>Simplified Instructions (remove any manual settings like
+currently we have 2 variables to define)</li>
+  <li>Build independent module with its own dependencies and not depend
+on other modules checkout/build or server image for compilation.</li>
+</ol>
+<div style="margin-left: 40px;">Use Case : consider building
+appserv-commons module standalone following should be build steps.<br>
+</div>
+<div style="margin-left: 40px;">
+<div style="margin-left: 40px;">% cvs co appserv-commons<br>
+% cd appserv-commons<br>
+% maven build&nbsp;&nbsp; =&gt; this should download all dependencies
+of appserv-commons in local repository and create the <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+appserv-commons-SNAPSHOT.jar&nbsp; <br>
+% maven package&nbsp; =&gt;this will download all other SNAPSHOT jars
+(except &lt;module&gt;-SNAPSHOT.jar)&nbsp; and build server image.<br>
+% maven configure-runtime =&gt;verify the changes from
+appserv-commons-SNAPSHOT.jar<br>
+</div>
+This usecase will avoid running bootstrap-all to build from sources.<br>
+</div>
+<br>
+<span style="font-weight: bold;"><a name="constraints"></a>Constraints:</span><br>
+<ul>
+  <li>About the non-standard way the glassfish build has to unpack/copy
+jars
+  </li>
+</ul>
+<ol>
+  <ul>
+    <li>The appserver image was a given, i.e. whatever files that used
+to be there have to be there, no more, no less.&nbsp; This is because
+the appserver was shipped in Solaris 9 (and onwards).&nbsp; The solaris
+packaging requires a finely controlled file content.&nbsp;&nbsp; You
+can think of it as a manifest of file list.&nbsp; If there are files
+missing, the solaris packaging will break.&nbsp; If we were to mess
+with the number or the name of the jars, we need to know how we can
+support the upgrade senario for the Soaris packages.</li>
+    <li>Many&nbsp; scripts already written depend on the appserver
+image.&nbsp; If we were to change that, we will have a lot of unhappy
+users.</li>
+  </ul>
+</ol>
+<ul>
+  <li>About the individual modules updating appserv-rt.jar <br>
+  </li>
+  <ul>
+    <li> The pre-glassfish build used to build individual jars within
+the module.&nbsp; There is a post build process that collects all jars
+and assemble them into the appserver image.&nbsp; The drawbacks are:
+      <br>
+&nbsp;&nbsp; a) It takes a long time to do the post assembly.
+      <br>
+&nbsp;&nbsp; b) People have complained it is too much effort to update
+just one class in the server image, i.e. you'd have to do the module
+build, either manually update the appserv-rt.jar yourself or add the
+build directory to the system classpath.&nbsp; Neither is elegant and
+fool proof.&nbsp; Hence the alternative in glassfish....
+    </li>
+  </ul>
+</ul>
+<ul>
+  <li>About each module pulling their own dependencies <br>
+  </li>
+</ul>
+<ol>
+  <ul>
+    <li> It was just easier to manage all the 3rd party dependencies,
+i.e. what they are, what's the version etc.&nbsp; We haven't had any
+precedence of shipping more than 1 version of the same
+components.&nbsp; Having individual modules define which binary/version
+they want to use quickly becomes unmanageable.&nbsp; Obviously, nothing
+like a tightly controlled nightly build cannot detect...&nbsp; The
+trick is to make sure the appserver build can resolve to use <span
+ class="moz-txt-underscore"><span class="moz-txt-tag">_</span>the<span
+ class="moz-txt-tag">_</span></span> approved version of the binary.</li>
+  </ul>
+</ol>
+<ul>
+  <li>One of the things we prototyped but scratched earlier is to empty
+out appserv-rt.jar and use manifest class-path instead.&nbsp; The
+manifest of appserv-rt.jar (similar to other composite jars) would
+point to individual module jars.&nbsp; This would address both the
+individual build problem and not breaking any existing scripts.&nbsp;
+The risk here is making sure we are not sacraficing performance (for
+startup and deployment) and not introducing classloading nightmares.</li>
+</ul>
+<span style="font-weight: bold;"><a name="current_bld_sys"></a>Current
+Build System:</span><br>
+<ul>
+  <li>It is possible to check
+out and build each independent module separately. Also it is be
+possible for a module
+engineer (e.g. appserv-webtier) to just check out the relevant module
+files instead of the checking out the entire workspace.</li>
+</ul>
+<div style="margin-left: 80px;">% cvs -d &lt;java.net repo.&gt; co
+glassfish/bootstrap; cd glassfish/bootstrap<br>
+% maven checkout -Dmodules=appserv-webtier bootstrap&nbsp; (Update the
+source
+and the image &lt;&lt;optional&gt;&gt;)<br>
+% maven clean build //
+clean and build the module</div>
+<ul>
+  <li>It is possible to build the
+entire source tree from a top level directory / workspace from
+glassfish/bootstrap.</li>
+  <li>There is a facility for
+obtaining a "binary" module (i.e. one whose source code is not
+available) from the remote repository. Its flexible to add any third
+party dependencies by staging the binary
+into the Remote repository and edit centrally controlled configuration
+files.</li>
+  <li>Developers don't have to
+compile and build every dependent module. Instead it is possible
+to retrieve a pre-compiled and tested version of the module. They are
+also be able to download an entire Glassfish installation
+(called Glassfish image) and build the module against it using "maven
+bootstrap" build type.</li>
+  <li>Workspace doesn't depend on any shared server or NFS mounted
+network directory.</li>
+</ul>
+<span style="font-weight: bold;"><a name="maven1.0.2"></a>Use of Maven
+1.0.2:<br>
+</span>
+<ul>
+  <li>Currently we are using Maven 1.0.2 to download binary
+dependencies, so have separate project.xml like project-src.xml for
+bootstrap-all goal, and project-bootstrap.xml for bootstrap goal. Most
+of the post-bootstrap is done in bootstrap/glassfish.xml to publish the
+appserver image by building jar files, binary libraries etc.<br>
+  </li>
+  <li>checkout goal to checkout all or individual modules using
+-Dmodules=&lt;modules&gt; is implemented in maven.xml using Jelly
+scripts + ant task to checkout sources.<br>
+  </li>
+  <li>All other build targets like "compile, assemble, publish, clean"
+are implemented in build.xml (Ant) and wrapped around in maven.xml to
+execute from standalone module. Most of the goals routes this to
+"invoke-ant" target in bootstrap/maven.xml<span
+ style="font-weight: bold;">.</span><br>
+  </li>
+</ul>
+<span style="font-weight: bold;"><a name="m2_pros"></a>Maven 2.0 Pros:</span><br>
+<ul>
+  <li>Clean-up of current Maven/Ant combined workspace to use Maven
+properly , Use excitement of Maven 2.0 to GlassFish.<br>
+  </li>
+</ul>
+<span style="font-weight: bold;">Maven 2.0 Cons:</span><br>
+<ul>
+  <li>Need to make lots of changes in current build system to make
+Maven 2.0 migration, like removing dependency on build.xml, ant tasks,
+maven.xml which is tied deeply in current build system.</li>
+  <li>If we don't use all features of Maven, so it may be overkill.</li>
+  <li>IDE support to Netbeans/Eclipse need to be looked into as these
+IDEs should have Maven 2.0 plugins by now.</li>
+  <li>It may still not resolve properties to be defined like
+glassfish.cvs.username, glassfish.os.name as same property loading
+issue as Maven 1.x<br>
+  </li>
+</ul>
+</body>
+</html>

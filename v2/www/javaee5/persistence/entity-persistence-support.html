@@ -1,0 +1,522 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <meta name="GENERATOR"
+ content="Mozilla/4.79 [en] (X11; U; SunOS 5.7 sun4u) [Netscape]">
+  <title>GlassFish Project - Entity Persistence Support</title>
+<!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+-->
+</head>
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<div id="projecthome" class="app"><span style="font-weight: bold;"><font
+ size="+1">GlassFish
+Project - Entity Persistence Support&nbsp;</font></span>
+<p><span style="font-weight: bold;"><a
+ href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New
+to GlassFish</a> | <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community
+Guidelines</a> | <a
+ href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads</a>
+| <a href="https://glassfish.dev.java.net/public/faq/index.html">FAQ</a>
+| <a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo">How-Tos</a></span>
+<br>
+<br>
+<a href="https://glassfish.dev.java.net/downloads/persistence/JavaPersistence.html">Persistence Downloads</a>
+| <a href="persistence_faq.html">Persistence FAQ</a>
+<br>
+</p>
+<p>
+On this page you can find helpful information on EJB 3.0 Persistence
+(Java Persistence) support in GlassFish.
+<br>
+&nbsp;
+</p>
+<ul>
+  <li><a href="#getting_started">Getting Started with Entity Persistence</a><br>
+  </li>
+  <li><a href="#Configuration_and_Packaging">Configuration and
+Packaging
+information</a></li>
+  <ul>
+    <li><a href="#Java_EE_Container">Packaging Persistence inside a
+Java EE Container</a></li>
+    <li><a href="#Java_SE">Packaging and Using Persistence in Java SE</a></li>
+  </ul>
+  <li> <a href="#Tested%20Features">Tested Features</a></li>
+  <li> <a href="#Known%20issues">Known Limitations</a></li>
+  <li> <a href="#TopLink_Hints_and_Extentions">Using TopLink Features
+as
+Hints
+or persistence.xml Extensions</a></li>
+  <ul>
+    <li> <a href="#Query_Hints">Query Hints</a></li>
+    <li> <a href="#persistence.xml">persistence.xml Extensions</a></li>
+  </ul>
+    <li> <a href="#Logging">Logging</a></li>
+</ul>
+<br>
+<h3><a name="getting_started"></a>Getting Started with Entity
+Persistence</h3>
+Java Persistence API implementation is GlassFish is also called TopLink(TM) Essentials (contributed by Oracle). 
+<br>
+<br>
+If you are new to Java Persistence, the best starting point will be
+to read Java
+Persistence API document of <a
+ href="http://jcp.org/en/jsr/detail?id=220">JSR-220:
+Enterprise
+JavaBeansTM
+3.0 Specification</a>. This will allow you to learn the new API and
+annotations that you can use to write your application.<br>
+<br>
+If you are ready to look at an example, or just prefer to start with
+looking at an example, go to the <a href="persistence-example.html">Persistence
+Example</a> page.<br>
+<br>
+If you already have an application that you want to try, you should
+find information on this page very helpful.<br>
+<br>
+<a href="persistence_faq.html">Persistence FAQ</a> page contains answers to common questions and problems.<br>
+<br>
+If you still have questions, send them to <span
+ style="font-weight: bold;"><a
+ href="mailto:persistence@glassfish.dev.java.net"
+ style="font-weight: normal;">persistence@glassfish.dev.java.net</a>
+<span style="font-weight: normal;">alias.</span></span>
+<br><br>
+<a href="http://otn.oracle.com/jpa">Oracle TopLink</a> website is another source of useful information about
+ the technology and use cases.<br>
+<h3><a name="Configuration_and_Packaging"></a>Configuration and
+Packaging
+information</h3>
+<span style="font-weight: bold;">Note:</span> If you do not use Java EE application client container to run the client program, you need to have toplink-essentials.jar in your client classpath.<br>
+<h4><a name="Java_EE_Container"></a>Packaging Persistence inside a Java
+EE Container<br>
+</h4>
+Entity bean classes, like any other POJO classes, can be
+packaged along with the component classes that use them or separately
+as a library. They are allowed to be
+packaged in the following ways:<br>
+<ol>
+  <li>In an ejb-jar file along with other EJB classes.</li>
+  <li>In WEB-INF/classes directory along with other web application
+classes.</li>
+  <li>In any of the jar files directly located in WEB-INF/lib directory.</li>
+  <li>In any of the utility jar files in an ear file including jar
+files that belong to lib directory in an ear file</li>
+  <li>In an application client jar file.</li>
+</ol>
+Note: a rar file does not contain entity bean classes.<br>
+<br>
+Each of the above jar files or directory needs to contain a
+META-INF/persistence.xml. The schema which defines the structure of
+this XML document is available <a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/persistence-api/schemas/persistence_1_0.xsd">here</a>.<br>
+<br>
+Example of a simple persistence.xml file:<br>
+<code>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+<br>
+&lt;persistence
+xmlns="http://java.sun.com/xml/ns/persistence" version="1.0"&gt;
+<br>
+&nbsp;&nbsp;&nbsp; &lt;persistence-unit name ="pu1"&gt;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;jta-data-source&gt;jdbc/DataSource1&lt;/jta-data-source&gt;
+<br>
+&nbsp;&nbsp;&nbsp; &lt;/persistence-unit&gt;
+<br>
+&lt;/persistence&gt;</code><br>
+<br>
+<h4><a name="Java_SE"></a>Packaging and Using Persistence in Java SE</h4>
+The following code creates EntityManagerFactory, EntityManager, starts
+a transaction, persists a new Customer, commits the transaction, and
+then runs a Java Persistence query:<br>
+<br>
+<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Create
+EntityManagerFactory for a persistence unit called em1.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; EntityManagerFactory emf =
+Persistence.createEntityManagerFactory("pu1");<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // create EntityManager<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; EntityManager em =
+emf.createEntityManager();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Get a transaction
+instance and start the transaction<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; EntityTransaction tx =
+em.getTransaction();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tx.begin();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Create a new customer and
+persist it.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Customer c = new Customer();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; c.setName("Joe Smith");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; em.persist(c);<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // Commit the transaction<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; tx.commit();<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; // run a Java Persistence query
+selecting a customer by name<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; String queryString = "SELECT c
+FROM Customer c WHERE c.name = :name";<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Query query =
+em.createQuery(queryString);<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; query.setParameter("name",
+"Joe Smith");<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; List result =
+query.getResultList();<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; System.out.println("Java Persistence 
+query " + queryString + " returns " + result);</code><br>
+<br>
+The persistence.xml file should list <span style="font-weight: bold;">all</span>
+persistent classes from the
+application
+domain, e.g. entity.Customer, etc. (substitute "&lt;...&gt;" text with
+your actual values for jdbc properties).
+<br>
+<span style="font-weight: bold;">Provider class name</span> can be specified either in the &lt;provider&gt; element as below, or as a value for <span style="font-style: italic;">javax.persistence.provider</span> property included in the Map passed to createEntityManagerFactory().<br>
+<br>
+<code>&lt;persistence
+xmlns="http://java.sun.com/xml/ns/persistence" version="1.0"&gt;
+<br>
+&nbsp;&nbsp;&nbsp; &lt;persistence-unit name="pu1"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;provider&gt;oracle.toplink.essentials.ejb.cmp3.EntityManagerFactoryProvider&lt;/provider&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;!-- All persistence
+classes must be listed --&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;class&gt;entity.Customer&lt;/class&gt;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;class&gt;entity.Order&lt;/class&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;class&gt;entity.Item&lt;/class&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;properties&gt;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;!-- Provider-specific connection properties --&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;property name="toplink.jdbc.driver" value="&lt;database driver&gt;"/&gt;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;property name="toplink.jdbc.url" value="&lt;database
+url&gt;"/&gt;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;property name="toplink.jdbc.user" value="&lt;user&gt;"/&gt;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;property name="toplink.jdbc.password" value="&lt;password&gt;"/&gt;<br>
+&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &lt;!-- </code><code>Provider-specific
+settings --&gt;</code><br>
+<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+&lt;property name="toplink.logging.level" value="INFO"/&gt;
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;/properties&gt;
+<br>
+&nbsp;&nbsp;&nbsp; &lt;/persistence-unit&gt;
+<br>
+&lt;/persistence&gt;</code>
+<br>
+<br>
+<span style="font-weight: bold;">Note:</span> If you use build 03/02 or later, you do not need to specify
+transaction-type="RESOURCE_LOCAL" in Java SE.<br>
+<br>
+To execute the example, add your classes and META-INF/persistence.xml
+to the classpath. Then run:<br>
+<br>
+<div style="margin-left: 40px;"><code> java
+-javaagent:${glassfish.home}/lib/toplink-essentials-agent.jar
+client.Client<br>
+</code></div>
+<br>
+<span style="font-weight: bold;">Note:</span> <b><code>toplink-essentials.jar</b></code> from <span
+ style="font-style: italic;">{glassfish.home}/lib</span>
+will be added automatically to the classpath. It contains both, the API and the implementation classes.
+<br>
+</div>
+<br>
+<h3><a name="Tested Features"></a>Tested Features</h3>
+All features required by specification are fully implemented. This list is intended as a 
+high level overview only. 
+<br>
+<br>
+If you think that any of the required features is not working, please file an issue in 
+<a href="https://glassfish.dev.java.net/servlets/ProjectIssues">Issue Tracker</a>
+ in <b>entity-persistence</b> subcomponent.
+<br>
+<ul>
+  <li>Persistent fields access=FIELD</li>
+  <li>Persistent properties access=PROPERTY</li>
+  <li>Compound PK</li>
+  <li>Embeddable Classes</li>
+  <li>Entity Manager Operations</li>
+  <li>Entity Listener and Callbacks</li>
+  <li>Query Language</li>
+  <li>Query Interface</li>
+  <li>Container-Managed Entity Manager injected with PersistenceContext
+annotation</li>
+  <li>Container-Managed EntityManager obtained through JNDI lookup</li>
+  <li>Application-Managed Entity Manager from EntityManagerFactory
+injected using the PersistenceUnit annotation (JTA)</li>
+  <li>Non-entity and abstract entity classes in inheritance hierarchy</li>
+  <li>Relationship Mapping Defaults<br>
+  </li>
+  <li>Annotations:</li>
+  <ul>
+    <li>PersistenceContext</li>
+    <li>PersistenceUnit</li>
+    <li>Table</li>
+    <li>SecondaryTable</li>
+    <ul>
+      <li>PrimaryKeyJoinColumn</li>
+    </ul>
+    <li>Column</li>
+    <li>JoinColumn</li>
+    <li>Id</li>
+    <li>EmbeddedId</li>
+    <li>IdClass</li>
+    <li>Transient</li>
+    <li>Basic</li>
+    <li>ManyToOne</li>
+    <ul>
+      <li>targetEntity and generic types</li>
+    </ul>
+    <li>ManyToMany</li>
+    <ul>
+      <li>JoinTable</li>
+      <li>targetEntity and generic types</li>
+    </ul>
+    <li>OneToOne</li>
+    <ul>
+      <li>targetEntity</li>
+    </ul>
+    <li>OneToMany</li>
+    <ul>
+      <li>targetEntity and generic types</li>
+    </ul>
+    <li>Cascade - ALL, PERSIST, REMOVE</li>
+    <li>Inheritance</li>
+    <li>MappedSuperclass</li>
+    <li>Embedded</li>
+    <li>Embeddable</li>
+    <li>DiscriminatorColumn</li>
+    <ul>
+      <li>discriminatorValue, discriminatorTYPE=STRING</li>
+    </ul>
+    <li>DiscriminatorValue</li>
+    <li>GeneratorType=TABLE, AUTO<br>
+    </li>
+    <li>NamedQuery</li>
+    <li>NamedQueries</li>
+    <li>NamedNativeQuery</li>
+    <li>NamedNativeQueries</li>
+    <li>SqlResultSetMapping</li>
+    <ul>
+      <li>EntityResult</li>
+    </ul>
+    <ul>
+      <ul>
+        <li>FieldResult</li>
+      </ul>
+      <li>ColumnResult</li>
+    </ul>
+    <li>MapKey</li>
+  </ul>
+  <li>AttributeOverrides</li>
+  <li>setFlushMode (FlushModeType.AUTO)</li>
+  <li>Version</li>
+  <li>Temporal</li>
+  <ul>
+    <li>TemporalType.DATE</li>
+    <li>TemporalType.TIME</li>
+    <li>TemporalType.TIMESTAMP</li>
+  </ul>
+  <li>Enumerated<br>
+  </li>
+  <ul>
+    <li> EnumType.ORDINAL</li>
+    <li>EnumType.STRING</li>
+  </ul>
+  <li>Propagation of container-managed persistence contexts</li>
+  <li><a href="http://blogs.sun.com/roller/page/java2dbInGlassFish">Automatic
+table generation</a></li>
+</ul>
+<h3>
+<a name="Known issues"></a>Known Limitations</h3>
+<ul>
+  <li>GeneratedValue(GeneratorType.AUTO - requires SEQUENCE table)</li>
+  <li>GeneratedValue(GeneratorType.TABLE - requires first row to be
+manually inserted)</li>
+  <li>SINGLE_TABLE Inheritance Mapping Strategy</li>
+</ul>
+<h3>
+<a name="TopLink_Hints_and_Extentions"></a>Using TopLink Features as
+Hints
+or persistence.xml Extensions</h3>
+<br>
+This query hints and persistence.xml sections represent some examples of TopLink hints. For the complete set of hints and more details
+see <a href="http://www.oracle.com/technology/products/ias/toplink/jpa/resources/toplink-jpa-extensions.html">TopLink JPA Extensions Reference</a>.
+<h4 style="font-weight: bold;">
+<a name="Query_Hints" class="mozTocH4"></a>Query Hints</h4>
+The ability to specify a hint for the execution of a query that will
+cause
+custom TopLink functionality to be used.
+<br>
+Example:
+<br>
+<code>&nbsp;&nbsp;&nbsp;&nbsp; Customer customer = (Customer)entityMgr.
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+createNamedQuery("findCustomerBySSN").
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+setParameter("SSN", "123-12-1234").
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+setHint("hint-name", hint-value).
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+getSingleResult();</code><br>
+<br>
+<table border="1" cellspacing="2" cellpadding="2" width="100%">
+  <caption><br>
+  </caption><tbody>
+  </tbody> <tbody>
+    <tr>
+      <td style="vertical-align: top; text-align: center;"><span
+ style="font-weight: bold;">Hint
+Name</span></td>
+      <td
+ style="vertical-align: top; text-align: center; font-weight: bold;">Description</td>
+    </tr>
+    <tr>
+      <td>toplink.reference-class</td>
+      <td>ObjectLevelReadQuery.setReferenceClass((Class)value)</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">toplink.refresh</td>
+      <td style="vertical-align: top;">ObjectLevelReadQuery.setShouldRefreshIdentityMapResult((Boolean)value)&nbsp;</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">toplink.pessimistic-lock</td>
+      <td style="vertical-align: top;">ObjectLevelReadQuery.setLockMode((Short)value)&nbsp;
+      <p>Valid values: <br>
+ObjectLevelReadQuery.DEFAULT_LOCK_MODE = -1;&nbsp; <br>
+ObjectLevelReadQuery.NO_LOCK = 0;&nbsp; <br>
+ObjectLevelReadQuery.LOCK = 1;&nbsp; <br>
+ObjectLevelReadQuery.LOCK_NOWAIT = 2;&nbsp;</p>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">toplink.expression</td>
+      <td style="vertical-align: top;">DatabaseQuery.setSelectionCriteria((Expression)value)&nbsp;</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">toplink.call</td>
+      <td style="vertical-align: top;">DatabaseQuery.setCall((Call)value)&nbsp;
+      <br>
+Provides an alternative solution to use native SQL queries with a new
+SQLCall("SELECT...")&nbsp;</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">toplink.cascade</td>
+      <td style="vertical-align: top;">DatabaseQuery.setCascadePolicy((Integer)value)&nbsp;
+      <br>
+Used to determine the cascading of query p&nbsp;
+      <p>Valid values: <br>
+DatabaseQuery.NoCascading = 1;&nbsp; <br>
+DatabaseQuery.CascadePrivateParts = 2;&nbsp; <br>
+DatabaseQuery.CascadeAllParts = 3;&nbsp; <br>
+DatabaseQuery.CascadeDependentParts = 4;&nbsp; <br>
+DatabaseQuery.CascadeAggregateDelete = 5;&nbsp; <br>
+DatabaseQuery.CascadeByMapping = 6;</p>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<h4>
+<a name="persistence.xml" class="mozTocH4"></a>persistence.xml
+Extensions</h4>
+The following extensions can be used in Java SE environment as vendor
+specific
+properties:
+<p>EntityManagerFactoryProvider.JDBC_DRIVER_PROPERTY = "toplink.jdbc.driver";
+<br>
+EntityManagerFactoryProvider.JDBC_CONNECTION_STRING_PROPERTY =
+"toplink.jdbc.url";
+<br>
+EntityManagerFactoryProvider.JDBC_USER_PROPERTY = "toplink.jdbc.user";
+<br>
+EntityManagerFactoryProvider.JDBC_PASSWORD_PROPERTY = "toplink.jdbc.password";
+<br>
+EntityManagerFactoryProvider.TOPLINK_PLATFORM_PROPERTY =
+"toplink.platform.class.name";
+<br>
+EntityManagerFactoryProvider.TOPLINK_SERVER_PLATFORM_PROPERTY =
+"toplink.server.platform.class.name";
+<br>
+EntityManagerFactoryProvider.TOPLINK_EXTERNAL_TRANSACTION_CONTROLLER_PROPERTY
+= "toplink.external.transaction.controller.class.name";
+<br>
+EntityManagerFactoryProvider.TOPLINK_LOGGING_LEVEL =
+"toplink.logging.level";<br>
+</p>
+<p>If weaving is not available in Java SE environment, set this
+property to "false":<br>
+EntityManagerSetupImpl.WEAVING = "toplink.weaving";<br>
+&nbsp;
+</p>
+<h3><a name="Logging" class="mozTocH4"></a>Logging</h3>
+Possible values are as follows:
+  <ul>
+    <li>OFF</li>
+    <li>SEVERE</li>
+    <li>WARNING</li>
+    <li>INFO (DEFAULT)</li>
+    <li>CONFIG</li>
+    <li>FINE</li>
+    <li>FINER</li>
+    <li>FINEST</li>
+    <li>ALL</li>
+  </ul>
+  <p><br>
+How you can set it: <br>
+  <ul>
+    <li> In persistence.xml. It will be used to override the default logging level for that specific
+persistence unit.
+<div style="margin-left: 40px;"><code>&nbsp;&nbsp; &lt;properties&gt;
+</code><br>
+<code>&nbsp;&nbsp; ....
+</code><br>
+<code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; &lt;property
+name="toplink.logging.level" value="FINE"/&gt;
+</code><br>
+<code>&nbsp;&nbsp; ....
+</code><br>
+<code>&nbsp;&nbsp; &lt;/properties&gt;</code><br>
+</div>
+&nbsp;</div>
+   </li>
+   <li> Using <b>asadmin</b> CLI to set logging level globally for all 
+persistence units in this domain.xml by adding a property to 
+<i>log-service.module-log-levels</i>. 
+<br>For example the following command will set log levels for all the TopLink Essentials loggers to FINEST
+<br><br><code>
+asadmin set "server.log-service.module-log-levels.property.oracle\.toplink\.essentials"=FINEST
+</code><br>
+   </li>
+   <li> Using Admin GUI: Go to Logging tab, Log levels sub tab and add
+property using "Additional Module Log Level Properties"<br>
+   </li>
+    <li> Using a system property: -Dtoplink.logging.level=FINE</li>
+  </ul>
+<b>Note:</b> Log level set at persistence unit level takes precedence over log level set
+globally.
+</body>
+</html>

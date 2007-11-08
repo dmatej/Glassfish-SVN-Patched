@@ -1,0 +1,147 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>12.&nbsp;&nbsp;Developing Lifecycle Listeners
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Developer's Guide</A>&nbsp;<br>
+<A HREF="bealk.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="gbdzi.html">Next</A><br>
+            <!--startindex--><A NAME="beamc"></A><b>Chapter&nbsp;12</b><h1>Developing Lifecycle Listeners</h1>
+<p><A NAME="indexterm-581"></A><A NAME="indexterm-582"></A>Lifecycle listener modules provide a means of running short or long duration
+Java-based tasks within the application server environment, such as instantiation
+of singletons or RMI servers. These modules are automatically initiated at server
+startup and are notified at various phases of the server life cycle.</p>
+<p>All lifecycle module classes and interfaces are in the <i>install-dir</i><tt>/lib/</tt><tt>appserv-rt.jar</tt> file.<A NAME="indexterm-583"></A></p>
+<p>The following sections describe how to create and use a lifecycle listener module:</p>
+<ul><li><p><A HREF="beamc.html#beamd">Server Life Cycle Events</A></p>
+</li>
+<li><p><A HREF="beamc.html#beame">The LifecycleListener Interface</A></p>
+</li>
+<li><p><A HREF="beamc.html#beamf">The LifecycleEvent Class</A></p>
+</li>
+<li><p><A HREF="beamc.html#beamg">The Server Lifecycle Event Context</A></p>
+</li>
+<li><p><A HREF="beamc.html#beamh">Deploying a Lifecycle Module</A></p>
+</li>
+<li><p><A HREF="beamc.html#beami">Considerations for Lifecycle Modules</A></p>
+</li>
+</ul>
+<A NAME="beamd"></A><h2>Server Life Cycle Events</h2>
+<p>A lifecycle module listens for and performs its tasks in response to the following
+events in the <A NAME="indexterm-584"></A><A NAME="indexterm-585"></A>server life cycle:</p>
+<ul><li><p>After the <A NAME="indexterm-586"></A><tt>INIT_EVENT</tt>, the server reads the configuration, initializes
+built-in subsystems (such as security and logging services), and creates the containers.</p>
+</li>
+<li><p>After the <A NAME="indexterm-587"></A><tt>STARTUP_EVENT</tt>, the server loads and initializes deployed
+applications.</p>
+</li>
+<li><p>After the <A NAME="indexterm-588"></A><tt>READY_EVENT</tt>, the server is ready to service requests.</p>
+</li>
+<li><p>After the <A NAME="indexterm-589"></A><tt>SHUTDOWN_EVENT</tt>, the server destroys loaded applications
+and stops.</p>
+</li>
+<li><p>After the <A NAME="indexterm-590"></A><tt>TERMINATION_EVENT</tt>, the server closes the containers,
+the built-in subsystems, and the server runtime environment.</p>
+</li>
+</ul>
+<p>These events are defined in the <tt>LifecycleEvent</tt> class.</p>
+<p>The lifecycle modules that listen for these events implement the <tt>LifecycleListener</tt> interface.</p>
+<A NAME="beame"></A><h2>The LifecycleListener Interface</h2>
+<A NAME="indexterm-591"></A><p>To create a lifecycle module is to configure a customized class that implements
+the <tt>com.sun.appserv.server.LifecycleListener</tt> interface. You can
+create and simultaneously execute multiple lifecycle modules.</p>
+<p>The <tt>LifecycleListener</tt> interface defines this method:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><tr><td><pre>public void handleEvent(com.sun.appserv.server.LifecycleEvent event) 
+throws ServerLifecycleException</pre>
+</td></tr></table><br><p>This method responds to a lifecycle event and throws a <tt>com.sun.appserv.server.</tt><A NAME="indexterm-592"></A><tt>ServerLifecycleException</tt> if an error occurs.</p>
+<p>A sample implementation of the <tt>LifecycleListener</tt> interface
+is the <A NAME="indexterm-593"></A><tt>LifecycleListenerImpl.java</tt> file, which you can use
+for testing lifecycle events.</p>
+<A NAME="beamf"></A><h2>The LifecycleEvent Class</h2>
+<p>The <tt>com.sun.appserv.server.</tt><A NAME="indexterm-594"></A><tt>LifecycleEvent</tt> class defines a server life cycle event.
+The following methods are associated with the event:</p>
+<ul><li><p><tt>public java.lang.Object</tt> <A NAME="indexterm-595"></A><tt>getData()</tt></p>
+<p>This method returns an instance
+of <tt>java.util.Properties</tt> that contains the properties defined for
+the lifecycle module in the <tt>domain.xml</tt> file. For more information
+about the <tt>domain.xml</tt> file, see the <A HREF="http://docs.sun.com/app/docs/doc/819-3661"><i>Sun Java System Application Server Platform Edition 9.0 Administration Reference</i></A>.</p>
+</li>
+<li><p><tt>public int</tt> <A NAME="indexterm-596"></A><tt>getEventType()</tt></p>
+<p>This method returns the
+type of the last event, which is <tt>INIT_EVENT</tt>, <tt>STARTUP_EVENT</tt>, <tt>READY_EVENT</tt>, <tt>SHUTDOWN_EVENT</tt>, or <tt>TERMINATION_EVENT</tt>.</p>
+</li>
+<li><p><tt>public com.sun.appserv.server.LifecycleEventContext</tt> <A NAME="indexterm-597"></A><tt>getLifecycleEventContext()</tt></p>
+<p>This method
+returns the lifecycle event context, described next.</p>
+</li>
+</ul>
+<p>A <tt>LifecycleEvent</tt> instance is passed to the <tt>LifecycleListener.handleEvent</tt> method.</p>
+<A NAME="beamg"></A><h2>The Server Lifecycle Event Context</h2>
+<p>The <tt>com.sun.appserv.server.</tt><A NAME="indexterm-598"></A><tt>LifecycleEventContext</tt> interface exposes runtime information
+about the server. The lifecycle event context is created when the <tt>LifecycleEvent</tt> class is instantiated at server initialization. The <tt>LifecycleEventContext</tt> interface defines these methods:</p>
+<ul><li><p><tt>public java.lang.String[]</tt> <A NAME="indexterm-599"></A><tt>getCmdLineArgs()</tt></p>
+<p>This method returns the
+server startup command-line arguments.</p>
+</li>
+<li><p><tt>public java.lang.String</tt> <A NAME="indexterm-600"></A><tt>getInstallRoot()</tt></p>
+<p>This method returns the
+server installation root directory.</p>
+</li>
+<li><p><tt>public java.lang.String</tt> <A NAME="indexterm-601"></A><tt>getInstanceName()</tt></p>
+<p>This method returns the
+server instance name.</p>
+</li>
+<li><p><tt>public javax.naming.InitialContext</tt> <A NAME="indexterm-602"></A><tt>getInitialContext()</tt></p>
+<p>This method returns
+the initial <A NAME="indexterm-603"></A>JNDI naming context. The naming environment for lifecycle modules is installed
+after the <A NAME="indexterm-604"></A><tt>STARTUP_EVENT</tt>. A lifecycle module can look up any resource
+by its <tt>jndi-name</tt> attribute after the <tt>READY_EVENT</tt>.</p>
+</li>
+</ul>
+<p>If a lifecycle module needs to look up resources, it can do so after the <tt>READY_EVENT</tt>. It can use the <tt>getInitialContext()</tt> method
+to get the initial context to which all the resources are bound.</p>
+<A NAME="beamh"></A><h2>Deploying a Lifecycle Module</h2>
+<p>You can deploy a <A NAME="indexterm-605"></A>lifecycle module using the following tools:</p>
+<ul><li><p>In the <A NAME="indexterm-606"></A>Admin Console, open the Applications component and go to the Lifecycle
+Modules page. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+</li>
+<li><p>Use the <A NAME="indexterm-607"></A><tt></tt><tt>asadmin create-lifecycle-module</tt> command.
+For details, see
+the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A></i>.</p>
+</li>
+</ul>
+<p>You do not need to specify a classpath for the lifecycle module if you place
+it in the <i>domain-dir</i><tt>/lib</tt> or <i>domain-dir</i><tt>/lib/classes</tt> directory.</p>
+<p>After you deploy a lifecycle module, you must restart the server to activate
+it. The server instantiates it and registers it as a lifecycle event listener at server
+initialization.</p>
+<p><hr size="1" noshade><p><b>Note - </b>If the <A NAME="indexterm-608"></A><tt>is-failure-fatal</tt> setting is set to <tt>true</tt> (the
+default is <tt>false</tt>), lifecycle module failure prevents server initialization
+or startup, but not shutdown or termination.</p>
+<hr size="1" noshade></p><A NAME="beami"></A><h2>Considerations for Lifecycle Modules</h2>
+<p>The resources allocated at initialization or startup should be freed at shutdown
+or termination. The <A NAME="indexterm-609"></A>lifecycle module classes are called synchronously from the main server
+thread, therefore it is important to ensure that these classes don't block the
+server. Lifecycle modules can create threads if appropriate, but these threads must
+be stopped in the shutdown and termination phases.</p>
+<p>The <A NAME="indexterm-610"></A>LifeCycleModule Classloader is the parent class loader for <A NAME="indexterm-611"></A>lifecycle modules. Each lifecycle module's <tt>classpath</tt> in <tt>domain.xml</tt> is used to construct its class loader. All the support classes
+needed by a lifecycle module must be available to the LifeCycleModule Classloader
+or its parent, the <A NAME="indexterm-612"></A>Connector Classloader.</p>
+<p>You must ensure that the <A NAME="indexterm-613"></A><A NAME="indexterm-614"></A><tt>server.policy</tt> file is appropriately set up, or a lifecycle
+module trying to perform a <tt>System.exec()</tt> might cause a security
+access violation. For details, see <A HREF="beabg.html#beabx">The server.policy File</A>.</p>
+<p>The configured properties for a lifecycle module are passed as properties after
+the <tt>INIT_EVENT</tt>. The <A NAME="indexterm-615"></A>JNDI naming context is not available before the <tt>STARTUP_EVENT</tt>. If a lifecycle module requires the naming context, it can get this after
+the <tt>STARTUP_EVENT</tt>, <tt>READY_EVENT</tt>, or <tt>SHUTDOWN_EVENT</tt>.</p>
+
+            <!--stopindex-->
+<br>
+<A HREF="bealk.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="gbdzi.html">Next</A>
+</body>
+</html>

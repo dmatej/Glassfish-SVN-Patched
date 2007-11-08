@@ -1,0 +1,928 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>10.&nbsp;&nbsp;Configuring Message Security
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9 Administration Guide</A>&nbsp;<br>
+<A HREF="ablnk.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="ablsn.html">Next</A><br>
+            <!--startindex--><A NAME="ablrk"></A><b>Chapter&nbsp;10</b><h1>Configuring Message Security</h1>
+<p>This chapter describes the configuration of message layer security for web services
+in the Application Server. This chapter contains the following topics:</p>
+<ul><li><p><A HREF="ablnk.html#ablnl">About Application Server Security</A></p>
+</li>
+<li><p><A HREF="ablnk.html#abloz">Admin Console Tasks for Security</A></p>
+</li>
+</ul>
+<p>Some of the material in this chapter assumes a basic understanding of security
+and web services concepts. To learn more about these concepts, explore the resources
+listed in <A HREF="ablnk.html#ablrj">Further Information</A> before beginning this
+chapter.</p>
+<A NAME="ablrl"></A><h2>About Message Security</h2>
+<ul><li><p><A HREF="ablnk.html#ablnm">Overview of Security</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablrn">Understanding Message Security in the Application Server</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablry">Securing a Web Service</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsa">Securing the Sample Application</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsb">Configuring the Application Server for Message Security</A></p>
+</li>
+</ul>
+<A NAME="ablrm"></A><h3>Overview of Message Security</h3>
+<p>In <i>message security</i>, security information is inserted into
+messages so that it travels through the networking layers and arrives with the message
+at the message destination(s). Message security differs from transport layer security
+(which is discussed in the<i> Security</i> chapter of the<i> J2EE 1.4 Tutorial</i>) in that message security can be used to decouple message
+protection from message transport so that messages remain protected after transmission.</p>
+<p>Web Services Security: SOAP Message Security (WS-Security) is an international
+standard for interoperable Web Services Security that was developed in OASIS by a
+collaboration of all the major providers of web services technology (including Sun
+Microsystems). WS-Security is a message security mechanism that uses XML Encryption
+and XML Digital Signature to secure web services messages sent over SOAP. The WS-Security
+specification defines the use of various security tokens including X.509 certificates,
+SAML assertions, and username/password tokens to authenticate and encrypt SOAP web
+services messages.</p>
+<p>The WS-Security specification can be viewed at <A HREF="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0.pdf">http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0.pdf</A>.</p>
+<p>See Also:</p>
+<ul><li><p><A HREF="ablrk.html#ablrn">Understanding Message Security in the Application Server</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablry">Securing a Web Service</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsa">Securing the Sample Application</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsb">Configuring the Application Server for Message Security</A></p>
+</li>
+</ul>
+<A NAME="ablrn"></A><h3>Understanding Message Security in the Application Server</h3>
+<p>The Application Server offers integrated support for the WS-Security standard in
+its web services client and server-side containers. This functionality is integrated
+such that web services security is enforced by the containers of the Application Server on
+behalf of applications, and such that it can be applied to protect any web service
+application without requiring changes to the implementation of the application. The Application Server achieves
+this effect by providing facilities to bind SOAP layer message security providers
+and message protection policies to containers and to applications deployed in containers.</p>
+<A NAME="ablro"></A><h4>Assigning Message Security Responsibilities</h4>
+<p>In the Application Server, the <A HREF="ablnk.html#ablnw">System Administrator</A> and <A HREF="ablnk.html#ablnv">Application Deployer</A> roles are expected to take primary
+responsibility for configuring message security. In some situations, the <A HREF="ablnk.html#ablnu">Application Developer</A> may also contribute, although in the typical case either
+of the other roles may secure an existing application without changing its implementation
+without involving the developer. The responsibilities of the various roles are defined
+in the following sections:</p>
+<ul><li><p><A HREF="ablnk.html#ablnw">System Administrator</A></p>
+</li>
+<li><p><A HREF="ablnk.html#ablnv">Application Deployer</A></p>
+</li>
+<li><p><A HREF="ablnk.html#ablnu">Application Developer</A></p>
+</li>
+</ul>
+<A NAME="ablrp"></A><h5>System Administrator</h5>
+<p>The system administrator is responsible for:</p>
+<ul><li><p>Configuring message security providers on the Application Server.</p>
+</li>
+<li><p>Managing user databases.</p>
+</li>
+<li><p>Managing keystore and truststore files.</p>
+</li>
+<li><p>Configuring a Java Cryptography Extension (JCE) provider if using
+encryption and running a version of the Java SDK prior to version 1.5.0.</p>
+</li>
+<li><p>Installing the samples server. This is only done if the <tt>xms</tt> sample application will be used to demonstrate the use of message layer
+web services security.</p>
+</li>
+</ul>
+<p>A system administrator uses the Admin Console to manage server security settings
+and uses a command line tool to manage certificate databases. In Platform Edition,
+certificates and private keys are stored in key stores and are managed with <tt>keytool</tt>. Standard Edition and Enterprise Edition store certificates and
+private keys in an NSS database, where they are managed using <tt>certutil</tt>.
+This document is intended primarily for system administrators. For an overview of
+message security tasks, see <A HREF="ablrk.html#ablsb">Configuring the Application Server for Message Security</A>.</p>
+<A NAME="ablrq"></A><h5>Application Deployer</h5>
+<p>The application deployer is responsible for:</p>
+<ul><li><p>Specifying (at application assembly) any required application-specific
+message protection policies if such policies have not already been specified by upstream
+roles (the developer or assembler).</p>
+</li>
+<li><p>Modifying Sun-specific deployment descriptors to specify application-specific
+message protection policies information (message-security-binding elements) to web
+service endpoint and service references.</p>
+</li>
+</ul>
+<p>These security tasks are discussed in the<i> Securing Applications</i> chapter
+of the<i> Developers' Guide</i>. For a link to this chapter,
+see <A HREF="ablnk.html#ablrj">Further Information</A>.</p>
+<A NAME="ablrr"></A><h5>Application Developer</h5>
+<p>The application developer can turn on message security, but is not responsible
+for doing so. Message security can be set up by the System Administrator so that all
+web services are secured, or by the Application Deployer when the provider or protection
+policy bound to the application must be different from that bound to the container.</p>
+<p>The application developer or assembler is responsible for the following:</p>
+<ul><li><p>Determining if an application-specific message protection policy is
+required by the application. If so, ensuring that the required policy is specified
+at application assembly which may be accomplished by communicating with the Application
+Deployer.</p>
+</li>
+</ul>
+<A NAME="ablrs"></A><h4>About Security Tokens and Security Mechanisms</h4>
+<p>The WS-Security specification provides an extensible mechanism for using security
+tokens to authenticate and encrypt SOAP web services messages. The SOAP layer message
+security providers installed with the Application Server may be used to employ username/password
+and X.509 certificate security tokens to authenticate and encrypt SOAP web services
+messages. Additional providers that employ other security tokens including SAML assertions
+will be installed with subsequent releases of the Application Server.</p>
+<A NAME="ablrt"></A><h5>About Username Tokens</h5>
+<p>The Application Server uses <i>Username tokens</i> in SOAP messages
+to establish the authentication identity of the message <i>sender</i>.
+The recipient of a message containing a Username token (within embedded password)
+validates that the message sender is authorized to act as the user (identified in
+the token) by confirming that the sender knows the secret (the password) of the user.</p>
+<p>When using a Username token, a valid user database must be configured on the Application Server.
+For more information on this topic, read <A HREF="ablnk.html#ablpi">To edit a realm</A>.</p>
+<A NAME="ablru"></A><h5>About Digital Signatures</h5>
+<p>The Application Server uses XML Digital signatures to bind an authentication identity
+to message <i>content</i>. Clients use digital signatures to establish
+their caller identity, analogous to the way basic authentication or SSL client certificate
+authentication have been used to do the same thing when transport layer security is
+being used. Digital signatures are verified by the message receiver to authenticate
+the source of the message content (which may be different from the sender of the message.)</p>
+<p>When using digital signatures, valid keystore and truststore files must be configured
+on the Application Server. For more information on this topic, read <A HREF="ablnk.html#ablqx">About Certificate Files</A>.</p>
+<A NAME="ablrv"></A><h5>About Encryption</h5>
+<p>The purpose of encryption is to modify the data such that it can only be understood
+by its intended audience. This is accomplished by substituting an encrypted element
+for the original content. When predicated on public key cryptography, encryption can
+be used to establish the identity of the parties that can read a message.</p>
+<p>When using Encryption, you must have an installed JCE provider that supports
+encryption. For more information on this topic, read <A HREF="ablrk.html#ablsc">To configure a JCE Provider</A>.</p>
+<A NAME="ablrw"></A><h5>About Message Protection Policies</h5>
+<p>Message protection policies are defined for request message processing and response
+message processing and are expressed in terms of requirements for source and/or recipient
+authentication. A source authentication policy represents a requirement that the identity
+of the entity that sent a message or that defined the content of a message be established
+in the message such that it can be authenticated by the message receiver. A recipient
+authentication policy represents a requirement that the message be sent such that
+the identity of the entities that can receive the message can be established by the
+message sender. The providers apply specific message security mechanisms to cause
+the message protection policies to be realized in the context of SOAP web services
+messages.</p>
+<p>Request and response message protection policies are defined when a provider
+is configured into a container. Application-specific message protection policies (at
+the granularity of the web service port or operation) may also be configured within
+the Sun-specific deployment descriptors of the application or application client.
+In any case, where message protection policies are defined, the request and response
+message protection policies of the client must match (be equivalent to) the request
+and response message protection policies of the server. For more information on defining
+application-specific message protection policies, refer to the <i>Securing
+Applications</i> chapter of the <i>Developers' Guide</i>. </p>
+<A NAME="ablrx"></A><h4>Glossary of Message Security Terminology</h4>
+<p>The terminology used in this document is described below. The concepts are also
+discussed in <A HREF="ablrk.html#ablsb">Configuring the Application Server for Message Security</A>.</p>
+<ul><li><p>Authentication Layer</p>
+<p>The <i>authentication layer</i> is the message layer on which authentication processing must be performed.
+The Application Server enforces web services message security at the SOAP layer.</p>
+</li>
+<li><p>Authentication Provider</p>
+<p>In this release of the Application Server,
+the Application Server invokes <i>authentication</i> <i>providers</i> to process SOAP message layer security.</p>
+<ul><li><p>A <i>client-side provider</i> establishes (by signature
+or username/password) the source identity of request messages and/or protects (by
+encryption) request messages such that they can only be viewed by their intended recipients.
+A client-side provider also establishes its container as an authorized recipient of
+a received response (by successfully decrypting it) and validates passwords or signatures
+in the response to authenticate the source identity associated with the response.
+Client-side providers configured in the Application Server can be used to protect the request
+messages sent and the response messages received by server-side components (servlets
+and EJB components) acting as clients of other services.</p>
+</li>
+<li><p>A <i>server-side provider</i> establishes its container
+as an authorized recipient of a received request (by successfully decrypting it) and
+validates passwords or signatures in the request to authenticate the source identity
+associated with the request. A server-side provider also establishes (by signature
+or username/password) the source identity of response messages and/or protects (by
+encryption) response messages such that they can only be viewed by their intended
+recipients. <i>Server-side providers</i> are only invoked by server-side
+containers.</p>
+</li>
+</ul>
+</li>
+<li><p>Default Server Provider</p>
+<p>The <i>default server provider</i> is used to identify the server provider to be invoked for any application
+for which a specific server provider has not been bound. The <i>default server
+provider</i> is sometimes referred to as the <i>default provider.</i></p>
+</li>
+<li><p>Default Client Provider</p>
+<p>The <i>default client provider</i> is used to identify the client provider to be invoked for any application
+for which a specific client provider has not been bound.</p>
+</li>
+<li><p>Request Policy</p>
+<p>The <i>request policy</i> defines
+the authentication policy requirements associated with request processing performed
+by the authentication provider. Policies are expressed in message sender order such
+that a requirement that encryption occur after content would mean that the message
+receiver would expect to decrypt the message before validating the signature.</p>
+</li>
+<li><p>Response Policy</p>
+<p>The <i>response policy</i> defines
+the authentication policy requirements associated with response processing performed
+by the authentication provider. Policies are expressed in message sender order such
+that a requirement that encryption occur after content would mean that the message
+receiver would expect to decrypt the message before validating the signature.</p>
+</li>
+</ul>
+<p>See Also:</p>
+<ul><li><p><A HREF="ablrk.html#ablry">Securing a Web Service</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsa">Securing the Sample Application</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsb">Configuring the Application Server for Message Security</A></p>
+</li>
+</ul>
+<A NAME="ablry"></A><h3>Securing a Web Service</h3>
+<p>Web services deployed on the Application Server are secured by binding SOAP layer
+message security providers and message protection policies to the containers in which
+the applications are deployed or to web service endpoints served by the applications.
+SOAP layer message security functionality is configured in the client-side containers
+of the Application Server by binding SOAP layer message security providers and message
+protection policies to the client containers or to the portable service references
+declared by client applications.</p>
+<p>When the Application Server is installed, SOAP layer message security providers are
+configured in the client and server-side containers of the Application Server, where they
+are available for binding for use by the containers, or by individual applications
+or clients deployed in the containers. During installation, the providers are configured
+with a simple message protection policy that, if bound to a container, or to an application
+or client in a container, would cause the source of the content in all request and
+response messages to be authenticated by XML digital signature.</p>
+<p>The administrative interfaces of the Application Server can be employed to bind the
+existing providers for use by the server-side containers of the Application Server, to
+modify the message protection policies enforced by the providers, or to create new
+provider configurations with alternative message protection policies. These operations
+are defined in <A HREF="ablnk.html#abloz">Admin Console Tasks for Security</A>.
+Analogous administrative operations can be performed on the SOAP message layer security
+configuration of the application client container as defined in <A HREF="ablrk.html#ablsk">To enable message security for application clients</A>.</p>
+<p>By default, message layer security is disabled on the Application Server. To configure
+message layer security for the Application Server follow the steps outlined in <A HREF="ablrk.html#ablsb">Configuring the Application Server for Message Security</A>. If you want to cause
+web services security to be used to protect all web services applications deployed
+on the Application Server, follow the steps in <A HREF="ablrk.html#ablse">To enable providers for message security</A>.</p>
+<p>Once you have completed the above steps (which may include restarting the Application Server),
+web services security will be applied to all web services applications deployed on
+the Application Server.</p>
+<A NAME="ablrz"></A><h4>Configuring Application-Specific Web Services Security</h4>
+<p>Application-specific web services security functionality is configured (at application
+assembly) by defining message-security-binding elements in the Sun-specific deployment
+descriptors of the application. These message-security-binding elements are used to
+associate a specific provider or message protection policy with a web services endpoint
+or service reference, and may be qualified so that they apply to a specific port or
+method of the corresponding endpoint or referenced service.</p>
+<p>For more information on defining application specific message protection policies,
+refer to the<i> Securing Applications</i> chapter of the <i>Developers' Guide</i>. There is a link to this chapter in <A HREF="ablnk.html#ablrj">Further Information</A>.</p>
+<p>See Also:</p>
+<ul><li><p><A HREF="ablrk.html#ablse">To enable providers for message security</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsk">To enable message security for application clients</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsf">To configure a message security provider</A></p>
+</li>
+</ul>
+<A NAME="ablsa"></A><h3>Securing the Sample Application</h3>
+<p>The Application Server ships with a sample application named <tt>xms</tt>.
+The <tt>xms</tt> application features a simple web service that is implemented
+by both a J2EE EJB endpoint and a Java Servlet endpoint. Both endpoints share the
+same service endpoint interface. The service endpoint interface defines a single operation, <tt>sayHello</tt>, which takes a string argument, and returns a <tt>String</tt> composed
+by pre-pending <tt>Hello</tt> to the invocation argument.</p>
+<p>The <tt>xms</tt> sample application is provided to demonstrate the
+use of the Application Server's WS-Security functionality to secure an existing web
+services application. The instructions which accompany the sample describe how to
+enable the WS-Security functionality of the Application Server such that it is used to
+secure the <tt>xms</tt> application. The sample also demonstrates the binding
+of WS-Security functionality directly to the application (as described in <A HREF="ablrk.html#ablrz">Configuring Application-Specific Web Services Security</A> application.</p>
+<p>The <tt>xms</tt> sample application is installed in the directory: <i>install-dir</i><tt>/samples/webservices/security/ejb/apps/xms/</tt>.</p>
+<p>For information on compiling, packaging, and running the <tt>xms</tt> sample
+application, refer to the<i> Securing Applications</i> chapter of
+the <i>Developers' Guide</i>.</p>
+<A NAME="ablsb"></A><h3>Configuring the Application Server for Message Security</h3>
+<ul><li><p><A HREF="ablrk.html#ablsh">Actions of Request and Response Policy Configurations</A></p>
+</li>
+<li><p><A HREF="ablrk.html#fxiyn">To configure other security facilities</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsc">To configure a JCE Provider</A></p>
+</li>
+</ul>
+<A NAME="ablsh"></A><h4>Actions of Request and Response Policy Configurations</h4>
+<p>The following table shows message protection policy configurations and the resulting
+message security operations performed by the WS-Security SOAP message security providers
+for that configuration.</p>
+<A NAME="fxjcu"></A><p><b>Table 10-1 </b>Message protection policy
+to WS-Security SOAP message security operation mapping</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Message Protection Policy                            </p></th><th scope="col"><p>Resulting WS-Security SOAP message protection operations                   
+        </p></th></tr>
+<tr><td><p>auth-source="sender"</p></td><td><p>The message contains a <tt>wsse:Security</tt> header that contains
+a <tt>wsse:UsernameToken</tt> (with password).</p></td></tr>
+<tr><td><p>auth-source="content"</p></td><td><p>The content of the SOAP message Body is signed. The message contains a <tt>wsse:Security</tt> header that contains the message Body signature represented
+as a <tt>ds</tt>:<tt>Signature</tt>.</p></td></tr>
+<tr><td><p>auth-source="sender"</p><p>auth-recipient="before-content"</p><p>OR</p><p>auth-recipient="after-content"</p></td><td><p>The content of the SOAP message Body is encrypted and replaced with the resulting <tt>xend:EncryptedData</tt>. The message contains <tt>a wsse:Security</tt> header
+that contains a <tt>wsse:UsernameToken (with password)</tt> and an <tt>xenc:EncryptedKey</tt>. The <tt>xenc:EncryptedKey</tt> contains the
+key used to encrypt the SOAP message body. The key is encrypted in the public key
+of the recipient.</p></td></tr>
+<tr><td><p>auth-source="content"</p><p>auth-recipient="before-content"</p></td><td><p>The content of the SOAP message Body is encrypted and replaced with the resulting <tt>xend:EncryptedData</tt>. The <tt>xenc:EncryptedData</tt> is signed.
+The message contains <tt>a wsse:Security</tt> header that contains an <tt>xenc:EncryptedKey</tt> and a <tt>ds</tt>:<tt>Signature</tt>.
+The <tt>xenc:EncryptedKey</tt> contains the key used to encrypt the SOAP
+message body. The key is encrypted in the public key of the recipient.</p></td></tr>
+<tr><td><p>auth-source="content"</p><p>auth-recipient="after-content"</p></td><td><p>The content of the SOAP message Body is signed, then encrypted, and then replaced
+with the resulting <tt>xend:EncryptedData</tt>. The message contains a <tt>wsse:Security</tt> header that contains an <tt>xenc:EncryptedKey</tt> and
+a <tt>ds:Signature</tt>. The <tt>xenc:EncryptedKey</tt> contains
+the key used to encrypt the SOAP message body. The key is encrypted in the public
+key of the recipient.</p></td></tr>
+<tr><td><p>auth-recipient="before-content"</p><p>OR</p><p>auth-recipient="after-content"</p></td><td><p>The content of the SOAP message Body is encrypted and replaced with the resulting <tt>xend:EncryptedData</tt>. The message contains <tt>a wsse:Security</tt> header
+that contains an <tt>xenc:EncryptedKey</tt>. The <tt>xenc:EncryptedKey</tt> contains the key used to encrypt the SOAP message body. The key is encrypted
+in the public key of the recipient.</p></td></tr>
+<tr><td><p>No policy specified.</p></td><td><p>No security operations are performed by the modules.</p></td></tr>
+</table><A NAME="fxiyn"></A><h4><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To configure other security facilities</h4>
+<p>The Application Server implements message security using message security providers
+integrated in its SOAP processing layer. The message security providers depend on
+other security facilities of Application Server.</p>
+<h5>Steps</h5><ol><li><p><b>If using a version of the Java SDK prior to version 1.5.0, and using encryption
+technology, configure a JCE provider.</b></p><p>Configuring a JCE provider is discussed
+in <A HREF="ablrk.html#ablsc">To configure a JCE Provider</A>.</p>
+</li>
+<li><p><b>If using a username token, configure a user database, if necessary. When
+using a username/password token, an appropriate realm must be configured and an appropriate
+user database must be configured for the realm.</b></p><p>Configuring a user database
+is discussed in <A HREF="ablnk.html#ablpi">To edit a realm</A>.</p>
+</li>
+<li><p><b>Manage certificates and private keys, if necessary.</b></p><p>Managing
+certificates and private keys is discussed in <A HREF="ablnk.html#ablqx">About Certificate Files</A>.</p>
+</li>
+</ol><h5>Next Steps</h5><p>Once the facilities of the Application Server are configured for use by message security
+providers, then the providers installed with the Application Server may be enabled as described
+in <A HREF="ablrk.html#ablse">To enable providers for message security</A>.</p>
+<h5>See Also</h5><ul><li><p><A HREF="ablrk.html#ablsc">To configure a JCE Provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablse">To enable providers for message security</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsk">To enable message security for application clients</A></p>
+</li>
+<li><p><A HREF="ablnk.html#ablpi">To edit a realm</A></p>
+</li>
+<li><p><A HREF="ablnk.html#ablqx">About Certificate Files</A></p>
+</li>
+</ul>
+<A NAME="ablsc"></A><h4><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To configure a JCE Provider</h4>
+<p><A NAME="indexterm-261"></A><A NAME="indexterm-262"></A>The Java Cryptography Extension (JCE) provider included with J2SE 1.4.x
+does not support <A NAME="indexterm-263"></A>RSA encryption. Because the XML Encryption defined by WS-Security is typically
+based on RSA encryption, in order to use WS-Security to encrypt SOAP messages you
+must download and install a JCE provider that supports RSA encryption.</p>
+<p><hr size="1" noshade><p><b>Note - </b>RSA is public-key encryption technology developed by RSA Data Security,
+Inc. The acronym stands for Rivest, Shamir, and Adelman, the inventors of the technology.</p>
+<hr size="1" noshade></p><p>If you are running the Application Server on version 1.5 of the Java SDK, the JCE
+provider is already configured properly. If you are running the Application Server on version
+1.4.x of the Java SDK, you can add a JCE provider statically as part of your JDK environment,
+as follows.</p>
+<h5>Steps</h5><ol><li><p><b>Download and install a JCE provider JAR (Java ARchive) file. </b></p><p>The following URL provides a list of JCE providers that support RSA encryption: <A HREF="http://java.sun.com/products/jce/jce14_providers.html">http://java.sun.com/products/jce/jce14_providers.html</A>.</p>
+</li>
+<li><p><b>Copy the JCE provider JAR file to <i>java-home</i><tt>/jre/lib/ext/</tt>.                      </b></p></li>
+<li><p><b>Stop the Application Server. </b></p><p>If the Application Server is not stopped
+and then restarted later in this process, the JCE provider will not be recognized
+by the Application Server.</p>
+</li>
+<li><p><b>Edit the <i>java-home</i><tt>/jre/lib/security/java.security</tt> properties file in any text editor. Add the JCE provider you've just
+downloaded to this file.</b></p><p>The <tt>java.security</tt> file contains
+detailed instructions for adding this provider. Basically, you need to add a line
+of the following format in a location with similar properties:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>security.provider.<i>n</i>=<i>provider-class-name</i></pre>
+</td></table><br><p>In this example, <i>n</i> is the order of preference to
+be used by the Application Server when evaluating security providers. Set <i>n</i> to <tt>2</tt> for the JCE provider you've just added.</p>
+<p>For example, if you've downloaded The Legion of the Bouncy Castle
+JCE provider, you would add this line.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>security.provider.2=org.bouncycastle.jce.provider.
+   BouncyCastleProvider</pre>
+</td></table><br><p>Make sure that the Sun security provider remains at the highest preference,
+with a value of 1.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>security.provider.1=sun.security.provider.Sun</pre>
+</td></table><br><p>Adjust the levels of the other security providers downward so that there is
+only one security provider at each level.</p>
+<p>The following is an example
+of a <tt>java.security</tt> file that provides the necessary JCE provider
+and keeps the existing providers in the correct locations.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>security.provider.1=sun.security.provider.Sun
+security.provider.2=org.bouncycastle.jce.provider.
+   BouncyCastleProvider
+security.provider.3=com.sun.net.ssl.internal.ssl.Provider
+security.provider.4=com.sun.rsajca.Provider
+security.provider.5=com.sun.crypto.provider.SunJCE
+security.provider.6=sun.security.jgss.SunProvider</pre>
+</td></table><br></li>
+<li><p><b>Save and close the file.</b></p></li>
+<li><p><b>Restart the Application Server.</b></p></li>
+</ol><A NAME="ablsd"></A><h2>Admin Console Tasks for Message Security</h2>
+<p>Most of the steps for setting up the Application Server for using message security can
+be accomplished using the Admin Console, the <tt>asadmin</tt> command-line
+tool, or by manually editing system files. In general, editing system files is discouraged
+due to the possibility of making unintended changes that prevent the Application Server from
+running properly, therefore, where possible, steps for configuring the Application Server using
+the Admin Console are shown first, with the <tt>asadmin</tt> tool command
+shown after. Steps for manually editing system files are shown only when there is
+no Admin Console or <tt>asadmin</tt> equivalent.</p>
+<p>Support for
+message layer security is integrated into the Application Server and its client containers
+in the form of (pluggable) authentication modules. By default, message layer security
+is disabled on the Application Server. The following sections provide the details for enabling,
+creating, editing, and deleting message security configurations and providers.</p>
+<ul><li><p><A HREF="ablrk.html#ablse">To enable providers for message security</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsf">To configure a message security provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsg">Creating a Message Security Provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsi">To delete a message security configuration</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsj">To delete a message security provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsk">To enable message security for application clients</A></p>
+<p>In most cases, it will be necessary to restart the Application Server after
+performing the administrative operations listed above. This is especially the case
+if you want the effects of the administrative change to be applied to applications
+that were already deployed on the Application Server at the time the operation was performed.</p>
+</li>
+</ul>
+<A NAME="ablse"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To enable providers for message security</h3>
+<p>To enable message security for web services endpoints deployed in the Application Server,
+you must specify a provider to be used by default on the server side. If you enable
+a default provider for message security, you also need to enable providers to be used
+by clients of the web services deployed in the Application Server. Information for enabling
+the providers used by clients is discussed in <A HREF="ablrk.html#ablsk">To enable message security for application clients</A>.</p>
+<p>To enable message security for web service invocations originating from deployed
+endpoints, you must specify a default client provider. If you enabled a default client
+provider for the Application Server, you must ensure that any services invoked from endpoints
+deployed in the Application Server are compatibly configured for message layer security.</p>
+<h5>Steps</h5><ol><li><p><b>In the Admin Console tree component, expand the Configuration node.</b></p></li>
+<li><p><b>Expand the Security node.</b></p></li>
+<li><p><b>Expand the Message Security node.</b></p></li>
+<li><p><b>Select the SOAP node.</b></p></li>
+<li><p><b>Select the Message Security tab.</b></p></li>
+<li><p><b>On the Edit Message Security Configuration page, specify a provider to
+be used on the server side and a provider to be used on the client side for all applications
+for which a specific provider has not been bound. </b></p><p>This is accomplished
+by modifying the following optional properties:</p>
+<ul><li><p><b>Default Provider</b> -  The identity
+of the server provider to be invoked for any application for which a specific server
+provider has not been bound.</p>
+<p>By default, no provider configuration is
+selected for the Application Server. To identify a server-side provider, select <tt>ServerProvider</tt>. Selecting the null option means that no message security
+provider will be invoked (by default) on the server side.</p>
+<p>You would generally
+select <tt>ServerProvider</tt> for this field.</p>
+</li>
+<li><p><b>Default Client Provider</b> -
+ The identity of the client provider to be invoked for any application for which a
+specific client provider has not been bound.</p>
+<p>By default, no provider configuration
+is selected for the Application Server. To identify a client-side provider, select <tt>ClientProvider</tt>. Selecting the null option means that no message security
+provider will be invoked (by default) on the client side.</p>
+<p>You would generally
+select null for this field. You would select <tt>ClientProvider</tt> if
+you wanted to enable a default provider and message protection policy to apply to
+the web services invocations originating from web services endpoints deployed on the Application Server.</p>
+</li>
+</ul>
+</li>
+<li><p><b>Click Save.</b></p></li>
+<li><p><b>If you enabled a client or server provider and you want to modify the
+message protection policies of the enabled providers, refer to <A HREF="ablrk.html#ablsf">To configure a message security provider</A> for information on modifying the
+message security providers enabled in this step.</b></p></li>
+</ol><h5>More Information<br>Equivalent asadmin commands</h5>
+<ul><li><p>To specify the default server provider:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin  set --user  <i>admin-user</i> --port <i>admin-port</i> 
+server-config.security-service.message-security-config.SOAP.
+default_provider=ServerProvider</pre>
+</td></table><br></li>
+<li><p>To specify the default client provider:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin  set --user  <i>admin-user</i> --port <i>admin-port</i> 
+server-config.security-service.message-security-config.SOAP.
+default_client_provider=ClientProvider</pre>
+</td></table><br></li>
+</ul>
+<h5>See Also</h5><ul><li><p><A HREF="ablrk.html#ablsf">To configure a message security provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsg">Creating a Message Security Provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsi">To delete a message security configuration</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsk">To enable message security for application clients</A></p>
+</li>
+</ul>
+<A NAME="ablsf"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To configure a message security provider</h3>
+<p>Typically, a provider would be reconfigured to modify its message protection
+policies, although the provider type, implementation class, and provider-specific
+configuration properties may also be modified.</p>
+<h5>Steps</h5><ol><li><p><b>In the Admin Console tree component, expand the Configuration node.</b></p></li>
+<li><p><b>Expand the Security node.</b></p></li>
+<li><p><b>Expand the Message Security node.</b></p></li>
+<li><p><b>Select the SOAP node.</b></p></li>
+<li><p><b>Select the Providers tab.</b></p></li>
+<li><p><b>Select the message security provider to edit.</b></p><p><tt>ClientProvider</tt> and <tt>ServerProvider</tt> ship with the Application Server.</p>
+</li>
+<li><p><b>In the Provider Config section of the Edit Provider Config page, the following
+properties are available for modification:</b></p><ul><li><p><b>Provider Type</b> -  Select <tt>client</tt>, <tt>server</tt>, or <tt>client-server</tt> to
+establish whether the provider is to be used as a client authentication provider,
+a server authentication provider, or both (a client-server provider).</p>
+</li>
+<li><p><b>Class Name</b> - Enter the Java implementation
+class of the provider. Client authentication providers must implement the <tt>com.sun.enterprise.security.jauth.ClientAuthModule</tt> interface. Server-side
+providers must implement the <tt>com.sun.enterprise.security.jauth.ServerAuthModule</tt> interface. A provider may implement both interfaces, but it must implement
+the interface corresponding to its provider type.</p>
+</li>
+</ul>
+</li>
+<li><p><b>In the Request Policy section of the Create a Provider Configuration page,
+enter the following optional values, if needed. </b></p><p>These properties are
+optional, but if not specified, no authentication is applied to request messages.</p>
+<p>The <i>request policy</i> defines the authentication policy
+requirements associated with request processing performed by the authentication provider.
+Policies are expressed in message sender order such that a requirement that encryption
+occur after content would mean that the message receiver would expect to decrypt the
+message before validating the signature.</p>
+<ul><li><p><b>Authentication Source</b>-  Select <tt>sender</tt>, <tt>content</tt>, or null (the blank option) to define
+a requirement for message-layer sender authentication (for example, username password),
+content authentication (for example, digital signature), or no authentication be applied
+to request messages. When null is specified, source authentication of the request
+is not required.</p>
+</li>
+<li><p><b>Authentication Recipient</b>-
+ Select <tt>beforeContent</tt> or <tt>afterContent</tt> to define
+a requirement for message-layer authentication of the receiver of the request message
+to its sender (by XML encryption). When the value is not specified it defaults to <tt>afterContent</tt>.</p>
+</li>
+</ul>
+<p>For a description of the actions performed by the SOAP message security providers
+as a result of the following message protection policies see <A HREF="ablrk.html#ablsh">Actions of Request and Response Policy Configurations</A>.</p>
+</li>
+<li><p><b>In the Response Policy section of the Create a Provider Configuration
+page, enter the following optional properties, if needed. </b></p><p>These properties
+are optional, but if not specified, no authentication is applied to response messages.</p>
+<p>The <i>response policy</i> defines the authentication policy
+requirements associated with response processing performed by the authentication provider.
+Policies are expressed in message sender order such that a requirement that encryption
+occur after content would mean that the message receiver would expect to decrypt the
+message before validating the signature.</p>
+<ul><li><p><b>Authentication Source</b> - 
+Select <tt>sender</tt>, <tt>content</tt>, or null (the blank option)
+to define a requirement for message-layer sender authentication (for example, username
+password) or content authentication (for example, digital signature) to be applied
+to response messages. When null is specified, source authentication of the response
+is not required.</p>
+</li>
+<li><p><b>Authentication Recipient</b> -
+ Select <tt>beforeContent</tt> or <tt>afterContent</tt> to define
+a requirement for message-layer authentication of the receiver of the response message
+to its sender (by XML encryption). When the value is not specified it defaults to <tt>afterContent</tt>.</p>
+</li>
+</ul>
+<p>For a description of the actions performed by the SOAP message security providers
+as a result of the following message protection policies see <A HREF="ablrk.html#ablsh">Actions of Request and Response Policy Configurations</A>.</p>
+</li>
+<li><p><b>Add additional properties by clicking the Add Property button. </b></p><p>The provider that is shipped with the Application Server supports the property listed
+below. If other providers are used, refer to their documentation for more information
+on properties and valid values.</p>
+<ul><li><p><tt>server.config</tt> -  The directory and file name
+of an XML file that contains the server configuration information. For example, <i>domain-dir</i><tt>/config/wss-server-config.xml</tt>.</p>
+</li>
+</ul>
+</li>
+<li><p><b>Click Save.</b></p></li>
+</ol><h5>More Information<br>Equivalent asadmin commands</h5>
+<p>To set the response policy, replace the word <tt>request</tt> in the
+following commands with <tt>response</tt>.</p>
+<ul><li><p>Add a request policy to the client and set the authentication source:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin  set --user  <i>admin-user</i> --port <i>admin-port</i> 
+server-config.security-service.message-security-config.SOAP.
+provider-config.ClientProvider.request-policy.auth_source=
+sender | content</pre>
+</td></table><br></li>
+<li><p>Add a request policy to the server and set the authentication source:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin  set --user  <i>admin-user</i> --port <i>admin-port</i> 
+server-config.security-service.message-security-config.SOAP.
+provider-config.ServerProvider.request-policy.auth_source=
+sender | content</pre>
+</td></table><br></li>
+<li><p>Add a request policy to the client and set the authentication recipient:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin  set --user  <i>admin-user</i> --port <i>admin-port</i> 
+server-config.security-service.message-security-config.SOAP.
+provider-config.ClientProvider.request-policy.auth_recipient=
+before-content | after-content</pre>
+</td></table><br></li>
+<li><p>Add a request policy to the server and set the authentication recipient:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin  set --user  <i>admin-user</i> --port <i>admin-port</i> 
+server-config.security-service.message-security-config.SOAP.
+provider-config.ServerProvider.request-policy.auth_recipient=
+before-content | after-content</pre>
+</td></table><br></li>
+</ul>
+<h5>See Also</h5><ul><li><p><A HREF="ablrk.html#ablse">To enable providers for message security</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsf">To configure a message security provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsg">Creating a Message Security Provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsi">To delete a message security configuration</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsj">To delete a message security provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsk">To enable message security for application clients</A></p>
+</li>
+</ul>
+<A NAME="ablsg"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">Creating a Message Security Provider</h3>
+<p>To configure an existing provider, follow the steps in <A HREF="ablrk.html#ablsf">To configure a message security provider</A>.</p>
+<h5>Steps</h5><ol><li><p><b>In the Admin Console tree component, expand the Configuration node.</b></p></li>
+<li><p><b>Expand the Security node.</b></p></li>
+<li><p><b>Expand the Message Security node.</b></p></li>
+<li><p><b>Select the SOAP node.</b></p></li>
+<li><p><b>Select the Providers tab.</b></p></li>
+<li><p><b>On the Provider Configuration page, click New.</b></p></li>
+<li><p><b>In the Provider Config section of the Create a Provider Configuration
+page, enter the following:</b></p><ul><li><p><b>Default Provider</b> -  Check
+the box beside this field to make the new message security provider the provider to
+be invoked for any application for which a specific provider has not been bound. Whether
+the provider becomes the default client provider, the default server provider, or
+both will be based on the value selected for Provider Type.</p>
+</li>
+<li><p><b>Provider Type</b> -  Select <tt>client</tt>, <tt>server</tt>, or <tt>client-server</tt> to
+establish whether the provider is to be used as a client authentication provider,
+a server authentication provider, or both (a client-server provider).</p>
+</li>
+<li><p><b>Provider ID</b> - Enter an identifier
+for this provider configuration. This name will appear in the Current Provider Configurations
+list.</p>
+</li>
+<li><p><b>Class Name</b> - Enter the Java implementation
+class of the provider. Client authentication providers must implement the <tt>com.sun.enterprise.security.jauth.ClientAuthModule</tt> interface. Server-side
+providers must implement the <tt>com.sun.enterprise.security.jauth.ServerAuthModule</tt> interface. A provider may implement both interfaces, but it must implement
+the interface corresponding to its provider type.</p>
+</li>
+</ul>
+</li>
+<li><p><b>In the Request Policy section of the Create a Provider Configuration page,
+enter the following optional values, if needed. </b></p><p>These properties are
+optional, but if not specified, no authentication is applied to request messages.</p>
+<ul><li><p><b>Authentication Source</b> - 
+Select <tt>sender</tt>, <tt>content</tt>, or null (the blank option)
+to define a requirement for message-layer sender authentication (for example, username
+password), content authentication (for example, digital signature), or no authentication
+be applied to request messages. When null is specified, source authentication of the
+request is not required.</p>
+</li>
+<li><p><b>Authentication Recipient</b> -
+ Select <tt>beforeContent</tt> or <tt>afterContent</tt> to define
+a requirement for message-layer authentication of the receiver of the request message
+to its sender (by XML encryption). When the value is not specified it defaults to <tt>afterContent</tt>.</p>
+</li>
+</ul>
+<p>For a description of the actions performed by the SOAP message security providers
+as a result of the following message protection policies see <A HREF="ablrk.html#ablsh">Actions of Request and Response Policy Configurations</A>.</p>
+</li>
+<li><p><b>In the Response Policy section of the Create a Provider Configuration
+page, enter the following optional properties, if needed. </b></p><p>These properties
+are optional, but if not specified, no authentication is applied to response messages.</p>
+<ul><li><p><b>Authentication Source</b> - 
+Select <tt>sender</tt>, <tt>content</tt>, or null (the blank option)
+to define a requirement for message-layer sender authentication (for example, username
+password) or content authentication (for example, digital signature) to be applied
+to response messages. When null is specified, source authentication of the response
+is not required.</p>
+</li>
+<li><p><b>Authentication Recipient</b> -
+ Select <tt>beforeContent</tt> or <tt>afterContent</tt> to define
+a requirement for message-layer authentication of the receiver of the response message
+to its sender (by XML encryption). When the value is not specified it defaults to <tt>afterContent</tt>.</p>
+</li>
+</ul>
+<p>For a description of the actions performed by the SOAP message security providers
+as a result of the following message protection policies see <A HREF="ablrk.html#ablsh">Actions of Request and Response Policy Configurations</A>.</p>
+</li>
+<li><p><b>Add additional properties by clicking the Add Property button. </b></p><p>The provider that is shipped with the Application Server supports the property listed
+below. If other providers are used, refer to their documentation for more information
+on properties and valid values.</p>
+<ul><li><p><tt>server.config</tt> -  The directory and file name
+of an XML file that contains the server configuration information. For example, <i>domain-dir</i><tt>/config/wss-server-config.xml</tt>.</p>
+</li>
+</ul>
+</li>
+<li><p><b>Click OK to save this configuration, or click Cancel to quit without saving.</b></p></li>
+</ol><h5>More Information<br>Equivalent asadmin command</h5>
+<p><tt>create-message-security-provider</tt></p>
+<h5>See Also</h5><ul><li><p><A HREF="ablrk.html#ablsh">Actions of Request and Response Policy Configurations</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablse">To enable providers for message security</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsf">To configure a message security provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsg">Creating a Message Security Provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsi">To delete a message security configuration</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsj">To delete a message security provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsk">To enable message security for application clients</A></p>
+</li>
+</ul>
+<A NAME="gbton"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To create an JSR196 httpservlet provider</h3>
+<h5>Steps</h5><ol><li><p><b>In the Admin Console tree component, expand the Configuration node.</b></p></li>
+<li><p><b>Expand the Security node.</b></p></li>
+<li><p><b>Expand the Message Security node.</b></p></li>
+<li><p><b>On the Message Security Configuration page, click New.</b></p></li>
+<li><p><b>In the Authentication Layer drop-down list, select HttpServlet.</b></p></li>
+<li><p><b>In the Provider Configuration section, specify the following:</b></p><ul><li><p><b>Default Provider</b> -  Check
+the box beside this field to make the new message security provider the provider to
+be invoked for any application for which a specific provider has not been bound. Whether
+the provider becomes the default client provider, the default server provider, or
+both will be based on the value selected for Provider Type.</p>
+</li>
+<li><p><b>Provider Type</b> -  Select <tt>server</tt> to specify that the provider is to be used as a server authentication
+provider.</p>
+</li>
+<li><p><b>Provider ID</b> - Enter JSR196AMProvider
+as the name of this provider configuration. This name will appear in the Current Provider
+Configurations list.</p>
+</li>
+<li><p><b>Class Name</b> - Enter the Java implementation
+class of the provider, which is <tt>com.sun.identity.agents.jsr196.as9.JSR196AMAuthModule</tt>.</p>
+</li>
+</ul>
+</li>
+<li><p><b>Add additional properties by clicking the Add Property button. </b></p></li>
+<li><p><b>Click OK to create the provider. The new provider HttpServlet is listed
+in the Message Security Configuration page as well as a new node under the Message
+Security node.</b></p></li>
+<li><p><b>Click the HttpServlet node under the Message Security node.</b></p></li>
+<li><p><b>Click the Providers tab and click HttpServlet to open the Edit Provider
+Configuration page.</b></p></li>
+<li><p><b>In the Request Policy section, click Authenticate Source and select content.</b></p></li>
+<li><p><b>In the Response Policy section, click Authenticate Source and select content.</b></p></li>
+<li><p><b>Click Save to complete the message security provider creation.</b></p></li>
+</ol><h5>More Information<br>Equivalent asadmin command</h5>
+<p><tt>create-message-security-provider</tt></p>
+<A NAME="ablsi"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To delete a message security configuration</h3>
+<h5>Steps</h5><ol><li><p><b>In the Admin Console tree component, expand the Configuration node.</b></p></li>
+<li><p><b>Expand the Security node.</b></p></li>
+<li><p><b>Select the Message Security node.</b></p></li>
+<li><p><b>Click in the checkbox to the left of the Message Security Configuration
+to be deleted.</b></p></li>
+<li><p><b>Click Delete.</b></p></li>
+</ol><h5>See Also</h5><ul><li><p><A HREF="ablrk.html#ablse">To enable providers for message security</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsf">To configure a message security provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsg">Creating a Message Security Provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsj">To delete a message security provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsk">To enable message security for application clients</A></p>
+</li>
+</ul>
+<A NAME="ablsj"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To delete a message security provider</h3>
+<h5>Steps</h5><ol><li><p><b>In the Admin Console tree component, expand the Configuration node.</b></p></li>
+<li><p><b>Expand the Security node.</b></p></li>
+<li><p><b>Expand the Message Security node.</b></p></li>
+<li><p><b>Select the SOAP node.</b></p></li>
+<li><p><b>Select the Providers page.</b></p></li>
+<li><p><b>Click in the checkbox to the left of the Provider Configuration to be
+deleted.</b></p></li>
+<li><p><b>Click Delete.</b></p></li>
+</ol><h5>More Information<br>Equivalent asadmin command</h5>
+<p><tt>delete-message-security-provider</tt></p>
+<h5>See Also</h5><ul><li><p><A HREF="ablrk.html#ablse">To enable providers for message security</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsf">To configure a message security provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsg">Creating a Message Security Provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsi">To delete a message security configuration</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsk">To enable message security for application clients</A></p>
+</li>
+</ul>
+<A NAME="ablsk"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To enable message security for application clients</h3>
+<p>The message protection policies of client providers must be configured such
+that they are equivalent to the message protection policies of the server-side providers
+they will be interacting with. This is already the case for the providers configured
+(but not enabled) when the Application Server is installed.</p>
+<p>To enable message security for client applications, modify the Application Server specific
+configuration for the application client container.</p>
+<h5>Steps</h5><ol><li><p><b>Stop any client applications that depend on the client container descriptor.</b></p></li>
+<li><p><b>In a text editor, open the Sun application client container descriptor,
+located in <i>domain-dir</i><tt>/config/sun-acc.xml.</tt>                   </b></p></li>
+<li><p><b>Add the <tt>default-client-provider</tt> element to the file
+to enable the default client provider in the application client. </b></p><p>The
+other code is provided to show where the code to enable message security for client
+applications should be located. The other code may differ slightly in your installation.
+Do not change it.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;client-container>
+  &lt;target-server name="<i>your-host</i>" address="<i>your-host</i>"
+      port="<i>your-port</i>"/>
+  &lt;log-service file="" level="WARNING"/>
+  &lt;message-security-config auth-layer="SOAP"
+      default-client-provider="ClientProvider">
+    &lt;provider-config
+        class-name="com.sun.enterprise.security.jauth.ClientAuthModule"
+        provider-id="ClientProvider" provider-type="client">
+      &lt;request-policy auth-source="sender"/>
+      &lt;response-policy/>
+        &lt;property name="security.config"
+          value="C:/Sun/AppServer/lib/appclient/wss-client-config.xml"/>
+    &lt;/provider-config>
+  &lt;/message-security-config>
+&lt;/client-container></pre>
+</td></table><br><p>The message security provider configured in the client container will also require
+access to private keys and trusted certificates. This is accomplished by defining
+appropriate values for the following system properties in the application client startup
+script.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>-Djavax.net.ssl.keyStore</pre>
+</td></table><br><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>-Djavax.net.ssl.trustStore</pre>
+</td></table><br></li>
+</ol><h5>See Also</h5><ul><li><p><A HREF="ablrk.html#ablse">To enable providers for message security</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsf">To configure a message security provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsg">Creating a Message Security Provider</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsi">To delete a message security configuration</A></p>
+</li>
+<li><p><A HREF="ablrk.html#ablsj">To delete a message security provider</A></p>
+</li>
+</ul>
+<A NAME="ablsl"></A><h3>Setting the Request and Response Policy for the Application
+Client Configuration</h3>
+<p>The <i>request and response policies</i> define the authentication
+policy requirements associated with request and response processing performed by the
+authentication provider. Policies are expressed in message sender order such that
+a requirement that encryption occur after content would mean that the message receiver
+would expect to decrypt the message before validating the signature.</p>
+<p>To achieve message security, the request and response policies must be enabled
+on both the server and client. When configuring the policies on the client and server,
+make sure that the client policy matches the server policy for request/response protection
+at application-level message binding.</p>
+<p>To set the request policy for the application client configuration, modify the Application Server specific
+configuration for the application client container as described in <A HREF="ablrk.html#ablsk">To enable message security for application clients</A>. In the application client
+configuration file, add the <tt>request-policy</tt> and <tt>response-policy</tt> elements as shown to set the request policy. </p>
+<p>The other code is provided for reference. The other code may differ slightly
+in your installation. Do not change it.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;client-container>
+  &lt;target-server name="<i>your-host</i>" address="<i>your-host</i>"
+      port="<i>your-port</i>"/>
+  &lt;log-service file="" level="WARNING"/>
+  &lt;message-security-config auth-layer="SOAP"
+      default-client-provider="ClientProvider">
+    &lt;provider-config
+        class-name="com.sun.enterprise.security.jauth.ClientAuthModule"
+        provider-id="ClientProvider" provider-type="client">
+      &lt;request-policy auth-source="<i>sender</i> | <i>content</i>"
+        auth-recipient="<i>after-content</i> | <i>before-content</i>"/>
+      &lt;response-policy auth-source="<i>sender</i> | <i>content</i>"
+        auth-recipient="<i>after-content</i> | <i>before-content</i>"/>
+       &lt;property name="security.config"
+           value="<i>install-dir</i>/lib/appclient/wss-client-config.xml"/>
+    &lt;/provider-config>
+  &lt;/message-security-config>
+&lt;/client-container></pre>
+</td></table><br><p>Valid values for <tt>auth-source</tt> include <tt>sender</tt> and <tt>content</tt>. Valid values for <tt>auth-recipient</tt> include <tt>before-content</tt> and <tt>after-content</tt>. A table describing
+the results of various combinations of these values can be found in <A HREF="ablrk.html#ablsh">Actions of Request and Response Policy Configurations</A>.</p>
+<p>To not specify a request or response policy, leave the element blank, for example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;response-policy/></pre>
+</td></table><br><A NAME="ablsm"></A><h3>Further Information</h3>
+<ul><li><p>The Java 2 Standard Edition discussion of security can be viewed from <A HREF="http://java.sun.com/j2se/1.4.2/docs/guide/security/index.html">http://java.sun.com/j2se/1.4.2/docs/guide/security/index.html</A>. </p>
+</li>
+<li><p>The <i>J2EE 1.4 Tutorial</i> chapter titled <i>Security</i> can be viewed from <A HREF="http://java.sun.com/j2ee/1.4/docs/tutorial/doc/index.html">http://java.sun.com/j2ee/1.4/docs/tutorial/doc/index.html</A>.</p>
+</li>
+<li><p>The<i> Administration Guide</i> chapter titled <A HREF="ablnk.html#ablnm">Overview of Security</A> <A HREF="ablnk.html#ablnk">Chapter&nbsp;9, Configuring Security</A>.</p>
+</li>
+<li><p>The <i>Developer's Guide</i> chapter titled <i>Securing Applications</i>.</p>
+</li>
+<li><p><A NAME="indexterm-264"></A>The Oasis Web Services Security: SOAP Message Security (WS-Security)
+specification, can be viewed from <A HREF="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0.pdf">http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0.pdf</A>.</p>
+</li>
+<li><p>The OASIS Web Services Security Username Token Profile 1.0, can be
+found at <A HREF="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0.pdf">http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0.pdf</A>.</p>
+</li>
+<li><p>The OASIS Web Services Security X.509 Certificate Token Profile 1.0,
+can be found at <A HREF="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0.pdf">http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-x509-token-profile-1.0.pdf</A>.</p>
+</li>
+<li><p>The <i>XML-Signature Syntax and Processing</i> document
+can be viewed at <A HREF="http://www.w3.org/TR/xmldsig-core/">http://www.w3.org/TR/xmldsig-core/</A>.</p>
+</li>
+<li><p>The <i>XML Encryption Syntax and Processing</i> document
+can be viewed at <A HREF="http://www.w3.org/TR/xmlenc-core/">http://www.w3.org/TR/xmlenc-core/</A>.</p>
+</li>
+</ul>
+
+            <!--stopindex-->
+<br>
+<A HREF="ablnk.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="ablsn.html">Next</A>
+</body>
+</html>

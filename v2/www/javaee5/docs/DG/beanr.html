@@ -1,0 +1,221 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>16.&nbsp;&nbsp;Using the Java Naming and Directory Interface
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Developer's Guide</A>&nbsp;<br>
+<A HREF="beanm.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="beaob.html">Next</A><br>
+            <!--startindex--><A NAME="beanr"></A><b>Chapter&nbsp;16</b><h1>Using the Java Naming and Directory Interface</h1>
+<A NAME="indexterm-673"></A><A NAME="indexterm-674"></A><A NAME="indexterm-675"></A><p>A <i>naming service</i> maintains a set of bindings, which
+relate names to objects. The Java EE naming service is based on the Java Naming
+and Directory Interface&#153; (JNDI) API. The JNDI API allows
+application components and clients to look up distributed resources, services,
+and EJB components. For general information about the JNDI API, see <A HREF="http://java.sun.com/products/jndi/">http://java.sun.com/products/jndi/</A>.</p>
+<p><A NAME="indexterm-676"></A>You can also see the JNDI tutorial at <A HREF="http://java.sun.com/products/jndi/tutorial/">http://java.sun.com/products/jndi/tutorial/</A>.</p>
+<p>This chapter contains the following sections:</p>
+<ul><li><p><A HREF="beanr.html#beans">Accessing the Naming Context</A></p>
+</li>
+<li><p><A HREF="beanr.html#beanx">Configuring Resources</A></p>
+</li>
+<li><p><A HREF="beanr.html#beaoa">Mapping References</A></p>
+</li>
+</ul>
+<A NAME="beans"></A><h2>Accessing the Naming Context</h2>
+<p>The Application Server provides a naming environment, or <A NAME="indexterm-677"></A><i>context</i>, which is compliant with standard
+Java EE 5 requirements. A <tt>Context</tt> object provides the methods
+for binding names to objects, unbinding names from objects, renaming objects,
+and listing the bindings. The <A NAME="indexterm-678"></A><tt>InitialContext</tt> is the handle to the Java EE
+naming service that application components and clients use for lookups.</p>
+<p>The JNDI API also provides subcontext functionality. Much like a directory
+in a file system, a subcontext is a context within a context. This hierarchical
+structure permits better organization of information. For naming services
+that support subcontexts, the <tt>Context</tt> class also provides
+methods for creating and destroying subcontexts.</p>
+<p>The rest of this section covers these topics:</p>
+<ul><li><p><A HREF="beanr.html#beant">Naming Environment for Java EE Application Components</A></p>
+</li>
+<li><p><A HREF="beanr.html#beanu">Accessing EJB Components Using the CosNaming Naming Context</A></p>
+</li>
+<li><p><A HREF="beanr.html#beanv">Accessing EJB Components in a Remote Application Server</A></p>
+</li>
+<li><p><A HREF="beanr.html#beanw">Naming Environment for Lifecycle Modules</A></p>
+</li>
+</ul>
+<p><hr size="1" noshade><p><b>Note - </b>Each resource within a server instance must have a unique name.
+However, two resources in different server instances or different domains
+can have the same name.</p>
+<hr size="1" noshade></p><A NAME="beant"></A><h3>Naming Environment for Java EE Application Components</h3>
+<p>The namespace for objects looked up in a Java EE environment is organized
+into different subcontexts, with the standard prefix <tt>java:comp/env</tt>.</p>
+<p>The following table describes standard <A NAME="indexterm-679"></A><A NAME="indexterm-680"></A>JNDI subcontexts for connection factories in the Application Server.</p>
+<A NAME="fvynn"></A><p><b>Table 16-1 </b>Standard JNDI
+Subcontexts for Connection Factories</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Resource Manager                         </p></th><th scope="col"><p>Connection Factory Type                         </p></th><th scope="col"><p>JNDI Subcontext                         </p></th></tr>
+<tr><td><p><A NAME="indexterm-681"></A>JDBC</p></td><td><p><tt>javax.sql.DataSource</tt></p></td><td><p><tt>java:comp/env/jdbc</tt></p></td></tr>
+<tr><td><p><A NAME="indexterm-682"></A>Transaction Service</p></td><td><p><tt>javax.transaction.UserTransaction</tt></p></td><td><p><tt>java:comp/UserTransaction</tt></p></td></tr>
+<tr><td><p>Transaction Manager</p></td><td><p><tt>javax.transaction.TransactionManager</tt></p></td><td><p><tt>java:appserver/TransactionManager</tt></p></td></tr>
+<tr><td><p><A NAME="indexterm-683"></A>JMS</p></td><td><p><tt>javax.jms.TopicConnectionFactory</tt></p><p><tt>javax.jms.QueueConnectionFactory</tt></p></td><td><p><tt>java:comp/env/jms</tt></p></td></tr>
+<tr><td><p><A NAME="indexterm-684"></A>JavaMail</p></td><td><p><tt>javax.mail.Session</tt></p></td><td><p><tt>java:comp/env/mail</tt></p></td></tr>
+<tr><td><p><A NAME="indexterm-685"></A>URL</p></td><td><p><tt>java.net.URL</tt></p></td><td><p><tt>java:comp/env/url</tt></p></td></tr>
+<tr><td><p><A NAME="indexterm-686"></A>Connector</p></td><td><p><tt>javax.resource.cci.ConnectionFactory</tt></p></td><td><p><tt>java:comp/env/eis</tt></p></td></tr>
+</table><A NAME="beanu"></A><h3>Accessing EJB Components Using the CosNaming Naming
+Context</h3>
+<A NAME="indexterm-687"></A><p>The preferred way of accessing the naming service, even in code that
+runs outside of a Java EE container, is to use the no-argument <tt>InitialContext</tt> constructor. However, if EJB client code explicitly instantiates
+an <tt>InitialContext</tt> that points to the CosNaming naming service,
+it is necessary to set the <tt>java.naming.factory.initial</tt> property
+to <tt>com.sun.jndi.cosnaming.CNCtxFactory</tt> in the client JVM
+when accessing EJB components. You can set this property as a command-line
+argument, as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>-Djava.naming.factory.initial=com.sun.jndi.cosnaming.CNCtxFactory</pre>
+</td></table><br><p>Or you can set this property in the code, as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>Properties properties = null;
+      try {
+            properties = new Properties();
+            properties.put("java.naming.factory.initial",
+                  "com.sun.jndi.cosnaming.CNCtxFactory");
+      ...</pre>
+</td></table><br><A NAME="beanv"></A><h3>Accessing EJB Components in a Remote Application
+Server</h3>
+<p>The recommended approach for looking up an EJB component in a remote Application Server from
+a client that is a servlet or EJB component is to use the <A NAME="indexterm-688"></A>Interoperable Naming Service syntax. Host and port information
+is prepended to any global JNDI names and is automatically resolved during
+the lookup. The syntax for an interoperable global name is as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>corbaname:iiop:<i>host</i>:<i>port</i>#a/b/<i>name</i></pre>
+</td></table><br><p>This makes the programming model for accessing EJB components in another Application Server exactly
+the same as accessing them in the same server. The deployer can change the
+way the EJB components are physically distributed without having to change
+the code.</p>
+<p>For Java EE components, the code still performs a <tt>java:comp/env</tt> lookup on an EJB reference. The only difference is that the deployer
+maps the <tt>ejb-reference</tt> element to an interoperable name
+in an Application Server deployment descriptor file instead of a simple global
+JNDI name.</p>
+<p>For example, suppose a servlet looks up an EJB reference using <tt>java:comp/env/ejb/Foo</tt>, and the target EJB component has a global
+JNDI name of <tt>a/b/Foo</tt>.</p>
+<p>The <tt>ejb-ref</tt> element in <tt>sun-web.xml</tt> looks
+like this:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;ejb-ref>
+   &lt;ejb-ref-name>ejb/Foo&lt;/ejb-ref-name>
+   &lt;jndi-name>corbaname:iiop:<i>host</i>:<i>port</i>#a/b/Foo&lt;/jndi-name>
+&lt;ejb-ref></pre>
+</td></table><br><p>The code looks like this:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>Context ic = new InitialContext();
+Object o = ic.lookup("java:comp/env/ejb/Foo");</pre>
+</td></table><br><p>For a client that doesn't run within a Java EE container, the
+code just uses the interoperable global name instead of the simple global
+JNDI name. For example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>Context ic = new InitialContext();
+Object o = ic.lookup("corbaname:iiop:<i>host</i>:<i>port</i>#a/b/Foo");</pre>
+</td></table><br><p>Objects stored in the interoperable naming context and component-specific
+(<tt>java:comp/env</tt>) naming contexts are transient. On each
+server startup or application reloading, all relevant objects are re-bound
+to the namespace.</p>
+<A NAME="beanw"></A><h3>Naming Environment for Lifecycle Modules</h3>
+<p><A NAME="indexterm-689"></A>Lifecycle listener modules provide a means of running short or
+long duration Java-based tasks within the application server environment,
+such as instantiation of singletons or RMI servers. These modules are automatically
+initiated at server startup and are notified at various phases of the server
+life cycle. For details about lifecycle modules, see <A HREF="beamc.html#beamc">Chapter&nbsp;12, Developing Lifecycle Listeners</A>.</p>
+<p>The configured properties for a lifecycle module are passed as properties
+during server initialization (the <tt>INIT_EVENT</tt>). The initial <A NAME="indexterm-690"></A>JNDI naming context is not available until server initialization
+is complete. A lifecycle module can get the <tt>InitialContext</tt> for
+lookups using the method <tt>LifecycleEventContext.</tt><A NAME="indexterm-691"></A><tt>getInitialContext()</tt> during, and only during,
+the <tt>STARTUP_EVENT</tt>, <tt>READY_EVENT</tt>, or <tt>SHUTDOWN_EVENT</tt> server life cycle events.</p>
+<A NAME="beanx"></A><h2>Configuring Resources</h2>
+<p>The Application Server exposes the following special resources in the naming
+environment. Full administration details are provided in the following sections:</p>
+<ul><li><p><A HREF="beanr.html#beany">External JNDI Resources</A></p>
+</li>
+<li><p><A HREF="beanr.html#beanz">Custom Resources</A></p>
+</li>
+</ul>
+<A NAME="beany"></A><h3>External JNDI Resources</h3>
+<p>An <A NAME="indexterm-692"></A><A NAME="indexterm-693"></A>external JNDI resource defines custom JNDI contexts and implements
+the <tt>javax.naming.spi.InitialContextFactory</tt> interface. There
+is no specific JNDI parent context for external JNDI resources, except for
+the standard <tt>java:comp/env/</tt>.</p>
+<p>Create an external JNDI resource in one of these ways:</p>
+<ul><li><p>To create an external JNDI resource using the <A NAME="indexterm-694"></A>Admin Console, open the Resources component, open the JNDI component,
+and select External Resources. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+</li>
+<li><p>To create an external JNDI resource, use the <A NAME="indexterm-695"></A><tt>asadmin create-jndi-resource</tt> command. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A></i>.</p>
+</li>
+</ul>
+<A NAME="beanz"></A><h3>Custom Resources</h3>
+<p>A <A NAME="indexterm-696"></A><A NAME="indexterm-697"></A>custom resource specifies a custom server-wide resource object
+factory that implements the <tt>javax.naming.spi.ObjectFactory</tt> interface.
+There is no specific JNDI parent context for external JNDI resources, except
+for the standard <tt>java:comp/env/</tt>.</p>
+<p>Create a custom resource in one of these ways:</p>
+<ul><li><p>To create a custom resource using the <A NAME="indexterm-698"></A>Admin Console, open the Resources component, open the JNDI component,
+and select Custom Resources. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+</li>
+<li><p>To create a custom resource, use the <A NAME="indexterm-699"></A><tt>asadmin create-custom-resource</tt> command. For
+details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A></i>.</p>
+</li>
+</ul>
+<A NAME="beaoa"></A><h2>Mapping References</h2>
+<p>The following XML elements map <A NAME="indexterm-700"></A>JNDI names configured in the Application Server to <A NAME="indexterm-701"></A><A NAME="indexterm-702"></A>resource references in application client, EJB, and web application
+components:</p>
+<ul><li><p><tt>resource-env-ref</tt> - Maps the <A NAME="indexterm-703"></A><tt>resource-env-ref</tt> element in the corresponding
+Java EE XML file to the absolute JNDI name configured in the Application Server.</p>
+</li>
+<li><p><tt>resource-ref</tt> - Maps the <A NAME="indexterm-704"></A><tt>resource-ref</tt> element in the corresponding Java
+EE XML file to the absolute JNDI name configured in the Application Server.</p>
+</li>
+<li><p><tt>ejb-ref</tt> - Maps the <A NAME="indexterm-705"></A><tt>ejb-ref</tt> element in the corresponding Java EE
+XML file to the absolute JNDI name configured in the Application Server.</p>
+</li>
+</ul>
+<p><A NAME="indexterm-706"></A>JNDI names for EJB components must be unique. For example, appending
+the application name and the module name to the EJB name is one way to guarantee
+unique names. In this case, <tt>mycompany.pkging.pkgingEJB.MyEJB</tt> would
+be the JNDI name for an EJB in the module <tt>pkgingEJB.jar</tt>,
+which is packaged in the <tt>pkging.ear</tt> application.</p>
+<p>These elements are part of the <tt>sun-web-app.xml</tt>, <tt>sun-ejb-ref.xml</tt>, and <tt>sun-application-client.xml</tt> <A NAME="indexterm-707"></A>deployment descriptor files. For more information about how these
+elements behave in each of the deployment descriptor files, see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">Appendix A, "Deployment Descriptor Files," in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+<p>The rest of this section uses an example of a JDBC resource lookup to
+describe how to reference resource factories. The same principle is applicable
+to all resources (such as JMS destinations, JavaMail sessions, and so on).</p>
+<p>The <tt>resource-ref</tt> element in the <tt>sun-web-app.xml</tt> deployment descriptor file maps the JNDI name of a resource reference
+to the <tt>resource-ref</tt> element in the <tt>web-app.xml</tt> Java EE deployment descriptor file.</p>
+<p>The resource lookup in the application code looks like this:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>InitialContext ic = new InitialContext();
+String dsName = "java:comp/env/jdbc/HelloDbDs";
+DataSource ds = (javax.sql.DataSource)ic.lookup(dsName);
+Connection connection = ds.getConnection();</pre>
+</td></table><br><p>The resource being queried is listed in the <tt>res-ref-name</tt> element
+of the <tt>web.xml</tt> file as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;resource-ref>
+   &lt;description>DataSource Reference&lt;/description>
+   &lt;res-ref-name>jdbc/HelloDbDs&lt;/res-ref-name>
+   &lt;res-type>javax.sql.DataSource&lt;/res-type>
+   &lt;res-auth>Container&lt;/res-auth>
+&lt;/resource-ref></pre>
+</td></table><br><p>The <tt>resource-ref</tt> section in a Application Server specific
+deployment descriptor, for example <tt>sun-web.xml</tt>, maps the <tt>res-ref-name</tt> (the name being queried in the application code) to
+the JNDI name of the JDBC resource. The JNDI name is the same as the name
+of the JDBC resource as defined in the resource file when the resource is
+created.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;resource-ref>
+   &lt;res-ref-name>jdbc/HelloDbDs&lt;/res-ref-name>
+   &lt;jndi-name>jdbc/HelloDbDataSource&lt;/jndi-name>
+&lt;/resource-ref></pre>
+</td></table><br><p>The JNDI name in the Application Server specific deployment descriptor must
+match the JNDI name you assigned to the resource when you created and configured
+it.</p>
+
+            <!--stopindex-->
+<br>
+<A HREF="beanm.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="beaob.html">Next</A>
+</body>
+</html>

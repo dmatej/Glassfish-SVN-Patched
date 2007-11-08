@@ -1,0 +1,207 @@
+<!DOCTYPE doctype PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+                                                    
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+                                                    
+  <meta name="GENERATOR"
+ content="Mozilla/4.79 [en] (X11; U; SunOS 5.7 sun4u) [Netscape]">
+  <title>GlassFish Project - EJB</title>
+                                                     <!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+-->
+</head>
+  <body style="color: rgb(0,0,0); background-color: rgb(255,255,255);">
+                          
+<div id="projecthome" class="app"><span style="font-weight: bold;"></span> 
+ <span style="font-weight: bold;"><font size="+1">GlassFish Project - Simple 
+  Enterprise JavaBeans<sup>TM</sup> (EJB)  3.0 Stateless Session Bean Example&nbsp;</font></span> 
+                      
+<p><span style="font-weight: bold;"><a
+ href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New to GlassFish</a>
+| <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community
+    Guidelines</a> | <a
+ href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads</a>
+    | <a href="https://glassfish.dev.java.net/public/faq/index.html">FAQ</a>
+   |       <a
+ href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo">How-Tos</a></span><br>
+        </p>
+                           
+<ul id="mozToc">
+     <!--mozToc h1 1 h2 2 h3 3 h4 4 h5 5 h6 6--><li><a href="#Overview">Overview</a><a
+ href="#overview"><br>
+            </a></li>
+       <li><a href="#BusinessInterface">Business  Interface</a></li>
+       <li><a href="#BeanClass">Bean  Class</a></li>
+       <li><a href="#DD">Deployment  Descriptor</a></li>
+       <li><a href="#AppClient">Application  Client</a></li>
+       <li><a href="#JavaClient">Standalone  Java Client</a></li>
+       <li><a href="#AppServerConfig">SUN  App Server Specific Deployment 
+ Configuration</a><br>
+               </li>
+       <li><a href="#RunningExample">Running  the example</a></li>
+         
+</ul>
+                         
+<h3><a name="Overview"></a>Overview</h3>
+        This is a very simple EJB 3.0 Stateless Session Bean with a Remote
+ business   interface. &nbsp;<br>
+        <br>
+        Click <a href="Sless.zip">here</a> to get the ZIP file with the complete
+   example.<br>
+             <br>
+       Contact us at <a href="mailto:ejb@glassfish.dev.java.net">ejb@glassfish.dev.java.net</a> 
+   with any comments or questions.<br>
+        <code></code><code></code><code></code><br>
+                         
+<h3><a name="BusinessInterface"></a>Business Interface</h3>
+       The Stateless Session bean has a Remote business interface with a
+single    business method.<br>
+             <br><br>package ejb30;<br>
+       import javax.ejb.Remote;<br>
+             <br>
+       @Remote<br>
+       public interface Sless {<br>
+             <br>
+       &nbsp;&nbsp;&nbsp; public String hello();<br>
+             <br>
+       }<br>
+             <br>
+       Note that unlike prior versions of EJB, the Remote interface is <b>not</b> 
+   required to extend java.rmi.Remote and its business methods are <b>not</b> 
+   required to throw java.rmi.RemoteException. <br>
+             <br>
+       The business interface is designated as a remote business interface
+ via   the @javax.ejb.Remote annotation.<br>
+                         
+<h3><a name="BeanClass"></a>Stateless Session Bean Class</h3>
+       Here's the bean implementation :<br>
+             <br>package ejb30;<br>import javax.ejb.Stateless;<br><br>
+       @Stateless<br>
+       public class SlessBean implements Sless {<br>
+             <br>
+       &nbsp;&nbsp;&nbsp; public String hello() {<br>
+       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return "hello, world!\n";<br>
+       &nbsp;&nbsp;&nbsp; }<br>
+             <br>
+       }<br>
+             <br>
+       @javax.ejb.Stateless is a component-defining annotation that designates
+   this class as the bean class for a Stateless Session Bean. &nbsp; <br>
+             <br>
+                         
+<h3><a name="DD"></a>Deployment Descriptor</h3>
+       The good news is the deployment descriptor is no longer required!!!
+ &nbsp;The   two java files above are sufficient to completely describe this
+ stateless   session bean. &nbsp;<br>
+                         
+<h3><a name="AppClient"></a>Application Client</h3>
+       Here's a Java EE Application Client that accesses the Stateless Session
+   Bean using the @EJB annotation and dependency injection :<br>
+             <br>package ejb30;<br>import javax.ejb.EJB;<br><br>
+       public class SlessAppClient {<br>
+             <br>
+       &nbsp;&nbsp;&nbsp; @EJB<br>
+       &nbsp;&nbsp;&nbsp; private static Sless sless;<br>
+             <br>
+       &nbsp;&nbsp;&nbsp; public static void main(String args[]) {<br>
+             <br>
+       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; System.out.println("Sless 
+ bean  says : " + sless.hello());<br>
+             <br>
+       &nbsp;&nbsp;&nbsp; }<br>
+       }<br>
+             <br>
+       The @EJB annotation tells the container that this component has a
+dependency    on a business interface of an EJB. &nbsp;At initialization
+time, the Application    Client container will inject the variable "sless"
+with a reference to a  Stateless  Session bean. &nbsp;There's no JNDI lookup
+or casting required.<br>
+            <br>
+      Note that the Java EE 5 specification requires that annotations within
+  Application  Client classes be static since the entry point for the application
+  is the  static main() method. &nbsp;<br>
+                         
+<h3><a name="JavaClient"></a>Standalone Java Client</h3>
+       Here's an example of a plain Java client that runs outside of a Java 
+ EE  container. &nbsp;In this case, it does a global JNDI lookup since dependency 
+  injection is not available outside of a Java EE component. &nbsp;<br>
+             <br>package ejb30;<br>import javax.naming.InitialContext;<br><br>
+       public class SlessJavaClient {<br>
+             <br>
+       &nbsp;&nbsp;&nbsp; public static void main(String args[]) {<br>
+             <br>
+       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; try {<br>
+             <br>
+       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+InitialContext   ic = new InitialContext();<br>
+       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+Sless   sless = (Sless) ic.lookup("ejb30.Sless");<br>
+       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+System.out.println("Sless   bean says : " + sless.hello());<br>
+             <br>
+       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; } catch(Exception e) {<br>
+       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; 
+e.printStackTrace();<br>
+       &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; }<br>
+             <br>
+       &nbsp;&nbsp;&nbsp; }<br>
+             <br>
+       }<br>
+             <br>
+                         
+<h3><a name="AppServerConfig"></a>SUN App Server Specific Deployment  Configuration</h3>
+       There is no need to define any SUN App Server-specific deployment
+descrpitors    (e.g. sun-ejb-jar.xml, sun-application-client.xml) for this
+example. &nbsp;   The  JNDI name for the Remote Stateless Session bean will
+default to the fully-qualified class name of its Remote business interface &nbsp;: <b>ejb30.Sless</b>. 
+ &nbsp; &nbsp;The Application  Client's Remote @EJB dependency will be resolved 
+ to the same value since its business interface type is also <b>ejb30.Sless</b>. 
+  &nbsp; <br>
+             <br>
+                           
+<h3><a name="RunningExample"></a>Running the example</h3>
+             <br>
+        Use the following steps to build and execute the test.<br>
+             <br>
+                         
+<ol>
+       <li>Set the glassfish.home property within build.xml.</li>
+       <li>Set JAVA_HOME to point to a JDK 1.5 (or later) installation.</li>
+       <li>ant build</li>
+       <li>ant deploy</li>
+       <li>ant run &nbsp;</li>
+         
+</ol>
+             <br>
+       This will execute the Application Client and produce the following 
+output    :<br>
+             <br>
+             <code></code>  <b>Sless bean says : hello, world!</b><br>
+        <br>
+                         
+<h3>Other Targets </h3>
+                         
+<ul>
+       <li>ant runjavaclient &nbsp; (run stand-alone java client)</li>
+       <li>ant undeploy &nbsp; &nbsp; &nbsp; &nbsp;(undeploy stateless session 
+  bean)</li>
+       <li>ant clean &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; (remove build
+  directory)</li>
+         
+</ul>
+         
+<p><br>
+     </p>
+     </div>
+     <br>
+     <br>
+    <br>
+   <br>
+  <br>
+ 
+</body>
+</html>

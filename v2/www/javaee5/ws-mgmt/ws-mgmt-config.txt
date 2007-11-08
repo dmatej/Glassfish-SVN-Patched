@@ -1,0 +1,86 @@
+<!ELEMENT j2ee-application (description?, web-service-endpoint*,property*)>
+<!ELEMENT ejb-module (description?, web-service-endpoint*, property*)>
+<!ELEMENT web-module (description?, web-service-endpoint*, property*)>
+<!ELEMENT connector-module (description?, property*)>
+<!ELEMENT appclient-module (description?, property*)>
+
+<!-- web-service-endpoint
+
+
+ This specifies configuration for a web service end point. This web
+ service end point could be JAXRPC or JSR-109 web service. It contains
+ configuration about Monitoring, Transformation rules and Monitoring Log.
+
+ children
+
+  registry-location: 
+     jndi name of the registry where this endpoint is registered.
+
+  transformation-rule:
+        transformations (xslt) that can be applied to operations in
+        this web service.
+
+
+  attributes
+    name                        fully qualified web service name.
+                                Format: <ModuleName>#<EndpointName>
+    monitoring-level            monitoring level for this web service.
+    max-history-size            maximum number of monitoring records
+                                stored in history for this end point
+    jbi-enabled                 when false, it disables the visibility of
+                                this endoint as a service in JBI
+
+  Used in:
+   j2ee-application, ejb-module, web-module
+-->
+>
+<!ELEMENT web-service-endpoint (registry-location*, transformation-rule*)>
+<!ATTLIST web-service-endpoint name CDATA #REQUIRED
+                                monitoring %monitoring-level; "OFF"
+                                max-history-size CDATA "25"
+                                jbi-enabled %boolean; "true">
+
+<!-- registry-location
+  Specifies the registry where web service end point artifacts
+  are published.
+  Used in:
+   web-service-endpoint
+-->
+
+<!ELEMENT registry-location EMPTY>
+<!ATTLIST registry-location connector-resource-jndi-name CDATA #REQUIRED>
+
+
+<!-- transformation-rule
+
+     Specifies configuration for a XSLT transformation rule.
+
+     attributes:
+
+     enabled     if false, this transformation rule is disabled.
+     name        name of the transformation rule
+     apply-to   "request": transformations are applied to request in 
+                           the order in which they are specified.
+                "response": transformation is applied to response in
+                           the order in which they are specified.
+                "both": transformation rule is applied to request and
+                           response. The order is reversed for response.
+
+     rule-file-location
+                location of rule file to do the transformation. Only
+                XSLT files are allowed. Default location is:
+                ${com.sun.aas.instanceRoot}/generated/xml/
+                            <appOrModule>/<xslt-filename>/
+                Absolute paths can also be specified.
+
+
+     Used in:
+      web-service-endpoint
+-->
+<!ELEMENT transformation-rule (description?)>
+<!ATTLIST transformation-rule
+     name CDATA #REQUIRED
+     enabled %boolean; "true"
+     apply-to ("request" | "response" | "both") "request"
+     rule-file-location CDATA #REQUIRED>
+>

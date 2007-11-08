@@ -1,0 +1,513 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <title>
+      GlassFish Configuration Naming.
+    </title>
+    <!--
+                        @page { size: 8.27in 11.69in; margin: 0.79in }
+                        P { margin-bottom: 0.08in }
+                      -->
+  </head>
+  <body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+    <div id="projecthome" class="app">
+      <!--StartFragment -->
+      <span style="font-weight: bold;"><font size="+1">GlassFish Project - Configuration
+      Naming.</font></span> 
+      <p>
+        <span style="font-weight: bold;">|</span> <a href=
+        "https://glassfish.dev.java.net/javaee5/admin-infra/config/configuration.html">Return to GlassFish
+        Configuration Management Page</a> | <a href="https://glassfish.dev.java.net/index.html">GlassFish
+        Project Home</a> | <a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo">How-Tos</a> |
+      </p>
+      <p>
+        <!--StartFragment -->
+        <br>
+         GlassFish Configuration Naming (naming) is a set of metadata and APIs to support identification of and
+        access to configuration data such as elements, attributes, descriptions and properties. This is a
+        critical part of the Configuration Management module, as GlassFish has complex configuration data
+        structures and exposes a variety of interfaces for GUI, CLI, and JMX MBeans.
+      </p>
+      <p>
+        First, we will discuss different types of names and APIs in GlassFish Configuration, then discuss the
+        metadata driven approach to managing configuration naming.
+      </p>
+      <h3>
+        Page Contents
+      </h3>
+      <div style="margin-left: 2em">
+        <ul>
+          <li>
+            <a href="#ConfigTree">Configuration tree.</a>
+          </li>
+          <li>
+            <a href="#ConfigAddressing">Addressing the configuration elements.</a>
+          </li>
+          <li style="list-style: none">
+            <ul>
+              <li>
+                <a href="#Xpath">Config Beans and XPath.</a>
+              </li>
+              <li>
+                <a href="#ObjectNames">Config MBeans and ObjectNames.</a>
+              </li>
+              <li>
+                <a href="#DottedNames">CLI Dotted names.</a>
+              </li>
+            </ul>
+          </li>
+          <li>
+            <a href="#locationVector">Element generic addressing: location vector and name templates.</a>
+          </li>
+          <li>
+            <a href="#Naming_metadata">Naming metadata.</a>
+          </li>
+          <li>
+            <a href="#UseCases">Naming usage.</a>
+          </li>
+          <li>
+            <a href="#naming_files">Naming API classes and metadata files in the GlassFish repository.</a>
+          </li>
+          <li>
+            <a href="#Supporting_Documentation">Supporting Documentation.</a>
+          </li>
+        </ul>
+      </div>
+      <h3>
+        <a name="ConfigTree"></a> Configuration tree.
+      </h3>
+      <p>
+        GlassFish Configuration is defined by the content of domain.xml file (located in
+        {install-directory}/domains/{domain name}/config directory). It is represented a hierarchical tree
+        of the configuration elements. Elements could contain attributes and special sub-elements -
+        description/properties/system-properties. The following figure shows a fragment of the GlassFish
+        configuration tree.
+      </p>
+      <p>
+        <img src="domain_xml.gif"><br>
+         <u>Figure 1: Configuration elements in domain.xml</u>
+      </p>
+      <br>
+       
+      <p>
+        The above configuration fragment includes the http-listener named "mySecureListener", located in
+        config tree named "myConfig". Starting from here, we will refer to this element in the 
+        following samples.
+      </p>
+      <br>
+       
+      <h3>
+        <a name="ConfigAddressing"></a> Addressing the configuration elements: XML XPath, JMX ObjectName and
+        CLI dotted name.
+      </h3>
+      <p>
+        There are four major consumers for Configuration Management data and services: GlassFish backend
+        modules, MBeans, Command Line and Graphic user interfaces (CLI and GUI). These components point to
+        the configuration entity (element,attribute,property etc.) by using different types of
+        addresses. Having different addresses for the same entity is necessary for several reasons, including 
+        external requiremenets (e.g. JMX ObjectNames rules) or usability (CLI).
+      </p>
+      <p>
+        <img src="naming_clients.gif"><br>
+         <u>Figure 2: Major configuration clients</u>
+      </p>
+      <p>
+        GlassFish provides two types of generic configuration APIs to manage config elements/properties and
+        attributes.
+      </p>
+      <p>
+        Backend modules can access the configuration through Config Beans. Config Beans are the Java classes,
+        programmatically generated accordingly to domain XML schema. Each Config Bean represents a corresponding 
+        configuration element and provides the generic configuration API: set/get attribute values, 
+        list/create/delete child Config Beans and properties.
+      </p>
+      <p>
+        External configuration requests (GUI, CLI, and JMX) are served by Config MBeans - Dynamic JMX
+        MBeans. These MBeans are binded to corresponding Config Beans and provide the similar generic
+        operations.
+      </p>
+      <br>
+       
+      <div style="margin-left: 2em">
+        <h4>
+          <a name="Xpath"></a> Config Beans and XPath.
+        </h4>
+        <p>
+          GlassFish provides a generic configuration API for backend modules and MBeans to manage config
+          elements/properties and attributes. Config Bean objects are programmatically generated according
+          to sun-domain.dtd. Each Config Bean represents the corresponding configuration element and provides
+          generic configuration API: set/get attribute values, list/create/delete child Config Beans and
+          properties.
+        </p>
+        <p>
+          Backend modules use two approaches to get ConfigBeans for given configuration elements. First, they
+          can use navigation through configuration tree, starting from the tree root element's bean ("domain"
+          element). For example, to obtain Config Bean reprenting http-listener named "mySecureListener"
+          located in config tree named "myConfig", the following calls can be performed:<br>
+          <br>
+        </p>
+        <table>
+          <tr>
+            <td width="40">
+            </td>
+            <td bgcolor="#D0D0D0">
+              <br>
+               <code>Domain domain =(Domain)myConfigContext.getRootBean;<br>
+               Configs configs = domain.getConfig();<br>
+               Config config = configs.getConfigByName(<i><b>"myConfig"</b></i>);<br>
+               HttpService httpService = config.getHttpService();<br>
+               HttpListener httpListener =
+              httpService.getHttpListenerById(<i><b>"mySecureListener"</b></i>);<br>
+              </code><br>
+            </td>
+          </tr>
+        </table>
+        <br>
+         
+        <p>
+          Another method of Config Beans discovery uses xml element XPath. XPath is the popular language for
+          addressing the xml-file components (elements/attributes etc.). The http listener in the above example
+          would have the following XPath address:
+          /domain/configs/config[@name='myConfig']/http-service/http-listener[@id='mySecureListener'].
+          Configuration Management provides util API for dicovery Config Beans by their XPathes. So, the same
+          Config Bean could be retrieved by the following code:<br>
+          <br>
+        </p>
+        <table>
+          <tr>
+            <td width="40">
+            </td>
+            <td bgcolor="#D0D0D0">
+              <br>
+               <code>HttpListener httpListener = (HttpListener)ConfigBeanFactory.getConfigBeanByXPath(<br>
+                    myConfigContext,<br>
+                    <i><b>"/domain/configs/config[@name='myConfig']/http-service/http-listener[@id='mySecureListener']"</b></i>);<br>
+              </code><br>
+            </td>
+          </tr>
+        </table>
+        <br>
+         
+        <h4>
+          <a name="ObjectNames"></a>Config MBeans and ObjectNames.
+        </h4>
+        <p>
+          Config Beans are used by backend modules to retrieve and update configuration data. These beans
+          are inaccessible for client code. J2EE application server provides client API through JMX MBeans.
+          They are available to JMX connected client. GlassFish provides special Config MBeans (Admin MBeans)
+          bound to the corresponding configuration element and its Config Bean. We can consider Config MBeans
+          as client form of Config Beans. Special name - ObjectName is assigned to each MBean. You can find
+          its format description in <a href="http://www.jcp.org/en/jsr/detail?id=3">JMX specification</a>.
+        </p>
+        <p>
+          Config MBean for our example's http listener element would have the following ObjectName:
+          <b><i>"com.appserv:type=http-listener,config=myConfig,id=mySecureListener".</i></b><br>
+        </p>
+        <h4>
+          <a name="DottedNames"></a>CLI Dotted names.
+        </h4>
+        <p>
+          Both XPath and ObjectName are still too complex for using them as client UI names for addressed
+          configuration elements. So, GlassFish's user commands interface (CLI) uses so-called dotted names
+          for access to Config MBeans. These names are used in generic config operations such as get, set and
+          list.
+        </p>
+        <p>
+          Our example http listener element will be addressed by the following dotted name -
+          <b><i>"myConfig.http-service.http-listener.mySecureListener"</i></b><br>
+        </p>
+      </div>
+      <h3>
+        <a name="locationVector"></a>Element generic addressing: location vector and name templates.
+      </h3>
+      <p>
+        Let's consider XPath address for configuration element from above sample:<br>
+        <br>
+      </p>
+      <table>
+        <tr>
+          <td width="40">
+          </td>
+          <td bgcolor="#D0D0D0">
+            <code><br>
+             <b>"/domain/configs/config[@name=<i><u><font color="RED">'myConfig'</font></u></i>]/http-service/http-listener[@id=
+            <i><u><font color="RED">'mySecureListener'</font></u></i>]"<br>
+            <br>
+            </b></code>
+          </td>
+        </tr>
+      </table>
+      <br>
+       
+      <p>
+        It represents the fully qualified path from the tree root (/domain element) to http listener named
+        &lsquo;mySecureListener&rsquo; located in the configuration named &lsquo;myConfig&rsquo;. On that
+        way, there were two nodes (configs and http-service) that have multiple descendants of the same type
+        (config and http-listener respectively). String values of their primary keys &ndash;
+        &lsquo;myConfig&rsquo; and &lsquo;mySecureListener&rsquo; represent the choice of sub-branches
+        leading to the given element on that way. These values marked by italic red font.
+      </p>
+      <p>
+        Now, let&rsquo;s consider the XPath address for another http listener, which has the different name
+        and belongs to the different configuration. It could be:<br>
+        <br>
+      </p>
+      <table>
+        <tr>
+          <td width="40">
+          </td>
+          <td bgcolor="#D0D0D0">
+            <code><br>
+             <b>"/domain/configs/config[@name=<i><u><font color="RED">'newConfig'</font></u></i>]/http-service/http-listener[@id=
+            <i><u><font color="RED">'newListener'</font></u></i>]"<br>
+            <br>
+            </b></code>
+          </td>
+        </tr>
+      </table>
+      <br>
+       
+      <p>
+        These two addresses are differed only by primary key values. All other parts of addresses, except of
+        these values will be exactly the same! It means that if we know the id of desired http listener and
+        name of configuration it belongs to, then we can easily produce XPath address for desired element by
+        replacing the key values in above XPath address to required ones. Let's call the set of such primary
+        key values as element location vector. This vector will have the same size and member meaning for all
+        elements of the same type. In our case, the two we deal with "http-listener" element with location
+        {"myConfig", "mySecureListener"}.
+      </p>
+      <p>
+        Other words, we can say that every http listener in doman.xml file has XPath address equals to
+        <b><i>"/domain/configs/config[@name='<font color=
+        "RED">{1}</font>']/http-service/http-listener[@id='<font color="RED">{2}</font>']"</i></b>, where
+        <font color="RED">{1}</font> should be replaced by actual name of config containing the addressing
+        http listener, and <font color="RED">{2}</font> is place holder for actual http-listener id value.
+        I.e. we have got XPath template for all http listener elements in whole configuration tree and if we
+        know location (primary key values) for an element we can easily map this template to its XPath
+        address. XPath for the elements of the same type always will match to the corresponding XPath
+        template.
+      </p>
+      <p>
+        Please, note that element's &ldquo;type&rdquo; in this context is not uniquely specified by XML tag 
+				of an element. For example, according to domain.dtd, &ldquo;ssl&rdquo; element can belong to different 
+				parent elements:
+        &ldquo;http-listener&rdquo;, &rdquo;ssl-client-config&rdquo;, &rdquo;iiop-listener&rdquo;, or
+        &rdquo;jmx-connector&rdquo;. It means that there are four different element types (e.g. &ldquo;http
+        listener ssl&rdquo;) with own XPath templates for &ldquo;ssl&rdquo; XML element in domain.xml.
+      </p>
+      <p>
+        Having XPath address template for each element type is pretty obvious, because XPath address is
+        representing the fully qualified path to the element and this address is completely defined by XML
+        tree topology. Despite of XPath, two other addresses: JMX ObjectName and CLI dotted name are not
+        predefined by element location, but chosen by UI designers in accordance with design requirements and
+        usability. Let&rsquo;s look at all these three addresses again:<br>
+        <br>
+      </p>
+      <table>
+        <tr>
+          <td width="40">
+          </td>
+          <td bgcolor="#D0D0D0">
+            <code><br>
+             XPath:
+            <b><i>"/domain/configs/config[@name=<font color="RED">'myConfig'</font>]/http-service/http-listener[@id=<font color="RED">'mySecureListener'</font>]"</i></b><br>
+             JMX ObjectName:
+            <b><i>"com.appserv:type=http-listener,config=<font color="RED">myConfig</font>,id=<font color="RED">mySecureListener</font>,category=config"</i></b><br>
+             CLI dotted name: <b><i>"<font color="RED">myConfig</font>.http-service.http-listener.<font color="RED">mySecureListener</font>"</i></b><br>
+            <br>
+            </code>
+          </td>
+        </tr>
+      </table>
+      <br>
+       It is amazing! The other two addresses also contain the same primary key values, which helped us to
+      find the right path on the way from the tree root to the required element for XPath construction!
+      Let&rsquo;s replace these values by placeholders as we did for XPath earlier:<br>
+      <br>
+       
+      <table>
+        <tr>
+          <td width="40">
+          </td>
+          <td bgcolor="#D0D0D0">
+            <code><br>
+             XPath: <b><i>"/domain/configs/config[@name='<font color=
+            "RED">{1}</font>']/http-service/http-listener[@id='<font color="RED">{2}</font>']"</i></b><br>
+             JMX ObjectName: <b><i>"com.appserv:type=http-listener,config=<font color=
+            "RED">{1}</font>,id=<font color="RED">{2}</font>,category=config"</i></b><br>
+             CLI dotted name: <b><i>"<font color="RED">{1}</font>.http-service.http-listener.<font color=
+            "RED">{2}</font> "</i></b><br>
+            </code><br>
+          </td>
+        </tr>
+      </table>
+      <br>
+       Now, we have set of templates for all addresses for certain type element. Strictly speaking, such
+      templates will exist not just for given address types, but for any well-defined generic string type
+      address. We will consider the element type address is well-defined, if any possible address uniquely
+      identifiers the element type and location of the desired element. XPath address is always well-defined,
+      but ObjectName and dotted name templates should be chosen the way to avoid an ambiguity. For example,
+      we can choose another template for dotted name or alias of http-listener element &ndash; "<font color=
+      "RED">{1}</font>.listener.<font color="RED">{2}</font> " or "HTTP-listener. <font color=
+      "RED">{1}</font>.<font color="RED">{2}</font>&rdquo; . This address could be well-defined if it is not
+      confused with other element templates. Again, in the present discussion we are limited by type of
+      addresses we deal with &ndash; JMX ObjectNames and CLI dotted names with their format restrictions, but
+      template approach will work with any other generic addresses suitable for UI. For example the following
+      pattern could also produce the string address uniquely identifying the given element:<br>
+       
+      <table>
+        <tr>
+          <td width="40">
+          </td>
+          <td bgcolor="#D0D0D0">
+            <code>&ldquo;The http listener named <font color="RED">{1}</font> located in the configuration
+            named <font color="RED">{2}</font>&rdquo;</code>
+          </td>
+        </tr>
+      </table>
+      <br>
+       
+      <h3>
+        <a name="Naming_metadata"></a>Naming metadata.
+      </h3>
+      <p>
+        Naming metadata is conained in Admin MBean Descriptors file (you can find it in the GlassFish
+        repository) and represented by set of assigned name templates for each addressable element(like those
+        three above templates for the sample element). Let's see how it looks for http-listener element:
+      </p>
+      <table>
+        <tr>
+          <td width="40">
+          </td>
+          <td bgcolor="#D0D0D0">
+<pre>
+  &lt;!-- +++++++++  27. http-listener  +++++++++++ --&gt;
+  &lt;mbean name="http-listener" group="config" className="com.sun.enterprise.admin.mbeans.HttpListenerMBean" &gt;
+     &lt;descriptor&gt;
+        &lt;field name="elementChangeEvent" value="com.sun.enterprise.admin.event.http.HSHttpListenerEvent" /&gt;
+ <font color=
+"RED">      &lt;field name="ObjectName" value=<i><b><u>"{0}:type=http-listener,id={2},config={1},category=config"</u></b></i> /&gt;
+        &lt;field name="xpath" value=<i><b><u>"/domain/configs/config[@name='{1}']/http-service/http-listener[@id='{2}']"</u></b></i> /&gt;
+        &lt;field name="CLIName" value=<i><b><u>"{1}.http-service.http-listener.{2}"</u></b></i> /&gt;
+</font>     &lt;/descriptor&gt;
+     &lt;attribute name="server-name" &gt;
+         &lt;descriptor&gt;
+            &lt;field name="emptyValueAllowed" value="true" /&gt;
+         &lt;/descriptor&gt;
+     &lt;/attribute&gt;
+  &lt;/mbean&gt;
+         
+</pre>
+          </td>
+        </tr>
+      </table>
+      <br>
+       
+      <p>
+        Naming templates extracted from each MBean decriptor is contained in the corresponding
+        MBeanNamingDescriptor class object. This object provides two basic operations: - check the matching
+        with concrete address value of any allowed type (XPath/ObjectName/CLI-name); - extracts Element
+        Location Vector for matching address;
+      </p>
+      <h3>
+        <a name="HowItWorks"></a>How It Works.
+      </h3>
+      <p>
+        As we could see from the previous paragraphs, most naming services based on address values conversion
+        and retrieval objects (beans/MBeans) by their addresses. Also we could see that having any type
+        address for given configuration element, we can easily find proper MBeanNamingDescriptor matching to
+        this value and obtain element's Location Vector.
+      </p>
+      <p>
+        GlassFish Config Naming infrastructure objects ( MBeanNamingDescriptor, MBeanNamingInfo classes etc.)
+        provide the whole spectrum of the mutual address values convertion (XPath to ObjecNames, dottednames
+        to XPath etc.) and lifecircle operations, like "instantiate MBean by certain address". The following
+        figure describes typical scenarios of configuration naming usage.
+      </p>
+      <p>
+        <img src="naming_usage.gif"><br>
+         <u>Figure 3: Configuration naming typical usage.</u>
+      </p>
+      <br>
+       
+      <h3>
+        <a name="UseCases"></a>Naming usage.
+      </h3>
+      <p>
+        Thus, there are three types of names possibly pointing to the same configuration element: XPath
+        value, JMX ObjectName, and CLI dotted name in the GlassFish. Let's consider the cases when GlassFish
+        uses them:
+      </p>
+      <ul>
+        <li>
+          In the beginning of the application server startup, domain.xml configuration file is parsing and
+          converted to set of corresponding Config Beans, containing the proper XPath addresses;
+        </li>
+        <li>
+          Every time when new Config Bean created, corresponding Config MBean is instantiated in DAS under
+          the proper ObjectName;
+        </li>
+        <li>
+          Every time when new Config MBean is created, - corresponding dotted-name is formed and registered
+          in the Dotted Names Manager;
+        </li>
+        <li>
+          Admin modules and HTML adapters use JMX ObjectNames for access config MBeans;
+        </li>
+        <li>
+          CLI client uses dotted names to address configuration element, attribute, or property; these names
+          are passing to backend&rsquo;s dotted name manager;
+        </li>
+        <li>
+          Dotted names manager converts CLI dotted names for get/set/list operations to ObjectNames of MBeans
+          representing the same configuration element;
+        </li>
+        <li>
+          Backend modules and MBeans use configuration elements XPathes to obtain corresponding Config Beans;
+        </li>
+        <li>
+          Various converters applied to names, transforming them to another address form. E.g. MBean
+          operations often use convertion of ConfigBeans (XPathes) to JMX ObjectNames as returning values for
+          config operations;
+        </li>
+        <li>
+          XPath address is intensively using by Dynamic Reconfiguration process and Admin Validator;
+        </li>
+        <li>
+          XPathes of the updated elements are part of ConfigChangeEvents analyzed by Admin Validator;
+        </li>
+      </ul>
+      <br>
+       
+      <h3>
+        <a name="naming_files"></a>Naming API classes and metadata files in the GlassFish repository.
+      </h3>
+      <div style="margin-left: 2em">
+        <p>
+          Naming metadata can be found in the <a href=
+          "https://glassfish.dev.java.net/source/browse/glassfish/admin-core/admin/dtds/">Admin MBean
+          descriptors file</a>.
+        </p>
+        <p>
+          Naming API classes are resided in <a href=
+          "https://glassfish.dev.java.net/source/browse/glassfish/admin-core/admin/src/java/com/sun/enterprise/admin/meta">
+          admin sub module of admin-core in the GlassFish repository</a>
+        </p>
+      </div>
+        
+      <h3>
+        <a name="Supporting_Documentation"></a>Supporting Documentation
+      </h3>
+      <ul>
+        <li>
+          <a href="http://docs.sun.com/source/819-0082/hman1m/asadmin.1m.html">CLI Reference Manual</a>
+        </li>
+        <li>
+          <a href="http://www.jcp.org/en/jsr/detail?id=3">JSR 3: Java Management Extensions (JMX)
+          Specification</a>
+        </li>
+      </ul>
+    </div>
+  </body>
+</html>

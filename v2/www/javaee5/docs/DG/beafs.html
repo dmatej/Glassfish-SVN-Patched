@@ -1,0 +1,704 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>7.&nbsp;&nbsp;Developing Web Applications
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Developer's Guide</A>&nbsp;<br>
+<A HREF="gaszn.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="beahl.html">Next</A><br>
+            <!--startindex--><A NAME="beafs"></A><b>Chapter&nbsp;7</b><h1>Developing Web Applications</h1>
+<p>This chapter describes how <A NAME="indexterm-274"></A>web applications are supported in the Sun Java System Application Server and
+includes the following sections:</p>
+<ul><li><p><A HREF="beafs.html#beaft">Introducing Web Applications</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagj">Using Servlets</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagu">Using JavaServer Pages</A></p>
+</li>
+<li><p><A HREF="beafs.html#beaha">Creating and Managing HTTP Sessions</A></p>
+</li>
+</ul>
+<p>For general information about web applications, see the <A NAME="indexterm-275"></A><i>Java EE 5 Tutorial</i> at <A HREF="http://java.sun.com/j2ee/1.4/docs/tutorial/doc/WebApp.html#wp76431">http://java.sun.com/j2ee/1.4/docs/tutorial/doc/WebApp.html#wp76431</A>.</p>
+<A NAME="beaft"></A><h2>Introducing Web Applications</h2>
+<p>This section includes summaries of the following topics:</p>
+<ul><li><p><A HREF="beafs.html#beafu">Internationalization Issues</A></p>
+</li>
+<li><p><A HREF="beafs.html#beafz">Virtual Servers</A></p>
+</li>
+<li><p><A HREF="beafs.html#beaga">Default Web Modules</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagb">Class Loader Delegation</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagc">Using the default-web.xml File</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagd">Configuring Logging in the Web Container</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagh">Configuring HTML Error Pages</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagi">Header Management</A></p>
+</li>
+</ul>
+<A NAME="beafu"></A><h3>Internationalization Issues</h3>
+<p>This section covers <A NAME="indexterm-276"></A>internationalization as it applies to the following:</p>
+<ul><li><p><A HREF="beafs.html#beafv">The Server</A></p>
+</li>
+<li><p><A HREF="beafs.html#beafw">Servlets</A></p>
+</li>
+</ul>
+<A NAME="beafv"></A><h4>The Server</h4>
+<p>To set the default locale of the entire Application Server, which determines the <A NAME="indexterm-277"></A>locale of the Admin Console, the logs, and so on, use the <A NAME="indexterm-278"></A>Admin Console. Select the Domain component, and type a value in the Locale
+field. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+<A NAME="beafw"></A><h4>Servlets</h4>
+<p>This section explains how the Application Server determines the character <A NAME="indexterm-279"></A><A NAME="indexterm-280"></A>encoding for the servlet request and the servlet response. For encodings
+you can use, see <A HREF="http://java.sun.com/j2se/1.4/docs/guide/intl/encoding.doc.html">http://java.sun.com/j2se/1.4/docs/guide/intl/encoding.doc.html</A>.</p>
+<A NAME="beafx"></A><h5>Servlet Request</h5>
+<p>When processing a servlet request, the server uses the following order of precedence,
+first to last, to determine the request character encoding:</p>
+<ul><li><p>The <A NAME="indexterm-281"></A><tt></tt><tt>getCharacterEncoding()</tt> method.</p>
+</li>
+<li><p>A hidden field in the form, specified by the <tt>form-hint-field</tt> attribute of the <tt>parameter-encoding</tt> element in the <tt>sun-web.xml</tt> file.</p>
+</li>
+<li><p>The character encoding set in the <tt>default-charset</tt> attribute
+of the <tt>parameter-encoding</tt> element in the <tt>sun-web.xml</tt> file.</p>
+</li>
+<li><p>The default, which is <tt>ISO-8859-1</tt>.</p>
+</li>
+</ul>
+<p>For details about the <tt>parameter-encoding</tt> element, see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"parameter-encoding" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+<A NAME="beafy"></A><h5>Servlet Response</h5>
+<p>When processing a servlet response, the server uses the following order of precedence,
+first to last, to determine the response character encoding:</p>
+<ul><li><p>The <A NAME="indexterm-282"></A><tt>setCharacterEncoding()</tt> or <A NAME="indexterm-283"></A><tt></tt><tt>setContentType()</tt> method.</p>
+</li>
+<li><p>The <A NAME="indexterm-284"></A><tt></tt><tt>setLocale()</tt> method.</p>
+</li>
+<li><p>The default, which is <tt>ISO-8859-1</tt>.</p>
+</li>
+</ul>
+<A NAME="beafz"></A><h3>Virtual Servers</h3>
+<p>A <A NAME="indexterm-285"></A>virtual server, also called a virtual host, is a virtual web server that
+serves content targeted for a specific URL. Multiple virtual servers can serve content
+using the same or different host names, port numbers, or IP addresses. The HTTP service
+directs incoming web requests to different virtual servers based on the URL.</p>
+<p>When you first install the Application Server, a <A NAME="indexterm-286"></A><A NAME="indexterm-287"></A>default virtual server is created. (You can also assign a default virtual
+server to each new HTTP listener you create. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.)</p>
+<p>Web applications and Java EE applications containing web components can be assigned
+to virtual servers. </p>
+<A NAME="fvycf"></A><h4><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To assign virtual servers</h4>
+<h5>Steps</h5><ol><li><p><b>Deploy the application or web module and assign the desired virtual server
+to it.</b></p><p>For more information, see <A HREF="http://docs.sun.com/app/docs/doc/819-3660"><i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+</li>
+<li><p><b>In the Admin Console, open the HTTP Service component under the relevant
+configuration.</b></p></li>
+<li><p><b>Open the Virtual Servers component under the HTTP Service component.</b></p></li>
+<li><p><b>Select the virtual server to which you want to assign a default web module.</b></p></li>
+<li><p><b>Select the application or web module from the Default Web Module drop-down
+list. </b></p><p>For more information, see <A HREF="beafs.html#beaga">Default Web Modules</A>.</p>
+</li>
+</ol><h5>See Also</h5><p>For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+<A NAME="beaga"></A><h3>Default Web Modules</h3>
+<p>A <A NAME="indexterm-288"></A><A NAME="indexterm-289"></A>default web module can be assigned to the default virtual server and to
+each new virtual server. For details, see <A HREF="beafs.html#beafz">Virtual Servers</A>. To access the default web module for a virtual server, point the browser
+to the URL for the virtual server, but do not supply a context root. For example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>http://myvserver:3184/</pre>
+</td></table><br><p>A virtual server with no default web module assigned serves HTML or JSP content
+from its document root, which is usually <i>domain-dir</i><tt>/docroot</tt>. To
+access this HTML or JSP content, point your browser to the URL for the virtual server,
+do not supply a context root, but specify the target file.</p>
+<p>For example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>http://myvserver:3184/hellothere.jsp</pre>
+</td></table><br><A NAME="beagb"></A><h3>Class Loader Delegation</h3>
+<p>The Servlet specification recommends that the <A NAME="indexterm-290"></A>Web Classloader look in the local class loader before delegating to its
+parent. To make the Web Classloader follow the delegation model in the Servlet specification,
+set <tt>delegate="false"</tt> in the <A NAME="indexterm-291"></A><tt>class-loader</tt> element of the <A NAME="indexterm-292"></A><tt>sun-web.xml</tt> file. It's safe to do this only for
+a web module that does not interact with any other modules.</p>
+<p>The default value is <tt>delegate="true"</tt>, which causes the Web
+Classloader to delegate in the same manner as the other class loaders. Use <tt>delegate="true"</tt> for a web application that accesses EJB components or that
+acts as a web service client or endpoint. For details about <tt>sun-web.xml</tt>,
+see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"The sun-web.xml File" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+<p>For general information about class loaders, see <A HREF="beade.html#beade">Chapter&nbsp;2, Class Loaders</A>.</p>
+<A NAME="beagc"></A><h3>Using the default-web.xml File</h3>
+<p>You can use the <A NAME="indexterm-293"></A><tt>default-web.xml</tt> file to define features such as filters
+and security constraints that apply to all web applications.</p>
+<A NAME="fvymc"></A><h4><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To use the default-web.xml file</h4>
+<h5>Steps</h5><ol><li><p><b>Place the JAR file for the filter, security constraint, or other feature
+in the <i>domain-dir</i><tt>/lib</tt> directory.</b></p></li>
+<li><p><b>Edit the <i>domain-dir</i><tt>/config/default-web.xml</tt> file to
+refer to the JAR file.</b></p></li>
+<li><p><b>Restart the server.</b></p></li>
+</ol><A NAME="beagd"></A><h3>Configuring Logging in the Web Container</h3>
+<p>For information about configuring <A NAME="indexterm-294"></A>logging and <A NAME="indexterm-295"></A>monitoring in the web container using the <A NAME="indexterm-296"></A><A NAME="indexterm-297"></A>Admin Console, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+<A NAME="beagh"></A><h3>Configuring HTML Error Pages</h3>
+<p>To specify an <A NAME="indexterm-298"></A>error page (or URL to an error page) to be displayed to the end user,
+use the <A NAME="indexterm-299"></A><tt>error-url</tt> attribute of the <tt>sun-web-app</tt> element
+in the <tt>sun-web.xml</tt> file. For example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;sun-web-app error-url="<i>webserver-install-dir</i>/error/error1.html">
+... <i>subelements</i> ...
+&lt;/sun-web-app></pre>
+</td></table><br><p>If the <tt>error-url</tt> attribute is specified, it overrides all
+other mechanisms configured for error reporting.</p>
+<p><hr size="1" noshade><p><b>Note - </b>This attribute should not point to a URL on the Application Server instance,
+because the <tt>error-url</tt> cannot be loaded if the server is down. Instead,
+specify a URL that points to a location on the web server.</p>
+<hr size="1" noshade></p><p>For details, see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"sun-web-app" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+<p>The Application Server provides the following options for specifying the error page.</p>
+<ul><li><p>You can specify the <tt>error-url</tt> to be an HTTP URL.
+The Application Server forwards the client request to the specified error URL.</p>
+</li>
+<li><p>If you do not specify the <tt>error-url</tt> attribute in
+the <tt>sun-web.xml</tt> file, a default error page is displayed.</p>
+</li>
+</ul>
+<p>The error page is displayed according to the following rules:</p>
+<ul><li><p>When an error is encountered for an application, the Application Server first
+checks if the <tt>error-url</tt> attribute is defined. If it is defined,
+the Application Server reads the URL attribute and loads the error page.</p>
+</li>
+<li><p>If the <tt>error-url</tt> attribute is missing or invalid,
+the Application Server displays the default error page.</p>
+</li>
+<li><p>If the <tt>error-url</tt> has been defined but the page
+is missing, the Application Server loads the default error page.</p>
+</li>
+<li><p>If the default error page is missing, the error is forwarded to the
+web server.</p>
+</li>
+</ul>
+<A NAME="beagi"></A><h3>Header Management</h3>
+<A NAME="indexterm-300"></A><A NAME="indexterm-301"></A><p>In all Editions of the Application Server, the <tt>Enumeration</tt> from <tt>request.</tt><tt>getHeaders()</tt> contains multiple elements instead
+of a single, aggregated value.</p>
+<p>The header names used in <tt>HttpServletResponse.add</tt><i>XXX</i><tt>Header()</tt> and <tt>HttpServletResponse.set</tt><i>XXX</i><tt>Header()</tt> are returned as
+they were created.</p>
+<A NAME="beagj"></A><h2>Using Servlets</h2>
+<A NAME="indexterm-302"></A><p>Application Server supports the Java Servlet Specification version 2.5.</p>
+<p><hr size="1" noshade><p><b>Note - </b>Servlet API version 2.5 is fully backward compatible with versions 2.3
+and 2.4, so all existing servlets should work without modification or recompilation.</p>
+<hr size="1" noshade></p><p><A NAME="indexterm-303"></A><A NAME="indexterm-304"></A>To develop servlets, use Sun Microsystems' Java Servlet API. For
+information about using the <A NAME="indexterm-305"></A><A NAME="indexterm-306"></A><A NAME="indexterm-307"></A>Java Servlet API, see the documentation provided by Sun Microsystems at <A HREF="http://java.sun.com/products/servlet/index.html">http://java.sun.com/products/servlet/index.html</A>.</p>
+<p>The Application Server provides the <tt>wscompile</tt> and <tt>wsdeploy</tt> tools to help you implement a web service endpoint as a servlet. For more
+information about these tools, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A></i>.</p>
+<p>This section describes how to create effective servlets to control application
+interactions running on an Application Server, including standard-based servlets. In addition,
+this section describes the Application Server features to use to augment the standards.</p>
+<p>This section contains the following topics:</p>
+<ul><li><p><A HREF="beafs.html#beagk">Invoking a Servlet with a URL</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagl">Servlet Output</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagm">Caching Servlet Results</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagr">About the Servlet Engine</A></p>
+</li>
+</ul>
+<A NAME="beagk"></A><h3>Invoking a Servlet with a URL</h3>
+<A NAME="indexterm-308"></A><p>You can call a servlet deployed to the Application Server by using a URL in a browser
+or embedded as a link in an HTML or JSP file. The format of a servlet invocation URL
+is as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>http://<i>server</i>:<i>port</i>/<i>context-root</i>/<i>servlet-mapping</i>?<i>name</i>=<i>value</i></pre>
+</td></table><br><p>The following table describes each URL section.</p>
+<A NAME="fvyhk"></A><p><b>Table 7-1 </b>URL Fields for Servlets
+Within an Application</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>URL element                         </p></th><th scope="col"><p>Description                         </p></th></tr>
+<tr><td><p><i>server</i><tt>:</tt><i>port</i></p></td><td><p>The IP address (or host name) and optional port number.</p><p>To access the <A NAME="indexterm-309"></A><A NAME="indexterm-310"></A>default web module for a virtual server, specify only this URL section.
+You do not need to specify the <i>context-root</i> or <i>servlet-name</i> unless you also wish to specify name-value parameters.</p></td></tr>
+<tr><td><p><i>context-root</i></p></td><td><p>For an application, the <A NAME="indexterm-311"></A>context root is defined in the <tt>context-root</tt> element
+of the <tt>application.xml</tt> or <tt>sun-application.xml</tt> file.
+For an individually deployed web module, the context root is specified during deployment.</p><p>For both applications and individually deployed web modules, the default context
+root is the name of the WAR file minus the <tt>.war</tt> suffix.</p></td></tr>
+<tr><td><p><i>servlet-mapping</i></p></td><td><p>The <tt>servlet-mapping</tt> as configured in the <tt>web.xml</tt> file.</p></td></tr>
+<tr><td><p><tt>?</tt><i>name</i><tt>=</tt><i>value</i><tt>...</tt></p></td><td><p>Optional request parameters.</p></td></tr>
+</table><p>In this example, <tt>localhost</tt> is the host name, <tt>MortPages</tt> is the context root, and <tt>calcMortgage</tt> is the servlet
+mapping:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>http://localhost:8080/MortPages/calcMortgage?rate=8.0&amp;per=360&amp;bal=180000</pre>
+</td></table><br><p>When invoking a servlet from within a JSP file, you can use a relative path.
+For example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;jsp:forward page="TestServlet"/>
+&lt;jsp:include page="TestServlet"/></pre>
+</td></table><br><A NAME="beagl"></A><h3>Servlet Output</h3>
+<A NAME="indexterm-312"></A><A NAME="indexterm-313"></A><p><A NAME="indexterm-314"></A><tt>ServletContext.log</tt> messages are sent to the server
+log.</p>
+<p>By default, the <tt>System.out</tt> and <tt>System.err</tt> output
+of servlets are sent to the server log, and during startup server log messages are
+echoed to the <tt>System.err</tt> output. Also by default, there is no Windows-only
+console for the <tt>System.err</tt> output.</p>
+<p>To change these defaults using the <A NAME="indexterm-315"></A>Admin Console, select the Logger Settings component under the relevant
+configuration, then check or uncheck these boxes:</p>
+<ul><li><p>Log Messages to Standard Error - If checked, <tt>System.err</tt> output
+is sent to the server log. If unchecked, <tt>System.err</tt> output is sent
+to the system default location only.</p>
+</li>
+<li><p>Write to System Log - If checked, <tt>System.out</tt> output
+is sent to the server log. If unchecked, <tt>System.out</tt> output is sent
+to the system default location only.</p>
+</li>
+</ul>
+<p>For more information, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+<A NAME="beagm"></A><h3>Caching Servlet Results</h3>
+<p><A NAME="indexterm-316"></A><A NAME="indexterm-317"></A>The Application Server can cache the results of invoking a servlet, a JSP,
+or any URL pattern to make subsequent invocations of the same servlet, JSP, or URL
+pattern faster. The Application Server caches the request results for a specific amount
+of time. In this way, if another data call occurs, the Application Server can return the
+cached data instead of performing the operation again. For example, if your servlet
+returns a stock quote that updates every 5 minutes, you set the cache to expire after
+300 seconds.</p>
+<p>Whether to cache results and how to cache them depends on the data involved.
+For example, it makes no sense to cache the results of a quiz submission, because
+the input to the servlet is different each time. However, it makes sense to cache
+a high level report showing demographic data taken from quiz results that is updated
+once an hour.</p>
+<p>To define how an Application Server web application handles response caching, you
+edit specific fields in the <tt>sun-web.xml</tt> file.</p>
+<p><hr size="1" noshade><p><b>Note - </b>A servlet that uses caching is not portable.</p>
+<hr size="1" noshade></p><p>A sample caching application is in <i>install-dir</i><tt>/samples/webapps/apps/caching</tt>.</p>
+<p>For more information about JSP caching, see <A HREF="beafs.html#beagw">JSP Caching</A>.</p>
+<p>The rest of this section covers the following topics:</p>
+<ul><li><p><A HREF="beafs.html#beagn">Caching Features</A></p>
+</li>
+<li><p><A HREF="beafs.html#beago">Default Cache Configuration</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagp">Caching Example</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagq">CacheKeyGenerator Interface</A></p>
+</li>
+</ul>
+<A NAME="beagn"></A><h4>Caching Features</h4>
+<p>The Application Server has the following web application response caching capabilities:</p>
+<ul><li><p>Caching is configurable based on the servlet name or the URI.</p>
+</li>
+<li><p>When caching is based on the URI, this includes user specified parameters
+in the query string. For example, a response from <tt>/garden/catalog?category=roses</tt> is different from a response from <tt>/garden/catalog?category=lilies</tt>. These responses are stored under different keys in the cache.</p>
+</li>
+<li><p>Cache size, entry timeout, and other caching behaviors are configurable.</p>
+</li>
+<li><p>Entry timeout is measured from the time an entry is created or refreshed.
+To override this timeout for an individual cache mapping, specify the <tt>cache-mapping</tt> subelement <tt>timeout</tt>.</p>
+</li>
+<li><p>To determine caching criteria programmatically, write a <A NAME="indexterm-318"></A>class that implements the <tt>com.sun.appserv.web.cache.CacheHelper</tt> interface. For example, if only a servlet knows when a back end data source
+was last modified, you can write a helper class to retrieve the last modified timestamp
+from the data source and decide whether to cache the response based on that timestamp.</p>
+</li>
+<li><p>To determine cache key generation programmatically, write a class
+that implements the <tt>com.sun.appserv.web.cache.CacheKeyGenerator</tt> interface.
+See <A HREF="beafs.html#beagq">CacheKeyGenerator Interface</A>.</p>
+</li>
+<li><p>All non-ASCII request parameter values specified in cache key elements
+must be URL encoded. The caching subsystem attempts to match the raw parameter values
+in the request query string.</p>
+</li>
+<li><p>Since newly updated classes impact what gets cached, the web container
+clears the cache during dynamic deployment or reloading of classes.</p>
+</li>
+<li><p>The following <A NAME="indexterm-319"></A><tt>HttpServletRequest</tt> request attributes are exposed:</p>
+<ul><li><p><tt>com.sun.appserv.web.cachedServletName</tt>, the cached
+servlet target</p>
+</li>
+<li><p><tt>com.sun.appserv.web.cachedURLPattern</tt>, the URL pattern
+being cached</p>
+</li>
+</ul>
+</li>
+<li><p>Results produced by resources that are the target of a <tt>RequestDispatcher.include()</tt> or <tt>RequestDispatcher.forward()</tt> call are cached if caching
+has been enabled for those resources. For details, see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"cache-mapping" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A> and <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"dispatcher" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.
+These are elements in the <tt>sun-web.xml</tt> file.</p>
+</li>
+</ul>
+<A NAME="beago"></A><h4>Default Cache Configuration</h4>
+<p>If you enable <A NAME="indexterm-320"></A>caching but do not provide any special configuration for a servlet or
+JSP, the default cache configuration is as follows:</p>
+<ul><li><p>The default cache timeout is 30 seconds.</p>
+</li>
+<li><p>Only the HTTP GET method is eligible for caching.</p>
+</li>
+<li><p>HTTP requests with cookies or sessions automatically disable caching.</p>
+</li>
+<li><p>No special consideration is given to <tt>Pragma:</tt>, <tt>Cache-control:</tt>, or <tt>Vary:</tt> headers.</p>
+</li>
+<li><p>The default key consists of the Servlet Path (minus <tt>pathInfo</tt> and the query string).</p>
+</li>
+<li><p>A "least recently used" list is maintained to evict cache
+entries if the maximum cache size is exceeded.</p>
+</li>
+<li><p>Key generation concatenates the servlet path with key field values,
+if any are specified.</p>
+</li>
+<li><p>Results produced by resources that are the target of a <tt>RequestDispatcher.include()</tt> or <tt>RequestDispatcher.forward()</tt> call are never cached.</p>
+</li>
+</ul>
+<A NAME="beagp"></A><h4>Caching Example</h4>
+<p>Here is an example <A NAME="indexterm-321"></A>cache element in the <tt>sun-web.xml</tt> file:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;cache max-capacity="8192" timeout="60">
+&lt;cache-helper name="myHelper" class-name="MyCacheHelper"/>
+&lt;cache-mapping>
+	&lt;servlet-name>myservlet&lt;/servlet-name>
+	&lt;timeout name="timefield">120&lt;/timeout>
+	&lt;http-method>GET&lt;/http-method>
+	&lt;http-method>POST&lt;/http-method>
+&lt;/cache-mapping>
+&lt;cache-mapping>
+	&lt;url-pattern> /catalog/* &lt;/url-pattern>
+	&lt;!-- cache the best selling category; cache the responses to
+	   -- this resource only when the given parameters exist. Cache
+	   -- only when the catalog parameter has 'lilies' or 'roses'
+	   -- but no other catalog varieties:
+	  -- /orchard/catalog?best&amp;category='lilies'
+	  -- /orchard/catalog?best&amp;category='roses'
+	  -- but not the result of
+	   -- /orchard/catalog?best&amp;category='wild'
+	-->
+	&lt;constraint-field name='best' scope='request.parameter'/>
+	&lt;constraint-field name='category' scope='request.parameter'>
+		&lt;value> roses &lt;/value>
+		&lt;value> lilies &lt;/value>
+	&lt;/constraint-field>
+	 &lt;!-- Specify that a particular field is of given range but the
+	   -- field doesn't need to be present in all the requests -->
+	&lt;constraint-field name='SKUnum' scope='request.parameter'>
+		&lt;value match-expr='in-range'> 1000 - 2000 &lt;/value>
+	&lt;/constraint-field>
+	&lt;!-- cache when the category matches with any value other than
+	   -- a specific value -->
+	&lt;constraint-field name="category" scope="request.parameter>
+		&lt;value match-expr="equals" cache-on-match-failure="true">
+       bogus
+		&lt;/value>
+	&lt;/constraint-field>
+&lt;/cache-mapping>
+&lt;cache-mapping>
+	&lt;servlet-name> InfoServlet &lt;/servlet-name>
+	&lt;cache-helper-ref>myHelper&lt;/cache-helper-ref>
+&lt;/cache-mapping>
+&lt;/cache></pre>
+</td></table><br><p>For more information about the <tt>sun-web.xml</tt> caching settings,
+see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"cache" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+<A NAME="beagq"></A><h4>CacheKeyGenerator Interface</h4>
+<p>The built-in default <A NAME="indexterm-322"></A><A NAME="indexterm-323"></A><tt>CacheHelper</tt> implementation allows web applications
+to customize the key generation. An application component (in a servlet or JSP) can
+set up a custom <tt>CacheKeyGenerator</tt> implementation as an attribute
+in the <tt>ServletContext</tt>.</p>
+<p>The name of the context attribute is configurable as the <tt>value</tt> of
+the <A NAME="indexterm-324"></A><tt>cacheKeyGeneratorAttrName</tt> property in the <tt>default-helper</tt> element of the <tt>sun-web.xml</tt> deployment
+descriptor. For more information, see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"default-helper" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+<A NAME="beagr"></A><h3>About the Servlet Engine</h3>
+<p>Servlets exist in and are managed by the <A NAME="indexterm-325"></A>servlet engine in the Application Server. The servlet engine is an internal
+object that handles all servlet meta functions. These functions include instantiation,
+initialization, destruction, access from other components, and configuration management.
+This section covers the following topics:</p>
+<ul><li><p><A HREF="beafs.html#beags">Instantiating and Removing Servlets</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagt">Request Handling</A></p>
+</li>
+</ul>
+<A NAME="beags"></A><h4>Instantiating and Removing Servlets</h4>
+<p><A NAME="indexterm-326"></A><A NAME="indexterm-327"></A><A NAME="indexterm-328"></A><A NAME="indexterm-329"></A><A NAME="indexterm-330"></A><A NAME="indexterm-331"></A><A NAME="indexterm-332"></A>After the servlet engine instantiates the servlet, the servlet engine
+calls the servlet's <tt>init()</tt> method to perform any necessary
+initialization. You can override this method to perform an initialization function
+for the servlet's life, such as initializing a counter.</p>
+<p>When a servlet is removed from service, the servlet engine calls the <tt>destroy()</tt> method in the servlet so that the servlet can perform any final
+tasks and deallocate resources. You can override this method to write log messages
+or clean up any lingering connections that won't be caught in garbage collection.</p>
+<A NAME="beagt"></A><h4>Request Handling</h4>
+<p><A NAME="indexterm-333"></A><A NAME="indexterm-334"></A><A NAME="indexterm-335"></A>When a request is made, the Application Server hands the incoming data to the
+servlet engine. The servlet engine processes the request's input data, such
+as form data, cookies, session information, and URL name-value pairs, into an <tt>HttpServletRequest</tt> request object type.</p>
+<p>The servlet engine also creates an <tt>HttpServletResponse</tt> response
+object type. The engine then passes both as parameters to the servlet's <tt>service()</tt> method.</p>
+<p><A NAME="indexterm-336"></A><A NAME="indexterm-337"></A><A NAME="indexterm-338"></A>In an HTTP servlet, the default <tt>service()</tt> method routes
+requests to another method based on the HTTP transfer method: <tt>POST</tt>, <tt>GET</tt>, <tt>DELETE</tt>, <tt>HEAD</tt>, <tt>OPTIONS</tt>, <tt>PUT</tt>, or <tt>TRACE</tt>. For example, HTTP <tt>POST</tt> requests are sent to the <tt>doPost()</tt> method, HTTP <tt>GET</tt> requests are sent to the <tt>doGet()</tt> method, and so on.
+This enables the servlet to process request data differently, depending on which transfer
+method is used. Since the routing takes place in the service method, you generally
+do not override <tt>service()</tt> in an HTTP servlet. Instead, override <tt>doGet()</tt>, <tt>doPost()</tt>, and so on, depending on the request
+type you expect.</p>
+<p><A NAME="indexterm-339"></A><A NAME="indexterm-340"></A><A NAME="indexterm-341"></A>To perform the tasks to answer a request, override the <tt>service()</tt> method for generic servlets, and the <tt>doGet()</tt> or <tt>doPost()</tt> methods for HTTP servlets. Very often, this means accessing EJB
+components to perform business transactions, then collating the information in the
+request object or in a JDBC <tt>ResultSet</tt> object.</p>
+<A NAME="beagu"></A><h2>Using JavaServer Pages</h2>
+<p>The Application Server supports the following JSP features:</p>
+<ul><li><p>JavaServer Pages (JSP) Specification version 2.1</p>
+</li>
+<li><p>Precompilation of JSP files, which is especially useful for production
+servers</p>
+</li>
+<li><p>JSP tag libraries and standard portable tags</p>
+</li>
+</ul>
+<p>For information about creating JSP files, see Sun Microsystem's <A NAME="indexterm-342"></A><A NAME="indexterm-343"></A><A NAME="indexterm-344"></A>JavaServer Pages web site at <A HREF="http://java.sun.com/products/jsp/index.html">http://java.sun.com/products/jsp/index.html</A>.</p>
+<p>For information about <A NAME="indexterm-345"></A>Java Beans, see <A NAME="indexterm-346"></A>Sun Microsystem's JavaBeans web page at <A HREF="http://java.sun.com/beans/index.html">http://java.sun.com/beans/index.html</A>.</p>
+<p>This section describes how to use JavaServer Pages (JSP files) as page templates
+in an Application Server web application. This section contains the following topics:</p>
+<ul><li><p><A HREF="beafs.html#beagv">JSP Tag Libraries and Standard Portable Tags</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagw">JSP Caching</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagz">Options for Compiling JSP Files</A></p>
+</li>
+</ul>
+<A NAME="beagv"></A><h3>JSP Tag Libraries and Standard Portable Tags</h3>
+<A NAME="indexterm-347"></A><A NAME="indexterm-348"></A><p>Application Server supports tag libraries and standard portable tags. For more information,
+see the JavaServer Pages Standard Tag Library (JSTL) page at <A HREF="http://java.sun.com/products/jsp/jstl/index.jsp">http://java.sun.com/products/jsp/jstl/index.jsp</A>.</p>
+<p>Web applications don't need to bundle copies of the <tt>jsf-impl.jar</tt> or <tt>appserv-jstl.jar</tt> JSP tag libraries (in <i>install-dir</i><tt>/lib</tt>) to use JavaServer&#153; Faces technology or JSTL,
+respectively. These tag libraries are automatically available to all web applications.</p>
+<p><A NAME="indexterm-349"></A>However, the <i>install-dir</i><tt>/lib/appserv-tags.jar</tt> tag
+library for JSP caching is not automatically available to web applications. See <A HREF="beafs.html#beagw">JSP Caching</A>, next.</p>
+<A NAME="beagw"></A><h3>JSP Caching</h3>
+<A NAME="indexterm-350"></A><A NAME="indexterm-351"></A><A NAME="indexterm-352"></A><p>JSP caching lets you cache tag invocation results within the Java engine. Each
+can be cached using different cache criteria. For example, suppose you have invocations
+to view stock quotes, weather information, and so on. The stock quote result can be
+cached for 10 minutes, the weather report result for 30 minutes, and so on. JSP caching
+is described in the following topics:</p>
+<ul><li><p><A HREF="beafs.html#gaxbq">The appserv-tags.jar File</A></p>
+</li>
+<li><p><A HREF="beafs.html#gaxcr">Caching Scope</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagx">The cache Tag</A></p>
+</li>
+<li><p><A HREF="beafs.html#beagy">The flush Tag</A></p>
+</li>
+</ul>
+<p>For more information about response caching as it pertains to servlets, see <A HREF="beafs.html#beagm">Caching Servlet Results</A>.</p>
+<A NAME="gaxbq"></A><h4>The appserv-tags.jar File</h4>
+<A NAME="indexterm-353"></A><A NAME="indexterm-354"></A><p>JSP caching is implemented by a tag library packaged into the <i>install-dir</i><tt>/lib/appserv-tags.jar</tt> file, which you can copy into the <tt>WEB-INF/lib</tt> directory of your web application. The <tt>appserv-tags.tld</tt> tag
+library descriptor file is in the <tt>META-INF</tt> directory of this JAR
+file.</p>
+<p><hr size="1" noshade><p><b>Note - </b>Web applications that use this tag library are not portable.</p>
+<hr size="1" noshade></p><p>To allow all web applications to share this tag library, change the following
+elements in the <tt>domain.xml</tt> file. Change this:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;jvm-options>
+-Dcom.sun.enterprise.taglibs=appserv-jstl.jar,jsf-impl.jar
+&lt;/jvm-options></pre>
+</td></table><br><p>to this:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;jvm-options>
+-Dcom.sun.enterprise.taglibs=appserv-jstl.jar,jsf-impl.jar,appserv-tags.jar
+&lt;/jvm-options></pre>
+</td></table><br><p>and this:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;jvm-options>
+-Dcom.sun.enterprise.taglisteners=jsf-impl.jar
+&lt;/jvm-options></pre>
+</td></table><br><p>to this:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;jvm-options>
+-Dcom.sun.enterprise.taglisteners=jsf-impl.jar,appserv-tags.jar
+&lt;/jvm-options></pre>
+</td></table><br><p>For more information about the <tt>domain.xml</tt> file, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3661"><i>Sun Java System Application Server Platform Edition 9.0 Administration Reference</i></A></i>.</p>
+<p>Refer to these tags in JSP files as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;%@ taglib prefix="<i>prefix</i>" uri="Sun ONE Application Server Tags" %></pre>
+</td></table><br><p>Subsequently, the cache tags are available as <tt>&lt;</tt><i>prefix</i><tt>:cache></tt> and <tt>&lt;</tt><i>prefix</i><tt>:flush></tt>. For example, if your <i>prefix</i> is <tt>mypfx</tt>, the cache tags are available as <tt>&lt;mypfx:cache></tt> and <tt>&lt;mypfx:flush></tt>.</p>
+<A NAME="gaxcr"></A><h4>Caching Scope</h4>
+<p>JSP caching is available in three different scopes: <tt>request</tt>, <tt>session</tt>, and <tt>application</tt>. The default is <tt>application</tt>. To use a cache in <tt>request</tt> scope, a web application
+must specify the <tt>com.sun.appserv.web.taglibs.cache.CacheRequestListener</tt> in its <tt>web.xml</tt> deployment descriptor, as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;listener>
+   &lt;listener-class>
+      com.sun.appserv.web.taglibs.cache.CacheRequestListener
+   &lt;/listener-class>
+&lt;/listener></pre>
+</td></table><br><p>Likewise, for a web application to utilize a cache in <tt>session</tt> scope,
+it must specify the   <tt>com.sun.appserv.web.taglibs.cache.CacheSessionListener</tt> in its <tt>web.xml</tt> deployment descriptor, as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;listener>
+   &lt;listener-class>
+      com.sun.appserv.web.taglibs.cache.CacheSessionListener
+   &lt;/listener-class>
+&lt;/listener></pre>
+</td></table><br><p>To utilize a cache in <tt>application</tt> scope, a web application
+need not specify any listener. The <tt>com.sun.appserv.web.taglibs.cache.CacheContextListener</tt> is already specified in the <tt>appserv-tags.tld</tt> file.</p>
+<A NAME="beagx"></A><h4>The cache Tag</h4>
+<A NAME="indexterm-355"></A><p>The cache tag caches the body between the beginning and ending tags according
+to the attributes specified. The first time the tag is encountered, the body content
+is executed and cached. Each subsequent time it is run, the cached content is checked
+to see if it needs to be refreshed and if so, it is executed again, and the cached
+data is refreshed. Otherwise, the cached data is served.</p>
+<A NAME="fvyfx"></A><h5>Attributes</h5>
+<p>The following table describes attributes for the <tt>cache</tt> tag.</p>
+<A NAME="fvygg"></A><p><b>Table 7-2 </b><tt>cache</tt> Attributes</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute</p></th><th scope="col"><p>Default</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><A NAME="indexterm-356"></A><tt>key</tt></p></td><td><p><i>ServletPath</i><tt>_</tt><i>Suffix</i></p></td><td><p>(optional) The name used by the container to access the cached entry. The cache
+key is suffixed to the servlet path to generate a key to access the cached entry.
+If no key is specified, a number is generated according to the position of the tag
+in the page.</p></td></tr>
+<tr><td><p><A NAME="indexterm-357"></A><tt>timeout</tt></p></td><td><p><tt>60s</tt></p></td><td><p>(optional) The time in seconds after which the body of the tag is executed and
+the cache is refreshed. By default, this value is interpreted in seconds. To specify
+a different unit of time, add a suffix to the timeout value as follows: <tt>s</tt> for seconds, <tt>m</tt> for minutes, <tt>h</tt> for
+hours, <tt>d</tt> for days. For example, <tt>2h</tt> specifies
+two hours.</p></td></tr>
+<tr><td><p><A NAME="indexterm-358"></A><tt>nocache</tt></p></td><td><p><tt>false</tt></p></td><td><p>(optional) If set to <tt>true</tt>, the body content is executed and
+served as if there were no <tt>cache</tt> tag. This offers a way to programmatically
+decide whether the cached response is sent or whether the body has to be executed,
+though the response is not cached.</p></td></tr>
+<tr><td><p><A NAME="indexterm-359"></A><tt>refresh</tt></p></td><td><p><tt>false</tt></p></td><td><p>(optional) If set to <tt>true</tt>, the body content is executed and
+the response is cached again. This lets you programmatically refresh the cache immediately
+regardless of the <tt>timeout</tt> setting.</p></td></tr>
+<tr><td><p><A NAME="indexterm-360"></A><tt>scope</tt></p></td><td><p><tt>application</tt></p></td><td><p>(optional) The scope of the cache. Can be <tt>request</tt>, <tt>session</tt>, or <tt>application</tt>. See <A HREF="beafs.html#gaxcr">Caching Scope</A>.</p></td></tr>
+</table><A NAME="fvyeh"></A><h5>Example</h5>
+<p>The following example represents a cached JSP file:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;%@ taglib prefix="mypfx" uri="Sun ONE Application Server Tags" %>
+&lt;%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+&lt;mypfx:cache                 key="${sessionScope.loginId}"
+			nocache="${param.nocache}"
+			refresh="${param.refresh}"
+			timeout="10m">
+&lt;c:choose>
+	&lt;c:when test="${param.page == 'frontPage'}">
+		&lt;%-- get headlines from database --%>
+	&lt;/c:when>
+	&lt;c:otherwise>
+		...
+	&lt;/c:otherwise>
+&lt;/c:choose>
+&lt;/mypfx:cache>
+&lt;mypfx:cache timeout="1h">
+&lt;h2> Local News &lt;/h2>
+	&lt;%-- get the headline news and cache them --%>
+&lt;/mypfx:cache></pre>
+</td></table><br><A NAME="beagy"></A><h4>The flush Tag</h4>
+<A NAME="indexterm-361"></A><p>Forces the cache to be flushed. If a <tt>key</tt> is specified, only
+the entry with that key is flushed. If no key is specified, the entire cache is flushed.</p>
+<A NAME="fvykp"></A><h5>Attributes</h5>
+<p>The following table describes attributes for the <tt>flush</tt> tag.</p>
+<A NAME="fvyep"></A><p><b>Table 7-3 </b><tt>flush</tt> Attributes</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute</p></th><th scope="col"><p>Default</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><A NAME="indexterm-362"></A><tt>key</tt></p></td><td><p><i>ServletPath</i><tt>_</tt><i>Suffix</i></p></td><td><p>(optional) The name used by the container to access the cached entry. The cache
+key is suffixed to the servlet path to generate a key to access the cached entry.
+If no key is specified, a number is generated according to the position of the tag
+in the page.</p></td></tr>
+<tr><td><p><A NAME="indexterm-363"></A><tt>scope</tt></p></td><td><p><tt>application</tt></p></td><td><p>(optional) The scope of the cache. Can be <tt>request</tt>, <tt>session</tt>, or <tt>application</tt>. See <A HREF="beafs.html#gaxcr">Caching Scope</A>.</p></td></tr>
+</table><A NAME="fvyle"></A><h5>Examples</h5>
+<p>To flush the entry with <tt>key="foobar"</tt>:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;mypfx:flush key="foobar"/></pre>
+</td></table><br><p>To flush the entire cache:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;c:if test="${empty sessionScope.clearCache}">
+   &lt;mypfx:flush />
+&lt;/c:if></pre>
+</td></table><br><A NAME="beagz"></A><h5>Options for Compiling JSP Files</h5>
+<A NAME="indexterm-364"></A><A NAME="indexterm-365"></A><A NAME="indexterm-366"></A><A NAME="indexterm-367"></A><p>Application Server provides the following ways of compiling JSP 2.1 compliant source
+files into servlets:</p>
+<ul><li><p>JSP files are automatically compiled at runtime.</p>
+</li>
+<li><p>The <tt>asadmin deploy</tt> command has a <tt>precompilejsp</tt> option. For details, see
+the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A></i>.</p>
+</li>
+<li><p>The <tt>sun-appserv-jspc</tt> Ant task allows you to precompile
+JSP files; see <A HREF="beaep.html#beaew">sun-appserv-jspc</A>.</p>
+</li>
+<li><p>The <A NAME="indexterm-368"></A><tt>jspc</tt> command line tool allows you to precompile JSP
+files at the command line. For details, see
+the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A></i>.</p>
+</li>
+</ul>
+<A NAME="beaha"></A><h2>Creating and Managing HTTP Sessions</h2>
+<A NAME="indexterm-369"></A><p>This chapter describes how to create and manage a session that allows users
+and transaction information to persist between interactions.</p>
+<p>This chapter contains the following sections:</p>
+<ul><li><p><A HREF="beafs.html#beahb">Configuring Sessions</A></p>
+</li>
+<li><p><A HREF="beafs.html#beahf">Session Managers</A></p>
+</li>
+</ul>
+<A NAME="beahb"></A><h3>Configuring Sessions</h3>
+<p>This section covers the following topics:</p>
+<ul><li><p><A HREF="beafs.html#beahc">Sessions, Cookies, and URL Rewriting</A></p>
+</li>
+<li><p><A HREF="beafs.html#beahd">Coordinating Session Access</A></p>
+</li>
+</ul>
+<A NAME="beahc"></A><h4>Sessions, Cookies, and URL Rewriting</h4>
+<A NAME="indexterm-370"></A><A NAME="indexterm-371"></A><A NAME="indexterm-372"></A><p>To configure whether and how sessions use cookies and URL rewriting, edit the <tt>session-properties</tt> and <tt>cookie-properties</tt> elements in
+the <tt>sun-web.xml</tt> file for an individual web application. For more
+about the properties you can configure, see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"session-properties" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A> and <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"cookie-properties" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+<p>For information about configuring default session properties for the entire
+web container, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3658"><i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A></i>.</p>
+<A NAME="beahd"></A><h4>Coordinating Session Access</h4>
+<p>Make sure that multiple threads don't simultaneously modify the same session
+object in conflicting ways.</p>
+<p>This is especially likely to occur in web applications that use HTML frames
+where multiple servlets are executing simultaneously on behalf of the same client.
+A good solution is to ensure that one of the servlets modifies the session and the
+others have read-only access.</p>
+<A NAME="beahf"></A><h3>Session Managers</h3>
+<A NAME="indexterm-373"></A><A NAME="indexterm-374"></A><p>A session manager automatically creates new session objects whenever a new session
+starts. In some circumstances, clients do not join the session, for example, if the
+session manager uses cookies and the client does not accept cookies.</p>
+<p>Application Server offers these session management options, determined by the <tt>session-manager</tt> element's <tt>persistence-type</tt> attribute
+in the <tt>sun-web.xml</tt> file:</p>
+<ul><li><p><A HREF="beafs.html#beahg">The memory Persistence Type</A>, the
+default</p>
+</li>
+<li><p><A HREF="beafs.html#beahh">The file Persistence Type</A>, which
+uses a file to store session data</p>
+</li>
+</ul>
+<p><hr size="1" noshade><p><b>Note - </b>If the session manager configuration contains an error, the error is written
+to the server log and the default (<tt>memory</tt>) configuration is used.</p>
+<hr size="1" noshade></p><p>For more information, see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"session-manager" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+<A NAME="beahg"></A><h4>The memory Persistence Type</h4>
+<p>This persistence type is not designed for a production environment that requires
+session persistence. It provides no session persistence. However, you can configure
+it so that the session state in memory is written to the file system prior to server
+shutdown.</p>
+<p>To specify the <tt>memory</tt> persistence type for the entire web
+container, use the <tt>configure-ha-persistence</tt> command. For details,
+see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A></i>.</p>
+<p>To specify the <tt>memory</tt> persistence type for a specific web
+application, edit the <tt>sun-web.xml</tt> file as in the following example.
+The <tt>persistence-type</tt> property is optional, but must be set to <tt>memory</tt> if included. This overrides the web container availability settings
+for the web application.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;sun-web-app>
+...
+&lt;session-config>
+	&lt;session-manager persistence-type=memory />
+		&lt;manager-properties>
+			&lt;property name="sessionFilename" value="sessionstate" />
+		&lt;/manager-properties>
+	&lt;/session-manager>
+	...
+&lt;/session-config>
+...
+&lt;/sun-web-app></pre>
+</td></table><br><p>The only manager property that the <tt>memory</tt> persistence type
+supports is sessionFilename, which is listed under <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"manager-properties" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+<p>For more information about the <tt>sun-web.xml</tt> file, see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"The sun-web.xml File" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+<A NAME="beahh"></A><h4>The file Persistence Type</h4>
+<p>This persistence type provides session persistence to the local file system,
+and allows a single server domain to recover the session state after a failure and
+restart. The session state is persisted in the background, and the rate at which this
+occurs is configurable. The store also provides passivation and activation of the
+session state to help control the amount of memory used. This option is not supported
+in a production environment. However, it is useful for a development system with a
+single server instance.</p>
+<p><hr size="1" noshade><p><b>Note - </b>Make sure the <tt>delete</tt> option is set in the <tt>server.policy</tt> file, or expired file-based sessions might not be deleted
+properly. For more information about <tt>server.policy</tt>, see <A HREF="beabg.html#beabx">The server.policy File</A>.</p>
+<hr size="1" noshade></p><p>To specify the <tt>file</tt> persistence type for the entire web container,
+use the <tt>configure-ha-persistence</tt> command. For details, see the <i><A HREF="http://docs.sun.com/app/docs/doc/819-3662"><i>Sun Java System Application Server Platform Edition 9.0 2006Q1 Reference Manual</i></A></i>.</p>
+<p>To specify the <tt>file</tt> persistence type for a specific web application,
+edit the <tt>sun-web.xml</tt> file as in the following example. Note that <tt>persistence-type</tt> must be set to <tt>file</tt>. This overrides
+the web container availability settings for the web application.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;sun-web-app>
+...
+&lt;session-config>
+	&lt;session-manager persistence-type=file>
+		&lt;store-properties>
+			&lt;property name=directory value=sessiondir />
+		&lt;/store-properties>
+	&lt;/session-manager>
+	...
+&lt;/session-config>
+...
+&lt;/sun-web-app></pre>
+</td></table><br><p>The <tt>file</tt> persistence type supports all the manager properties
+listed under <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"manager-properties" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A> except <tt>sessionFilename</tt>, and supports the <tt>directory</tt> store property
+listed under <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"store-properties" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+<p>For more information about the <tt>sun-web.xml</tt> file, see <A HREF="http://docs.sun.com/app/docs/doc/819-3660">"The sun-web.xml File" in <i>Sun Java System Application Server Platform Edition 9.0 Application Deployment Guide</i></A>.</p>
+
+            <!--stopindex-->
+<br>
+<A HREF="gaszn.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="beahl.html">Next</A>
+</body>
+</html>

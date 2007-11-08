@@ -1,0 +1,525 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html><head>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="GENERATOR" content="Mozilla/4.79 [en] (X11; U; SunOS 5.7 sun4u) [Netscape]"><title>GlassFish Project - Java Persistence Example</title><!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+-->
+</head>
+
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<div id="projecthome" class="app"><span style="font-weight: bold;"><font size="+1">GlassFish
+Project - Java Persistence Example&nbsp;</font></span>
+<p><span style="font-weight: bold;"><a href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New
+to GlassFish</a> | <a href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community
+Guidelines</a> | <a href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads</a>
+| <a href="https://glassfish.dev.java.net/public/faq/index.html">FAQ</a>
+| <a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo">How-Tos</a></span><br>
+</p>
+<ul id="mozToc">
+<!--mozToc h1 1 h2 2 h3 3 h4 4 h5 5 h6 6--><li><a href="#overview">Overview<br>
+    </a></li>
+  <li><a href="#existing_tables">Mapping to Existing Tables</a></li>
+  <li><a href="#POJOs">POJO Classes</a></li>
+  <ul>
+    <li><a href="#customer">Customer</a></li>
+    <li><a href="#order">Order</a></li>
+  </ul>
+  <li><a href="#persist">Persisting POJO Entities</a></li>
+  <li><a href="#query_and_navigation">Query and Navigation</a></li>
+  <li><a href="#merge_and_remove">Merge and Removal of Persistent
+Instances</a></li>
+  <li><a href="#all_together">Putting It All Together</a>
+    <ul id="mozToc">
+      <li><a href="#Using_in_Java_SE">Using in Java SE</a></li>
+      <li><a href="#Using_Netbeans_Java_SE_Example">Using Netbeans for Java SE Example</a></li>
+      <li><a href="#Using_in_Java_EE">Using in Java EE</a></li>
+      <li><a href="#result">The Result<br>
+        </a></li>
+    </ul>
+  </li>
+</ul>
+<h3><a name="overview"></a>Overview</h3>
+<p>This is a very simple example that uses only 2 entities - a Customer
+  and an Order, with OneToMany relationships between them. The Customer
+  and the Order classes are Plain Old Java Classes (POJOs). These
+  classes, as well as the code that manipulates POJO instances, can be
+  used without any changes in Java SE or Java EE environment.<br>
+  <br>
+  Accessing
+  an EntityManagerFactory and an EntityManager depends on the environment
+  and is described in more details below.<br>
+  <br>
+  We will create
+  a customer and two related orders, find the customer, and navigate from
+  the customer to its orders, and then merge and remove all the objects.
+  All these
+  operation will be performed using Java Persistence API and require <a href="http://java.sun.com/j2se/1.5.0/download.jsp">JDK 5.0</a>.<br>
+  <br>
+  Click <a href="http://glassfish.dev.java.net/javaee5/persistence/JPASE.zip">here</a> to get
+  the ZIP file with the complete Java SE example as a netbeans project. This example works with Java DB or with Oracle. </p>
+<p> Click <a href="http://glassfish.dev.java.net/javaee5/persistence/ex1.zip">here</a> to get the ZIP file with the complete Java SE example. This example works with Oracle.<br>
+    <br>
+    Click <a href="http://glassfish.dev.java.net/javaee5/persistence/ex1-ee.zip">here</a> to get
+      the ZIP file with the complete Java EE example.<br>
+    <br>
+    Refer to Java
+    Persistence API document of <a href="http://jcp.org/en/jsr/detail?id=220">JSR-220:
+      Enterprise
+      JavaBeansTM
+      3.0 Specification</a> for further details on annotations and APIs.<br>
+    <br>
+    Check example sources for the
+    necessary import statements.<br>
+</p>
+<h3><a name="existing_tables" class="mozTocH3"></a>Mapping to Existing
+Tables</h3>
+In the first example we will use only two tables:<br>
+<br>
+<table style="width: 100px; text-align: left; background-color: rgb(255, 255, 204);" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">CUSTOMER</span><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">ID<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">NAME</td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<br>
+<table style="text-align: left; width: 211px; height: 117px; background-color: rgb(255, 255, 204);" border="1" cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top; text-align: center;"><span style="font-weight: bold;">ORDER_TABLE</span><br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">ORDER_ID<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">SHIPPING_ADDRESS<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">CUSTOMER_ID<br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<br>
+CUSTOMER_ID column in the ORDER_TABLE is the Foreign Key (FK) to the ID
+column from the CUSTOMER table. The files <span style="font-style: italic;">sql/tables_oracle.sql  <span style="font-style: italic;"> and sql/tables_derby.sql</span></span>
+in the example contains DDL to create both tables for Oracle and Apache Derby. <br>
+<br>
+<h3><a name="POJOs" class="mozTocH3"></a>POJO Classes</h3>
+Now let's look at the corresponding persistence classes. Both entities
+in this example use property based persistence. There is no access
+annotation element on the entity, so it defaults to <font size="+1"><span style="font-family: monospace;">access=PROPERTY</span></font>. This is
+the reason why @Column annotation is specified for the get methods and
+not for the fields. The classes that are used as an argument or a
+return type between a&nbsp;
+remote client and a container must implement <span style="font-weight: bold;">java.io.Serializable</span>
+interface.<br>
+The POJO classes in the examples belong to an <span style="font-style: italic;">entity</span> package. <br>
+<h4><a name="customer" class="mozTocH4"></a>Customer</h4>
+The Customer
+entity is mapped to the CUSTOMER table, and looks like this:<br>
+<br>
+<code>@Entity<br>
+public class Customer {<br>
+<br>
+&nbsp;&nbsp;&nbsp; private int id;<br>
+&nbsp;&nbsp;&nbsp; private String name;<br>
+&nbsp;&nbsp;&nbsp; private Collection</code><code>&lt;Order&gt;</code><code>
+orders;<br>
+<br>
+&nbsp;&nbsp;&nbsp; @Id<br>
+&nbsp;&nbsp;&nbsp; public int getId() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return id;<br>
+&nbsp;&nbsp;&nbsp; }<br>
+<br>
+&nbsp;&nbsp;&nbsp; public void setId(int id) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; this.id = id;<br>
+&nbsp;&nbsp;&nbsp; }<br>
+</code><code><br>
+&nbsp;&nbsp;&nbsp; public </code><code>String</code><code> getName() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return name;<br>
+&nbsp;&nbsp;&nbsp; }<br>
+<br>
+&nbsp;&nbsp;&nbsp; public void setName(String </code><code>name</code><code>)
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; this.</code><code></code><code>name</code><code>
+= </code><code></code><code>name</code><code>;<br>
+&nbsp;&nbsp;&nbsp; }</code><br>
+<code><br>
+&nbsp;&nbsp;&nbsp; @OneToMany(cascade=ALL, mappedBy="customer")<br>
+&nbsp;&nbsp;&nbsp; public Collection&lt;Order&gt; getOrders() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return orders;<br>
+&nbsp;&nbsp;&nbsp; }<br>
+<br>
+&nbsp;&nbsp;&nbsp; public void setOrders(Collection&lt;Order&gt;
+newValue) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; this.orders = newValue;<br>
+&nbsp;&nbsp;&nbsp; }<br>
+<br>
+}<br>
+</code><br>
+Note that there are no @Table and @Column annotations. This is possible
+because the persistence provider will use the default rules to
+calculate those values for you. See chapter 9 of the <a href="http://jcp.org/en/jsr/detail?id=220">Java
+Persistence API Specification</a> for detailed rules of the mapping
+annotations.
+<h4><a name="order" class="mozTocH4"></a>Order</h4>
+The Order entity
+is mapped to the ORDER_TABLE table. It requires both @Table and @Column
+mapping annotations because table and column names do not match class
+and properties names exactly. @Column annotations are specified for the
+corresponding get methods:<br>
+<br>
+<code>@Entity<br>
+@Table(name="ORDER_TABLE")</code><br>
+<code>public class Order {<br>
+<br>
+&nbsp;&nbsp;&nbsp; private int id;<br>
+&nbsp;&nbsp;&nbsp; private String address;<br>
+&nbsp;&nbsp;&nbsp; private Customer customer;<br>
+<br>
+&nbsp;&nbsp;&nbsp; @Id<br>
+&nbsp;&nbsp;&nbsp; </code><code>@Column(name="ORDER_ID")</code><br>
+<code>&nbsp;&nbsp;&nbsp; public int getId() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return id;<br>
+&nbsp;&nbsp;&nbsp; }<br>
+<br>
+&nbsp;&nbsp;&nbsp; public void setId(int id) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; this.id = id;<br>
+&nbsp;&nbsp;&nbsp; }<br>
+</code><code><br>
+&nbsp;&nbsp;&nbsp; </code><code>@Column(name="SHIPPING_ADDRESS")</code><br>
+<code>&nbsp;&nbsp;&nbsp; public </code><code>String</code><code> get</code><code></code><code>Address</code><code></code><code>()
+{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return </code><code></code><code></code><code>address</code><code>;<br>
+&nbsp;&nbsp;&nbsp; }<br>
+<br>
+&nbsp;&nbsp;&nbsp; public void set</code><code>Address</code><code>(String
+</code><code>address</code><code>) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; this.</code><code></code><code>address</code><code>
+= </code><code></code><code>address</code><code>;<br>
+&nbsp;&nbsp;&nbsp; }</code><br>
+<code><br>
+&nbsp;&nbsp;&nbsp; @ManyToOne()<br>
+&nbsp;&nbsp;&nbsp; @JoinColumn(name="CUSTOMER_ID")<br>
+&nbsp;&nbsp;&nbsp; public Customer getCustomer</code><code>() {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; return </code><code>customer</code><code>;<br>
+&nbsp;&nbsp;&nbsp; }<br>
+<br>
+&nbsp;&nbsp;&nbsp; public void setCustomer</code><code>(</code><code>Customer</code><code>
+</code><code>customer</code><code>) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; this.</code><code>customer</code><code>
+= </code><code>customer</code><code>;<br>
+&nbsp;&nbsp;&nbsp; }<br>
+<br>
+}<br>
+</code><br>
+Note that Customer and Order have bidirectional relationships between
+the entities.<br>
+<h3><a name="persist" class="mozTocH3"></a>Persisting POJO Entities<br>
+</h3>
+Now, let's create new instances, set up the relationships and persist
+all of them together using the CASCADE option that we set on the
+Customer entity. This code must be executed in a context of an active
+transaction.<br>
+<code><br>
+&nbsp;&nbsp;&nbsp; // Create new customer<br>
+&nbsp;&nbsp;&nbsp; Customer customer0 = new Customer();<br>
+&nbsp;&nbsp;&nbsp; customer0.setId(1);<br>
+&nbsp;&nbsp;&nbsp; customer0.setName("Joe Smith");<br>
+<br>
+&nbsp;&nbsp;&nbsp; // Persist the customer<br>
+&nbsp;&nbsp;&nbsp; em.persist(customer0);<br>
+<br>
+&nbsp;&nbsp;&nbsp; // Create 2 orders<br>
+&nbsp;&nbsp;&nbsp; Order order1 = new Order();<br>
+&nbsp;&nbsp;&nbsp; order1.setId(100);<br>
+&nbsp;&nbsp;&nbsp; order1.setAddress("123 Main St. Anytown, USA");<br>
+<br>
+&nbsp;&nbsp;&nbsp; Order order2 = new Order();<br>
+&nbsp;&nbsp;&nbsp; order2.setId(200);<br>
+&nbsp;&nbsp;&nbsp; order2.setAddress("567 1st St. Random City, USA");<br>
+<br>
+&nbsp;&nbsp;&nbsp; // Associate orders with the customer.<br>
+</code><br>
+Note that the association must be set on both sides of the
+relationship: on the customer side for the orders to be persisted when
+transaction commits, and on the order side because it is the owning
+side:<br>
+<br>
+<code>&nbsp;&nbsp;&nbsp; customer0.getOrders().add(order1);<br>
+&nbsp;&nbsp;&nbsp; order1.setCustomer(customer0);<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp; customer0.getOrders().add(order2);<br>
+&nbsp;&nbsp;&nbsp; order2.setCustomer(customer0);<br>
+<br>
+</code>When this transaction commits, all three entities will be
+persisted in the database.<br>
+<h3><a name="query_and_navigation" class="mozTocH3"></a>Query and
+Navigation<br>
+</h3>
+We'll use a new EntityManager to do the query, but will execute the
+query without an active transaction:<br>
+<br>
+&nbsp;&nbsp;&nbsp; <code>// Create new EntityManager<br>
+&nbsp;&nbsp;&nbsp; em = emf.createEntityManager();<br>
+<br>
+&nbsp;&nbsp;&nbsp; Query q = em.createQuery("select c from Customer c
+where c.name = :name");<br>
+&nbsp;&nbsp;&nbsp; q.setParameter("name", "Joe Smith");<br>
+&nbsp;&nbsp;&nbsp; <br>
+</code>Our query is supposed to return a single customer, so we will
+use the Query method <span style="font-style: italic;">getSingleResult()</span>
+to execute the query. This method would throw an exception if there is
+no or more than one matching customers.<code><br>
+<br>
+&nbsp;&nbsp;&nbsp; Customer c = (Customer)q.getSingleResult();</code><br>
+<br>
+Now let's verify that the orders were also created by navigating from
+the Customer. <br>
+You can print the orders, but we'll just check the size:<br>
+&nbsp;&nbsp;&nbsp; <br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <code>Collection&lt;Order&gt; orders =
+c.getOrders();<br>
+&nbsp;&nbsp;&nbsp; if (orders == null || orders.size() != 2) {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; throw new
+RuntimeException("Unexpected number of orders: "<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
++ ((orders == null)? "null" : "" + orders.size()));<br>
+&nbsp;&nbsp;&nbsp; }</code><code></code><br>
+<h3><a name="merge_and_remove" class="mozTocH3"></a>Merge and Removal
+of Persistent
+Instances<br>
+</h3>
+To remove an instance, it must be managed by this EntityManager. The
+code below uses a customer '<span style="font-style: italic;">c</span>'
+that had been detached from its persistence context. Removal of the
+Customer also removes related orders because of the CASCADE option set
+on the corresponding relationship. This code must be executed in a
+context of an active transaction.<br>
+<br>
+<code>&nbsp;&nbsp;&nbsp; // Merge the customer to the new persistence
+context<br>
+&nbsp;&nbsp;&nbsp; Customer c0 = em.merge(c);<br>
+</code><br>
+Note that <span style="font-style: italic;">merge()</span> is not a
+void operation. It returns back a managed copy of the argument (and its
+related objects). Only this copy can be used for EntityManager
+operations.<code><br>
+<br>
+&nbsp;&nbsp;&nbsp; // Delete all records<br>
+&nbsp;&nbsp;&nbsp; em.remove(c0);<br>
+</code><br>
+<h3><a name="all_together"></a>Putting It All Together<br>
+</h3>
+<h4><a name="Using_in_Java_SE" class="mozTocH3"></a>Using in Java SE</h4>
+First, we need to create an EntityManagerFactory that we will use in
+the
+example. An EntityManagerFactory is created once
+for each PersistentUnit. Persistent unit in this example is called
+"pu1".<br>
+<br>
+<code>&nbsp;&nbsp; // Create EntityManagerFactory for persistent unit
+named "pu1"<br>
+&nbsp;&nbsp; // to be used in this
+test<br>
+&nbsp;&nbsp; emf = Persistence.createEntityManagerFactory("pu1");</code><br>
+<br>
+For each business method in the example, a new EntityManager is created:<br>
+<br>
+<code>&nbsp;&nbsp;&nbsp; // Create new EntityManager<br>
+&nbsp;&nbsp;&nbsp; em = emf.createEntityManager();<br>
+<br>
+</code>If a transaction required, it is started:<br>
+<br>
+<code>&nbsp;&nbsp;&nbsp; // Begin transaction<br>
+&nbsp;&nbsp;&nbsp; em.getTransaction().begin();<br>
+<br>
+</code>And then the business logic is executed in a separate business
+method:<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <code>// Business logic</code><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <code>mybusinessmethod(...);</code><br>
+<br>
+If transaction has been started it must be committed:<br>
+<code><br>
+</code><code>&nbsp;&nbsp;&nbsp; // Commit the transaction<br>
+&nbsp;&nbsp;&nbsp; em.getTransaction().commit();<br>
+<br>
+</code>And EntityManager should always be closed if it won't be used
+again:<br>
+<code></code><br>
+<code>&nbsp;&nbsp;&nbsp; // Close this EntityManager<br>
+&nbsp;&nbsp;&nbsp; em.close();<br>
+<br>
+</code>Java SE client code in this <a href="http://glassfish.dev.java.net/javaee5/persistence/ex1.zip">example</a>
+is located in the
+class <span style="font-style: italic;">client.Client</span>.<br>
+<br>
+To run the test, you need to create <span style="font-weight: bold;">META-INF/persistence.xml</span>
+file in
+the classpath. Copy META-INF/persistence.xml.template file from the
+classes
+directory in the example to META-INF/persistence.xml and populate the
+values of the
+corresponding properties with the database settings that you are using.
+Note that persistence-unit name is set to "pu1" and all entity classes
+are explicitly listed.<br>
+<br>
+Add your database driver and classes directory
+from the unzipped example to the classpath, load the tables into the
+database, then run:<br>
+<br>
+<div style="margin-left: 40px;">
+  <p><code> java
+  -javaagent:${glassfish.home}/lib/toplink-essentials-agent.jar
+  client.Client<br>
+  </code></p>
+  <p>&nbsp;</p>
+</div>
+<h4><a name="Using_Netbeans_Java_SE_Example" id="Using_Netbeans_Java_SE_Example"></a>Using the Java SE Example in Netbeans</h4>
+<ul>
+  <li>Download <a href="http://www.netbeans.info/downloads/index.php">Netbeans 5.5</a> and install the bundle</li>
+  <li>Download and install <a href="http://developers.sun.com/prodtech/javadb/downloads/index.jsp">Java DB/Derby</a> if you plan on using Java DB/Derby instead of Oracle. 
+    <ul>
+      <li>Configure Netbeans to use Java DB/Derby by following the steps in this <a href="http://www.netbeans.org/kb/50/derby-demo.html">tutorial</a> . </li>
+    </ul>
+  </li>
+  <li>Install the <a href="http://glassfish.dev.java.net/javaee5/persistence/JPASE.zip">JAVA SE Persistence Example project </a> .</li>
+  </ul>
+<h5>Configuring the JDBC driver</h5>
+<p>To configure the JDBC driver to be used when running the project, right-click on the project, select properties. Click on the libraries and then click on the 'Add JAR/Folder' button to add the jars for the JDBC driver being used. In the example below, the Java DB/Derby JDBC Client Driver is added. </p>
+<p><img src="ProjectProperties.PNG" width="802" height="461"></p>
+<h5>Creating the tables</h5>
+<p>Scripts are provided to create the tables needed for the example for either Java DB/Derby or Oracle. </p>
+<blockquote>
+  <p> <strong>Note</strong>:If you are using Oracle, go to the runtime tab, click databases and then right click drivers to add the Oracle driver so that it can be used with the SQL Editor. </p>
+  </blockquote>
+<ul>
+  <li>Create a connection to the database
+    <ul>
+      <li>expand the drivers folder and right click on the Oracle or Java DB/Derby driver and create a connection to the database. For Java DB/Derby you can enter: <span class="style1">jdbc:derby://localhost:1527/</span>testDB;create=true and enter APP for the username and password. </li>
+      </ul>
+  </li>
+  <li>If you are using Java DB/Derby and the server is not started, Select Tools-&gt;Java DB Database -&gt;Start Java DB server </li>
+  <li>Open the appropriate sql script by typing Ctrl-O or selecting 'Open File' from the file menu. The SQL scripts are in the sql directory of the project.</li>
+  <li>Select the connection to use (for Java DB/Derby you can use <span class="style1">jdbc:derby://localhost:1527/testDB;create=true [APP on APP]</span> .</li>
+  <li>Click the Run SQL icon <img src="RunSQL.png" align="absmiddle" height="22" width="26"> on the right of the Connection drop-down box. This will open the Connect dialog. Enter the password for your connection. <strong></strong>. Click OK to connect and run the SQL script. </li>
+  </ul>
+<p><img src="SQLEditor.PNG" width="815" height="489"></p>
+<h5>Configuring the persistence unit </h5>
+<p>To configure the persistence unit for the sample, click on source packages and then click on META-INF. Double click on persistence.xml. Your configuration should look like the following if you are using Java DB/Derby:</p>
+<p><img src="pu.PNG" width="1033" height="544"> </p>
+<h5>Running the project:</h5>
+<p>To run the the sample application. Right click on the project and select 'Run Project'. </p>
+<p>&nbsp; </p>
+<h4><a name="Using_in_Java_EE"></a>Using in Java EE</h4>
+In a Java EE container, the client code will not create an
+EntityManagerFactory - it is done by the container.<br>
+<br>
+There are several option to get a hold of an
+EntityManager:<br>
+<ul>
+  <li>An EntityManagerFactory or an EntityManager can be injected by
+the container or looked up in JNDI.</li>
+  <li>An EntityManager instance can be acquired from an
+EntityManagerFactory via the corresponding API call.</li>
+</ul>
+Transaction boundaries depend on the EntityManager type:<br>
+<ul>
+  <li>A JTA EntityManager participates in the current JTA transaction
+that is either controlled by the container or by a user via <span style="font-style: italic;">javax.transaction.UserTransaction</span>
+API.</li>
+  <li>A resource-local EntityManager uses the same Java Persistence API
+as in <a href="http://glassfish.dev.java.net/javaee5/persistence/persistence-example.html#Using_in_Java_SE">Java
+SE</a> environment to control
+its transactions.</li>
+</ul>
+In our <a href="ex1-ee.zip">example</a> a JTA EntityManager is
+injected by
+the container into the Session Bean:<br>
+<br>
+<code>&nbsp;&nbsp;&nbsp; @PersistenceContext(unitName="pu1")<br>
+&nbsp;&nbsp;&nbsp; private EntityManager em;</code><br>
+<br>
+Transaction boundaries set to container-managed defaults.<br>
+<br>
+The client code from the Java SE example is now divided between a
+Stateless
+Session Bean <span style="font-style: italic;">ejb.TestBean</span>
+(implements <span style="font-style: italic;">ejb.Test</span> remote
+business interface), which contains the business logic (i.e. exactly
+the same business methods as the Java SE client), and an
+application client <span style="font-style: italic;">client.AppClient</span>
+that calls the corresponding methods and prints the output:<br>
+<br>
+<code>&nbsp;&nbsp;&nbsp; // Persist all entities<br>
+&nbsp;&nbsp;&nbsp; System.out.println("Inserting Customer and Orders...
+" + sb.testInsert());<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp; // Test query and navigation<br>
+&nbsp;&nbsp;&nbsp; System.out.println("Verifying that all are
+inserted... " + sb.verifyInsert());<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp; // Get a detached instance<br>
+&nbsp;&nbsp;&nbsp; Customer c = sb.findCustomer("Joe Smith");<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp; // Remove all entities<br>
+&nbsp;&nbsp;&nbsp; System.out.println("Removing all... " +
+sb.testDelete(c));<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp; // Query the results<br>
+&nbsp;&nbsp;&nbsp; System.out.println("Verifying that all are
+removed... " + sb.verifyDelete());</code><br>
+<br>
+<br>
+In the Java EE environment META-INF/persistence.xml does
+not need to list persistence classes, or the &lt;provider&gt; (if you
+use the default persistence provider). It should specify
+&lt;jta-data-source&gt;, if it does not use the default DataSource
+provided by the container. The example specifies jdbc/__default, which
+is the default for the Derby database, so that it is easy to replace
+with another name. Java EE example uses <a href="http://blogs.sun.com/roller/page/java2dbInGlassFish">automatic
+table generation</a> feature in GlassFish by setting required
+properties in the META-INF/persistence.xml.<br>
+<br>
+To test the example, unzip it and deploy ex1-ee.ear file:<br>
+<code><br>
+&nbsp;&nbsp;&nbsp; ${glassfish.home}/bin/asadmin deploy --retrieve .
+ex1-ee.ear<br>
+<br>
+</code>Then execute the <span style="font-style: italic;">appclient</span>
+script:<code><br>
+<br>
+</code><code>&nbsp;&nbsp;&nbsp; ${glassfish.home}</code><code>/bin/appclient
+-client ./ex1-eeClient.jar -mainclass client.AppClient<br>
+</code>
+<h4><a name="result"></a>The Result<br>
+</h4>
+This is the output (after several extra log messages) that will be
+printed:<br>
+<br>
+<code>Inserting Customer and Orders... OK<br>
+Verifying that all are inserted... OK<br>
+Removing all... OK<br>
+Verifying that all are removed... OK</code><br>
+<br>
+Read the <a href="http://glassfish.dev.java.net/javaee5/persistence/entity-persistence-support.html#Configuration_and_Packaging">packaging
+rules</a> and other useful information on the <a href="http://glassfish.dev.java.net/javaee5/persistence/entity-persistence-support.html">Entity
+Persistence</a> page for the next steps.<br>
+</div>
+</body></html>

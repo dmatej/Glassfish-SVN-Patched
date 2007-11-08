@@ -1,0 +1,668 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>6.&nbsp;&nbsp;Migrating from Application Server 6.x/7.x/8.x to Application Server 9
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Upgrade and Migration
+Guide</A>&nbsp;<br>
+<A HREF="abmcj.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="abmem.html">Next</A><br>
+            <!--startindex--><A NAME="abmcz"></A><b>Chapter&nbsp;6</b><h1>Migrating from Application Server 6.x/7.x/8.x to Application Server 9</h1>
+<p>This chapter describes the considerations and strategies that are needed when
+moving J2EE applications from Application Server 6.x,7.x,8.x and Application Server
+8.xto the Application Server Platform Edition 9product line. However, Application Server 9 provides
+backward compatibility standard, with Application Server 7 as the baseline. That is,
+applications developed in Application Server 7 can be deployable directly to Application
+Server 9 with minimum or no changes.</p>
+<p>The sections that follow describe issues that arise while migrating the main
+components of a typical J2EE application from Application Server 6.x/7.x to Application Server Platform Edition 9.</p>
+<p>This chapter contains the following sections:</p>
+<ul><li><p><A HREF="abmcz.html#abmda">Migrating Deployment Descriptors</A></p>
+</li>
+<li><p><A HREF="abmcz.html#abmdh">Migrating Web Application Modules</A></p>
+</li>
+<li><p><A HREF="abmcz.html#abmdi">Migrating Enterprise EJB Modules</A></p>
+</li>
+<li><p><A HREF="abmcz.html#abmdp">Migrating Enterprise Applications</A></p>
+</li>
+<li><p><A HREF="abmcz.html#abmds">Migrating Proprietary Extensions</A></p>
+</li>
+<li><p><A HREF="abmcz.html#abmdt">Migrating UIF</A></p>
+</li>
+<li><p><A HREF="abmcz.html#abmea">Migrating Rich Clients</A></p>
+</li>
+</ul>
+<p>The migration issues described in this chapter are based on an actual
+migration that was performed for a J2EE application called <i>iBank</i><A NAME="indexterm-30"></A>, a simulated online banking service, from Application Server 6.x to Sun Java System Application Server 9.
+This application reflects all aspects of a traditional J2EE application.</p>
+<p>The following areas of the J2EE specification are covered by the iBank application:</p>
+<ul><li><p>Servlets, especially with redirection to JSP pages (model-view-controller
+architecture)</p>
+</li>
+<li><p>JSP pages, especially with static and dynamic inclusion of pages</p>
+</li>
+<li><p>JSP custom tag libraries</p>
+</li>
+<li><p>Creation and management of HTTP sessions</p>
+</li>
+<li><p>Database access through the JDBC API</p>
+</li>
+<li><p>Enterprise JavaBeans: Stateful and Stateless session beans, CMP and
+BMP entity beans.</p>
+</li>
+<li><p>Assembly and deployment in line with the standard packaging methods
+of the J2EE application</p>
+</li>
+</ul>
+<A NAME="abmda"></A><h2>Migrating Deployment Descriptors</h2>
+<p>There are two types of deployment descriptors, namely, Standard Deployment Descriptors
+and Runtime Deployment Descriptors. Standard deployment descriptors are portable across
+J2EE platform versions and vendors and does not require any modifications. Currently,
+there are exceptions due to standards interpretation. The following table lists such
+deployment descriptors.</p>
+
+<table cellspacing="5" border="1">
+<tr><td><p>Source Deployment Descriptor                      </p></td><td><p>Target Deployment Descriptor                      </p></td></tr>
+<tr><td><p><tt>ejb-jar.xml</tt> - 1.1</p></td><td><p><tt>ejb-jar.xml</tt> - 2.0</p></td></tr>
+<tr><td><p><tt>web.xml</tt></p></td><td><p><tt>web.xml</tt></p></td></tr>
+<tr><td><p><tt>application.xml</tt></p></td><td><p><tt>application.xml</tt></p></td></tr>
+</table><p>The J2EE standard deployment descriptors <tt>ejb-jar.xml</tt>, <tt>web.xml</tt> and <tt>application.xml</tt> are not modified significantly.
+However, the <tt>ejb-jar.xml</tt> deployment descriptor is modified to make
+it compliant with EJB 2.0 specification in order to make the application deployable
+on Sun Java System Application Server 9.</p>
+<p>Runtime deployment descriptors are vendor and product specific and are not portable
+across application servers due to difference in their format. Hence, deployment descriptors
+require migration. This section describes how you can manually create the runtime
+deployment descriptors and migrate relevant information.</p>
+<p>The following table summarizes the deployment descriptor migration mapping.</p>
+
+<table cellspacing="5" border="1">
+<tr><td><p>Source Deployment Descriptor                      </p></td><td><p>Target Deployment Descriptor                      </p></td></tr>
+<tr><td><p><tt>ias-ejb-jar.xml</tt></p></td><td><p><tt>sun-ejb-jar.xml</tt></p></td></tr>
+<tr><td><p><tt>&lt;bean-name>-ias-cmp.xml</tt></p></td><td><p><tt>sun-cmp-mappings.xml</tt></p></td></tr>
+<tr><td><p><tt>ias-web.xml</tt></p></td><td><p><tt>sun-web.xml</tt></p></td></tr>
+</table><p>The standard deployment descriptors of Application Server 6.x needs modification
+when moving to Application Server 9 because of non-conformance with the DTDs.</p>
+<p>A majority of the information required for creating <tt>sun-ejb-jar.xml</tt> and <tt>sun-web.xml</tt> comes from <tt>ias-ejb-jar.xml</tt> and <tt>ias-web.xml</tt> respectively. However, there is some
+information that is required and extracted from the home interface (java file) of
+the CMP entity bean, in case the <tt>sun-ejb-jar.xml</tt> being migrated
+declares one. This is required to build the <tt>&lt;query-filter></tt> construct
+inside the <tt>sun-ejb-jar.xml</tt>, which requires information from inside
+the home interface of that CMP entity bean. If the source file is not present during
+the migration time, the <tt>&lt;query-filter></tt> construct is created,
+but with missing information (which manifests itself in the form of REPLACE ME phrases
+in the migrated <tt>sun-ejb-jar.xml</tt>).</p>
+<p>Additionally, if the <tt>ias-ejb-jar.xml</tt> contains a <tt>&lt;message-driven></tt> element, then information from inside this element is
+picked up and used to fill up information inside both <tt>ejb-jar.xml</tt> and <tt>sun-ejb-jar.xml</tt>. Also, inside the <tt>&lt;message-driven></tt> element
+of <tt>ias-ejb-jar.xml</tt>, there is an element <tt>&lt;destination-name></tt>, which holds the JNDI name of the topic or queue to which the MDB listens.
+In Application Server 6.5, the naming convention for this jndi name is <tt>cn=&lt;SOME_NAME>.</tt> Since a JMS Topic or Queue with this name is not deployable on Application Server,
+the application server changes this to <tt>&lt;SOME_NAME></tt>, and inserts
+this information in the <tt>sun-ejb-jar.xml</tt>. This change must be reflected
+for all valid input files, namely, all <tt>.java,</tt> <tt>.jsp</tt> and <tt>.xml</tt> files. Hence, this JNDI name change is propagated across the application,
+and if some source files that contain reference to this jndi-name are unavailable,
+the administrator must make the changes manually so that the application becomes deployable.</p>
+<A NAME="abmdb"></A><h2>Migrating Web Applications</h2>
+<p>Application Server 6.x support servlets (Servlet API 2.2), and JSPs (JSP 1.1). Sun Java System Application Server 9 supports
+Servlet API 2.4 and JSP 2.0.</p>
+<p>Within these environments it is essential to group the different components
+of an application (servlets, JSP and HTML pages and other resources) together within
+an archive file (J2EE-standard Web application module) deploying it on the application
+server.</p>
+<p>According to the J2EE specification, a Web application is an archive file (WAR
+file) with the following structure:</p>
+<ul><li><p>A root directory containing the HTML pages, JSP, images and other
+static resources of the application.</p>
+</li>
+<li><p>A <tt>META-INF/</tt> directory containing the archive manifest
+file <tt>MANIFEST.MF</tt> containing the version information for the SDK
+used and, optionally, a list of the files contained in the archive.</p>
+</li>
+<li><p>A <tt>WEB-INF/</tt> directory containing the application
+deployment descriptor (<tt>web.xml</tt> file) and all the Java classes and
+libraries used by the application, organized as follows:</p>
+<ul><li><p>A <tt>classes/</tt> sub-directory containing the tree-structure
+of the compiled classes of the application (servlets, auxiliary classes), organized
+into packages</p>
+<ul><li><p>A <tt>lib/</tt> directory containing any Java libraries
+(JAR files) used by the application</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<A NAME="abmdc"></A><h3>Migrating Java Server Pages and JSP Custom Tag Libraries</h3>
+<A NAME="indexterm-31"></A><p>Application Server 6.x complies with the JSP 1.1 specification and Application Server 8.1
+complies with the JSP 2.0 specification.</p>
+<p>JSP 2.0 specification contains many new features, as well as updates to the
+JSP 1.1 specification.</p>
+<p>These changes are enhancements and are not required to migrate to JSP pages
+from JSP 1.1 to 2.0.</p>
+<p>The implementation of JSP custom tag libraries in Application Server 6.x complies
+with the J2EE specification. Consequently, migrating JSP custom tag libraries to the Application Server Platform Edition 9does
+not pose any particular problem, nor require any modifications.</p>
+<A NAME="abmdd"></A><h3>Migrating Servlets</h3>
+<A NAME="indexterm-32"></A><p>Application Server 6.x supports the Servlet 2.2 API. Sun Java System Application Server 9 supports
+the Servlet 2.4 API.</p>
+<p>Servlet API 2.4 leaves the core of servlets relatively untouched. Most changes
+are concerned with adding new features outside the core.</p>
+<p>The most significant features are:</p>
+<ul><li><p>Servlets now require JDK 1.2 or later</p>
+</li>
+<li><p>Filter mechanisms have been created</p>
+</li>
+<li><p>Application lifecycle events have been added</p>
+</li>
+<li><p>Internationalization support has been added</p>
+</li>
+<li><p>Error and security attributes have been expanded</p>
+</li>
+<li><p>HttpUtils class has been deprecated</p>
+</li>
+<li><p>Several DTD behaviors have been expanded and clarified</p>
+</li>
+</ul>
+<p>These changes are enhancements and are not required to be made when migrating
+servlets from Servlet API 2.2 to 2.4.</p>
+<p>However, if the servlets in the application use JNDI to access resources in
+the J2EE application (such as data sources or EJBs), some modifications might be needed
+in the source files or in the deployment descriptor.</p>
+<p>These modifications are explained in detail in the following sections:</p>
+<ul><li><p><A HREF="abmcz.html#abmde">Obtaining a Data Source from the JNDI Context</A></p>
+</li>
+<li><p><A HREF="abmcz.html#abmdf">Declaring EJBs in the JNDI Context</A></p>
+</li>
+</ul>
+<p>One last scenario might require modifications to the servlet code. Naming conflicts
+can occur with Application Server 6.x if a JSP page has the same name as an existing
+Java class. In this case, the conflict must be resolved by modifying the name of the
+JSP page in question. This in turn can mean editing the code of the servlets that
+call this JSP page. This issue is resolved in Application Server as it uses a new class
+loader hierarchy. In the new version of the application server, for a given application,
+one class loader loads all EJB modules and another class loader loads web module.
+As these two loaders do not talk with each other, there is no naming conflict.</p>
+<A NAME="abmde"></A><h4>Obtaining a Data Source from the JNDI Context</h4>
+<A NAME="indexterm-33"></A><p>To obtain a reference to a data source bound to the JNDI context, look up the
+data source's JNDI name from the initial context object. The object retrieved
+in this way is then be <i>cast</i> as a DataSource type object:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>ds = (DataSource)ctx.lookup(JndiDataSourceName);</pre>
+</td></table><br><p>For detailed information, refer to section "Migrating JDBC Code."</p>
+<A NAME="abmdf"></A><h4>Declaring EJBs in the JNDI Context</h4>
+<p>Please refer to section <A HREF="abmcj.html#abmcr">Clients written to the new EJB 3.0 API</A> in <A HREF="abmcj.html#abmcj">Chapter&nbsp;5, Migrating from EJB 2.0 to EJB 3.0</A>."</p>
+<A NAME="abmdg"></A><h4>Potential Servlets and JSP Migration Problems</h4>
+<p>The actual migration of the components of a Servlet / JSP application from Application
+Server 6.x to Application Server 9does not require any modifications to the component
+code.</p>
+<p>If the Web application is using a server resource, a DataSource for example,
+the Application Server requires that this resource to be declared inside the <tt>web.xml</tt> file and, correspondingly, inside the <tt>sun-web.xml</tt> file.
+To declare a DataSource called <tt>jdbc/iBank</tt>, the <tt>&lt;resource-ref></tt> tag in the <tt>web.xml</tt> file is as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;resource-ref>
+   &lt;res-ref-name>jdbc/iBank&lt;/res-ref-name>
+   &lt;res-type>javax.sql.XADataSource&lt;/res-type>
+   &lt;res-auth>Container&lt;/res-auth>
+   &lt;res-sharing-scope>Shareable&lt;/res-sharing-scope>
+&lt;/resource-ref></pre>
+</td></table><br><p>The corresponding declaration inside the <tt>sun-web.xml</tt> file
+looks like this:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;?xml version="1.0" encoding="UTF-8"?>
+&lt;! DOCTYPE FIX ME: need confirmation on the DTD to be used for this file
+&lt;sun-web-app>
+   &lt;resource-ref>
+      &lt;res-ref-name>jdbc/iBank&lt;/res-ref-name>
+      &lt;jndi-name>jdbc/iBank&lt;/jndi-name>
+   &lt;/resource-ref>
+ &lt;/sun-web-app></pre>
+</td></table><br><A NAME="abmdh"></A><h3>Migrating Web Application Modules</h3>
+<p>Migrating applications from Application Server 6.x to Sun Java System Application Server 9 does
+not require any changes to the Java code or Java Server Pages. However, you must change
+the following files:</p>
+<ul><li><p><tt>web.xml</tt></p>
+</li>
+<li><p><tt>ias-web.xml</tt></p>
+</li>
+</ul>
+<p>The Application Server adheres to J2EE 1.4 standards, according to which, the <tt>web.xml</tt> file inside a WAR file must comply with the revised DTD at <A HREF="http://java.sun.com/dtd/web-app_2_3.dtd">http://java.sun.com/dtd/web-app_2_3.dtd</A>. This DTD is a superset of the previous versions' DTD, hence only the <tt>&lt;! DOCTYPE</tt> definition needs to be changed inside the <tt>web.xml</tt> file, which is to be migrated. The modified <tt>&lt;! DOCTYPE</tt> declaration
+looks like:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>&lt;!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD 
+Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd"></pre>
+</td></table><br><p>In Application Server Platform Edition 9, the name of this file is changed to <tt>sun-web.xml</tt>.</p>
+<p>This XML file must declare the Application Server-specific properties and resources
+that are required by the Web application.</p>
+<p>See <A HREF="abmcz.html#abmdg">Potential Servlets and JSP Migration Problems</A> for
+information about important inclusions to this file.</p>
+<p>If the <tt>ias-web.xml</tt> of the Application Server 6.5 application
+is present and does declare Application Server 6.5 specific properties, then this
+file needs to be migrated to Application Server standards. The DTD file name has to be
+changed to <tt>sun-web.xml</tt>. For more details, see URL <A HREF="http://wwws.sun.com/software/dtd/appserver/sun-web-app_2_4-1.dtd">http://wwws.sun.com/software/dtd/appserver/sun-web-app_2_4-1.dtd</A></p>
+<p>Once you have made these changes to the <tt>web.xml</tt> and <tt>ias-web.xml</tt> files, the Web application (WAR file) can be deployed from the Application Server's
+deploytool GUI interface or from the command line utility <tt>asadmin</tt>.
+The deployment command must specific the type of application as web.</p>
+<p>Invoke the <tt>asadmin</tt> command line utility by running <tt>asadmin.bat</tt> file or the <tt>asadmin.sh</tt> script in the Application Server's <tt>bin</tt> directory.</p>
+<p>The command at the <A NAME="indexterm-34"></A><tt>asadmin</tt> prompt is:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin deploy -u username -w password
+-H hostname 
+-p adminport 
+--type web 
+[--contextroot contextroot] 
+[--force=true] 
+[--name component-name] 
+[--upload=true] filepath</pre>
+</td></table><br><A NAME="abmdi"></A><h2>Migrating Enterprise EJB Modules</h2>
+<p>Application Server 6.x supports EJB 1.1, and the Application Server 8.x supports
+EJB 2.0. Application Server 9 supports EJB 3.0. Therefore, both can support:</p>
+<ul><li><p>Stateful or stateless session beans</p>
+</li>
+<li><p>Entity beans with bean-managed persistence (BMP), or container-managed
+persistence (CMP)</p>
+</li>
+</ul>
+<p>EJB 2.0, however, introduces a new type of enterprise bean, called a message-driven
+bean (MDB).</p>
+<p>J2EE 1.4 specification dictates that the different components of an EJB must
+be grouped together in a JAR file with the following structure:</p>
+<ul><li><p><tt>META-INF/</tt> directory with an XML deployment descriptor
+named <tt>ejb-jar.xml</tt></p>
+</li>
+<li><p>The <tt>.class</tt> files corresponding to the home interface,
+remote interface, the implementation class, and the auxiliary classes of the bean
+with their package</p>
+</li>
+</ul>
+<p>Application Server 6.x uses this archive structure. However, the EJB 1.1 specification
+leaves each EJB container vendor to implement certain aspects as they see fit:</p>
+<ul><li><p>Database persistence of CMP EJBs (particularly the configuration of
+mapping between the bean's CMP fields and columns in a database table).</p>
+</li>
+<li><p>Implementation of the custom finder method logic for CMP beans.</p>
+</li>
+<li><p>Application Server 6.x/7.x andApplication Server 9do not handle
+migrations in the same way, which means that some XML files must be modified:</p>
+</li>
+<li><p>The <tt>&lt;!DOCTYPE</tt> definition must be modified to
+point to the latest DTD url (in the case of J2EE standard DDs, like <tt>ejb-jar.xml)</tt>.</p>
+</li>
+<li><p>Replace the <tt>ias-ejb-jar.xml</tt> file with the modified
+version of this file (for example, file <tt>sun-ejb-jar.xml</tt>, which
+is created manually according to the DTDs). For more information, see <A HREF="http://wwws.sun.com/software/dtd/appserver/sun-ejb-jar_2_1-1.dtd">http://wwws.sun.com/software/dtd/appserver/sun-ejb-jar_2_1-1.dtd</A></p>
+</li>
+<li><p>Replace all the <tt>&lt;</tt><i>ejb-name</i><tt>>-ias-cmp.xml</tt> files with one <tt>sun-cmp-mappings.xml</tt> file,
+which is created manually. For more information, see <A HREF="http://wwws.sun.com/software/dtd/appserver/sun-cmp-mapping_1_2.dtd">http://wwws.sun.com/software/dtd/appserver/sun-cmp-mapping_1_2.dtd</A></p>
+</li>
+<li><p>Optionally, for CMP entity beans, use the capture-schema utility in
+the Application Server's <tt>bin</tt> directory to generate the dbschema.
+Then place it above the <tt>META-INF</tt> directory for the entity beans.</p>
+</li>
+</ul>
+<A NAME="abmdj"></A><h3>EJB Migration</h3>
+<A NAME="indexterm-35"></A><p>As mentioned in <A HREF="abmbz.html#abmbz">Chapter&nbsp;4, Understanding Migration</A>, while Application Server 6.x supports the EJB 1.1 specification and Application Server 8
+supports EJB 2.0, Application Server 9 supports the EJB 3.0 specification. The EJB 3.0
+specification introduces the following new features and functions to the architecture:</p>
+<ul><li><p>Annotations</p>
+</li>
+<li><p>Improvements in EJB QL</p>
+</li>
+<li><p>Improvements in EJB QL</p>
+</li>
+</ul>
+<p>Although the EJB 1.1 and 2.0 specification continues to be supported in the Application Server,
+the use of the EJB 3.0 architecture is recommended to leverage its enhanced capabilities.</p>
+<p>For detailed information on migrating from EJB 2.0 to EJB 3.0, please refer
+to <A HREF="abmcj.html#abmcj">Chapter&nbsp;5, Migrating from EJB 2.0 to EJB 3.0</A></p>
+<A NAME="abmdk"></A><h3>EJB Changes Specific to Application Server Platform Edition
+8.1</h3>
+<A NAME="indexterm-36"></A><p>Migrating EJBs from Application Server 6.x to Application Server 9 is done
+without making any changes to the EJB code. However, the following DTD changes are
+required.</p>
+<A NAME="abmdl"></A><h4>Session Beans</h4>
+<ul><li><p>The <tt>&lt;!DOCTYPE></tt> definition must be modified to
+point to the latest DTDs with J2EE standard DDs, such as <tt>ejb-jar.xml</tt>.</p>
+</li>
+<li><p>Replace <tt>ias-ejb-jar.xml</tt> file with the modified
+version of this file, named <tt>sun-ejb-jar.xml,</tt>created manually according
+to the DDs. For more details, see h<A HREF="http://ttp://wwws.sun.com/software/dtd/appserver/sun-ejb-jar_2_1-1.dtd">http://ttp://wwws.sun.com/software/dtd/appserver/sun-ejb-jar_2_1-1.dtd</A></p>
+</li>
+<li><p>In the <tt>sun-ejb-jar.xml</tt> file, the JNDI name for
+all the EJBs must be added before "<tt>ejb/</tt>' in all the
+JNDI names. This is required because, in Application Server 6.5, the JNDI name of
+the EJB can only be <tt>ejb/&lt;</tt><i>ejb-name</i><tt>></tt> where <tt>&lt;</tt><i>ejb-name</i><tt>></tt> is the name of the EJB as declared inside the <tt>ejb-jar.xml</tt> file.</p>
+<p>In the Application Server, a new tag has been introduced in the <tt>sun-ejb-jar.xml</tt>. This is where the JNDI name of the EJB is declared.</p>
+</li>
+</ul>
+<p><hr size="1" noshade><p><b>Note - </b>To avoid changing JNDI names throughout the application, declare the JNDI
+name of the EJB as <tt>ejb/&lt;</tt><i>ejb-name</i><tt>></tt> inside the <tt>&lt;</tt><i>jndi-name</i><tt>></tt> tag.</p>
+<hr size="1" noshade></p><A NAME="abmdn"></A><h4>Entity Beans</h4>
+<ul><li><p>The <tt>&lt;!DOCTYPE></tt> definition must be modified to
+point to the latest DTDs containing J2EE standard DDs, such as <tt>ejb-jar.xml</tt>.</p>
+</li>
+<li><p>Update the <tt>&lt;cmp-version></tt> tag with the value
+1.1, for all CMPs in the <tt>ejb-jar.xml</tt> file.</p>
+</li>
+<li><p>Replace all the <tt>&lt;</tt><i>ejb-name</i><tt>>-ias-cmp.xml</tt> files with the manually created <tt>sun-cmp-mappings.xml</tt> file. For more information, see <A HREF="http://wwws.sun.com/software/dtd/appserver/sun-cmp-mapping_1_2.dtd">http://wwws.sun.com/software/dtd/appserver/sun-cmp-mapping_1_2.dtd</A></p>
+</li>
+<li><p>Generate <tt>dbschema</tt> by using the <tt>capture-schema</tt> utility in the Application Server installation's bin directory and place
+it above <tt>META-INF</tt> folder for Entity beans.</p>
+</li>
+<li><p><tt>Replace the ias-ejb-jar.xml</tt> with the <tt>sun-ejb.jar.xml</tt> in Application Server.</p>
+</li>
+<li><p>In Application Server 6.5, the finder's SQL was directly embedded
+into the <tt>&lt;</tt><i>ejb-name</i><tt>>-ias-cmp.xml</tt>. In Application Server, mathematical expressions are used to declare the <tt>&lt;query-filter></tt> for the various finder methods.</p>
+</li>
+</ul>
+<A NAME="abmdo"></A><h4>Message Driven Beans</h4>
+<p>Application Server provides seamless Message Driven Support through the tight integration
+of Sun Java System Message Queue with the Application Server, providing a native, built-in
+JMS Service.</p>
+<p>This installation provides Application Server with a JMS messaging system that supports
+any number of Application Server instances. Each server instance, by default, has an associated
+built-in JMS Service that supports all JMS clients running in the instance.</p>
+<p>Both container-managed and bean-managed transactions, as defined in the Enterprise
+JavaBeans Specification, v2.0, are supported.</p>
+<p>Message Driven Bean support in iPlanet Application Server was restricted to
+developers, and used many of the older proprietary APIs. Messaging services were provided
+by iPlanet Message Queue for Java 2.0. An LDAP directory was also required under iPlanet
+Application Server to configure the <tt>Queue Connection Factory</tt> object.</p>
+<p>The <tt>QueueConnectionFactory</tt>, and other elements required to
+configure Message Driven Beans in Application Server are now specified in the <tt>ejb-jar.xml</tt> file.</p>
+<p>For more information on the changes to deployment descriptors, see <A HREF="abmcz.html#abmda">Migrating Deployment Descriptors</A> For information on Message Driven Beans see <A HREF="http://docs.sun.com/app/docs/doc/819-3659">"Using Message-Driven Beans" in <i>Sun Java System Application Server Platform Edition 9.0 Developer's Guide</i></A>.</p>
+<A NAME="abmdp"></A><h2>Migrating Enterprise Applications</h2>
+<p>According to the J2EE specifications, an enterprise application is an EAR file,
+which must have the following structure:</p>
+<ul><li><p>A <tt>META-INF/</tt> directory containing the XML deployment
+descriptor of the J2EE application called <tt>application.xml</tt></p>
+</li>
+<li><p>The JAR and WAR archive files for the EJB modules and Web module of
+the enterprise application, respectively</p>
+</li>
+</ul>
+<p>In the application deployment descriptor, the modules that make up the enterprise
+application and the Web application's context root are defined.</p>
+<p>Application server 6.x and the Application Server 9support the J2EE model
+wherein applications are packaged in the form of an enterprise archive (EAR) file
+(extension <tt>.ear</tt>). The application is further subdivided into a
+collection of J2EE modules, packaged into Java archives (JAR files, which have a <tt>.jar</tt> file extension) and EJBs and Web archives (WAR files, which have a <tt>.war</tt> file extension) for servlets and JSPs.</p>
+<p>It is essential to follow the steps listed here before deploying an enterprise
+application:</p>
+<A NAME="gaekh"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To Build an EAR File</h3>
+<h5>Steps</h5><ol><li><p><b>Package EJBs in one or more EJB modules.</b></p></li>
+<li><p><b>Package the components of the Web application in a Web module.</b></p></li>
+<li><p><b>Assemble the EJB modules and Web modules in an enterprise application
+module.</b></p></li>
+<li><p><b>Define the name of the enterprise application's root context, which
+will determine the URL for accessing the application.</b></p><p>The Application Server uses
+a newer class loader hierarchy than Application Server 6.x does. In the new scheme,
+for a given application, one class loader loads all EJB modules and another class
+loader loads Web modules. These two are related in a parent child hierarchy where
+the JAR module class loader is the parent module of the WAR module class loader. All
+classes loaded by the JAR class loader are available/accessible to the WAR module
+but the reverse is not true. If a certain class is required by the JAR file as well
+as the WAR file, then the class file must be packaged inside the JAR module only.
+If this guideline is not followed it can lead to class conflicts.</p>
+</li>
+</ol><A NAME="abmdq"></A><h3>Application Root Context and Access URL</h3>
+<p>There is a major "difference between Application Server 6.x and the Application Server,
+concerning the applications access URL (root context of the application's Web
+module. If <tt>AppName</tt> is the name of the root context of an application
+deployed on a server called <tt>hostname</tt>, the access URL for this application
+will differ depending on the application server used:</p>
+<ul><li><p>With Application Server 6.x, which is always used jointly with a Web
+front-end, the access URL for the application takes the following form (assuming the
+Web server is configured on the standard HTTP port, 80):</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>http://&lt;<i>hostname</i>>/NASApp/AppName/</pre>
+</td></table><br></li>
+<li><p>With the Application Server, the URL takes the form:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>http://&lt;<i>hostname</i>>:&lt;<i>portnumber</i>>/AppName/</pre>
+</td></table><br></li>
+</ul>
+<p>The TCP port used as default by Application Server is port 8080.</p>
+<p>Although the difference in access URLs between Application Server 6.x and the Application Server might
+appear minor, it can be problematic when migrating applications that make use of absolute
+URL references. In such cases, it is necessary to edit the code to update any absolute
+URL references so that they are no longer prefixed with the specific marker used by
+the Web Server plug-in for Application Server 6.x.</p>
+<A NAME="abmdr"></A><h3>Applications With Form-based Authentication</h3>
+<p>Applications developed on Application Server 6.5 that use form-based authentication
+can pass the request parameters to the Authentication Form or the Login page. The
+Login page could be customized to display the authentication parameters based on the
+input parameters.</p>
+<p>For example:</p>
+<p><tt>http://gatekeeper.uk.sun.com:8690/NASApp/test/secured/page.jsp?arg1=test&amp;arg2=m</tt></p>
+<p>Application Server 9 does not support the passing of request parameters
+while displaying the Login page. The applications that uses form-based authentication,
+which passes the request parameters can not be migrated to Application Server 9.
+Porting such applications to Application Server 9 requires significant changes
+in the code. Instead, you can store the request parameter information in the session,
+which can be retrieved while displaying the Login page.</p>
+<p>The following code example demonstrates the workaround:</p>
+<p>Before changing the code in 6.5:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>---------index-65.jsp -----------
+&lt;%@page contentType="text/html"%>
+&lt;html>
+&lt;head>&lt;title>JSP Page&lt;/title>&lt;/head>
+&lt;body>
+go to the &lt;a href="secured/page.htm">secured a rea&lt;/a>
+&lt;/body>
+&lt;/html>
+----------login-65.jsp--------------
+&lt;%@page contentType="text/html"%>
+&lt;html>
+&lt;head> &lt;/head>
+&lt;body>
+&lt;!-- Print login form -->
+&lt;h3>Parameters&lt;/h3>&lt;br>
+out.println("arg1 is " + request.getParameter("arg1"));
+out.println("arg2 is " + request.getParameter("arg2"));
+&lt;/body>
+&lt;/html></pre>
+</td></table><br><p>After changing the code in Application Server 9:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>---------index-81.jsp -----------
+&lt;%@page contentType="text/html"%>
+&lt;html>
+&lt;head>&lt;title>JSP Page&lt;/title>&lt;/head>
+&lt;body>
+&lt;%session.setAttribute("arg1","test"); %>
+&lt;%session.setAttribute("arg2","me"); %>
+go to the &lt;a href="secured/page.htm">secured area&lt;/a>
+&lt;/body>
+&lt;/html></pre>
+</td></table><br><p>The <tt>index-81.jsp</tt> shows how you can store the request parameters
+in a session.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>----------login-81.jsp--------------
+&lt;%@page contentType="text/html"%>
+&lt;html>
+&lt;head> &lt;/head>
+&lt;body>
+&lt;!-- Print login form -->
+&lt;h3>Parameters&lt;/h3>&lt;br>
+&lt;!--retrieving the parameters from the session -->
+out.println("arg1 is"+(String)session.getAttribute("arg1"));
+out.println("arg2 is" + (String)session.getAttribute("arg2"));
+&lt;/body>
+&lt;/html></pre>
+</td></table><br><A NAME="abmds"></A><h2>Migrating Proprietary Extensions</h2>
+<p>A number of classes proprietary to the Application Server 6.x environment might
+have been used in applications. Some of the proprietary packages used by Application
+Server 6.x are listed below:</p>
+<ul><li><p><tt>com.iplanet.server.servlet.extension</tt></p>
+</li>
+<li><p><tt>com.kivasoft.dlm</tt></p>
+</li>
+<li><p><tt>com.iplanetiplanet.server.jdbc</tt></p>
+</li>
+<li><p><tt>com.kivasoft.util</tt></p>
+</li>
+<li><p><tt>com.netscape.server.servlet.extension</tt></p>
+</li>
+<li><p><tt>com.kivasoft</tt></p>
+</li>
+<li><p><tt>com.netscape.server</tt></p>
+</li>
+</ul>
+<p>These APIs are not supported in the Application Server. Applications using any classes
+belonging to the above package must be rewritten to use standard J2EE APIs. Applications
+using custom JSP tags and UIF framework also need to be rewritten to use standard
+J2EE APIs.</p>
+<p>For a sample migration walkthrough using the iBank application, see <A HREF="abmem.html#abmem">Chapter&nbsp;7, Migrating a Sample Application - an Overview</A>.</p>
+<A NAME="abmdt"></A><h2>Migrating UIF</h2>
+<p>The Application Server does not support the use of Unified Integration Framework
+(UIF) API for applications. Instead, it supports the use of J2EE Connector Architecture
+(JCA) for integrating the applications. However, the applications developed in Application
+Server 6.5 use the UIF. In order to deploy such applications to the Application Server,
+migrate the UIF to the J2EE Connector Architecture. This section discusses the prerequisites
+and steps to migrate the applications using UIF to Application Server.</p>
+<p>Before migrating the applications, ensure that the UIF is installed on Application
+Server 6.5. To check for the installation, follow either of the following approaches:</p>
+<A NAME="abmdu"></A><h3>Checking in the Registry Files</h3>
+<p>UIF is installed as a set of application server extensions. They are registered
+in the application server registry during the installation. Search for the following
+strings in the registry to check whether UIF is installed.</p>
+<p>Extension Name Set:</p>
+<ul><li><p>Extension DataObjectExt-cDataObject</p>
+</li>
+<li><p>Extension RepositoryExt-cLDAPRepository</p>
+</li>
+<li><p>Extension MetadataService-cMetadataService</p>
+</li>
+<li><p>Extension RepoValidator-cRepoValidator</p>
+</li>
+<li><p>Extension BSPRuntime-cBSPRuntime</p>
+</li>
+<li><p>Extension BSPErrorLogExt-cErrorLogMgr</p>
+</li>
+<li><p>Extension BSPUserMap-cBSPUserMap</p>
+</li>
+</ul>
+<p>The registry file on Solaris Operating Environment can be found at the following
+location:</p>
+<p><i>AS_HOME</i>/<tt>AS/registry/reg.dat</tt></p>
+<A NAME="abmdv"></A><h4>Checking for UIF Binaries in Installation Directories</h4>
+<p>UIF installers copy specific binary files in to the application server installation.
+Successfully finding the files listed below, indicates that UIF is installed.</p>
+<p>The location of the following files on Solaris and Windows is:</p>
+<p><i>AS_HOME</i><tt>/AS/APPS/bin</tt></p>
+<p>List of files to be searched on Solaris:</p>
+<ul><li><p><tt>libcBSPRlop.so</tt></p>
+</li>
+<li><p><tt>libcBSPRuntime.so</tt></p>
+</li>
+<li><p><tt>libcBSPUserMap.so</tt></p>
+</li>
+<li><p><tt>libcDataObject.so</tt></p>
+</li>
+<li><p><tt>libcErrorLogMgr.so</tt></p>
+</li>
+<li><p><tt>libcLDAPRepository.so</tt></p>
+</li>
+<li><p><tt>libcMetadataService.so</tt></p>
+</li>
+<li><p><tt>libcRepoValidator.so</tt></p>
+</li>
+<li><p><tt>libjx2cBSPRuntime.so</tt></p>
+</li>
+<li><p><tt>libjx2cDataObject.so</tt></p>
+</li>
+<li><p><tt>libjx2cLDAPRepository.so</tt></p>
+</li>
+<li><p><tt>libjx2cMetadataService.so</tt></p>
+</li>
+</ul>
+<p>List of files to be searched on Windows:</p>
+<ul><li><p><tt>cBSPRlop.dll</tt></p>
+</li>
+<li><p><tt>cBSPRuntime.dll</tt></p>
+</li>
+<li><p><tt>cBSPUserMap.dll</tt></p>
+</li>
+<li><p><tt>cDataObject.dll</tt></p>
+</li>
+<li><p><tt>ErrorLogMgr.dll</tt></p>
+</li>
+<li><p><tt>cLDAPRepository.dll</tt></p>
+</li>
+<li><p><tt>cMetadataService.dll</tt></p>
+</li>
+<li><p><tt>cRepoValidator.dll</tt></p>
+</li>
+<li><p><tt>jx2cBSPRuntime.dll</tt></p>
+</li>
+<li><p><tt>jx2cDataObject.dll</tt></p>
+</li>
+<li><p><tt>jx2cLDAPRepository.dll</tt></p>
+</li>
+<li><p><tt>jx2cMetadataService.dll</tt></p>
+</li>
+</ul>
+<p>Before migrating the UIF to Application Server, ensure that the UIF API is being
+used in the applications. To verify its usage:</p>
+<ul><li><p>Check for the usage of <tt>netscape.bsp</tt> package name
+in the Java sources</p>
+</li>
+<li><p>Check for the usage of <tt>access_cBSPRuntime.getcBSPRuntime</tt> method in the sources. You must call this method to acquire the UIF runtime.</p>
+</li>
+</ul>
+<p>Contact appserver-migration@sun.com for information about UIF migration to the Application Server.</p>
+<A NAME="abmea"></A><h2>Migrating Rich Clients</h2>
+<p>This section describes the steps for migrating RMI/IIOP and ACC clients developed
+in Planet Application Server 6.x to the Application Server.</p>
+<A NAME="abmeb"></A><h3>Authenticating a Client in Application Server 6.x</h3>
+<p>Application Server 6.x provides a client-side callback mechanism that enables
+applications to collect authentication data from the user, such as the username and
+the password.The authentication data collected by the iPlanet CORBA infrastructure
+is propagated to the application server via IIOP.</p>
+<p>If ORBIX 2000 is the ORB used for RMI/IIOP, portable interceptors implement
+security by providing hooks, or interception points, which define stages within the
+request and reply sequence.</p>
+<A NAME="abmec"></A><h3>Authenticating a Client in Sun Java System Application Server 9</h3>
+<p>The authentication is done based on JAAS (Java Authorization and Authentication
+System API). If a client does not provide a <tt>CallbackHandler</tt>, then
+the default <tt>CallbackHandler</tt>, called the <tt>LoginModule</tt>,
+is used by the ACC to obtain the authentication data.</p>
+<p>For detailed instructions on using JAAS for authentication, see <A HREF="http://docs.sun.com/app/docs/doc/819-3658">Chapter 9, "Configuring Security," in <i>Sun Java System Application Server Platform Edition 9.0 Administration Guide</i></A>.</p>
+<A NAME="abmed"></A><h3>Using ACC in Application Server 6.x and Sun Java System Application Server 9</h3>
+<p>In Application Server 6.x, no separate appclient script is provided. You are
+required to place the <tt>iasacc.jar</tt> file in the classpath instead
+of the <tt>iascleint.jar</tt> file. The only benefit of using the ACC for
+packaging application clients in 6.x is that the JNDI names specified in the client
+application are indirectly mapped to the absolute JNDI names of the EJBs.</p>
+<p>In case of Application Server 6.x applications, a stand-alone client uses the
+absolute name of the EJB in the JNDI lookup. That is, outside an ACC, the following
+approach is used to lookup the JNDI:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>initial.lookup("ejb/ejb-name");
+initial.lookup("ejb/module-name/ejb-name");</pre>
+</td></table><br><p>If your application was developed using Application Server 6.5 SP3, you would
+have used the prefix "<tt>java:comp/env/ejb/</tt>" when performing
+lookups via absolute references.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>initial.lookup("java:comp/env/ejb/ejb-name");</pre>
+</td></table><br><p>In Sun Java System Application Server 9, the JNDI lookup is done on the <tt>jndi-name</tt> of
+the EJB. The absolute name of the ejb must not be used. Also, the prefix, <tt>java:comp/env/ejb</tt> is not supported in Sun Java System Application Server 9. Replace the <tt>iasclient.jar</tt>, <tt>iasacc.jar</tt>, or <tt>javax.jar</tt> JAR
+files in the classpath with <tt>appserv-ext.jar</tt>.</p>
+<p>If your application provides load balancing capabilities, in Sun Java System Application Server 9,
+load balancing capabilities are supported only in the form of S1ASCTXFactory as the
+context factory on the client side and then specifying the alternate hosts and ports
+in the cluster by setting the <tt>com.sun.appserv.iiop.loadbalancingpolicy</tt> system
+property as follows:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>com.sun.appserv.iiop.loadbalancingpolicy=
+roundrobin,host1:port1,host2:port2,...,</pre>
+</td></table><br><p>This property provides the administrator with a list of host:port combinations
+to round robin the ORBs. These host names can also map to multiple IP addresses. If
+this property is used along with <tt>org.omg.CORBA.ORBInitialHost</tt> and <tt>org.omg.CORBA.ORBInitialPort</tt> as system properties, the round robin algorithm
+will round robin across all the values provided. If, however, a host name and port
+number are provided in your code, in the environment object, that value overrides
+any other system property settings.</p>
+<p>The Provider URL to which the client is connected in Application Server 6.5
+is the IIOP host and port of the CORBA Executive Engine (CXS Engine). In case of Sun Java System Application Server 9,
+the client needs to specify the IIOP listener Host and Port number of the instance.
+No separate CXS engine exists in Sun Java System Application Server 9.</p>
+<p>The default IIOP port is 3700 in Sun Java System Application Server 9; the actual value of the
+IIOP Port can be found in the <tt>domain.xml</tt> configuration file.</p>
+
+            <!--stopindex-->
+<br>
+<A HREF="abmcj.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="abmem.html">Next</A>
+</body>
+</html>

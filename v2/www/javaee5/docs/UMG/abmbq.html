@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>3.&nbsp;&nbsp;Upgrading an Application Server Installation
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Upgrade and Migration
+Guide</A>&nbsp;<br>
+<A HREF="abmbj.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="abmbz.html">Next</A><br>
+            <!--startindex--><A NAME="abmbq"></A><b>Chapter&nbsp;3</b><h1>Upgrading an Application Server Installation</h1>
+<A NAME="indexterm-4"></A><p>You can upgrade to Application Server 9 Platform Editionfrom Application Server 8.x Platform
+Edition installation. Information that is transferred includes data about deployed
+applications, the file realm, security certificates, and other resource and server
+configuration settings. You can install your upgrade in a new location, or you can
+upgrade in place by overwriting your previous installation.</p>
+<p>This chapter discusses the following topics:</p>
+<ul><li><p><A HREF="abmbq.html#gaejc">Upgrade Overview</A></p>
+</li>
+<li><p><A HREF="abmbq.html#abmbr">Upgrading Through the Upgrade Utility</A></p>
+</li>
+<li><p><A HREF="abmbq.html#abmbs">Upgrading Through the Wizard</A></p>
+</li>
+<li><p><A HREF="abmbq.html#gbtow">Correcting Potential Upgrade Problems</A></p>
+</li>
+</ul>
+<A NAME="gaejc"></A><h2>Upgrade Overview</h2>
+<p><A NAME="indexterm-5"></A>The following table shows supported Application Server upgrades, where
+PE indicates Platform Edition and EE indicates Enterprise Edition.</p>
+<A NAME="gaeja"></A><p><b>Table 3-1 </b>Supported Upgrade Paths</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Source Installation                      </p></th><th scope="col"><p>9 Platform Edition                      </p></th><th scope="col"><p>9 Enterprise Edition                      </p></th></tr>
+<tr><td><p>7.XPE</p></td><td><p>Not supported</p></td><td><p>Not supported</p></td></tr>
+<tr><td><p>7.XSE</p></td><td><p> Not applicable</p></td><td><p>Not supported</p></td></tr>
+<tr><td><p>7.XEE</p></td><td><p> Not applicable</p></td><td><p>Not supported</p></td></tr>
+<tr><td><p>8.0PE</p></td><td><p>Supported</p></td><td><p>Supported</p></td></tr>
+<tr><td><p>8.0 EE</p></td><td><p>Not applicable</p></td><td><p>Supported</p></td></tr>
+<tr><td><p>8.1 PE</p></td><td><p>Supported</p></td><td><p>Supported</p></td></tr>
+<tr><td><p>8.1 EE </p></td><td><p>Not applicable</p></td><td><p>Supported</p></td></tr>
+<tr><td><p>8.2 PE </p></td><td><p>Supported</p></td><td><p>Supported</p></td></tr>
+<tr><td><p>8.2 EE</p></td><td><p>Not applicable</p></td><td><p>Supported</p></td></tr>
+</table><p><hr size="1" noshade><p><b>Note - </b>Before starting the upgrade process, make sure that both the source server
+(the server from which you are upgrading) and the target server (the server to which
+you are upgrading) are stopped.</p>
+<hr size="1" noshade></p><p>The software provides two methods, a command-line utility (<tt>asupgrade</tt>) and an Upgrade Wizard, for completing the upgrade. If you issue the <tt>asupgrade</tt> command with no options, the Upgrade Wizard is displayed. If you
+use the<tt>asupgrade</tt> command in command-line mode and if you do not
+supply all of the required information, an interviewer requests information for the
+required options you omitted. The Upgrade Wizard automatically detects the version
+of the specified source server installation.</p>
+<p>If a domain contains information about a deployed application and the installed
+application components do not agree with the configuration information, the configuration
+is migrated as is without any attempt to reconfigure the incorrect configurations.</p>
+<p>During an upgrade, the configuration and deployed applications of a previous
+version of the Application Server are migrated; however, the runtime binaries of the server
+are not updated. Database migrations or conversions are also beyond the scope of this
+upgrade process.</p>
+<p>Only those instances that do not use Web Server-specific features are upgraded
+seamlessly. Configuration files related to HTTP path, CGI bin, SHTML, and NSAPI plug-ins
+are not be upgraded.</p>
+<p>Enterprise Application Archive  (EAR) files and component archives (JAR, WAR,
+and RAR files) that are deployed in the Application Server 8.x environment do not require
+any modification to run on Application Server 9.</p>
+<p>Applications and components that are deployed in the source server are deployed
+on the target server during the upgrade. Applications that do not deploy successfully
+on the target server must be migrated using the Migration Tool or <tt>asmigrate</tt> command, then deployed again manually.</p>
+<p>If the upgrade includes clusters, specify one or more cluster files. Upon successful
+upgrade, an upgrade report is generated listing successfully migrated items along
+with a list of the items that could not be migrated.</p>
+<A NAME="abmbr"></A><h2>Upgrading Through the Upgrade Utility</h2>
+<p><A NAME="indexterm-6"></A>The upgrade utility is run from the command line using the following syntax:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asupgrade 
+[--console ] 
+[--version ] 
+[--help ] 
+[--source applicationserver_8.x_installation] 
+[--target applicationserver_9_installation] 
+--adminuser admin_user 
+[--adminpassword admin_password] 
+[--masterpassword changeit] 
+[--passwordfile path_to_password_file] 
+[--domain domain_name] 
+[--nsspwdfile NSS_password_filepath] 
+[--targetnsspwdfile target_NSS_password_filepath] 
+[--jkspwdfile JKS_password_filepath] 
+[--capwdfile CA_password_filepath] 
+[--clinstancefile file1 [, file2, file3, ... filen]]</pre>
+</td></table><br><p>The following table describes the command options in greater detail, including
+the short form, the long form, and a description.</p>
+<A NAME="gbtmt"></A><p><b>Table 3-2 </b><tt>asupgrade</tt> Utility Command Options</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Short Form                      </p></th><th scope="col"><p>Long Form                      </p></th><th scope="col"><p>Description                      </p></th></tr>
+<tr><td><p>-c</p></td><td><p><tt>---console</tt></p></td><td><p>Launches the upgrade command line utility.</p></td></tr>
+<tr><td><p><tt>-V</tt></p></td><td><p><tt>---version</tt></p></td><td><p>The version of the Upgrade tool.</p></td></tr>
+<tr><td><p><tt>-h</tt></p></td><td><p><tt>---help</tt></p></td><td><p>Displays the arguments for launching the upgrade utility.</p></td></tr>
+<tr><td><p><tt>-t</tt></p></td><td><p><tt>---target</tt></p></td><td><p>The installation directory for Application Server 8.2.</p></td></tr>
+<tr><td><p><tt>-a</tt></p></td><td><p><tt>---adminuser</tt></p></td><td><p>The username of the administrator.</p></td></tr>
+<tr><td><p><tt>-w</tt></p></td><td><p><tt>---adminpassword</tt></p></td><td><p>The password for the <tt>adminuser</tt>. Although this option can
+be used, the recommended way to transmit passwords is by using the <tt>-passwordfile</tt> option.</p></td></tr>
+<tr><td><p><tt>-m</tt></p></td><td><p><tt>--masterpassword</tt></p></td><td><p>The master password that is created during installation. The default value is <tt>changeit</tt>. Although this option can be used, the recommended way to transmit
+passwords is by using the --passwordfile option.</p><p>Note: This option is required only if your target server is Application Server
+8.2 EE.</p></td></tr>
+<tr><td><p><tt>-f</tt></p></td><td><p><tt>--passwordfile</tt></p></td><td><p>The path to the file that contains the <tt>adminpassword</tt> and<tt> masterpassword</tt>. Content of this file should be in the following format:</p><p><tt>AS_ADMIN_ADMINPASSWORD=adminpassword</tt></p><p><tt>AS_ADMIN_MASTERPASSWORD=masterpassword</tt></p></td></tr>
+<tr><td><p><tt>-d</tt></p></td><td><p><tt>--domain</tt></p></td><td><p>The domain name for the migrated certificates.</p></td></tr>
+<tr><td><p>-n</p></td><td><p><tt>--nsspwdfile</tt></p></td><td><p>The path to the NSS password file.</p></td></tr>
+<tr><td><p><tt>-e</tt></p></td><td><p><tt>--targetnsspwdfile</tt></p></td><td><p>The path to the target NSS password file.</p></td></tr>
+<tr><td><p>-j</p></td><td><p><tt>--jkspwdfile</tt></p></td><td><p>The path to the JKS password file.</p></td></tr>
+<tr><td><p><tt>-p</tt></p></td><td><p><tt>--capwdfile</tt></p></td><td><p>The path to the CA certificate password file.</p></td></tr>
+<tr><td><p><tt>-i</tt></p></td><td><p><tt>--clinstancefile</tt></p></td><td><p>The path to the cluster file. The default filename is <tt>$AS_INSTALL/conf/clinstance.conf</tt>.</p></td></tr>
+</table><p>The following examples show how to use the asupgrade command-line utility to
+upgrade an existing application server installation to Application Server 9.</p>
+<p>Example 1: Upgrading an Application Server 8.0 installation to Application Server 9 with
+Prompts for Certificate Migration.</p>
+<p>This example shows how to upgrade aApplication Server 8.0 installation to Application Server 9.
+You will be prompted to migrate certificates. If you reply no, then no certificates
+will be migrated.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asupgrade --adminuser admin --passwordfile password.txt
+ --source /home/sunas8.1 --target /home/sjsas9</pre>
+</td></table><br><p>Example 3: Upgrading an Application Server 8.0 PE Installation with JKS and CA Certificates
+to Application Server 9 PE</p>
+<p>This example shows how to upgrade a Application Server 8.0 PE installation to Sun Java System Application Server 9 PE.
+JKS and CA certificates will be migrated.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asupgrade --adminuser admin --passwordfile password.txt 
+--source /home/sjsas8.0 
+--target /home/sjsas9 
+--domain domain1 
+--jkspwdfile /home/sjsas8.0/jkspassword.txt 
+--capwdfile /home/sjsas9/capassword.txt</pre>
+</td></table><br><A NAME="abmbs"></A><h2>Upgrading Through the Wizard</h2>
+<p><A NAME="indexterm-7"></A><A NAME="indexterm-8"></A><A NAME="indexterm-9"></A>The Upgrade wizard provides a GUI, however, using the wizard increases
+install time and space requirements. You can start the Upgrade wizard in GUI mode
+from the command line or from the desktop.</p>
+<p>To start the wizard,</p>
+<p>- On UNIX, change to the <tt>&lt;install_dir>/bin</tt> directory
+and type <tt>asupgrade</tt>.</p>
+<p>- On Windows, double-click the <tt>asupgrade</tt> icon in the <tt>&lt;install_dir>/bin</tt> directory.</p>
+<p>If the Upgrade checkbox was selected during the Application Server installation
+process, the Upgrade Wizard screen will automatically display after the installation
+completes.</p>
+<p>From the Upgrade Wizard screen:</p>
+<A NAME="gaejn"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To Use the Upgrade Wizard</h3>
+<h5>Steps</h5><ol><li><p><b>In the Source Installation Directory field, enter the location of the
+existing installation from which to import the configuration.</b></p><p>This installation
+can be Application Server 8.0, Application Server 81, or Application Server 8.2.</p>
+</li>
+<li><p><b>In the Target Installation Directory field, enter the location of the Application Server installation
+to which to transfer the configuration.</b></p><p>If the upgrade wizard was started
+from the installation (the Upgrade from Previous Version checkbox was checked during
+the Application Server installation), the default value for this field will be the directory
+to which the Application Server software was just installed.</p>
+</li>
+<li><p><b> Continue with Step 4 if security certificates need to be transferred.
+If the source installation has security certificates that must be transferred, check
+the Transfer Security Certificates checkbox, press the Next button, and the Transfer
+Security Certificates screen displays.</b></p></li>
+<li><p><b>From the Transfer Security Certificates screen, press the Add Domain button
+to add domains with certificates to be transferred. </b></p><p>The Add Domain dialog
+displays.</p>
+</li>
+<li><p><b>From the Add Domain dialog, select the domain name that contains the security
+certificates to migrate and enter the appropriate passwords.</b></p></li>
+<li><p><b>Click the OK button when done. </b></p><p>The Transfer Security Certificates
+screen will be displayed again.</p>
+</li>
+<li><p><b>Repeat <A HREF="abmbq.html#abmbs">Upgrading Through the Wizard</A> and <A HREF="abmbq.html#abmbs">Upgrading Through the Wizard</A> until all the domains that
+have certificates to be transferred have been added.</b></p></li>
+<li><p><b>After all of the domains that contain certificates to be transferred have
+been added, press the Next button and</b></p><p>Continue with <A HREF="abmbq.html#abmbs">Upgrading Through the Wizard</A> or with <A HREF="abmbq.html#abmbs">Upgrading Through the Wizard</A> if cluster configuration information needs to be transferred.</p>
+</li>
+<li><p><b>The Upgrade Results screen displays, showing the status of the upgrade
+operation in the Results field.</b></p></li>
+<li><p><b>Click the Finish button to close the Upgrade Tool when the upgrade process
+is complete.</b></p></li>
+</ol><A NAME="gbtow"></A><h2>Correcting Potential Upgrade Problems</h2>
+<p>This section addresses issues that could occur during an upgrade to Application Server 9.</p>
+<p>When you upgrade from a previous version of the application server,  transfer
+of the previous configuration is required. Since the target 	configuration files may
+have new parameters and new preconfigured features, copying the old configuration
+files to the new server installation is not 	possible. The values of the old configurations
+must be transferred to the Application Server 9 configuration format.</p>
+<A NAME="abmbv"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To Migrate Additional HTTP Listeners Defined on the Source
+Server to the Target PE Server</h3>
+<p>If additional <A NAME="indexterm-10"></A>HTTP listeners have been defined in the PE source server, those listeners
+need to be added to the PE target server after the upgrade:</p>
+<h5>Steps</h5><ol><li><p><b>Start the Admin Console.</b></p></li>
+<li><p><b>Expand Configuration.</b></p></li>
+<li><p><b>Expand HTTP Service.</b></p></li>
+<li><p><b>Expand Virtual Servers.</b></p></li>
+<li><p><b>Select &lt;server>.</b></p></li>
+<li><p><b>In the right hand pane, add the additional HTTP listener name to the HTTP
+Listeners field.</b></p></li>
+<li><p><b>Click Save when done.</b></p></li>
+</ol>
+            <!--stopindex-->
+<br>
+<A HREF="abmbj.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="abmbz.html">Next</A>
+</body>
+</html>

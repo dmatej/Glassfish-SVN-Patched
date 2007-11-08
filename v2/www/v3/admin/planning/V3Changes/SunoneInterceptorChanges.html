@@ -1,0 +1,420 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+<title>MBeanServer and SunoneInterceptor Changes</title>
+<style type="text/css" >
+  
+  
+#main-body
+{
+	width: 620px;
+	
+	background-color: #F8F8F8;
+	border: 1px solid #000;
+	visibility: visible;
+	
+	position: relative;
+	padding-top: 0px;
+	padding-left: 10px;
+	padding-right: 10px;
+	padding-bottom: 0px;
+	
+	text-align: justify;
+	align: center;
+}
+
+#page-title {
+	font-family: Georgia, "Times New Roman", Times, Georgia, serif;
+	font-size: 24px;
+	font-variant: normal;
+	text-align: center;
+	font-weight: bold;
+	line-height: 125%;
+	color: #000;
+}
+
+body {
+	background-color: #AAA;
+	font-family: "Georgia", "Times New Roman", Times, serif;
+	font-size: 14px;
+	line-height: 140%;
+	text-align: justify;
+}
+
+
+p
+{
+	text-indent: 0px;
+}
+
+ul
+{
+	margin: 0px 5px 0px 10px;
+}
+
+li
+{
+	margin-bottom: 8px;
+}
+
+h1 {
+	font-family: Georgia, "Times New Roman", Times, Georgia, serif;
+	font-size: 20px;
+	font-variant: normal;
+	text-align: justify;
+	font-weight: bold;
+	color: #005000;
+}
+
+
+h2 {
+	font-family: Georgia, "Times New Roman", Times, Georgia, serif;
+	font-size: 16px;
+	font-variant: normal;
+	text-align: justify;
+	font-weight: bold;
+	color: #005000;
+}
+
+h3
+{
+	font-family: Georgia, "Times New Roman", Times, Georgia, serif;
+	font-size: 14px;
+	font-variant: small-caps;
+	text-align: justify;
+	font-weight: bold;
+	color: #005000;
+}
+
+h4
+{
+	font-family: Georgia, "Times New Roman", Times, Georgia, serif;
+	font-size: 12px;
+	font-variant: small-caps;
+	text-align: justify;
+	font-weight: bold;
+	color: #005000;
+}
+table {
+	font-family: "monospaced", "Trebuchet MS", Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	line-height: 120%;
+	border: 1px solid #000;
+	position: relative;
+	border-collapse: collapse;
+	text-align: left;
+}
+
+
+th {
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 130%;
+	background-color: rgb(240,240,240);
+	border-bottom: 1px solid black;
+	padding: 2px;
+	text-align: center;
+}
+
+.rhc {
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 130%;
+	padding: 2px;
+	text-align: center;
+}
+
+.rhl {
+	font-weight: bold;
+	font-size: 14px;
+	line-height: 130%;
+	padding: 2px;
+	text-align: left;
+}
+
+.code {
+	font-family: "Courier New", "monospaced", sans-serif;
+	font-size: 14px;
+}
+
+.code-block {
+	background-color: #F0F0F0;
+	border: 1px solid #000;
+	font-family: "Courier New", "monospaced", sans-serif;
+	font-size: 12px;
+}
+
+
+td {
+	padding: 3px;
+	line-height: 140%;
+}
+
+
+.table-hover {
+}
+
+table.table-hover tr:hover {
+ background-color: rgb(255,255,225);
+}
+
+
+.row-faint-bottom-border {
+}
+
+
+table.row-faint-bottom-border tr {
+	border-bottom: 1px solid #DDD;
+}
+
+
+#table-of-contents {
+	font-family: "Trebuchet MS", Arial, Helvetica, sans-serif;
+	position: relative;
+	font-size: 12px;
+	line-height: 120%;
+	space-before: 5px;
+	font-weight: bold;
+	text-align: left;
+}
+.style1 {color: #FF0000}
+</STYLE>
+
+</head>
+
+<body>
+<div align="center">
+<div id="main-body">
+<div id="page-title">Initialization of the MBeanServer in Glassfish&mdash;<br />
+  <em>Fixing the SunoneInterceptor Initialization</em></div>
+<p class="code">December 3, 2006, Lloyd.Chambers@sun.com </p>
+<h1>Current initialization sequence</h1>
+<h2>Classnames used in this document</h2>
+<p>Most of these  classes are all in the appserv-core module. </p>
+<p class="code-block">com.sun.enterprise.admin.server.core.<strong>AdminService</strong><br />
+  com.sun.enterprise.admin.server.core.jmx.<strong>SunoneInterceptor</strong><br />
+  com.sun.enterprise.admin.server.core.jmx.<strong>AppServerMBeanServerBuilder</strong><br />
+  com.sun.enterprise.admin.server.core.jmx.<strong>AppServerMBeanServerBuilderFactory</strong><br />
+  com.sun.enterprise.admin.server.core.<strong>ConfigInterceptor</strong><br />
+  <br />
+  com.sun.enterprise.util.<strong>FeatureAvailability</strong><br />
+  com.sun.enterprise.util.<strong>RunnableBase</strong></p>
+<h2>Problematic initialization </h2>
+<p>The main player is <span class="code">SunoneInterceptor</span>, the
+  MBeanServer replacement used by GlassFish for some not-so-good reasons. The <span class="code">SunoneInterceptor</span> wraps the <span class="code">javax.management.MBeanServer</span>. </p>
+<p>The current initialization sequence is <strong>problematic for multiple reasons</strong>:</p>
+<ol>
+  <li> It is possible for certain types of code
+    to run even before the JVM calls <span class="code">main()</span> [PEMain]. This creates an MBeanServer, but all future
+    AppServer code will fail, because it will locate the <strong>wrong</strong> MBeanServer (see <a href="https://glassfish.dev.java.net/issues/show_bug.cgi?id=1409" target="_blank">bug
+    #xxxx</a>). The code is
+    sprinkled heavily with the idiom <span class="code">getMBeanServers().get(0)</span>. Short of finding and changing every
+    single call site, it is critical to make sure the correct MBeanServer is #0. </li>
+  <li>Implementation dependencies of <span class="code">SunoneInterceptor</span> make it <em>impossible</em> to initialize
+    the MBeanServer prior to initialization of various other facilities, such as the <span class="code">ServerContext</span>, <span class="code">ConfigContext</span> and <span class="code">AdminContext</span>.</li>
+  <li>Building of the <span class="code">SunoneInterceptor</span> is done by <span class="code">AppServerMBeanServerBuilder</span>,
+    which expects a boolean to be set by <span class="code">AppServerMBeanServerBuilderFactory</span>, which indicates  that
+    the <span class="code">SunoneInterceptor</span> is
+    to be created. It also expects this to be <span class="code">synchronized</span>.</li>
+  <li>The <span class="code">SunOneInterceptor</span> exists as an <span class="code">MBeanServer</span> in a state of incomplete initialization for
+    a period of time (until
+    <span class="code">setJmxMBeanServer()</span> is called). There is no guarantee that intervening code wouldn&rsquo;t attempt
+    to use it during that period&mdash;only sheer luck and the desire of all developers for QuirkLook to pass before comitting
+    changes. </li>
+  <li><span class="style1">Thread-unsafe code</span> (see <a href="#CorrectnessProblems"><em>Correctness Problems</em></a> below). </li>
+</ol>
+<h2><a name="CorrectnessProblems" id="CorrectnessProblems"></a>Correctness problems of SunoneInterceptor </h2>
+<p><span class="code">SunoneInterceptor</span> inserts a large amount of unnecessary performance-degrading code. Some of
+  it is literally run for no reason at all&mdash;code that should have been stripped out long ago. Some of it has an apparent
+  purpose, which at least for PE seems to be mostly unnecessary. And some of it isn&rsquo;t even correct code &mdash; it&rsquo;s not thread-safe. </p>
+<h3>Thread-unsafe variables</h3>
+<p>The following variables are not protected by <span class="code">synchronized</span> or <span class="code">volatile</span>.
+  Though the server appears to work, it is actually broken, because multiple threads can access these variables. </p>
+<ol>
+  <li><span class="code">adminContext</span> &mdash; static variable set by one thread (main thread), but accessed by any number
+    of threads. </li>
+  <li><span class="code">realMBeanServer</span> &mdash; instance variable initialized by <span class="code">setJmxMBeanServer()</span> via
+    main thread, but accessed by any number of threads.</li>
+</ol>
+<h3><a name="ConfigInterceptor" id="ConfigInterceptor"></a>initialization of ConfigInterceptor</h3>
+<p>When <span class="code">SunoneInterceptor.setJmxMBeanServer()</span> is called, it calls <span class="code">com.sun.enterprise.admin.util.proxy.ProxyFactory</span>  to
+  create an <span class="code">MBeanServer</span> proxy, implemented by <span class="code">ProxyClass</span>,
+  which wraps  <span class="code">ConfigInterceptor</span>:</p>
+<pre class="code-block">void setJmxMBeanServer(MBeanServer jmxMBS) throws InitException {
+    realMBeanServer = (MBeanServer)ProxyFactory.createProxy(
+        MBeanServer.class, jmxMBS, adminContext.getMBeanServerInterceptor());
+    logMBeanServerInfo();
+    initialize(); 
+}
+</pre>
+
+<h2><a name="CorrectnessProblems" id="CorrectnessProblems"></a>Performance problems caused by SunoneInterceptor </h2>
+<h3>Performance degradation calling defunct code</h3>
+<p>The following in SunoneInterceptor are all code that should not exist and/or can be easily removed:</p>
+<ol>
+  <li><span class="code">checkHotConfigChanges</span> &mdash; ends up calling new InstanceEnvironment() for every call on every
+    MBean. <strong>This
+      creates hundreds and possibly thousands of objects</strong>, only to return a constant <span class="code">'true'</span>,
+      for every <span class="code">get/setAttribute(s)</span> and <span class="code">invoke</span> call. </li>
+  <li><span class="code">registerWithPersistenceCheck</span> &mdash; dynamic loading of MBeans, <em>none</em> of which need
+    to be dynamically loaded, and very few of which actually are. All but one of these are <span class="code">&ldquo;ias&rdquo;</span> MBeans,
+    which are <em>duplicate</em> registrations of <span class="code">com.sun.appserv</span> MBeans (see below). The remaining
+    MBean is <span class="code">type=server-instance</span>, and it&rsquo;s unclear that it&rsquo;s even used. It can be handled in a
+    far better manner (by a <span class="code">NotificationListener</span>). </li>
+  <li>Duplicate registration &mdash; Some MBeans are registered twice; once in the &ldquo;<span class="code">ias</span>&rdquo;
+    domain and once in the &ldquo;<span class="code">com.sun.appserv</span>&rdquo;
+    domain. Changing the constant <span class="code">kDefaultIASDomainName</span> in <span class="code">ObjectNames.java</span>    to
+    &ldquo;<span class="code">com.sun.appserv</span>&rdquo; instead of &ldquo;<span class="code">ias</span>&rdquo; solves this
+    duplicate registration. </li>
+</ol>
+<h3><a name="PerformanceDegradationByConfigInterceptor" id="PerformanceDegradationByConfigInterceptor"></a>Performance degradation by ConfigInterceptor</h3>
+<p>The use of <span class="code">ConfigInterceptor</span> (see <em><a href="#ConfigInterceptor">Initialization
+  of ConfigInterceptor</a></em>)
+  routes all calls through it. This is  inefficient, because very few calls are relevant&mdash;only those that change configuration.
+  These include<span class="code"> setAttribute(</span>), <span class="code">setAttributes()</span> and<span class="code"> invoke()</span>.
+  Of course, <span class="code">invoke()</span> can be called on many operations that do not modify configuration (<span class="code">getAbc()</span>,<span class="code"> listAbc()</span>,
+  etc).</p>
+<p><strong>It is also troublesome that for each relevant <span class="code">setAttribute(s)/invoke</span> call, there are
+    probably 100X or 1000X as many <span class="code">get/list/invoke</span> calls that are read only.</strong> In fact,
+    once the server has been configured, the penalty is paid <em>forever</em>, even if configuration is never changed again.</p>
+<p>Compounding the transgression (of impacting <em>all</em> <span class="code">MBeanServer</span> operations), <em>all MBeans
+  in all JMX domains are impacted</em>, when in fact only certain ones are relevant to <span class="code">ConfigInterceptor</span>&mdash;namely
+  the <span class="code">com.sun.appserv:category=config</span> MBeans.
+  For example, the <span class="code">java.lang</span>, <span class="code">amx</span>, <span class="code">category=monitor</span>,
+  etc MBeans are all routed through <span class="code">ConfigInterceptor</span>. AMX MBeans route all config operations through
+  their <a href="https://glassfish.dev.java.net/javaee5/amx/docs/amx-impl.html" target="_blank">Delegate</a>, which is a <span class="code">com.sun.appserv:category=config</span> MBean.</p>
+<p><strong>It is not just a waste of clock-cycles</strong>&mdash;multiple new objects are instantiated for <em>every</em> call.
+  These objects must be garbage-collected at a future time.</p>
+<p>The name says it all&mdash;&ldquo;<em>Config</em>&rdquo; and &ldquo;<em>Interceptor</em>&rdquo;.
+  Impacting things that aren&rsquo;t related to config <em>modifications</em> has not only immediate clock-cycle performance
+  impacts, but possible unknown side-effects, and future garbage-collection impacts. </p>
+<h3>Inability to concurrently start services/modules</h3>
+<p><span class="code">SunoneInterceptor</span> is initialized by the <span class="code">AdminService</span>, a heavyweight
+  service which can take 2-3 seconds to initialize even on the very fastest machines. <span class="code">AdminService</span> initializes
+  a large number of admin-related services, MBeans, etc.</p>
+<p>As <span class="code">AdminService</span> is the first <span class="code">ServerLifecycle</span> to be run, all subsequent <span class="code">ServerLifecycle</span>  modules <em>must
+    wait until it has finished</em>. Since most of these need only the <span class="code">MBeanServer</span> and/or a few
+    specific MBeans (and
+    in some cases nothing at all), this has the effect of <strong>precluding concurrent initialization of other
+    services</strong>.</p>
+<h4>Solution</h4>
+<ul>
+  <li>Recode the initialization of the <span class="code">MBeanServer</span> such that it can be done immediately upon entry
+    to <span class="code">PEMain.main()</span> (in its own thread),
+    or even before <span class="code">PEMain</span> is
+    called. This allows any dependent code to immediately have access to the <span class="code">MBeanServer</span> without waiting for the <span class="code">AdminService</span>.
+    Such code might depend on other features; see <span class="code">com.sun.enterprise.util.FeatureAvailability</span>. </li>
+  <li><em>Defer</em> the insertion of the <span class="code">ConfigInterceptor</span> until the time at which it can be created eg when the <span class="code">AdminService</span> is
+    initialized. </li>
+  <li>Internally thread the initialialization and startup sequence of the <span class="code">AdminService</span>. <em>Very</em> little
+    of what it initializes has a serialization dependency on prior items. See  <span class="code">com.sun.enterprise.util.RunnableBase</span>;
+    5 threads are used within the <span class="code">AdminService</span> in the author&rsquo;s  non-committed code base. </li>
+  </ul>
+<h4>Threading example</h4>
+<p>Below are two examples  of a threaded sub-part of the AdminService; the <span class="code">FORCE_SERIAL</span> boolean
+  can be flipped to allow true asynchronous initialization. For the 1st checkin phased, the boolean will be set to <span class="code">true</span> to
+  mimic existing behavior, though this appears to be unnecessary. </p>
+<pre class="code-block">
+    // initialize AdminChannel
+        _adminChannelIniter   = new RunnableBase( "AdminService _adminChannelIniter") {
+            protected void doRun()  throws Exception {
+                adminChannel = new AdminChannelLifecycle();
+                adminChannel.onInitialization(context);
+            }
+        };
+        _adminChannelIniter.submit( FORCE_SERIAL );
+<br />        _callflowAndJKSIniter = new RunnableBase( &quot;AdminService _callflowAndJKSIniter&quot; ) {<br />            protected void doRun()  throws Exception {<br />                initCallFlow(); <br />                setupJKS();<br />            }<br />        };<br />        _callflowAndJKSIniter.submit( FORCE_SERIAL );</pre>
+<h1>Fixing the MBeanServer initialization sequence </h1>
+<h2>Overview</h2>
+<p>It appears that the functionality of <span class="code">ConfigInterceptor</span> is still required, namely to flush the
+  Config when a change is made (though even that is not a clear necessity&mdash;further research will look into it). For
+  this reason, <strong>an interceptor must still be used</strong> until it is established that the config-flushing behavior
+  is not needed, or that it can be done via other means. </p>
+<h4>Instantiating a new interceptor</h4>
+<p>The new interceptor <span class="code">DynamicInterceptor</span> will be instantiated from within <span class="code">PEMain</span> in a separate
+  thread (&ldquo;<span class="code">Dynamic</span>&rdquo; because its behavior can be modified at a later time) . This
+  entails the following:</p>
+<ol>
+  <li>modifying the <span class="code">javax.management.builder.initial</span> property in several domain.xml templates;</li>
+  <li>kicking off a thread to instantiate  the <span class="code">MBeanServer</span> (about 110ms on a fast machine). </li>
+  <li>Modifying <span class="code">com.sun.enterprise.admin.common.MBeanServerFactory</span> to call <span class="code">FeatureAvailability</span> to return the <span class="code">MBeanServer</span>. </li>
+</ol>
+<p>The code below initializes the <span class="code">MBeanServer</span>. Note that it is critical to establish that the <span class="code">MBeanServer</span> can
+  be started immediately because there are means by which code can ask for the <span class="code">MBeanServer</span> even
+  before <span class="code">main()</span> is called (see <a href="https://glassfish.dev.java.net/issues/show_bug.cgi?id=1409" target="_blank">bug#1409</a> for an example). </p>
+<pre class="code-block">    static private final String BUILDER_SYSTEM_PROPERTY =
+			"javax.management.builder.initial";
+    static private final String MBEAN_SERVER_BUILDER =
+        "com.sun.enterprise.interceptor.InterceptorMBeanServerBuilder";
+    
+    private static class MBeanServerIniter extends RunnableBase {
+        MBeanServerIniter() {
+            final String builder    = System.getProperty( BUILDER_SYSTEM_PROPERTY );
+            if ( ! builder.equals( MBEAN_SERVER_BUILDER ) ) {
+                throw new Error( "initializeMBeanServer: incorrect MBeanServer specified" );
+            }
+        }
+        protected void doRun() {
+            final long  start   = System.currentTimeMillis();
+            
+            final MBeanServer server =
+                java.lang.management.ManagementFactory.getPlatformMBeanServer();
+            
+            if ( ! (server instanceof DynamicInterceptor) ) {
+                // Don't use a Logger; it has not even been initialized yet
+                // this message indicates a development bug and so doesn't need I18N
+                System.err.println( "initializeMBeanServer: wrong MBeanServer was created" );
+                throw new Error( "initializeMBeanServer: incorrect MBeanServer was created" );
+            }
+            FeatureAvailability.getInstance().registerFeature(
+                FeatureAvailability.MBEAN_SERVER_FEATURE, server );
+            
+            final long elapsed = System.currentTimeMillis() - start;
+            _Debug.println( "MBeanServer created successfully in "  + elapsed + "ms");
+        }
+    };
+	
+	public static void main(String[] args) {
+	    final MBeanServerIniter initer  = new MBeanServerIniter();
+		initer.submit();
+		...
+</pre>
+<p>Note the use of <span class="code">FeatureAvailability</span> to record the availability of the <span class="code">MBEAN_SERVER_FEATURE</span>. This is the <strong>only</strong> mechanism
+  by which other dependent code should obtain the MBeanServer, though the current idioms will continue to work. </p>
+<h2>Maintaining the existing ConfigInterceptor in the call chain </h2>
+<p>The <span class="code">DynamicInterceptor</span> accepts a &ldquo;hook&rdquo; eg:</p>
+<pre class="code-block">public synchronized void addHook( String jmxDomain, DynamicInterceptorHook hook ) </pre>
+<p>The <span class="code">AdminService</span> uses this hook to insert the <span class="code">ConfigInterceptor</span> into the call chain:</p>
+<pre class="code-block">
+FeatureAvailability.getInstance().waitForFeature(
+    FeatureAvailability.MBEAN_SERVER_FEATURE, "AdminService.init" );
+final MBeanServer mbs = getMBeanServer();
+try {
+    adminContext.setMBeanServer( mbs );
+    final FlushConfigHook hook  = new FlushConfigHook( adminContext );
+    ((DynamicInterceptor)mbs).addHook( "com.sun.appserv", hook );
+    sLogger.info( "core.mbs_init_ok");
+...
+</pre>
+<p>The <span class="code">FlushConfigHook</span> optimizes the calling path such that only <a href="#PerformanceDegradationByConfigInterceptor">relevant
+    MBeans</a> are passed along to <span class="code">ConfigInterceptor</span>  . Thus, MBeans in other JMX domains do not
+    suffer a performance hit from insertion of the FlushConfigHook (<span class="code">com.sun.jbi, amx, java.lang, amx-support,
+    com.sun.apspserv:category=monitor/runtime</span>,
+    etc). </p>
+<h1>Conclusions</h1>
+<p>This change will make a major improvement in the way the <span class="code">MBeanServer</span> is instantiated, setting
+  the stage for far more efficient startup of the server (eg  concurrent initialization with today&rsquo;s <span class="code">ServerLifecycle</span>  approach,
+  which can cut server startup time by about 40% on a dual-core machine).</p>
+<p>&nbsp;</p>
+<p>&nbsp; </p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp; </p>
+</div>
+</div>
+</body>
+
+
+
+</html>

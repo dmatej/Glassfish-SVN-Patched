@@ -1,0 +1,520 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>GlassFish V2 with Cluster, Load Balancer Configurations</title>
+  <meta content="Dinesh Patil" name="author">
+</head>
+<body>
+<center>
+<h1 style="text-align: left;">Configuring the Cluster/Load Balancer
+with GlassFish V2</h1>
+</center>
+<h3>Contents <small><span style="font-weight: normal;">(Updated on Apr
+25th 2007, </span><a style="font-weight: normal;"
+ href="mailto:dpatil@dev.java.net">send comments</a><span
+ style="font-weight: normal;">)</span></small></h3>
+<ul>
+  <li><a href="#install_web">Installing and Configuring GlassFish and
+the Web Server</a> </li>
+  <li><a href="GlassFish_LB_Cluster.html#setup_cluster">Setting up a
+One-machine Cluster using
+GlassFish V2</a></li>
+  <li><a href="#config_lb">Configuring the Load Balancer Plugin</a> </li>
+  <li><a href="#deploy">Deploying and Running the <code>clusterjsp</code>
+Sample Application</a></li>
+  <li><a href="#failover">High Availability/Failover using In-memory
+Replication feature</a><br>
+  </li>
+  <li><a href="#cleanup">Stop and Cleanup Cluster Settings</a></li>
+  <li><a href="#cluster_using_cli">Create Cluster using Glassfish Admin
+CLI commands</a><br>
+  </li>
+  <li><a href="#trouble_shooting">Trouble Shooting</a></li>
+</ul>
+<p>
+</p>
+<hr style="width: 100%; height: 2px;">
+<h3><a name="install_web"></a>Installing and Configuring GlassFish and
+the Web Server</h3>
+<p>Install the GlassFish server by
+downloading it from GlassFish
+Download Page at: <span style="text-decoration: underline;"></span><a
+ href="https://glassfish.dev.java.net/public/downloadsindex.html">https://glassfish.dev.java.net/public/downloadsindex.html</a><br>
+</p>
+<p>GlasssFish installation
+requires JDK 5 (1.5.0_10) and ant 1.6.5 (included).
+</p>
+<ol>
+  <li>Download one of the bundles to disk</li>
+  <li>Run:
+    <pre>java -Xmx256m -jar <i>filename.jar</i><br></pre>
+  </li>
+  <li>cd glassfish</li>
+  <li>ant -f setup-cluster.xml</li>
+</ol>
+<p>To download and install Load Balancer plugin to work with GlassFish,
+follow the steps below.<br>
+</p>
+<ol>
+  <li>Download aslb (appserver load balancer plugin) from the link: <a
+ href="http://download.java.net/javaee5/external/SunOS_X86/aslb/jars/aslb-9.1-MS4-b1.jar">SunOS_X86</a>
+, <a
+ href="http://download.java.net/javaee5/external/SunOS/aslb/jars/aslb-9.1-MS4-b1.jar">SunOS</a>
+, <a
+ href="http://download.java.net/javaee5/external/Linux/aslb/jars/aslb-9.1-MS4-b1.jar">Linux</a>
+, <a
+ href="http://download.java.net/javaee5/external/WINNT/aslb/jars/aslb-9.1-MS4-b1.jar">Windows</a></li>
+http://download.java.net/javaee5/external/&lt;OS&gt;/aslb/jars/aslb-9.1-MS4-b1.jar
+  <li>This document explains the steps for Sun Webserver 61 plugin on
+Solaris, the bundle contains Apache Webserver plugin also.&nbsp;<span
+ style="font-weight: bold;"></span></li>
+  <span style="font-weight: bold;">Please note that GlassFish V2
+officially
+tested and supported only with Sun Webserver 6.1</span> and not
+supported for other webserver for the load balancer plugin. <br>
+  <li>Unjar to install and configure in GlassFish installation (this is
+${glassfish.home}same as $S1AS_HOME) directory</li>
+  <ul>
+    <li>Unjar aslb-9.1-MS4-b1.jar file in
+"${glassfish.home}/lib/lbplugin"</li>
+    <li>There are 2 zip files bundled inside the aslb jar:
+SUNWaslb.zip, SUNWaspx.zip, unzip these 2 zip files in the same
+directory and delete the zip files.<br>
+    </li>
+    <li>Change permissions on all shared libraries of lbplugin as below</li>
+    <li>chmod -R 755 ${glassfish.home}/lib/lbplugin/lib<br>
+    </li>
+  </ul>
+</ol>
+Before you install the load balancer plugin, you must install
+Sun Java System Webserver 6.1 (SJSWS) first. SJSWS 6.1 is the supported<br>
+webserver for GlassFish V2 and these steps being specific to SJSWS
+6.1.&nbsp; You can download the Web Server
+from:<br>
+<a href="http://www.sun.com/download/products.xml?id=434aec1d">http://www.sun.com/download/products.xml?id=434aec1d</a><br>
+<br>
+To install and manually configure the SJSWS
+6.1 for GlassFish HTTP load balancing, you can use <span
+ style="font-weight: bold;">lbplugin.sh</span> script, located in<br>
+${glassfish.home}/samples/quickstart/clusterjsp
+directory. <span style="font-weight: bold;">You will have to edit the
+script</span> to set values of following three variables.<br>
+<p><code><span style="font-family: monospace;"></span></code></p>
+<div style="margin-left: 40px;"><code><span
+ style="font-family: monospace;"><span style="font-weight: bold;">asDir</span>=&lt;Set
+value of ${glassfish.home} e.g.
+/export/tinderbox/dinesh/my814/publish/glassfish&gt;</span></code><br>
+<code><span style="font-family: monospace;"><span
+ style="font-weight: bold;">wsInstanceDir</span>=&lt;Set Sun Webserver
+installation path to Webserver Instance <br>
+&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; &nbsp;&nbsp;
+e.g.
+/export/tinderbox/dinesh/WebServer/ws6.1/https-iasenglx2.red.iplanet.com&gt;</span></code><br>
+<code><span style="font-family: monospace;"><span
+ style="font-weight: bold;">os</span>=&lt;Platform e.g.
+solaris/linux&gt;</span></code><br>
+<code><span style="font-family: monospace;"></span><i><span
+ style="font-family: monospace;"></span></i></code></div>
+<p>The above script automates following steps.<br>
+Legends: <code><br>
+websrvr_install_dir - Sun Java System Webserver install Directory<br>
+websrvr_instance_dir - Sun Java System Webserver Instance Directory<br>
+</code><code>as_install_dir -&nbsp; GlassFish installation Directory.</code><br>
+</p>
+<ol>
+  <li>Create the following directories:
+    <ul>
+      <li><code>&lt;websrvr_install_dir&gt;/plugins/lbplugin/bin</code></li>
+      <li><code>&lt;websrvr_install_dir&gt;/plugins/lbplugin/resource</code></li>
+      <li><code><code>&lt;websrvr_install_dir&gt;/plugins/lbplugin/errorpages</code></code></li>
+    </ul>
+  </li>
+  <li>Copy <code>&lt;as_install_dir/lib/lbplugin/lib/webserver-plugin/&lt;OS&gt;/iws61/libpassthrough.so</code>
+    <p> as <code>&lt;websrvr_install_dir&gt;/plugins/lbplugin/bin/libpassthrough.so</code>
+    </p>
+    <p>Where &lt;OS&gt; refers
+to 'linux' for the linux platform, and 'solaris' for the solaris
+platform.</p>
+  </li>
+  <li>Add execute permission to <code>&lt;websrvr_install_dir&gt;/plugins/lbplugin/bin/libpassthrough.so</code>.
+  </li>
+  <li>Copy <code>&lt;as_install_dir&gt;/lib/lbplugin/lib/webserver-plugin/&lt;OS&gt;/iws61/errorpages/default-error.html</code>
+    <p>as&nbsp; <code>&lt;websrvr_install_dir&gt;/plugins/lbplugin/errorpages/default-error.html</code>
+    </p>
+  </li>
+  <li>Copy <code>&lt;as_install_dir&gt;/lib/lbplugin/lib/webserver-plugin/&lt;OS&gt;/iws61/errorpages/sun-http-lberror.html</code>
+    <p>as&nbsp; <code>&lt;websrvr_install_dir&gt;/plugins/lbplugin/errorpages/sun-http-lberror.html</code>
+    </p>
+  </li>
+  <li>Copy <code>&lt;as_install_dir&gt;/lib/lbplugin/lib/webserver-plugin/&lt;OS&gt;/iws61/*.res</code>
+    <p>To&nbsp; <code>&lt;websrvr_install_dir&gt;/plugins/lbplugin/resource</code>
+    </p>
+  </li>
+  <li>Copy <code>&lt;as_install_dir&gt;/lib/lbplugin/lib/install/templates/loadbalancer.xml.example</code>
+    <p>as&nbsp; <code>&lt;<span style="font-weight: bold;">websrvr</span>_<b>instance_dir</b>&gt;/config/loadbalancer.xml.example</code></p>
+  </li>
+  <ul>
+    <li> This is just an example for notational purpose, the user
+should manually edit (if choosen to do this way) this file prior to
+using this <br>
+as loadbalancer.xml, to reflect the correct cluster
+configuration. Refer to &#8220;<a href="#config_lb">Configuring the Load
+Balancer Plugin</a>&#8221; for this. <br>
+Note manual editing is not the endorsed
+way to configure the load balancer. GlassFish Admin CLI or GUI are the
+two supported approaches for generating this file, while providing for
+error free load balancer configuration generation. </li>
+  </ul>
+  <li>Copy <code>&lt;as_install_dir&gt;/lib/lbplugin/lib/dtds/sun-loadbalancer_1_2.dtd</code>
+    <p>as&nbsp; <code>&lt;<span style="font-weight: bold;">websrvr</span>_<b>instance_dir</b>&gt;/config/sun-loadbalancer_1_2.dtd</code>
+    </p>
+  </li>
+  <li>Append the following lines to <code>&lt;websrvr_instance_dir&gt;/config/magnus.conf</code>.
+    <br>
+  </li>
+  <ol>
+    <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;##BEGIN EE LB Plugin Parameters<br>&nbsp;&nbsp;&nbsp;&nbsp;Init fn="load-modules" shlib="&lt;websrvr_install_dir&gt;/plugins/lbplugin/bin/libpassthrough.so"<br>funcs="init-passthrough,service-passthrough,name-trans-passthrough" Thread="no"<br>&nbsp;&nbsp;&nbsp;&nbsp;Init fn="init-passthrough"<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;##END EE LB Plugin Parameters<br></pre>
+The above lines need to be before following line.<br>
+    <pre>Init fn="load-modules" shlib=".../libj2eeplugin.so" shlib_flags="(global|now)" </pre>
+Replace &lt;websrvr_install_dir&gt; with your Web Server
+installation directory.
+  </ol>
+  <li>Insert this line <b>before</b> the line of the first occurence
+of the string "nametrans" in <code>&lt;websrvr_instance_dir&gt;/config/obj.conf</code><br>
+    <pre>NameTrans fn="name-trans-passthrough" name="lbplugin" config-file="&lt;websrvr_instance_dir&gt;/config/loadbalancer.xml"<br></pre>
+    <p>Replace <code>&lt;<span style="font-weight: bold;">websrvr_instance_dir</span>&gt;</code>
+with your Web
+Server
+Instance Directory. </p>
+  </li>
+  <li>Append the following lines to <code>&lt;websrvr_instance_dir&gt;/config/obj.conf</code>
+    <pre>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;Object name="lbplugin"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ObjectType fn="force-type" type="magnus-internal/lbplugin"<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; PathCheck fn="deny-existence" path="*/WEB-INF/*"<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Service type="magnus-internal/lbplugin" fn="service-passthrough"<br>&nbsp;&nbsp;&nbsp; &nbsp;&nbsp;&nbsp; Error reason="Bad Gateway" fn="send-error" uri="$docroot/badgateway.html"<br>&nbsp;&nbsp;&nbsp; &lt;/Object&gt;<br></pre>
+  </li>
+  <li>(Optional) For DAS based Load Balancer admininstration (the new
+feature), configure the WebServer for SSL. Refer to inputs at
+http://blogs.sun.com/sv96363/entry/ssl_setup_of_http_load<br>
+  </li>
+  <li>Start the Web Server if not running.<br>
+  </li>
+</ol>
+<p>
+</p>
+<hr style="width: 100%; height: 2px;">
+<h3><a name="setup_cluster"></a>Setting Up a One Machine Cluster<br>
+</h3>
+<p>If you haven't already done so, download and install <a
+ href="https://glassfish.dev.java.net/public/downloadsindex.html#Promoted_binary_builds">GlassFish
+latest promoted build</a>. <br>
+</p>
+<p>Now to create the cluster, we need to first configure and start
+GlassFish V2 domain (which is in cluster mode), run following commands:<br>
+</p>
+<pre style="margin-left: 40px;">% ant -f setup-cluster.xml<br>% cd ${glassfish.home}/bin<br>% asadmin start-domain --user <i>${adminuser}</i> --passwordfile <span
+ style="font-family: mon;"><span style="font-style: italic;">${Admin-PasswordFile}</span></span> <i>domain-name</i></pre>
+<p>To create a cluster on the machine running the above Domain
+Administartion
+Server (DAS), follow these steps:
+</p>
+<ol>
+  <li>In a shell window, change your working directory to <code><i><span
+ style="font-family: monospace;">${glassfish.home}/samples/quickstart/clusterjsp</span></i></code></li>
+  <li>Run the command: <code style="font-weight: bold;">${glassfish.home}/bin/asant
+setup-one-machine-cluster</code> which automates following steps.<br>
+    <ul>
+      <li>The values of <code>cluster.name</code> and <code>nodeagent.name</code>
+are specified here, change it appropriately.<br>
+        <code>${glassfish.home}/samples/quickstart/clusterjsp/cluster.properties</code>.</li>
+      <li>Creates a cluster with name <code>cluster.name (cluster1)</code>
+      </li>
+      <li>Creates a node-agent with name <code>nodeagent.name
+(cluster1-nodeagent)<br>
+        </code></li>
+      <li>Starts the node-agent</li>
+      <li>Creates two instances under the cluster that will use the
+node agent just created</li>
+      <li>The default value for master password is "changeit".&nbsp;
+This is different from the admin password. <br>
+Most of the default values
+are used from ${glassfish.home}/samples/common.properties or
+cluster.properties above. </li>
+    </ul>
+  </li>
+  <li>Starts the cluster <code style="font-weight: bold;">${glassfish.home}/bin/asant
+start_cluster<br>
+    </code></li>
+  <li>Troble-shooting:<br>
+  </li>
+  <ul>
+    <li>if you see the errors while starting the cluster, you can
+ignore some harmless errors. For more details, refer to <a
+ href="GlassFish_LB_Cluster.html#trouble_shooting">troubleshooting
+section</a>.</li>
+    <li>On some Windows XP PCs, if this command hangs at
+"start-node-agent", do CNTR-C and retry again. Second time this goes
+through, starts node-agent, cluster successfully.</li>
+    <li>If asant
+setup-one-machine-cluster is not starting the cluster, in that case
+asant start_cluster must be explicitly invoked.</li>
+  </ul>
+  <li>You can do the above steps using Adminstration GUI by accessing <span
+ style="font-weight: bold;">https</span>://&lt;glassfish-host-name&gt;:&lt;admin-port&gt;</li>
+  <li>GlassFish Admin CLI commands to create cluster can be found <a
+ href="#cluster_using_cli"><span style="font-weight: bold;">HERE</span></a>.<br>
+  </li>
+</ol>
+<p>
+</p>
+<hr style="width: 100%; height: 2px;">
+<h3><a name="config_lb"></a>Configuring the Load Balancer Plugin</h3>
+After installing the Load Balancer Plugin, configure the <code>&lt;<span
+ style="font-weight: bold;">websrvr</span>_<b>instance_dir</b>&gt;/config/loadbalancer.xml</code><code></code>
+file as follows:
+<pre>&lt;!DOCTYPE loadbalancer PUBLIC "-//Sun Microsystems Inc.//DTD Sun One Application Server 8.1//EN"<br>"sun-loadbalancer_1_2.dtd"&gt;<br>&lt;loadbalancer&gt;<br>     &lt;cluster name="cluster1"  policy="round-robin"&gt;<br>        &lt;instance  name="instance1" enabled="true" disable-timeout-in-minutes="60" <br>			listeners="http://<i>instance-one-host</i>:<i>instance-one-port</i>"  weight="100"/&gt;<br>        &lt;instance  name="instance2" enabled="true" disable-timeout-in-minutes="60" <br>			listeners="http://<i>instance-two-host</i>:<i>instance-two-port</i> weight="100"/&gt;<br>        &lt;web-module context-root="clusterjsp" enabled="true" disable-timeout-in-minutes="60" <br>			error-url="sun-http-lberror.html" /&gt;<br>        &lt;health-checker url="/" interval-in-seconds="10" timeout-in-seconds="30" /&gt;<br>    &lt;/cluster&gt;<br><br>    &lt;property name="reload-poll-interval-in-seconds" value="60"/&gt;<br>    &lt;property name="response-timeout-in-seconds" value="30"/&gt;<br>    &lt;property name="https-routing" value="true"/&gt;<br>    &lt;property name="require-monitor-data" value="false"/&gt;<br>    &lt;property name="active-healthcheck-enabled" value="false"/&gt;<br>    &lt;property name="number-healthcheck-retries" value="3"/&gt;<br>    &lt;property name="rewrite-location" value="true"/&gt;<br>&lt;/loadbalancer&gt;<br></pre>
+<p>
+To turn on load balancer plug-in monitor messages, set the <code>require-monitor-data</code>
+property value to true. The load balancer plug-in logs record the
+following information:
+</p>
+<ul>
+  <li>Request start/stop information for every request. </li>
+  <li>Failed-over request information when a request fails over from an
+unhealthy instance to a healthy instance. </li>
+  <li>List of unhealthy instances at the end of every health-check
+cycle.</li>
+</ul>
+Restart the Web Server after configuring the LB plugin from <code>loadbalancer.xml
+file.</code>
+<hr style="width: 100%; height: 2px;">
+<h3><a name="deploy"></a>Deploying and Running the <code>clusterjsp</code>
+Sample Application</h3>
+<p>To test <code>cluster1</code> of two GlassFish V2 Server
+instances,
+use the "clusterjsp" application located in&nbsp; <code><big><span
+ style="font-family: mon;">${glassfish.home}</span></big>/samples/quickstart/clusterjsp
+directory as clusterjsp.ear</code></p>
+<div style="margin-left: 40px;">
+<p> </p>
+</div>
+<ul>
+  <li>To deploy the <code>clusterjsp</code> application on
+"cluster1" of two instances, run following command</li>
+</ul>
+<ul>
+  <ul>
+    <li>
+      <pre>cd <code><span style="font-family: mon;">${JAVAEE_HOME}</span>/samples/quickstart/clusterjsp</code></pre>
+    </li>
+    <li>
+      <pre><code></code>% ${JAVAEE_HOME}/bin/asant deploy</pre>
+    </li>
+    <li>Now all the clustering, load balancing configurations and
+application deployment is done. <br>
+    </li>
+  </ul>
+  <ul>
+    <li>You can access the <code>clusterjsp</code> application
+using <code>http://hostname:web-server-port/clusterjsp</code>
+(<span style="font-weight: bold;">webserver port</span>) and add
+sessions to the application.</li>
+  </ul>
+</ul>
+<div style="margin-left: 40px;">
+</div>
+<ul>
+  <li>Clusterjsp http response will show which GlassFish Server
+instance (instance-ONE or instance-TWO) serving the request of the
+client.&nbsp; To simulate application server clustering along with
+load-balancing, follow steps below </li>
+</ul>
+<div style="margin-left: 40px;">
+</div>
+<ol style="margin-left: 40px;">
+  <li>You will need to use two Firefox browsers or at least two
+seperate sessions of the
+browsers, and clear cache/cookies from the browser before every new
+request (this is needed to simulate unique clients) to access a
+deployed
+clusterjsp sample application.<br>
+  </li>
+  <li>You access the clusterjsp application through
+webserver <code>http://web-server-host:web-server-port/clusterjsp</code><br>
+and see the request is served by first instance that is running
+(instance-ONE in our case) in the http response you get in
+browser.&nbsp;
+Healthy and the Unhealthy instance is been detected by webserver
+load-balancer plugin. <br>
+  </li>
+  <li>Open another Firefox browser, clear cache/cookies from
+the
+browser <span style="font-weight: bold;">(Do it couple of times to
+really clear cache/cookies)</span> and access clusterjsp application
+again through
+webserver <code>http://web-server-host:web-server-port/clusterjsp</code><span
+ style="color: rgb(255, 0, 0);"> </span>This time, you can see the
+request is served by second instance that is running (instance-TWO in
+this case) in the http response you get in browser. This ensures that
+requests are served by
+instances in the
+order set in the <code>loadbalancer.xml</code> file in Round-Robin
+fashion.&nbsp; Screenshots below.</li>
+</ol>
+<table style="text-align: left; width: 905px; height: 534px;" border="1"
+ cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td style="vertical-align: top;"><img alt="instance-ONE"
+ src="images/instance-ONE-img.gif" style="width: 427px; height: 522px;"><br>
+      </td>
+      <td style="vertical-align: top;"><img alt="instance-TWO"
+ src="images/instance-TWO-img.gif" style="width: 445px; height: 517px;"><br>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<br>
+This demonstrates the cluster of two instances instance-ONE, and
+instance-TWO which are managed by the Node-agents and Domain
+Admininstration
+Server of GlassFish V2 and load balanced through Load Balancer plugin
+installed on SJS Webserver 6.1.<br>
+<hr style="width: 100%; height: 2px;">
+<p style="font-weight: bold;"><big><a name="failover"></a>High
+Availability/Failover using In-memory Replication feature</big></p>
+<p>To verify GlassFish server High-Availability or failover while
+accessing a deployed clusterjsp sample application,
+follow the steps below:<br>
+</p>
+<div style="margin-left: 40px;"> </div>
+<ol>
+  <li>You can make a particular instance serve a request by
+restarting
+the
+web server that has the load balancer plugin installed <b>before</b>
+deploying an
+application. This ensures that requests are served by instances in the
+order set in
+the <code>loadbalancer.xml</code> file. From the above <code>loadbalancer.xml</code>
+instance-ONE will serve the first request.</li>
+  <li>We have already deployed a sample application that stores
+session
+data, e.g.
+clusterjsp web application as above. With this we should be able to see
+that successive requests from same client are served by the same
+instance that the served
+first request and the session data is maintained across the requests. <br>
+  </li>
+  <li>Send few requests and note down the instance that served
+those
+requests and shutdown that particular instance.
+Use this command to stop the instance:</li>
+  <ul>
+    <li>asadmin stop-instance --user <i>adminuser</i> --password <i>adminpassword</i>
+      <i>instance-name</i></li>
+  </ul>
+  <li>Now send in the next request and verify that the new data
+is
+stored properly and that the previously added data is still there in
+the session.</li>
+</ol>
+<ol>
+  <img alt="Session Data" src="images/session-data.gif"
+ style="width: 480px; height: 641px;"><br>
+</ol>
+<br>
+This demonstrate the same shopping-cart scenario to avoid
+single-point of failure. If one of the server serving requests and
+adding items in shopping cart initially crashed, or not available
+anymore, then another server in the same cluster will take-over the
+request with all earlier session data (added items of shopping cart)
+and complete the request. Here the session data is stored in Memory, so
+this demonstrates the in-memory replication feature to get GlassFish
+server Highly Available.
+<hr style="width: 100%; height: 2px;">
+<h3><a name="cleanup"></a>Stop and Cleanup Cluster Settings</h3>
+<ol>
+  <li>To stop the <code>cluster1</code> Cluster of two instances and <code>cluster1-nodeagent</code>
+nodeagent, run following command</li>
+  <ul>
+    <li>
+      <pre>cd <code><span style="font-family: mon;">${glassfish.home}</span>/samples/quickstart/clusterjsp</code></pre>
+    </li>
+    <li>
+      <pre><code></code>% ${glassfish.home}/bin/asant stop_nodeagent</pre>
+    </li>
+  </ul>
+  <li>To remove cluster1 of two instances and node-agent, run following
+command</li>
+  <ul>
+    <li>
+      <pre>cd <code><span style="font-family: mon;">${glassfish.home}</span>/samples/quickstart/clusterjsp</code></pre>
+    </li>
+    <li>
+      <pre><code></code>% ${glassfish.home}/bin/asant clean-one-machine-cluster</pre>
+    </li>
+  </ul>
+</ol>
+<hr style="width: 100%; height: 2px;">
+<h3><a name="cluster_using_cli"></a>Create Cluster using GlassFish
+Admin CLI commands</h3>
+<ul>
+  <li>The values of <code>cluster.name</code> and <code>nodeagent.name</code>
+are specified here, change it appropriately.<code><i><span
+ style="font-family: monospace;"> ${glassfish.home}/</span></i>samples/quickstart/clusterjsp/cluster.properties</code>.</li>
+  <li>Creates a cluster with name <code>cluster.name (cluster1)</code></li>
+  <ul>
+    <li>
+      <pre>asadmin create-cluster --user admin --passwordfile adminpassword.txt --host localhost -port 4848 cluster1</pre>
+    </li>
+  </ul>
+  <li>Creates a node-agent with name <code>nodeagent.name
+(cluster1-nodeagent)</code></li>
+  <ul>
+    <li>
+      <pre>asadmin create-node-agent --user admin --passwordfile adminpassword.txt --host localhost -port 4848 cluster1-nodeagent</pre>
+    </li>
+  </ul>
+  <li>Starts the node-agent</li>
+  <ul>
+    <li>
+      <pre>asadmin start-node-agent --user admin --passwordfile adminpassword.txt --host localhost -port 4848 cluster1-nodeagent</pre>
+    </li>
+  </ul>
+  <li>Creates two instances under the cluster that will use the
+node agent just created</li>
+  <ul>
+    <pre><li>asadmin create-instance --user admin --passwordfile<br>adminpassword.txt --host localhost -port 4848 --cluster cluster1<br>--nodeagent cluster1-nodeagent --systemproperties<br>"JMX_SYSTEM_CONNECTOR_PORT=8687:IIOP_LISTENER_PORT=3330:IIOP_SSL_LISTENER_PORT=4440:IIOP_SSL_<br><br>MUTUALAUTH_PORT=5550:HTTP_LISTENER_PORT=1110:HTTP_SSL_LISTENER_PORT=2220"<br>instance-ONE</li>    <li>asadmin create-instance --user admin --passwordfile<br>adminpassword.txt<br>--host localhost -port 4848 --cluster cluster1 --nodeagent<br>cluster1-nodeagent --systemproperties<br>"JMX_SYSTEM_CONNECTOR_PORT=8688:IIOP_LISTENER_PORT=3331:IIOP_SSL_LISTENER_PORT=4441:IIOP_SSL_<br><br>MUTUALAUTH_PORT=5551:HTTP_LISTENER_PORT=1111:HTTP_SSL_LISTENER_PORT=2221"<br>instance-TWO</li></pre>
+  </ul>
+  <li>Starts the cluster</li>
+  <ul>
+    <li>
+      <pre>asadmin start-cluster --user admin --passwordfile adminpassword.txt<br>--host localhost -port 4848 cluster1</pre>
+    </li>
+  </ul>
+</ul>
+<hr style="width: 100%; height: 2px;">
+<h3><a name="trouble_shooting"></a>Trouble Shooting</h3>
+<ol>
+  <li>If you see the following error message during start-cluster, you
+can safely ignore it, we are working on resolving this.</li>
+start_cluster:<br>
+&nbsp;&nbsp;&nbsp;&nbsp; [echo] Starting cluster cluster1<br>
+&nbsp;&nbsp;&nbsp;&nbsp; [exec] instance-ONE is running, does not
+require restart<br>
+&nbsp;&nbsp;&nbsp;&nbsp; [exec] error 0
+[#|2006-08-18T11:22:58.078-0700|WARNING|sun-appserver-ee9.1|javax.jms|_ThreadID=10;_ThreadName=main;_RequestID=94652747-8288-451a-83d0-12fb326ce7d7;|[I500]:
+Caught JVM Exception: java.net.ConnectException: Connection refused|#]<br>
+  <br>
+  <li>If you see webserver startup failures for loading the libraries,
+you may need to do the following: <br>
+  </li>
+Edit the &lt;websrv_instance_dir&gt;/start script to update the
+LD_LIBRARY_PATH value to include
+&lt;as_install_dir&gt;/lib/lbplugin/lib. This contains the various
+binary dependencies for the loadbalancer plugin.
+</ol>
+<div style="margin-left: 40px;"><br>
+</div>
+</body>
+</html>

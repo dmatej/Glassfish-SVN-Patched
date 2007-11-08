@@ -1,0 +1,337 @@
+<html>
+<head>
+<title>Removal of --password option from asadmin</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+</head>
+
+<body bgcolor="#FFFFFF" text="#000000">
+<h1><font face="Georgia, Times New Roman, Times, serif">Making Appserver Admin 
+  CLI More Secure</font></h1>
+<h5><font face="Georgia, Times New Roman, Times, serif">Status</font><br>
+</h5>
+<table width="73%" border="0">
+  <tr> 
+    <td width="17%"> 
+      <h5>Asarch Reviewed and Approved</h5>
+    </td>
+    <td width="50%"> 
+      <h5>Kedar Mhaswade</h5>
+    </td>
+    <td width="33%"> 
+      <h5>0.95</h5>
+    </td>
+  </tr>
+  <tr> 
+    <td width="17%"> 
+      <h5>Document Created</h5>
+    </td>
+    <td width="50%"> 
+      <h5>Kedar Mhaswade</h5>
+    </td>
+    <td width="33%"> 
+      <h5>0.5</h5>
+    </td>
+  </tr>
+</table>
+<h5>&nbsp; </h5>
+<p><font face="Georgia, Times New Roman, Times, serif"><a href="#toc">Table Of 
+  Contents</a></font></p>
+<h3><font face="Georgia, Times New Roman, Times, serif">Introduction and Scope<a name="scope"></a><br>
+  </font></h3>
+<p><font face="Georgia, Times New Roman, Times, serif">This document describes 
+  the details of changes required to be done in and around Appserver software 
+  in order to implement Sun's security policy about reusable passwords in command 
+  lines. Appserver versions affected by this proposed change are GlassFish, Sun's 
+  Appserver PE/EE 9.0. Basic familiarity of readers with Sun's Appserver is assumed. 
+  The policy mandates that all programs distributed by Sun strictly follow the 
+  following:</font></p>
+<ul>
+  <li><font face="Georgia, Times New Roman, Times, serif">No Reusable Password 
+    is specified on command line in cleartext.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">The credentials such 
+    as password strings are not read from environment of a command shell.</font></li>
+</ul>
+<p><font face="Georgia, Times New Roman, Times, serif">Following terminology applies.</font></p>
+<table width="83%" border="1">
+  <tr> 
+    <td width="23%"><font face="Georgia, Times New Roman, Times, serif">Terms, 
+      Synonyms</font></td>
+    <td width="77%"><font face="Georgia, Times New Roman, Times, serif">Meaning, 
+      Details</font></td>
+  </tr>
+  <tr> 
+    <td width="23%"><font face="Georgia, Times New Roman, Times, serif">Reusable 
+      Password</font></td>
+    <td width="77%"><font face="Georgia, Times New Roman, Times, serif">A password 
+      string that can be used successfully more than once. This differs from one 
+      time passwords. The appserver's admin password is an example of a reusable 
+      password.</font></td>
+  </tr>
+  <tr> 
+    <td width="23%"><font face="Georgia, Times New Roman, Times, serif">admin, 
+      administrative</font></td>
+    <td width="77%"><font face="Georgia, Times New Roman, Times, serif">The term 
+      &quot;admin&quot; is used to mean administrative throughout this document. 
+      </font></td>
+  </tr>
+  <tr> 
+    <td width="23%"><font face="Georgia, Times New Roman, Times, serif">Appserver</font></td>
+    <td width="77%"><font face="Georgia, Times New Roman, Times, serif">A generic 
+      term that applies to GlassFish, Sun's Appserver 9.0 PE and EE alike, unless 
+      specified otherwise.</font></td>
+  </tr>
+  <tr> 
+    <td width="23%"><font face="Georgia, Times New Roman, Times, serif"><i>asadmin</i></font></td>
+    <td width="77%"><font face="Georgia, Times New Roman, Times, serif">The name 
+      given to Appserver's Command Line Interface.</font></td>
+  </tr>
+  <tr> 
+    <td width="23%"><font face="Georgia, Times New Roman, Times, serif">Password</font></td>
+    <td width="77%"><font face="Georgia, Times New Roman, Times, serif">When used 
+      this way, it means the admin password for Appserver domains, unless specified 
+      otherwise. Note that until Appserver 8.2, every asadmin invocation needs 
+      an admin password to perform any <i>remote</i> operation on a given domain. 
+      There are other passwords as well, which should not be confused with this 
+      password.</font></td>
+  </tr>
+  <tr> 
+    <td width="23%"><font face="Georgia, Times New Roman, Times, serif">Remote 
+      command</font></td>
+    <td width="77%"><font face="Georgia, Times New Roman, Times, serif">Any asadmin 
+      command that depends on making a <i>connection</i> to Domain Admin Server 
+      running locally or elsewhere to do any admin task. An example is &quot;deploy&quot;. 
+      Thus, &quot;remote&quot; is really a misnomer because the asadmin command 
+      may not be invoked on a remote machine. About 95% of the asadmin commands 
+      are Remote Commands.</font></td>
+  </tr>
+  <tr> 
+    <td width="23%"><font face="Georgia, Times New Roman, Times, serif">Local 
+      command</font></td>
+    <td width="77%"><font face="Georgia, Times New Roman, Times, serif">Any asadmin 
+      command that does not depend on Domain Admin Server and performs an admin 
+      task locally. An example is: &quot;create-domain&quot;. About 5% of the 
+      asadmin commands are Local Commands.</font></td>
+  </tr>
+</table>
+<h3><font face="Georgia, Times New Roman, Times, serif">Requirements<a name="requirements"></a></font></h3>
+<p><font face="Georgia, Times New Roman, Times, serif">Following requirements 
+  drive this proposal:</font></p>
+<ol>
+  <li><font face="Georgia, Times New Roman, Times, serif">Appserver software should 
+    support Sun's Security Policy for <i>asadmin</i>.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">No <i>asadmin</i> command 
+    may read the plaintext Password string specified on command line and treat 
+    it as Reusable Password. See 4. below.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">No asadmin command may 
+    read the environment variable named AS_ADMIN_*PASSWORD (* is a wildcard) to 
+    use it as a reusable password. If such a variable is defined in the environment, 
+    it must be ignored. Examples of such ignored environmental variables are AS_ADMIN_PASSWORD, 
+    AS_ADMIN_ADMINPASSWOD.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif"><i>asadmin</i> may not 
+    use --password option. In other words, Appserver must incorporate the change 
+    (incompatible with previous releases) to reject a command line that specifies 
+    this option. This is different from 2. above.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">Since existing users 
+    are well versed with the --password option, it is imperative that a clear 
+    message is generated on each asadmin invocation where it (--password) is specified. 
+    In other words, an invalid option for a command and --password must be treated 
+    differently.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">No documentation should 
+    mention --password option. In other words, all the existing documentation 
+    that refers to --password should be changed in favor of --passwordfile.</font></li>
+</ol>
+<p><font face="Georgia, Times New Roman, Times, serif"><br>
+  <a href="#toc">Table Of Contents</a></font></p>
+<h3><font face="Georgia, Times New Roman, Times, serif">Summary of Changes<a name="summary"></a></font></h3>
+<p><font face="Georgia, Times New Roman, Times, serif">Here is a summary of changes 
+  to expect if the proposal is implemented. It is necessary to go through the 
+  details when in doubt.</font></p>
+<ol>
+  <li><font face="Georgia, Times New Roman, Times, serif">asadmin will not support 
+    --password option on command line.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">asadmin will not read 
+    the environment variables of the form &quot;AS_ADMIN_*PASSWORD&quot;.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">asadmin option &quot;--user&quot; 
+    that denotes the admin user name is optional on all the commands.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">The asadmin user's preferences 
+    (admin user name and admin password) will now be formally stored in a defined 
+    preferences file. The format of the preferences file is discussed below. Note 
+    that this file contains the credentials in cleartext.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">To enhance the user 
+    experience of asadmin, a new asadmin command called &quot;<b>login</b>&quot; 
+    will be introduced.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">Creation of domain will 
+    provide an option that can automatically &quot;<b>login</b>&quot; to that 
+    domain.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">All the asadmin commands 
+    that accept a host name and port number will use the preferences file to read 
+    the user name and password. </font></li>
+</ol>
+<p>&nbsp;</p>
+<h3><font face="Georgia, Times New Roman, Times, serif">Details<a name="details"></a></font></h3>
+<h4><font face="Georgia, Times New Roman, Times, serif"><a name="createdomainchanges"></a>Provision 
+  of Saving Admin User Name and Password while Creating Domain</font></h4>
+<p><font face="Georgia, Times New Roman, Times, serif">In order to enhance the 
+  usability of create-domain command for its immediate administration, create-domain 
+  command will provide a new option called <b>--savelogin</b>. This, in addition 
+  to creating the domain will save the admin user name and password, will save 
+  the admin user name and password. This improves the usability of any domain 
+  that is created by user and is not limited to just the default domain that is 
+  created during installation. The <b>default</b> value of this option is <b>false</b>. 
+  This is how the create-domain command changes, when this (Boolean) option is 
+  used. (When the option is not used, the behavior of create-domain is unchanged).</font></p>
+<table width="90%" border="1">
+  <tr> 
+    <td bgcolor="#999999"> 
+      <p><font face="Georgia, Times New Roman, Times, serif">$&gt;asadmin create-domain 
+        --adminport 8888 <b>--savelogin</b> mydomain<br>
+        <br>
+        The admin user name and password will be saved in [/home/joe/.asadminpass] 
+        for this domain, <b>mydomain</b>. Do you want to continue (y/n)? y</font></p>
+      <p><font face="Georgia, Times New Roman, Times, serif">Please enter the 
+        admin user name for this domain: administrator<br>
+        Please enter the admin password for this domain: (no echo)<br>
+        Please enter the admin password for this domain again: (no echo) </font></p>
+      <p><font face="Georgia, Times New Roman, Times, serif">Domain [mydomain] 
+        was created successfully.<br>
+        <b>The admin user name and encoded password is saved in [/home/Joe/.asadminpass]. 
+        Make sure that this file remains protected. If admin user name and password 
+        is not specified otherwise, asadmin will use the information stored in 
+        this file to administer this domain [mydomain]. </b></font></p>
+    </td>
+  </tr>
+</table>
+<p><font face="Georgia, Times New Roman, Times, serif"> It is important to note 
+  the following:</font></p>
+<ul>
+  <li><font face="Georgia, Times New Roman, Times, serif">The file <b>&quot;.asadminpass&quot;</b> 
+    will be created in user's home directory, as returned by java.lang.System.getProperty(&quot;user.home&quot;).</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">A domain can only be 
+    created locally and hence while using the above option, the host name saved 
+    in &quot;.asadminpass&quot; will always be <b>&quot;localhost&quot;</b>.</font></li>
+</ul>
+<p><font face="Georgia, Times New Roman, Times, serif">This provision improves 
+  the user experience of a domain that is created and administered <i>locally</i>. 
+  This is because if the user has specified default admin port while creating 
+  the domain, there is no need to specify --user, --passwordfile, --host, --port 
+  on <i>any</i> of the subsequent asadmin Remote Commands. These values will be 
+  automatically obtained.</font></p>
+<p><font face="Georgia, Times New Roman, Times, serif"><b>It is important to note 
+  that when the same user creates multiple domains having same admin port number 
+  using this option on the same or different machines (where the home directory 
+  is NFS mounted), the command is NOT going to prompt whether the admin-password 
+  should be overwritten. It will always be overwritten. The reason being the possibility 
+  of this command to be run in a batch mode.</b></font></p>
+<font face="Georgia, Times New Roman, Times, serif">Note that &quot;<b>asadmin 
+delete-domain</b>&quot; command will remove the entry corresponding to &quot;<b>localhost</b>&quot; 
+and its &quot;<b>admin-port</b>&quot; obtained from the domain.xml.</font> 
+<h4><font face="Georgia, Times New Roman, Times, serif">Provision of asadmin login 
+  Command for Remote Administration</font></h4>
+<p><font face="Georgia, Times New Roman, Times, serif">One of the strengths of 
+  asadmin interface is that it simulates an administration console. Thus, if various 
+  Appserver domains are created on various machines (<i>locally</i>), asadmin 
+  invocation from any of these machines can manage the domains located elsewhere 
+  (<i>remotely</i>). This comes in handy especially when a particular machine 
+  is chosen as an administration client and it manages multiple domains and servers 
+  therein. To ease the administration of such <i>remote</i> domains (just like 
+  the above provision does it for <i>local</i> domains), a new command is proposed 
+  here: &quot;asadmin login&quot;. This is only an interactive command. It can 
+  not be run (easily) using script. Following is the behavior of this command:</font></p>
+<table width="90%" border="1">
+  <tr> 
+    <td bgcolor="#999999"> 
+      <p><font face="Georgia, Times New Roman, Times, serif">$&gt;asadmin login 
+        --host admin-host --port admin-port </font></p>
+      <p><font face="Georgia, Times New Roman, Times, serif">The admin user name 
+        and password will be saved in [/home/Joe/.asadminpass] for this domain, 
+        with host [admin-host] and admin-port [admin-port]. Do you want to continue 
+        (y/n)? y</font></p>
+      <p><font face="Georgia, Times New Roman, Times, serif">Please enter the 
+        admin user name for this domain: administrator<br>
+        Please enter the admin password for this domain: (no echo)<br>
+        </font></p>
+      <p><font face="Georgia, Times New Roman, Times, serif">(Assuming the login 
+        to the remote server succeeded)</font></p>
+      <p><font face="Georgia, Times New Roman, Times, serif"><b>The admin user 
+        name and encoded password is saved in [/home/Joe/.asadminpass]. Make sure 
+        that this file remains protected. If admin user name and password is not 
+        specified otherwise, asadmin will use the information stored in this file 
+        to administer this domain [host: admin-host, port: admin-port]. </b></font></p>
+    </td>
+  </tr>
+</table>
+<p><font face="Georgia, Times New Roman, Times, serif">Following should be noted 
+  in relation to <b>asadmin login</b>:</font></p>
+<ul>
+  <li><font face="Georgia, Times New Roman, Times, serif">The file <b>&quot;.asadminpass&quot;</b> 
+    will be created in user's home directory, as returned by java.lang.System.getProperty(&quot;user.home&quot;). 
+    This is the same file that is modified during the <a href="#createdomainchanges">create-domain 
+    command while using --savelogin</a> option.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">The host name is stored 
+    &quot;as-is&quot; i.e., to say that there will be no resolution attempted 
+    with DNS etc. </font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">It is enough for a user 
+    to login to a particular domain which is fully qualified by [admin-host, admin-port] 
+    pair once. Thus, if a domain is being administered from various machines, 
+    it is sufficient to invoke &quot;asadmin login&quot; once. There is no password 
+    aging proposed.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">The command will modify 
+    the &quot;.asadminpass&quot; file only on successful login. Thus the domain 
+    must be running for this command to run.</font></li>
+  <li><font face="Georgia, Times New Roman, Times, serif">Successive successful 
+    invocations of the same command with same parameters result in overwriting 
+    the contents of &quot;.asadminpass&quot; file for the given admin host and 
+    port. This, however will be done if the user wishes so. User will be given 
+    a chance to reject such a login.</font></li>
+</ul>
+<p><font face="Georgia, Times New Roman, Times, serif">Again, note that while 
+  using &quot;asadmin login&quot; with host specified as &quot;localhost&quot; 
+  for multiple domains and same port number, the command will prompt whether the 
+  user wants to overwrite the previous entry.</font></p>
+<h4><font face="Georgia, Times New Roman, Times, serif">Format of &quot;.asadminpass&quot; 
+  File</font></h4>
+<p><font face="Georgia, Times New Roman, Times, serif">The following is the format 
+  of &quot;.asadminpass&quot; file: </font></p>
+<table width="71%" border="1">
+  <tr> 
+    <td bgcolor="#CCCCCC"><font face="Georgia, Times New Roman, Times, serif">#Please 
+      don't modify this file by hand. Use &quot;asadmin login&quot; command instead.<br>
+      #<br>
+      asadmin://admin%20user@host:port-uri-encoded encoded-admin-password<br>
+      ... </font></td>
+  </tr>
+</table>
+<p>Note that a space (' ') is used as a field delimiter.</p>
+<h4><font face="Georgia, Times New Roman, Times, serif">Algorithm to Get User 
+  Name and Password</font></h4>
+<p><font face="Georgia, Times New Roman, Times, serif">Here is how admin user 
+  and admin password determined (obtained) by asadmin.</font></p>
+<p><font face="Georgia, Times New Roman, Times, serif">Admin User</font></p>
+<p><font face="Georgia, Times New Roman, Times, serif"><img src="images/admin-user-algorithm.jpg" width="767" height="1012" align="middle"></font></p>
+<p><font face="Georgia, Times New Roman, Times, serif">Admin Password</font></p>
+<p><font face="Georgia, Times New Roman, Times, serif"><img src="images/admin-password-algorithm.jpg" width="767" height="1012" align="middle"></font></p>
+<h4><font face="Georgia, Times New Roman, Times, serif">Other Changes to asadmin</font></h4>
+<p><font face="Georgia, Times New Roman, Times, serif">Following are the additional 
+  changes to asadmin:</font></p>
+<ul>
+  <li><font face="Georgia, Times New Roman, Times, serif">No command accepts any 
+    password on the command line or from the environment. A list of affected commands 
+    is <a href="CommandsWithPasswords.html">here</a>.</font></li>
+</ul>
+<h4><font face="Georgia, Times New Roman, Times, serif">Changes to Other Parts 
+  of Appserver/GlassFish</font></h4>
+<h4><font face="Georgia, Times New Roman, Times, serif">Admin GUI</font></h4>
+<font face="Georgia, Times New Roman, Times, serif">According to Admin GUI team 
+it is sufficient to use the password manager like facility provided by the browsers. 
+They do not make any changes and rely on the browser behavior. </font> 
+<h4><font face="Georgia, Times New Roman, Times, serif">AMX</font></h4>
+<font face="Georgia, Times New Roman, Times, serif">There will be no changes made.</font> 
+<p><font face="Georgia, Times New Roman, Times, serif">TOC<a name="toc"></a></font></p>
+<p><font face="Georgia, Times New Roman, Times, serif"><a href="#scope">Introduction</a><br>
+  <a href="#requirements">Requirements</a><br>
+  <a href="#summary">Summary of Changes</a><br>
+  <a href="#details">Details</a> </font></p>
+<p><font face="Georgia, Times New Roman, Times, serif">$Id: remove--password.html,v 1.3 2006/01/25 07:28:58 kedar Exp $<br>
+  $Author: kedar $ </font></p>
+</body>
+</html>

@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//Tigris//DTD XHTML 1.0 Transitional//EN" "http://style.tigris.org/nonav/tigris_transitional.dtd">
+<html>
+<head>
+  <title>Projet GlassFish - Mise en route</title>
+  <meta http-equiv="Content-Type"
+
+ content="text/html; charset=windows-1252">
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8">
+</head>
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<div id="projecthome" class="app"><font size="+1"><span
+
+ style="font-weight: bold;">Construction du projet GlassFish </span></font><br> <a href="#pre_req">Configuration requise pour la construction de GlassFish</a><br> <a
+
+ href="http://wiki.glassfish.java.net/Wiki.jsp?page=BuildInformation#qs">Guide de d&eacute;marrage rapide</a><span style="font-weight: bold;"></span><br> <a href="#Complete_Instructions_on_how_to_Build">Instructions de construction compl&egrave;tes</a><br> <a href="http://www.netbeans.org/kb/41/glassfish.html">Construction de GlassFish avec NetBeans IDE</a><br> <a href="BuildGlassFish.html#Branch">Construction &agrave; partir d'une branche</a><br> <a href="#maven_goals">Aper&ccedil;u des goals Maven sous GlassFish</a><br> <br> Cette page d&eacute;crit la proc&eacute;dure de construction de GlassFish. Voici des liens utiles si vous souhaitez <a
+
+ href="https://glassfish.dev.java.net/public/NewtoGlsasFish.html#Submit_a_Bug">signaler un bogue</a> ou <a
+
+ href="https://glassfish.dev.java.net/public/NewtoGlsasFish.html#Request_a_Feature">proposer une fonctionnalit&eacute;</a>. Vous pouvez consulter notre politique de gouvernance en cliquant <a
+
+ href="https://glassfish.dev.java.net/public/GovernancePolicy.html">ici</a>.<br>
+<p><span style="font-weight: bold;"></span></p>
+<h3><a name="Complete_Instructions_on_how_to_Build"></a>Instructions compl&egrave;tes relatives &agrave; la construction de GlassFish</h3>
+GlassFish peut &ecirc;tre mis en &oelig;uvre avec NetBeans ou &agrave; l'aide des options de ligne de commande. L'article suivant comporte de plus amples informations sur la proc&eacute;dure de <a
+
+ href="http://www.netbeans.org/kb/41/glassfish.html">construction et de d&eacute;veloppement du projet GlassFish avec NetBeans</a>. Les options de ligne de commande sont pr&eacute;sent&eacute;es ci-dessous.<br> <br> <span style="font-weight: bold;"><a name="pre_req"></a>Configuration requise pour la construction de GlassFish. </span><br>
+<ul>
+  <li>L'utilisateur doit disposer de <a
+
+ href="http://maven.apache.org/maven-1.x/start/download.html">Maven</a> (1.0.2) : cela permettra de cr&eacute;er le r&eacute;f&eacute;rentiel local requis par Maven pour stocker les d&eacute;pendances GlassFish.</li>
+  <li>Il doit &eacute;galement disposer d'une connexion &agrave; java.net et avoir acc&egrave;s au r&eacute;f&eacute;rentiel CVS pour le projet GlassFish.</li>
+  <li>Il doit se connecter au r&eacute;f&eacute;rentiel CVS de GlassFish (afin que celui-ci puisse enregistrer le mot de passe dans le fichier .cvspass sous le r&eacute;pertoire de base de l'utilisateur).</li>
+  <li><a href="http://java.sun.com/j2se/1.5.0/download.jsp">J2SE 5.0</a> (1.5.0_12) doit &ecirc;tre install&eacute;, configur&eacute; en tant que variable d'environnement JAVA_HOME, dans votre chemin binaire. Nous vous recommandons d'utiliser la derni&egrave;re version disponible.<br>
+  </li>
+  <li>Configuration du <a
+
+ href="https://glassfish.dev.java.net/servlets/ProjectSource#wincvs">client CVS</a> selon les instructions disponibles sur java.net.<br>
+  </li>
+</ul>
+<span style="font-weight: bold;">&Eacute;tapes de construction de GlassFish :</span><br>
+<ol>
+</ol>
+<div style="margin-left: 40px;">La premi&egrave;re &eacute;tape consiste &agrave; extraire les d&eacute;pendances de module et les fichiers communs utilis&eacute;s dans le syst&egrave;me de construction, puis &agrave; modifier le fichier de propri&eacute;t&eacute;s.</div>
+<ol>
+  <pre>% mkdir workspace<br>% cd workspace<br>% cvs -d :pserver:&lt;idutilisateur&gt;@cvs.dev.java.net:/cvs checkout glassfish/bootstrap<br></pre>
+Cette commande permet d'extraire les fichiers project.xml, maven.xml, project.properties, ainsi que les fichiers communs r&eacute;f&eacute;renc&eacute;s &agrave; partir de project.xml.<br>
+</ol>
+<div style="margin-left: 40px;">Cr&eacute;ez les fichiers workspace/glassfish/bootstrap/build.properties ou, pour un espace de travail GlassFish r&eacute;utilisable, utilisez un processus unique en cr&eacute;ant ${HOME}/build.properties (Unix) ou %HOMEPATH%\build.properties (Windows) et en d&eacute;finissant les variables suivantes : (vous pouvez obtenir la valeur de %HOMEPATH% en ex&eacute;cutant la commande : echo %HOMEPATH% ou ex&eacute;cutez &laquo; set &raquo; et recherchez la variable HOMEPATH (Windows)<br> D&eacute;finissez deux variables glassfish glassfish.os.name, glassfish.cvs.username (<a href="BuildGlassFish.html#configuration">voir ci-dessus</a>).<br> glassfish.os.name= &lt;nom SE - les valeurs possibles sont WINNT, SunOS, Linux, SunOS_X86, Darwin&gt;<br> glassfish.cvs.username= &lt;id java.net&gt;<br>
+</div>
+<ol>
+Par exemple, sous Windows XP Professionnel<br> <code>glassfish.os.name=WINNT<br> glassfish.cvs.username=carlavmott<br></code> <br>
+  <li>Ensuite, proc&eacute;dez &agrave; l'extraction des sources.</li>
+  <pre>% cd glassfish/bootstrap<br>% maven checkout<br></pre>
+Limitation connue : il se peut que certaines sources requises pour la construction de GlassFish ne soient pas directement disponibles sur java.net (par exemple MQ, ORB, JWSDP 2.0, etc). Celles-ci seront, pour le moment, trait&eacute;es en tant que d&eacute;pendances binaires. (Reportez-vous &agrave; l'&eacute;tape suivante pour observer la mani&egrave;re dont les d&eacute;pendances binaires sont utilis&eacute;es.) Vous pouvez &eacute;galement extraire un sous-ensemble de modules en appelant :<br>
+  <pre>% maven checkout -Dmodules=<span style="font-family: monospace;">[</span>liste des noms de module s&eacute;par&eacute;s par une virgule]   </pre>
+  <p>Les noms de module se trouvent sur cette <a
+
+ href="http://wiki.java.net/bin/view/Projects/GlassFishModuleOwners">page</a>.<span
+
+ style="font-family: monospace;"></span></p>
+  <li>Amor&ccedil;age de l'image serveur (collection de scripts et de fichiers jar utilis&eacute;s pour ex&eacute;cuter glassfish). Le d&eacute;veloppeur peut s&eacute;lectionner l'option &laquo; bootstrap &raquo;, qui permet de t&eacute;l&eacute;charger le serveur pr&eacute;construit et de g&eacute;n&eacute;rer uniquement un sous-ensemble de modules. L'option &laquo; bootstrap-all &raquo; permet de cr&eacute;er un nouveau serveur et de g&eacute;n&eacute;rer tous les modules afin de v&eacute;rifier le changement de version des d&eacute;pendances binaires ou intermodules.<br>
+  </li>
+  <span style="font-weight: bold;"><br></span>Option <b>bootstrap-all</b> : cr&eacute;ation de tous les modules &agrave; partir de la source.<br>
+  <pre>% maven bootstrap-all </pre>
+  Option <b>bootstrap</b> : cr&eacute;ation de votre propre module &agrave; l'aide du serveur pr&eacute;construit <br>
+  <pre>% maven bootstrap</pre>
+Cette &eacute;tape est facultative si vous avez d&eacute;j&agrave; install&eacute; une version promue de GlassFish. Pour utiliser cette derni&egrave;re, vous devez d&eacute;finir la propri&eacute;t&eacute; correspondante dans glassfish/project.properties.
+  <pre wrap="">glassfish.image.version=&lt;&lt;num&eacute;ro de version&gt;&gt;</pre>
+Cela permet de faire &laquo; pointer &raquo; le syst&egrave;me de g&eacute;n&eacute;ration vers cette installation. Il est &eacute;galement possible d'ajouter cette propri&eacute;t&eacute; &agrave; ${HOME}/build.properties<br> <br>
+  <li>G&eacute;n&eacute;rez le code source extrait. L'ordre de compilation est d&eacute;termin&eacute; par un fichier de configuration commun extrait &agrave; l'&eacute;tape 2. <strong>Cette &eacute;tape permet de mettre &agrave; jour l'image install&eacute;e apr&egrave;s la compilation de chaque module</strong>.<br>
+  </li>
+  <pre>% maven build<br></pre>
+Vous pouvez toujours g&eacute;n&eacute;rer un sous-ensemble de modules en invoquant :<br>
+  <pre>% maven build -Dmodules<i style="font-style: italic;">=</i><span
+
+ style="font-family: monospace;">[</span>liste des noms de module s&eacute;par&eacute;s par une virgule] </pre>
+ou bien allez sur ../[nom-module] et invoquez :<br>
+  <pre>% maven build<br></pre>
+  <li>Configurez l'ex&eacute;cution du serveur GlassFish. Cette &eacute;tape permet de cr&eacute;er le script asadmin, d'ex&eacute;cuter create-domain, etc., &eacute;tapes n&eacute;cessaires &agrave; l'ex&eacute;cution du serveur GlassFish.<br>
+  </li>
+  <pre>% maven configure-runtime   (installation silencieuse par d&eacute;faut) </pre>
+Si vous souhaitez sp&eacute;cifier des informations de configuration communes (par exemple, les num&eacute;ros de port, etc.), utilisez configure-runtime en mode d&eacute;taill&eacute;. &nbsp;
+  <pre>% maven configure-runtime -Dinteractive<br></pre>
+En r&egrave;gle g&eacute;n&eacute;rale, il vous suffit d'ex&eacute;cuter cette commande une fois. Une reconfiguration sera en revanche n&eacute;cessaire si vous modifiez, par exemple, l'environnement de domaine (voir la FAQ pour plus d'informations). Vous trouverez les valeurs par d&eacute;faut de la configuration de l'ex&eacute;cution dans glassfish/bootstrap/project.properties :<br>
+  <pre>domain.name=&quot;domain1&quot;<br>instance.name=&quot;server&quot;<br>admin.user=&quot;admin&quot;<br>admin.password=&quot;adminadmin&quot;<br>admin.port=&quot;4848&quot;<br>instance.port&quot;=&quot;8080&quot;<br>orb.port=&quot;3700&quot;<br>imq.port=&quot;7676&quot;<br>https.port=&quot;8181&quot; <br></pre>
+Le goal Maven &laquo; configure-runtime &raquo; permet de cr&eacute;er un domaine &agrave; instance unique, similaire &agrave; GlassFish V1. Si vous souhaitez cr&eacute;er un domaine en mode cluster de GlassFish V2, ex&eacute;cutez la commande suivante :<br> <code>% maven configure-cluster</code><br>
+  <li>
+    <p>D&eacute;marrez le serveur &agrave; l'aide de la commande suivante. L'ensemble des commandes serveur GlassFish se trouve dans le r&eacute;pertoire &lt;racine.glassfish&gt;/publish/bin. Pour obtenir de plus amples informations sur le mode d'administration du serveur, reportez-vous &agrave; la <a href="http://docs.sun.com/source/819-1004/QuickStart.html">documentation</a> de Sun Java System Application Server PE versions 8.x. La plupart de ces informations sont encore valables pour la version 9. Remarque : actuellement, GlassFish prend uniquement en charge l'option de ligne de commande sur toutes les plates-formes.<br>
+    </p>
+  </li>
+  <pre>% asadmin start-domain</pre>
+  <li>
+    <p>Nettoyage du serveur.<br>
+    </p>
+  </li>
+  <pre>% maven clobber<br></pre>
+Cela permet de supprimer tous les scripts et fichiers jar utilis&eacute;s pour ex&eacute;cuter le serveur. En outre, tous les &eacute;l&eacute;ments sous glassfish.home sont supprim&eacute;s&nbsp;; cela fait, retournez &agrave; l'&eacute;tape 2.<br> <br>
+  <li>Nettoyez le build/serveur <span style="font-weight: bold;">: </span>vous pouvez utiliser l'un des trois goals ci-dessus &agrave; tout moment lors de votre processus de d&eacute;veloppement. Mettez &agrave; jour les sources &agrave; l'aide de votre IDE favori, et utilisez l'une des commandes suivantes sur un espace de travail d&eacute;j&agrave; construit de mani&egrave;re &agrave; restaurer ce dernier sur son &eacute;tat d'origine &agrave; reg&eacute;n&eacute;rer, puis v&eacute;rifiez vos modifications. </li>
+  <ul>
+    <li>Pour nettoyer les modules de mani&egrave;re &agrave; supprimer les fichiers build g&eacute;n&eacute;r&eacute;s, tels que .class, .properties et ceux pr&ecirc;ts &agrave; &ecirc;tre recompil&eacute;s, ex&eacute;cutez la commande suivante :
+      <pre>% maven clean (ou maven -Dmodules=mail,activation clean)</pre>
+    </li>
+    <li>Pour nettoyer le serveur configur&eacute; &agrave; l'&eacute;tape 5, utilisez la commande ci-dessous ; le serveur d'administration et le domaine1 sont supprim&eacute;s et le serveur est restaur&eacute; sur son &eacute;tat d'origine. (les nouveaux fichiers &agrave; jeton remplac&eacute; sont supprim&eacute;s des r&eacute;pertoires de configuration ${glassfish.home}/bin.)
+      <pre>% maven clean-config</pre>
+    </li>
+    <li>Vous pouvez utiliser &laquo; maven clean-config &raquo; pour v&eacute;rifier vos modifications associ&eacute;es au d&eacute;marrage du domaine et du serveur d'administration. Utilisez le goal &laquo; clobber &raquo; pour supprimer votre serveur et en obtenir un nouveau. Utilisez &laquo; clean &raquo; pour supprimer les fichiers build et ceux pr&ecirc;ts &agrave; &ecirc;tre compil&eacute;s.<br>
+    </li>
+  </ul>
+  <br>
+  <li><span style="font-weight: bold;">Ex&eacute;cutez des tests QuickLook</span> : les tests QuickLook permettent au d&eacute;veloppeur de contr&ocirc;ler les fonctionnalit&eacute;s principales du serveur d'application et d'ex&eacute;cuter un contr&ocirc;le de validit&eacute; pour v&eacute;rifier qu'aucun &eacute;l&eacute;ment important n'est endommag&eacute;. <br>
+  </li>
+  <ul>
+    <li>R&eacute;cup&eacute;rez les fichiers de test requis &agrave; partir de glassfish/appserv-tests comme indiqu&eacute; ci-dessous.<br>
+    </li>
+    <pre>% cd glassfish/bootstrap<br>% maven checkout-quicklook</pre>
+    <li>D&eacute;finissez <code>APS_HOME</code>. Il s'agit du r&eacute;pertoire &agrave; partir duquel vous avez extrait l'espace de travail, notamment son nom racine (<code>/workspace/appserv-tests</code>)</li>
+    <li>D&eacute;finissez <code>S1AS_HOME</code>. Il s'agit du r&eacute;pertoire d'installation du serveur GlassFish (<code>/workspace/publish/glassfish</code>)</li>
+    <li>Les propri&eacute;t&eacute;s d'installation se trouvent sous <code>${APS_HOME}/config.properties</code>, correspondant &agrave; votre recherche (<code>admin.password</code>, <code>http.port</code>, etc.). Si vous avez modifi&eacute; des valeurs par d&eacute;faut, modifiez alors le fichier config.properties.</li>
+    <li>Assurez-vous que le serveur n'est PAS ex&eacute;cut&eacute; avant de lancer les tests, sinon, arr&ecirc;tez-le.<br>
+    </li>
+    <li>Ex&eacute;cutez le test :
+      <pre>% cd $APS_HOME<br>% maven runtest<br></pre>
+    </li>
+    <li>Ouvrez le fichier <code>${APS_HOME}/test_results.html</code> dans un navigateur puis examinez les r&eacute;sultats.</li>
+  </ul>
+  <ul>
+    <li>Cliquez <a
+
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Quicklook_Tests">ICI</a> pour obtenir des instructions d&eacute;taill&eacute;es relatives &agrave; l'ex&eacute;cution des tests QuickLook.</li>
+  </ul>
+</ol>
+<p>Si vous rencontrez des probl&egrave;mes, n'oubliez pas de consulter le wiki <a
+
+ href="http://wiki.java.net/bin/view/Projects/GlassFishBuildQuestions">FAQ sur la construction de GlassFish </a>.</p>
+<p><b>Prise en charge de l'IDE</b><br> <br> <font color="#000080"><a href="http://community.java.net/netbeans"><font
+
+ color="#000080"><img src="image/builds-bestSmaller.png" name="Graphic2"
+
+ align="bottom" border="1" height="38" width="75"></font></a></font><a
+
+ href="http://community.java.net/netbeans"> </a><a
+
+ href="http://www.netbeans.org/kb/41/glassfish.html">Construction et d&eacute;veloppement de GlassFish</a> avec NetBeans 4.1.<br> <br> Pour plus d'informations, consultez les <a
+
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Workspace_Guidelines">directives relatives &agrave; l'espace de travail</a> et les <a
+
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Commit_Procedures">proc&eacute;dures de validation</a>. Vous pouvez &eacute;galement utiliser <a
+
+ href="http://fisheye.cenqua.com/java.net/viewrep/cvs/glassfish">FishEye</a> pour rep&eacute;rer les modifications apport&eacute;es &agrave; l'espace de travail.</p>
+<p><span style="font-weight: bold;"><a name="Branch"></a><big>Construction de Glassfish pour FCS, SJSAS91_FCS_BRANCH : </big></span><br>
+</p>
+<span style="font-weight: bold;"></span>
+<p>Vous trouverez ci-dessous les &eacute;tapes n&eacute;cessaires &agrave; la construction &agrave; partir d'une branche GlassFish :<br> <code>% mkdir workspace<br> % cd workspace<br> % cvs -d :pserver:&lt;idutilisateur&gt;@cvs.dev.java.net:/cvs checkout -r <b>SJSAS91_FCS_BRANCH</b> glassfish/bootstrap</code>
+</p>
+<p>glassfish/bootstrap/project.properties de la branche SJSAS91_FCS_BRANCH comporte une variable &laquo; glassfish.cvstag &raquo; d&eacute;finie sur &laquo; glassfish.cvstag=SJSAS91_FCS_BRANCH &raquo;. Les sources de la branche FCS seront extraites et g&eacute;n&eacute;r&eacute;es en cons&eacute;quence.
+</p>
+<p>D&eacute;finissez deux variables glassfish, glassfish.os.name et glassfish.cvs.username (<a href="BuildGlassFish.html#configuration">voir ci-dessus</a>).
+</p>
+<p>Ensuite :<br> <code>% cd glassfish/bootstrap<br> % maven checkout <b>bootstrap-all</b> build configure-runtime</code>
+</p>
+<p>Vous pouvez choisir quel goal ex&eacute;cuter entre bootstrap et bootstrap-all dans les commandes ci-dessus, en cliquant <a
+
+ href="BuildGlassFish.html#maven_goals">ici</a>.</p>
+<a name="maven_goals"></a><big><span style="font-weight: bold;">Aper&ccedil;u des goals Maven sous GlassFish :</span></big><br> <br>
+<table style="text-align: left; width: 743px; height: 328px;" border="1"
+
+ cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td
+
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">Nom du goal<br>
+      </td>
+      <td
+
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">Commande correspondante<br>
+      </td>
+      <td
+
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">Description<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">bootstrap<br>
+      </td>
+      <td style="vertical-align: top;">maven -Dmodules=admin <span
+
+ style="font-weight: bold;">bootstrap</span> checkout build<br>
+      </td>
+      <td style="vertical-align: top;"> T&eacute;l&eacute;chargez le fichier .jar glassfish-image-SNAPSHOT, d&eacute;compressez-le sous ${glassfish.home}(image serveur) pour g&eacute;n&eacute;rer des modules individuels.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">bootstrap-all<br>
+      </td>
+      <td style="vertical-align: top;">maven checkout <span
+
+ style="font-weight: bold;">bootstrap-all</span> build<br>
+      </td>
+      <td style="vertical-align: top;">Installez une image glassfish vide pouvant uniquement contenir des d&eacute;pendances binaires, puis t&eacute;l&eacute;chargez les d&eacute;pendances binaires individuelles, d&eacute;compressez-les sous ${glassfish.home} et g&eacute;n&eacute;rez tous les modules &agrave; partir des sources.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">checkout </td>
+      <td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">checkout</span><br>
+      </td>
+      <td style="vertical-align: top;"> Extraction d'un module.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">build<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">build</span><br>
+      </td>
+      <td style="vertical-align: top;"> G&eacute;n&eacute;ration du module.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">configure-runtime</td>
+      <td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">configure-runtime</span><br>
+      </td>
+      <td style="vertical-align: top;"> Configuration de ${glassfish.home} avec un domaine &agrave; instance unique<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">configure-cluster<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">configure-cluster</span><br>
+      </td>
+      <td style="vertical-align: top;">Configuration de domaine &agrave; l'aide des fonctionnalit&eacute;s de clustering pour GlassFish V2<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">clean </td>
+      <td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">clean</span> clobber<br>
+      </td>
+      <td style="vertical-align: top;"> Nettoyage du module.</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">clobber<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">clobber</span><br>
+      </td>
+      <td style="vertical-align: top;">Nettoyage de l'image serveur GlassFish, avec suppression du r&eacute;pertoire ${glassfish.home. Doit &ecirc;tre utilis&eacute; avec &laquo; bootstrap-all &raquo; pour obtenir une nouvelle image et nettoyer toute image serveur corrompue.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">clean-config<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">clean-config</span><br>
+      </td>
+      <td style="vertical-align: top;">Nettoyage du serveur. Le domaine1 et les fichiers &agrave; jeton remplac&eacute; sont supprim&eacute;s dans bin,config.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">-Dmodules=<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">-Dmodules</span>=admin bootstrap checkout build</td>
+      <td style="vertical-align: top;"> Nettoyage/extraction/g&eacute;n&eacute;ration de certains modules uniquement : maven -Dmodules={liste d'&eacute;l&eacute;ments s&eacute;par&eacute;s par une virgule} nom de goal</td>
+    </tr>
+  </tbody>
+</table>
+<br> <br> <!--EndFragment--></div>
+</body>
+</html>

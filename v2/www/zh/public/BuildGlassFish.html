@@ -1,0 +1,278 @@
+<!DOCTYPE html PUBLIC "-//Tigris//DTD XHTML 1.0 Transitional//EN" "http://style.tigris.org/nonav/tigris_transitional.dtd">
+<html>
+<head>
+<title>GlassFish 项目－入门</title>
+  <meta http-equiv="Content-Type"
+
+ content="text/html; charset=UTF-8">
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8">
+</head>
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<div id="projecthome" class="app"><font size="+1"><span
+
+ style="font-weight: bold;">构建 GlassFish 项目</span></font><br> <a href="#pre_req">构建 GlassFish 的先决条件</a><br> <a
+
+ href="http://wiki.glassfish.java.net/Wiki.jsp?page=BuildInformation#qs">快速入门指南</a><span style="font-weight: bold;"></span><br> <a href="#Complete_Instructions_on_how_to_Build">完整的构建说明</a><br> <a href="http://www.netbeans.org/kb/41/glassfish.html">使用 NetBeans IDE 构建 GlassFish</a><br> <a href="BuildGlassFish.html#Branch">从分支 (Branch) 构建</a><br> <a href="#maven_goals">GlassFish Maven 目标概述</a><br> <br>此页面介绍了如何构建 GlassFish。此处提供了一些有用的链接，可用于<a
+
+ href="https://glassfish.dev.java.net/public/NewtoGlsasFish.html#Submit_a_Bug">提交错误</a>或<a
+
+ href="https://glassfish.dev.java.net/public/NewtoGlsasFish.html#Request_a_Feature">请求功能</a>。您可在<a
+
+ href="https://glassfish.dev.java.net/public/GovernancePolicy.html">此处</a>找到管理策略。<br> <p><span style="font-weight: bold;"></span></p>
+<h3><a name="Complete_Instructions_on_how_to_Build"></a>有关如何构建 GlassFish 的完整说明</h3>
+可以使用 NetBeans 或使用命令行选项构建 GlassFish。下文提供了有关<a
+
+ href="http://www.netbeans.org/kb/41/glassfish.html">使用 NetBeans 构建和开发 GlassFish 项目</a>的更多信息。用于构建 GlassFish 的命令行选项如下。<br> <br> <span style="font-weight: bold;"><a name="pre_req"></a>构建 GlassFish 的先决条件 </span><br>
+<ul>
+<li>用户必须已安装了 <a
+
+ href="http://maven.apache.org/maven-1.x/start/download.html">Maven</a> (1.0.2)：这将创建 Maven 所需的本地系统信息库以存储 GlassFish 相关项。</li>
+<li>用户必须登录 java.net，并且必须可以访问 GlassFish 项目的 CVS 系统信息库。</li>
+<li>用户必须登录 GlassFish CVS 系统信息库一次（从而 CVS 可以在用户主目录中的 .cvspass 文件中保存密码）。</li>
+<li><a href="http://java.sun.com/j2se/1.5.0/download.jsp">J2SE 5.0</a> (1.5.0_12) 必须已安装，配置为 JAVA_HOME 环境变量且位于您的二进制路径中。建议您使用可用的最新版本。&#xA0; <br>
+  </li>
+<li>为每个 java.net 指令设置 <a
+
+ href="https://glassfish.dev.java.net/servlets/ProjectSource#wincvs">cvs 客户机</a>。<br>   </li>
+</ul>
+<span style="font-weight: bold;">GlassFish 构建步骤：</span><br>
+<ol>
+</ol>
+<div style="margin-left: 40px;">第一步是签出构建系统中使用的模块相关项和通用文件，并编辑属性文件。</div>
+<ol>
+<pre>% mkdir workspace<br>% cd workspace<br>% cvs -d :pserver:&lt;userid&gt;@cvs.dev.java.net:/cvs checkout glassfish/bootstrap<br></pre>
+这将签出 project.xml、maven.xml、project.properties 以及从 project.xml 引用的通用文件。<br>
+</ol>
+<div style="margin-left: 40px;">创建 workspace/glassfish/bootstrap/build.properties，或对于可重用的 GlassFish 工作区，一次性过程是创建 ${HOME}/build.properties (Unix) 或 %HOMEPATH%\build.properties (Windows)，并设置以下变量：（可通过运行命令 echo %HOMEPATH% 获取 %HOMEPATH% 值，或者运行 &quot;set&quot; 并查找 HOMEPATH 变量 (windows)）<br>定义两个 glassfish 变量 glassfish.os.name 和 glassfish.cvs.username <a href="BuildGlassFish.html#configuration">同上</a>。<br>glassfish.os.name= &lt;OS 名称－可能的值为 WINNT、 SunOS、Linux、SunOS_X86、Darwin&gt;<br> glassfish.cvs.username= &lt;java.net id&gt;<br>
+</div>
+<ol>
+例如，在 Windows XP Professional 中<br><code>glassfish.os.name=WINNT<br> glassfish.cvs.username=carlavmott<br></code> <br>
+<li>接下来签出源。</li>
+<pre>% cd glassfish/bootstrap<br>% maven checkout<br></pre>
+已知限制：构建 GlassFish 所需的某些源可能无法立即在 java.net 上使用（例如，MQ、ORB、JWSDP 2.0 等）。这些源暂时将被视为二进制相关项。（请参见下一步了解如何使用二进制相关项。）还可通过调用以下命令签出模块的子集：<br>
+<pre>% maven checkout -Dmodules=<span style="font-family: monospace;">[</span>逗号分隔的模块名称列表]   </pre>
+<p>模块名称位于此<a
+
+ href="http://wiki.java.net/bin/view/Projects/GlassFishModuleOwners">页面</a>上。<span
+
+ style="font-family: monospace;"></span></p>
+<li>引导服务器映像（用于运行 glassfish 的脚本和 jar 文件的集合）。开发者可以选择 &quot;bootstrap&quot; 选项，该选项将下载预构建服务器并仅构建模块的子集。另一个选项 &quot;bootstrap-all&quot; 则从头开始创建服务器，并构建所有模块，以验证模块间或二进制相关项版本更改。<br>
+  </li>
+<span style="font-weight: bold;"><br></span><b>bootstrap-all</b> 选项：从源构建所有模块。<br>
+<pre>% maven bootstrap-all </pre>
+<b>bootstrap</b> 选项：使用预构建服务器构建您自己的模块<br>
+<pre>% maven bootstrap</pre>
+如果已经安装了 GlassFish 的提升版本 (promoted build)，则此步骤为可选步骤。要使用提升版本 (promoted build)，需要在 glassfish/project.properties 中设置属性。
+<pre wrap="">glassfish.image.version=&lt;&lt;构建版本&gt;&gt;</pre>
+这会导致构建系统&ldquo;指向&rdquo;此安装。此属性还可添加至 ${HOME}/build.properties<br> <br>
+<li>构建已签出的源代码。编译顺序将由在上述步骤 2 中签出的通用配置文件决定。<strong>此步骤将在每个模块编译结束时更新已安装的映像</strong>。<br>
+  </li>
+<pre>% maven build<br></pre>
+您始终可以通过调用以下命令构建模块的子集：<br>
+<pre>% maven build -Dmodules<i style="font-style: italic;">=</i><span
+
+ style="font-family: monospace;">[</span>逗号分隔的模块名称列表] </pre>
+或者转至 ../[module-name] 并调用：<br>
+<pre>% maven build<br></pre>
+<li>配置 GlassFish 服务器运行时。此步骤将创建 asadmin 脚本，运行 create-domain 等，这些都是运行 GlassFish 服务器所需的。<br>
+  </li>
+<pre>% maven configure-runtime（默认为无提示安装）</pre>
+如果想要指定通用配置信息（例如，端口号等），请在 verbose 模式中使用 configure-runtime。 &nbsp;
+<pre>% maven configure-runtime -Dinteractive<br></pre>
+通常，您只需运行此命令一次。对于您要更改域环境的情况，则需要重新配置，请参见 FAQ 了解更多信息。运行时配置的默认值可在 glassfish/bootstrap/project.properties 中找到：<br>
+<pre>domain.name=&quot;domain1&quot;<br>instance.name=&quot;server&quot;<br>admin.user=&quot;admin&quot;<br>admin.password=&quot;adminadmin&quot;<br>admin.port=&quot;4848&quot;<br>instance.port&quot;=&quot;8080&quot;<br>orb.port=&quot;3700&quot;<br>imq.port=&quot;7676&quot;<br>https.port=&quot;8181&quot; <br></pre>
+Maven 目标 'configure-runtime' 将创建与 GlassFish V1 类似的单一实例域。如果想要创建 GlassFish V2 的群集模式域，请运行以下命令：<br><code>% maven configure-cluster</code><br>
+  <li>
+<p>使用以下命令启动服务器。所有 GlassFish 服务器命令均位于 &lt;glassfish.root&gt;/publish/bin 目录下。有关如何管理服务器的更多文档，请参阅 Sun Java System Application Server PE 版本 8 系列<a href="http://docs.sun.com/source/819-1004/QuickStart.html">文档</a>。其中大量文档仍适用于版本 9。注意：目前 GlassFish 仅支持所有平台的命令行选项。<br>
+    </p>
+  </li>
+<pre>% asadmin start-domain</pre>
+  <li>
+<p>清理服务器。&#xA0; <br>
+    </p>
+  </li>
+<pre>% maven clobber<br></pre>
+这将删除用于运行服务器的所有脚本和 jar 文件。它将删除 glassfish.home 下的所有文件，完成此步后，您需要返回步骤 2。<br> <br>
+<li>清理构建/服务器<span style="font-weight: bold;">：</span>在开发过程中可使用以上三个目标中的任意一个。使用您喜欢的 IDE 更新源，并在已构建的工作区上使用以下任意命令，使工作区进入初始阶段，以重新构建并验证您的更改。 </li>
+  <ul>
+<li>要清理模块以删除构建生成的文件（如，.class、.properties）并准备重新编译，请运行以下命令
+<pre>% maven clean（或 maven -Dmodules=mail,activation clean）</pre>
+    </li>
+<li>要清理在上述步骤 5 配置的服务器，请使用下面的命令来清理服务器，此命令将删除管理服务器和 domain1，并保留服务器，使其返回初始安装阶段。（删除 ${glassfish.home}/bin、${glassfish.home}/config 目录中新近生成的令牌替换文件。）
+<pre>% maven clean-config</pre>
+    </li>
+<li>如果想要验证与域和管理服务器启动相关的更改，可以使用 &quot;maven clean-config&quot;。&quot;clobber&quot; 目标可用于删除服务器，以获得新的服务器。&quot;clean&quot; 可用于删除构建文件，并准备编译。<br>
+    </li>
+  </ul>
+  <br>
+<li><span style="font-weight: bold;">运行 Quicklook 测试</span>：Quicklook 测试用于为开发者提供一种方法，以便测试应用服务器中的主要功能并运行健全性检查，以确保没有破坏任何主要功能。 <br>
+  </li>
+  <ul>
+<li>如下所示，从 glassfish/appserv-tests 签出所需的测试失败。<br>
+    </li>
+<pre>% cd glassfish/bootstrap<br>% maven checkout-quicklook</pre>
+<li>设置 <code>APS_HOME</code>。这是签出工作区的目录，包括工作区根目录名称（例如 <code>/workspace/appserv-tests</code>）</li>
+<li>设置 <code>S1AS_HOME</code>。这是 GlassFish 服务器的安装目录（例如 <code>/workspace/publish/glassfish</code>）</li>
+<li>安装属性位于 <code>${APS_HOME}/config.properties</code> 下，以匹配您的安装（例如 <code>admin.password</code>、<code>http.port</code> 等）。如果更改了任何默认值，请编辑此 config.properties 文件。</li>
+<li>确保在运行测试前服务器没有运行，如果服务器已经运行，请将其停止。<br>
+    </li>
+<li>运行测试：
+<pre>% cd $APS_HOME<br>% maven runtest<br></pre>
+    </li>
+<li>在浏览器中打开 <code>${APS_HOME}/test_results.html</code> 文件，并检查结果。</li>
+  </ul>
+  <ul>
+<li>可在<a
+
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Quicklook_Tests">此处</a>找到运行 Quicklook 测试的详细说明。</li>
+  </ul>
+</ol>
+<p>如果运行时遇到问题，请记得查看 <a
+
+ href="http://wiki.java.net/bin/view/Projects/GlassFishBuildQuestions">GlassFish 构建 FAQ </a>wiki。</p>
+<p><b>IDE 支持</b><br> <br> <font color="#000080"><a href="http://community.java.net/netbeans"><font
+
+ color="#000080"><img src="image/builds-bestSmaller.png" name="Graphic2"
+
+ align="bottom" border="1" height="38" width="75"></font></a></font><a
+
+ href="http://community.java.net/netbeans"> </a>使用 NetBeans 4.1 <a
+
+ href="http://www.netbeans.org/kb/41/glassfish.html">构建和开发 GlassFish</a>。<br><br>有关其他信息，请查看<a
+
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Workspace_Guidelines">工作区指南</a>和<a
+
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Commit_Procedures">提交过程</a>。&#xA0;此外，还可使用 <a
+
+ href="http://fisheye.cenqua.com/java.net/viewrep/cvs/glassfish">FishEye</a> 查明工作区中发生了哪些变化。</p>
+<p><span style="font-weight: bold;"><a name="Branch"></a><big>为 FCS、SJSAS91_FCS_BRANCH 构建 Glassfish： </big></span><br>
+</p>
+<span style="font-weight: bold;"></span>
+<p>从 GlassFish 分支 (Branch) 进行构建的步骤如下：<br><code>% mkdir workspace<br> % cd workspace<br> % cvs -d :pserver:&lt;userid&gt;@cvs.dev.java.net:/cvs checkout -r <b>SJSAS91_FCS_BRANCH</b> glassfish/bootstrap</code>
+</p>
+<p>由于 SJSAS91_FCS_BRANCH 分支中的 glassfish/bootstrap/project.properties 将变量 &quot;glassfish.cvstag&quot; 设置为 &quot;glassfish.cvstag=SJSAS91_FCS_BRANCH&quot;，因此将相应地签出并构建 FCS 分支源。
+</p>
+<p>定义两个 glassfish 变量，glassfish.os.name 和 glassfish.cvs.username，<a href="BuildGlassFish.html#configuration">同上</a>。
+</p>
+<p>然后：<br><code>% cd glassfish/bootstrap<br> % maven checkout <b>bootstrap-all</b> build configure-runtime</code>
+</p>
+<p>通过查看<a
+
+ href="BuildGlassFish.html#maven_goals">此处</a>的详细信息，可以确定在以上命令中的 bootstrap 和 bootstrap-all 之间运行的目标。</p>
+<a name="maven_goals"></a><big><span style="font-weight: bold;">GlassFish Maven 目标概述：</span></big><br> <br>
+<table style="text-align: left; width: 743px; height: 328px;" border="1"
+
+ cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+<td
+
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">目标名称<br>
+      </td>
+<td
+
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">常用命令<br>
+      </td>
+<td
+
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">说明<br>
+      </td>
+    </tr>
+    <tr>
+<td style="vertical-align: top;">bootstrap<br>
+      </td>
+<td style="vertical-align: top;">maven -Dmodules=admin <span
+
+ style="font-weight: bold;">bootstrap</span> checkout build<br>
+      </td>
+<td style="vertical-align: top;"> 下载 glassfish-image-SNAPSHOT.jar 文件，并在 ${glassfish.home}（服务器映像）下解压缩文件以构建各个模块<br>
+      </td>
+    </tr>
+    <tr>
+<td style="vertical-align: top;">bootstrap-all<br>
+      </td>
+<td style="vertical-align: top;">maven checkout <span
+
+ style="font-weight: bold;">bootstrap-all</span> build<br>
+      </td>
+<td style="vertical-align: top;">安装一个仅包含二进制相关项的空 glassfish 映像，然后下载各个二进制相关项，将其解压缩至 ${glassfish.home}，并从源构建所有的模块。<br>
+      </td>
+    </tr>
+    <tr>
+<td style="vertical-align: top;">checkout </td>
+<td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">checkout</span><br>
+      </td>
+<td style="vertical-align: top;"> 签出模块<br>
+      </td>
+    </tr>
+    <tr>
+<td style="vertical-align: top;">build<br>
+      </td>
+<td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">build</span><br>
+      </td>
+<td style="vertical-align: top;"> 构建模块</td>
+    </tr>
+    <tr>
+<td style="vertical-align: top;">configure-runtime</td>
+<td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">configure-runtime</span><br>
+      </td>
+<td style="vertical-align: top;"> 使用单一实例域配置 ${glassfish.home}<br>
+      </td>
+    </tr>
+    <tr>
+<td style="vertical-align: top;">configure-cluster<br>
+      </td>
+<td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">configure-cluster</span><br>
+      </td>
+<td style="vertical-align: top;">使用 GlassFish V2 的群集功能配置域<br>
+      </td>
+    </tr>
+    <tr>
+<td style="vertical-align: top;">clean </td>
+<td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">clean</span> clobber<br>
+      </td>
+<td style="vertical-align: top;"> 清理模块</td>
+    </tr>
+    <tr>
+<td style="vertical-align: top;">clobber<br>
+      </td>
+<td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">clobber</span><br>
+      </td>
+<td style="vertical-align: top;">清理 GlassFish 服务器映像－删除目录 ${glassfish.home。需要与 &quot;bootstrap-all&quot; 一起使用来获取新映像以清理任何被破坏的服务器映像。<br>
+      </td>
+    </tr>
+    <tr>
+<td style="vertical-align: top;">clean-config<br>
+      </td>
+<td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">clean-config</span><br>
+      </td>
+<td style="vertical-align: top;">清理服务器。删除 domain1 和 bin,config 中的令牌替换文件<br>
+      </td>
+    </tr>
+    <tr>
+<td style="vertical-align: top;">-Dmodules=<br>
+      </td>
+<td style="vertical-align: top;">maven <span
+
+ style="font-weight: bold;">-Dmodules</span>=admin bootstrap checkout build</td>
+<td style="vertical-align: top;"> 仅清理/签出/构建某些模块：maven -Dmodules={逗号分隔的列表} 目标名称</td>
+    </tr>
+  </tbody>
+</table>
+<br> <br> <!--EndFragment--></div>
+</body>
+</html>

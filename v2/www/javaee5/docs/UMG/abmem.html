@@ -1,0 +1,175 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>7.&nbsp;&nbsp;Migrating a Sample Application - an Overview
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9.0 Upgrade and Migration
+Guide</A>&nbsp;<br>
+<A HREF="abmcz.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="abmex.html">Next</A><br>
+            <!--startindex--><A NAME="abmem"></A><b>Chapter&nbsp;7</b><h1>Migrating a Sample Application - an Overview</h1>
+<p>This chapter describes the process for migrating the main components of a typical
+J2EE application from Sun ONE Application Server 6.x to Sun Java System Application Server 9. This chapter
+highlights some of the problems posed during the migration of each type of component
+and suggests practical solutions to overcome such problems.</p>
+<p>For this migration process, the J2EE application presented is called <i>iBank</i> and is based on the actual migration of the iBank application from
+Sun ONE Application Server 6.x to Application Server 9. iBank simulates an online
+banking service and covers all of the aspects traditionally associated with a J2EE
+application.</p>
+<p>The major points of the J2EE specification covered by the iBank application
+are:</p>
+<ul><li><p>Servlets, especially with redirection to JSP pages (model-view-controller
+architecture)</p>
+</li>
+<li><p>JSP pages, especially with static and dynamic inclusion of pages</p>
+</li>
+<li><p>JSP custom tag libraries</p>
+</li>
+<li><p>Creation and management of HTTP sessions</p>
+</li>
+<li><p>Database access through the JDBC API</p>
+</li>
+<li><p>Enterprise JavaBeans: Stateful and Stateless session beans, CMP and
+BMP entity beans</p>
+</li>
+<li><p>Assembly and deployment in line with the standard packaging methods
+of the J2EE application</p>
+</li>
+</ul>
+<p>The iBank application is presented in detail in </p>
+<A NAME="abmen"></A><h2>Preparing for Migrating the iBank Application</h2>
+<p>Before starting the migration process, it in important to understand the differences
+in the deployment descriptors. For detailed information, see <A HREF="abmcz.html#abmda">Migrating Deployment Descriptors</A>.</p>
+<A NAME="abmeo"></A><h3>Choosing the Target</h3>
+<p>To start, choose Sun Java System Application Server 9 as the target migration server. Install
+the server in the migration environment. For step-by-step instructions on how to install
+the software, see the <i>Sun Java System Application Server 9 Installation Guide</i>.</p>
+<p>If you are using Migration Tool for Sun Java System Application Server 9.1 to migrate the components, install the tool.
+The Migration Tool can be downloaded from the following location:</p>
+<p><A HREF="http://java.sun.com/j2ee/tools/migration">http://java.sun.com/j2ee/tools/migration</A></p>
+<p>For information on how to use the Migration Tool for Sun Java System Application Server 9.1, see the Migration Tool online
+help. The iBank application is bundled with the tool.</p>
+<A NAME="abmep"></A><h3>Identifying the Components of the iBank Application</h3>
+<p>The iBank application has the following directory structure:</p>
+<p><tt>iBank/docroot</tt>/<tt>session/entity/misc</tt></p>
+<ul><li><p><tt>/docroot</tt> contains HTML, JSP's and Image files
+in its root. It also contains the source files for servlets and EJBs in the sub-folder <tt>WEB-INF\\classes</tt> following the package structure <tt>com.sun.bank.*</tt>. A war file is generated using this directory.</p>
+</li>
+<li><p><tt>/session</tt> contains the source code for the session
+beans following the package structure <tt>com.sun.bank.ejb.session</tt>.
+This directory forms the EJB module for the session beans.</p>
+</li>
+<li><p><tt>/entity</tt> contains the entity beans following the
+package structure <tt>com.sun.bank.ejb.entity</tt>. This directory would
+form the EJB module for entity beans.</p>
+</li>
+<li><p><tt>/misc</tt> contain the sql scripts for the database
+setup.</p>
+</li>
+</ul>
+<A NAME="abmeq"></A><h2>Manual Steps in the iBank Application Migration</h2>
+<A NAME="indexterm-37"></A><p>Most of the migration is done by the Migration Tool. There are some aspects
+of migration that must be done manually. These steps are documented in the Migration
+Tool's user's guide and the documentation for the iBank sample application.</p>
+<A NAME="abmer"></A><h3>Configuring Database Connectivity</h3>
+<A NAME="indexterm-38"></A><p>In order to deploy an application to the target server, you must add a connection
+pool, add a JDBC resource and a persistence manager.</p>
+<p>This section discusses the following topics:</p>
+<ul><li><p><A HREF="abmem.html#abmes">Adding a Connection Pool</A></p>
+</li>
+<li><p><A HREF="abmem.html#abmet">Adding a JDBC Resource</A></p>
+</li>
+<li><p><A HREF="abmem.html#abmeu">Adding a Persistence Manager</A></p>
+</li>
+</ul>
+<p><hr size="1" noshade><p><b>Note - </b>Before you begin these steps, make sure that the domain to which the application
+will be deployed is in the running state. These instructions assume that the application
+will be deployed to the default domain, domain1.</p>
+<p>Use the asadmin utility
+in the Application Server bin directory to perform these tasks.</p>
+<hr size="1" noshade></p><A NAME="abmes"></A><h4>Adding a Connection Pool</h4>
+<p>A JDBC <A NAME="indexterm-39"></A>connection pool is a group of reusable connections for a particular database.
+Because creating each new physical connection is time consuming, the server maintains
+a pool of available connections to increase performance. When an application requests
+a connection, it obtains one from the pool. When an application closes a connection,
+the connection is returned to the pool.</p>
+<p>Use the <tt>asadmin create-jdbc-connection-pool</tt> command to add
+a connection pool to the server. The syntax of the command is given below.</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin create-jdbc-connection-pool
+     --user  <i>admin_user</i>
+     --password <i>admin_password</i>
+     --host <i>localhost</i>
+     --port <i>portno</i>
+     --datasourceclassname <i>dsclassname</i>
+     --property User=ibank_user:Password=ibank_user:<i>URL_PROP</i>=<i>db_url</i> TMB</pre>
+</td></table><br><p>where, <i>dsclassname</i> is:</p>
+<ul><li><p><tt>oracle.jdbc.pool.OracleDataSource</tt> for Oracle</p>
+</li>
+<li><p><tt>com.pointbase.jdbc.jdbcDataSource</tt> for PointBase</p>
+</li>
+</ul>
+<p><i>URL_PROP</i> is:</p>
+<ul><li><p><tt>url</tt> for Oracle</p>
+</li>
+<li><p><tt>DatabaseName</tt> for PointBase</p>
+</li>
+</ul>
+<p><i>db_url</i> is:</p>
+<ul><li><p><tt>jdbc:oracle:thin:@</tt><i>ORACLE_HOST</i><tt>:1521:SID</tt> for Oracle, where <i>ORACLE_HOST</i> is the
+machine name/IP address on which the database is installed, and SID is the System
+ID of the Oracle database.</p>
+</li>
+<li><p><tt>jdbc:pointbase:server://</tt><i>POINTBASE_HOST:9092</i><tt>/migration-samples</tt> for Pointbase, where <i>POINTBASE_HOST</i> is the machine name/IP address on which the database
+is installed. This will be localhost in most cases.</p>
+</li>
+</ul>
+<A NAME="abmet"></A><h4>Adding a JDBC Resource</h4>
+<p>A JDBC <A NAME="indexterm-40"></A>resource (data source) provides applications with a means of connecting
+to a database. Before creating a JDBC resource, you must first create a JDBC connection
+pool.</p>
+<p>Use the <tt>asadmin create-jdbc-resource</tt> command to add resource.</p>
+<p><tt>asadmin create-jdbc-resource --user</tt> <i>admin_user</i> <tt>--password</tt> <i>admin_password</i> <tt>--host localhost --port</tt> <i>portno</i> <tt>--connectionpoolid
+TMB jdbc/IBank</tt></p>
+<A NAME="abmeu"></A><h4>Adding a Persistence Manager</h4>
+<p>A<A NAME="indexterm-41"></A> persistence manager is required for backward compatibility. To run on
+version 7 of the Application Server, a persistent manager resource was required for
+applications with container-managed persistent beans (a type of EJB component).</p>
+<p>Use the <tt>asadmin create-persistence-resource</tt> command.</p>
+<p><tt>asadmin create-persistence-resource --user</tt> <i>admin_user</i> <tt>--password</tt> <i>admin_password</i> <tt>--host localhost --port</tt> <i>portno</i> <tt>--connectionpoolid TMB --factoryclass com.sun.jdo.spi.persistence.support.sqlstore.impl.PersistenceManagerFactoryImpljdo/pmf</tt></p>
+<A NAME="abmev"></A><h3>Assembling Application for Deployment</h3>
+<A NAME="indexterm-42"></A><p>Application Server primarily supports the J2EE model wherein applications are packaged
+in the form of an enterprise archive (EAR) file (extension .ear). The application
+is further subdivided into a collection of J2EE modules, packaged into Java archives
+(JAR, extension .jar) for EJBs and web archives (WAR, extension .war) for servlets
+and JSPs.</p>
+<p>All the JSPs and Servlets must be packaged into WAR file, all EJBs into the
+JAR file and finally the WAR and the JAR file together with the deployment descriptors
+in to the EAR file. This EAR file is a deployable component.</p>
+<A NAME="abmew"></A><h3>Using the asadmin Utility to Deploy the iBank Application
+on Application Server</h3>
+<p>The last step is to deploy the application on Sun Java System Application Server 9. The process
+for deploying an application is described below:</p>
+<p>The Sun Java System Application Server 9 asadmin command includes a help section on deployment
+that is accessible from the Help menu.</p>
+<p>The command line utility <tt>asadmin</tt> can be invoked by executing <tt>asadmin.bat</tt> file in Windows and <tt>asadmin</tt> file in Solaris
+Operating Environment that is stored in Application Server's installation's <tt>bin</tt> directory.</p>
+<p>At <tt>asadmin</tt> prompt, the command for deployment looks like
+this:</p>
+<p><tt>asadmin> deploy -u</tt> <i>username</i> <tt>-w</tt> <i>password</i> <tt>-H</tt> <i>hostname</i> <tt>-p</tt> <i>adminport</i> <i>absolute_path_to_application</i></p>
+<p>After restarting the Application Server, open a browser and go to the following URL
+to test the application:</p>
+<p><tt>http://&lt;</tt><i>machine_name</i><tt>>:&lt;</tt><i>port_number</i><tt>>/ibank</tt></p>
+<p>When prompted, enter one of the available user names and passwords. The main
+menu page of the iBank application displays.</p>
+
+            <!--stopindex-->
+<br>
+<A HREF="abmcz.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="abmex.html">Next</A>
+</body>
+</html>

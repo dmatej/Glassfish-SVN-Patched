@@ -1,0 +1,828 @@
+<HTML>
+<BODY BGCOLOR="white">
+<PRE>
+<FONT color="green">001</FONT>    /*<a name="line.1"></a>
+<FONT color="green">002</FONT>     * The contents of this file are subject to the terms <a name="line.2"></a>
+<FONT color="green">003</FONT>     * of the Common Development and Distribution License <a name="line.3"></a>
+<FONT color="green">004</FONT>     * (the License).  You may not use this file except in<a name="line.4"></a>
+<FONT color="green">005</FONT>     * compliance with the License.<a name="line.5"></a>
+<FONT color="green">006</FONT>     * <a name="line.6"></a>
+<FONT color="green">007</FONT>     * You can obtain a copy of the license at <a name="line.7"></a>
+<FONT color="green">008</FONT>     * https://glassfish.dev.java.net/public/CDDLv1.0.html or<a name="line.8"></a>
+<FONT color="green">009</FONT>     * glassfish/bootstrap/legal/CDDLv1.0.txt.<a name="line.9"></a>
+<FONT color="green">010</FONT>     * See the License for the specific language governing <a name="line.10"></a>
+<FONT color="green">011</FONT>     * permissions and limitations under the License.<a name="line.11"></a>
+<FONT color="green">012</FONT>     * <a name="line.12"></a>
+<FONT color="green">013</FONT>     * When distributing Covered Code, include this CDDL <a name="line.13"></a>
+<FONT color="green">014</FONT>     * Header Notice in each file and include the License file <a name="line.14"></a>
+<FONT color="green">015</FONT>     * at glassfish/bootstrap/legal/CDDLv1.0.txt.  <a name="line.15"></a>
+<FONT color="green">016</FONT>     * If applicable, add the following below the CDDL Header, <a name="line.16"></a>
+<FONT color="green">017</FONT>     * with the fields enclosed by brackets [] replaced by<a name="line.17"></a>
+<FONT color="green">018</FONT>     * you own identifying information: <a name="line.18"></a>
+<FONT color="green">019</FONT>     * "Portions Copyrighted [year] [name of copyright owner]"<a name="line.19"></a>
+<FONT color="green">020</FONT>     * <a name="line.20"></a>
+<FONT color="green">021</FONT>     * Copyright 2006 Sun Microsystems, Inc. All rights reserved.<a name="line.21"></a>
+<FONT color="green">022</FONT>     */<a name="line.22"></a>
+<FONT color="green">023</FONT>    package com.sun.appserv.management.client;<a name="line.23"></a>
+<FONT color="green">024</FONT>    <a name="line.24"></a>
+<FONT color="green">025</FONT>    import java.util.Collection;<a name="line.25"></a>
+<FONT color="green">026</FONT>    import java.util.Set;<a name="line.26"></a>
+<FONT color="green">027</FONT>    import java.util.HashSet;<a name="line.27"></a>
+<FONT color="green">028</FONT>    import java.util.List;<a name="line.28"></a>
+<FONT color="green">029</FONT>    import java.util.ArrayList;<a name="line.29"></a>
+<FONT color="green">030</FONT>    import java.util.Map;<a name="line.30"></a>
+<FONT color="green">031</FONT>    import java.util.HashMap;<a name="line.31"></a>
+<FONT color="green">032</FONT>    import java.util.Collections;<a name="line.32"></a>
+<FONT color="green">033</FONT>    import java.util.logging.Logger;<a name="line.33"></a>
+<FONT color="green">034</FONT>    import java.io.IOException;<a name="line.34"></a>
+<FONT color="green">035</FONT>    import java.lang.reflect.Proxy;<a name="line.35"></a>
+<FONT color="green">036</FONT>    <a name="line.36"></a>
+<FONT color="green">037</FONT>    import javax.management.MBeanServerConnection;<a name="line.37"></a>
+<FONT color="green">038</FONT>    import javax.management.InstanceNotFoundException;<a name="line.38"></a>
+<FONT color="green">039</FONT>    import javax.management.ObjectName;<a name="line.39"></a>
+<FONT color="green">040</FONT>    import javax.management.MBeanServer;<a name="line.40"></a>
+<FONT color="green">041</FONT>    import javax.management.MalformedObjectNameException;<a name="line.41"></a>
+<FONT color="green">042</FONT>    import javax.management.JMException;<a name="line.42"></a>
+<FONT color="green">043</FONT>    import javax.management.relation.MBeanServerNotificationFilter;<a name="line.43"></a>
+<FONT color="green">044</FONT>    import javax.management.MBeanServerNotification;<a name="line.44"></a>
+<FONT color="green">045</FONT>    import javax.management.Notification;<a name="line.45"></a>
+<FONT color="green">046</FONT>    import javax.management.NotificationListener;<a name="line.46"></a>
+<FONT color="green">047</FONT>    import javax.management.remote.JMXConnector;<a name="line.47"></a>
+<FONT color="green">048</FONT>    import javax.management.remote.JMXConnectionNotification;<a name="line.48"></a>
+<FONT color="green">049</FONT>    <a name="line.49"></a>
+<FONT color="green">050</FONT>    import com.sun.appserv.management.DomainRoot;<a name="line.50"></a>
+<FONT color="green">051</FONT>    import com.sun.appserv.management.base.AMX;<a name="line.51"></a>
+<FONT color="green">052</FONT>    import com.sun.appserv.management.base.AMXAttributes;<a name="line.52"></a>
+<FONT color="green">053</FONT>    import com.sun.appserv.management.base.XTypes;<a name="line.53"></a>
+<FONT color="green">054</FONT>    import com.sun.appserv.management.base.Util;<a name="line.54"></a>
+<FONT color="green">055</FONT>    import com.sun.appserv.management.util.jmx.MBeanProxyHandler;<a name="line.55"></a>
+<FONT color="green">056</FONT>    import com.sun.appserv.management.util.jmx.MBeanServerConnectionSource;<a name="line.56"></a>
+<FONT color="green">057</FONT>    import com.sun.appserv.management.util.jmx.MBeanServerConnectionConnectionSource;<a name="line.57"></a>
+<FONT color="green">058</FONT>    import com.sun.appserv.management.util.misc.ClassUtil;<a name="line.58"></a>
+<FONT color="green">059</FONT>    import com.sun.appserv.management.util.misc.TypeCast;<a name="line.59"></a>
+<FONT color="green">060</FONT>    <a name="line.60"></a>
+<FONT color="green">061</FONT>    import com.sun.appserv.management.client.ConnectionSource;<a name="line.61"></a>
+<FONT color="green">062</FONT>    import com.sun.appserv.management.client.handler.ConverterHandlerFactory;<a name="line.62"></a>
+<FONT color="green">063</FONT>    import com.sun.appserv.management.client.handler.ConverterHandlerUtil;<a name="line.63"></a>
+<FONT color="green">064</FONT>    import com.sun.appserv.management.client.handler.ProxyCache;<a name="line.64"></a>
+<FONT color="green">065</FONT>    <a name="line.65"></a>
+<FONT color="green">066</FONT>    import com.sun.appserv.management.util.misc.GSetUtil;<a name="line.66"></a>
+<FONT color="green">067</FONT>    import com.sun.appserv.management.util.misc.ExceptionUtil;<a name="line.67"></a>
+<FONT color="green">068</FONT>    import com.sun.appserv.management.util.jmx.JMXUtil;<a name="line.68"></a>
+<FONT color="green">069</FONT>    import com.sun.appserv.management.base.AMXClientLogger;<a name="line.69"></a>
+<FONT color="green">070</FONT>    <a name="line.70"></a>
+<FONT color="green">071</FONT>    /**<a name="line.71"></a>
+<FONT color="green">072</FONT>            Factory for {@link AMX} proxies.<a name="line.72"></a>
+<FONT color="green">073</FONT>            Usually proxies are obtained by starting with the DomainRoot obtained via<a name="line.73"></a>
+<FONT color="green">074</FONT>            {@link AppserverConnectionSource#getDomainRoot}.<a name="line.74"></a>
+<FONT color="green">075</FONT>            <a name="line.75"></a>
+<FONT color="green">076</FONT>            @see com.sun.appserv.management.client.AppserverConnectionSource<a name="line.76"></a>
+<FONT color="green">077</FONT>     */<a name="line.77"></a>
+<FONT color="green">078</FONT>    public final class ProxyFactory implements NotificationListener<a name="line.78"></a>
+<FONT color="green">079</FONT>    {<a name="line.79"></a>
+<FONT color="green">080</FONT>            private final ProxyCache                mProxyCache;<a name="line.80"></a>
+<FONT color="green">081</FONT>            private final ConnectionSource  mConnectionSource;<a name="line.81"></a>
+<FONT color="green">082</FONT>            private final ObjectName                mDomainRootObjectName;<a name="line.82"></a>
+<FONT color="green">083</FONT>            private final DomainRoot                mDomainRoot;<a name="line.83"></a>
+<FONT color="green">084</FONT>            private final String                    mMBeanServerID;<a name="line.84"></a>
+<FONT color="green">085</FONT>            <a name="line.85"></a>
+<FONT color="green">086</FONT>            private static final Map&lt;MBeanServerConnection,ProxyFactory&gt; INSTANCES    =<a name="line.86"></a>
+<FONT color="green">087</FONT>                Collections.synchronizedMap( new HashMap&lt;MBeanServerConnection,ProxyFactory&gt;() );<a name="line.87"></a>
+<FONT color="green">088</FONT>            <a name="line.88"></a>
+<FONT color="green">089</FONT>            <a name="line.89"></a>
+<FONT color="green">090</FONT>                    private<a name="line.90"></a>
+<FONT color="green">091</FONT>            ProxyFactory( final ConnectionSource connSource )<a name="line.91"></a>
+<FONT color="green">092</FONT>            {<a name="line.92"></a>
+<FONT color="green">093</FONT>                    assert( connSource != null );<a name="line.93"></a>
+<FONT color="green">094</FONT>                    <a name="line.94"></a>
+<FONT color="green">095</FONT>                    mConnectionSource       = connSource;<a name="line.95"></a>
+<FONT color="green">096</FONT>                    mProxyCache                     = new ProxyCache();<a name="line.96"></a>
+<FONT color="green">097</FONT>                    <a name="line.97"></a>
+<FONT color="green">098</FONT>                    try<a name="line.98"></a>
+<FONT color="green">099</FONT>                    {<a name="line.99"></a>
+<FONT color="green">100</FONT>                            final MBeanServerConnection     conn    = getConnection();<a name="line.100"></a>
+<FONT color="green">101</FONT>                            <a name="line.101"></a>
+<FONT color="green">102</FONT>                            mMBeanServerID          = JMXUtil.getMBeanServerID( conn );<a name="line.102"></a>
+<FONT color="green">103</FONT>                                    <a name="line.103"></a>
+<FONT color="green">104</FONT>                            mDomainRootObjectName   = initDomainRootObjectName();<a name="line.104"></a>
+<FONT color="green">105</FONT>                            mDomainRoot                             = initDomainRoot();<a name="line.105"></a>
+<FONT color="green">106</FONT>                            <a name="line.106"></a>
+<FONT color="green">107</FONT>                            // we should always be able to listen to MBeans--<a name="line.107"></a>
+<FONT color="green">108</FONT>                            // but the http connector does not support listeners<a name="line.108"></a>
+<FONT color="green">109</FONT>                            try<a name="line.109"></a>
+<FONT color="green">110</FONT>                            {<a name="line.110"></a>
+<FONT color="green">111</FONT>                                    final MBeanServerNotificationFilter     filter  =<a name="line.111"></a>
+<FONT color="green">112</FONT>                                            new MBeanServerNotificationFilter();<a name="line.112"></a>
+<FONT color="green">113</FONT>                                    filter.enableAllObjectNames();<a name="line.113"></a>
+<FONT color="green">114</FONT>                                    filter.disableAllTypes();<a name="line.114"></a>
+<FONT color="green">115</FONT>                                    filter.enableType( MBeanServerNotification.UNREGISTRATION_NOTIFICATION );<a name="line.115"></a>
+<FONT color="green">116</FONT>                                    <a name="line.116"></a>
+<FONT color="green">117</FONT>                                    JMXUtil.listenToMBeanServerDelegate( conn, this, filter, null );<a name="line.117"></a>
+<FONT color="green">118</FONT>                            }<a name="line.118"></a>
+<FONT color="green">119</FONT>                            catch( Exception e )<a name="line.119"></a>
+<FONT color="green">120</FONT>                            {<a name="line.120"></a>
+<FONT color="green">121</FONT>                                    getLogger().warning( "ProxyFactory: connection does not support notifications: " +<a name="line.121"></a>
+<FONT color="green">122</FONT>                                            connSource.toString() );<a name="line.122"></a>
+<FONT color="green">123</FONT>                            }<a name="line.123"></a>
+<FONT color="green">124</FONT>                            <a name="line.124"></a>
+<FONT color="green">125</FONT>                            // same idea as above, this time we want to listen to connection died<a name="line.125"></a>
+<FONT color="green">126</FONT>                            // plus there may not be a JMXConnector involved<a name="line.126"></a>
+<FONT color="green">127</FONT>                            final JMXConnector      connector       = connSource.getJMXConnector( false );<a name="line.127"></a>
+<FONT color="green">128</FONT>                            if ( connector != null )<a name="line.128"></a>
+<FONT color="green">129</FONT>                            {<a name="line.129"></a>
+<FONT color="green">130</FONT>                                    try<a name="line.130"></a>
+<FONT color="green">131</FONT>                                    {<a name="line.131"></a>
+<FONT color="green">132</FONT>                                            connector.addConnectionNotificationListener( this, null, null );<a name="line.132"></a>
+<FONT color="green">133</FONT>                                    }<a name="line.133"></a>
+<FONT color="green">134</FONT>                                    catch( Exception e )<a name="line.134"></a>
+<FONT color="green">135</FONT>                                    {<a name="line.135"></a>
+<FONT color="green">136</FONT>                                            getLogger().warning(<a name="line.136"></a>
+<FONT color="green">137</FONT>                                                    "ProxyFactory: connector does not support addConnectionNotificationListener: " +<a name="line.137"></a>
+<FONT color="green">138</FONT>                                                    connSource );<a name="line.138"></a>
+<FONT color="green">139</FONT>                                    }<a name="line.139"></a>
+<FONT color="green">140</FONT>                            }<a name="line.140"></a>
+<FONT color="green">141</FONT>                    }<a name="line.141"></a>
+<FONT color="green">142</FONT>                    catch( Exception e )<a name="line.142"></a>
+<FONT color="green">143</FONT>                    {<a name="line.143"></a>
+<FONT color="green">144</FONT>                            getLogger().throwing( getClass().getName(), "ProxyFactory", e );<a name="line.144"></a>
+<FONT color="green">145</FONT>                            throw new RuntimeException( e );<a name="line.145"></a>
+<FONT color="green">146</FONT>                    }<a name="line.146"></a>
+<FONT color="green">147</FONT>            }<a name="line.147"></a>
+<FONT color="green">148</FONT>            <a name="line.148"></a>
+<FONT color="green">149</FONT>            <a name="line.149"></a>
+<FONT color="green">150</FONT>            /**<a name="line.150"></a>
+<FONT color="green">151</FONT>                    The connection is bad.  Tell each proxy its gone and remove it.<a name="line.151"></a>
+<FONT color="green">152</FONT>             */<a name="line.152"></a>
+<FONT color="green">153</FONT>                    private void<a name="line.153"></a>
+<FONT color="green">154</FONT>            connectionBad()<a name="line.154"></a>
+<FONT color="green">155</FONT>            {<a name="line.155"></a>
+<FONT color="green">156</FONT>                    synchronized( mProxyCache )<a name="line.156"></a>
+<FONT color="green">157</FONT>                    {<a name="line.157"></a>
+<FONT color="green">158</FONT>                            final Set&lt;ObjectName&gt;   keySet  = mProxyCache.keySet();<a name="line.158"></a>
+<FONT color="green">159</FONT>                            for( final ObjectName key : keySet )<a name="line.159"></a>
+<FONT color="green">160</FONT>                            {<a name="line.160"></a>
+<FONT color="green">161</FONT>                                    final AMX       proxy   = mProxyCache.getCachedProxy( key );<a name="line.161"></a>
+<FONT color="green">162</FONT>                                    <a name="line.162"></a>
+<FONT color="green">163</FONT>                                    mProxyCache.remove( Util.getObjectName( proxy ) );<a name="line.163"></a>
+<FONT color="green">164</FONT>                                    ConverterHandlerUtil.connectionBad( proxy );<a name="line.164"></a>
+<FONT color="green">165</FONT>                            }<a name="line.165"></a>
+<FONT color="green">166</FONT>                    }<a name="line.166"></a>
+<FONT color="green">167</FONT>            }<a name="line.167"></a>
+<FONT color="green">168</FONT>            <a name="line.168"></a>
+<FONT color="green">169</FONT>            /**<a name="line.169"></a>
+<FONT color="green">170</FONT>                    Verify that the connection is still alive.<a name="line.170"></a>
+<FONT color="green">171</FONT>             */<a name="line.171"></a>
+<FONT color="green">172</FONT>                    public boolean<a name="line.172"></a>
+<FONT color="green">173</FONT>            checkConnection()<a name="line.173"></a>
+<FONT color="green">174</FONT>            {<a name="line.174"></a>
+<FONT color="green">175</FONT>                    boolean connectionGood  = true;<a name="line.175"></a>
+<FONT color="green">176</FONT>                    <a name="line.176"></a>
+<FONT color="green">177</FONT>                    try<a name="line.177"></a>
+<FONT color="green">178</FONT>                    {<a name="line.178"></a>
+<FONT color="green">179</FONT>                            getConnection().isRegistered( JMXUtil.getMBeanServerDelegateObjectName() );<a name="line.179"></a>
+<FONT color="green">180</FONT>                            connectionGood  = true;<a name="line.180"></a>
+<FONT color="green">181</FONT>                    }<a name="line.181"></a>
+<FONT color="green">182</FONT>                    catch( Exception e )<a name="line.182"></a>
+<FONT color="green">183</FONT>                    {<a name="line.183"></a>
+<FONT color="green">184</FONT>                            connectionBad();<a name="line.184"></a>
+<FONT color="green">185</FONT>                    }<a name="line.185"></a>
+<FONT color="green">186</FONT>                    <a name="line.186"></a>
+<FONT color="green">187</FONT>                    return( connectionGood );<a name="line.187"></a>
+<FONT color="green">188</FONT>            }<a name="line.188"></a>
+<FONT color="green">189</FONT>            <a name="line.189"></a>
+<FONT color="green">190</FONT>    <a name="line.190"></a>
+<FONT color="green">191</FONT>                    void<a name="line.191"></a>
+<FONT color="green">192</FONT>            notifsLost()<a name="line.192"></a>
+<FONT color="green">193</FONT>            {<a name="line.193"></a>
+<FONT color="green">194</FONT>                    // should probably check each proxy for validity, but not clear if it's important...<a name="line.194"></a>
+<FONT color="green">195</FONT>            }<a name="line.195"></a>
+<FONT color="green">196</FONT>            <a name="line.196"></a>
+<FONT color="green">197</FONT>            /**<a name="line.197"></a>
+<FONT color="green">198</FONT>                    Listens for MBeanServerNotification.UNREGISTRATION_NOTIFICATION and<a name="line.198"></a>
+<FONT color="green">199</FONT>                    JMXConnectionNotification and takes appropriate action.<a name="line.199"></a>
+<FONT color="green">200</FONT>                    &lt;br&gt;<a name="line.200"></a>
+<FONT color="green">201</FONT>                Used internally as callback for {@link javax.management.NotificationListener}.<a name="line.201"></a>
+<FONT color="green">202</FONT>                &lt;b&gt;DO NOT CALL THIS METHOD&lt;/b&gt;.<a name="line.202"></a>
+<FONT color="green">203</FONT>             */<a name="line.203"></a>
+<FONT color="green">204</FONT>                    public void<a name="line.204"></a>
+<FONT color="green">205</FONT>            handleNotification(<a name="line.205"></a>
+<FONT color="green">206</FONT>                    final Notification      notifIn, <a name="line.206"></a>
+<FONT color="green">207</FONT>                    final Object            handback) <a name="line.207"></a>
+<FONT color="green">208</FONT>            {<a name="line.208"></a>
+<FONT color="green">209</FONT>                    final String    type    = notifIn.getType();<a name="line.209"></a>
+<FONT color="green">210</FONT>                    <a name="line.210"></a>
+<FONT color="green">211</FONT>                    if ( type.equals( MBeanServerNotification.UNREGISTRATION_NOTIFICATION)  )<a name="line.211"></a>
+<FONT color="green">212</FONT>                    {<a name="line.212"></a>
+<FONT color="green">213</FONT>                            final MBeanServerNotification   notif   = (MBeanServerNotification)notifIn;<a name="line.213"></a>
+<FONT color="green">214</FONT>                            final ObjectName        objectName      = notif.getMBeanName();<a name="line.214"></a>
+<FONT color="green">215</FONT>                            final AMX proxy = getProxy( objectName, AMX.class, false );<a name="line.215"></a>
+<FONT color="green">216</FONT>                            mProxyCache.remove( objectName );<a name="line.216"></a>
+<FONT color="green">217</FONT>                            ConverterHandlerUtil.targetUnregistered(proxy);<a name="line.217"></a>
+<FONT color="green">218</FONT>                            <a name="line.218"></a>
+<FONT color="green">219</FONT>                            getLogger().fine( "ProxyFactory.handleNotification: UNREGISTERED: " + objectName );<a name="line.219"></a>
+<FONT color="green">220</FONT>                    }<a name="line.220"></a>
+<FONT color="green">221</FONT>                    else if ( notifIn instanceof JMXConnectionNotification )<a name="line.221"></a>
+<FONT color="green">222</FONT>                    {<a name="line.222"></a>
+<FONT color="green">223</FONT>                            if ( type.equals( JMXConnectionNotification.CLOSED ) ||<a name="line.223"></a>
+<FONT color="green">224</FONT>                                    type.equals( JMXConnectionNotification.FAILED ) )<a name="line.224"></a>
+<FONT color="green">225</FONT>                            {<a name="line.225"></a>
+<FONT color="green">226</FONT>                                    connectionBad();<a name="line.226"></a>
+<FONT color="green">227</FONT>                            }<a name="line.227"></a>
+<FONT color="green">228</FONT>                            else if ( type.equals( JMXConnectionNotification.NOTIFS_LOST ) )<a name="line.228"></a>
+<FONT color="green">229</FONT>                            {<a name="line.229"></a>
+<FONT color="green">230</FONT>                                    notifsLost();<a name="line.230"></a>
+<FONT color="green">231</FONT>                            }<a name="line.231"></a>
+<FONT color="green">232</FONT>                    }<a name="line.232"></a>
+<FONT color="green">233</FONT>                    else<a name="line.233"></a>
+<FONT color="green">234</FONT>                    {<a name="line.234"></a>
+<FONT color="green">235</FONT>                            getLogger().fine( "ProxyFactory.handleNotification: UNKNOWN notif: " + type );<a name="line.235"></a>
+<FONT color="green">236</FONT>                    }<a name="line.236"></a>
+<FONT color="green">237</FONT>            }<a name="line.237"></a>
+<FONT color="green">238</FONT>            <a name="line.238"></a>
+<FONT color="green">239</FONT>                    private static Logger<a name="line.239"></a>
+<FONT color="green">240</FONT>            getLogger()<a name="line.240"></a>
+<FONT color="green">241</FONT>            {<a name="line.241"></a>
+<FONT color="green">242</FONT>                    return( AMXClientLogger.getInstance() );<a name="line.242"></a>
+<FONT color="green">243</FONT>            }<a name="line.243"></a>
+<FONT color="green">244</FONT>            <a name="line.244"></a>
+<FONT color="green">245</FONT>                    private ObjectName<a name="line.245"></a>
+<FONT color="green">246</FONT>            initDomainRootObjectName()<a name="line.246"></a>
+<FONT color="green">247</FONT>                    throws IOException<a name="line.247"></a>
+<FONT color="green">248</FONT>            {<a name="line.248"></a>
+<FONT color="green">249</FONT>                    final MBeanServerConnection     conn    = mConnectionSource.getMBeanServerConnection( false );<a name="line.249"></a>
+<FONT color="green">250</FONT>                    <a name="line.250"></a>
+<FONT color="green">251</FONT>                    final String    patternString   = "*:" +<a name="line.251"></a>
+<FONT color="green">252</FONT>                                                            AMX.J2EE_TYPE_KEY + "=" + XTypes.DOMAIN_ROOT + ",*";<a name="line.252"></a>
+<FONT color="green">253</FONT>                    <a name="line.253"></a>
+<FONT color="green">254</FONT>                    ObjectName      pattern = null;<a name="line.254"></a>
+<FONT color="green">255</FONT>                    try<a name="line.255"></a>
+<FONT color="green">256</FONT>                    {<a name="line.256"></a>
+<FONT color="green">257</FONT>                            pattern = new ObjectName( patternString );<a name="line.257"></a>
+<FONT color="green">258</FONT>                    }<a name="line.258"></a>
+<FONT color="green">259</FONT>                    catch ( MalformedObjectNameException e )<a name="line.259"></a>
+<FONT color="green">260</FONT>                    {<a name="line.260"></a>
+<FONT color="green">261</FONT>                            assert( false );        // can't happen<a name="line.261"></a>
+<FONT color="green">262</FONT>                            throw new RuntimeException( e );<a name="line.262"></a>
+<FONT color="green">263</FONT>                    }<a name="line.263"></a>
+<FONT color="green">264</FONT>                    <a name="line.264"></a>
+<FONT color="green">265</FONT>                    final Set&lt;ObjectName&gt;     objectNames     = JMXUtil.queryNames( conn, pattern, null );<a name="line.265"></a>
+<FONT color="green">266</FONT>                    if ( objectNames.size() != 1 )<a name="line.266"></a>
+<FONT color="green">267</FONT>                    {<a name="line.267"></a>
+<FONT color="green">268</FONT>                            throw new IllegalArgumentException( "Can't find DomainRoot MBean using pattern " + pattern );<a name="line.268"></a>
+<FONT color="green">269</FONT>                    }<a name="line.269"></a>
+<FONT color="green">270</FONT>    <a name="line.270"></a>
+<FONT color="green">271</FONT>                    final ObjectName        objectName      = GSetUtil.getSingleton( objectNames );<a name="line.271"></a>
+<FONT color="green">272</FONT>                    <a name="line.272"></a>
+<FONT color="green">273</FONT>                    return( objectName );<a name="line.273"></a>
+<FONT color="green">274</FONT>            }<a name="line.274"></a>
+<FONT color="green">275</FONT>            <a name="line.275"></a>
+<FONT color="green">276</FONT>            private final static String     DOMAIN_ROOT_KEY = "DomainRoot";<a name="line.276"></a>
+<FONT color="green">277</FONT>            <a name="line.277"></a>
+<FONT color="green">278</FONT>                    public DomainRoot<a name="line.278"></a>
+<FONT color="green">279</FONT>            createDomainRoot( )<a name="line.279"></a>
+<FONT color="green">280</FONT>                    throws IOException<a name="line.280"></a>
+<FONT color="green">281</FONT>            {<a name="line.281"></a>
+<FONT color="green">282</FONT>                    return( mDomainRoot );<a name="line.282"></a>
+<FONT color="green">283</FONT>            }<a name="line.283"></a>
+<FONT color="green">284</FONT>            <a name="line.284"></a>
+<FONT color="green">285</FONT>                    public DomainRoot<a name="line.285"></a>
+<FONT color="green">286</FONT>            initDomainRoot( )<a name="line.286"></a>
+<FONT color="green">287</FONT>                    throws IOException<a name="line.287"></a>
+<FONT color="green">288</FONT>            {<a name="line.288"></a>
+<FONT color="green">289</FONT>                    final ObjectName        domainRootObjectName    = getDomainRootObjectName( );<a name="line.289"></a>
+<FONT color="green">290</FONT>                    <a name="line.290"></a>
+<FONT color="green">291</FONT>                    final DomainRoot        domainRoot      = (DomainRoot)<a name="line.291"></a>
+<FONT color="green">292</FONT>                            newProxyInstance(<a name="line.292"></a>
+<FONT color="green">293</FONT>                                    domainRootObjectName,<a name="line.293"></a>
+<FONT color="green">294</FONT>                                    new Class[] { DomainRoot.class }  );<a name="line.294"></a>
+<FONT color="green">295</FONT>                    <a name="line.295"></a>
+<FONT color="green">296</FONT>                    return( domainRoot );<a name="line.296"></a>
+<FONT color="green">297</FONT>            }<a name="line.297"></a>
+<FONT color="green">298</FONT>            <a name="line.298"></a>
+<FONT color="green">299</FONT>            /**<a name="line.299"></a>
+<FONT color="green">300</FONT>                Return the DomainRoot.  AMX may not yet be fully <a name="line.300"></a>
+<FONT color="green">301</FONT>                initialized; call getDomainRoot( true ) if AMX<a name="line.301"></a>
+<FONT color="green">302</FONT>                must be initialized upon return.<a name="line.302"></a>
+<FONT color="green">303</FONT>                <a name="line.303"></a>
+<FONT color="green">304</FONT>                    @return the DomainRoot for this factory.<a name="line.304"></a>
+<FONT color="green">305</FONT>             */<a name="line.305"></a>
+<FONT color="green">306</FONT>                    public DomainRoot<a name="line.306"></a>
+<FONT color="green">307</FONT>            getDomainRoot( )<a name="line.307"></a>
+<FONT color="green">308</FONT>            {<a name="line.308"></a>
+<FONT color="green">309</FONT>                    return getDomainRoot( false );<a name="line.309"></a>
+<FONT color="green">310</FONT>            }<a name="line.310"></a>
+<FONT color="green">311</FONT>            <a name="line.311"></a>
+<FONT color="green">312</FONT>            /**<a name="line.312"></a>
+<FONT color="green">313</FONT>                If 'waitReady' is true, then upon return AMX<a name="line.313"></a>
+<FONT color="green">314</FONT>                is guaranteed to be fully loaded.  Otherwise<a name="line.314"></a>
+<FONT color="green">315</FONT>                AMX MBeans may continue to initialize asynchronously.<a name="line.315"></a>
+<FONT color="green">316</FONT>                <a name="line.316"></a>
+<FONT color="green">317</FONT>                @param waitReady<a name="line.317"></a>
+<FONT color="green">318</FONT>                    @return the DomainRoot for this factory.<a name="line.318"></a>
+<FONT color="green">319</FONT>             */<a name="line.319"></a>
+<FONT color="green">320</FONT>                    public DomainRoot<a name="line.320"></a>
+<FONT color="green">321</FONT>            getDomainRoot( boolean waitReady )<a name="line.321"></a>
+<FONT color="green">322</FONT>            {<a name="line.322"></a>
+<FONT color="green">323</FONT>                if ( waitReady )<a name="line.323"></a>
+<FONT color="green">324</FONT>                {<a name="line.324"></a>
+<FONT color="green">325</FONT>                    mDomainRoot.waitAMXReady();<a name="line.325"></a>
+<FONT color="green">326</FONT>                }<a name="line.326"></a>
+<FONT color="green">327</FONT>                <a name="line.327"></a>
+<FONT color="green">328</FONT>                    return( mDomainRoot );<a name="line.328"></a>
+<FONT color="green">329</FONT>            }<a name="line.329"></a>
+<FONT color="green">330</FONT>            <a name="line.330"></a>
+<FONT color="green">331</FONT>            <a name="line.331"></a>
+<FONT color="green">332</FONT>            /**<a name="line.332"></a>
+<FONT color="green">333</FONT>                    @return the ConnectionSource used by this factory<a name="line.333"></a>
+<FONT color="green">334</FONT>             */<a name="line.334"></a>
+<FONT color="green">335</FONT>                    public ConnectionSource<a name="line.335"></a>
+<FONT color="green">336</FONT>            getConnectionSource()<a name="line.336"></a>
+<FONT color="green">337</FONT>            {<a name="line.337"></a>
+<FONT color="green">338</FONT>                    return( mConnectionSource );<a name="line.338"></a>
+<FONT color="green">339</FONT>            }<a name="line.339"></a>
+<FONT color="green">340</FONT>            <a name="line.340"></a>
+<FONT color="green">341</FONT>            /**<a name="line.341"></a>
+<FONT color="green">342</FONT>                    @return the JMX MBeanServerID for the MBeanServer in which MBeans reside.<a name="line.342"></a>
+<FONT color="green">343</FONT>             */<a name="line.343"></a>
+<FONT color="green">344</FONT>                    public String<a name="line.344"></a>
+<FONT color="green">345</FONT>            getMBeanServerID()<a name="line.345"></a>
+<FONT color="green">346</FONT>            {<a name="line.346"></a>
+<FONT color="green">347</FONT>                    return( mMBeanServerID );<a name="line.347"></a>
+<FONT color="green">348</FONT>            }<a name="line.348"></a>
+<FONT color="green">349</FONT>            <a name="line.349"></a>
+<FONT color="green">350</FONT>            /**<a name="line.350"></a>
+<FONT color="green">351</FONT>                    Return the ObjectName for the DomainMBean.<a name="line.351"></a>
+<FONT color="green">352</FONT>             */<a name="line.352"></a>
+<FONT color="green">353</FONT>                    public ObjectName<a name="line.353"></a>
+<FONT color="green">354</FONT>            getDomainRootObjectName()<a name="line.354"></a>
+<FONT color="green">355</FONT>                    throws IOException<a name="line.355"></a>
+<FONT color="green">356</FONT>            {<a name="line.356"></a>
+<FONT color="green">357</FONT>                    return( mDomainRootObjectName );<a name="line.357"></a>
+<FONT color="green">358</FONT>            }<a name="line.358"></a>
+<FONT color="green">359</FONT>            <a name="line.359"></a>
+<FONT color="green">360</FONT>            /**<a name="line.360"></a>
+<FONT color="green">361</FONT>                    Get an instance of the ProxyFactory for the MBeanServer.  Generally<a name="line.361"></a>
+<FONT color="green">362</FONT>                    not applicable for remote clients.<a name="line.362"></a>
+<FONT color="green">363</FONT>                    <a name="line.363"></a>
+<FONT color="green">364</FONT>                    @param server<a name="line.364"></a>
+<FONT color="green">365</FONT>             */<a name="line.365"></a>
+<FONT color="green">366</FONT>                    public static ProxyFactory<a name="line.366"></a>
+<FONT color="green">367</FONT>            getInstance( final MBeanServer server )<a name="line.367"></a>
+<FONT color="green">368</FONT>            {<a name="line.368"></a>
+<FONT color="green">369</FONT>                    return( getInstance( new MBeanServerConnectionSource( server ), true ) );<a name="line.369"></a>
+<FONT color="green">370</FONT>            }<a name="line.370"></a>
+<FONT color="green">371</FONT>            <a name="line.371"></a>
+<FONT color="green">372</FONT>            /**<a name="line.372"></a>
+<FONT color="green">373</FONT>                    Get an instance of the ProxyFactory for the MBeanServerConnection.<a name="line.373"></a>
+<FONT color="green">374</FONT>                    Creates a ConnectionSource for it and calls getInstance( connSource, true ).<a name="line.374"></a>
+<FONT color="green">375</FONT>             */<a name="line.375"></a>
+<FONT color="green">376</FONT>                    public static ProxyFactory<a name="line.376"></a>
+<FONT color="green">377</FONT>            getInstance( final MBeanServerConnection conn )<a name="line.377"></a>
+<FONT color="green">378</FONT>            {<a name="line.378"></a>
+<FONT color="green">379</FONT>                    return( getInstance( new MBeanServerConnectionConnectionSource( conn ), true ) );<a name="line.379"></a>
+<FONT color="green">380</FONT>            }<a name="line.380"></a>
+<FONT color="green">381</FONT>            <a name="line.381"></a>
+<FONT color="green">382</FONT>            /**<a name="line.382"></a>
+<FONT color="green">383</FONT>                    Calls getInstance( connSource, true ).<a name="line.383"></a>
+<FONT color="green">384</FONT>             */<a name="line.384"></a>
+<FONT color="green">385</FONT>                    public static ProxyFactory<a name="line.385"></a>
+<FONT color="green">386</FONT>            getInstance( final ConnectionSource conn )<a name="line.386"></a>
+<FONT color="green">387</FONT>            {       <a name="line.387"></a>
+<FONT color="green">388</FONT>                    return( getInstance( conn, true ) );<a name="line.388"></a>
+<FONT color="green">389</FONT>            }<a name="line.389"></a>
+<FONT color="green">390</FONT>            <a name="line.390"></a>
+<FONT color="green">391</FONT>            /**<a name="line.391"></a>
+<FONT color="green">392</FONT>                    Get an instance.  If 'useMBeanServerID' is false, and<a name="line.392"></a>
+<FONT color="green">393</FONT>                    the ConnectionSource is not one that has been passed before, a new ProxyFactory<a name="line.393"></a>
+<FONT color="green">394</FONT>                    is instantiated which will not share its proxies with any previously-instantiated<a name="line.394"></a>
+<FONT color="green">395</FONT>                    ones.  Such usage is discouraged, as it duplicates proxies.  Pass 'true' unless<a name="line.395"></a>
+<FONT color="green">396</FONT>                    there is an excellent reason to pass 'false'.<a name="line.396"></a>
+<FONT color="green">397</FONT>                    <a name="line.397"></a>
+<FONT color="green">398</FONT>                    @param connSource                       the ConnectionSource<a name="line.398"></a>
+<FONT color="green">399</FONT>                    @param useMBeanServerID         use the MBeanServerID to determine if it's the same server<a name="line.399"></a>
+<FONT color="green">400</FONT>             */<a name="line.400"></a>
+<FONT color="green">401</FONT>                    public static synchronized ProxyFactory<a name="line.401"></a>
+<FONT color="green">402</FONT>            getInstance(<a name="line.402"></a>
+<FONT color="green">403</FONT>                    final ConnectionSource  connSource,<a name="line.403"></a>
+<FONT color="green">404</FONT>                    final boolean                   useMBeanServerID )<a name="line.404"></a>
+<FONT color="green">405</FONT>            {<a name="line.405"></a>
+<FONT color="green">406</FONT>                    ProxyFactory    instance        = findInstance( connSource );<a name="line.406"></a>
+<FONT color="green">407</FONT>                    <a name="line.407"></a>
+<FONT color="green">408</FONT>                    if ( instance == null )<a name="line.408"></a>
+<FONT color="green">409</FONT>                    {<a name="line.409"></a>
+<FONT color="green">410</FONT>                            try<a name="line.410"></a>
+<FONT color="green">411</FONT>                            {<a name="line.411"></a>
+<FONT color="green">412</FONT>                                    // match based on the MBeanServerConnection; different<a name="line.412"></a>
+<FONT color="green">413</FONT>                                    // ConnectionSource instances could wrap the same connection<a name="line.413"></a>
+<FONT color="green">414</FONT>                                    final MBeanServerConnection     conn =<a name="line.414"></a>
+<FONT color="green">415</FONT>                                            connSource.getMBeanServerConnection( false );<a name="line.415"></a>
+<FONT color="green">416</FONT>                                    <a name="line.416"></a>
+<FONT color="green">417</FONT>                                    instance        = findInstance( conn );<a name="line.417"></a>
+<FONT color="green">418</FONT>                                    <a name="line.418"></a>
+<FONT color="green">419</FONT>                                    // if not found, match based on MBeanServerID as requested, or if this<a name="line.419"></a>
+<FONT color="green">420</FONT>                                    // is an in-process MBeanServer<a name="line.420"></a>
+<FONT color="green">421</FONT>                                    if ( instance == null &amp;&amp;<a name="line.421"></a>
+<FONT color="green">422</FONT>                                            ( useMBeanServerID  || connSource instanceof MBeanServerConnectionSource ) )<a name="line.422"></a>
+<FONT color="green">423</FONT>                                    {<a name="line.423"></a>
+<FONT color="green">424</FONT>                                            final String    id      = JMXUtil.getMBeanServerID( conn );<a name="line.424"></a>
+<FONT color="green">425</FONT>                                            instance        = findInstanceByID( id );<a name="line.425"></a>
+<FONT color="green">426</FONT>                                    }<a name="line.426"></a>
+<FONT color="green">427</FONT>                            <a name="line.427"></a>
+<FONT color="green">428</FONT>                                    if ( instance == null )<a name="line.428"></a>
+<FONT color="green">429</FONT>                                    {<a name="line.429"></a>
+<FONT color="green">430</FONT>                                            instance        = new ProxyFactory( connSource );<a name="line.430"></a>
+<FONT color="green">431</FONT>                                            INSTANCES.put( conn, instance );<a name="line.431"></a>
+<FONT color="green">432</FONT>                                            <a name="line.432"></a>
+<FONT color="green">433</FONT>                                            getLogger().fine( "\n----------------\n" +<a name="line.433"></a>
+<FONT color="green">434</FONT>                                                    "ProxyFactory.getInstance: created new factory for: " +<a name="line.434"></a>
+<FONT color="green">435</FONT>                                                            instance.getMBeanServerID() + <a name="line.435"></a>
+<FONT color="green">436</FONT>                                                    "\n----------------\n" );<a name="line.436"></a>
+<FONT color="green">437</FONT>                                    }<a name="line.437"></a>
+<FONT color="green">438</FONT>                            }<a name="line.438"></a>
+<FONT color="green">439</FONT>                            catch( Exception e )<a name="line.439"></a>
+<FONT color="green">440</FONT>                            {<a name="line.440"></a>
+<FONT color="green">441</FONT>                                    getLogger().severe( "ProxyFactory.getInstance: " +<a name="line.441"></a>
+<FONT color="green">442</FONT>                                            "Failure trying to create a new ProxyFactory: " + ExceptionUtil.toString( e ) );<a name="line.442"></a>
+<FONT color="green">443</FONT>                                    throw new RuntimeException( e );<a name="line.443"></a>
+<FONT color="green">444</FONT>                            }<a name="line.444"></a>
+<FONT color="green">445</FONT>                    }<a name="line.445"></a>
+<FONT color="green">446</FONT>                    <a name="line.446"></a>
+<FONT color="green">447</FONT>                    return( instance );<a name="line.447"></a>
+<FONT color="green">448</FONT>            }<a name="line.448"></a>
+<FONT color="green">449</FONT>            <a name="line.449"></a>
+<FONT color="green">450</FONT>            /**<a name="line.450"></a>
+<FONT color="green">451</FONT>                    @return ProxyFactory corresponding to the ConnectionSource<a name="line.451"></a>
+<FONT color="green">452</FONT>             */<a name="line.452"></a>
+<FONT color="green">453</FONT>                    public static synchronized ProxyFactory<a name="line.453"></a>
+<FONT color="green">454</FONT>            findInstance( final ConnectionSource conn )<a name="line.454"></a>
+<FONT color="green">455</FONT>            {<a name="line.455"></a>
+<FONT color="green">456</FONT>                    return( INSTANCES.get( conn ) );<a name="line.456"></a>
+<FONT color="green">457</FONT>            }<a name="line.457"></a>
+<FONT color="green">458</FONT>            <a name="line.458"></a>
+<FONT color="green">459</FONT>            /**<a name="line.459"></a>
+<FONT color="green">460</FONT>                    @return ProxyFactory corresponding to the MBeanServerConnection<a name="line.460"></a>
+<FONT color="green">461</FONT>             */<a name="line.461"></a>
+<FONT color="green">462</FONT>                    public static synchronized ProxyFactory<a name="line.462"></a>
+<FONT color="green">463</FONT>            findInstance( final MBeanServerConnection conn )<a name="line.463"></a>
+<FONT color="green">464</FONT>            {<a name="line.464"></a>
+<FONT color="green">465</FONT>                    ProxyFactory    instance        = null;<a name="line.465"></a>
+<FONT color="green">466</FONT>                    <a name="line.466"></a>
+<FONT color="green">467</FONT>                    final Collection&lt;ProxyFactory&gt; values     = INSTANCES.values();<a name="line.467"></a>
+<FONT color="green">468</FONT>                    for( final ProxyFactory factory : values )<a name="line.468"></a>
+<FONT color="green">469</FONT>                    {<a name="line.469"></a>
+<FONT color="green">470</FONT>                            if ( factory.getConnectionSource().getExistingMBeanServerConnection( ) == conn )<a name="line.470"></a>
+<FONT color="green">471</FONT>                            {<a name="line.471"></a>
+<FONT color="green">472</FONT>                                    instance        = factory;<a name="line.472"></a>
+<FONT color="green">473</FONT>                                    break;<a name="line.473"></a>
+<FONT color="green">474</FONT>                            }<a name="line.474"></a>
+<FONT color="green">475</FONT>                    }<a name="line.475"></a>
+<FONT color="green">476</FONT>                    return( instance );<a name="line.476"></a>
+<FONT color="green">477</FONT>            }<a name="line.477"></a>
+<FONT color="green">478</FONT>            <a name="line.478"></a>
+<FONT color="green">479</FONT>            <a name="line.479"></a>
+<FONT color="green">480</FONT>            /**<a name="line.480"></a>
+<FONT color="green">481</FONT>                    @return ProxyFactory corresponding to the MBeanServerID<a name="line.481"></a>
+<FONT color="green">482</FONT>             */<a name="line.482"></a>
+<FONT color="green">483</FONT>                    public static synchronized ProxyFactory<a name="line.483"></a>
+<FONT color="green">484</FONT>            findInstanceByID( final String mbeanServerID )<a name="line.484"></a>
+<FONT color="green">485</FONT>            {<a name="line.485"></a>
+<FONT color="green">486</FONT>                    ProxyFactory    instance        = null;<a name="line.486"></a>
+<FONT color="green">487</FONT>                    <a name="line.487"></a>
+<FONT color="green">488</FONT>                    final Collection&lt;ProxyFactory&gt; values     = INSTANCES.values();<a name="line.488"></a>
+<FONT color="green">489</FONT>                    for( final ProxyFactory factory : values )<a name="line.489"></a>
+<FONT color="green">490</FONT>                    {<a name="line.490"></a>
+<FONT color="green">491</FONT>                            if ( factory.getMBeanServerID().equals( mbeanServerID ) )<a name="line.491"></a>
+<FONT color="green">492</FONT>                            {<a name="line.492"></a>
+<FONT color="green">493</FONT>                                    instance        = factory;<a name="line.493"></a>
+<FONT color="green">494</FONT>                                    break;<a name="line.494"></a>
+<FONT color="green">495</FONT>                            }<a name="line.495"></a>
+<FONT color="green">496</FONT>                    }<a name="line.496"></a>
+<FONT color="green">497</FONT>                    <a name="line.497"></a>
+<FONT color="green">498</FONT>                    return( instance );<a name="line.498"></a>
+<FONT color="green">499</FONT>            }<a name="line.499"></a>
+<FONT color="green">500</FONT>            <a name="line.500"></a>
+<FONT color="green">501</FONT>        <a name="line.501"></a>
+<FONT color="green">502</FONT>            /**<a name="line.502"></a>
+<FONT color="green">503</FONT>                    @return an appropriate {@link AMX} interface for the ObjectName<a name="line.503"></a>
+<FONT color="green">504</FONT>                    @deprecated use versions that take a class as a parameter<a name="line.504"></a>
+<FONT color="green">505</FONT>             */<a name="line.505"></a>
+<FONT color="green">506</FONT>                    public AMX<a name="line.506"></a>
+<FONT color="green">507</FONT>            getProxy( final ObjectName      objectName )<a name="line.507"></a>
+<FONT color="green">508</FONT>            {<a name="line.508"></a>
+<FONT color="green">509</FONT>                return getProxy( objectName, true );<a name="line.509"></a>
+<FONT color="green">510</FONT>            }<a name="line.510"></a>
+<FONT color="green">511</FONT>                    <a name="line.511"></a>
+<FONT color="green">512</FONT>            /**<a name="line.512"></a>
+<FONT color="green">513</FONT>                    Get any existing proxy, returning null if none exists and 'create' is false.<a name="line.513"></a>
+<FONT color="green">514</FONT>                    <a name="line.514"></a>
+<FONT color="green">515</FONT>                    @param objectName       ObjectName for which a proxy should be created<a name="line.515"></a>
+<FONT color="green">516</FONT>                    @param create           true to create the proxy, false to return existing value<a name="line.516"></a>
+<FONT color="green">517</FONT>                    @return an appropriate {@link AMX} interface for the ObjectName<a name="line.517"></a>
+<FONT color="green">518</FONT>                    @deprecated use versions that take a class as a parameter<a name="line.518"></a>
+<FONT color="green">519</FONT>             */<a name="line.519"></a>
+<FONT color="green">520</FONT>                    public AMX<a name="line.520"></a>
+<FONT color="green">521</FONT>            getProxy( final ObjectName      objectName, boolean create )<a name="line.521"></a>
+<FONT color="green">522</FONT>            {<a name="line.522"></a>
+<FONT color="green">523</FONT>                return getProxy( objectName, AMX.class, create );<a name="line.523"></a>
+<FONT color="green">524</FONT>            }<a name="line.524"></a>
+<FONT color="green">525</FONT>            <a name="line.525"></a>
+<FONT color="green">526</FONT>            /**<a name="line.526"></a>
+<FONT color="green">527</FONT>                The actual interface(s) that the proxy implements are predetermined.<a name="line.527"></a>
+<FONT color="green">528</FONT>                Specifying the interface ties the return type to the interface at compile-time<a name="line.528"></a>
+<FONT color="green">529</FONT>                but has no effect on the actual interfaces that are implemented by<a name="line.529"></a>
+<FONT color="green">530</FONT>                the proxy.<a name="line.530"></a>
+<FONT color="green">531</FONT>                    @return an appropriate {@link AMX} interface for the ObjectName<a name="line.531"></a>
+<FONT color="green">532</FONT>             */<a name="line.532"></a>
+<FONT color="green">533</FONT>                    public synchronized &lt;T extends AMX&gt; T<a name="line.533"></a>
+<FONT color="green">534</FONT>            getProxy(<a name="line.534"></a>
+<FONT color="green">535</FONT>                final ObjectName    objectName,<a name="line.535"></a>
+<FONT color="green">536</FONT>                final Class&lt;T&gt;      theInterface )<a name="line.536"></a>
+<FONT color="green">537</FONT>            {<a name="line.537"></a>
+<FONT color="green">538</FONT>                    return getProxy( objectName, theInterface, true );<a name="line.538"></a>
+<FONT color="green">539</FONT>            }<a name="line.539"></a>
+<FONT color="green">540</FONT>            <a name="line.540"></a>
+<FONT color="green">541</FONT>            /**<a name="line.541"></a>
+<FONT color="green">542</FONT>                    Get any existing proxy, returning null if none exists and 'create' is false.<a name="line.542"></a>
+<FONT color="green">543</FONT>                    <a name="line.543"></a>
+<FONT color="green">544</FONT>                    @param objectName       ObjectName for which a proxy should be created<a name="line.544"></a>
+<FONT color="green">545</FONT>                    @param create           true to create the proxy, false to return existing value<a name="line.545"></a>
+<FONT color="green">546</FONT>                    @param theClass     class of returned proxy, avoids casts and compiler warnings<a name="line.546"></a>
+<FONT color="green">547</FONT>                    @return an appropriate {@link AMX} interface for the ObjectName<a name="line.547"></a>
+<FONT color="green">548</FONT>             */<a name="line.548"></a>
+<FONT color="green">549</FONT>                    public synchronized &lt;T extends AMX&gt; T<a name="line.549"></a>
+<FONT color="green">550</FONT>            getProxy(<a name="line.550"></a>
+<FONT color="green">551</FONT>                final ObjectName    objectName,<a name="line.551"></a>
+<FONT color="green">552</FONT>                Class&lt;T&gt;            theClass,<a name="line.552"></a>
+<FONT color="green">553</FONT>                boolean             create )<a name="line.553"></a>
+<FONT color="green">554</FONT>            {<a name="line.554"></a>
+<FONT color="green">555</FONT>                    AMX     proxy   = mProxyCache.getCachedProxy( objectName );<a name="line.555"></a>
+<FONT color="green">556</FONT>                    <a name="line.556"></a>
+<FONT color="green">557</FONT>                    if ( proxy == null &amp;&amp; create )<a name="line.557"></a>
+<FONT color="green">558</FONT>                    {<a name="line.558"></a>
+<FONT color="green">559</FONT>                            proxy   = createProxy( objectName );<a name="line.559"></a>
+<FONT color="green">560</FONT>                    }<a name="line.560"></a>
+<FONT color="green">561</FONT>                    return theClass.cast( proxy );<a name="line.561"></a>
+<FONT color="green">562</FONT>            }<a name="line.562"></a>
+<FONT color="green">563</FONT>            <a name="line.563"></a>
+<FONT color="green">564</FONT>            /**<a name="line.564"></a>
+<FONT color="green">565</FONT>                    @return MBeanServerConnection used by this factory<a name="line.565"></a>
+<FONT color="green">566</FONT>             */<a name="line.566"></a>
+<FONT color="green">567</FONT>                    protected MBeanServerConnection<a name="line.567"></a>
+<FONT color="green">568</FONT>            getConnection()<a name="line.568"></a>
+<FONT color="green">569</FONT>                    throws IOException<a name="line.569"></a>
+<FONT color="green">570</FONT>            {<a name="line.570"></a>
+<FONT color="green">571</FONT>                    return( getConnectionSource().getMBeanServerConnection( false ) );<a name="line.571"></a>
+<FONT color="green">572</FONT>            }<a name="line.572"></a>
+<FONT color="green">573</FONT>            <a name="line.573"></a>
+<FONT color="green">574</FONT>            /**<a name="line.574"></a>
+<FONT color="green">575</FONT>                    Create a new proxy.  When a new proxy is created, its parent is<a name="line.575"></a>
+<FONT color="green">576</FONT>                    required, which could cause a chain of proxies to be created.<a name="line.576"></a>
+<FONT color="green">577</FONT>                    @param ObjectName<a name="line.577"></a>
+<FONT color="green">578</FONT>             */<a name="line.578"></a>
+<FONT color="green">579</FONT>                    private AMX<a name="line.579"></a>
+<FONT color="green">580</FONT>            createProxy( final ObjectName   objectName  )<a name="line.580"></a>
+<FONT color="green">581</FONT>            {<a name="line.581"></a>
+<FONT color="green">582</FONT>                    AMX proxy                               = null;<a name="line.582"></a>
+<FONT color="green">583</FONT>                    <a name="line.583"></a>
+<FONT color="green">584</FONT>                    try<a name="line.584"></a>
+<FONT color="green">585</FONT>                    {<a name="line.585"></a>
+<FONT color="green">586</FONT>                            String          proxyInterfaceName      = null;<a name="line.586"></a>
+<FONT color="green">587</FONT>                            Class   proxyInterface          = null;<a name="line.587"></a>
+<FONT color="green">588</FONT>                            <a name="line.588"></a>
+<FONT color="green">589</FONT>                            proxyInterfaceName      = (String)<a name="line.589"></a>
+<FONT color="green">590</FONT>                                    getConnection().getAttribute( objectName, AMXAttributes.ATTR_INTERFACE_NAME );<a name="line.590"></a>
+<FONT color="green">591</FONT>                            <a name="line.591"></a>
+<FONT color="green">592</FONT>                            proxyInterface  = ClassUtil.getClassFromName( proxyInterfaceName );<a name="line.592"></a>
+<FONT color="green">593</FONT>                                            <a name="line.593"></a>
+<FONT color="green">594</FONT>                            proxy   =  newProxyInstance( objectName, new Class[] { proxyInterface } );<a name="line.594"></a>
+<FONT color="green">595</FONT>                    }<a name="line.595"></a>
+<FONT color="green">596</FONT>                    catch( IllegalArgumentException e )<a name="line.596"></a>
+<FONT color="green">597</FONT>                    {<a name="line.597"></a>
+<FONT color="green">598</FONT>                            throw e;<a name="line.598"></a>
+<FONT color="green">599</FONT>                    }<a name="line.599"></a>
+<FONT color="green">600</FONT>                    catch( Exception e )<a name="line.600"></a>
+<FONT color="green">601</FONT>                    {<a name="line.601"></a>
+<FONT color="green">602</FONT>                            throw new RuntimeException( e );<a name="line.602"></a>
+<FONT color="green">603</FONT>                    }<a name="line.603"></a>
+<FONT color="green">604</FONT>                                    <a name="line.604"></a>
+<FONT color="green">605</FONT>                    return( proxy );<a name="line.605"></a>
+<FONT color="green">606</FONT>            }<a name="line.606"></a>
+<FONT color="green">607</FONT>            <a name="line.607"></a>
+<FONT color="green">608</FONT>                private MBeanProxyHandler<a name="line.608"></a>
+<FONT color="green">609</FONT>            createProxyHandler( final ObjectName objectName )<a name="line.609"></a>
+<FONT color="green">610</FONT>                throws IOException<a name="line.610"></a>
+<FONT color="green">611</FONT>            {<a name="line.611"></a>
+<FONT color="green">612</FONT>                return ConverterHandlerFactory.createHandler( mConnectionSource, objectName );<a name="line.612"></a>
+<FONT color="green">613</FONT>            }<a name="line.613"></a>
+<FONT color="green">614</FONT>    <a name="line.614"></a>
+<FONT color="green">615</FONT>                    <a name="line.615"></a>
+<FONT color="green">616</FONT>            /**<a name="line.616"></a>
+<FONT color="green">617</FONT>                    Instantiates a new proxy using the default AttributeNameMangler and with any desired number<a name="line.617"></a>
+<FONT color="green">618</FONT>                    of interfaces.  If you want NotificationBroadcaster as one of the interfaces, you must<a name="line.618"></a>
+<FONT color="green">619</FONT>                    supply it in the list.<a name="line.619"></a>
+<FONT color="green">620</FONT>                    Use of this routine is discouraged in favor of<a name="line.620"></a>
+<FONT color="green">621</FONT>                    {@link #getProxy}<a name="line.621"></a>
+<FONT color="green">622</FONT>                    <a name="line.622"></a>
+<FONT color="green">623</FONT>                    @param objectName                       the target MBean which will be invoked by the proxy<a name="line.623"></a>
+<FONT color="green">624</FONT>                    @param interfaceClasses all interfaces the proxy should implement<a name="line.624"></a>
+<FONT color="green">625</FONT>                    <a name="line.625"></a>
+<FONT color="green">626</FONT>                    @return the new Proxy implementing the specified interface<a name="line.626"></a>
+<FONT color="green">627</FONT>             */<a name="line.627"></a>
+<FONT color="green">628</FONT>                    public AMX<a name="line.628"></a>
+<FONT color="green">629</FONT>            newProxyInstance(<a name="line.629"></a>
+<FONT color="green">630</FONT>                    final ObjectName                        objectName,<a name="line.630"></a>
+<FONT color="green">631</FONT>                    final Class&lt;?&gt;[]                  interfaceClasses )<a name="line.631"></a>
+<FONT color="green">632</FONT>                    throws IOException<a name="line.632"></a>
+<FONT color="green">633</FONT>            {<a name="line.633"></a>
+<FONT color="green">634</FONT>                    final MBeanProxyHandler handler = createProxyHandler( objectName );<a name="line.634"></a>
+<FONT color="green">635</FONT>                    <a name="line.635"></a>
+<FONT color="green">636</FONT>                    final ClassLoader               classLoader     = interfaceClasses[ 0 ].getClassLoader();<a name="line.636"></a>
+<FONT color="green">637</FONT>                    <a name="line.637"></a>
+<FONT color="green">638</FONT>                    final AMX proxy = Util.asAMX(Proxy.newProxyInstance( classLoader, interfaceClasses, handler));<a name="line.638"></a>
+<FONT color="green">639</FONT>                    if ( proxy != null )<a name="line.639"></a>
+<FONT color="green">640</FONT>                    {<a name="line.640"></a>
+<FONT color="green">641</FONT>                        mProxyCache.remove( objectName );<a name="line.641"></a>
+<FONT color="green">642</FONT>                            mProxyCache.cacheProxy( proxy );<a name="line.642"></a>
+<FONT color="green">643</FONT>                    }<a name="line.643"></a>
+<FONT color="green">644</FONT>                    <a name="line.644"></a>
+<FONT color="green">645</FONT>                    return( proxy );<a name="line.645"></a>
+<FONT color="green">646</FONT>            }<a name="line.646"></a>
+<FONT color="green">647</FONT>            <a name="line.647"></a>
+<FONT color="green">648</FONT>                    protected static String<a name="line.648"></a>
+<FONT color="green">649</FONT>            toString( final Object o )<a name="line.649"></a>
+<FONT color="green">650</FONT>            {<a name="line.650"></a>
+<FONT color="green">651</FONT>                    return( com.sun.appserv.management.util.stringifier.SmartStringifier.toString( o ) );<a name="line.651"></a>
+<FONT color="green">652</FONT>            }<a name="line.652"></a>
+<FONT color="green">653</FONT>            <a name="line.653"></a>
+<FONT color="green">654</FONT>            <a name="line.654"></a>
+<FONT color="green">655</FONT>            /**<a name="line.655"></a>
+<FONT color="green">656</FONT>                    Convert a Set of ObjectName to a Set of AMX.<a name="line.656"></a>
+<FONT color="green">657</FONT>                    <a name="line.657"></a>
+<FONT color="green">658</FONT>                    @return a Set of AMX from a Set of ObjectName.<a name="line.658"></a>
+<FONT color="green">659</FONT>             */<a name="line.659"></a>
+<FONT color="green">660</FONT>                    public Set&lt;AMX&gt;<a name="line.660"></a>
+<FONT color="green">661</FONT>            toProxySet( final Set&lt;ObjectName&gt; objectNames )<a name="line.661"></a>
+<FONT color="green">662</FONT>            {<a name="line.662"></a>
+<FONT color="green">663</FONT>                    final Set&lt;AMX&gt;    s       = new HashSet&lt;AMX&gt;();<a name="line.663"></a>
+<FONT color="green">664</FONT>                    <a name="line.664"></a>
+<FONT color="green">665</FONT>                    for( final ObjectName objectName : objectNames )<a name="line.665"></a>
+<FONT color="green">666</FONT>                    {<a name="line.666"></a>
+<FONT color="green">667</FONT>                            try<a name="line.667"></a>
+<FONT color="green">668</FONT>                            {<a name="line.668"></a>
+<FONT color="green">669</FONT>                                    final AMX       proxy   = getProxy( objectName, AMX.class, true );<a name="line.669"></a>
+<FONT color="green">670</FONT>                                    assert( ! s.contains( proxy ) );<a name="line.670"></a>
+<FONT color="green">671</FONT>                                    s.add( proxy );<a name="line.671"></a>
+<FONT color="green">672</FONT>                            }<a name="line.672"></a>
+<FONT color="green">673</FONT>                            catch( Exception e )<a name="line.673"></a>
+<FONT color="green">674</FONT>                            {<a name="line.674"></a>
+<FONT color="green">675</FONT>                                final Throwable rootCause   = ExceptionUtil.getRootCause( e );<a name="line.675"></a>
+<FONT color="green">676</FONT>                                <a name="line.676"></a>
+<FONT color="green">677</FONT>                                //getLogger<a name="line.677"></a>
+<FONT color="green">678</FONT>                                System.out.println( "ProxyFactory.toProxySet: exception for MBean " +<a name="line.678"></a>
+<FONT color="green">679</FONT>                                    objectName  + " = " + rootCause );<a name="line.679"></a>
+<FONT color="green">680</FONT>                            }<a name="line.680"></a>
+<FONT color="green">681</FONT>                    }<a name="line.681"></a>
+<FONT color="green">682</FONT>                    <a name="line.682"></a>
+<FONT color="green">683</FONT>                    return( s );<a name="line.683"></a>
+<FONT color="green">684</FONT>            }<a name="line.684"></a>
+<FONT color="green">685</FONT>            <a name="line.685"></a>
+<FONT color="green">686</FONT>            /**<a name="line.686"></a>
+<FONT color="green">687</FONT>                    Convert a Collection of ObjectName to a List of AMX.<a name="line.687"></a>
+<FONT color="green">688</FONT>                    <a name="line.688"></a>
+<FONT color="green">689</FONT>                    @return a List of AMX from a List of ObjectName.<a name="line.689"></a>
+<FONT color="green">690</FONT>             */<a name="line.690"></a>
+<FONT color="green">691</FONT>                    public List&lt;AMX&gt;<a name="line.691"></a>
+<FONT color="green">692</FONT>            toProxyList( final Collection&lt;ObjectName&gt; objectNames )<a name="line.692"></a>
+<FONT color="green">693</FONT>            {<a name="line.693"></a>
+<FONT color="green">694</FONT>                    final List&lt;AMX&gt;   list    = new ArrayList&lt;AMX&gt;();<a name="line.694"></a>
+<FONT color="green">695</FONT>                    <a name="line.695"></a>
+<FONT color="green">696</FONT>                    for( final ObjectName objectName : objectNames )<a name="line.696"></a>
+<FONT color="green">697</FONT>                    {<a name="line.697"></a>
+<FONT color="green">698</FONT>                            try<a name="line.698"></a>
+<FONT color="green">699</FONT>                            {<a name="line.699"></a>
+<FONT color="green">700</FONT>                                    final AMX       proxy   = getProxy( objectName, AMX.class, true );<a name="line.700"></a>
+<FONT color="green">701</FONT>                                    list.add( proxy );<a name="line.701"></a>
+<FONT color="green">702</FONT>                            }<a name="line.702"></a>
+<FONT color="green">703</FONT>                            catch( Exception e )<a name="line.703"></a>
+<FONT color="green">704</FONT>                            {<a name="line.704"></a>
+<FONT color="green">705</FONT>                                final Throwable rootCause   = ExceptionUtil.getRootCause( e );<a name="line.705"></a>
+<FONT color="green">706</FONT>                                <a name="line.706"></a>
+<FONT color="green">707</FONT>                                //getLogger<a name="line.707"></a>
+<FONT color="green">708</FONT>                                System.out.println( "ProxyFactory.toProxyList: exception for MBean " +<a name="line.708"></a>
+<FONT color="green">709</FONT>                                    objectName  + " = " + rootCause );<a name="line.709"></a>
+<FONT color="green">710</FONT>                            }<a name="line.710"></a>
+<FONT color="green">711</FONT>                    }<a name="line.711"></a>
+<FONT color="green">712</FONT>                    <a name="line.712"></a>
+<FONT color="green">713</FONT>                    return( list );<a name="line.713"></a>
+<FONT color="green">714</FONT>            }<a name="line.714"></a>
+<FONT color="green">715</FONT>            <a name="line.715"></a>
+<FONT color="green">716</FONT>            /**<a name="line.716"></a>
+<FONT color="green">717</FONT>                    Convert a Map of ObjectName, and convert it to a Map<a name="line.717"></a>
+<FONT color="green">718</FONT>                    of AMX, with the same keys.<a name="line.718"></a>
+<FONT color="green">719</FONT>                    <a name="line.719"></a>
+<FONT color="green">720</FONT>                    @return a Map of AMX from a Map of ObjectName.<a name="line.720"></a>
+<FONT color="green">721</FONT>             */<a name="line.721"></a>
+<FONT color="green">722</FONT>                    public Map&lt;String,AMX&gt;<a name="line.722"></a>
+<FONT color="green">723</FONT>            toProxyMap(<a name="line.723"></a>
+<FONT color="green">724</FONT>                    final Map&lt;String,ObjectName&gt;      objectNameMap )<a name="line.724"></a>
+<FONT color="green">725</FONT>            {<a name="line.725"></a>
+<FONT color="green">726</FONT>                    final Map&lt;String,AMX&gt; resultMap   = new HashMap&lt;String,AMX&gt;();<a name="line.726"></a>
+<FONT color="green">727</FONT>                    <a name="line.727"></a>
+<FONT color="green">728</FONT>                    final Set&lt;String&gt;   keys    = objectNameMap.keySet();<a name="line.728"></a>
+<FONT color="green">729</FONT>                    <a name="line.729"></a>
+<FONT color="green">730</FONT>                    for( final String key : keys )<a name="line.730"></a>
+<FONT color="green">731</FONT>                    {<a name="line.731"></a>
+<FONT color="green">732</FONT>                            final ObjectName        objectName      = objectNameMap.get( key );<a name="line.732"></a>
+<FONT color="green">733</FONT>                            <a name="line.733"></a>
+<FONT color="green">734</FONT>                            try<a name="line.734"></a>
+<FONT color="green">735</FONT>                            {<a name="line.735"></a>
+<FONT color="green">736</FONT>                                    final AMX       proxy   = getProxy( objectName, AMX.class, true );<a name="line.736"></a>
+<FONT color="green">737</FONT>                                    resultMap.put( key, proxy );<a name="line.737"></a>
+<FONT color="green">738</FONT>                            }<a name="line.738"></a>
+<FONT color="green">739</FONT>                            catch( Exception e )<a name="line.739"></a>
+<FONT color="green">740</FONT>                            {<a name="line.740"></a>
+<FONT color="green">741</FONT>                                final Throwable rootCause   = ExceptionUtil.getRootCause( e );<a name="line.741"></a>
+<FONT color="green">742</FONT>                                <a name="line.742"></a>
+<FONT color="green">743</FONT>                                System.out.println( "ProxyFactory.toProxyMap: exception for MBean " +<a name="line.743"></a>
+<FONT color="green">744</FONT>                                    objectName  + " = " + rootCause );<a name="line.744"></a>
+<FONT color="green">745</FONT>                            }<a name="line.745"></a>
+<FONT color="green">746</FONT>                    }<a name="line.746"></a>
+<FONT color="green">747</FONT>                    <a name="line.747"></a>
+<FONT color="green">748</FONT>                    return( resultMap );<a name="line.748"></a>
+<FONT color="green">749</FONT>            }<a name="line.749"></a>
+<FONT color="green">750</FONT>            <a name="line.750"></a>
+<FONT color="green">751</FONT>    }<a name="line.751"></a>
+<FONT color="green">752</FONT>    <a name="line.752"></a>
+<FONT color="green">753</FONT>    <a name="line.753"></a>
+<FONT color="green">754</FONT>    <a name="line.754"></a>
+<FONT color="green">755</FONT>    <a name="line.755"></a>
+<FONT color="green">756</FONT>    <a name="line.756"></a>
+<FONT color="green">757</FONT>    <a name="line.757"></a>
+<FONT color="green">758</FONT>    <a name="line.758"></a>
+<FONT color="green">759</FONT>    <a name="line.759"></a>
+<FONT color="green">760</FONT>    <a name="line.760"></a>
+<FONT color="green">761</FONT>    <a name="line.761"></a>
+<FONT color="green">762</FONT>    <a name="line.762"></a>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>

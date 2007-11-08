@@ -1,0 +1,484 @@
+<!DOCTYPE html PUBLIC "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <meta name="GENERATOR"
+ content="Mozilla/4.76 [en] (X11; U; SunOS 5.8 sun4u) [Netscape]">
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8">
+  <meta name="AUTHOR" content="Rok Sribar">
+  <meta name="CREATED" content="20010729;14240000">
+  <meta name="CHANGED" content="20050410;19562300">
+  <meta name="Author" content="Satish Viswanatham">
+  <title>GlassFish Project - Web Services Management</title>
+<!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+	-->
+  <style>
+	<!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-left: 0.49in; margin-bottom: 0in }
+		P.western { font-family: "Arial", sans-serif; font-size: 12pt; font-weight: medium }
+	-->
+	</style>
+  <style>
+	<!--
+		@page { size: 8.27in 11.69in; margin: 0.79in }
+		P { margin-bottom: 0.08in }
+	-->
+	</style>
+</head>
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<div id="projecthome" class="app"><!--StartFragment --><span
+ style="font-weight: bold;"><font size="+1">GlassFish
+Project - Web Services Management home page</font></span><br>
+<br>
+<a href="https://glassfish.dev.java.net/public/NewtoGlassFish.html">New
+to GlassFish</a> | <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html">Community
+Guidelines&nbsp;</a> | <a
+ href="https://glassfish.dev.java.net/public/downloadsindex.html">Downloads
+</a>|
+<a href="https://glassfish.dev.java.net/public/faq/index.html">FAQ</a>
+|&nbsp;<a href="http://wiki.java.net/bin/view/Projects/JavaEESDKHowTo">How-Tos</a>
+<br>
+<p><!--StartFragment --><br>
+Welcome to the Web Services Management page. This page is dedicated
+to discussing the collection new Web Services Management features in
+GlassFish.
+The source code for these features is part of this cvs repository.
+</p>
+<h3>Web Services Management News</h3>
+<ul>
+  <>
+  <table style="width: 100%; text-align: left;" border="0"
+ cellpadding="2" cellspacing="3">
+    <tbody>
+      <tr>
+        <td style="vertical-align: top;"><a
+ href="screencast/WebServicesMgmt.html"><img
+ alt="screencast/WebServicesMgmt.html" src="screencast/admin_icon.jpg"
+ style="border: 0px solid ; width: 75px; height: 66px;" align="middle"></a><br>
+        </td>
+        <td style="vertical-align: top;">A screencast&nbsp; that shows
+you how to monitor and manage web services in Admin Console is
+available for watching. .&nbsp;&nbsp; It walks you through&nbsp; the
+entire&nbsp; process from deploying the web services to configurating
+it for monitoring, to interpreting the statistics, to testing&nbsp; and
+finally applying the transformation rule.&nbsp;&nbsp; (May 14, 2006)<br>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <br>
+  </><li> New article <i><a
+ href="http://developers.sun.com/prodtech/appserver/reference/techart/ws_mgmt.html">Managing
+and Monitoring Web Services in Project GlassFish</a></i> is available.
+This comprehensive, three-part article shows you how to monitor and
+manage Web services with Project GlassFish. (March 01, 2006) </li>
+  <li>WS Management Registry page has come <a
+ href="registry/registryhome.html">online</a> with steps required to
+work with JWSDP 1.6 EBXML Service Registry (Feb 14, 2006).</li>
+  <li>In GlassFish Web Services are first class manageable objects,
+combined with detailed Monitoring and Diagnostics.&nbsp; See below for
+more information on the design and implementation of these features.</li>
+</ul>
+<h3>Page Contents</h3>
+<ul>
+  <ul>
+    <li> <a href="#Overview">Overview</a></li>
+    <li> <a href="#Configuration_Model">Configuration Model</a></li>
+    <li> <a href="#CLI_commands">CLI Commands</a></li>
+    <li> <a href="#Code_walkthrough">Code Walk-through</a></li>
+    <li> <a href="#Unit_Acceptance_Tests">Unit/Acceptance Tests</a></li>
+    <li> <a href="#Supporting_Documentation">Supporting Documentation</a></li>
+    <li> <a href="#ToDo_List">ToDo List</a></li>
+    <li><a href="registry/registryhome.html">WS Management Registry
+Home Page</a><br>
+    </li>
+  </ul>
+</ul>
+<h3>
+<a name="Overview"></a>Overview</h3>
+In Glassfish, all web service endpoints are discovered and shown
+distinctly,
+so they can be managed.&nbsp; Response times and invocation counts are
+tracked and this performance information can be graphed in real time.
+Alerts
+can be generated on various boundary conditions including resposetime
+time
+and through put failures. Web Service invocation content can be viewed
+in XML. Runtime message transformation can be achieved using
+XSLT.&nbsp;
+Here is an overview of the Architecture of the Web Services Management
+in GlassFish.
+<center>
+<p><img src="pe-arch.gif" height="480" width="640"><br>
+<u>Figure 1: Web Services Management Architecture</u></p>
+</center>
+<p><br>
+<br>
+<br>
+<br>
+</p>
+<p>Our approach does not require developers to change the Web service
+implementation
+or their clients - no retrofitting the code with proprietary controls,
+inserting proprietary headers or using proprietary APIs. This
+non-invasive
+approach guarantees that user can add management (even after
+development)
+without disrupting the client side or the server side. The following
+sections
+describe each feature in detail.
+</p>
+<ul>
+  <ul>
+    <ul>
+      <li> <a href="#First_Class_Objects">Web Services As First Class
+Objects</a></li>
+      <li> <a href="#Monitoring">Monitoring</a></li>
+      <li> <a href="#Message_Visualization">Message Visualization</a></li>
+      <li> <a href="#Transformation">Transformation</a></li>
+      <li> <a href="#Registry">Registry</a></li>
+    </ul>
+  </ul>
+</ul>
+<center><img src="features.gif" height="480" width="652">
+<br>
+<u>Figure 2: Web Services Management Features</u></center>
+<ul>
+  <h4> <a name="First_Class_Objects"></a>Web Services As First Class
+Objects</h4>
+Currently, it is very hard to find all the deployed web services in a
+domain.
+Similar to EJBs and Servlets, all Web Services will listed in the
+management
+console. User will be able to select a web service and be able to
+manage
+it. Users will be able to look at the deployment artifacts of the web
+service
+(webservices.xml, WSDL, etc.) and perform other management tasks
+described
+in this specification. Please refer to [13] for the UI layout details.
+The backend will consist of a crawler that will discover all the web
+services
+in Central Repository. Web Services Management AMX Mbeans provide the
+necessary
+support for GUI and CLI.
+  <h4><a name="Monitoring"></a>Monitoring</h4>
+We will have capabilities to track and graphically show operational
+statistics,
+such as the number of requests per second, average response time and
+throughput.
+Monitoring configuration model will be enhanced to support monitoring
+per
+web service or per application. Each web service can be configured for
+monitoring. Supported monitored Levels are OFF, LOW and HIGH. If
+monitoring
+is turned ON for a web service, it is enabled for all operations in
+that
+web service.
+</ul>
+</div>
+<blockquote>
+  <blockquote><span style="text-decoration: underline;">LOW</span> - At
+this
+setting, response time, throughput, total # of requests, and faults are
+monitored for the whole web service. No method level monitoring is done
+at this level. <br>
+    <span style="text-decoration: underline;">HIGH</span> - At this
+setting,
+apart from the above mentioned attributes. Message Trace (Content
+Visualization)
+is enabled. <br>
+    <span style="text-decoration: underline;">OFF</span> -&nbsp; no
+monitoring
+data is collected.</blockquote>
+</blockquote>
+<div id="projecthome" class="app">
+<blockquote>
+  <h4><a name="Message_Visualization"></a>Message Visualization</h4>
+When enabled, it will be possible to see last N (default is 25)
+messages
+for a Web Service end point. These messages will be kept in memory of
+the
+remote server instances. Details of SOAP request, response and HTTP
+header
+information will be available.
+  <h4><a name="Transformation"></a>Transformation</h4>
+User will be able to apply XSLT transformation rules per web service
+end
+point. This enables fine grained control of Web Services request and
+response.
+Multiple XSLT rules can be applied to a web service end point method.
+The
+order in which the transformations are applied is deterministic and can
+be configured. All the XSLT files will be stored in the
+"generated/xml/&lt;appOrModule&gt;"
+directory of Central Repository. These transformation rules will be
+synchronized
+to the remote server instances.
+  <h4><a name="Registry"></a>Registry</h4>
+A web service can be Published(Advertised)/Unpublished(unadvertised) to
+the JES registry and can be discovered&nbsp; from the JES Registry.
+Publish/Unpublish
+WS to external registries and Discover them from external registries.</blockquote>
+<h3>
+<a name="Configuration_Model"></a>The Configuration Model</h3>
+<font color="#000000">New element called web-service-endpoint is added
+as child element to j2ee-application, ejb-module and web-module
+elements.
+Other 2 new config elements are transformation-rule and
+registry-location.&nbsp;
+These relevant config elements are listed in <a
+ href="ws-mgmt-config.txt">ws-mgmt-config.dtd</a>.
+For </font>the complete server configuration model, please<font
+ color="#000000">
+refer to </font><a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/admin-core/config-api/dtds/sun-domain_1_2.dtd?view=markup">sun-domain_1_2.dtd</a>
+<h3><a name="CLI_commands"></a>CLI Commands</h3>
+Please refer to CLI command reference page for the list of commands
+available
+for Web Services Management. The common CLI command usage is
+illustrated
+<a href="cli_samples.html">here</a>.
+<h3><a name="Code_walkthrough"></a>Code-Walkthrough</h3>
+The GlassFish Web Services management code is located in <a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/admin/ws-mgmt">ws-mgmt
+sub module</a> in the repository. The following describes all the sub
+packages
+in this module.
+<p>The&nbsp;<span style="text-decoration: underline;"><a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/admin/ws-mgmt/src/java/com/sun/enterprise/admin/wsmgmt/agent">Agent</a></span>
+sub-package, which registers call back/listeners with <a
+ href="http://www.jcp.org/en/jsr/detail?id=109">JSR
+109</a> Implementation. These callback provides the information
+required
+for web services management.
+</p>
+<p><a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/admin/ws-mgmt/src/java/com/sun/enterprise/admin/wsmgmt/filter/spi">Filter</a>
+sub-package contains the code that executes a management function on
+these
+callback. Examples of a Filter is a Monitoring Filter, Transformation
+Filter
+or Message Filter.
+</p>
+<p><a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/admin/ws-mgmt/src/java/com/sun/enterprise/admin/wsmgmt/lifecycle">Lifecycle</a>
+manages enabling and disabling of the filters. This lifecycle code
+kicks
+in both on server initialization and dynamic reconfiguration after
+startup.
+</p>
+<p>Transformation implementation is in <a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/admin/ws-mgmt/src/java/com/sun/enterprise/admin/wsmgmt/transform">Transform</a>
+directory. Message Transformation Filters and data collection logic is
+in <a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/admin/ws-mgmt/src/java/com/sun/enterprise/admin/wsmgmt/msg">Msg</a>
+and the underlying Pool implementation is <a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/admin/ws-mgmt/src/java/com/sun/enterprise/admin/wsmgmt/pool">Pool</a>
+.
+</p>
+<p>The following diagram shows the sub packages in Web Services
+Management
+backend.
+</p>
+<center>
+<p><img src="sub-packages.gif" height="326" width="384"></p>
+<p><u>Figure 3: Web Services Management Backend Internals</u></p>
+</center>
+<h3>
+<a name="Unit_Acceptance_Tests"></a>Unit/Acceptance Tests</h3>
+<a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Quicklook_Tests">Running
+the Quicklook</a> tests is required in this section. In addition to the
+Quicklook tests the Web Services Management module has unit tests
+developed
+which need to pass prior to checking in any code. The setup for running
+unit tests is the same as the Quicklook tests. To run just the web
+services
+management unit tests do the following:
+<blockquote>Go to <a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/admin/mbeanapi-impl/tests">glassfish/admin/mbeanapi-impl/tests</a>
+  <br>
+You will need to change host/port/user/password properties in
+amxtest.properties <br>
+maven runtest <br>
+Please follow the instructions in the file <a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/admin/mbeanapi-impl/tests/amx-unit-tests.html?view=markup">amx-unit-tests.html</a></blockquote>
+This will build and run all the all the AMX unit tests including the
+tests
+in&nbsp; <a
+ href="https://glassfish.dev.java.net/source/browse/glassfish/admin/mbeanapi-impl/tests/com/sun/enterprise/management/ext/wsmgmt">tests/com/sun/enterprise/management/ext/wsmgmt</a>.
+See the amx-unit-tests.html for more details.
+<br>
+&nbsp;
+<h3><a name="Supporting_Documentation"></a>Supporting Documentation</h3>
+This section will be updated with useful documents and information
+about the Web Services Management - Tutorials, Blogs and other useful
+links.
+<ul>
+  <li> <a
+ href="http://developers.sun.com/prodtech/appserver/reference/techart/ws_mgmt.html">Managing
+and Monitoring Web Services in Project GlassFish</a> <br>
+This comprehensive, three-part article shows you how to monitor and
+manage Web services with Project GlassFish. (March 2006)</li>
+</ul>
+<ul>
+  <li> <a
+ href="http://blogs.sun.com/roller/page/theaquarium?entry=java_ee_5_learning_resources1">Java
+EE 5 Learning Resources</a> <br>
+Java EE 5 specific resources for Web Services. (March 2006)</li>
+</ul>
+<ul>
+  <li> <a
+ href="http://java.sun.com/developer/EJTechTips/2006/tt0128.html#2">Tech
+Tip: Monitoring Web Services</a> <br>
+Web Services Monitoring features in GlassFish. (January 2006)</li>
+</ul>
+<ul>
+  <li> <a
+ href="http://java.sun.com/developer/EJTechTips/2005/tt1220.html#1">Tech
+Tip: Developing Web Services Using JAX-WS</a> <br>
+Read this tech tip to see how JAX-WS simplifies building and using a
+web service. (December 2005) </li>
+</ul>
+<ul>
+  <li><a
+ href="http://java.sun.com/developer/technicalArticles/Interviews/hapner_qa.html">SOA
+Best Practices: A Conversation With Sun Microsystems Distinguished
+Engineer Mark Hapner</a> <br>
+Service-oriented architecture (SOA) will soon play a major role in
+software engineering. Sun Microsystems Distinguished Engineer Mark
+Hapner explores the future of SOA. (January 2006) </li>
+</ul>
+<ul>
+  <li><a href="http://www.netbeans.org/kb/50/jaxws20.html">Building
+JAX-WS 2.0 Services with NetBeans 5.0</a> <br>
+This article explains how you can use the built-in features of NetBeans
+5.0 to create JAX-WS 2.0 services quickly. The steps to create a web
+service with JAX-WS 2.0 have been simplified, and you can turn a web
+application project in NetBeans into a web service with very few steps.
+(December 2005) </li>
+</ul>
+<ul>
+  <li><a
+ href="http://www.netbeans.org/kb/articles/javaee5-hello-world.html">Java
+EE 5 "Hello World" application in NetBeans</a> <br>
+This tutorial shows how to use NetBeans and the GlassFish application
+server to create and test a simple "Hello World" Java Enterprise
+Edition 5 application with Enterprise JavaBeans 3.0 and dependency
+injection in JavaServer Faces. (November 2005)</li>
+</ul>
+<ul>
+  <li><a
+ href="http://java.sun.com/developer/technicalArticles/WebServices/soa2/fastinfoset-soa.html">Fast
+Infoset and the Pragmatic SOA Approach</a> <br>
+Fast Infoset complements the best practices of SOA -- specifically,
+loosely-coupled, document-based messaging. Read why Fast Infoset is a
+viable alternative to XML when message size and parsing performance are
+issues. (October 2005) </li>
+</ul>
+<ul>
+  <li><a
+ href="http://java.sun.com/developer/technicalArticles/Interviews/routeone_qa.html">The
+Next Big Thing: Service-Oriented Architecture (SOA) Takes a New Route</a>
+    <br>
+RouteOne's service-oriented architecture (SOA), which serves some 80%
+of the 22,000 auto dealerships in the United States, makes it clear
+that SOA is here to stay. (October 2005) </li>
+</ul>
+<ul>
+  <li><a
+ href="http://java.sun.com/developer/technicalArticles/WebServices/soa2/WhatsNewArticle.html">What's
+New in SOA and Web Services?</a> <br>
+This article introduces the enhanced capabilities and emerging
+technologies, tools, and infrastructure software to simplify creating,
+using, and managing services in an SOA. (October 2005) </li>
+</ul>
+<ul>
+  <li><a
+ href="http://developers.sun.com/prodtech/appserver/reference/techart/mutual_auth.html">Mutual
+Authentication for Web Services: A Live Example</a> <br>
+How do you set up secure communications among Web services for
+supply-chain applications? This article answers that question with a
+description of the implementation procedure for mutual authentication,
+citing the java.net project Adventure Builder as an example. (October
+2005) </li>
+</ul>
+<ul>
+  <li><a
+ href="http://java.sun.com/developer/technicalArticles/xml/jaxrpcpatterns/">Pattern
+and Strategies for Building Document-Based Web Services:Part 1 in a
+Series</a> <br>
+This article outlines some of the different architectural choices and
+the
+associated tradeoffs, alternatives, and best practices that architects
+and developers should keep in mind when building document-driven web
+services using JAX-RPC on the J2EE platform. (September 2004) </li>
+</ul>
+<ul>
+  <li><a
+ href="http://java.sun.com/developer/technicalArticles/xml/jaxrpcpatterns2">Interoperability
+With Patterns and Strategies for Document-Based Web Services:Part 2 in
+a Series</a> <br>
+In Part 2 of this article, we demonstrate interoperability for
+document-driven web services with Microsoft .NET (C#) using strategies
+discussed in Part 1. (January 2005) </li>
+</ul>
+<ul>
+  <li><a
+ href="http://java.sun.com/developer/technicalArticles/xml/jaxrpcpatterns3">Realizing
+Strategies for Document-Based Web Services With JAX-WS 2.0: Part 3 in a
+Series</a> <br>
+This white paper, Part 3 of the series, will examine how to realize
+some of the same strategies described in part 1 and 2 with the Java API
+for XML-Based Web
+Services (JAX-WS) 2.0, a successor to JAX-RPC 1.1. (December 2005) </li>
+</ul>
+<h3>
+<a name="ToDo_List"></a>ToDo List</h3>
+The following is non-comprehensive list of developer friendly&nbsp; web
+services management ToDo features. Please email <a
+ href="mailto:dev@glassfish.dev.java.net">us</a>
+if you have questions about current implementation or would like to
+contribute towards future ToDo list.
+<ul>
+  <li>Analyze WSDL for potential problems and compliance to standards</li>
+  <li>Compare WSDL (diffing) Includes all documents referenced by the
+WSDL</li>
+  <li>Analyze SOAP messages for potential problems and compliance to
+standards
+( BP 1.1 and WS-I Attachments Profile analysis</li>
+  <li>Compare SOAP messages</li>
+  <li>Compare HTTP headers</li>
+  <li>Message visualization:</li>
+  <ul>
+    <li>Pseudocode View</li>
+    <li>Tree View (outline view of XML)</li>
+    <li>Raw View (XML as it appears on the wire)</li>
+    <li>Hex View</li>
+  </ul>
+  <li>WSDL visualization:</li>
+  <ul>
+    <li>Pseudocode View</li>
+    <li>Tree View (outline view of XML)</li>
+    <li>XML View (with syntax coloring)</li>
+    <li>Raw View (XML as it appears on the wire)</li>
+    <li>Graph View (document structure)</li>
+  </ul>
+  <li>Alerts based on aggregated data. (Date/Time)</li>
+  <li>Five minute or one hour summaries</li>
+  <li>Auto generate test messages</li>
+  <li>Easy Configuration of authentication, integrity with digital
+signatures
+and confidentiality with digital encryption including WS-Security</li>
+  <li>Historical logging</li>
+  <li>Identity based management</li>
+</ul>
+</div>
+</body>
+</html>

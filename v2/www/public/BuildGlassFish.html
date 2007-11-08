@@ -1,0 +1,424 @@
+<!DOCTYPE html PUBLIC "-//Tigris//DTD XHTML 1.0 Transitional//EN" "http://style.tigris.org/nonav/tigris_transitional.dtd">
+<html>
+<head>
+  <title>GlassFish Project - Getting Started</title>
+  <meta http-equiv="Content-Type"
+ content="text/html; charset=iso-8859-1">
+  <meta http-equiv="CONTENT-TYPE" content="text/html; charset=utf-8">
+</head>
+<body style="color: rgb(0, 0, 0); background-color: rgb(255, 255, 255);">
+<div id="projecthome" class="app"><font size="+1"><span
+ style="font-weight: bold;">Build GlassFish V2 Project<br>
+</span>For GlassFish V3, refer the build pages <a
+ href="http://wiki.glassfish.java.net/Wiki.jsp?page=PlanForGlassFishV3">HERE</a><span
+ style="font-weight: bold;"><br>
+</span></font><a href="#pre_req">Prerequisites to building GlassFish</a><br>
+<a
+ href="http://wiki.glassfish.java.net/Wiki.jsp?page=BuildInformation#qs">Quickstart
+Guide</a><span style="font-weight: bold;"></span><br>
+<a href="#Complete_Instructions_on_how_to_Build">Complete Build
+Instructions</a><br>
+<a href="http://www.netbeans.org/kb/41/glassfish.html">GlassFish Build
+with NetBeans IDE</a><br>
+<a href="BuildGlassFish.html#Branch">Building from the Branch</a><br>
+<a href="#maven_goals">GlassFish Maven Goals Overview</a><br>
+<br>
+This page describes how to build <span style="font-weight: bold;">GlassFish
+V2</span>.&nbsp; Here are useful
+links if you want to <a
+ href="https://glassfish.dev.java.net/public/NewtoGlsasFish.html#Submit_a_Bug">submit
+a bug</a> or <a
+ href="https://glassfish.dev.java.net/public/NewtoGlsasFish.html#Request_a_Feature">request
+a feature</a>. You can find the governance policy <a
+ href="https://glassfish.dev.java.net/public/GovernancePolicy.html">here.</a>
+<br>
+<p><span style="font-weight: bold;"></span></p>
+<h3><a name="Complete_Instructions_on_how_to_Build"></a>Complete
+Instructions on how to Build GlassFish V2<br>
+</h3>
+GlassFish can be build with NetBeans or using the command line
+options.&nbsp; The following article has more information on <a
+ href="http://www.netbeans.org/kb/41/glassfish.html">building and
+developing the GlassFish project with NetBeans</a>.&nbsp; Command line
+options for building GlassFish are below.<br>
+<br>
+<span style="font-weight: bold;"><a name="pre_req"></a>Prerequisites to
+building GlassFish. </span><br>
+<ul>
+  <li>The users must have <a
+ href="http://maven.apache.org/maven-1.x/start/download.html">Maven</a>
+(1.0.2) installed: This will create the local repository needed by
+Maven to store
+GlassFish dependencies.</li>
+  <li>The user must have a login on java.net and must have access to
+the CVS
+repository for the GlassFish project.</li>
+  <li>The user must login to the GlassFish CVS repository once (so CVS
+saves the password in the .cvspass file in the user's
+home directory)</li>
+  <li><a href="http://java.sun.com/j2se/1.5.0/download.jsp">J2SE 5.0</a>
+(1.5.0_12) must be installed, configured as JAVA_HOME env variable and
+in your
+binary path.&nbsp; We
+recommend that you use the latest version available.&nbsp; <br>
+  </li>
+  <li>Setup<a
+ href="https://glassfish.dev.java.net/servlets/ProjectSource#wincvs">
+cvs client</a> per java.net instructions.<br>
+  </li>
+</ul>
+<span style="font-weight: bold;">GlassFish build steps:</span><br>
+<ol>
+</ol>
+<div style="margin-left: 40px;">The first step is to checkout the
+module dependencies and common
+files used in the build system and edit the properties file.</div>
+<ol>
+  <pre>% mkdir workspace<br>% cd workspace<br>% cvs -d :pserver:&lt;userid&gt;@cvs.dev.java.net:/cvs checkout -r SJSAS91_UR1_BRANCH glassfish/bootstrap<br></pre>
+This will checkout project.xml, maven.xml, project.properties,
+and
+common files referenced from project.xml.<br>
+</ol>
+<div style="margin-left: 40px;">Create&nbsp;
+workspace/glassfish/bootstrap/build.properties or for re-usable
+GlassFish workspace, one-time process is to create
+${HOME}/build.properties
+(Unix)&nbsp; or %HOMEPATH%\build.properties (Windows) and&nbsp; set
+following variables: (you can get %HOMEPATH% value by running the
+command: echo %HOMEPATH% or run "set" and find HOMEPATH variable
+(windows))<br>
+Define two glassfish variables glassfish.os.name,
+glassfish.cvs.username <a href="BuildGlassFish.html#configuration">same
+as above</a>.<br>
+glassfish.os.name= &lt;OS name - possible
+values are WINNT, SunOS, Linux, SunOS_X86, Darwin&gt;<br>
+glassfish.cvs.username= &lt;java.net id&gt;<br>
+</div>
+<ol>
+For example, on Windows XP Professional<br>
+  <code>glassfish.os.name=WINNT<br>
+glassfish.cvs.username=carlavmott<br>
+  </code> <br>
+  <li>Next checkout the sources.</li>
+  <pre>% cd glassfish/bootstrap<br>% maven checkout<br></pre>
+Known
+limitation: Some of the sources needed for building GlassFish may not
+be available on java.net right away (for example MQ, the ORB, JWSDP
+2.0, etc).&nbsp; These will be treated as binary dependencies for the
+time being. (See the next step for how binary dependencies are used.)
+You can also checkout a subset of the modules by calling:<br>
+  <pre>% maven checkout -Dmodules=<span style="font-family: monospace;">[</span>comma separated list of module-names]   </pre>
+  <p>The module-names are on this <a
+ href="http://wiki.java.net/bin/view/Projects/GlassFishModuleOwners">page</a>.<span
+ style="font-family: monospace;"></span></p>
+  <li>Bootstrap the
+server image (a collection of scripts and
+jar files used
+to run glassfish). Developer can
+select the option of "bootstrap" which downloads the pre-built server
+and builds only subset of the modules. Other option "bootstrap-all" is
+to create the server from scratch, and build all the modules to verify
+the intermodule or binary dependencies version change.<br>
+  </li>
+  <span style="font-weight: bold;"><br>
+  </span><b>bootstrap-all</b> option: Building all the modules from the
+source.<br>
+  <pre>% maven bootstrap-all </pre>
+  <b>bootstrap</b> option: Build your own module using pre-built server
+  <br>
+  <pre>% maven bootstrap</pre>
+This step is optional if you have already installed a promoted build of
+GlassFish.&nbsp; To use the promoted
+build you will need to set the property in
+glassfish/project.properties.
+  <pre wrap="">glassfish.image.version=&lt;&lt;build version&gt;&gt;</pre>
+This will cause the build system to
+"point" to that installation. This property can also be added to
+${HOME}/build.properties<br>
+  <br>
+  <li>Build the checked out source code. The order of compilation will
+be driven by a common
+configuration file checked out in step 2 above. <strong>This step will
+update the installed image at
+the end of compiling each module</strong>.<br>
+  </li>
+  <pre>% maven build<br></pre>
+You can always build a subset of the modules by invoking:<br>
+  <pre>% maven build -Dmodules<i style="font-style: italic;">=</i><span
+ style="font-family: monospace;">[</span>comma separated list of module-names] </pre>
+or go to ../[module-name] and invoke:<br>
+  <pre>% maven build<br></pre>
+  <li>Configure the GlassFish Server runtime.&nbsp; This step will
+create the asadmin
+script, run create-domain, etc which are needed to run
+the GlassFish server.<br>
+  </li>
+  <pre>% maven configure-runtime   (Default is silent installation) </pre>
+If you would like to specify common configuration information (for
+example, port numbers etc.), use configure-runtime in verbose mode.
+&nbsp;
+  <pre>% maven configure-runtime -Dinteractive<br></pre>
+In
+general you will only need to run this command once.&nbsp; Cases where
+you are changing the domain environment will require reconfiguration,
+see the FAQ for more informations.&nbsp; Default values for runtime
+configuration can be found in glassfish/bootstrap/project.properties:<br>
+  <pre>domain.name="domain1"<br>instance.name="server"<br>admin.user="admin"<br>admin.password="adminadmin"<br>admin.port="4848"<br>instance.port"="8080"<br>orb.port="3700"<br>imq.port="7676"<br>https.port="8181" <br></pre>
+Maven goal 'configure-runtime' will create single-instance domain
+similar to GlassFish V1. If you want to
+create cluster mode domain of GlassFish
+V2, run following command:<br>
+  <code>% maven configure-cluster</code><br>
+  <li>
+    <p>Start the server using the following command. All GlassFish
+server commands are located in the &lt;glassfish.root&gt;/publish/bin
+directory.&nbsp;
+For more documentation on how to administer the server please refer to
+the <a href="http://docs.sun.com/source/819-1004/QuickStart.html">documentation</a>
+for the Sun Java System Application Server PE version 8 seriers.&nbsp;
+A great amount of what is there still applies to version 9.&nbsp;
+Note:&nbsp; currently GlassFish only supports command line option for
+all platforms.&nbsp; <br>
+    </p>
+  </li>
+  <pre>% asadmin start-domain</pre>
+  <li>
+    <p>Cleaning the server.&nbsp; <br>
+    </p>
+  </li>
+  <pre>% maven clobber<br></pre>
+This will remove all the scripts and jar files used to run the server.
+It will remove everything under glassfish.home and once this is done
+you will need to go back to step 2.<br>
+  <br>
+  <li>Clean Build/Server<span style="font-weight: bold;">: </span>You
+can use any of the above three goals during your development process.
+Update the sources using your favorite IDE, and use any of the
+following commands on already built workspace to bring the workspace to
+its original stage to rebuild and verify your changes. </li>
+  <ul>
+    <li>To clean the modules to delete build generated files like
+.class, .properties and ready to recompile, run
+following command
+      <pre>% maven clean (or maven -Dmodules=mail,activation clean)</pre>
+    </li>
+    <li>To clean the server configured in step 5 above, use command
+below to clean the server which deletes Administration Server, domain1
+and preserves the server back to original installed stage. (Deletes
+newly generated token replaced
+files in ${glassfish.home}/bin, config directories.)
+      <pre>% maven clean-config</pre>
+    </li>
+    <li>You can use "maven
+clean-config" if you want to verify your changes related to domain and
+administration server startup related. "clobber" goal can be used to
+delete your server to get new server. "clean" can be used to delete
+build files and ready to compile.<br>
+    </li>
+  </ul>
+  <br>
+  <li><span style="font-weight: bold;">Run Quicklook Tests</span>:
+Quicklook Tests are meant to give the developer a way
+of testing major functionality in the Application Server and of running
+a sanity check to ensure that nothing major is broken. <br>
+  </li>
+  <ul>
+    <li>Checkout the required test failes from glassfish/appserv-tests
+as below.<br>
+    </li>
+    <pre>% cd glassfish/bootstrap<br>% maven checkout-quicklook</pre>
+    <li>Set <code>APS_HOME</code>. This is the directory where you
+checked out the
+workspace including the workspace root name (e.g. <code>/workspace/appserv-tests</code>)</li>
+    <li>Set <code>S1AS_HOME</code>. This is installation directory
+for the GlassFish Server (e.g. <code>/workspace/publish/glassfish</code>)</li>
+    <li>The installation
+properties are under <code>${APS_HOME}/config.properties</code> to
+match
+your installation (e.g. <code>admin.password</code>, <code>http.port</code>,
+etc.). If you changed any default values, edit this config.properties
+file.</li>
+    <li>Make sure the server is NOT running before running the tests,
+stop the server if its already running.<br>
+    </li>
+    <li>Run the test:
+      <pre>% cd $APS_HOME<br>% maven runtest<br></pre>
+    </li>
+    <li>Open the <code>${APS_HOME}/test_results.html</code> file in a
+browser and examine the results.</li>
+  </ul>
+  <ul>
+    <li>You can find the detailed instructions to run Quicklook tests <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Quicklook_Tests">HERE</a>.</li>
+  </ul>
+</ol>
+<p>Remember to check the <a
+ href="http://wiki.java.net/bin/view/Projects/GlassFishBuildQuestions">GlassFish
+Build FAQ </a>wiki if you run into problems.</p>
+<p><b>IDE support</b><br>
+<br>
+<font color="#000080"><a href="http://community.java.net/netbeans"><font
+ color="#000080"><img src="image/builds-bestSmaller.png" name="Graphic2"
+ align="bottom" border="1" height="38" width="75"></font></a></font><a
+ href="http://community.java.net/netbeans"> </a><a
+ href="http://www.netbeans.org/kb/41/glassfish.html">Build and develop
+GlassFish</a> with NetBeans 4.1.<br>
+<br>
+For additional information, review the <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Workspace_Guidelines">workspace
+guidelines</a> and <a
+ href="https://glassfish.dev.java.net/public/GuidelinesandConventions.html#Commit_Procedures">commit
+procedures</a>.&nbsp; Also you can use <a
+ href="http://fisheye.cenqua.com/java.net/viewrep/cvs/glassfish">FishEye</a>
+to investigate what changes occurred in&nbsp; the workspace.</p>
+<p><span style="font-weight: bold;"><a name="Branch"></a><big>Building
+Glassfish for FCS, SJSAS91_FCS_BRANCH : </big></span><br>
+</p>
+<span style="font-weight: bold;"></span>
+<p>Following are the steps to build from GlassFish Branch:<br>
+<code>% mkdir workspace<br>
+% cd workspace<br>
+% cvs -d :pserver:&lt;userid&gt;@cvs.dev.java.net:/cvs checkout -r <b>SJSAS91_FCS_BRANCH</b>
+glassfish/bootstrap</code>
+</p>
+<p>As glassfish/bootstrap/project.properties from SJSAS91_FCS_BRANCH
+branch
+has variable "glassfish.cvstag" set as
+"glassfish.cvstag=SJSAS91_FCS_BRANCH". The FCS branch sources will be
+checked
+out and built accordingly.
+</p>
+<p>Define two glassfish variables glassfish.os.name,
+glassfish.cvs.username <a href="BuildGlassFish.html#configuration">same
+as above</a>.
+</p>
+<p>Then:<br>
+<code>% cd glassfish/bootstrap<br>
+% maven checkout <b>bootstrap-all</b> build configure-runtime</code>
+</p>
+<p>You can decide which goal to run between bootstrap and bootstrap-all
+in above commands, by going through the details <a
+ href="BuildGlassFish.html#maven_goals">here</a>.</p>
+<a name="maven_goals"></a><big><span style="font-weight: bold;">GlassFish
+Maven Goals Overview:</span></big><br>
+<br>
+<table style="text-align: left; width: 743px; height: 328px;" border="1"
+ cellpadding="2" cellspacing="2">
+  <tbody>
+    <tr>
+      <td
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">Goal
+Name<br>
+      </td>
+      <td
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">Commonly
+used command<br>
+      </td>
+      <td
+ style="vertical-align: top; font-weight: bold; background-color: rgb(204, 204, 204);">Description<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">bootstrap<br>
+      </td>
+      <td style="vertical-align: top;">maven -Dmodules=admin <span
+ style="font-weight: bold;">bootstrap</span> checkout build<br>
+      </td>
+      <td style="vertical-align: top;"> Dowload
+glassfish-image-SNAPSHOT.jar file and unzip the file under the
+${glassfish.home}(Server Image) to build individual modules<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">bootstrap-all<br>
+      </td>
+      <td style="vertical-align: top;">maven checkout <span
+ style="font-weight: bold;">bootstrap-all</span> build<br>
+      </td>
+      <td style="vertical-align: top;">Install an empty glassfish image
+that only contains
+the binaries dependencies, then download individual binary
+dependencies and unzip them into ${glassfish.home} and builds all
+modules from Sources.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">checkout </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">checkout</span><br>
+      </td>
+      <td style="vertical-align: top;"> Checking out a module<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">build<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">build</span><br>
+      </td>
+      <td style="vertical-align: top;"> Building the module</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">configure-runtime</td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">configure-runtime</span><br>
+      </td>
+      <td style="vertical-align: top;"> Configuring ${glassfish.home}
+with single-instance domain<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">configure-cluster<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">configure-cluster</span><br>
+      </td>
+      <td style="vertical-align: top;">Configuring Domain with
+clustering features for GlassFish V2<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">clean </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">clean</span> clobber<br>
+      </td>
+      <td style="vertical-align: top;"> Clean the module</td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">clobber<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">clobber</span><br>
+      </td>
+      <td style="vertical-align: top;">Cleans GlassFish server image -
+deletes directory ${glassfish.home. Need to be used with
+"bootstrap-all"
+to get new image to clean any corrupted server image.<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">clean-config<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">clean-config</span><br>
+      </td>
+      <td style="vertical-align: top;">Cleans Server. Delete domain1
+and token replaced files in bin,config<br>
+      </td>
+    </tr>
+    <tr>
+      <td style="vertical-align: top;">-Dmodules=<br>
+      </td>
+      <td style="vertical-align: top;">maven <span
+ style="font-weight: bold;">-Dmodules</span>=admin bootstrap checkout
+build</td>
+      <td style="vertical-align: top;"> Clean/Check out/Build only some
+modules: maven -Dmodules={comma separated list} goal name</td>
+    </tr>
+  </tbody>
+</table>
+<br>
+<br>
+<!--EndFragment--></div>
+</body>
+</html>

@@ -1,0 +1,523 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<title>AMX: Design and structure</title>
+
+<link href="../amx.css" rel="stylesheet" type="text/css">
+<style type="text/css">
+<!--
+body {
+	background-color: #CCCCCC;
+}
+-->
+</style>
+</head>
+
+<body><div align="center">
+<table width="600" border="1" cellpadding="4" cellspacing="0" bordercolor="#333333" bgcolor="#EEEEEE" id="OUTER">
+  <tr>
+    <td><h1 align="center">AMX: Design and Use </h1>
+      <p align="center" class="Default">by Lloyd L Chambers<br>
+        Last updated: 01 August 2006</p>
+      <p align="left" class="SectionHeader">Contents</p>
+      <pre>1. <a href="#Introduction">Introduction</a>
+
+2. <a href="#Design">Design</a>
+    <a href="#DesignGoals">Design goals</a> 
+        <a href="#EaseOfUse">Ease of use</a>
+        <a href="#Consistency">Consistency in data types, behavior and idioms</a>
+        <a href="#StandardDataTypes">Use of standard data types</a>
+        <a href="#MBeansAndClientProxies">MBeans and Client Proxies</a>
+        <a href="#StructuralConsistency">Structural consistency</a>
+    <a href="#AMXInterfaces">AMX interfaces and structural overview</a> 
+        <a href="#AMXGroups">Groups of AMX MBeans</a>
+        <a href="#TheBaseAMXInterface">The Base AMX interface</a>
+        <a href="#TheContainerInterface">The Container interface</a>
+        <a href="#TheAMXConfigInterface">The AMXConfig interface</a>
+        <a href="#MonitoringInterfaces">The Monitoring and MonitoringStats interfaces</a>
+        <a href="#TheJ2EEManagedObjectInterface">The J2EEManagedObject interface</a>
+        <a href="#TheExtraInterface">The Extra interface</a>
+        <a href="#UtilityMBeans">Utility and manager MBeans</a> 
+        <a href="#HelperClasses">Helper classes</a> 
+        <a href="#DottedNameSupport">Dotted name support</a> 
+    <a href="#Exceptions">Exceptions</a>
+    <a href="#Notifications">Notifications</a>
+    <a href="#ComplexDataTypes">Complex data types</a>
+	
+3. <a href="#UsingAMX">Using AMX</a>
+    <a href="#ConnectionToTheDAS">Connecting to the Domain Admin Server (DAS)</a>
+    <a href="#NavigatingTheAMXHierarchy">Navigating through the AMX hierarchy</a>
+
+<a href="#SampleAMXHierarchy">Appendix A &#8212;Sample AMX Hierarchy </a></pre>
+      <p class="SectionHeader"><a name="Introduction"></a>1. Introduction</p>
+      <p class="Body">This document provides an overview of the <a href="http://glassfish.dev.java.net" target="_blank">Glassfish</a> AppServer Management Extensions (AMX) management API design. For developers interested in making changes to the source code, please see <em><a href="./amx-impl.html" target="_blank">AMX: Implementation</a></em>.</p>
+      <p class="Body">AMX was first introduced in Sun Java System AppServer 8.1, the Platform Edition of which is known as <a href="http://glassfish.dev.java.net" target="_blank">Glassfish</a>. AMX is implemented in pure Java using the <a href="http://java.sun.com/products/JavaManagement/index.jsp" target="_blank">Java Management Extensions</a> (JMX) technology. Familiarity with JMX is helpful in understanding how AMX works, but most of AMX  can also be used with no knowledge of JMX.</p>
+      <table width="100%" border="1" cellpadding="2" cellspacing="0">
+        <tr>
+          <td colspan="2" class="TableLabel">Glossary</td>
+        </tr>
+        <tr>
+          <td width="116" class="TableContent">AMX</td>
+          <td width="508" class="TableContent"><p><strong>AppServer</strong> <strong>M</strong>anagement E<strong>X</strong>tensions. The terms &#8220;AppServer&#8221; and &ldquo;Management&rdquo; should be self-explanatory. The term &ldquo;Extensions&rdquo; refers to the addition of a considerable number of interfaces beyond the basic structure defined by the <a href="http://www.jcp.org/en/jsr/detail?id=77" target="_blank">J2EE Management specification</a> (JSR 77). [See also the <a href="https://glassfish.dev.java.net/javaee5/admin-infra/jsr77/jsr77_impl.html" target="_blank">Glassfish JSR 77 page</a>). </p>
+              <p>AMX is  composed of several hundred <a href="../javadoc/index.html" target="_blank">Java <em>interfaces</em></a> (eg &ldquo;<span class="Code">public interface DomainRoot {...}</span> ). Each of this interfaces represents the runtime capabilities of a server-side JMX MBean residing in the AppServer. See also <a href="#AMXDynamicClientProxy">AMX Dynamic Proxy</a>. </p></td>
+        </tr>
+        <tr>
+          <td class="TableContent">JMX<br>
+            JMX Remote </td>
+          <td class="TableContent"><strong><a href="http://java.sun.com/products/JavaManagement/index.jsp" target="_blank">J</a></strong><a href="http://java.sun.com/products/JavaManagement/index.jsp" target="_blank">ava <strong>M</strong>anagement E<strong>x</strong>tensions</a> (JSR 3) and remote access (JSR 160). </td>
+        </tr>
+        <tr>
+          <td class="TableContent"><a href="https://glassfish.dev.java.net/javaee5/amx/index.html" target="_blank">Glassfish</a></td>
+          <td class="TableContent">The name for Sun's open source J2EE implementation, of which AMX is a part. </td>
+        </tr>
+        <tr>
+          <td class="TableContent"><a name="AMXDynamicClientProxy" id="AMXDynamicClientProxy"></a>AMX Dynamic <strong>Client Proxy</strong></td>
+          <td class="TableContent"><p>The <span class="Code"> J2SE java.lang.reflect.proxy</span> API is used to generate Java objects which implement the various <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/index.html" target="_blank">AMX interfaces</a>. Each proxy internally stores the JMX <a href="http://java.sun.com/products/JavaManagement/index.jsp" target="_blank">ObjectName</a> of a server-side <a href="http://java.sun.com/products/JavaManagement/index.jsp" target="_blank">JMX</a> MBean whose <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanInfo.html" target="_blank">MBeanInfo</a> corresponds to the AMX interface implemented by the proxy.</p>
+              <p>In this document, the term <strong>Client Proxy</strong> is used to mean AMX Dynamic Client Proxy. </p></td>
+        </tr>
+      </table>
+      <p class="SectionHeader"><a name="Design"></a>2. Design</p>
+      <p class="SubSection"><a name="DesignGoals"></a>2.1 Design goals </p>
+      <p class="Body">AMX was designed with several key principles in mind:</p>
+      <ul>
+        <li class="Body">ease of use;</li>
+        <li class="Body">consistency in data types, behavior, and idioms; </li>
+        <li class="Body">use of standard data types whenever possible;</li>
+        <li class="Body">accessible as both standard JMX MBeans through an <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServerConnection.html" target="_blank">MBeanServerConnection</a>, and/or through <a href="#AMXDynamicClientProxy">Dynamic Client Proxies</a>. </li>
+        <li class="Body">structural consistency with both the domain.xml configuration file and with the <a href="http://www.jcp.org/en/jsr/detail?id=77" target="_blank">J2EE Management</a> model. </li>
+      </ul>
+      <p class="Body">Close attention to those design goals has resulted in an API which is very predictable in its structure and details. Understanding the design goals in detail will  aid the user in understanding what to expect in AMX.</p>
+      <p class="SubSubSection"><a name="EaseOfUse"></a>2.1.1 Ease of use</p>
+      <p class="Body">Ease of use is addressed in multiple ways&#8212;</p>
+      <p class="Body">The use of <a href="#AMXDynamicClientProxy">Dynamic Client Proxies</a> which implement the various AMX interfaces makes accessing the server-side MBeans as simple as using local objects. No knowledge of JMX is needed, nor is any awareness of remote access necessary; all Client Proxies can be used just like any other local Java object.</p>
+      <p class="Body">The well-defined <strong>containment hierarchy</strong> [<a href="#SampleAMXHierarchy">sample</a>] of the AMX MBeans is reflected directly in the AMX interfaces. All AMX interfaces which logically contain other AMX interfaces provide both generic methods (via the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Container.html" target="_blank" class="Code">Container</a> interface) and explicit methods to obtain other AMX objects logically contained with themselves (containees). Every containee also has a <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#getContainer()" target="_blank" class="Code">getContainer()</a> method. Thus, it is possible to navigate the AMX MBean hierarchy via explicit methods. </p>
+      <p class="Body">The <strong><a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/ObjectName.html" target="_blank" class="Code">ObjectName</a></strong> for each AMX MBean follows a formal naming convention that mirrors the containment hierarchy. Thus, the containment hierarchy is made explicit in the ObjectNames of AMX MBeans and can itself be used for navigation and query purposes.</p>
+      <p class="Body">Routines that simplify finding desired MBeans are provided in the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/QueryMgr.html" target="_blank" class="Code">QueryMgr</a>, removing the need to understand JMX in order to find desired MBeans. This is particularly important when working with <a href="#AMXDynamicClientProxy">Client Proxies</a>; it helps maintain a level of abstraction over JMX by eliminating the need to deal with ObjectNames returned from queries. </p>
+      <p class="Body">For programmers making more extensive use of AMX, particularly advanced users who may use more JMX facilities, a considerable amount of utility code is included in the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/index.html" target="_blank">AMX APIs</a> in the <span class="Code">com.sun.appserv.management.util.*</span> packages. </p>
+      <p class="SubSubSection"><a name="Consistency"></a>2.1.2 Consistency in data types, behavior and idioms</p>
+      <p class="Body">Great care was taken with the following:</p>
+      <ul>
+        <li class="Body">structured <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/package-summary.html" target="_blank">naming conventions</a> for class, method, attribute and constant names;</li>
+        <li class="Body">similar approach for all create() and remove methods;</li>
+        <li class="Body">all access to MBean Attributes follows the same get/set idiom in each AMX interface;</li>
+        <li class="Body">all AMX-issued JMX <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/Notification.html" target="_blank">Notification</a>s have the same structure;</li>
+        <li class="Body">avoidance of magic values/numbers for parameters or return types; </li>
+        <li class="Body">explicit parameters (where possible) allow for for compile-time correctness checking.</li>
+      </ul>
+      <p class="SubSubSection"><a name="StandardDataTypes"></a>2.1.3 Use of standard data types</p>
+      <p class="Body">Wherever feasible, standard data types were used, up to and including the use of <span class="Code">java.util.Map</span> to encode more complex data types. This approach was taken to avoid requiring a proprietary client jar for pure-JMX clients, but has the additional benefit of avoiding incompatibilities between releases. Helper routines are always provided to convert such <span class="Code">Maps</span> into the corresponding AMX data type (for those clients using the AMX interfaces). It also has the side benefit of backward and forward compatibility.</p>
+      <p class="Body">With the release of AppServer 9.0 AMX was  enhanced to support complex data types for clients using <a href="#AMXDynamicClientProxy">AMX Dynamic Client Proxies</a>, while leaving the over-the-wire use of java.util.Map in place for such data types.  See <a href="#ComplexDataTypes">Complex Data Types</a>. </p>
+      <p class="SubSubSection"><a name="MBeansAndClientProxies"></a>2.1.4 MBeans and Client Proxies</p>
+      <p class="Body">All AMX management interfaces ultimately correspond to JMX MBeans residing in the AppServer. For some clients, a pure-JMX approach with an <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServerConnection.html" target="_blank" class="Code">MBeanServerConnection</a> and <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/ObjectName.html" target="_blank" class="Code">ObjectName</a> is desirable. </p>
+      <p class="Body">However, for most programming tasks, use of <a href="#AMXDynamicClientProxy">Client Proxies</a> greatly simplifies using AMX, while also providing strong type-checking at compile time. Code written using client proxies can be considerably simpler and easier to understand than code using JMX directly. </p>
+      <p class="SubSubSection"><a name="StructuralConsistency"></a>2.1.5 Structural consistency</p>
+      <p class="Body">Nearly all  of the AppServer configuration is stored in <span class="Code">domain.xml</span>, which, like all XML files, has a formal containment structure. AMX represents all elements of <span class="Code">domain.xml</span> as interfaces  in the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/config/package-frame.html" target="_blank" class="Code">com.sun.appserv.management.config</a> package. Those interfaces model the formal containment structure found in <span class="Code">domain.xml</span>. Thus, anyone familiar with <span class="Code">domain.xml</span> should be immediately comfortable with the AMX configuration interfaces, because the names of the AMX interfaces are the same (or nearly so) as the names of the XML elements and Attributes found in <span class="Code">domain.xml</span>. </p>
+      <p class="Body">AMX also mirrors the <a href="http://www.jcp.org/en/jsr/detail?id=77" target="_blank">J2EE Management</a> (JSR 77) structure, including its j2eeTypes within the overall AMX hierarchy and also leveraging the <span class="Code">j2eeType</span> property within the ObjectName of every AMX MBean. Thus, anyone familiar with JSR 77 will recognized those types within the AMX hierarchy (see <span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/package-summary.html" target="_blank">com.sun.appserv.management.j2ee</a></span>). </p>
+      <p class="SubSection"><a name="AMXInterfaces"></a>2.2 AMX interfaces and structural overview </p>
+      <p class="Body">This section discusses the various <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html" target="_blank" class="Code">AMX</a> interfaces and related matters. Each <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html" target="_blank" class="Code">AMX</a> interface corresponds to zero or more runtime instances of JMX MBeans in the server. </p>
+      <p class="Body">In this discussion, the term <strong>AMX object</strong> means either/or the <a href="#AMXDynamicClientProxy">AMX Client Dynamic Proxy</a> and its corresponding JMX MBean. An AMX object is distinct from an AMX interface in that it refers to a <em>instantiated instance</em> of an AMX interface; there may or may not be  instances of a particular AMX interface in existence at any given point in time, depending on configuration and monitoring status of the server. </p>
+      <p class="Body">AMX uses consistent naming conventions for its interfaces. The conventions are documented in the javadoc for <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/package-summary.html" target="_blank"><span class="Code">com.sun.appserv.management</span></a>. </p>
+      <p class="SubSubSection"><a name="AMXGroups" id="AMXGroups"></a>2.2.1 Groups of AMX MBeans</p>
+      <p class="Body">All AMX MBeans expose a <span class="Code">Group</span> attribute, available as the <span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#getGroup()" target="_blank">getGroup()</a></span> method in each AMX interface. The group values are the following:</p>
+      <ul>
+        <li class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_CONFIGURATION" target="_blank">GROUP_CONFIGURATION</a></li>
+        <li class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_MONITORING" target="_blank">GROUP_MONITORING</a></li>
+        <li class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_UTILITY" target="_blank">GROUP_UTILITY</a></li>
+        <li class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_JSR77" target="_blank">GROUP_JSR77</a></li>
+        <li class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_OTHER" target="_blank">GROUP_OTHER</a></li>
+      </ul>
+      <p class="Body">The meaning should be relatively self-evident; click on each link to see the javadoc. The <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_CONFIGURATION" target="_blank" class="Code">GROUP_CONFIGURATION</a>, <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_MONITORING" target="_blank" class="Code">GROUP_MONITORING</a> and <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_JSR77" target="_blank" class="Code">GROUP_JSR77</a> MBeans all define their own containment <a href="#SampleAMXHierarchy">hierarchies</a>. The <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_UTILITY" target="_blank" class="Code">GROUP_UTILITY</a> and <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_OTHER" target="_blank" class="Code">GROUP_OTHER</a> MBeans are typically singleton MBeans with dedicated purposes, such as the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/QueryMgr.html" target="_blank" class="Code">QueryMgr</a>, <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/BulkAccess.html" target="_blank" class="Code">BulkAccess</a> and <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/deploy/DeploymentMgr.html" target="_blank" class="Code">DeploymentMgr</a>.</p>
+      <p class="SubSubSection"><a name="TheBaseAMXInterface"></a>2.2.2 The base <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html" target="_blank">AMX</a> interface</p>
+      <p class="Body">The <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html" target="_blank" class="Code">AMX</a> interface is the base interface which is extended by all other AMX interfaces. Some key attributes (methods) are explained here.</p>
+      <table width="100%" border="1" cellpadding="2" cellspacing="0">
+        <tr>
+          <td class="TableLabel"><div align="center">Method</div></td>
+          <td class="TableLabel"><div align="center">Comments</div></td>
+        </tr>
+        <tr>
+          <td class="Code">getName()</td>
+          <td class="TableContent">The name of the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html" target="_blank" class="Code">AMX</a> object, which is the same as the <span class="Code">name</span> property of its <span class="Code">ObjectName</span>. </td>
+        </tr>
+        <tr>
+          <td class="Code">getJ2EEType()</td>
+          <td><p class="TableContent">The <span class="Code">j2eeType</span> of the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html" target="_blank" class="Code">AMX</a> object, which is the same as the<span class="Code"> j2eeType</span> property of its <span class="Code">ObjectName</span>. Every AMX MBean has a distinct type, known as the <span class="Code">j2eeType</span> (this concept is derived from the JSR77 spec). All AMX objects with the same <span class="Code">j2eeType</span>  have the same interface; they are distinct instances of the same interface.</p>            </td>
+        </tr>
+        <tr>
+          <td class="Code">getContainer()</td>
+          <td class="TableContent">Returns the containing <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html" target="_blank" class="Code">AMX</a> object. All <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html" target="_blank" class="Code">AMX</a> objects have a <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Container.html" target="_blank" class="Code">Container</a> except for <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/DomainRoot.html" target="_blank" class="Code">DomainRoot</a>.</td>
+        </tr>
+        <tr>
+          <td class="Code">getDomainRoot()</td>
+          <td><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/DomainRoot.html" target="_blank" class="Code">DomainRoot</a> is the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Container.html" target="_blank" class="Code">Container</a> for all other <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html" target="_blank" class="Code">AMX</a> objects. </td>
+        </tr>
+        <tr>
+          <td class="Code">getFullType()</td>
+          <td class="TableContent">A string representing the <span class="Code">j2eeTypes</span> of the containment hierarchy for this object.
+            <p>Example:<br>
+              <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/Servlet.html" target="_blank" class="Code">J2EEServer.J2EEApplication.WebModule.Servlet</a></p>
+            <p>For this example, a <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/Servlet.html" target="_blank" class="Code">Servlet</a> is contained within a <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/WebModule.html" target="_blank" class="Code">WebModule</a>, which is contained within a <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/J2EEApplication.html" target="_blank" class="Code">J2EEApplication</a>, which is contained within a <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/J2EEServer.html" target="_blank" class="Code">J2EEServer</a>. J2EEServer is implicitly contained within a <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/J2EEDomain.html" target="_blank" class="Code">J2EEDomain</a>, which is contained by <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/DomainRoot.html" target="_blank" class="Code">DomainRoot</a>. </p></td>
+        </tr>
+        <tr>
+          <td class="Code">getGroup()</td>
+          <td><p class="TableContent">The group to which this AMX object belongs. See <a href="#Groups">Groups of AMX MBeans</a>.</p></td>
+        </tr>
+      </table>
+      <p class="SubSubSection"><a name="TheContainerInterface"></a>2.2.3 The <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Container.html" target="_blank">Container</a> interface</p>
+      <p class="Body">The <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Container.html" target="_blank" class="Code">Container</a> interface is   implemented by all AMX objects which logically contain other AMX objects. It methods are essentially a form of localized query which restricts its results to the AMX object(s) logically contained <em>directly within</em> the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Container.html" target="_blank" class="Code">Container</a> (non-recursive) . Some containees <em>potentially</em> exist, but may or may not actually be present. For example, optional configuration elements may or may not exist in <span class="Code">domain.xml</span>, and thus their corresponding AMX objects will be null until that configuration is created. </p>
+      <p class="Body">You can find the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Container.html" target="_blank" class="Code">Container</a> for any AMX object by calling <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#getContainer()" target="_blank" class="Code">getContainer()</a>. The only AMX object without a <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Container.html" target="_blank" class="Code">Container</a> is <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/DomainRoot.html" target="_blank" class="Code">DomainRoot</a>; its Container is <span class="Code">null</span>. </p>
+      <p class="Body">Please see the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Container.html" target="_blank">javadoc</a> for details on the methods.</p>
+      <p class="SubSubSection"><a name="TheAMXConfigInterface"></a>2.2.4 The <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/config/AMXConfig.html" target="_blank">AMXConfig</a> interface</p>
+      <p class="Body">All AMX interfaces that represent configuration extend from <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/config/AMXConfig.html" target="_blank" class="Code">AMXConfig</a>, and are arranged in a hierarchy under <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/config/DomainConfig.html" target="_blank" class="Code">DomainConfig</a>. These MBeans are all in the group <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_CONFIGURATION" target="_blank" class="Code">GROUP_CONFIGURATION</a>. Many <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/config/AMXConfig.html" target="_blank" class="Code">AMXConfig</a> extend <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Container.html" target="_blank" class="Code">Container</a>,   analagous to the elements in <span class="Code">domain.xml</span> that contain other elements. </p>
+      <p class="Body">The <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/config/AMXConfig.html" target="_blank" class="Code">AMXConfig</a> interface defines JMX Notifications emitted by AMX configuration MBeans. Please see the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/config/AMXConfig.html" target="_blank">javadoc</a> for details.</p>
+      <p class="SubSubSection"><a name="MonitoringInterfaces"></a>2.2.5 The <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/monitor/Monitoring.html" target="_blank">Monitoring</a> and <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/monitor/MonitoringStats.html" target="_blank">MonitoringStats</a> interface</p>
+      <p class="Body">AMX interfaces that support monitoring extend  <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/monitor/Monitoring.html" target="_blank" class="Code">Monitoring</a>, and are arranged in a hierarchy under <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/monitor/MonitoringRoot.html" target="_blank" class="Code">MonitoringRoot</a>. These MBeans are all in the group <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_MONITORING" target="_blank" class="Code">GROUP_MONITORING</a>. </p>
+      <p class="Body">MBeans that provide <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/monitor/MonitoringStats.html#getStats()" target="_blank" class="Code">Stats</a> implement the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/monitor/MonitoringStats.html" target="_blank" class="Code">MonitoringStats</a> interface, which extends <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/monitor/Monitoring.html" target="_blank" class="Code">Monitoring</a>.</p>
+      <p class="SubSubSection"><a name="TheJ2EEManagedObjectInterface"></a>2.2.6 The <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/J2EEManagedObject.html" target="_blank" class="Code">J2EEManagedObject</a> interface</p>
+      <p class="Body">AMX interfaces represent a J2EE Management object extend from <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/J2EEManagedObject.html" target="_blank" class="Code">J2EEManagedObject</a>, and are arranged in a hierarchy under <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/J2EEDomain.html" target="_blank" class="Code">J2EEDomain</a>. These MBeans are all in the group <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/AMX.html#GROUP_JSR77" target="_blank" class="Code">GROUP_JSR77</a>. </p>
+      <p class="Body">Some <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/J2EEManagedObject.html" target="_blank" class="Code">J2EEManagedObject</a> instances provide the navigational routines <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/J2EEManagedObject.html#getConfigPeer()" target="_blank" class="Code">getConfigPeer()</a> and <span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/J2EEManagedObject.html#getMonitoringPeer()" target="_blank">getMonitoringPeer()</a>,</span> useful for getting to corresponding configuration or monitoring objects.  See the javadoc for details. </p>
+      <p class="SubSubSection"><a name="TheExtraInterface"></a>2.2.7 The <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Extra.html" target="_blank">Extra </a> interface</p>
+      <p class="Body">The <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Extra.html" target="_blank" class="Code">Extra</a> interface, which extends <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/StdAttributesAccess.html" target="_blank" class="Code">StdAttributesAccess</a>, allows access to JMX features directly, starting with any AMX object. Those wishing to combine the ease of use of  <a href="#AMXDynamicClientProxy">AMX Dynamic Client proxies</a> with the generic functionality of JMX can use <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Extra.html" target="_blank" class="Code">Extra</a> to access it. </p>
+      <p class="Body">For example, you might want to get the  <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServerConnection.html" target="_blank" class="Code">MBeanServerConnection</a> from an AMX:</p>
+      <p class="Code">final MBeanServerConnection conn =<br>
+        Util.getExtra( amx ).getConnectionSource().getMBeanServerConnection();</p>
+      <p class="Body">There are also convenience routines such as <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Extra.html#getAllAttributes()" target="_blank" class="Code">getAllAttributes()</a>, <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Extra.html#getAttributeNames()" target="_blank" class="Code">getAttributeNames()</a>, etc. </p>
+      <p class="SubSubSection"><a name="UtilityMBeans"></a>2.2.8 Utility and manager MBeans </p>
+      <p class="Body">There are a number of utility MBeans that AMX offers noted in the table below. These MBeans all extend either or both of the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Utility.html" target="_blank" class="Code">Utility</a> and <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Singleton.html" target="_blank" class="Code">Singleton</a> interfaces. </p>
+      <table width="100%" border="1" cellpadding="2" cellspacing="0">
+        <tr>
+          <td class="TableLabel">Interface</td>
+          <td class="TableLabel">Comments</td>
+        </tr>
+        <tr>
+          <td class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/SystemInfo.html" target="_blank">SystemInfo</a></td>
+          <td class="TableContent">Provides queries for determining AppServer capabilities, such as whether clustering is supported. </td>
+        </tr>
+        <tr>
+          <td class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/QueryMgr.html" target="_blank">QueryMgr</a></td>
+          <td class="TableContent">Provides JMX-like queries which are restricted to AMX MBeans. </td>
+        </tr>
+        <tr>
+          <td class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/BulkAccess.html" target="_blank">BulkAccess</a></td>
+          <td class="TableContent">Provides network-efficient &ldquo;bulk&rdquo; calls whereby many Attributes/Operations in many MBeans may be fetched/invoked in one invocation, thus minimizing network overhead. </td>
+        </tr>
+        <tr>
+          <td class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/NotificationService.html" target="_blank">NotificationService</a></td>
+          <td class="TableContent">Provides buffering and selective dynamic listening for Notifications on AMX MBeans. </td>
+        </tr>
+        <tr>
+          <td class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/UploadDownloadMgr.html" target="_blank">UploadDownloadMgr</a></td>
+          <td class="TableContent">Supports uploading and downloading of files to/from the AppServer. </td>
+        </tr>
+        <tr>
+          <td class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/deploy/DeploymentMgr.html" target="_blank">DeploymentMgr</a></td>
+          <td class="TableContent"><p>Supports deployment of J2EE applications and modules.</p>
+            <p><strong>Note:  <span class="Code">com.sun.appserv.management.deploy.DeploymentMgr</span> will be deprecated in Glassfish 9.1. </strong>Use
+              the JSR88 <a href="http://java.sun.com/javaee/5/docs/api/index.html?javax/enterprise/deploy/spi/DeploymentManager.html" target="_blank">DeploymentManager</a>            as
+            an alternative.</p></td>
+        </tr>
+      </table>
+      <p class="SubSubSection"><a name="HelperClasses"></a>2.2.9 Helper classes </p>
+      <p class="Body">AMX offers a number of classes that simplify certain operations, such as connecting to the server, uploading a file or finding references to to deployed items. These helper classes may all be found in the package <span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/helper/package-summary.html" target="_blank">com.sun.appserv.management.helper</a></span>.</p>
+      <p class="Body">Unlike AMX <em>interfaces</em>, the <span class="Code">helper</span> package contains concrete <em>classes</em> that use the functionality provided by AMX interfaces. </p>
+      <p class="SubSubSection"><a name="DottedNameSupport"></a>2.2.10 Dotted name support </p>
+      <p class="Body">Consistent with the dotted names offered by the AppServer <span class="Code">'asadmin'</span> command line interface, AMX offers the <span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/config/ConfigDottedNames.html" target="_blank">ConfigDottedNames</a></span> and <span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/monitor/MonitoringDottedNames.html" target="_blank">MonitoringDottedNames</a></span> interfaces.</p>
+      <p class="Body">AMX exposes each of the dotted names as a JMX <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/Attribute.html" target="_blank">Attribute</a>. Unlike most AMX interfaces, dotted names are accessed generically, because the available dotted names can vary dynamically, and the number of distinct names may be quite large. See the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/DottedNames.html" target="_blank">javadoc</a> for details. </p>
+      <p class="SubSection"><a name="Exceptions"></a>2.3 Exceptions</p>
+      <p class="Body">Exceptions are an awkward problem for several reasons:</p>
+      <ul>
+        <li class="Body">Direct use of JMX (eg <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServerConnection.html" target="_blank">MBeanServerConnection</a>) forces catching 5-8 Exceptions, depending on which method is called (eg <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServerConnection.html#invoke(javax.management.ObjectName,%20java.lang.String,%20java.lang.Object[],%20java.lang.String[])" target="_blank">invoke()</a>, <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServerConnection.html#getAttribute(javax.management.ObjectName,%20java.lang.String)" target="_blank">getAttribute()</a>, <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServerConnection.html#setAttribute(javax.management.ObjectName,%20javax.management.Attribute)" target="_blank">setAttribute()</a>, etc). In practice, this usually means catching <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Exception.html" target="_blank">java.lang.Exception</a>. </li>
+        <li class="Body">Use of AMX <a href="#AMXDynamicClientProxy">Client Proxies</a> means that any <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Throwable.html" target="_blank">Throwable</a> thrown will emerge as <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/reflect/UndeclaredThrowableException.html" target="_blank">UndeclaredThrowableException</a>, because <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/reflect/Proxy.html" target="_blank">java.lang.reflect.Proxy</a> wraps all undeclared exceptions.</li>
+        <li class="Body">Internal implementation of AMX MBeans may change, in which case thrown exceptions may change, with the addition or removal of exceptions. No backward-compatible API can tolerate such changes. For that reason, all proprietary <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Throwable.html" target="_blank">Throwable</a>s are remapped to plain <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Exception.html" target="_blank" class="Code">Exception</a> prior to being thrown from an AMX MBean. </li>
+      </ul>
+      <p class="Body">In either case, determining the original <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Exception.html" target="_blank" class="Code">Exception</a> (or<a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Throwable.html" target="_blank" class="Code"> Throwable</a>) might require finding the original cause because the JMX <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServer.html" target="_blank">MBeanServer</a> will wrap most  exceptions in an <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanException.html" target="_blank">MBeanException</a>. For this reason, AMX provides the utility ExceptionUtil.getRootCause(). </p>
+      <p class="Body"> There are two cases to distinguish:<br>
+          <br>
+          1.&nbsp; <strong>Direct use of JMX via <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServerConnection.html" target="_blank">MBeanServerConnection</a></strong>.&nbsp; In this case, the exceptions that get thrown are defined by the MBeanServerConnection methods&mdash;5-7 different exceptions for invoke(), getAttribute(), etc.<br>
+          <br>
+Example&mdash;assume you want to get an <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/Attribute.html" target="_blank">Attribute</a> named &ldquo;Classpath&rdquo; using <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServerConnection.html" target="_blank" class="Code">MBeanServerConnection</a>:<br>
+<br>
+<span class="Code">try {<br>
+&nbsp;&nbsp;&nbsp; String classpath = conn.getAttribute( objectName, &ldquo;Classpath&rdquo; );<br>
+} catch( <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Exception.html" target="_blank">Exception</a> e ) {<br>
+// catch <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanException.html" target="_blank">MBeanException</a>, <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/AttributeNotFoundException.html" target="_blank">AttributeNotFoundException</a>,<br>
+ <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/InstanceNotFoundException.html" target="_blank">InstanceNotFoundException</a>, <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/ReflectionException.html" target="_blank">ReflectionException</a>, <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/io/IOException.html" target="_blank">IOException</a><br>
+&nbsp;&nbsp;&nbsp; <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Throwable.html" target="_blank">Throwable</a> t&nbsp;&nbsp;  = ExceptionUtil.getRootCause(e);<br>
+}</span><br>
+<br>
+2.&nbsp; <strong>Use of AMX <a href="#AMXDynamicClientProxy">client proxies</a></strong>.&nbsp; In this case, any <span class="Code">Exception</span> thrown gets wrapped by <span class="Code"><a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/reflect/Proxy.html" target="_blank">java.lang.reflect.Proxy</a></span> with an <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/reflect/UndeclaredThrowableException.html" target="_blank" class="Code">UndeclaredThrowableException</a>.<br>
+<br>
+Example&mdash;assume you want to get an <span class="Code"><a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/Attribute.html" target="_blank">Attribute</a></span> named &ldquo;Classpath&rdquo; using an AMX interface:<br>
+<br>
+<span class="Code">try {<br>
+&nbsp;&nbsp;&nbsp; String classpath = amx.getClasspath();<br>
+} catch( <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/reflect/UndeclaredThrowableException.html" target="_blank">UndeclaredThrowableException</a> e ) {<br>
+&nbsp;&nbsp;&nbsp; <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Throwable.html" target="_blank">Throwable</a> t&nbsp;&nbsp;  = ExceptionUtil.getRootCause(e);<br>
+}</span><br>
+<br>
+Either case requires the same logic.&nbsp; In the <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServerConnection.html" target="_blank" class="Code">MBeanServerConnection</a> case, you can catch the 5 types separately, but that's just as easily done using logic after catching the <a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/reflect/UndeclaredThrowableException.html" target="_blank" class="Code">UndeclaredThrowableException</a>.&nbsp; Note that in both cases, it can be a chain of <span class="Code">Throwables</span>, and thus <span class="Code"><a href="http://java.sun.com/j2se/1.5.0/docs/api/java/lang/Throwable.html#getCause()" target="_blank">Throwable.getCause()</a></span> is not sufficient; for this reason AMX includes the utility routine<span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/util/misc/ExceptionUtil.html" target="_blank"> ExceptionUtil</a>.<a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/util/misc/ExceptionUtil.html#getRootCause(java.lang.Throwable)" target="_blank">getRootCause()</a></span>.<br>
+<br>
+Even if the AMX API declared all its <span class="Body">exceptions</span> (which it  can't, given that internal implementation changes could introduce new exceptions and remove  others), you would still have to extract such <span class="Code">Exceptions</span> from an <span class="Code"><a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanException.html" target="_blank">MBeanException</a></span> (eg call <span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/util/misc/ExceptionUtil.html" target="_blank">ExceptionUtil</a>.<a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/util/misc/ExceptionUtil.html#getRootCause(java.lang.Throwable)" target="_blank">getRootCause()</a></span>). </p>
+      <p class="SubSection"><a name="Notifications"></a>2.4 Notifications</p>
+      <p class="Body">JMX defines certain standard Notifications, including the base <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/Notification.html" target="_blank" class="Code">Notification</a> and certain others which extend it, such as <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/AttributeChangeNotification.html" target="_blank" class="Code">AttributeChangeNotification</a>, <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServerNotification.html" target="_blank" class="Code">MBeanServerNotification</a>, etc.</p>
+      <p class="Body">AMX does not introduce any new proprietary Notifications, but instead uses the base <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/Notification.html" target="_blank" class="Code">Notification</a> for all Notifications it emits (other than standard ones). AMX uses the <span class="Code">UserData</span> field to store a <span class="Code"><a href="http://java.sun.com/j2se/1.5.0/docs/api/java/util/Map.html" target="_blank">java.util.Map</a></span>. The contents of this map, and the keys into it, are defined in each AMX interface that issues Notification(s). For examples, please see <span class="Code">DeploymentMgr</span> and <span class="Code">LogRecordEmitter</span>. </p>
+      <p class="Body">AMX provides utility routines in <span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Util.html" target="_blank">com.sun.appserv.management.Util</a></span> to access the <span class="Code">Map</span> in the <span class="Code">UserData</span> field:</p>
+      <p class="Code">Map&lt;String,Serializable&gt; <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Util.html#getAMXNotificationData(javax.management.Notification)" target="_blank">getAMXNotificationData</a>( Notification notif );<br>
+        <br>
+        Serializable <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Util.html#getAMXNotificationValue(javax.management.Notification,%20java.lang.String)" target="_blank">getAMXNotificationValue</a>( Notification notif, String key );<br>
+        <br>
+        &lt;T extends Serializable&gt; T <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Util.html#getAMXNotificationValue(javax.management.Notification,%20java.lang.String)" target="_blank">getAMXNotificationValue</a>( Notification  notif, String        key, Class&lt;T&gt;      theClass);</p>
+      <p class="Body">Use of these routines is preferred for future compatibility. </p>
+      <p class="Body">AMX also provides some advanced capabilities for listening for Notifications and for buffering them to avoid losing them. Please see <span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/NotificationServiceMgr.html" target="_blank">NotificationServiceMgr</a></span> and <span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/NotificationEmitterService.html" target="_blank">NotificationEmitterService</a></span>. </p>
+      <p class="SubSection"><a name="ComplexDataTypes"></a>2.5 Complex data types</p>
+      <p class="Body">In AppServer 9.0 AMX was  enhanced to support complex data types with <a href="#AMXDynamicClientProxy">AMX Dynamic Client Proxies</a>, while leaving the use of <span class="Code">java.util.Map</span> in place for transporting such data types &quot;over the wire&quot;. Thus, over-the-wire generic access is preserved, but a client using the AMX interfaces automatically enjoys use of the appropriate interface, without having to concern itself with converting a<span class="Code"> java.util.Map</span> to the appropriate type. </p>
+      <p class="Body">The following methods are examples of this increase in usability:</p>
+      <p class="Code">WebServiceEndpointInfo <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/ext/wsmgmt/WebServiceMgr.html#getWebServiceEndpointInfo(java.lang.Object)" target="_blank">getWebServiceEndpointInfo</a>(...); // WebServiceMgr<br>
+      MessageTrace[] <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/j2ee/WebServiceEndpoint.html#getMessagesInHistory()" target="_blank">getMessagesInHistory</a>(); // WebServiceEndpoint<br>
+      LogQueryResult <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/ext/logging/LogQuery.html#queryServerLog(java.lang.String,%20long,%20boolean,%20int,%20java.lang.Long,%20java.lang.Long,%20java.lang.String,%20java.util.Set,%20java.util.List)" target="_blank">queryServerLog</a>(...); // Logging: </p>
+      <p class="Body">Prior to AMX 9.0, the methods shown above would have been declared as:</p>
+      <p class="Code">Map&lt;String,Serializable&gt; getWebServiceEndpointInfo(...);<br>
+Map&lt;String,Serializable&gt;[] getMessagesInHistory();<br>
+List&lt;String,Serializable&gt; queryServerLog(...);</p>
+      <p class="Body">Implementation of this support late in the development cycle did not allow time to update certain AMX interfaces, such as  <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/deploy/DeploymentMgr.html" target="_blank">DeploymentMgr</a>. </p>
+      <p class="SectionHeader"><a name="UsingAMX"></a>3. Using AMX</p>
+      <p class="Body">This section contains hints and tips on using AMX. One of the best ways to get started is to run the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/samples/javadoc/amxsamples/package-summary.html" target="_blank">sample command line</a>, then read the corresponding code to see what AMX facilities are being used. The usage discussed in this section assumes use of  <a href="#AMXDynamicClientProxy">AMX Dynamic Client Proxies</a>. If you are using straight JMX through <a href="http://java.sun.com/j2se/1.5.0/docs/api/javax/management/MBeanServerConnection.html" target="_blank" class="Code">MBeanServerConnection</a>, the steps are similar, at the expense of more coding effort. </p>
+      <p class="SubSection"><a name="ConnectionToTheDAS"></a>3.1 Connecting to the Domain Admin Server (DAS)</p>
+      <p class="Body">The first step in using AMX is to establish a connection to the Domain Admin Server or <strong>DAS</strong>. The <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/samples/javadoc/amxsamples/package-summary.html" target="_blank">Sample Guide</a> explains how to do this, but two things are worth noting:</p>
+      <ul>
+        <li class="Body">the port used by AMX is an RMI port (default 8686), not the GUI (http/s) port. Connecting to the GUI port will not work.</li>
+        <li class="Body">You will need to know whether TLS (SSL) is enabled or not in order to connect.</li>
+        </ul>
+      <p class="SubSection"><a name="NavigatingTheAMXHierarchy"></a>3.2 Navigating through the AMX hierarchy</p>
+      <p class="Body">The first step in accessing AMX objects is to obtain <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/DomainRoot.html" target="_blank" class="Code">DomainRoot</a>, via<br> 
+        <span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/client/AppserverConnectionSource.html" target="_blank">AppserverConnectionSource</a>.<a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/index.html?com/sun/appserv/management/helper/package-summary.html" target="_blank">getDomainRoot()</a></span>, as detailed in the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/samples/javadoc/amxsamples/package-summary.html" target="_blank">sample guide</a>. </p>
+      <p class="Body">There are multiple ways to move through the available AMX objects:</p>
+      <ul>
+        <li class="Body">calling getter method(s) that return other AMX objects or Maps of AMX Objects;</li>
+        <li class="Body">querying for objects using the <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/QueryMgr.html" target="_blank" class="Code">QueryMgr</a>;</li>
+        <li class="Body">using <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Container.html" target="_blank" class="Code">Container</a> methods</li>
+        </ul>
+      <p class="Body">The sample code shows a number of examples of how this is done. </p>
+      <p class="SectionHeader"><a name="SampleAMXHierarchy" id="SampleAMXHierarchy"></a>Appendix
+        A &mdash;Sample AMX hierarchy</p>
+      <p class="Body">This hierarchy was generated by running the show-hierarchy command as found in the <a href="../samples/javadoc/index.html" target="_blank">sample command line interface</a>. <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/config/ModuleMonitoringLevelsConfig.html" target="_blank">Module monitoring levels</a> were set to <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/config/ModuleMonitoringLevelValues.html#OFF" target="_blank" class="Code">OFF </a> to avoid too large an example; with monitoring set to <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/config/ModuleMonitoringLevelValues.html#HIGH" target="_blank" class="Code">HIGH</a>, the monitoring hierarchy expands considerably. </p>
+    <p class="Body">Each line in the listing represents an AMX object (MBean). If there is a non-generic name, it is denoted as<span class="Code"> <em>j2eeType</em>=<em>name</em></span>, otherwise only its j2eeType is given, as found in <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/XTypes.html" target="_blank" class="Code">XTypes</a>. </p>
+    <p class="Body"> Each level of indentation represents containment within the containing object (see <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/Container.html" target="_blank" class="Code">Container</a>), with <span class="Code">X-DomainRoot</span> at the root. Excepting the Java EE management classes (defined by JSR 77), the name of an AMX interface is the same as the <span class="Code"><a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/XTypes.html" target="_blank">j2eeType</a></span>, minus the &ldquo;<span class="Code">X-</span>&rdquo; prefix. </p>
+    <p class="Body">A sample <a href="https://glassfish.dev.java.net/nonav/javaee5/amx/javadoc/com/sun/appserv/management/base/XTypes.html" target="_blank" class="Code">j2eeType</a> hierarchy from a newly-created AppServer domain: </p>
+    <p class="Code">X-DomainRoot=amx  <br>
+&nbsp;&nbsp;X-BulkAccess<br>
+&nbsp;&nbsp;X-ConfigDottedNames<br>
+&nbsp;&nbsp;X-DeploymentMgr<br>
+&nbsp;&nbsp;X-JMXMonitorMgr<br>
+&nbsp;&nbsp;X-MonitoringDottedNames<br>
+&nbsp;&nbsp;X-NotificationEmitterService=DomainNotificationEmitterService<br>
+&nbsp;&nbsp;X-NotificationServiceMgr<br>
+&nbsp;&nbsp;X-QueryMgr<br>
+&nbsp;&nbsp;X-Sample<br>
+&nbsp;&nbsp;X-SystemInfo<br>
+&nbsp;&nbsp;X-UploadDownloadMgr<br>
+&nbsp;&nbsp;X-WebServiceMgr
+<br>
+  &nbsp;&nbsp;J2EEDomain=amx<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;J2EEServer=server<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;J2EEApplication=__JWSappclients<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WebModule=//server/__JWSappclients<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=jsp<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=default<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=JWSSystemServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;J2EEApplication=MEjbApp<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EJBModule=mejb.jar<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;StatelessSessionBean=MEJBBean<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;J2EEApplication=__ejb_container_timer_app<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EJBModule=ejb.jar<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EntityBean=TimerBean<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;EntityBean=TimerMigrationBean<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JDBCResource=jdbc/__TimerPool<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;JVM=server1138655729031<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ResourceAdapterModule=__xa<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ResourceAdapter=__xa<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WebModule=//__asadmin/<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=DownloadServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=ThemeServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=AdminGUIServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=ChartViewer<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=jsp<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=default<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=FacesServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=UploadServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=help2Servlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=HandleQuickStartDocs<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WebModule=//server/<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=jsp<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=default<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WebModule=//__asadmin/web1<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=ConnectServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=AdminAPIEntryServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=jsp<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=default<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=RemoteJmxConnectorServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=UploadServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;WebModule=//__asadmin/asadmin<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=DownloadServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=ThemeServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=AdminGUIServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=ChartViewer<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=jsp<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=default<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=FacesServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=UploadServlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=help2Servlet<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Servlet=HandleQuickStartDocs<br>
+  &nbsp;&nbsp;X-DomainConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-ConfigConfig=default-config<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AdminServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-DASConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JMXConnectorConfig=system<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SSLConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AvailabilityServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-EJBContainerAvailabilityConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JMSAvailabilityConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-WebContainerAvailabilityConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-DiagnosticServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-EJBContainerConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-EJBTimerServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-GroupManagementServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AccessLogConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ConnectionPoolConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPFileCacheConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPListenerConfig=http-listener-2<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPListenerConfig=http-listener-1<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPProtocolConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-KeepAliveConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-RequestProcessingConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-VirtualServerConfig=server<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPAccessLogConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-IIOPServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-IIOPListenerConfig=orb-listener-1<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-IIOPListenerConfig=SSL<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SSLConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-IIOPListenerConfig=SSL_MUTUALAUTH<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SSLConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ORBConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JMSServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JMSHostConfig=default_JMS_host<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JavaConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-LogServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ModuleLogLevelsConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-MDBContainerConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ManagementRulesConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-MonitoringServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ModuleMonitoringLevelsConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SecurityServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AuditModuleConfig=default<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AuthRealmConfig=file<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AuthRealmConfig=admin-realm<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AuthRealmConfig=certificate<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JACCProviderConfig=default<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ThreadPoolConfig=thread-pool-1<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-TransactionServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-WebContainerConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SessionConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SessionManagerConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ManagerPropertiesConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-StorePropertiesConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SessionPropertiesConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-ConfigConfig=server-config<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AdminServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-DASConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JMXConnectorConfig=system<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SSLConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AvailabilityServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-EJBContainerAvailabilityConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JMSAvailabilityConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-WebContainerAvailabilityConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-DiagnosticServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-EJBContainerConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-EJBTimerServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AccessLogConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ConnectionPoolConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPFileCacheConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPListenerConfig=admin-listener<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPListenerConfig=http-listener-2<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPListenerConfig=http-listener-1<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPProtocolConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-KeepAliveConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-RequestProcessingConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-VirtualServerConfig=__asadmin<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPAccessLogConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-VirtualServerConfig=server<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPAccessLogConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-IIOPServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-IIOPListenerConfig=orb-listener-1<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-IIOPListenerConfig=SSL<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SSLConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-IIOPListenerConfig=SSL_MUTUALAUTH<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SSLConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ORBConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JMSServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JMSHostConfig=default_JMS_host<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JavaConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-LogServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ModuleLogLevelsConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-MDBContainerConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ManagementRulesConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-MonitoringServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ModuleMonitoringLevelsConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SecurityServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AuditModuleConfig=default<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AuthRealmConfig=file<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AuthRealmConfig=admin-realm<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-AuthRealmConfig=certificate<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JACCProviderConfig=default<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-MessageSecurityConfig=SOAP<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ProviderConfig=ServerProvider<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-RequestPolicyConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ResponsePolicyConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ProviderConfig=ClientProvider<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-RequestPolicyConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ResponsePolicyConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ThreadPoolConfig=thread-pool-1<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-TransactionServiceConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-WebContainerConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SessionConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SessionManagerConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ManagerPropertiesConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-StorePropertiesConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-SessionPropertiesConfig<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-J2EEApplicationConfig=__JWSappclients<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-J2EEApplicationConfig=MEjbApp<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-J2EEApplicationConfig=__ejb_container_timer_app<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-JDBCConnectionPoolConfig=DerbyPool<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-JDBCConnectionPoolConfig=__CallFlowPool<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-JDBCConnectionPoolConfig=__TimerPool<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-JDBCResourceConfig=jdbc/__TimerPool<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-JDBCResourceConfig=jdbc/__CallFlowPool<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-JDBCResourceConfig=jdbc/__default<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-StandaloneServerConfig=server<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-DeployedItemRefConfig=admingui<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-DeployedItemRefConfig=__JWSappclients<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-DeployedItemRefConfig=MEjbApp<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-DeployedItemRefConfig=adminapp<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-DeployedItemRefConfig=__ejb_container_timer_app<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ResourceRefConfig=jdbc/__CallFlowPool<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ResourceRefConfig=jdbc/__TimerPool<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ResourceRefConfig=jdbc/__default<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-WebModuleConfig=admingui<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;X-WebModuleConfig=adminapp<br>
+&nbsp;&nbsp;X-MonitoringRoot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;X-ServerRootMonitor=server<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-ApplicationMonitor=__JWSappclients<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-CallFlowMonitor=server<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPServiceMonitor<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-HTTPServiceVirtualServerMonitor=server<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-JVMMonitor<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X-Logging=server<br>
+    </p>    </td>
+	
+  </tr>
+</table>
+</div>
+</body>
+</html>

@@ -1,0 +1,1484 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2 Final//EN">
+<html><!-- GenHTML@12751-->
+<head>
+<META HTTP-EQUIV="Content-type" CONTENT="text/html; charset=iso-8859-1">
+<!-- ident	"%Z%%M%	%I%	%E% SMI" -->
+
+    <title>17.&nbsp;&nbsp;Monitoring Components and Services
+    </title>
+</head>
+<body>
+<font style="color: red; font-family:arial,helvetica,sans-serif; font-size:12pt; font-weight:bold}">Not For Publication</font>&nbsp;&nbsp;&nbsp;<br>Glassfish Review Draft<br> </td>
+
+<A href="toc.html">Sun Java System Application Server Platform Edition 9 Administration Guide</A>&nbsp;<br>
+<A HREF="abluj.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="gbnfd.html">Next</A><br>
+            <!--startindex--><A NAME="ablur"></A><b>Chapter&nbsp;17</b><h1>Monitoring Components and Services</h1>
+<p>This chapter contains information about monitoring components using the Application Server Admin Console.
+This chapter contains the following sections:</p>
+<ul><li><p><A HREF="ablur.html#ablus">About Monitoring</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvp">Admin Console Tasks for Enabling and Disabling Monitoring</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvs">Admin Console Tasks for Viewing Monitoring Data</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablwi">Using JConsole</A></p>
+</li>
+</ul>
+<A NAME="ablus"></A><h2>About Monitoring</h2>
+<ul><li><p><A HREF="ablur.html#ablut">Monitoring in the Application Server</A></p>
+</li>
+<li><p><A HREF="ablur.html#abluu">Overview of Monitoring</A></p>
+</li>
+<li><p><A HREF="ablur.html#abluv">About the Tree Structure of Monitorable Objects</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvd">About Statistics for Monitored Components and Services</A></p>
+</li>
+</ul>
+<A NAME="ablut"></A><h3>Monitoring in the Application Server</h3>
+<p>Use monitoring to observe the runtime state of various components and services
+deployed in a server instance of theApplication Server. With the information on the state
+of runtime components and processes, it is possible to identify performance bottlenecks
+for tuning purposes, aid capacity planning, predict failures, do root cause analysis
+in case of failures, and ensure that everything is functioning as expected.</p>
+<p>Turning monitoring on reduces performance by increasing overhead.</p>
+<p>See Also:</p>
+<ul><li><p><A HREF="ablur.html#abluu">Overview of Monitoring</A></p>
+</li>
+</ul>
+<A NAME="abluu"></A><h3>Overview of Monitoring</h3>
+<p>To monitor the Application Server, perform these steps:</p>
+<ol Type="1"><li><p>Enable the monitoring of specific services and components using either
+the Admin Console or the <tt>asadmin</tt> tool.</p>
+<p>For more information on this step, refer to <A HREF="ablur.html#ablvq">To configure monitoring levels using the Admin Console</A>.</p>
+<p>For more information on this step, refer to <A HREF="ablur.html#ablvp">Admin Console Tasks for Enabling and Disabling Monitoring</A>.</p>
+</li>
+<li><p>View monitoring data for the specified services or components using
+either the Admin Console or the <tt>asadmin</tt> tool.</p>
+<p>For more information on this step, refer to <A HREF="ablur.html#ablvt">To view monitoring data in the Admin Console</A> or <A HREF="ablur.html#ablvu">Viewing Monitoring Data With the asadmin Tool</A>.</p>
+<p>For more information
+on this step, refer to <A HREF="ablur.html#ablvs">Admin Console Tasks for Viewing Monitoring Data</A>.</p>
+</li>
+</ol>
+<p>See Also:</p>
+<ul><li><p><A HREF="ablur.html#ablvq">To configure monitoring levels using the Admin Console</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvt">To view monitoring data in the Admin Console</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvu">Viewing Monitoring Data With the asadmin Tool</A></p>
+</li>
+</ul>
+<A NAME="abluv"></A><h3>About the Tree Structure
+of Monitorable Objects</h3>
+<p>The Application Server uses a tree structure to track monitorable objects. Because
+the tree of monitoring objects is dynamic, it changes as components are added, updated,
+or removed in the instance. The root object in the tree is the server instance name,
+for example, <tt>server</tt>. (In the Platform Edition, just one server
+instance is permitted.)</p>
+<p>The following command displays the top level of the tree:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> list --user adminuser --monitor server
+server.applications
+server.http-service
+server.connector-service
+server.jms-service
+server.jvm
+server.orb
+server.resources
+server.thread-pools</pre>
+</td></table><br><p>The following sections describe these sub-trees:</p>
+<ul><li><p><A HREF="ablur.html#abluw">The Applications Tree</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablux">The HTTP Service Tree</A></p>
+</li>
+<li><p><A HREF="ablur.html#abluy">The Resources Tree</A></p>
+</li>
+<li><p><A HREF="ablur.html#abluz">The Connector Service Tree</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablva">The JMS Service Tree</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvb">The ORB Tree</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvc">The Thread Pool Tree</A></p>
+</li>
+</ul>
+<A NAME="abluw"></A><h4>The Applications Tree</h4>
+<A NAME="indexterm-345"></A><p>The following schematic shows the top and child nodes for the various components
+of enterprise applications. The nodes at which monitoring statistics are available
+are marked with an asterisk (*). For more information, refer to <A HREF="ablur.html#ablve">EJB Container Statistics</A>.</p>
+<p><b>Example 17-1 </b>Applications Node Tree Structure</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>applications
+   |--- application1
+   |    |--- ejb-module-1
+   |    |        |--- ejb1 *
+   |    |                  |--- cache (for entity/sfsb) *
+   |    |                  |--- pool (for slsb/mdb/entity) *
+   |    |                  |--- methods
+   |    |                       |---method1 *
+   |    |                       |---method2 *
+   |    |                  |--- stateful-session-store (for sfsb)*
+   |    |                  |--- timers (for s1sb/entity/mdb) *
+   |    |--- web-module-1
+   |    |        |--- virtual-server-1 *
+   |    |                       |---servlet1  *
+   |    |                       |---servlet2  *
+   |--- standalone-web-module-1
+   |    |        |----- virtual-server-2 *
+   |    |                       |---servlet3 *
+   |    |                       |---servlet4 *
+   |    |        |----- virtual-server-3 *
+   |    |                       |---servlet3 *(same servlet on different vs)
+   |    |                       |---servlet5 *
+   |--- standalone-ejb-module-1
+   |    |        |--- ejb2 *
+   |    |                  |--- cache (for entity/sfsb) *
+   |    |                  |--- pool (for slsb/mdb/entity) *
+   |    |                  |--- methods
+   |    |                       |--- method1 *
+   |    |                       |--- method2 *
+   |--- application2</pre>
+</td></table><br><A NAME="ablux"></A><h4>The HTTP Service Tree</h4>
+<p>The nodes of the HTTP service are shown in the following schematic. The nodes
+at which monitoring information is available are marked with an asterisk (*). See <A HREF="ablur.html#ablvg">HTTP Service Statistics</A>.</p>
+<p><b>Example 17-2 </b>HTTP Service Schematic (Platform Edition version)</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>http-service
+         |--- virtual-server-1
+              |--- http-listener-1 *
+              |--- http-listener-2 *
+         |--- virtual-server-2
+              |--- http-listener-1 *
+              |--- http-listener-2 *</pre>
+</td></table><br><p><b>Example 17-3 </b>HTTP Service Schematic (Enterprise Edition version)</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>http-service *
+             |---connection-queue *
+             |---dns *
+             |---file-cache *
+             |---keep-alive *
+             |---pwc-thread-pool *
+             |---virtual-server-1*
+             |        |--- request *
+             |---virtual-server-2*
+             |        |--- request *</pre>
+</td></table><br><A NAME="abluy"></A><h4>The Resources Tree</h4>
+<p>The resources node holds monitorable attributes for pools such as the JDBC connection
+pool and connector connection pool. The following schematic shows the top and child
+nodes for the various resource components. The nodes at which monitoring statistics
+are available are marked with an asterisk (*). See <A HREF="ablur.html#ablvh">JDBC Connection Pools Statistics</A>.</p>
+<p><b>Example 17-4 </b>Resources Schematic</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>resources
+        |---connection-pool1(either connector-connection-pool or jdbc)*
+        |---connection-pool2(either connector-connection-pool or jdbc)*</pre>
+</td></table><br><A NAME="abluz"></A><h4>The Connector Service Tree</h4>
+<p>The connector services node holds monitorable attributes for pools such as the
+connector connection pool. The following schematic shows the top and child nodes for
+the various connector service components. The nodes at which monitoring statistics
+are available are marked with an asterisk (*). See <A HREF="ablur.html#ablvi">JMS/Connector Service Statistics</A>.</p>
+<p><b>Example 17-5 </b>Connector Service Schematic</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>connector-service
+        |--- resource-adapter-1
+        |        |-- connection-pools
+        |        |        |-- pool-1 (All pool stats for this pool)
+        |        |-- work-management (All work mgmt stats for this RA)</pre>
+</td></table><br><A NAME="ablva"></A><h4>The JMS Service Tree</h4>
+<p>The JMS services node holds monitorable attributes for pools such as the connector
+connection pool. The following schematic shows the top and child nodes for the various
+JMS service components. The nodes at which monitoring statistics are available are
+marked with an asterisk (*).</p>
+<p><b>Example 17-6 </b>JMS Service Schematic</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>jms-service
+        |-- connection-factories [AKA conn. pools in the RA world]
+        |        |-- connection-factory-1 (All CF stats for this CF)
+        |-- work-management (All work mgmt stats for the MQ-RA)</pre>
+</td></table><br><A NAME="ablvb"></A><h4>The ORB Tree</h4>
+<p>The ORB node holds monitorable attributes for connection managers. The following
+schematic shows the top and child nodes for the ORB components. The nodes at which
+monitoring statistics are available are marked with an asterisk (*). See <A HREF="ablur.html#ablvj">Statistics for Connection Managers in an ORB</A>.</p>
+<p><b>Example 17-7 </b>ORB Schematic</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>orb
+        |--- connection-managers
+        |        |--- connection-manager-1 *
+        |        |--- connection-manager-1 *</pre>
+</td></table><br><A NAME="ablvc"></A><h4>The Thread Pool Tree</h4>
+<p>The thread pool node holds monitorable attributes for connection managers. The
+following schematic shows the top and child nodes for the ORB components. The nodes
+at which monitoring statistics are available are marked with an asterisk (*). See <A HREF="ablur.html#ablvk">Thread Pools Statistics</A>.</p>
+<p><b>Example 17-8 </b>Thread Pool Schematic</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>thread-pools
+        |    |--- thread-pool-1 *
+        |    |--- thread-pool-2 *</pre>
+</td></table><br><A NAME="ablvd"></A><h3>About Statistics for Monitored Components and Services</h3>
+<p>This section describes the monitoring statistics that are available:</p>
+<ul><li><p><A HREF="ablur.html#ablve">EJB Container Statistics</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvf">Web Container Statistics</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvg">HTTP Service Statistics</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvh">JDBC Connection Pools Statistics</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvi">JMS/Connector Service Statistics</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvj">Statistics for Connection Managers in an ORB</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvk">Thread Pools Statistics</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvl">Transaction Service Statistics</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvm">Java Virtual Machine (JVM) Statistics</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvn">JVM Statistics in J2SE 5.0</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvo">Production Web Container (PWC) Statistics</A></p>
+</li>
+</ul>
+<A NAME="ablve"></A><h4>EJB Container Statistics</h4>
+<p>EJB statistics are described in the following table.</p>
+<p><b>Table 17-1 </b>EJB Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>createcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of times an EJB's <tt>create</tt> method is called.</p></td></tr>
+<tr><td><p><tt>removecount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of times an EJB's <tt>remove</tt> method is called.</p></td></tr>
+<tr><td><p><tt>pooledcount</tt></p></td><td><p>RangeStatistic</p></td><td><p>Number of entity beans in pooled state.</p></td></tr>
+<tr><td><p><tt>readycount</tt></p></td><td><p>RangeStatistic</p></td><td><p>Number of entity beans in ready state.</p></td></tr>
+<tr><td><p><tt>messagecount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of messages received for a message-driven bean.</p></td></tr>
+<tr><td><p><tt>methodreadycount</tt></p></td><td><p>RangeStatistic</p></td><td><p>Number of stateful or stateless session beans that are in the <tt>MethodReady</tt> state.</p></td></tr>
+<tr><td><p><tt>passivecount</tt></p></td><td><p>RangeStatistic</p></td><td><p>Number of stateful session beans that are in <tt>Passive</tt> state.</p></td></tr>
+</table><p>The statistics available for EJB method invocations are listed in the following
+table.</p>
+<p><b>Table 17-2 </b>EJB Method Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>methodstatistic</tt></p></td><td><p>TimeStatistic</p></td><td><p>Number of times an operation is called; the total time that is spent during
+the invocation, and so on.</p></td></tr>
+<tr><td><p><A NAME="indexterm-346"></A><tt>totalnumerrors</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of times the method execution resulted in an exception. This is collected
+for stateless and stateful session beans and entity beans if monitoring is enabled
+for the EJB container.</p></td></tr>
+<tr><td><p><A NAME="indexterm-347"></A><tt>totalnumsuccess</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of times the method successfully executed. This is collected for stateless
+and stateful session beans and entity beans if monitoring enabled is true for EJB
+container.</p></td></tr>
+<tr><td><p><A NAME="indexterm-348"></A><tt>executiontime</tt></p></td><td><p>CountStatistic</p></td><td><p>Time (ms) spent executing the method for the last successful/unsuccessful attempt
+to execute the operation. This is collected for stateless and stateful session beans
+and entity beans if monitoring is enabled on the EJB container.</p></td></tr>
+</table><p>The statistics for EJB Session Stores are listed in the following table.</p>
+<p><b>Table 17-3 </b>EJB Session Store Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>currentSize</tt></p></td><td><p>RangeStatistic</p></td><td><p>Number of passivated or checkpointed sessions currently in the store.</p></td></tr>
+<tr><td><p><tt>activationCount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of sessions activated from the store.</p></td></tr>
+<tr><td><p><tt>activationSuccessCount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of sessions successfully activated from the store</p></td></tr>
+<tr><td><p><tt>activationErrorCount</tt></p></td><td><p>CountStatistic</p></td><td><p>Time (ms) spent executing the method for the last successful/unsuccessful attempt
+to execute the operation. This is collected for stateless and stateful session beans
+and entity beans, if monitoring is enabled on the EJB container.</p></td></tr>
+<tr><td><p><tt>passivationCount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of sessions passivated (inactivated) using this store.</p></td></tr>
+<tr><td><p><tt>passivationSuccessCount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of sessions successfully passivated using this store.</p></td></tr>
+<tr><td><p><tt>passivationErrorCount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of sessions that could not be passivated using this store.</p></td></tr>
+<tr><td><p><tt>expiredSessionCount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of expired sessions that were removed by this store.</p></td></tr>
+<tr><td><p><tt>passivatedBeanSize</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of bytes passivated by this store, including total, minimum, and
+maximum.</p></td></tr>
+<tr><td><p><tt>passivationTime</tt></p></td><td><p>CountStatistic</p></td><td><p>Time spent on passivating beans to the store, including the total, minimum,
+and maximum.</p></td></tr>
+<tr><td><p><tt>checkpointCount (EE only)</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of sessions checkpointed using this store.</p></td></tr>
+<tr><td><p><tt>checkpointSuccessCount (EE only)</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of sessions checkpointed successfully.</p></td></tr>
+<tr><td><p><tt>checkpointErrorCount (EE only)</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of sessions that couldn't be checkpointed.</p></td></tr>
+<tr><td><p><tt>checkpointedBeanSize (EE only)</tt></p></td><td><p>ValueStatistic</p></td><td><p>Total number of beans checkpointed by the store.</p></td></tr>
+<tr><td><p><tt>checkpointTime (EE only)</tt></p></td><td><p>TimeStatistic</p></td><td><p>Time spent on checkpointing beans to the store.</p></td></tr>
+</table><p>The statistics available for EJB pools are listed in the following table.</p>
+<p><b>Table 17-4 </b>EJB Pool Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><A NAME="indexterm-349"></A><tt>numbeansinpool</tt></p></td><td><p>BoundedRangeStatistic</p></td><td><p>Number of EJB's in the associated pool, providing an idea about how the
+pool is changing.</p></td></tr>
+<tr><td><p><A NAME="indexterm-350"></A><tt>numthreadswaiting</tt></p></td><td><p>BoundedRangeStatistic</p></td><td><p>Number of threads waiting for free beans, giving an indication of possible congestion
+of requests.</p></td></tr>
+<tr><td><p><A NAME="indexterm-351"></A><tt>totalbeanscreated</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of beans created in associated pool since the gathering of data started. </p></td></tr>
+<tr><td><p><A NAME="indexterm-352"></A><tt>totalbeansdestroyed</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of beans destroyed from associated pool since the gathering of data started.</p></td></tr>
+<tr><td><p><A NAME="indexterm-353"></A><tt>jmsmaxmessagesload</tt></p></td><td><p>CountStatistic</p></td><td><p>The maximum number of messages to load into a JMS session at one time for a
+message-driven bean to serve. Default is 1. Applies only to pools for message driven
+beans.</p></td></tr>
+</table><p>The statistics available for EJB caches are listed in the following table.</p>
+<p><b>Table 17-5 </b>EJB Cache Statistics</p>
+<A NAME="indexterm-354"></A><A NAME="indexterm-355"></A>
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><A NAME="indexterm-356"></A><tt>cachemisses</tt></p></td><td><p>BoundedRangeStatistic</p></td><td><p>The number of times a user request does not find a bean in the cache.</p></td></tr>
+<tr><td><p><A NAME="indexterm-357"></A><tt>cachehits</tt></p></td><td><p>BoundedRangeStatistic</p></td><td><p>The number of times a user request found an entry in the cache.</p></td></tr>
+<tr><td><p><tt>numbeansincache</tt></p></td><td><p>BoundedRangeStatistic</p></td><td><p>The number of beans in the cache. This is the current size of the cache.</p></td></tr>
+<tr><td><p><A NAME="indexterm-358"></A><tt>numpassivations</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of passivated beans. Applies only to stateful session beans.</p></td></tr>
+<tr><td><p><A NAME="indexterm-359"></A><tt>numpassivationerrors</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of errors during passivation. Applies only to stateful session beans.</p></td></tr>
+<tr><td><p><A NAME="indexterm-360"></A><tt>numexpiredsessionsremoved</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of expired sessions removed by the cleanup thread. Applies only to stateful
+session beans.</p></td></tr>
+<tr><td><p><A NAME="indexterm-361"></A><tt>numpassivationsuccess</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of times passivation completed successfully. Applies only to stateful
+session beans.</p></td></tr>
+</table><p>The statistics available for Timers are listed in the following table.</p>
+<p><b>Table 17-6 </b>Timer Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>numtimerscreated</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of timers created in the system.</p></td></tr>
+<tr><td><p><tt>numtimersdelivered</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of timers delivered by the system.</p></td></tr>
+<tr><td><p><tt>numtimersremoved</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of timers removed from the system.</p></td></tr>
+</table><A NAME="ablvf"></A><h4>Web Container Statistics</h4>
+<p>The web container fits into the tree of objects as shown in <A HREF="ablur.html#abluw">The Applications Tree</A>. Web container statistics are displayed for each individual
+web application. Statistics available for the web container for Servlets are shown
+in <A HREF="ablur.html#ablvf">Web Container Statistics</A> and statistics available
+for web modules are shown in <A HREF="ablur.html#ablvf">Web Container Statistics</A>.</p>
+<p><b>Table 17-7 </b>Web Container (Servlet) Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Units</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Comments</p></th></tr>
+<tr><td><p><tt>errorcount</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Cumulative number of cases where the response code is greater than or equal
+to 400.</p></td></tr>
+<tr><td><p><tt>maxtime</tt></p></td><td><p>Milliseconds</p></td><td><p>CountStatistic</p></td><td><p>The maximum amount of time the web container waits for requests.</p></td></tr>
+<tr><td><p><tt>processingtime</tt></p></td><td><p>Milliseconds</p></td><td><p>CountStatistic</p></td><td><p>Cumulative value of the amount of time required to process each request. The
+processing time is the average of request processing times divided by the request
+count.</p></td></tr>
+<tr><td><p><tt>requestcount</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The total number of requests processed so far.</p></td></tr>
+</table><p>Statistics available for web modules are shown in <A HREF="ablur.html#ablvf">Web Container Statistics</A>.</p>
+<p><b>Table 17-8 </b>Web Container (Web Module) Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Comments</p></th></tr>
+<tr><td><p><tt>jspcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of JSP pages that have been loaded in the web module.</p></td></tr>
+<tr><td><p><tt>jspreloadcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of JSP pages that have been reloaded in the web module.</p></td></tr>
+<tr><td><p><tt>sessionstotal</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of sessions that have been created for the web module.</p></td></tr>
+<tr><td><p><tt>activesessionscurrent</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of currently active sessions for the web module.</p></td></tr>
+<tr><td><p><tt>activesessionshigh</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum number of concurrently active sessions for the web module.</p></td></tr>
+<tr><td><p><tt>rejectedsessionstotal</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of rejected sessions for the web module. This is the number of
+sessions that were not created because the maximum allowed number of sessions were
+active.</p></td></tr>
+<tr><td><p><tt>expiredsessionstotal</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of expired sessions for the web module.</p></td></tr>
+<tr><td><p><tt>sessionsize (EE only)</tt></p></td><td><p>AverageRangeStatistic</p></td><td><p>Size of the session for the web module. Value is either high, low, or average,
+or is in bytes for serialized sessions.</p></td></tr>
+<tr><td><p><tt>containerlatency (EE only)</tt></p></td><td><p>AverageRangeStatistic</p></td><td><p>Latency for the web container's part of the overall latency request. Value
+is either high, low, or average.</p></td></tr>
+<tr><td><p><tt>sessionpersisttime (EE only)</tt></p></td><td><p>AverageRangeStatistic</p></td><td><p>Time (in ms, low, high, or average) taken to persist HTTP session state to back-end
+store for the web module.</p></td></tr>
+<tr><td><p><tt>cachedsessionscurrent (EE only)</tt></p></td><td><p>CountStatistic</p></td><td><p>Current number of sessions cached in memory for the web module.</p></td></tr>
+<tr><td><p><tt>passivatedsessionscurrent (EE only)</tt></p></td><td><p>CountStatistic</p></td><td><p>Current number of sessions passivated for the web module.</p></td></tr>
+</table><A NAME="ablvg"></A><h4>HTTP Service Statistics</h4>
+<p>The statistics available for the HTTP service are shown in <A HREF="ablur.html#ablvg">HTTP Service Statistics</A>. These statistics are applicable to the Platform Edition
+only. For statistics for the HTTP Service on the Enterprise Edition, see <A HREF="ablur.html#ablvo">Production Web Container (PWC) Statistics</A>.</p>
+<p><b>Table 17-9 </b>HTTP Service Statistics
+(applicable to Platform Edition only)</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Units</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Comments</p></th></tr>
+<tr><td><p><tt>bytesreceived</tt></p></td><td><p>Bytes</p></td><td><p>CountStatistic</p></td><td><p>The cumulative value of the bytes received by each of the request processors.</p></td></tr>
+<tr><td><p><tt>bytessent</tt></p></td><td><p>Bytes</p></td><td><p>CountStatistic</p></td><td><p>The cumulative value of the bytes sent by each of the request processors.</p></td></tr>
+<tr><td><p><tt>currentthreadcount</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The number of processing threads currently in the listener thread pool.</p></td></tr>
+<tr><td><p><tt>currentthreadsbusy</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The number of request processing threads currently in use in the listener thread
+pool serving requests.</p></td></tr>
+<tr><td><p><tt>errorcount</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The cumulative value of the error count, which represents the number of cases
+where the response code is greater than or equal to 400.</p></td></tr>
+<tr><td><p><tt>maxsparethreads</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The maximum number of unused response processing threads that can exist.</p></td></tr>
+<tr><td><p><tt>minsparethreads</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The minimum number of unused response processing threads that can exist.</p></td></tr>
+<tr><td><p><tt>maxthreads</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The maximum number of request processing threads created by the listener.</p></td></tr>
+<tr><td><p><tt>maxtime</tt></p></td><td><p>Milliseconds</p></td><td><p>CountStatistic</p></td><td><p>The maximum amount of time for processing threads.</p></td></tr>
+<tr><td><p><tt>processing-time</tt></p></td><td><p>Milliseconds</p></td><td><p>CountStatistic</p></td><td><p>The cumulative value of the times taken to process each request. The processing
+time is the average of request processing times divided by the request count.</p></td></tr>
+<tr><td><p><tt>request-count</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The total number of requests processed so far.</p></td></tr>
+</table><A NAME="ablvh"></A><h4>JDBC Connection Pools Statistics</h4>
+<p>Monitor JDBC resources to measure performance and capture resource usage at
+runtime. As the creation of JDBC connections are expensive and frequently cause performance
+bottlenecks in applications, it is crucial to monitor how a JDBC connection pool is
+releasing and creating new connections and how many threads are waiting to retrieve
+a connection from a particular pool.</p>
+<p>The statistics available for the JDBC connection pool are shown in the following
+table.</p>
+<p><b>Table 17-10 </b>JDBC Connection Pool Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Units</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>numconnfailedvalidation</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The total number of connections in the connection pool that failed validation
+from the start time until the last sample time.</p></td></tr>
+<tr><td><p><tt>numconnused</tt></p></td><td><p>Number</p></td><td><p>RangeStatistic</p></td><td><p>Provides connection usage statistics. The total number of connections that are
+currently being used, as well as information about the maximum number of connections
+that were used (the high water mark).</p></td></tr>
+<tr><td><p><tt>numconnfree</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The total number of free connections in the pool as of the last sampling.</p></td></tr>
+<tr><td><p><tt>numconntimedout</tt></p></td><td><p>Number</p></td><td><p>BoundedRangeStatistic</p></td><td><p>The total number of connections in the pool that timed out between the start
+time and the last sample time.</p></td></tr>
+<tr><td><p><tt>averageconnwaittime</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Indicates the average wait time of connections for successful connection request
+attempts to the connector connection pool.</p></td></tr>
+<tr><td><p><tt>waitqueuelength</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Number of connection requests in the queue waiting to be serviced.</p></td></tr>
+<tr><td><p><tt>connectionrequestwaittime</tt></p></td><td>&nbsp;</td><td><p>RangeStatistic</p></td><td><p>The longest and shortest wait times of connection requests. The current value
+indicates the wait time of the last request that was serviced by the pool.</p></td></tr>
+<tr><td><p><tt>numconncreated</tt></p></td><td><p>Milliseconds</p></td><td><p>CountStatistic</p></td><td><p>The number of physical connections that were created since the last reset.</p></td></tr>
+<tr><td><p><tt>numconndestroyed</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Number of physical connections that were destroyed since the last reset.</p></td></tr>
+<tr><td><p><tt>numconnacquired</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Number of logical connections acquired from the pool.</p></td></tr>
+<tr><td><p><tt>numconnreleased</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Number of logical connections released to the pool.</p></td></tr>
+</table><A NAME="ablvi"></A><h4>JMS/Connector Service Statistics</h4>
+<p>The statistics available for the connector connection pools are shown in <A HREF="ablur.html#ablvi">JMS/Connector Service Statistics</A>. Statistics for Connector
+Work Management are shown in <A HREF="ablur.html#ablvi">JMS/Connector Service Statistics</A>.</p>
+<p><b>Table 17-11 </b>Connector Connection Pool
+Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Units</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>numconnfailedvalidation</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The total number of connections in the connection pool that failed validation
+from the start time until the last sample time.</p></td></tr>
+<tr><td><p><tt>numconnused</tt></p></td><td><p>Number</p></td><td><p>RangeStatistic</p></td><td><p>Provides connection usage statistics. The total number of connections that are
+currently being used, as well as information about the maximum number of connections
+that were used (the high water mark).</p></td></tr>
+<tr><td><p><tt>numconnfree</tt></p></td><td><p>Number</p></td><td><p>RangeStatistic</p></td><td><p>The total number of free connections in the pool as of the last sampling.</p></td></tr>
+<tr><td><p><tt>numconntimedout</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The total number of connections in the pool that timed out between the start
+time and the last sample time.</p></td></tr>
+<tr><td><p><tt>averageconnwaittime</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Average wait time of connections before they are serviced by the connection
+pool.</p></td></tr>
+<tr><td><p><tt>waitqueuelenght</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Number of connection requests in the queue waiting to be serviced.</p></td></tr>
+<tr><td><p><tt>connectionrequestwaittime</tt></p></td><td>&nbsp;</td><td><p>RangeStatistic</p></td><td><p>The longest and shortest wait times of connection requests. The current value
+indicates the wait time of the last request that was serviced by the pool.</p></td></tr>
+<tr><td><p><tt>numconncreated</tt></p></td><td><p>Milliseconds</p></td><td><p>CountStatistic</p></td><td><p>The number of physical connections that were created since the last reset.</p></td></tr>
+<tr><td><p><tt>numconndestroyed</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Number of physical connections that were destroyed since the last reset.</p></td></tr>
+<tr><td><p><tt>numconnacquired</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Number of logical connections acquired from the pool.</p></td></tr>
+<tr><td><p><tt>numconnreleased</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Number of logical connections released to the pool.</p></td></tr>
+</table><p>Statistics available for Connector Work Management are listed in <A HREF="ablur.html#ablvi">JMS/Connector Service Statistics</A>.</p>
+<p><b>Table 17-12 </b>Connector Work Management Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>activeworkcount</tt></p></td><td><p>RangeStatistic</p></td><td><p>Number of work objects executed by the connector.</p></td></tr>
+<tr><td><p><tt>waitqueuelength</tt></p></td><td><p>RangeStatistic</p></td><td><p>Number of work objects waiting in the queue before executing.</p></td></tr>
+<tr><td><p><tt>workrequestwaittime</tt></p></td><td><p>RangeStatistic</p></td><td><p>Longest and shortest wait of a work object before it gets executed.</p></td></tr>
+<tr><td><p><tt>submittedworkcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of work objects submitted by a connector module.</p></td></tr>
+<tr><td><p><tt>rejectedworkcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of work objects rejected by the Application Server.</p></td></tr>
+<tr><td><p><tt>completedworkcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of work objects that were completed.</p></td></tr>
+</table><A NAME="ablvj"></A><h4>Statistics for Connection Managers in an ORB</h4>
+<A NAME="indexterm-362"></A><A NAME="indexterm-363"></A><p>The statistics available for the connection manager in an ORB are listed in <A HREF="ablur.html#ablvj">Statistics for Connection Managers in an ORB</A>.</p>
+<p><b>Table 17-13 </b>Connection Manager (in an
+ORB) Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Units</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>connectionsidle</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Provides total number of connections that are idle to the ORB.</p></td></tr>
+<tr><td><p><tt>connectionsinuse</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>Provides total number of connections in use to the ORB.</p></td></tr>
+<tr><td><p><tt>totalconnections</tt></p></td><td><p>Number</p></td><td><p>BoundedRangeStatistic</p></td><td><p>Total number of connections to the ORB.</p></td></tr>
+</table><A NAME="ablvk"></A><h4>Thread Pools Statistics</h4>
+<p>The statistics available for the thread pool are shown in the following table.</p>
+<p><b>Table 17-14 </b>Thread Pool Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Units</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>averagetimeinqueue</tt></p></td><td><p>Milliseconds</p></td><td><p>RangeStatistic</p></td><td><p>The average amount of time in milliseconds a request waited in the queue before
+getting processed.</p></td></tr>
+<tr><td><p><tt>averageworkcompletion-time</tt></p></td><td><p>Milliseconds</p></td><td><p>RangeStatistic</p></td><td><p>The average amount of time taken to complete an assignment, in milliseconds.</p></td></tr>
+<tr><td><p><tt>currentnumberofthreads</tt></p></td><td><p>Number</p></td><td><p>BoundedRangeStatistic</p></td><td><p>Current number of request processing threads.</p></td></tr>
+<tr><td><p><tt>numberofavailablethreads</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The number of threads that are available.</p></td></tr>
+<tr><td><p><tt>numberofbusythreads</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The number of threads that are busy.</p></td></tr>
+<tr><td><p><tt>totalworkitemsadded</tt></p></td><td><p>Number</p></td><td><p>CountStatistic</p></td><td><p>The total number of work items added so far to the work queue.</p></td></tr>
+</table><A NAME="ablvl"></A><h4>Transaction Service Statistics</h4>
+<A NAME="indexterm-364"></A><A NAME="indexterm-365"></A><p>The transaction service allows the client to freeze the transaction subsystem
+in order to roll back transactions and determine the transactions that are in process
+at the time of the freeze. The statistics available for the transaction service are
+shown in the following table.</p>
+<p><b>Table 17-15 </b>Transaction Service Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>activecount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of transactions currently active.</p></td></tr>
+<tr><td><p><tt>activeids</tt></p></td><td><p>StringStatistic</p></td><td><p>The ID's of the transactions that are currently active. Every such transaction
+can be rolled back after freezing the transaction service.</p></td></tr>
+<tr><td><p><tt>committedcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of transactions that have been committed.</p></td></tr>
+<tr><td><p><tt>rolledbackcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of transactions that have been rolled back.</p></td></tr>
+<tr><td><p><tt>state</tt></p></td><td><p>StringStatistic</p></td><td><p>Indicates whether or not the transaction has been frozen.</p></td></tr>
+</table><A NAME="ablvm"></A><h4>Java Virtual Machine (JVM) Statistics</h4>
+<p>The JVM has monitorable attributes that are always enabled. The statistics available
+for the JVM are shown in the following table.</p>
+<p><b>Table 17-16 </b>JVM Statistics</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>heapsize</tt></p></td><td><p>BoundedRangeStatistic</p></td><td><p>The resident memory footprint with the higher and lower bounds of the JVM's
+memory heap size.</p></td></tr>
+<tr><td><p><tt>uptime</tt></p></td><td><p>CountStatistic</p></td><td><p>The amount of time the JVM has been running.</p></td></tr>
+</table><A NAME="ablvn"></A><h5>JVM Statistics in J2SE 5.0</h5>
+<p>If the Application Server is configured to run on J2SE version 5.0 or higher, additional
+monitoring information can be obtained from the JVM. Set the monitoring level to LOW
+to enable the display of this additional information. Set the monitoring level to
+HIGH to also view information pertaining to each live thread in the system. More information
+on the additional monitoring features available in J2SE 5.0 is available in a document
+titled <i>Monitoring and Management for the Java Platform</i>, which
+is available from <A HREF="http://java.sun.com/j2se/1.5.0/docs/guide/management/">http://java.sun.com/j2se/1.5.0/docs/guide/management/</A>.</p>
+<p>The J2SE 5.0 monitoring tools are discussed at <A HREF="http://java.sun.com/j2se/1.5.0/docs/tooldocs/#manage">http://java.sun.com/j2se/1.5.0/docs/tooldocs/#manage</A>.</p>
+<p>The statistics available for class loading in the JVM in J2SE 5.0 are shown
+in <A HREF="ablur.html#ablvn">JVM Statistics in J2SE 5.0</A>.</p>
+<p><b>Table 17-17 </b>JVM Statistics for J2SE 5.0 - Class
+Loading</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>loadedclasscount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of classes that are currently loaded in the JVM.</p></td></tr>
+<tr><td><p><tt>totalloadedclasscount</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of classes that have been loaded since the JVM began execution.</p></td></tr>
+<tr><td><p><tt>unloadedclasscount</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of classes that have been unloaded from the JVM since the JVM began execution.</p></td></tr>
+</table><p>The statistics available for compilation in the JVM in J2SE 5.0 are shown in <A HREF="ablur.html#ablvn">JVM Statistics in J2SE 5.0</A>.</p>
+<p><b>Table 17-18 </b>JVM Statistics for J2SE 5.0 - Compilation</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>totalcompilationtime</tt></p></td><td><p>CountStatistic</p></td><td><p>Accumulated time (in milliseconds) spent in compilation.</p></td></tr>
+</table><p>The statistics available for garbage collection in the JVM in J2SE 5.0 are shown
+in <A HREF="ablur.html#ablvn">JVM Statistics in J2SE 5.0</A>.</p>
+<p><b>Table 17-19 </b>JVM Statistics for J2SE 5.0 - Garbage
+Collection</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>collectioncount</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of collections that have occurred.</p></td></tr>
+<tr><td><p><tt>collectiontime</tt></p></td><td><p>CountStatistic</p></td><td><p>Accumulated collection time (in milliseconds).</p></td></tr>
+</table><p>The statistics available for memory in the JVM in J2SE 5.0 are shown in <A HREF="ablur.html#ablvn">JVM Statistics in J2SE 5.0</A>.</p>
+<p><b>Table 17-20 </b>JVM Statistics for J2SE 5.0 - Memory</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>objectpendingfinalizationcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Approximate number of objects that are pending finalization.</p></td></tr>
+<tr><td><p><tt>initheapsize</tt></p></td><td><p>CountStatistic</p></td><td><p>Size of the heap initially requested by the JVM.</p></td></tr>
+<tr><td><p><tt>usedheapsize</tt></p></td><td><p>CountStatistic</p></td><td><p>Size of the heap currently in use.</p></td></tr>
+<tr><td><p><tt>maxheapsize</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum amount of memory (in bytes) that can be used for memory management.</p></td></tr>
+<tr><td><p><tt>committedheapsize</tt></p></td><td><p>CountStatistic</p></td><td><p>Amount of memory (in bytes) that is committed for the JVM to use.</p></td></tr>
+<tr><td><p><tt>initnonheapsize</tt></p></td><td><p>CountStatistic</p></td><td><p>Size of the non-heap area initially requested by the JVM.</p></td></tr>
+<tr><td><p><tt>usednonheapsize</tt></p></td><td><p>CountStatistic</p></td><td><p>Size of the non-heap area currently in use.</p></td></tr>
+<tr><td><p><tt>maxnonheapsize</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum amount of memory (in bytes) that can be used for memory management.</p></td></tr>
+<tr><td><p><tt>committednonheapsize</tt></p></td><td><p>CountStatistic</p></td><td><p>Amount of memory (in bytes) that is committed for the JVM to use.</p></td></tr>
+</table><p>The statistics available for the operating system in the JVM in J2SE 5.0 are
+shown in <A HREF="ablur.html#ablvn">JVM Statistics in J2SE 5.0</A>.</p>
+<p><b>Table 17-21 </b>JVM Statistics for J2SE 5.0 - Operating
+System</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>arch</tt></p></td><td><p>StringStatistic</p></td><td><p>Operating system architecture.</p></td></tr>
+<tr><td><p><tt>availableprocessors</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of processors available to the JVM.</p></td></tr>
+<tr><td><p><tt>name</tt></p></td><td><p>StringStatistic</p></td><td><p>Operating system name.</p></td></tr>
+<tr><td><p><tt>version</tt></p></td><td><p>StringStatistic</p></td><td><p>Operating system version.</p></td></tr>
+</table><p>The statistics available for the runtime in the JVM in J2SE 5.0 are shown in <A HREF="ablur.html#ablvn">JVM Statistics in J2SE 5.0</A>.</p>
+<p><b>Table 17-22 </b>JVM Statistics for J2SE 5.0 - Runtime</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>name</tt></p></td><td><p>StringStatistic</p></td><td><p>Name representing the running JVM</p></td></tr>
+<tr><td><p><tt>vmname</tt></p></td><td><p>StringStatistic</p></td><td><p>JVM implementation name.</p></td></tr>
+<tr><td><p><tt>vmvendor</tt></p></td><td><p>StringStatistic</p></td><td><p>JVM implementation vendor.</p></td></tr>
+<tr><td><p><tt>vmversion</tt></p></td><td><p>StringStatistic</p></td><td><p>JVM implementation version.</p></td></tr>
+<tr><td><p><tt>specname</tt></p></td><td><p>StringStatistic</p></td><td><p>JVM specification name.</p></td></tr>
+<tr><td><p><tt>specvendor</tt></p></td><td><p>StringStatistic</p></td><td><p>JVM specification vendor.</p></td></tr>
+<tr><td><p><tt>specversion</tt></p></td><td><p>StringStatistic</p></td><td><p>JVM specification version.</p></td></tr>
+<tr><td><p><tt>managementspecversion</tt></p></td><td><p>StringStatistic</p></td><td><p>Management spec. version implemented by the JVM.</p></td></tr>
+<tr><td><p><tt>classpath</tt></p></td><td><p>StringStatistic</p></td><td><p>Classpath that is used by the system class loader to search for class files.</p></td></tr>
+<tr><td><p><tt>librarypath</tt></p></td><td><p>StringStatistic</p></td><td><p>Java library path.</p></td></tr>
+<tr><td><p><tt>bootclasspath</tt></p></td><td><p>StringStatistic</p></td><td><p>Classpath that is used by the bootstrap class loader to search for class files.</p></td></tr>
+<tr><td><p><tt>inputarguments</tt></p></td><td><p>StringStatistic</p></td><td><p>Input arguments passed to the JVM. Does not include the arguments to the <tt>main</tt> method.</p></td></tr>
+<tr><td><p><tt>uptime</tt></p></td><td><p>CountStatistic</p></td><td><p>Uptime of the JVM (in milliseconds).</p></td></tr>
+</table><p>The statistics available for <tt>ThreadInfo</tt> in the JVM in J2SE
+5.0 are shown in <A HREF="ablur.html#ablvn">JVM Statistics in J2SE 5.0</A>.</p>
+<p><b>Table 17-23 </b>JVM Statistics for J2SE 5.0 - Thread
+Info</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>threadid</tt></p></td><td><p>CountStatistic</p></td><td><p>Id of the thread.</p></td></tr>
+<tr><td><p><tt>threadname</tt></p></td><td><p>StringStatistic</p></td><td><p>Name of the thread.</p></td></tr>
+<tr><td><p><tt>threadstate</tt></p></td><td><p>StringStatistic</p></td><td><p>State of the thread.</p></td></tr>
+<tr><td><p><tt>blockedtime</tt></p></td><td><p>CountStatistic</p></td><td><p>Time elapsed (in milliseconds) since the thread entered the <tt>BLOCKED</tt> state. Returns -1 if thread contention monitoring is disabled.</p></td></tr>
+<tr><td><p><tt>blockedcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of times that the thread entered the <tt>BLOCKED</tt> state.</p></td></tr>
+<tr><td><p><tt>waitedtime</tt></p></td><td><p>CountStatistic</p></td><td><p>Elapsed time (in milliseconds) that the thread has been in a <tt>WAITING</tt> state. Returns -1 if thread contention monitoring is disabled.</p></td></tr>
+<tr><td><p><tt>waitedcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of times the thread was in <tt>WAITING</tt> or <tt>TIMED_WAITING</tt> states.</p></td></tr>
+<tr><td><p><tt>lockname</tt></p></td><td><p>StringStatistic</p></td><td><p>String representation of the monitor lock that the thread is blocked to enter
+or waiting to be notified through the <tt>Object.wait</tt> method.</p></td></tr>
+<tr><td><p><tt>lockownerid</tt></p></td><td><p>CountStatistic</p></td><td><p>Id of the thread that holds the monitor lock of an object on which this thread
+is blocking.</p></td></tr>
+<tr><td><p><tt>lockownername</tt></p></td><td><p>StringStatistic</p></td><td><p>Name of the thread that holds the monitor lock of the object this thread is
+blocking on.</p></td></tr>
+<tr><td><p><tt>stacktrace</tt></p></td><td><p>StringStatistic</p></td><td><p>Stack trace associated with this thread.</p></td></tr>
+</table><p>The statistics available for threads in the JVM in J2SE 5.0 are shown in <A HREF="ablur.html#ablvn">JVM Statistics in J2SE 5.0</A>.</p>
+<p><b>Table 17-24 </b>JVM Statistics for J2SE 5.0 - Threads</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Statistic</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>threadcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Current number of live daemon and non-daemon threads.</p></td></tr>
+<tr><td><p><tt>peakthreadcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Peak live thread count since the JVM started or the peak was reset.</p></td></tr>
+<tr><td><p><tt>totalstartedthreadcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of threads created and/or started since the JVM started.</p></td></tr>
+<tr><td><p><tt>daemonthreadcount</tt></p></td><td><p>CountStatistic</p></td><td><p>Current number of live daemon threads.</p></td></tr>
+<tr><td><p><tt>allthreadids</tt></p></td><td><p>StringStatistic</p></td><td><p>List of all live thread ids.</p></td></tr>
+<tr><td><p><tt>currentthreadcputime</tt></p></td><td><p>CountStatistic</p></td><td><p>CPU time for the current thread (in nanoseconds) if CPU time measurement is
+enabled. If CPU time measurement is disabled, returns -1.</p></td></tr>
+<tr><td><p><tt>monitordeadlockedthreads</tt></p></td><td><p>StringStatistic</p></td><td><p>List of thread ids that are monitor deadlocked.</p></td></tr>
+</table><A NAME="ablvo"></A><h4>Production Web Container (PWC) Statistics</h4>
+<p>Statistics are available for the following PWC components and services on the
+Enterprise Edition (EE) of the Application Server:</p>
+<ul><li><p><A HREF="ablur.html#ablvo">Production Web Container (PWC) Statistics</A>, PWC Virtual Server</p>
+</li>
+<li><p><A HREF="ablur.html#ablvo">Production Web Container (PWC) Statistics</A>, PWC Request</p>
+</li>
+<li><p><A HREF="ablur.html#ablvo">Production Web Container (PWC) Statistics</A>, PWC File Cache</p>
+</li>
+<li><p><A HREF="ablur.html#ablvo">Production Web Container (PWC) Statistics</A>, PWC Keep Alive</p>
+</li>
+<li><p><A HREF="ablur.html#ablvo">Production Web Container (PWC) Statistics</A>, PWC DNS</p>
+</li>
+<li><p><A HREF="ablnk.html#ablqi">Admin Console Tasks for Listeners and JMX Connectors</A>, PWC Thread Pool</p>
+</li>
+<li><p><A HREF="ablur.html#ablvo">Production Web Container (PWC) Statistics</A>, PWC Connection Queue</p>
+</li>
+<li><p><A HREF="ablur.html#ablvo">Production Web Container (PWC) Statistics</A>, PWC HTTP Service</p>
+</li>
+</ul>
+<p>Statistics for PWC virtual servers are listed in <A HREF="ablur.html#ablvo">Production Web Container (PWC) Statistics</A>.</p>
+<p><b>Table 17-25 </b>PWC Virtual Server Statistics (EE only)</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type </p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>id</tt></p></td><td><p>StringStatistic</p></td><td><p>The ID of the virtual server.</p></td></tr>
+<tr><td><p><tt>mode</tt></p></td><td><p>StringStatistic</p></td><td><p>The mode the virtual server is in. Options include <tt>unknown</tt> or <tt>active</tt>.</p></td></tr>
+<tr><td><p><tt>hosts</tt></p></td><td><p>StringStatistic</p></td><td><p>Name of the hosts serviced by this virtual server.</p></td></tr>
+<tr><td><p><tt>interfaces</tt></p></td><td><p>StringStatistic</p></td><td><p>Type of interfaces (listeners) for which the virtual server is configured.</p></td></tr>
+</table><p>The statistics available for PWC requests are listed in the following table.</p>
+<p><b>Table 17-26 </b>PWC Request Statistics (EE only)</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>method</tt></p></td><td><p>StringStatistic</p></td><td><p>Method used for request.</p></td></tr>
+<tr><td><p><tt>uri</tt></p></td><td><p>StringStatistic</p></td><td><p>Last URI served.</p></td></tr>
+<tr><td><p><tt>countrequests</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of requests served.</p></td></tr>
+<tr><td><p><tt>countbytestransmitted</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of bytes transmitted, or 0 if this information is not available</p></td></tr>
+<tr><td><p><tt>countbytesreceived</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of bytes received, or 0 if this information is not available.</p></td></tr>
+<tr><td><p><tt>ratebytesreceived</tt></p></td><td><p>CountStatistic</p></td><td><p>Rate at which data was received over some server-defined interval, or 0 if this
+information is not available</p></td></tr>
+<tr><td><p><tt>maxbytestransmissionrate</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum rate at which data was transmitted over some server-defined interval,
+or 0 if this information is not available.</p></td></tr>
+<tr><td><p><tt>countopenconnections</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of connections that are currently open, or 0 if this information is not
+available.</p></td></tr>
+<tr><td><p><tt>maxopenconnections</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum number of concurrently open connections, or 0 if this information is
+not available.</p></td></tr>
+<tr><td><p><tt>count2xx</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses of code 2XX.</p></td></tr>
+<tr><td><p><tt>count3xx</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses of code 3XX.</p></td></tr>
+<tr><td><p><tt>count4xx</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses of code 4XX.</p></td></tr>
+<tr><td><p><tt>count5xx</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses of code 5XX.</p></td></tr>
+<tr><td><p><tt>countother</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses with other response codes.</p></td></tr>
+<tr><td><p><tt>count200</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses of code 200.</p></td></tr>
+<tr><td><p><tt>count302</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses of code 302.</p></td></tr>
+<tr><td><p><tt>count304</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses of code 304.</p></td></tr>
+<tr><td><p><tt>count400</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses of code 400.</p></td></tr>
+<tr><td><p><tt>count401</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses of code 401.</p></td></tr>
+<tr><td><p><tt>count403</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses of code 403.</p></td></tr>
+<tr><td><p><tt>count404</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses of code 404.</p></td></tr>
+<tr><td><p><tt>count503</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of responses of code 503.</p></td></tr>
+</table><p>The cache information section provides information on how the file cache is
+being used. Statistics for PWC file caches are listed in the following table.</p>
+<p><b>Table 17-27 </b>PWC File Cache Statistics (EE only)</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>flagenabled</tt></p></td><td><p>CountStatistic</p></td><td><p>Indicates whether the file cache is enabled. Valid values are 0 for no or 1
+for yes.</p></td></tr>
+<tr><td><p><tt>secondsmaxage</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum age of a valid cache entry, in seconds.</p></td></tr>
+<tr><td><p><tt>countentries</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of current cache entries. A single cache entry represents a single URI.</p></td></tr>
+<tr><td><p><tt>maxentries</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum number of simultaneous cache entries.</p></td></tr>
+<tr><td><p><tt>countopenentries</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of entries associated with an open file.</p></td></tr>
+<tr><td><p><tt>maxopenentries</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum number of simultaneous cache entries associated with an open file.</p></td></tr>
+<tr><td><p><tt>sizeheapcache</tt></p></td><td><p>CountStatistic</p></td><td><p>Heap space used for cache content.</p></td></tr>
+<tr><td><p><tt>maxheapcachesize</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum heap space used for cache file content.</p></td></tr>
+<tr><td><p><tt>sizemmapcache</tt></p></td><td><p>CountStatistic</p></td><td><p>Amount of address space used by memory mapped file content.</p></td></tr>
+<tr><td><p><tt>maxmmapcachesize</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum amount of address space used by the file cache for memory mapped file
+content.</p></td></tr>
+<tr><td><p><tt>counthits</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of successful cache lookups.</p></td></tr>
+<tr><td><p><tt>countmisses</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of failed cache lookups.</p></td></tr>
+<tr><td><p><tt>countinfohits</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of times a file information lookup succeeded.</p></td></tr>
+<tr><td><p><tt>countinfomisses</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of misses on cached file information.</p></td></tr>
+<tr><td><p><tt>countcontenthits</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of hits on cached file content.</p></td></tr>
+<tr><td><p><tt>countcontentmisses</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of times a file information lookup failed.</p></td></tr>
+</table><p>This section provides information about the server's HTTP-level keep-alive system.
+The statistics available for PWC Keep Alive are listed in the following table.</p>
+<p><b>Table 17-28 </b>PWC Keep Alive Statistics (EE only)</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>countconnections</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of connections in keep-alive mode.</p></td></tr>
+<tr><td><p><tt>maxconnections</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum number of connections simultaneously allowed in keep-alive mode.</p></td></tr>
+<tr><td><p><tt>counthits</tt></p></td><td><p>CountStatistic</p></td><td><p>The total number of times connections in keep-alive mode have subsequently made
+a valid request.</p></td></tr>
+<tr><td><p><tt>countflushes</tt></p></td><td><p>CountStatistic</p></td><td><p>The number of times keep-alive connections have been closed by the server.</p></td></tr>
+<tr><td><p><tt>countrefusals</tt></p></td><td><p>CountStatistic</p></td><td><p>The number of times the server could not hand off the connection to a keep-alive
+thread, possibly due to too many persistent connections.</p></td></tr>
+<tr><td><p><tt>counttimeouts</tt></p></td><td><p>CountStatistic</p></td><td><p>The number of times the server terminated keep-alive connections as the client
+connections timed out without any activity.</p></td></tr>
+<tr><td><p><tt>secondstimeout</tt></p></td><td><p>CountStatistic</p></td><td><p>The time (in seconds) before idle keep-alive connections are closed.</p></td></tr>
+</table><p>The DNS Cache caches IP addresses and DNS names. The server's DNS cache
+is disabled by default. A single cache entry represents a singular IP address or DNS
+name lookup. The statistics available for PWC DNS are listed in the following table.</p>
+<p><b>Table 17-29 </b>PWC DNS Statistics (EE only)</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>flagcacheenabled</tt></p></td><td><p>CountStatistic</p></td><td><p>Indicates whether the DNS cache is enabled (on). Either 0 for off or 1 for on.</p></td></tr>
+<tr><td><p><tt>countcacheentries</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of DNS entries presently in the cache.</p></td></tr>
+<tr><td><p><tt>maxcacheentries</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum number of DNS entries that can be accommodated by the cache.</p></td></tr>
+<tr><td><p><tt>countcachehits</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of times a DNS cache lookup has succeeded.</p></td></tr>
+<tr><td><p><tt>countcachemisses</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of times a DNS cache lookup has failed.</p></td></tr>
+<tr><td><p><tt>flagasyncenabled</tt></p></td><td><p>CountStatistic</p></td><td><p>Indicates whether asynchronous DNS lookups are enabled (on). Either 0 for off
+or 1 for on.</p></td></tr>
+<tr><td><p><tt>countasyncnamelookups</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of asynchronous DNS name lookups.</p></td></tr>
+<tr><td><p><tt>countasyncaddrlookups</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of asynchronous DNS address lookups.</p></td></tr>
+<tr><td><p><tt>countasynclookupsinprogress</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of asynchronous lookups in progress.</p></td></tr>
+</table><p>Statistics for PWC thread pools are listed in the following table.</p>
+<p><b>Table 17-30 </b>PWC Thread Pool Statistics (EE only)</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>id</tt></p></td><td><p>StringStatistic</p></td><td><p>ID of the thread pool.</p></td></tr>
+<tr><td><p><tt>countthreadsidle</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of request-processing threads currently idle.</p></td></tr>
+<tr><td><p><tt>countthreads</tt></p></td><td><p>CountStatistic</p></td><td><p>Current number of request-processing threads.</p></td></tr>
+<tr><td><p><tt>maxthreads</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum number of request processing threads that can exist concurrently.</p></td></tr>
+<tr><td><p><tt>countqueued</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of requests queued for processing by this thread pool.</p></td></tr>
+<tr><td><p><tt>peakqueued</tt></p></td><td><p>CountStatistic</p></td><td><p>The largest number of requests in the queue simultaneously.</p></td></tr>
+<tr><td><p><tt>maxqueued</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum number of requests that can be in the queue at one time.</p></td></tr>
+</table><p>The Connection Queue is the queue in which requests are held prior to being
+serviced. Statistics for the connection queue show the number of sessions in the queue
+and the average delay before the connection is accepted. Statistics for PWC connection
+queues are listed in the following table.</p>
+<p><b>Table 17-31 </b>PWC Connection Queue Statistics
+(EE only)</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>id</tt></p></td><td><p>StringStatistic</p></td><td><p>ID of the connection queue.</p></td></tr>
+<tr><td><p><tt>counttotalconnections</tt></p></td><td><p>CountStatistic</p></td><td><p>Total number of connections that have been accepted.</p></td></tr>
+<tr><td><p><tt>countqueued</tt></p></td><td><p>CountStatistic</p></td><td><p>Number of connections currently in the queue.</p></td></tr>
+<tr><td><p><tt>peakqueued</tt></p></td><td><p>CountStatistic</p></td><td><p>Largest number of connections that were in the queue simultaneously.</p></td></tr>
+<tr><td><p><tt>maxqueued</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum size of the connection queue.</p></td></tr>
+<tr><td><p><tt>countoverflows</tt></p></td><td><p>CountStatistic</p></td><td><p>The number of times the queue has been too full to accommodate a connection.</p></td></tr>
+<tr><td><p><tt>counttotalqueued</tt></p></td><td><p>CountStatistic</p></td><td><p>The total number of connections that have been queued. A given connection may
+be queued multiple times, so <tt>counttotalqueued</tt> may be greater than
+or equal to <tt>counttotalconnections</tt>.</p></td></tr>
+<tr><td><p><tt>tickstotalqueued</tt></p></td><td><p>CountStatistic</p></td><td><p>The total number of ticks that connections have spent in the queue. A tick is
+a system-dependent unit of time.</p></td></tr>
+<tr><td><p><tt>countqueued1minuteaverage</tt></p></td><td><p>CountStatistic</p></td><td><p>Average number of connections queued in the last 1 minute.</p></td></tr>
+<tr><td><p><tt>countqueued5minuteaverage</tt></p></td><td><p>CountStatistic</p></td><td><p>Average number of connections queued in the last 5 minutes.</p></td></tr>
+<tr><td><p><tt>countqueued15minuteaverage</tt></p></td><td><p>CountStatistic</p></td><td><p>Average number of connections queued in the last 15 minutes.</p></td></tr>
+</table><p>Statistics for PWC HTTP service are listed in the following table.</p>
+<p><b>Table 17-32 </b>PWC HTTP Service Statistics (EE only)</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Attribute Name</p></th><th scope="col"><p>Data Type</p></th><th scope="col"><p>Description</p></th></tr>
+<tr><td><p><tt>id</tt></p></td><td><p>StringStatistic</p></td><td><p>Instance name of the HTTP service.</p></td></tr>
+<tr><td><p><tt>versionserver</tt></p></td><td><p>StringStatistic</p></td><td><p>Version number of the HTTP service.</p></td></tr>
+<tr><td><p><tt>timestarted</tt></p></td><td><p>StringStatistic</p></td><td><p>Time the HTTP service was started (GMT).</p></td></tr>
+<tr><td><p><tt>secondsrunning</tt></p></td><td><p>CountStatistic</p></td><td><p>Time (in seconds) since the HTTP service started.</p></td></tr>
+<tr><td><p><tt>maxthreads</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum number of worker threads in each instance.</p></td></tr>
+<tr><td><p><tt>maxvirtualservers</tt></p></td><td><p>CountStatistic</p></td><td><p>Maximum number of virtual servers that can be configured in each instance.</p></td></tr>
+<tr><td><p><tt>flagprofilingenabled</tt></p></td><td><p>CountStatistic</p></td><td><p>Whether or not HTTP service performance profiling is enabled. Valid values are
+0 or 1.</p></td></tr>
+<tr><td><p><tt>flagvirtualserveroverflow</tt></p></td><td><p>CountStatistic</p></td><td><p>Indicates whether more than <tt>maxvirtualservers</tt> are configured.
+If this is set to 1, statistics are not being tracked for all virtual servers.</p></td></tr>
+<tr><td><p><tt>load1minuteaverage</tt></p></td><td><p>CountStatistic</p></td><td><p>Average load for requests in the last 1 minute.</p></td></tr>
+<tr><td><p><tt>load5minuteaverage</tt></p></td><td><p>CountStatistic</p></td><td><p>Average load for requests in the last 5 minutes.</p></td></tr>
+<tr><td><p><tt>load15minuteaverage</tt></p></td><td><p>CountStatistic</p></td><td><p>Average load for requests in the last 15 minutes.</p></td></tr>
+<tr><td><p><tt>ratebytestransmitted</tt></p></td><td><p>CountStatistic</p></td><td><p>The rate at which data is transmitted over some server-defined interval. The
+result is 0 when this information is not available.</p></td></tr>
+<tr><td><p><tt>ratebytesreceived</tt></p></td><td><p>CountStatistic</p></td><td><p>The rate at which data is received over some server-defined interval. The result
+is 0 when this information is not available.</p></td></tr>
+</table><A NAME="ablvp"></A><h2>Admin Console Tasks for Enabling and Disabling Monitoring</h2>
+<ul><li><p><A HREF="ablur.html#ablvq">To configure monitoring levels using the Admin Console</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvr">To configure monitoring using the asadmin tool</A></p>
+</li>
+</ul>
+<A NAME="ablvq"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To configure monitoring levels using the Admin Console</h3>
+<h5>Steps</h5><ol><li><p><b>Access the Monitoring Service page. To do this,</b></p><ol Type="a"><li><p><b>In the tree component, select the Application Server node.</b></p></li>
+<li><p><b>Select the Monitor page.</b></p></li>
+<li><p><b>Select the Setup tab.</b></p></li>
+</ol>
+</li>
+<li><p><b>On the Monitoring Service page, choose the appropriate value from the
+combo box opposite the component(s) or service(s) whose monitoring level is changing.</b></p><p>By default, monitoring is turned off for all components and services.
+To turn monitoring on, select LOW or HIGH from the combo box. To turn monitoring off,
+select OFF from the combo box. It is possible to turn monitoring on or off for the
+following components and services:</p>
+<ul><li><p><b>JVM</b> - Set the monitoring level
+to LOW for this option to monitor the Java Virtual Machine.</p>
+</li>
+<li><p><b>HTTP Service</b> - Set the monitoring
+level to LOW for this option to monitor all HTTP listeners and virtual servers.</p>
+</li>
+<li><p><b>Transaction Service</b> - Set the monitoring
+level to LOW for this option to monitor any transaction subsystem.</p>
+</li>
+<li><p><b>JMS/Connector Service</b> - Set the
+monitoring level to LOW for this option to monitor any Java Message Service (JMS).</p>
+</li>
+<li><p><b>ORB</b> - Set the monitoring level
+to LOW for this option to monitor the system ORB used by the Application Server core and
+its connection managers.</p>
+</li>
+<li><p><b>Web Container</b> - Set the monitoring
+level to LOW for this option to monitor all deployed servlets.</p>
+</li>
+<li><p><b>EJB Container</b> - Set the monitoring
+level to LOW for this option to monitor all deployed EJB components, EJB pools, and
+EJB caches. Set this method to HIGH to also monitor EJB business methods.</p>
+</li>
+<li><p><b>JDBC Connection Pool</b> - Set the
+monitoring level to LOW for this option to monitor all JDBC connection pools.</p>
+</li>
+<li><p><b>Thread Pool</b> - Set the monitoring
+level to LOW for this option to monitor all thread pools.</p>
+</li>
+</ul>
+</li>
+<li><p><b>Click Save.</b></p><p>There are no Additional Monitoring Service Properties
+in this release, therefore ignore the Additional Properties table.</p>
+</li>
+</ol><h5>More Information<br>Equivalent asadmin command</h5>
+<p><tt>set</tt></p>
+<p>For example, to turn on monitoring for the HTTP Service, use the following <tt>asadmin</tt> command:</p>
+<p><tt>asadmin> set --user</tt> <i>admin-user</i> <tt>server.monitoring-service.module-monitoring-levels.http-service=LOW</tt></p>
+<h5>See Also</h5><ul><li><p><A HREF="ablur.html#ablvt">To view monitoring data in the Admin Console</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvu">Viewing Monitoring Data With the asadmin Tool</A></p>
+</li>
+</ul>
+<A NAME="ablvr"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To configure monitoring
+using the asadmin tool</h3>
+<p>To turn monitoring off, or to set a level for monitoring a component or service,
+you can use the Admin Console as described in <A HREF="ablur.html#ablvq">To configure monitoring levels using the Admin Console</A>.</p>
+<h5>Steps</h5><ol><li><p><b>Use the <tt>get</tt> command to find out what services and components
+currently have monitoring enabled.</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> get --user <i>admin-user</i> server.monitoring-service.module-monitoring-levels.*</pre>
+</td></table><br><p>Returns:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.monitoring-service.module-monitoring-levels.
+connector-connection-pool = OFF
+server.monitoring-service.module-monitoring-levels.
+connector-service = OFF
+server.monitoring-service.module-monitoring-levels.ejb-container = OFF
+server.monitoring-service.module-monitoring-levels.http-service = OFF
+server.monitoring-service.module-monitoring-levels.jdbc-connection-pool = OFF
+server.monitoring-service.module-monitoring-levels.jms-service = OFF
+server.monitoring-service.module-monitoring-levels.jvm = OFF
+server.monitoring-service.module-monitoring-levels.orb = OFF
+server.monitoring-service.module-monitoring-levels.thread-pool = OFF
+server.monitoring-service.module-monitoring-levels.transaction-service = OFF
+server.monitoring-service.module-monitoring-levels.web-container = OFF</pre>
+</td></table><br></li>
+<li><p><b>Use the <tt>set</tt> command to enable monitoring.</b></p><p>For example, to enable monitoring for the HTTP service:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> set --user <i>admin-user</i> 
+server.monitoring-service.module-monitoring-levels.http-service=LOW</pre>
+</td></table><br><p>To disable monitoring, use the <tt>set</tt> command and specify <tt>OFF</tt> for the monitoring level.</p>
+</li>
+</ol><A NAME="ablvs"></A><h2>Admin Console Tasks for Viewing Monitoring Data</h2>
+<ul><li><p><A HREF="ablur.html#ablvt">To view monitoring data in the Admin Console</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvu">Viewing Monitoring Data With the asadmin Tool</A></p>
+</li>
+</ul>
+<A NAME="ablvt"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To view monitoring data in the Admin Console</h3>
+<p>For more information on the attributes for each component or service, refer
+to the<i> Monitoring</i> chapter of the<i> Administration Guide</i>.<A HREF="ablur.html#ablvd">About Statistics for Monitored Components and Services</A>.</p>
+<h5>Steps</h5><ol><li><p><b>Access the Monitoring page. To do this:</b></p><ol Type="a"><li><p><b>In the tree component, select the Application Server node. </b></p></li>
+<li><p><b>Select the Monitor page.</b></p></li>
+<li><p><b>Select the Monitor Values tab.</b></p></li>
+</ol>
+</li>
+<li><p><b>From the View list, select a component or service that has been deployed
+onto the server instance and for which monitoring is enabled.</b></p><p>Monitoring
+data for the selected component or service displays below the View field. For a description
+of the monitorable properties, refer to the<i> Monitoring</i> chapter of the<i> Administration Guide</i>.<A HREF="ablur.html#ablvd">About Statistics for Monitored Components and Services</A>.</p>
+<p>On this page, it is possible to view monitoring data for JVM, Server, Thread
+Pools, HTTP Service, and Transaction Service if monitoring is enabled for these components
+and services. A diagram showing how these components and services are
+organized is shown in <A HREF="ablur.html#abluv">About the Tree Structure of Monitorable Objects</A>.</p>
+</li>
+<li><p><b>If you do not see the component or service you wish to monitor in this
+list, select the
+Setup tab to enable and disable monitoring for selected components and services. </b></p><p>Select OFF to disable monitoring for a component or service. Select LOW
+or HIGH to enable monitoring for a component or service.</p>
+<p>For more information on enabling and disabling monitoring, refer to <A HREF="ablur.html#ablvq">To configure monitoring levels using the Admin Console</A> or <A HREF="ablur.html#ablvr">To configure monitoring using the asadmin tool</A>.</p>
+</li>
+<li><p><b>Select the <i>Applications</i> page to
+view monitoring data for application components that are deployed onto the server
+instance and for which monitoring is enabled. Select the application from the Application
+list. Select the specific component from the Component list.</b></p><p>If no monitoring
+data appears for the application or component, select the
+Setup tab to enable or disable monitoring for a component or service. To monitor
+applications, turn on the container in which they execute. For example, select Low
+or High for the Web Container for web applications and/or the EJB Container for EJB
+applications.</p>
+<p>If no monitoring data is displayed for applications, it
+is most likely that the application does not exist or is not exercised. Applications
+monitoring data is available only when the application exists, monitoring is enabled
+for the application, and the application is being exercised. Once the application
+is executed, it is registered in the monitoring registry and the monitoring data displays.</p>
+<p>Monitoring data for the selected component displays below the selected component.
+For a description of the monitorable properties, refer to the<i> Monitoring</i> chapter of the<i> Administration Guide</i>.<A HREF="ablur.html#ablvd">About Statistics for Monitored Components and Services</A>.
+A diagram showing how these components and services are organized for applications
+can be viewed in <A HREF="ablur.html#abluv">About the Tree Structure of Monitorable Objects</A>.</p>
+</li>
+<li><p><b>Select the <i>Resources</i> page to view monitoring data
+for resources that are deployed onto the server instance and for which monitoring
+has been enabled. Select the resource from the View list. </b></p><p>If the resource
+for which you wish to view monitoring data does not appear, select the
+Setup tab to enable or disable monitoring for a resource.</p>
+<p>If no monitoring
+data is displayed for resources, it is most likely that the resource does not exist
+or is not exercised. Resources monitoring data is available only when the resources
+exist, monitoring is enabled for the resource at a level of HIGH, and the resource
+is being exercised. For example, if you have created a JDBC connector service, but
+applications that use that connector service have not yet requested a connector from
+the service, that service has not yet been created, therefore, no service exists and
+no monitoring data is available. Once the JDBC application is executed and requests
+a connector from a service, the service is registered in the monitoring registry and
+monitoring data appears.</p>
+<p>Monitoring data for the selected component or
+service displays below the View field. For a description of the monitorable properties,
+refer to the<i> Monitoring</i> chapter of the<i> Administration Guide</i>.<A HREF="ablur.html#ablvd">About Statistics for Monitored Components and Services</A>. A diagram showing how these
+components and services are organized for resources can be viewed in <A HREF="ablur.html#abluv">About the Tree Structure of Monitorable Objects</A>.</p>
+</li>
+<li><p><b>Select the <i>Transactions</i> page to freeze the transaction
+subsystem in order to roll back transactions and determine the transactions that are
+in process at the time of the freeze. </b></p></li>
+<li><p><b>To enable monitoring for the Transaction Service, select the
+Setup tab and make sure that Transaction Service is set to LOW. </b></p><p>To
+freeze the Transaction Service in order to roll back transactions, select Freeze.
+To rollback a transaction, select the checkbox beside the transaction and click Rollback.</p>
+</li>
+</ol><h5>More Information<br>Equivalent asadmin command</h5>
+<p><tt>get --monitor</tt></p>
+<p>For example, to view monitoring data for the JVM, use the following <tt>asadmin</tt> command:</p>
+<p><tt>asadmin> get --user adminuser --monitor server.jvm.*</tt></p>
+<h5>See Also</h5><ul><li><p><A HREF="ablur.html#ablvq">To configure monitoring levels using the Admin Console</A></p>
+</li>
+<li><p>The <i>Monitoring Components and Services</i> chapter
+in the Application Server Administration Guide (For the guide's URL, see <A HREF="ablaq.html#ablcr">Further Information</A>.)</p>
+</li>
+</ul>
+<A NAME="ablvu"></A><h3>Viewing Monitoring Data With the asadmin Tool</h3>
+<ul><li><p><A HREF="ablur.html#ablvv">To use the asadmin tool to view monitoring data</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvw">Understanding and Specifying Dotted Names</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvx">Examples of the list and get Commands</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvy">Examples for the list --user admin-user --monitor Command</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablwb">Examples for the get --user admin-user --monitor Command</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablwg">To use the PetStore example</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablwh">Expected Output for list and get Commands at All Levels</A></p>
+</li>
+</ul>
+<A NAME="ablvv"></A><h4><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To use the asadmin tool to view monitoring data</h4>
+<p>To view monitoring data using the <tt>asadmin</tt> tool, use the <tt>asadmin list</tt> and <tt>asadmin get</tt> commands followed by the
+dotted name of a monitorable object, as follows.</p>
+<h5>Steps</h5><ol><li><p><b>To view the names of the objects that can be monitored, use the <tt>asadmin list</tt> command. </b></p><p>For example, to view a list of application
+components and subsystems that have monitoring enable for the server instance, type
+the following command in a terminal window:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> list --user adminuser --monitor server</pre>
+</td></table><br><p>The preceding command returns a list of application components and subsystems
+that have monitoring enabled, for example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.resources
+server.connector-service
+server.orb
+server.jms-service
+server.jvm
+server.applications
+server.http-service
+server.thread-pools</pre>
+</td></table><br><p>For further information on using
+the <tt>list</tt> command, refer to the <i>Monitoring Components
+and Services</i> chapter in the <i>Administration Guide</i>.
+(For the guide's URL, see <A HREF="ablaq.html#ablcr">Further Information</A>.)</p>
+<p>For further examples using the <tt>list</tt> command,
+refer to <A HREF="ablur.html#ablvx">Examples of the list and get Commands</A>. For
+further information on the dotted names you can use with the <tt>list</tt> command,
+refer to <A HREF="ablur.html#ablvw">Understanding and Specifying Dotted Names</A>.</p>
+</li>
+<li><p><b>To display monitoring statistics for an application component or subsystem
+for which monitoring has been enabled, use the <tt>asadmin get</tt> command. </b></p><p>To get the statistics, type the <tt>asadmin get</tt> command
+in a terminal window, specifying a name displayed by the <tt>list</tt> command
+in the preceding step. The following example attempts to get all attributes from a
+subsystem for a specific object:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> get --user adminuser --monitor server.jvm.*</pre>
+</td></table><br><p>The command returns the following attributes and data:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.jvm.dotted-name = server.jvm
+server.jvm.heapsize-current = 21241856
+server.jvm.heapsize-description = Provides statistical information about 
+   the JVM's memory heap size.
+server.jvm.heapsize-highwatermark = 21241856
+server.jvm.heapsize-lastsampletime = 1080232913938
+server.jvm.heapsize-lowerbound = 0
+server.jvm.heapsize-lowwatermark = 0
+server.jvm.heapsize-name = JvmHeapSize
+server.jvm.heapsize-starttime = 1080234457308
+server.jvm.heapsize-unit = bytes
+server.jvm.heapsize-upperbound = 518979584
+server.jvm.uptime-count = 1080234457308
+server.jvm.uptime-description = Provides the amount of time the JVM has 
+   been running.
+server.jvm.uptime-lastsampletime = 1080234457308
+server.jvm.uptime-name = JvmUpTime
+server.jvm.uptime-starttime = 1080232913928
+server.jvm.uptime-unit = milliseconds</pre>
+</td></table><br><p>For further information
+using the <tt>get</tt> command, refer to the <i>Monitoring Components
+and Services</i> chapter in the <i>Administration Guide</i>.
+(For the guide's URL, see <A HREF="ablaq.html#ablcr">Further Information</A>.)</p>
+<p>For further examples using the <tt>get</tt> command,
+refer to <A HREF="ablur.html#ablvx">Examples of the list and get Commands</A>. For
+further information on the dotted names you can use with the <tt>get</tt> command,
+refer to <A HREF="ablur.html#ablvw">Understanding and Specifying Dotted Names</A>.</p>
+</li>
+</ol><h5>See Also</h5><ul><li><p><i>Administration Guide</i> (For the guide's
+URL, see <A HREF="ablaq.html#ablcr">Further Information</A>.)</p>
+</li>
+<li><p><A HREF="ablur.html#ablvq">To configure monitoring levels using the Admin Console</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablvt">To view monitoring data in the Admin Console</A></p>
+</li>
+</ul>
+<A NAME="ablvw"></A><h4>Understanding and
+Specifying Dotted Names</h4>
+<p>In the <tt>asadmin list</tt> and <tt>get</tt> commands,
+specify the dotted name of monitorable objects. All child objects are addressed using
+the dot (.) character as separator, thus these are referred to as <i>dotted
+names</i>. If a child node is of singleton type, then only the monitoring object
+type is needed to address the object, otherwise a name of the form <tt>type.name</tt> is needed to address the object.</p>
+<p>For example, <tt>http-service</tt> is one of the valid monitorable
+object types and is a singleton. To address a singleton child node representing the <tt>http-service</tt> of instance <tt>server</tt>, the dotted name is:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.http-service</pre>
+</td></table><br><p>Another example, <tt>application</tt>, is a valid monitorable object
+type and is not a singleton. To address a non-singleton child node representing, for
+example, the application <tt>PetStore</tt>, the dotted name is:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.applications.petstore</pre>
+</td></table><br><p>The dotted names can also address specific attributes in monitorable objects.
+For example, <tt>http-service</tt> has a monitorable attribute called <tt>bytesreceived-lastsampletime</tt>. The following name addresses the <tt>bytesreceived</tt> attribute:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.http-service.server.http-listener-1.
+  bytesreceived-lastsampletime</pre>
+</td></table><br><p>The administrator is not expected to know the valid dotted names for <tt>asadmin list</tt> and <tt>get</tt> commands. The <tt>list</tt> command
+displays available monitorable objects, while the <tt>get</tt> command used
+with a wildcard parameter allows the inspection of all available attributes on any
+monitorable object.</p>
+<p>The underlying assumptions for using the <tt>list</tt> and <tt>get</tt> commands with dotted names are:</p>
+<ul><li><p>Any <tt>list</tt> command that has a dotted name that is <b>not</b> followed by a wildcard (<tt>*</tt>) gets as
+its result the current node's immediate children. For example, <tt>list
+--user</tt> <i>adminuser</i> <tt>--monitor</tt> <tt>server</tt> lists all immediate children belonging to the <tt>server</tt> node.</p>
+</li>
+<li><p>Any <tt>list</tt> command that has a dotted name followed
+by a wildcard of the form <tt>.*</tt> gets as its result a hierarchical
+tree of children nodes from the current node. For example, <tt>list --user</tt> <i>adminuser</i> <tt>--monitor server.applications.*</tt> lists all
+children of <tt>applications</tt> and their subsequent child nodes and so
+on.</p>
+</li>
+<li><p>Any <tt>list</tt> command that has a dotted name preceded
+or followed by a wildcard of the form <i>*dottedname</i> or <i>dotted * name</i> or <tt><b>dotted name *</b></tt> gets as its result
+all nodes and their children matching the regular expression created by the provided
+matching pattern.</p>
+</li>
+<li><p>A <tt>get</tt> command followed by a <tt>.*</tt> or
+a <tt>*</tt> gets as its result the set of attributes and their values belonging
+to the current node to be matched.</p>
+</li>
+</ul>
+<p>For more information, read <A HREF="ablur.html#ablwh">Expected Output for list and get Commands at All Levels</A>.</p>
+<A NAME="ablvx"></A><h4>Examples
+of the list and get Commands</h4>
+<p>This section contains the following topics:</p>
+<ul><li><p><A HREF="ablur.html#ablvy">Examples for the list --user admin-user --monitor Command</A></p>
+</li>
+<li><p><A HREF="ablur.html#ablwb">Examples for the get --user admin-user --monitor Command</A></p>
+</li>
+</ul>
+<A NAME="ablvy"></A><h4>Examples for the list --user admin-user --monitor
+Command</h4>
+<p><A NAME="indexterm-366"></A><A NAME="indexterm-367"></A>The <tt>list</tt> command provides information about the application
+components and subsystems currently being monitored for the specified server instance
+name. Using this command, you can see the monitorable components and subcomponents
+for a server instance. For a more complete listing of <tt>list</tt> examples,
+see <A HREF="ablur.html#ablwh">Expected Output for list and get Commands at All Levels</A>.</p>
+<A NAME="ablvz"></A><h5>Example 1</h5>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> list --user <i>admin-user</i> --monitor server</pre>
+</td></table><br><p>The preceding command returns a list of application components and subsystems
+that have monitoring enabled, for example:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.resources
+server.orb
+server.jvm
+server.jms-service
+server.connector-service
+server.applications
+server.http-service
+server.thread-pools</pre>
+</td></table><br><p>It is also possible to list applications that are currently monitored in the
+specified server instance. This is useful when particular monitoring statistics are
+sought from an application using the <tt>get</tt> command.</p>
+<A NAME="ablwa"></A><h5>Example 2</h5>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> list --user <i>admin-user</i> --monitor server.applications</pre>
+</td></table><br><p>Returns:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.applications.adminapp
+ server.applications.admingui
+server.applications.myApp</pre>
+</td></table><br><p>For a more comprehensive example, see <A HREF="ablur.html#ablwg">To use the PetStore example</A>.</p>
+<A NAME="ablwb"></A><h4>Examples for the get --user admin-user --monitor
+Command</h4>
+<p>This <A NAME="indexterm-368"></A><A NAME="indexterm-369"></A>command retrieves the following monitored information:</p>
+<ul><li><p>All attribute(s) monitored within a component or subsystem</p>
+</li>
+<li><p>Specific attribute monitored within a component or subsystem</p>
+<p>When an attribute is requested that does not exist for a particular component
+or subsystem, an error is returned. Similarly, when a specific attribute is requested
+that is not active for a component or subsystem, an error is returned.</p>
+<p>Refer to <A HREF="ablur.html#ablwh">Expected Output for list and get Commands at All Levels</A> for more information on the use of the <tt>get</tt> command.</p>
+</li>
+</ul>
+<A NAME="ablwc"></A><h5>Example 1</h5>
+<p>Attempt to get all attributes from a subsystem for a specific object:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> get --user <i>admin-user</i> --monitor server.jvm.*</pre>
+</td></table><br><p>Returns:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.jvm.dotted-name= server.jvm
+server.jvm.heapsize-current = 21241856
+server.jvm.heapsize-description = Provides statistical information about 
+   the JVM's memory heap size.
+server.jvm.heapsize-highwatermark = 21241856
+server.jvm.heapsize-lastsampletime = 1080232913938
+server.jvm.heapsize-lowerbound = 0
+server.jvm.heapsize-lowwatermark = 0
+server.jvm.heapsize-name = JvmHeapSize
+server.jvm.heapsize-starttime = 1080234457308
+server.jvm.heapsize-unit = bytes
+server.jvm.heapsize-upperbound = 518979584
+server.jvm.uptime-count = 1080234457308
+server.jvm.uptime-description = Provides the amount of time the JVM has 
+   been running.
+server.jvm.uptime-lastsampletime = 1080234457308
+server.jvm.uptime-name = JvmUpTime
+server.jvm.uptime-starttime = 1080232913928
+server.jvm.uptime-unit = milliseconds</pre>
+</td></table><br><A NAME="ablwd"></A><h5>Example 2</h5>
+<p>Attempt to get all attributes from a J2EE application:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> get --user <i>admin-user</i> --monitor server.applications.myJ2eeApp.*</pre>
+</td></table><br><p>Returns:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>No matches resulted from the wildcard expression.
+CLI137 Command get failed.</pre>
+</td></table><br><p>There are no monitorable attributes exposed at the J2EE-application level, therefore
+this reply displays.</p>
+<A NAME="ablwe"></A><h5>Example 3</h5>
+<p>Attempt to get a specific attribute from a subsystem:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> get --user <i>admin-user</i> --monitor server.jvm.uptime-lastsampletime</pre>
+</td></table><br><p>Returns:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.jvm.uptime-lastsampletime = 1093215374813</pre>
+</td></table><br><A NAME="ablwf"></A><h5>Example 4</h5>
+<p>Attempt to get an unknown attribute from within a subsystem attribute:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> get --user <i>admin-user</i> --monitor server.jvm.badname</pre>
+</td></table><br><p>Returns:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>No such attribute found from reflecting the corresponding Stats 
+interface: [badname]
+CLI137 Command get failed.</pre>
+</td></table><br><A NAME="ablwg"></A><h4><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To use the PetStore example</h4>
+<p>The following example illustrates how the <tt>asadmin</tt> tool might
+be used for monitoring purposes.</p>
+<p>A user wants to inspect the number of calls made to a method in the sample <tt>PetStore</tt> application after it has been deployed onto the Application Server.
+The instance onto which it has been deployed is named <tt>server</tt>. A
+combination of the <tt>list</tt> and <tt>get</tt> commands are
+used to access desired statistics on a method.</p>
+<h5>Steps</h5><ol><li><p><b>Start the Application Server and the <tt>asadmin</tt> tool.</b></p></li>
+<li><p><b>Set some useful environment variables to avoid entering them for every
+command:</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> export AS_ADMIN_USER=admin AS_ADMIN_PASSWORD=admin123
+asadmin>export AS_ADMIN_HOST=localhost AS_ADMIN_PORT=4849</pre>
+</td></table><br></li>
+<li><p><b>List monitorable components for instance <tt>server</tt>:</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> list --user adminuser --monitor server*</pre>
+</td></table><br><p>Returns (output will be similar to):</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server
+server.applications
+server.applications.CometEJB
+server.applications.ConverterApp
+server.applications.petstore
+server.http-service
+server.resources
+server.thread-pools</pre>
+</td></table><br><p>The list of monitorable components includes <tt>thread-pools</tt>, <tt>http-service</tt>, <tt>resources</tt>, and all deployed (and enabled) <tt>applications</tt>.</p>
+</li>
+<li><p><b>List the monitorable subcomponents in the <tt>PetStore</tt> application
+(<tt>-m</tt> can be used instead of <tt>--monitor</tt>):</b></p><p><tt>asadmin> list -m server.applications.petstore</tt></p>
+<p>Returns:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.applications.petstore.signon-ejb_jar
+server.applications.petstore.catalog-ejb_jar
+server.applications.petstore.uidgen-ejb_jar
+server.applications.petstore.customer-ejb_jar
+server.applications.petstore.petstore-ejb_jar
+server.applications.petstore.petstore\.war
+server.applications.petstore.AsyncSenderJAR_jar
+server.applications.petstore.cart-ejb_jar</pre>
+</td></table><br></li>
+<li><p><b>List the monitorable subcomponents in the EJB module <tt>signon-ejb_jar</tt> of the <tt>PetStore</tt> application:</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> list -m server.applications.petstore.signon-ejb_jar</pre>
+</td></table><br><p>Returns:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.applications.petstore.signon-ejb_jar.SignOnEJB
+server.applications.petstore.signon-ejb_jar.UserEJB</pre>
+</td></table><br></li>
+<li><p><b>List the monitorable subcomponents in the entity bean <tt>UserEJB</tt> for the EJB module <tt>signon-ejb_jar</tt> of the <tt>PetStore</tt> application:</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> list -m server.applications.petstore.signon-ejb_jar.UserEJB</pre>
+</td></table><br><p>Returns (with dotted name removed for space considerations):</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.applications.petstore.signon-ejb_jar.UserEJB.bean-cache
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-pool</pre>
+</td></table><br></li>
+<li><p><b>List the monitorable subcomponents in the method <tt>getUserName</tt> for the entity bean <tt>UserEJB</tt> in the EJB module <tt>signon-ejb_jar</tt> of the <tt>PetStore</tt> application:</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> list -m 
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.getUserName</pre>
+</td></table><br><p>Returns:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>Nothing to list at server.applications.petstore.signon-ejb_jar.
+UserEJB.bean-methods.getUserName. To get the valid names beginning with a 
+string, use the wildcard "*" character. For example, to list all names 
+that begin with "server", use "list server*".</pre>
+</td></table><br></li>
+<li><p><b>There are no monitorable subcomponents for methods. Get all monitorable
+statistics for the method <tt>getUserName</tt>.</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> get -m 
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.getUserName.*</pre>
+</td></table><br><p>Returns:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.executiontime-count = 0
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.executiontime-description = Provides the time in milliseconds 
+   spent during the last successful/unsuccessful attempt to execute the 
+   operation.
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.executiontime-lastsampletime = 1079981809259
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.executiontime-name = ExecutionTime
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.executiontime-starttime = 1079980593137
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.executiontime-unit = count
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.methodstatistic-count = 0
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.methodstatistic-description = Provides the number of times an 
+   operation was called, the total time that was spent during the 
+   invocation and so on.
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.methodstatistic-lastsampletime = 1079980593137
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.methodstatistic-maxtime = 0
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.methodstatistic-mintime = 0
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.methodstatistic-name = ExecutionTime
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.methodstatistic-starttime = 1079980593137
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.methodstatistic-totaltime = 0
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.methodstatistic-unit =
+ server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.totalnumerrors-count = 0
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.totalnumerrors-description = Provides the total number of errors 
+   that occured during invocation or execution of an operation.
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.totalnumerrors-lastsampletime = 1079981809273
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.totalnumerrors-name = TotalNumErrors
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.totalnumerrors-starttime = 1079980593137
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.totalnumerrors-unit = count
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.totalnumsuccess-count = 0
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.totalnumsuccess-description = Provides the total number of 
+   successful invocations of the method.
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.totalnumsuccess-lastsampletime = 1079981809255
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.totalnumsuccess-name = TotalNumSuccess
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.totalnumsuccess-starttime = 1079980593137
+server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.totalnumsuccess-unit = count</pre>
+</td></table><br></li>
+<li><p><b>To also get a specific statistic, such as execution time, use a command
+such as the following:</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin> get -m server.applications.petstore.signon-ejb_jar.
+UserEJB.bean-methods.getUserName.executiontime-count</pre>
+</td></table><br><p>Returns:</p>
+<table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.applications.petstore.signon-ejb_jar.UserEJB.bean-methods.
+getUserName.executiontime-count = 1</pre>
+</td></table><br></li>
+</ol><A NAME="ablwh"></A><h4>Expected Output for list and get Commands at All Levels</h4>
+<p>The following tables show the command, dotted name, and corresponding output
+at each level of the tree.</p>
+<p><b>Table 17-33 </b>Top Level</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Command</p></th><th scope="col"><p>Dotted Name</p></th><th scope="col"><p>Output</p></th></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server</tt></p></td><td><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>server.applicationsserver.thread-poolsserver.
+resourcesserver.http-serviceserver.transaction-
+serviceserver.orb.connection-managersserver.orb.
+connection-managers.orb\.Connections\.Inbound\.
+AcceptedConnectionsserver.jvm</pre>
+</td></table><br></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.*</tt></p></td><td><p>Hierarchy of child nodes below this node.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.*</tt></p></td><td><p>No output except a message saying there are no attributes at this node.</p></td></tr>
+</table><p>The following table shows the command, dotted name, and corresponding output
+for the applications level.</p>
+<p><b>Table 17-34 </b>Applications Level</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Command</p></th><th scope="col"><p>Dotted Name</p></th><th scope="col"><p>Output</p></th></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications</tt></p><p>or</p><p><tt>*applications</tt></p></td><td><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>appl1app2web-module1_warejb-module2_jar...</pre>
+</td></table><br></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.*</tt></p><p>or</p><p><tt>*applications.*</tt></p></td><td><p>Hierarchy of child nodes below this node.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.applications.*</tt></p><p>or</p><p><tt>*applications.*</tt></p></td><td><p>No output except message saying there are no attributes at this node.</p></td></tr>
+</table><p>The following table shows the command, dotted name, and corresponding output
+for stand-alone modules and enterprise applications at the applications level.</p>
+<p><b>Table 17-35 </b>Applications - Enterprise
+Applications and Standalone Modules</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Command</p></th><th scope="col"><p>Dotted Name</p></th><th scope="col"><p>Output</p></th></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.app1</tt></p><p>or</p><p><tt>*app1</tt></p><p>Note: this level is only applicable if an enterprise application has been deployed.
+It is not applicable if a standalone module is deployed.</p></td><td><p><tt>ejb-module1_jarweb-module2_warejb-module3_jarweb-module3_war...</tt></p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.app1.*</tt></p><p>or</p><p><tt>*app1.*</tt></p></td><td><p>Hierarchy of child nodes below this node.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.applications.app1.*</tt></p><p>or</p><p><tt>*app1.*</tt></p></td><td><p>No output except message saying there are no attributes at this node.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.app1.ejb-module1_jar</tt></p><p>or</p><p><tt>*ejb-module1_jar</tt></p><p>or</p><p><tt>server.applications.ejb-module1_jar</tt></p></td><td><p><tt>bean1bean2bean3...</tt></p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.app1.ejb-module1_jar</tt></p><p>or</p><p><tt>*ejb-module1_jar</tt></p><p>or</p><p><tt>server.applications.ejb-module1_jar</tt></p></td><td><p>Hierarchy of child nodes below this node.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.applications.app1.ejb-module1_jar.*</tt></p><p>or</p><p><tt>*ejb-module1_jar.*</tt></p><p>or</p><p><tt>server.applications.ejb-module1_jar.*</tt></p></td><td><p>No output except message saying there are no attributes at this node.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.app1.ejb-module1_jar.bean1</tt></p><p>Note: In standalone modules, the node containing the application name (<tt>app1</tt> in this example) will not appear.</p></td><td><p>List of child nodes:</p><p><tt>bean-poolbean-cachebean-method</tt></p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.app1.ejb-module1_jar.bean1</tt></p><p>Note: In standalone modules, the node containing the application name (<tt>app1</tt> in this example) will not appear.</p></td><td><p>Hierarchy of child nodes and a list of all attributes for this node and for
+any subsequent child nodes.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.applications.app1.ejb-module1_jar.bean1.*</tt></p><p>Note: In standalone modules, the node containing the application name (<tt>app1</tt> in this example) does not appear.</p></td><td><p>The following attributes and their associated values:</p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>CreateCount_CountCreateCount_
+DescriptionCreateCount_
+LastSampleTimeCreateCount_
+NameCreateCount_
+StartTimeCreateCount_
+UnitMethodReadyCount_
+CurrentMethodReadyCount_
+DescriptionMethodReadyCount_
+HighWaterMarkMethodReadyCount_
+LastSampleTimeMethodReadyCount_
+LowWaterMarkMethodReadyCount_
+NameMethodReadyCount_
+StartTimeMethodReadyCount_
+UnitRemoveCount_CountRemoveCount_
+DescriptionRemoveCount_
+LastSampleTimeRemoveCount_
+NameRemoveCount_StartTimeAttribute 
+RemoveCount_Unit</pre>
+</td></table><br></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.app1.ejb-module1_jar.bean1.bean-pool</tt></p><p>Note: In standalone modules, the node containing the application name (<tt>app1</tt> in this example) will not appear.</p></td><td><p>No attributes, but a message saying: Nothing to list at <tt>server.applications.appl.ejb-module1_jar.bean1-cache</tt>. To get the valid names beginning with a string, use the wildcard (*) character.
+For example, to list all names that begin with <tt>server</tt>, use <tt>list server*</tt>.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.applications.app1.ejb-module1_jar.bean1.bean-pool.*</tt></p><p>Note: In standalone modules, the node containing the application name (<tt>app1</tt> in this example) will not appear.</p></td><td><p>List of attributes and values corresponding to EJB Pool attributes as described
+in Table 1-4.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.app1.ejb-module1_jar.bean1.bean-cache</tt></p><p>Note: In standalone modules, the node containing the application name (<tt>app1</tt> in this example) will not appear.</p></td><td><p>No attributes, but a message saying "Use get command with the --monitor
+option to view this node's attributes and values."</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.applications.app1.ejb-module1_jar.bean1.bean-cache.*</tt></p><p>Note: In standalone modules, the node containing the application name (<tt>app1</tt> in this example) does not appear.</p></td><td><p>List of attributes and values corresponding to EJB Cache attributes as described
+in Table 1-5.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.app1.ejb-module1_jar.bean1.bean-method.method1</tt></p><p>Note: In standalone modules, the node containing the application name (<tt>app1</tt> in this example) will not appear.</p></td><td><p>No attributes, but a message saying "Use get command with the --monitor
+option to view this node's attributes and values."</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.applications.app1.ejb-module1_jar.bean1.bean-method.method1.*</tt></p><p>Note: In standalone modules, the node containing the application name (<tt>app1</tt> in this example) will not appear.</p></td><td><p>List of attributes and values corresponding to EJB Methods attributes as described
+in Table 1-2.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.app1.web-module1_war</tt></p></td><td><p>Displays the virtual server(s) assigned to the module.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.applications.app1.web-module1_war.*</tt></p></td><td><p>No output except a message saying there are no attributes at this node.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.app1.web-module1_war.virtual_server</tt></p></td><td><p>Displays list of servlets registered.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.applications.app1.web-module1_war.virtual_server.*</tt></p></td><td><p>No output except a message saying there are no attributes at this node.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.applications.app1.web-module1_war.virtual_server.servlet1</tt></p></td><td><p>No attributes, but a message saying "Use get command with the --monitor
+option to view this node's attributes and values."</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.applications.app1.web-module1_war.virtual_server.servlet1.*</tt></p></td><td><p>List of attributes and values corresponding to web container (Servlet) attributes
+as described in Table 1-7.</p></td></tr>
+</table><p>The following table shows the command, dotted name, and corresponding output
+for the HTTP Service level.</p>
+<p><b>Table 17-36 </b>HTTP-Service Level</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Command</p></th><th scope="col"><p>Dotted Name</p></th><th scope="col"><p>Output</p></th></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.http-service</tt></p></td><td><p>List of virtual servers.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.http-service.*</tt></p></td><td><p>No output except message saying there are no attributes at this node.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.http-service.server</tt></p></td><td><p>List of HTTP Listeners.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.http-service.server.*</tt></p></td><td><p>No output except message saying there are no attributes at this node.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.http-service.server.http-listener1</tt></p></td><td><p>No attributes, but a message saying "Use get command with the --monitor
+option to view this node's attributes and values."</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.http-service.server.*</tt></p></td><td><p>List of attributes and values corresponding to HTTP Service attributes as described
+in Table 1-9.</p></td></tr>
+</table><p>The following table shows the command, dotted name, and corresponding output
+for the thread pools level.</p>
+<p><b>Table 17-37 </b>Thread-Pools Level</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Command</p></th><th scope="col"><p>Dotted Name</p></th><th scope="col"><p>Output</p></th></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.thread-pools</tt></p></td><td><p>List of thread-pool names.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.thread-pools.*</tt></p></td><td><p>No output except message saying there are no attributes at this node.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.thread-pools.orb\.threadpool\.thread-pool-1</tt></p></td><td><p>No attributes, but a message saying "Use get command with the --monitor
+option to view this node's attributes and values."</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.thread-pools..orb\.threadpool\.thread-pool-1.*</tt></p></td><td><p>List of attributes and values corresponding to Thread Pool attributes as described
+in Table 1-14.</p></td></tr>
+</table><p>The following table shows the command, dotted name, and corresponding output
+for the resources level.</p>
+<p><b>Table 17-38 </b>Resources Level</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Command</p></th><th scope="col"><p>Dotted Name</p></th><th scope="col"><p>Output</p></th></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.resources</tt></p></td><td><p>List of pool names.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.resources.*</tt></p></td><td><p>No output except message saying there are no attributes at this node.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.resources.jdbc-connection-pool-pool.connection-pool1</tt></p></td><td><p>No attributes, but a message saying "Use get command with the --monitor
+option to view this node's attributes and values."</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.resources.jdbc-connection-pool-pool.connection-pool1.*</tt></p></td><td><p>List of attributes and values corresponding to Connection Pool attributes as
+described in Table 1-10.</p></td></tr>
+</table><p>The following table shows the command, dotted name, and corresponding output
+for the transaction service level.</p>
+<p><b>Table 17-39 </b>Transaction-Service Level</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Command</p></th><th scope="col"><p>Dotted Name</p></th><th scope="col"><p>Output</p></th></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.transaction-service</tt></p></td><td><p>No attributes, but a message saying "Use get command with the --monitor
+option to view this node's attributes and values."</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.transaction-service.*</tt></p></td><td><p>List of attributes and values corresponding to Transaction Service attributes
+as described in Table 1-15.</p></td></tr>
+</table><p>The following table shows the command, dotted name, and corresponding output
+for the ORB level.</p>
+<p><b>Table 17-40 </b>ORB Level</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Command</p></th><th scope="col"><p>Dotted Name</p></th><th scope="col"><p>Output</p></th></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.orb</tt></p></td><td><p><tt>server-orb.connection-managers</tt></p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.orb.*</tt></p></td><td><p>No output except message saying there are no attributes at this node.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.orb.connection-managers</tt></p></td><td><p>Name(s) of ORB connection managers.</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.orb.connection-managers.*</tt></p></td><td><p>No output except message saying there are no attributes at this node.</p></td></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.orb.connection-managers.orb\.Connections\.Inbound\.AcceptedConnections</tt></p></td><td><p>No attributes, but a message saying "Use get command with the --monitor
+option to view this node's attributes and values."</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.orb.connection-managers.orb\.Connections\.Inbound\.AcceptedConnections.*</tt></p></td><td><p>List of attributes and values corresponding to ORB Connection Manager attributes
+as described in Table 1-13.</p></td></tr>
+</table><p>The following table shows the command, dotted name, and corresponding output
+for the JVM level.</p>
+<p><b>Table 17-41 </b>JVM Level</p>
+
+<table cellspacing="5" border="1">
+<tr><th scope="col"><p>Command</p></th><th scope="col"><p>Dotted Name</p></th><th scope="col"><p>Output</p></th></tr>
+<tr><td><p><tt>list -m</tt></p></td><td><p><tt>server.jvm</tt></p></td><td><p>No attributes, but a message saying "Use get command with the <tt>--monitor</tt> option to view this node's attributes and values."</p></td></tr>
+<tr><td><p><tt>get -m</tt></p></td><td><p><tt>server.jvm.*</tt></p></td><td><p>List of attributes and values corresponding to JVM attributes as described in
+Table 1-16.</p></td></tr>
+</table><A NAME="ablwi"></A><h2>Using JConsole</h2>
+<p>For JConsole to work with the Application Server, security has to be disabled for
+the JMX connector. The current version of the Application Server (SE/EE edition) has security
+enabled by default.</p>
+<A NAME="toc-436"></A><h3><IMG border="0" alt="Procedure" src="graphics/procedure.gif">To disable security for the JMX Connector</h3>
+<h5>Steps</h5><ol><li><p><b>Use the Admin Console to disable security for the JMX Connector. To do
+this from the Admin Console,</b></p><ol Type="a"><li><p><b>Expand the Node Agent.</b></p></li>
+<li><p><b>Select the Node Agent.</b></p></li>
+<li><p><b>Deselect SSL3 and TLS in JMX tab.</b></p></li>
+<li><p><b>Select Save.</b></p></li>
+</ol>
+</li>
+<li><p><b>Use <tt>asadmin</tt> to disable security for the JMX Connector.
+To do this from a terminal window or command prompt,</b></p><ol Type="a"><li><p><b>Enter this command:</b></p><table cellpadding="4" border="1" cols="1" width="100%"><td><pre>asadmin set server.admin-service.jmx-connector.system.security-enabled=false</pre>
+</td></table><br></li>
+<li><p><b>Restart the domain application server (DAS).</b></p><p>For the Platform
+Edition version, the JMX Connector is disabled by default, therefore there is no need
+to change any configuration for Platform Edition.</p>
+</li>
+</ol>
+</li>
+<li><p><b>Start JConsole and enter the JMX URL, user name, and password on the Advanced
+tab for logging in. The JMX URL is of the form:</b></p><p><tt>service:jmx:rmi:///jndi/rmi://&lt;</tt><tt>your machine name</tt><tt>>:&lt;</tt><tt>port</tt><tt>>/management/rmi-jmx-connector</tt></p>
+<p>NOTE: You
+can get the exact JMX URL from the admin <tt>server.log</tt> file if you
+search for <tt>message ADM1501</tt>.</p>
+</li>
+</ol>
+            <!--stopindex-->
+<br>
+<A HREF="abluj.html">Previous</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="toc.html">Contents</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="idx.html">Index</A>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A HREF="gbnfd.html">Next</A>
+</body>
+</html>
