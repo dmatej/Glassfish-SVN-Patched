@@ -1,0 +1,1 @@
+java -jar %~dp0\..\lib\admin-cli-10.0-SNAPSHOT.jar %*
