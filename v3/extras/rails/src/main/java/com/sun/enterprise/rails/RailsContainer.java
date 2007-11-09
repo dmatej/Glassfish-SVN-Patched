@@ -26,9 +26,9 @@ package com.sun.enterprise.rails;
 
 import org.jvnet.hk2.annotations.Service;
 import com.sun.grizzly.jruby.RubyObjectPool;
-import org.jvnet.glassfish.api.ContractProvider;
-import org.jvnet.glassfish.api.container.Container;
-import org.jvnet.glassfish.api.container.ContainerProvider;
+import org.glassfish.api.ContractProvider;
+import org.glassfish.api.container.Container;
+import org.glassfish.api.container.ContainerProvider;
 import org.jvnet.hk2.component.PostConstruct;
 import org.jvnet.hk2.component.PreDestroy;
 import com.sun.logging.LogDomains;

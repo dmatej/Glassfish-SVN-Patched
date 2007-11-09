@@ -37,8 +37,8 @@ import com.sun.grizzly.tcp.Response;
 
 import com.sun.phobos.container.RequestWrapper;
 import com.sun.phobos.container.ResponseWrapper;
-import org.jvnet.glassfish.api.deployment.ApplicationContainer;
-import org.jvnet.glassfish.api.container.Adapter;
+import org.glassfish.api.deployment.ApplicationContainer;
+import org.glassfish.api.container.Adapter;
 
 
 /**

@@ -43,10 +43,10 @@ import org.apache.catalina.Host;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.core.StandardHost;
 import com.sun.grizzly.tcp.Adapter;
-import org.jvnet.glassfish.api.deployment.Deployer;
-import org.jvnet.glassfish.api.deployment.DeploymentContext;
-import org.jvnet.glassfish.api.deployment.MetaData;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
+import org.glassfish.api.deployment.Deployer;
+import org.glassfish.api.deployment.DeploymentContext;
+import org.glassfish.api.deployment.MetaData;
+import org.glassfish.api.deployment.archive.ReadableArchive;
 import org.jvnet.hk2.annotations.Inject;
 import org.jvnet.hk2.annotations.Service;
 

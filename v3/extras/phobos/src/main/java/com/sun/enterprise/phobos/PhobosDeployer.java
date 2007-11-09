@@ -25,9 +25,9 @@ package com.sun.enterprise.phobos;
 
 import com.sun.enterprise.v3.deployment.AbstractDeployer;
 import com.sun.enterprise.v3.deployment.DeployCommand;
-import org.jvnet.glassfish.api.deployment.Deployer;
-import org.jvnet.glassfish.api.deployment.DeploymentContext;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
+import org.glassfish.api.deployment.Deployer;
+import org.glassfish.api.deployment.DeploymentContext;
+import org.glassfish.api.deployment.archive.ReadableArchive;
 import org.jvnet.hk2.annotations.Service;
 
 import java.io.File;

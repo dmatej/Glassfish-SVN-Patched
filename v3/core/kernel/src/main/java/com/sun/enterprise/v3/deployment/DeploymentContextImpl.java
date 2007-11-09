@@ -24,9 +24,9 @@
 package com.sun.enterprise.v3.deployment;
 
 import java.lang.instrument.ClassFileTransformer;
-import org.jvnet.glassfish.api.deployment.DeploymentContext;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
+import org.glassfish.api.deployment.DeploymentContext;
 
+import org.glassfish.api.deployment.archive.ReadableArchive;
 import java.util.Properties;
 import java.util.Map;
 import java.util.HashMap;

@@ -1,5 +1,7 @@
 package com.sun.enterprise.config.serverbeans;
 
+import java.beans.PropertyVetoException;
+
 /**
  * Tag Interface for any module
  *
@@ -21,6 +23,6 @@ public interface Module {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setName(String value);
+    public void setName(String value) throws PropertyVetoException;
 
 }

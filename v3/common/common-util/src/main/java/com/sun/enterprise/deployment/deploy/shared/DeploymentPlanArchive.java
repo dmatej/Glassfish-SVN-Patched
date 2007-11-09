@@ -24,8 +24,8 @@
 package com.sun.enterprise.deployment.deploy.shared;
 
 import com.sun.enterprise.util.io.FileUtils;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
 
+import org.glassfish.api.deployment.archive.ReadableArchive;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;

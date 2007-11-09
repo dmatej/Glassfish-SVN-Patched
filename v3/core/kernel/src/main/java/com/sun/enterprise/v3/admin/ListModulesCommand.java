@@ -25,10 +25,10 @@ package com.sun.enterprise.v3.admin;
 
 import org.jvnet.hk2.annotations.Service;
 import org.jvnet.hk2.annotations.Inject;
-import org.jvnet.glassfish.api.admin.AdminCommand;
-import org.jvnet.glassfish.api.admin.AdminCommandContext;
-import org.jvnet.glassfish.api.ActionReport;
-import org.jvnet.glassfish.api.I18n;
+import org.glassfish.api.admin.AdminCommand;
+import org.glassfish.api.admin.AdminCommandContext;
+import org.glassfish.api.ActionReport;
+import org.glassfish.api.I18n;
 import com.sun.enterprise.module.ModulesRegistry;
 import com.sun.enterprise.module.Module;
 import com.sun.enterprise.module.ModuleState;

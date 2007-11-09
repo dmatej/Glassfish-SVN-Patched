@@ -38,7 +38,7 @@ package com.sun.enterprise.deployment.annotation.factory;
 import com.sun.enterprise.deployment.annotation.AnnotationHandler;
 import com.sun.enterprise.deployment.annotation.AnnotationProcessor;
 import com.sun.enterprise.deployment.annotation.impl.AnnotationProcessorImpl;
-import org.jvnet.glassfish.api.ContractProvider;
+import org.glassfish.api.ContractProvider;
 import org.jvnet.hk2.annotations.Inject;
 import org.jvnet.hk2.annotations.Scoped;
 import org.jvnet.hk2.annotations.Service;

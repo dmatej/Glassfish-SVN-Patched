@@ -40,8 +40,8 @@ import com.sun.enterprise.deployment.BundleDescriptor;
 import com.sun.enterprise.deployment.ServiceReferenceDescriptor;
 import com.sun.enterprise.deployment.WebService;
 import com.sun.enterprise.util.LocalStringManagerImpl;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
 
+import org.glassfish.api.deployment.archive.ReadableArchive;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;

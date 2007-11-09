@@ -23,8 +23,8 @@
 
 package com.sun.enterprise.deployment.backend;
 
-import org.jvnet.glassfish.api.deployment.archive.Archive;
 
+import org.glassfish.api.deployment.archive.Archive;
 import java.io.*;
 import java.util.Enumeration;
 import java.util.jar.JarFile;

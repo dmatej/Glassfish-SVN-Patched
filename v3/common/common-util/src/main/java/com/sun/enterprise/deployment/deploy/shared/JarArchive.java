@@ -23,8 +23,8 @@
 
 package com.sun.enterprise.deployment.deploy.shared;
 
-import org.jvnet.glassfish.api.deployment.archive.Archive;
 
+import org.glassfish.api.deployment.archive.Archive;
 import java.util.Enumeration;
 import java.util.Vector;
 

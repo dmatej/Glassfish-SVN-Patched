@@ -13,12 +13,12 @@ public interface ConstrainedBean {
 
     public VetoableChangeSupport getVetoableChangeSupport();
 
-    public void addVetoableChangeListener(VetoableChangeListener param0);
+    public void addVetoableChangeListener(VetoableChangeListener listener);
 
-    public void addVetoableChangeListener(String param0, VetoableChangeListener param1);
+    public void addVetoableChangeListener(String propertyName, VetoableChangeListener listener);
 
-    public void removeVetoableChangeListener(String param0, VetoableChangeListener param1);
+    public void removeVetoableChangeListener(String propertyName, VetoableChangeListener listner);
 
-    public void removeVetoableChangeListener(VetoableChangeListener param0);
+    public void removeVetoableChangeListener(VetoableChangeListener listener);
 
 }

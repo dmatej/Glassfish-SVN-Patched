@@ -1,7 +1,7 @@
 package com.sun.enterprise.glassfish.web;
 
-import org.jvnet.glassfish.api.deployment.archive.ArchiveHandler;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
+import org.glassfish.api.deployment.archive.ArchiveHandler;
+import org.glassfish.api.deployment.archive.ReadableArchive;
 import org.jvnet.hk2.annotations.Service;
 import org.apache.catalina.loader.WebappClassLoader;
 

@@ -23,8 +23,8 @@
 
 package com.sun.enterprise.rails;
 
-import org.jvnet.glassfish.api.deployment.ApplicationContainer;
-import org.jvnet.glassfish.api.container.Adapter;
+import org.glassfish.api.deployment.ApplicationContainer;
+import org.glassfish.api.container.Adapter;
 import com.sun.grizzly.jruby.RailsAdapter;
 import com.sun.grizzly.jruby.RubyObjectPool;
 

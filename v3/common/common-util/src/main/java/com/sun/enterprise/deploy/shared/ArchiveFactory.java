@@ -24,9 +24,9 @@
 package com.sun.enterprise.deploy.shared;
 
 import com.sun.logging.LogDomains;
-import org.jvnet.glassfish.api.ContractProvider;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
-import org.jvnet.glassfish.api.deployment.archive.WritableArchive;
+import org.glassfish.api.ContractProvider;
+import org.glassfish.api.deployment.archive.ReadableArchive;
+import org.glassfish.api.deployment.archive.WritableArchive;
 import org.jvnet.hk2.annotations.Inject;
 import org.jvnet.hk2.annotations.Scoped;
 import org.jvnet.hk2.annotations.Service;

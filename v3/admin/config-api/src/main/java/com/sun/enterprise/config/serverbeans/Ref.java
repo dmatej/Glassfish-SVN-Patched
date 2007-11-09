@@ -1,5 +1,7 @@
 package com.sun.enterprise.config.serverbeans;
 
+import java.beans.PropertyVetoException;
+
 /**
  * A domain.xml reference
  *
@@ -9,5 +11,5 @@ public interface Ref {
 
     public String getRef();
 
-    public void setRef(String refName);
+    public void setRef(String refName) throws PropertyVetoException;
 }

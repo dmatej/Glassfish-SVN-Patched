@@ -23,7 +23,7 @@
 
 package com.sun.enterprise.deployment.deploy.shared;
 
-import org.jvnet.glassfish.api.deployment.archive.WritableArchive;
+import org.glassfish.api.deployment.archive.WritableArchive;
 import org.jvnet.hk2.annotations.Service;
 
 import java.io.*;

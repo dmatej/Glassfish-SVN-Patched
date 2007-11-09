@@ -1,8 +1,8 @@
 package com.sun.enterprise.deploy.shared;
 
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
-import org.jvnet.glassfish.api.deployment.archive.WritableArchive;
 
+import org.glassfish.api.deployment.archive.ReadableArchive;
+import org.glassfish.api.deployment.archive.WritableArchive;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.BufferedInputStream;

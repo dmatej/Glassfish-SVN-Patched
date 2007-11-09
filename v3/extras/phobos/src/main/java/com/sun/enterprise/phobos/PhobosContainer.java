@@ -23,8 +23,8 @@
 
 package com.sun.enterprise.phobos;
 
-import org.jvnet.glassfish.api.ContractProvider;
-import org.jvnet.glassfish.api.container.Container;
+import org.glassfish.api.ContractProvider;
+import org.glassfish.api.container.Container;
 import org.jvnet.hk2.annotations.Service;
 
 /**

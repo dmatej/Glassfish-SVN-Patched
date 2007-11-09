@@ -35,8 +35,8 @@
  */
 package com.sun.enterprise.server.logging;
 
-import org.jvnet.glassfish.api.logging.Task;
 
+import org.glassfish.api.logging.Task;
 import java.util.TimerTask;
 
 public class LogRotationTimerTask extends TimerTask {

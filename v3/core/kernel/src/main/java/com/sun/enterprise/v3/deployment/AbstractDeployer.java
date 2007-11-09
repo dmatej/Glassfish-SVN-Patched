@@ -23,8 +23,8 @@
 
 package com.sun.enterprise.v3.deployment;
 
-import org.jvnet.glassfish.api.deployment.DeploymentContext;
-import org.jvnet.glassfish.api.deployment.MetaData;
+import org.glassfish.api.deployment.DeploymentContext;
+import org.glassfish.api.deployment.MetaData;
 import com.sun.enterprise.v3.server.V3Environment;
 import com.sun.enterprise.util.io.FileUtils;
 import com.sun.enterprise.deploy.shared.ArchiveFactory;

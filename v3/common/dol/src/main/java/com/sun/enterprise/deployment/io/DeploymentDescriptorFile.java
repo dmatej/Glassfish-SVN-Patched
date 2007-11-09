@@ -44,7 +44,7 @@ import com.sun.enterprise.deployment.node.SaxParserHandlerFactory;
 import com.sun.enterprise.deployment.util.DOLUtils;
 import com.sun.enterprise.util.LocalStringManagerImpl;
 import com.sun.enterprise.util.io.FileUtils;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
+import org.glassfish.api.deployment.archive.ReadableArchive;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;

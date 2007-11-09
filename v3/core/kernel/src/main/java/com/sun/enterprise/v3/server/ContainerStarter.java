@@ -28,9 +28,9 @@ import com.sun.enterprise.module.impl.CookedModuleDefinition;
 import com.sun.enterprise.v3.admin.Utils;
 import com.sun.enterprise.v3.data.ContainerInfo;
 import com.sun.enterprise.v3.data.ContainerRegistry;
-import org.jvnet.glassfish.api.container.Container;
-import org.jvnet.glassfish.api.container.ContainerProvider;
-import org.jvnet.glassfish.api.container.Sniffer;
+import org.glassfish.api.container.Container;
+import org.glassfish.api.container.ContainerProvider;
+import org.glassfish.api.container.Sniffer;
 import org.jvnet.hk2.component.ComponentException;
 import org.jvnet.hk2.component.Habitat;
 

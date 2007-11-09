@@ -1,9 +1,9 @@
 package com.sun.enterprise.deploy.jar;
 
 import org.jvnet.hk2.annotations.Service;
-import org.jvnet.glassfish.api.deployment.archive.ArchiveHandler;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
 
+import org.glassfish.api.deployment.archive.ArchiveHandler;
+import org.glassfish.api.deployment.archive.ReadableArchive;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;

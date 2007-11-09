@@ -1,7 +1,7 @@
 package com.sun.enterprise.v3.data;
 
 import com.sun.enterprise.v3.data.ContainerInfo;
-import org.jvnet.glassfish.api.deployment.ApplicationContainer;
+import org.glassfish.api.deployment.ApplicationContainer;
 
 /**
  * Information about a module in a container. There is a one to one mapping

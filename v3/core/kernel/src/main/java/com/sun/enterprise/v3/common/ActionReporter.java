@@ -23,8 +23,8 @@
 
 package com.sun.enterprise.v3.common;
 
-import org.jvnet.glassfish.api.ActionReport;
 
+import org.glassfish.api.ActionReport;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;

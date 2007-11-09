@@ -41,8 +41,8 @@ import java.io.File;
 import javax.xml.parsers.*;
 import org.w3c.dom.*;
 import org.jvnet.hk2.annotations.Service;
-import org.jvnet.glassfish.api.ContractProvider;
 
+import org.glassfish.api.ContractProvider;
 import com.sun.enterprise.deployment.*;
 import com.sun.enterprise.deployment.xml.*;
 import com.sun.enterprise.deployment.node.SaxParserHandler;

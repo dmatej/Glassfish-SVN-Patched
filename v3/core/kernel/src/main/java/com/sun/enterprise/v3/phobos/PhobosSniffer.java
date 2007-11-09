@@ -24,9 +24,9 @@
 package com.sun.enterprise.v3.phobos;
 
 import com.sun.enterprise.v3.deployment.GenericSniffer;
-import org.jvnet.glassfish.api.container.Sniffer;
+import org.glassfish.api.container.Sniffer;
 import com.sun.enterprise.module.Module;
-import org.jvnet.glassfish.api.deployment.Deployer;
+import org.glassfish.api.deployment.Deployer;
 import org.jvnet.hk2.annotations.Service;
 
 import java.util.logging.Logger;

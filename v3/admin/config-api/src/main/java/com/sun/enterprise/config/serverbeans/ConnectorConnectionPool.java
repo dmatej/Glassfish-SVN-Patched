@@ -11,12 +11,11 @@ package com.sun.enterprise.config.serverbeans;
 import org.jvnet.hk2.config.Attribute;
 import org.jvnet.hk2.config.Configured;
 import org.jvnet.hk2.config.Element;
+import org.glassfish.api.admin.ConfigBean;
 
 import java.beans.PropertyVetoException;
-import java.beans.VetoableChangeListener;
 import java.beans.VetoableChangeSupport;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -30,7 +29,7 @@ import java.util.List;
     "property"
 }) */
 @Configured
-public class ConnectorConnectionPool implements Resource, Serializable {
+public class ConnectorConnectionPool extends ConfigBean implements Resource, Serializable {
 
     final transient private VetoableChangeSupport support = new VetoableChangeSupport(this);
 
@@ -100,8 +99,8 @@ public class ConnectorConnectionPool implements Resource, Serializable {
     protected String maxConnectionUsageCount;
     protected String description;
     @Element
-    protected List<SecurityMap> securityMap = new ConstrainedList<SecurityMap>("securityMap", support);
-    protected List<Property> property = new ConstrainedList<Property>("property", support);
+    protected List<SecurityMap> securityMap = new ConstrainedList<SecurityMap>(this, "securityMap", support);
+    protected List<Property> property = new ConstrainedList<Property>(this, "property", support);
 
 
 
@@ -121,12 +120,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setName(String value) {
-        try {
-            support.fireVetoableChange("name", this.name, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setName(String value) throws PropertyVetoException {
+        support.fireVetoableChange("name", this.name, value);
+
         this.name = value;
     }
 
@@ -146,12 +142,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setResourceAdapterName(String value) {
-        try {
-            support.fireVetoableChange("resourceAdapterName", this.resourceAdapterName, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setResourceAdapterName(String value) throws PropertyVetoException {
+        support.fireVetoableChange("resourceAdapterName", this.resourceAdapterName, value);
+
         this.resourceAdapterName = value;
     }
 
@@ -171,12 +164,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setConnectionDefinitionName(String value) {
-        try {
-            support.fireVetoableChange("connectionDefinitionName", this.connectionDefinitionName, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setConnectionDefinitionName(String value) throws PropertyVetoException {
+        support.fireVetoableChange("connectionDefinitionName", this.connectionDefinitionName, value);
+
         this.connectionDefinitionName = value;
     }
 
@@ -200,12 +190,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setSteadyPoolSize(String value) {
-        try {
-            support.fireVetoableChange("steadyPoolSize", this.steadyPoolSize, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setSteadyPoolSize(String value) throws PropertyVetoException {
+        support.fireVetoableChange("steadyPoolSize", this.steadyPoolSize, value);
+
         this.steadyPoolSize = value;
     }
 
@@ -229,12 +216,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setMaxPoolSize(String value) {
-        try {
-            support.fireVetoableChange("maxPoolSize", this.maxPoolSize, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setMaxPoolSize(String value) throws PropertyVetoException {
+        support.fireVetoableChange("maxPoolSize", this.maxPoolSize, value);
+
         this.maxPoolSize = value;
     }
 
@@ -258,12 +242,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setMaxWaitTimeInMillis(String value) {
-        try {
-            support.fireVetoableChange("maxWaitTimeInMillis", this.maxWaitTimeInMillis, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setMaxWaitTimeInMillis(String value) throws PropertyVetoException {
+        support.fireVetoableChange("maxWaitTimeInMillis", this.maxWaitTimeInMillis, value);
+
         this.maxWaitTimeInMillis = value;
     }
 
@@ -287,12 +268,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setPoolResizeQuantity(String value) {
-        try {
-            support.fireVetoableChange("poolResizeQuantity", this.poolResizeQuantity, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setPoolResizeQuantity(String value) throws PropertyVetoException {
+        support.fireVetoableChange("poolResizeQuantity", this.poolResizeQuantity, value);
+
         this.poolResizeQuantity = value;
     }
 
@@ -316,12 +294,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setIdleTimeoutInSeconds(String value) {
-        try {
-            support.fireVetoableChange("idleTimeoutInSeconds", this.idleTimeoutInSeconds, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setIdleTimeoutInSeconds(String value) throws PropertyVetoException {
+        support.fireVetoableChange("idleTimeoutInSeconds", this.idleTimeoutInSeconds, value);
+
         this.idleTimeoutInSeconds = value;
     }
 
@@ -345,12 +320,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setFailAllConnections(String value) {
-        try {
-            support.fireVetoableChange("failAllConnections", this.failAllConnections, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setFailAllConnections(String value) throws PropertyVetoException {
+        support.fireVetoableChange("failAllConnections", this.failAllConnections, value);
+
         this.failAllConnections = value;
     }
 
@@ -370,12 +342,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setTransactionSupport(String value) {
-        try {
-            support.fireVetoableChange("transactionSupport", this.transactionSupport, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setTransactionSupport(String value) throws PropertyVetoException {
+        support.fireVetoableChange("transactionSupport", this.transactionSupport, value);
+
         this.transactionSupport = value;
     }
 
@@ -399,12 +368,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setIsConnectionValidationRequired(String value) {
-        try {
-            support.fireVetoableChange("isConnectionValidationRequired", this.isConnectionValidationRequired, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setIsConnectionValidationRequired(String value) throws PropertyVetoException {
+        support.fireVetoableChange("isConnectionValidationRequired", this.isConnectionValidationRequired, value);
+
         this.isConnectionValidationRequired = value;
     }
 
@@ -428,12 +394,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setValidateAtmostOncePeriodInSeconds(String value) {
-        try {
-            support.fireVetoableChange("validateAtmostOncePeriodInSeconds", this.validateAtmostOncePeriodInSeconds, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setValidateAtmostOncePeriodInSeconds(String value) throws PropertyVetoException {
+        support.fireVetoableChange("validateAtmostOncePeriodInSeconds", this.validateAtmostOncePeriodInSeconds, value);
+
         this.validateAtmostOncePeriodInSeconds = value;
     }
 
@@ -457,12 +420,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setConnectionLeakTimeoutInSeconds(String value) {
-        try {
-            support.fireVetoableChange("connectionLeakTimeoutInSeconds", this.connectionLeakTimeoutInSeconds, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setConnectionLeakTimeoutInSeconds(String value) throws PropertyVetoException {
+        support.fireVetoableChange("connectionLeakTimeoutInSeconds", this.connectionLeakTimeoutInSeconds, value);
+
         this.connectionLeakTimeoutInSeconds = value;
     }
 
@@ -486,12 +446,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setConnectionLeakReclaim(String value) {
-        try {
-            support.fireVetoableChange("connectionLeakReclaim", this.connectionLeakReclaim, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setConnectionLeakReclaim(String value) throws PropertyVetoException {
+        support.fireVetoableChange("connectionLeakReclaim", this.connectionLeakReclaim, value);
+
         this.connectionLeakReclaim = value;
     }
 
@@ -515,12 +472,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setConnectionCreationRetryAttempts(String value) {
-        try {
-            support.fireVetoableChange("connectionCreationRetryAttempts", this.connectionCreationRetryAttempts, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setConnectionCreationRetryAttempts(String value) throws PropertyVetoException {
+        support.fireVetoableChange("connectionCreationRetryAttempts", this.connectionCreationRetryAttempts, value);
+
         this.connectionCreationRetryAttempts = value;
     }
 
@@ -544,12 +498,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setConnectionCreationRetryIntervalInSeconds(String value) {
-        try {
-            support.fireVetoableChange("connectionCreationRetryIntervalInSeconds", this.connectionCreationRetryIntervalInSeconds, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setConnectionCreationRetryIntervalInSeconds(String value) throws PropertyVetoException {
+        support.fireVetoableChange("connectionCreationRetryIntervalInSeconds", this.connectionCreationRetryIntervalInSeconds, value);
+
         this.connectionCreationRetryIntervalInSeconds = value;
     }
 
@@ -573,12 +524,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setLazyConnectionEnlistment(String value) {
-        try {
-            support.fireVetoableChange("lazyConnectionEnlistment", this.lazyConnectionEnlistment, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setLazyConnectionEnlistment(String value) throws PropertyVetoException {
+        support.fireVetoableChange("lazyConnectionEnlistment", this.lazyConnectionEnlistment, value);
+
         this.lazyConnectionEnlistment = value;
     }
 
@@ -602,12 +550,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setLazyConnectionAssociation(String value) {
-        try {
-            support.fireVetoableChange("lazyConnectionAssociation", this.lazyConnectionAssociation, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setLazyConnectionAssociation(String value) throws PropertyVetoException {
+        support.fireVetoableChange("lazyConnectionAssociation", this.lazyConnectionAssociation, value);
+
         this.lazyConnectionAssociation = value;
     }
 
@@ -631,12 +576,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setAssociateWithThread(String value) {
-        try {
-            support.fireVetoableChange("associateWithThread", this.associateWithThread, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setAssociateWithThread(String value) throws PropertyVetoException {
+        support.fireVetoableChange("associateWithThread", this.associateWithThread, value);
+
         this.associateWithThread = value;
     }
 
@@ -660,12 +602,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setMatchConnections(String value) {
-        try {
-            support.fireVetoableChange("matchConnections", this.matchConnections, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setMatchConnections(String value) throws PropertyVetoException {
+        support.fireVetoableChange("matchConnections", this.matchConnections, value);
+
         this.matchConnections = value;
     }
 
@@ -689,12 +628,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setMaxConnectionUsageCount(String value) {
-        try {
-            support.fireVetoableChange("maxConnectionUsageCount", this.maxConnectionUsageCount, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setMaxConnectionUsageCount(String value) throws PropertyVetoException {
+        support.fireVetoableChange("maxConnectionUsageCount", this.maxConnectionUsageCount, value);
+
         this.maxConnectionUsageCount = value;
     }
 
@@ -714,12 +650,9 @@ public class ConnectorConnectionPool implements Resource, Serializable {
      * @param value allowed object is
      *              {@link String }
      */
-    public void setDescription(String value) {
-        try {
-            support.fireVetoableChange("description", this.description, value);
-        } catch (PropertyVetoException _x) {
-            return;
-        }
+    public void setDescription(String value) throws PropertyVetoException {
+        support.fireVetoableChange("description", this.description, value);
+
         this.description = value;
     }
 
@@ -771,20 +704,6 @@ public class ConnectorConnectionPool implements Resource, Serializable {
         return this.property;
     }
 
-    public void addVetoableChangeListener(VetoableChangeListener param0) {
-        support.addVetoableChangeListener(param0);
-    }
 
-    public void addVetoableChangeListener(String param0, VetoableChangeListener param1) {
-        support.addVetoableChangeListener(param0, param1);
-    }
-
-    public void removeVetoableChangeListener(String param0, VetoableChangeListener param1) {
-        support.removeVetoableChangeListener(param0, param1);
-    }
-
-    public void removeVetoableChangeListener(VetoableChangeListener param0) {
-        support.removeVetoableChangeListener(param0);
-    }
 
 }

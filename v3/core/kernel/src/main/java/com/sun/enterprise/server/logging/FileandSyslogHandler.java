@@ -44,7 +44,7 @@ import com.sun.enterprise.v3.common.BooleanLatch;
 import com.sun.enterprise.v3.logging.AgentFormatterDelegate;
 import com.sun.enterprise.v3.server.V3Environment;
 import com.sun.logging.LogDomains;
-import org.jvnet.glassfish.api.logging.Task;
+import org.glassfish.api.logging.Task;
 import org.jvnet.hk2.annotations.ContractProvided;
 import org.jvnet.hk2.annotations.Inject;
 import org.jvnet.hk2.annotations.Scoped;

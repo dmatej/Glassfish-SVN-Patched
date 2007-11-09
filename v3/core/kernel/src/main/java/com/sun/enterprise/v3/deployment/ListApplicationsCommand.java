@@ -24,9 +24,9 @@
 
 package com.sun.enterprise.v3.deployment;
 
-import org.jvnet.glassfish.api.ActionReport;
-import org.jvnet.glassfish.api.admin.AdminCommand;
-import org.jvnet.glassfish.api.admin.AdminCommandContext;
+import org.glassfish.api.ActionReport;
+import org.glassfish.api.admin.AdminCommand;
+import org.glassfish.api.admin.AdminCommandContext;
 import com.sun.enterprise.v3.data.ContainerRegistry;
 import com.sun.enterprise.v3.data.ContainerInfo;
 import com.sun.enterprise.v3.data.ApplicationInfo;

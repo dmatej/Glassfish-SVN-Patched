@@ -26,8 +26,8 @@ package com.sun.enterprise.deployment.util;
 import com.sun.enterprise.deployment.annotation.introspection.ClassFile;
 import com.sun.enterprise.deployment.annotation.introspection.ConstantPoolInfo;
 import com.sun.enterprise.deployment.annotation.introspection.AnnotationScanner;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
 
+import org.glassfish.api.deployment.archive.ReadableArchive;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;

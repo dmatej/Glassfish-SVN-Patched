@@ -24,7 +24,7 @@
 package com.sun.enterprise.v3.web;
 
 import com.sun.enterprise.v3.deployment.GenericSniffer;
-import org.jvnet.glassfish.api.container.Sniffer;
+import org.glassfish.api.container.Sniffer;
 import org.jvnet.hk2.annotations.Scoped;
 import org.jvnet.hk2.annotations.Service;
 import org.jvnet.hk2.component.Singleton;

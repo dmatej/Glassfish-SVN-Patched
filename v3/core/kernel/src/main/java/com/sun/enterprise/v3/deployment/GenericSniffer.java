@@ -25,9 +25,9 @@ package com.sun.enterprise.v3.deployment;
 
 import com.sun.enterprise.module.ModulesRegistry;
 import com.sun.enterprise.module.impl.DirectoryBasedRepository;
-import org.jvnet.glassfish.api.container.Sniffer;
-import org.jvnet.glassfish.api.deployment.Deployer;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
+import org.glassfish.api.container.Sniffer;
+import org.glassfish.api.deployment.Deployer;
+import org.glassfish.api.deployment.archive.ReadableArchive;
 import org.jvnet.hk2.annotations.Inject;
 import org.jvnet.hk2.annotations.Scoped;
 import org.jvnet.hk2.annotations.Service;

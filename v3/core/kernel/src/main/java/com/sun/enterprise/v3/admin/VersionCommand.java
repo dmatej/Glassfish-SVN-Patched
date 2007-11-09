@@ -24,11 +24,11 @@
 package com.sun.enterprise.v3.admin;
 
 import com.sun.appserv.server.util.Version;
-import org.jvnet.glassfish.api.admin.AdminCommand;
-import org.jvnet.glassfish.api.admin.AdminCommandContext;
-import org.jvnet.glassfish.api.ActionReport;
-import org.jvnet.glassfish.api.I18n;
-import org.jvnet.glassfish.api.ActionReport.ExitCode;
+import org.glassfish.api.admin.AdminCommand;
+import org.glassfish.api.admin.AdminCommandContext;
+import org.glassfish.api.ActionReport;
+import org.glassfish.api.I18n;
+import org.glassfish.api.ActionReport.ExitCode;
 import org.jvnet.hk2.annotations.Service;
 
 /**

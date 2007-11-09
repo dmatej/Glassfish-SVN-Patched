@@ -27,7 +27,7 @@ import org.jvnet.hk2.annotations.Inject;
 
 import com.sun.enterprise.module.Module;
 import com.sun.enterprise.module.ModulesRegistry;
-import org.jvnet.glassfish.api.Startup;
+import org.glassfish.api.Startup;
 import org.jvnet.hk2.component.PostConstruct;
 import org.jvnet.hk2.component.Singleton;
 

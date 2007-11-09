@@ -23,9 +23,9 @@
 
 package com.sun.enterprise.v3.data;
 
-import org.jvnet.glassfish.api.container.Sniffer;
-import org.jvnet.glassfish.api.deployment.Deployer;
-import org.jvnet.glassfish.api.deployment.ApplicationContainer;
+import org.glassfish.api.container.Sniffer;
+import org.glassfish.api.deployment.Deployer;
+import org.glassfish.api.deployment.ApplicationContainer;
 import com.sun.enterprise.v3.data.ApplicationInfo;
 import com.sun.enterprise.module.Module;
 

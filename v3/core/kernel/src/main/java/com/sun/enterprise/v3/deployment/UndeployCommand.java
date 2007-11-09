@@ -30,12 +30,12 @@ import com.sun.enterprise.v3.server.ApplicationLifecycle;
 import com.sun.enterprise.v3.server.V3Environment;
 import com.sun.enterprise.v3.services.impl.GrizzlyAdapter;
 import com.sun.logging.LogDomains;
-import org.jvnet.glassfish.api.ActionReport;
-import org.jvnet.glassfish.api.I18n;
-import org.jvnet.glassfish.api.Param;
-import org.jvnet.glassfish.api.admin.AdminCommand;
-import org.jvnet.glassfish.api.admin.AdminCommandContext;
-import org.jvnet.glassfish.api.deployment.DeploymentContext;
+import org.glassfish.api.ActionReport;
+import org.glassfish.api.I18n;
+import org.glassfish.api.Param;
+import org.glassfish.api.admin.AdminCommand;
+import org.glassfish.api.admin.AdminCommandContext;
+import org.glassfish.api.deployment.DeploymentContext;
 import org.jvnet.hk2.annotations.Inject;
 import org.jvnet.hk2.annotations.Service;
 

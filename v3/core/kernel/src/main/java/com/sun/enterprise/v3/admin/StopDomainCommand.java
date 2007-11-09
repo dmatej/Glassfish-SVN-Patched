@@ -24,11 +24,11 @@ package com.sun.enterprise.v3.admin;
 
 import com.sun.enterprise.util.LocalStringManagerImpl;
 import com.sun.enterprise.v3.server.Init;
-import org.jvnet.glassfish.api.Async;
-import org.jvnet.glassfish.api.I18n;
-import org.jvnet.glassfish.api.Startup;
-import org.jvnet.glassfish.api.admin.AdminCommand;
-import org.jvnet.glassfish.api.admin.AdminCommandContext;
+import org.glassfish.api.Async;
+import org.glassfish.api.I18n;
+import org.glassfish.api.Startup;
+import org.glassfish.api.admin.AdminCommand;
+import org.glassfish.api.admin.AdminCommandContext;
 import org.jvnet.hk2.annotations.Inject;
 import org.jvnet.hk2.annotations.Service;
 import org.jvnet.hk2.component.Habitat;

@@ -51,8 +51,8 @@ import com.sun.enterprise.deployment.annotation.introspection.EjbComponentAnnota
 import com.sun.enterprise.util.LocalStringManagerImpl;
 import com.sun.enterprise.util.io.FileUtils;
 import com.sun.enterprise.resource.Resource;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
 
+import org.glassfish.api.deployment.archive.ReadableArchive;
 import javax.enterprise.deploy.shared.ModuleType;
 import javax.persistence.EntityManagerFactory;
 import java.io.File;

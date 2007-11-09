@@ -26,9 +26,9 @@
 package com.sun.enterprise.rails;
 
 import com.sun.enterprise.v3.deployment.DeployCommand;
-import org.jvnet.glassfish.api.deployment.Deployer;
-import org.jvnet.glassfish.api.deployment.DeploymentContext;
-import org.jvnet.glassfish.api.deployment.MetaData;
+import org.glassfish.api.deployment.Deployer;
+import org.glassfish.api.deployment.DeploymentContext;
+import org.glassfish.api.deployment.MetaData;
 import com.sun.grizzly.jruby.RubyObjectPool;
 import java.util.Iterator;
 import org.jruby.RubyArray;

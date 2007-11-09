@@ -1,8 +1,8 @@
 package com.sun.enterprise.v3.contract;
 
 import org.jvnet.hk2.annotations.Contract;
-import org.jvnet.glassfish.api.container.Sniffer;
-import org.jvnet.glassfish.api.deployment.DeploymentContext;
+import org.glassfish.api.container.Sniffer;
+import org.glassfish.api.deployment.DeploymentContext;
 import com.sun.enterprise.v3.data.ApplicationInfo;
 
 import java.io.File;

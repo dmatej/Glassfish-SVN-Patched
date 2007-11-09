@@ -23,7 +23,7 @@
 
 package com.sun.enterprise.v3.web;
 
-import org.jvnet.glassfish.api.deployment.ApplicationContainer;
+import org.glassfish.api.deployment.ApplicationContainer;
 import org.apache.catalina.core.StandardContext;
 
 public class WebApplication implements ApplicationContainer {

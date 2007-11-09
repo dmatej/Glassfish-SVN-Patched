@@ -26,7 +26,7 @@ package com.sun.enterprise.deployment.deploy.shared;
 import com.sun.enterprise.deployment.util.DOLUtils;
 import com.sun.enterprise.util.i18n.StringManager;
 import com.sun.enterprise.util.io.FileUtils;
-import org.jvnet.glassfish.api.deployment.archive.ReadableArchive;
+import org.glassfish.api.deployment.archive.ReadableArchive;
 import org.jvnet.hk2.annotations.Service;
 
 import java.io.*;
