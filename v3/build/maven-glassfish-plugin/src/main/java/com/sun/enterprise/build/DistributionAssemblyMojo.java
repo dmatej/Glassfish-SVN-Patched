@@ -89,7 +89,7 @@ public class DistributionAssemblyMojo extends AbstractMojo {
         for (Artifact a : modules) {
             zfs = new ZipFileSet();
             zfs.setFile(a.getFile());
-            zfs.setPrefix(isModule(a) ? "glassfish/lib" : "glassfish/lib/jars");
+            zfs.setPrefix("glassfish/modules");
             zip.addZipfileset(zfs);
         }
 
