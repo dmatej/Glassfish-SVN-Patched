@@ -83,8 +83,8 @@ public class RailsImportPolicy implements ImportPolicy {
         // add jruby to this module's import so it is not garbage collected until this one is
         module.addImport(jrubyModule);
 
-        Module grizzlyRails = module.getRegistry().makeModuleFor("com.sun.enterprise.glassfish:grizzly-jruby", null);
-        grizzlyRails.addImport(new ModuleDependency("com.sun.enterprise.glassfish:grizzly-http", null));
+        Module grizzlyRails = module.getRegistry().makeModuleFor("org.glassfish.external:grizzly-jruby", null);
+        grizzlyRails.addImport(new ModuleDependency("org.glassfish.external:grizzly-http", null));
         grizzlyRails.addImport(jrubyModule);
     }
 }
