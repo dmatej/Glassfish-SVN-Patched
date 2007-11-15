@@ -67,7 +67,7 @@ public class HK2Dispatcher {
 
         // save the thread local entries.
         Thread thread = Thread.currentThread();
-        if (threadLocalsField==null) {
+/*        if (threadLocalsField==null) {
             init();
         }
         Set<Integer> entries = new HashSet();
@@ -89,7 +89,7 @@ public class HK2Dispatcher {
             } catch(IllegalAccessException e) {
 
             }
-
+*/
             ClassLoader currentCL = thread.getContextClassLoader();
             try {
                 if (cl==null) {
@@ -105,7 +105,7 @@ public class HK2Dispatcher {
             } finally {
                 thread.setContextClassLoader(currentCL);
             }
-
+/*
             // same thing again...
             try {
 
@@ -130,6 +130,6 @@ public class HK2Dispatcher {
             // no thread local protection available
 
         }
-
+*/
     }
 }
