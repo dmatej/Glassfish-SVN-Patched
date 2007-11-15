@@ -77,7 +77,7 @@ public class DistributionDashboardMojo extends AbstractMojo {
     /**
      * The file name of the created distribution image.
      *
-     * @parameter expression="${finalName}" default-value="${project.build.finalName}.zip"
+     * @parameter expression="${finalName}" default-value="${project.build.finalName}.txt"
      */
     protected String finalName;
 
@@ -103,8 +103,7 @@ public class DistributionDashboardMojo extends AbstractMojo {
         outputDirectory.mkdirs();
 
         // create a zip file
-        String newFileName = finalName.substring(0, finalName.lastIndexOf('.'));
-        File target = new File(outputDirectory, newFileName + ".txt");
+        File target = new File(outputDirectory, finalName);
 
         getLog().info("Creating the wiki page with " + generatorName);
 
