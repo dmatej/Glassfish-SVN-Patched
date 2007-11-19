@@ -210,6 +210,14 @@ public class FileUtils {
 
     ///////////////////////////////////////////////////////////////////////////
 
+    public static String makeLegalNoBlankFileName(String filename)
+    {
+        return  makeLegalFilename(filename).replace(
+            BLANK, REPLACEMENT_CHAR);
+    }
+
+
+    ///////////////////////////////////////////////////////////////////////////
     public static String makeFriendlyFilename(String filename) {
         if (isFriendlyFilename(filename))
             return filename;
