@@ -1,19 +1,20 @@
 package com.sun.enterprise.admin.cli;
 
-import java.util.Map;
-import java.util.HashMap;
-import java.util.StringTokenizer;
-import java.util.logging.Logger;
-import java.util.logging.Level;
-import java.util.logging.LogManager;
-import java.util.jar.Manifest;
-import java.util.jar.Attributes;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import java.net.URLConnection;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.URLEncoder;
-import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
+import java.util.jar.Attributes;
+import java.util.jar.Manifest;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * my v3 main, basically some throw away code
@@ -78,32 +79,24 @@ public class Main {
         if (Boolean.getBoolean("trace")) {
             System.out.println(httpConnection);
         }
-        URLConnection urlConnection;
         try {
             URL url = new URL(httpConnection);
-            urlConnection = url.openConnection();
+            HttpURLConnection urlConnection = (HttpURLConnection)url.openConnection();
             urlConnection.setRequestProperty("User-Agent", "hk2-cli");
             urlConnection.connect();
-        }  catch(java.net.MalformedURLException e) {
-            return;
-        }  catch(IOException e) {
-            System.err.println("Cannot connect to host, is server up ?");
-            return;
-        }
-        Pattern pattern = Pattern.compile("[^ ]* ([0-9]*) (.*)");
-        String code =  urlConnection.getHeaderField(null);
-        Matcher m = pattern.matcher(code);
-        if (m.matches()) {
-            String errorCode = m.group(1);
-            if (errorCode.equals("200")) {
+
+            int code = urlConnection.getResponseCode();
+            if (code==200) {
                if (params.size()==1 && params.get("help")!=null) {
                    processHelp(urlConnection);
                } else {
                    processMessage(urlConnection);
                }
             } else {
-                System.out.println("Failed : error code " + errorCode);
+                System.out.println("Failed : error code " + code);
             }
+        }  catch(IOException e) {
+            System.err.println("Cannot connect to host, is server up ?");
         }
     }
 
