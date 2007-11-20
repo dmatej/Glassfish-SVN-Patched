@@ -37,6 +37,8 @@ package com.sun.enterprise.deployment;
 
 import java.util.*;
 
+import org.glassfish.api.naming.JNDIBinding;
+
 import com.sun.enterprise.deployment.web.MimeMapping;
 import com.sun.enterprise.deployment.web.AppListenerDescriptor;
 import com.sun.enterprise.deployment.web.ResourceReference;
@@ -876,6 +878,10 @@ public class WebBundleDescriptor extends BundleDescriptor
 
     public InjectionInfo getInjectionInfoByClass(String className) {
         return (getInjectionInfoByClass(className, this));
+    }
+
+    public Collection<JNDIBinding> getJNDIBindings() {
+        return getJNDIBindings(this);
     }
 
     /**

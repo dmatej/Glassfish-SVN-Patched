@@ -36,6 +36,7 @@
 package com.sun.enterprise.deployment;
 
 import java.util.*;
+import org.glassfish.api.naming.JNDIBinding;
 
     /**
     * Objects implementing this interface allow their
@@ -188,4 +189,5 @@ public interface JndiNameEnvironment {
     public List<InjectionCapable> getInjectableResourcesByClass(String className);
     public InjectionInfo getInjectionInfoByClass(String className);
 
+    public Collection<JNDIBinding> getJNDIBindings();
 }
