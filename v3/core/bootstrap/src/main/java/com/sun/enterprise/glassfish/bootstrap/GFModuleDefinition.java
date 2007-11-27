@@ -18,11 +18,12 @@ final class GFModuleDefinition extends DefaultModuleDefinition {
         super(location);
     }
 
-    /**
-     * Load from "jars".
-     */
-    @Override
-    protected String decorateClassPath(String classpathElement) {
-        return "jars/"+classpathElement;
-    }
+//    /**
+//     * Load from "jars".
+//     */
+//    @Override
+//    protected String decorateClassPath(String classpathElement) {
+//        return "jars/"+classpathElement;
+//    }
+    // no such convention defined so far
 }
