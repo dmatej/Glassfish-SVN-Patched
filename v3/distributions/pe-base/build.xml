@@ -19,20 +19,25 @@
  own identifying information: Portions Copyright [yyyy]
  [name of copyright owner]
 -->
-<!DOCTYPE project [
-  <!ENTITY commonBuild SYSTEM "../../bootstrap/ant-common.xml">
-]>
-<project name="pe-base bundle creation" default="all" basedir=".">
-    <taskdef name="resolveArtifact" classname="org.apache.maven.plugin.antrun.ResolveArtifactTask"/>
-    <target name="create.bundle" depends="">
-        <delete dir="target"/> 
-        <mkdir dir="target"/>
-        <resolveArtifact groupId="org.jvnet.maven-antrun-extended-plugin" 
-                         artifactId="maven-antrun-extended-plugin"
-                         version="1.1"
-                         type="jar"
-                         />
-        <zip file="target/pe-base-1.0-SNAPSHOT.zip" basedir=".">
-        </zip>
+<project name="nucleus-base bundle creation" default="all" basedir=".">
+    <target name="create.bundle">
+	<mkdir dir="target/stage"/>
+        <resolveArtifact artifactId="javadb" property="javadb.jar"/>
+        <unjar src="${javadb.jar}" dest="target"/>
+        <!-- Note: the current version of the javadb jar file contains a single zip file.
+             As a result, we currently hard code the <unzip/> task to handle this file. -->
+        <unzip dest="target/stage/glassfish">
+            <fileset dir="target">
+                <include name="*javadb*.zip"/>
+            </fileset>
+            <patternset>
+                <include name="javadb/lib/**"/>
+            </patternset>
+        </unzip>
+        <resolveArtifact artifactId="nucleus-base" property="nucleus-base.zip"/>
+        <unjar src="${nucleus-base.zip}" dest="target/stage"/>
+        <zip file="target/pe-base.zip"
+             basedir="target/stage" />
+        <attachArtifact file="target/pe-base.zip" />
     </target>
 </project>
