@@ -14,6 +14,7 @@ import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionResult;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.resolver.filter.ScopeArtifactFilter;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
@@ -96,6 +97,11 @@ public class RunMojo extends DistributionAssemblyMojo {
      */
     private String[] args = new String[0];
 
+    /**
+     * @parameter expression="${session}"
+     */
+    private MavenSession session;
+
     public void execute() throws MojoExecutionException, MojoFailureException {
         configLogger();
         
@@ -146,7 +152,7 @@ public class RunMojo extends DistributionAssemblyMojo {
         if(rootDir==null) {
             // where's the base installation image?
             Artifact baseImage = findBaseImage(distPom);
-            rootDir = new File(project.getBasedir(),"target/glassfish");
+            rootDir = new File(new File(session.getExecutionRootDirectory()),"target/glassfish");
             if(!rootDir.exists()) {
                 getLog().info(
                     String.format("Extracting %1s to %2s as the installation base image",
