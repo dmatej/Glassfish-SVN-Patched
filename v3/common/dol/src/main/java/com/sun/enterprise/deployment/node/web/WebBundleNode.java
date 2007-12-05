@@ -167,7 +167,7 @@ public class WebBundleNode extends BundleNode implements RootXMLNode {
     */
     public Object getDescriptor() {
         if (descriptor==null) {
-            descriptor = getDefaultBundleDescriptor();
+            descriptor = (WebBundleDescriptor)getDefaultBundleDescriptor();
         }
 
         // if that's not there, create one from the factory
