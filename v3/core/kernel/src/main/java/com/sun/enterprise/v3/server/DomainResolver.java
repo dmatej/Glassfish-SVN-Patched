@@ -41,7 +41,7 @@ import org.xml.sax.InputSource;
  */
 
 @Deprecated
-public class DomainResolver implements EntityResolver {
+public class   DomainResolver implements EntityResolver {
     public InputSource resolveEntity(String publicId, String systemId) {
         
         if (systemId.startsWith("http://www.sun.com/software/appserver/")) {

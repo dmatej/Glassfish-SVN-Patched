@@ -1,5 +1,6 @@
 package com.sun.enterprise.v3.server;
 
+import com.sun.enterprise.config.serverbeans.GlassFishDocument;
 import com.sun.enterprise.module.bootstrap.Populator;
 import com.sun.enterprise.module.bootstrap.StartupContext;
 import com.sun.hk2.component.ExistingSingletonInhabitant;
@@ -144,7 +145,7 @@ public class DomainXml implements Populator {
         System.setProperty("com.sun.aas.instanceRoot", domainRoot.getAbsoluteFile().getAbsolutePath() );        
 
         try {
-            parser.parse(domainXml.toURL());
+            parser.parse(domainXml.toURL(), new GlassFishDocument(habitat));
         } catch (MalformedURLException e) {
             logger.log(Level.SEVERE, e.getMessage(), e);
         }
