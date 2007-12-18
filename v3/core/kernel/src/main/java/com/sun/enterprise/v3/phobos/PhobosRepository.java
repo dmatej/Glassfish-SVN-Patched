@@ -26,6 +26,7 @@ package com.sun.enterprise.v3.phobos;
 import com.sun.enterprise.module.ManifestConstants;
 import com.sun.enterprise.module.ModuleDefinition;
 import com.sun.enterprise.module.ModuleDependency;
+import com.sun.enterprise.module.RepositoryChangeListener;
 import com.sun.enterprise.module.impl.CookedLibRepository;
 import com.sun.enterprise.module.impl.CookedModuleDefinition;
 import java.io.File;
@@ -33,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.Attributes;
+import java.net.URI;
 
 /**
  * Until phobos becomes modular, I have no choice than cooking the module 
@@ -94,8 +96,20 @@ public class PhobosRepository extends CookedLibRepository {
         CookedModuleDefinition commons = new CookedModuleDefinition(
         new File(rootLocation, "logging-api-1.0.4.jar"), commonsAttr);
         moduleDefs.add(commons);
-    }    
-    
+    }
+
+    public List<URI> getJarLocations() {
+        return null;
+    }
+
+    public boolean addListener(RepositoryChangeListener repositoryChangeListener) {
+        return false;
+    }
+
+    public boolean removeListener(RepositoryChangeListener repositoryChangeListener) {
+        return false;
+    }
+
     public List<ModuleDefinition> findAll() {
         return moduleDefs;
     }  
