@@ -1718,21 +1718,7 @@ public class CoyoteResponse
      *
      * @return The cookie's string representation
      */
-    protected String getCookieString(Cookie cookie) {
-        return getCookieString(cookie, false);
-    }
-
-    /**
-     * Gets the string representation of the given cookie.
-     *
-     * @param cookie The cookie whose string representation to get
-     * @param encode true for URL encoding to take place, false otherwise
-     *
-     * @return The cookie's string representation
-     */
-    protected String getCookieString(final Cookie cookie,
-                                     final boolean encode) {
-
+    protected String getCookieString(final Cookie cookie) {
         String cookieValue = null;
         final StringBuffer sb = new StringBuffer();
 
@@ -1744,8 +1730,7 @@ public class CoyoteResponse
                             (sb, cookie.getVersion(), cookie.getName(), 
                              cookie.getValue(), cookie.getPath(), 
                              cookie.getDomain(), cookie.getComment(), 
-                             cookie.getMaxAge(), cookie.getSecure(),
-                             encode);
+                             cookie.getMaxAge(), cookie.getSecure());
                         return sb.toString();
                     }
                 });
@@ -1753,7 +1738,7 @@ public class CoyoteResponse
             ServerCookie.appendCookieValue
                 (sb, cookie.getVersion(), cookie.getName(), cookie.getValue(),
                  cookie.getPath(), cookie.getDomain(), cookie.getComment(), 
-                 cookie.getMaxAge(), cookie.getSecure(), encode);
+                 cookie.getMaxAge(), cookie.getSecure());
             cookieValue = sb.toString();
         }
 
