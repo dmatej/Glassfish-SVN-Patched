@@ -16,16 +16,24 @@ public class ApplicationRegistry {
 
     private Map<String, ApplicationInfo> apps = new HashMap<String, ApplicationInfo>();
 
-    public void add(String name, ApplicationInfo info) {
+    public synchronized void add(String name, ApplicationInfo info) {
         apps.put(name, info);
+        for (ModuleInfo module : info.getModuleInfos()) {
+            module.getContainerInfo().add(info);    
+        }
     }
 
     public ApplicationInfo get(String name) {
         return apps.get(name);
     }
 
-    public void remove(String name) {
-        apps.remove(name);
+    public synchronized void remove(String name) {
+
+        ApplicationInfo oldApp = apps.remove(name);
+        for (ModuleInfo module : oldApp.getModuleInfos()) {
+            module.getContainerInfo().remove(name);
+        }
+
     }
 
 }
