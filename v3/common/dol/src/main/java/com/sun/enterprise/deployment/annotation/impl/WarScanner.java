@@ -46,17 +46,16 @@ import com.sun.enterprise.deployment.WebBundleDescriptor;
 import com.sun.enterprise.deployment.WebComponentDescriptor;
 import com.sun.enterprise.deployment.web.ServletFilter;
 import com.sun.enterprise.deployment.web.AppListenerDescriptor;
+import org.jvnet.hk2.annotations.Service;
 
 /**
  * Implementation of the Scanner interface for war.
  *
  * @author Shing Wai Chan
  */
-public class WarScanner extends ModuleScanner {
-    public WarScanner(File archiveFile, WebBundleDescriptor webBundleDesc)
-            throws IOException {
-        this(archiveFile, webBundleDesc, null);
-    }
+@Service(name="war")
+public class WarScanner extends ModuleScanner<WebBundleDescriptor> {
+
 
     /**
      * This scanner will scan the archiveFile for annotation processing.
@@ -64,7 +63,7 @@ public class WarScanner extends ModuleScanner {
      * @param webBundleDesc
      * @param classLoader
      */
-    public WarScanner(File archiveFile, WebBundleDescriptor webBundleDesc,
+    public void process(File archiveFile, WebBundleDescriptor webBundleDesc,
             ClassLoader classLoader) throws IOException {
         if (AnnotationUtils.getLogger().isLoggable(Level.FINE)) {
             AnnotationUtils.getLogger().fine("archiveFile is " + archiveFile);

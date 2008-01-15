@@ -58,13 +58,8 @@ public class DirectoryScanner extends JavaEEScanner implements Scanner {
     File directory;
     Set<String> entries = new HashSet<String>();
     ClassLoader classLoader = null;
-    
-    /** Creates a new instance of JarScanner */
-    public DirectoryScanner(File directory) throws IOException {
-        this(directory, null);
-    }
 
-    public DirectoryScanner(File directory, ClassLoader classLoader)
+    public void process(File directory, Object bundleDesc, ClassLoader classLoader)
             throws IOException {
         AnnotationUtils.getLogger().finer("dir is " + directory);
         AnnotationUtils.getLogger().finer("classLoader is " + classLoader);

@@ -52,19 +52,15 @@ import com.sun.enterprise.deployment.annotation.Scanner;
  *
  * @author Jerome Dochez
  */
-public class JarScanner extends JavaEEScanner implements Scanner {
+public class JarScanner extends JavaEEScanner implements Scanner<Object> {
     
     File jarFile;
     Set<JarEntry> entries = new HashSet<JarEntry>();
     ClassLoader classLoader = null;
     
-    /** Creates a new instance of JarScanner */
-    public JarScanner(File jarFile) throws IOException {
-        this.jarFile = jarFile;
-        init();
-    }
     
-    private void init() throws java.io.IOException {
+    public  void process(File jarFile, Object bundleDesc, ClassLoader loader) throws java.io.IOException {
+        this.jarFile = jarFile;
         JarFile jf = new JarFile(jarFile);
         
         Enumeration<JarEntry> entriesEnum = jf.entries();

@@ -56,22 +56,17 @@ import com.sun.enterprise.deployment.ServiceReferenceDescriptor;
  *
  * @author Shing Wai Chan
  */
-public class AppClientScanner extends ModuleScanner {
-    private ApplicationClientDescriptor descriptor;
-    
-    public AppClientScanner(File archiveFile, ApplicationClientDescriptor desc)
-            throws IOException {
-        this(archiveFile, desc, null);
-    }
+public class AppClientScanner extends ModuleScanner<ApplicationClientDescriptor> {
+    private ApplicationClientDescriptor descriptor;    
 
     /**
      * This scanner will scan the given main class for annotation processing.
      * The archiveFile and libJarFiles correspond to classpath.
      * @param archiveFile
-     * @param descriptor
+     * @param desc
      * @param classLoader
      */
-    public AppClientScanner(File archiveFile, ApplicationClientDescriptor desc,
+    public void process(File archiveFile, ApplicationClientDescriptor desc,
             ClassLoader classLoader) throws IOException {
         if (AnnotationUtils.getLogger().isLoggable(Level.FINE)) {
             AnnotationUtils.getLogger().fine("archiveFile is " + archiveFile);

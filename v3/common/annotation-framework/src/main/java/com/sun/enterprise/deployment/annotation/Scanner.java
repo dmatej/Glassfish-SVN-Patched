@@ -39,6 +39,8 @@ package com.sun.enterprise.deployment.annotation;
 import org.jvnet.hk2.annotations.Contract;
 
 import java.util.Set;
+import java.io.File;
+import java.io.IOException;
 
 /** 
  * This interface is responsible for scanning the binary location 
@@ -47,7 +49,14 @@ import java.util.Set;
  * @author Jerome Dochez
  */
 @Contract
-public interface Scanner {
+public interface Scanner<T> {
+
+    /**
+     *
+     */
+    public void process(File archiveFile, T bundleDesc,
+            ClassLoader classLoader) throws IOException;
+
     
     /**
      * Returns a ClassLoader capable of loading classes from the 

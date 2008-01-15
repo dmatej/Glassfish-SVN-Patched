@@ -52,20 +52,34 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.logging.Level;
 
+import org.jvnet.hk2.annotations.Inject;
+import org.jvnet.hk2.component.PostConstruct;
+
 /**
  * This is an abstract class of the Scanner interface for J2EE module.
  *
  * @author Shing Wai Chan
  */
-abstract class ModuleScanner extends JavaEEScanner implements Scanner {
+abstract class ModuleScanner<T> extends JavaEEScanner implements Scanner<T>, PostConstruct {
+
+    @Inject
+    DefaultAnnotationScanner defaultScanner;
+    
     protected File archiveFile = null;
     protected ClassLoader classLoader = null;
-    protected ClassFile classFile = new ClassFile(new ConstantPoolInfo(new DefaultAnnotationScanner()))
-            ;
+    protected ClassFile classFile = null;
     private boolean processAllClasses = Boolean.getBoolean("com.sun.enterprise.deployment.annotation.processAllClasses");
 
     
     private Set<String> entries = new HashSet<String>();
+
+    /**
+     * The component has been injected with any dependency and
+     * will be placed into commission by the subsystem.
+     */
+    public void postConstruct() {
+        classFile = new ClassFile(new ConstantPoolInfo(defaultScanner));
+    }
 
     /**
      * This add extra className to be scanned.

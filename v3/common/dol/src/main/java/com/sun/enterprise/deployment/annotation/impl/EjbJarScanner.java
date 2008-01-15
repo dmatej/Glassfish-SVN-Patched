@@ -49,18 +49,14 @@ import java.util.logging.Level;
  * @author Shing Wai Chan
  */
 @Service(name="ejb")
-public class EjbJarScanner extends ModuleScanner {
-    public EjbJarScanner(File archiveFile, EjbBundleDescriptor desc)
-            throws IOException {
-        this(archiveFile, desc, null);
-    }
+public class EjbJarScanner extends ModuleScanner<EjbBundleDescriptor> {
 
     /**
      * This scanner will scan the archiveFile for annotation processing.
      * @param archiveFile
      * @param classLoader
      */
-    public EjbJarScanner(File archiveFile, EjbBundleDescriptor desc, 
+    public void process(File archiveFile, EjbBundleDescriptor desc, 
         ClassLoader classLoader) throws IOException {
         if (AnnotationUtils.getLogger().isLoggable(Level.FINE)) {
             AnnotationUtils.getLogger().fine("archiveFile is " + archiveFile);

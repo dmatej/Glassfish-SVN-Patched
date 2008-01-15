@@ -41,8 +41,7 @@ import java.util.Set;
 @Scoped(Singleton.class)
 public class DefaultAnnotationScanner implements AnnotationScanner {
 
-    @Inject
-    SJSASFactory factory;
+    SJSASFactory factory = new SJSASFactory();
     
     private static Set<String> annotations=null;
     

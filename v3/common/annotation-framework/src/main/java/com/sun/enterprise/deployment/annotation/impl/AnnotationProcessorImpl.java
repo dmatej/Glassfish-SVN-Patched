@@ -120,7 +120,7 @@ public class AnnotationProcessorImpl implements AnnotationProcessor {
         throws AnnotationProcessorException
     {
         
-        Scanner scanner = ctx.getProcessingInput();
+        Scanner<Object> scanner = ctx.getProcessingInput();
         ProcessingResultImpl result = new ProcessingResultImpl();
         errorCount=0;
         
