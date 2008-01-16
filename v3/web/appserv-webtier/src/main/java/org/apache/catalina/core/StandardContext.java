@@ -5631,7 +5631,8 @@ public class StandardContext
         if (isUseNaming()) {
             try {
                 ContextBindings.bindThread(this, this);
-            } catch (NamingException e) {
+            } catch (Throwable e) {
+                e.printStackTrace();
                 // Silent catch, as this is a normal case during the early
                 // startup stages
             }

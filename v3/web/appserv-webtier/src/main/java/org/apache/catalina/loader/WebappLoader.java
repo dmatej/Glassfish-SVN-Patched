@@ -718,7 +718,7 @@ public class WebappLoader
         // Construct a class loader based on our current repositories list
         try {
 
-            classLoader = createClassLoader();
+            classLoader = (WebappClassLoader) createClassLoader();
             classLoader.setResources(container.getResources());
             classLoader.setDebug(this.debug);
             classLoader.setDelegate(this.delegate);
@@ -827,7 +827,7 @@ public class WebappLoader
     /**
      * Create associated classLoader.
      */
-    private WebappClassLoader createClassLoader()
+    protected ClassLoader createClassLoader()
         throws Exception {
 
         Class clazz = Class.forName(loaderClass);

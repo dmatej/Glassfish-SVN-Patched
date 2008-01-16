@@ -134,8 +134,11 @@ public class JspServlet extends HttpServlet {
         rctxt = new JspRuntimeContext(context,options);
 
         // Instantiate and init our resource injector
-        String resourceInjectorClassName = config.getInitParameter(
-            Constants.JSP_RESOURCE_INJECTOR_CONTEXT_ATTRIBUTE);
+//        String resourceInjectorClassName = config.getInitParameter(
+//            Constants.JSP_RESOURCE_INJECTOR_CONTEXT_ATTRIBUTE);
+
+        String resourceInjectorClassName = null;
+
         if (resourceInjectorClassName != null) {
             try {
                 ResourceInjector ri = (ResourceInjector)
