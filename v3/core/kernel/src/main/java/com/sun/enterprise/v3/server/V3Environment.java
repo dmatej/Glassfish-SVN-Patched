@@ -56,6 +56,7 @@ public class V3Environment  {
     /** init file name */
     public static final String kInitFileName                = "init.conf";    
 
+    // TODO: this should be File
     final private String root;
 
     final private StartupContext startupContext;
