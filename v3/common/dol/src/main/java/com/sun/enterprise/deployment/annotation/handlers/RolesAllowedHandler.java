@@ -54,7 +54,7 @@ import com.sun.enterprise.deployment.annotation.AnnotationInfo;
 import com.sun.enterprise.deployment.annotation.AnnotationProcessorException;
 import com.sun.enterprise.deployment.annotation.HandlerProcessingResult;
 import com.sun.enterprise.deployment.annotation.context.EjbContext;
-import com.sun.enterprise.util.TypeUtil;
+import com.sun.enterprise.deployment.util.TypeUtil;
 import org.jvnet.hk2.annotations.Service;
 
 /**

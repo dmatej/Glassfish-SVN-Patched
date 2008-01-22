@@ -33,7 +33,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package com.sun.enterprise.util;
+package com.sun.enterprise.deployment.util;
 
 import java.lang.reflect.*;
 import java.util.Vector;

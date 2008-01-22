@@ -48,7 +48,7 @@ import com.sun.enterprise.deployment.EjbDescriptor;
 import com.sun.enterprise.deployment.EjbInitInfo;
 import com.sun.enterprise.deployment.EjbSessionDescriptor;
 import com.sun.enterprise.deployment.MethodDescriptor;
-import com.sun.enterprise.util.TypeUtil;
+import com.sun.enterprise.deployment.util.TypeUtil;
 
 import com.sun.enterprise.deployment.annotation.AnnotationInfo;
 import com.sun.enterprise.deployment.annotation.AnnotationProcessorException;

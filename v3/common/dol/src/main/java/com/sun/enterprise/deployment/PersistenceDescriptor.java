@@ -40,9 +40,9 @@ import java.util.*;
 import java.lang.reflect.*;
 import javax.ejb.EJBException;
 import com.sun.enterprise.util.LocalStringManagerImpl;
-import com.sun.enterprise.util.TypeUtil;
 import java.util.logging.Level;
 import com.sun.enterprise.deployment.util.DOLUtils;
+import com.sun.enterprise.deployment.util.TypeUtil;
 
 /** 
  * This class contains information about the persistent state

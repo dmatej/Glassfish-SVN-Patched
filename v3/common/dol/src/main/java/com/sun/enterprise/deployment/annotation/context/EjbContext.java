@@ -60,7 +60,7 @@ import com.sun.enterprise.deployment.annotation.handlers.PostProcessor;
 import com.sun.enterprise.deployment.annotation.impl.ComponentDefinition;
 import com.sun.enterprise.deployment.types.ServiceReferenceContainer;
 import com.sun.enterprise.deployment.types.HandlerChainContainer;
-import com.sun.enterprise.util.TypeUtil;
+import com.sun.enterprise.deployment.util.TypeUtil;
 
 /**
  *

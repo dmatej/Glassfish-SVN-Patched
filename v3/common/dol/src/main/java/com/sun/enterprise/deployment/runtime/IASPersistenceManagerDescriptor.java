@@ -41,7 +41,7 @@ import java.lang.reflect.*;
 import java.util.logging.*;
 import javax.ejb.EJBException;
 import com.sun.enterprise.util.LocalStringManagerImpl;
-import com.sun.enterprise.util.TypeUtil;
+import com.sun.enterprise.deployment.util.TypeUtil;
 import com.sun.enterprise.deployment.*;
 import com.sun.enterprise.deployment.util.DOLUtils;
 

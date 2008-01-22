@@ -41,7 +41,7 @@ import java.util.*;
 import java.util.logging.*;
 import java.lang.reflect.*;
 
-import com.sun.enterprise.util.TypeUtil;
+import com.sun.enterprise.deployment.util.TypeUtil;
 import com.sun.enterprise.util.*;
 import com.sun.enterprise.deployment.xml.*;
 import com.sun.enterprise.deployment.interfaces.QueryParser;

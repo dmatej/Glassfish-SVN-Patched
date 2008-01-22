@@ -59,7 +59,7 @@ import com.sun.enterprise.deployment.annotation.context.EjbContext;
 import com.sun.enterprise.deployment.annotation.context.EjbsContext;
 import com.sun.enterprise.deployment.annotation.context.EjbInterceptorContext;
 
-import com.sun.enterprise.util.TypeUtil;
+import com.sun.enterprise.deployment.util.TypeUtil;
 
 /**
  * This is an abstract class encapsulate generic behaviour of annotation

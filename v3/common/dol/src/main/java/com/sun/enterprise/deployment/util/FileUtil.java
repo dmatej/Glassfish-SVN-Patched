@@ -33,7 +33,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package com.sun.enterprise.util;
+package com.sun.enterprise.deployment.util;
 
 import java.io.*;
 import java.io.IOException;
@@ -49,6 +49,8 @@ import com.sun.logging.LogDomains;
 //START OF IASRI 4660742
 import java.util.logging.*;
 import com.sun.logging.*;
+import com.sun.enterprise.deployment.util.FileClassLoader;
+import com.sun.enterprise.util.Print;
 //END OF IASRI 4660742
 
 /**
@@ -62,7 +64,7 @@ public class FileUtil {
 
     // START OF IASRI 4679641
     // private static final boolean debug = false;
-    private static final boolean debug = com.sun.enterprise.util.logging.Debug.enabled;
+    private static final boolean debug = com.sun.enterprise.deployment.util.logging.Debug.enabled;
     // END OF IASRI 4679641
     private static final String JAR_FILE_NAME = "j2ee.jar";
     private static final String HOME_DIR_PROP="com.sun.enterprise.home";

@@ -73,7 +73,6 @@ import com.sun.enterprise.deployment.InjectionTarget;
 import com.sun.enterprise.deployment.types.EjbReference;
 import com.sun.enterprise.deployment.interfaces.*;
 import com.sun.enterprise.util.LocalStringManagerImpl;
-import com.sun.enterprise.util.TypeUtil;
 
 /**
  * This class validates a EJB Bundle descriptor once loaded from an .jar file

@@ -39,7 +39,7 @@ package com.sun.enterprise.deployment;
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import com.sun.enterprise.util.TypeUtil;
+import com.sun.enterprise.deployment.util.TypeUtil;
 
 /**
  * This class holds information about an injection target like the class name

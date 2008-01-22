@@ -38,9 +38,9 @@ package com.sun.enterprise.deployment;
 import java.lang.reflect.Method;
 import java.util.*;
 import com.sun.enterprise.util.LocalStringManagerImpl;
-import com.sun.enterprise.util.TypeUtil;
 import java.util.logging.*;
 import com.sun.enterprise.deployment.util.LogDomains;
+import com.sun.enterprise.deployment.util.TypeUtil;
 
     /** I am a deployment object representing a single method or a collection
     * of methods on Enterprise Bean classes.

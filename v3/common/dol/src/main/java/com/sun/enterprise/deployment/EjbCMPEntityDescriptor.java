@@ -42,11 +42,11 @@ import java.util.logging.*;
 import com.sun.logging.*;
 
 import com.sun.enterprise.util.LocalStringManagerImpl;
-import com.sun.enterprise.util.TypeUtil;
+import com.sun.enterprise.deployment.util.TypeUtil;
 
 import com.sun.enterprise.deployment.util.EjbVisitor;
 import com.sun.enterprise.deployment.util.LogDomains;
-import com.sun.enterprise.util.BeanMethodCalculator;
+import com.sun.enterprise.deployment.util.BeanMethodCalculator;
 
 /** 
  * This class contains information about EJB1.1 and EJB2.0 CMP EntityBeans.

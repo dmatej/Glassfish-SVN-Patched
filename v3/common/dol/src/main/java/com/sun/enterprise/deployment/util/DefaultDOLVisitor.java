@@ -67,7 +67,6 @@ import com.sun.enterprise.deployment.ApplicationClientDescriptor;
 import com.sun.enterprise.deployment.WebComponentDescriptor;
 import com.sun.enterprise.deployment.InjectionCapable;
 import com.sun.enterprise.deployment.InjectionTarget;
-import com.sun.enterprise.util.TypeUtil;
 
 /**
  * Default implementation of all the DOL visitor interface for convenience
