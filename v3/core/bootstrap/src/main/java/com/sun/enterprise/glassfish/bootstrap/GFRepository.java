@@ -1,7 +1,7 @@
 package com.sun.enterprise.glassfish.bootstrap;
 
 import com.sun.enterprise.module.ModuleDefinition;
-import com.sun.enterprise.module.impl.DirectoryBasedRepository;
+import com.sun.enterprise.module.common_impl.DirectoryBasedRepository;
 
 import java.io.File;
 import java.io.FileNotFoundException;

@@ -27,7 +27,7 @@ import com.sun.enterprise.v3.server.Init;
 import com.sun.enterprise.v3.server.V3Environment;
 import com.sun.enterprise.module.ModulesRegistry;
 import com.sun.enterprise.module.ModuleDefinition;
-import com.sun.enterprise.module.impl.DefaultModuleDefinition;
+import com.sun.enterprise.module.common_impl.DefaultModuleDefinition;
 import org.jvnet.hk2.component.PostConstruct;
 import org.jvnet.hk2.annotations.Service;
 import org.jvnet.hk2.annotations.Inject;
