@@ -33,62 +33,60 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+package org.glassfish.config.support;
 
-
-
-package com.sun.enterprise.config.serverbeans;
-
-import org.jvnet.hk2.config.Attribute;
-import org.jvnet.hk2.config.Configured;
+import org.jvnet.hk2.config.ConfigView;
 import org.jvnet.hk2.config.ConfigBeanProxy;
-import org.jvnet.hk2.component.Injectable;
 
-import java.beans.PropertyVetoException;
-import java.io.Serializable;
-
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 
 /**
+ * View that translate configured attributes containing properties like ${foo.bar}
+ * into system properties values.
  *
+ * @author Jerome Dochez
  */
+public class TranslatedConfigView implements ConfigView {
 
-/* @XmlType(name = "") */
-@Configured
-public interface BackendPrincipal extends ConfigBeanProxy, Injectable  {
+    final static Pattern p = Pattern.compile("\\$\\{([^\\}]*)\\}(.*)");
 
-    /**
-     * Gets the value of the userName property.
-     *
-     * @return possible object is
-     *         {@link String }
-     */
-    @Attribute(required = true)
-    public String getUserName();
+    public static Object getTranslatedValue(Object value) {
+        if (value!=null && value instanceof String) {
+            Matcher m = p.matcher(value.toString());
+            if (m.matches()) {
+                return System.getProperty(m.group(1)) + m.group(2);
+            }
+        }
+        return value;
+    }
 
-    /**
-     * Sets the value of the userName property.
-     *
-     * @param value allowed object is
-     *              {@link String }
-     */
-    public void setUserName(String value) throws PropertyVetoException;
+    final ConfigView masterView;
 
-    /**
-     * Gets the value of the password property.
-     *
-     * @return possible object is
-     *         {@link String }
-     */
-    @Attribute
-    public String getPassword();
+    TranslatedConfigView(ConfigView master) {
+        this.masterView = master;
+    }
 
-    /**
-     * Sets the value of the password property.
-     *
-     * @param value allowed object is
-     *              {@link String }
-     */
-    public void setPassword(String value) throws PropertyVetoException;
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        return getTranslatedValue(masterView.invoke(proxy, method, args));
+    }
 
+    public ConfigView getMasterView() {
+        return masterView;  //To change body of implemented methods use File | Settings | File Templates.
+    }
 
+    public void setMasterView(ConfigView view) {
+        // immutable implementation
+    }
 
+    public <T extends ConfigBeanProxy> Class<T> getProxyType() {
+        return masterView.getProxyType();
+    }
+
+    public <T extends ConfigBeanProxy> T getProxy(Class<T> proxyType) {
+        return proxyType.cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[]{proxyType},
+                 this));
+    }
 }
