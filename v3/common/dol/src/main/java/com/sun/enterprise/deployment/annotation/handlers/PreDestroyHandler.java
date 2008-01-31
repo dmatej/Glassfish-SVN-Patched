@@ -43,10 +43,10 @@ import java.lang.reflect.Method;
 import javax.annotation.PreDestroy;
 
 import com.sun.enterprise.deployment.LifecycleCallbackDescriptor;
-import com.sun.enterprise.deployment.annotation.AnnotatedElementHandler;
-import com.sun.enterprise.deployment.annotation.AnnotationInfo;
-import com.sun.enterprise.deployment.annotation.AnnotationProcessorException;
-import com.sun.enterprise.deployment.annotation.HandlerProcessingResult;
+import org.glassfish.apf.AnnotatedElementHandler;
+import org.glassfish.apf.AnnotationInfo;
+import org.glassfish.apf.AnnotationProcessorException;
+import org.glassfish.apf.HandlerProcessingResult;
 import com.sun.enterprise.deployment.annotation.context.AppClientContext;
 import com.sun.enterprise.deployment.annotation.context.ResourceContainerContext;
 import org.jvnet.hk2.annotations.Service;

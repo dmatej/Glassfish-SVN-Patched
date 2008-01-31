@@ -37,7 +37,7 @@
 package com.sun.enterprise.deployment.annotation.factory;
 
 import com.sun.enterprise.deployment.*;
-import com.sun.enterprise.deployment.annotation.AnnotatedElementHandler;
+import org.glassfish.apf.AnnotatedElementHandler;
 import com.sun.enterprise.deployment.annotation.context.AppClientContext;
 import com.sun.enterprise.deployment.annotation.context.EjbBundleContext;
 import com.sun.enterprise.deployment.annotation.context.WebBundleContext;

@@ -35,11 +35,12 @@
  */
 package com.sun.enterprise.deployment.annotation.context;
 
+import org.glassfish.apf.context.AnnotationContext;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.AnnotatedElement;
 
 import com.sun.enterprise.deployment.WebComponentDescriptor;
-import com.sun.enterprise.deployment.annotation.ProcessingContext;
+import org.glassfish.apf.ProcessingContext;
 
 /**
  * This provides a context for a collection of web components with the same

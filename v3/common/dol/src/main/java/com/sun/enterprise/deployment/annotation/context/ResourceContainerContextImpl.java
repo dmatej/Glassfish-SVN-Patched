@@ -35,6 +35,7 @@
  */
 package com.sun.enterprise.deployment.annotation.context;
 
+import org.glassfish.apf.context.AnnotationContext;
 import java.lang.annotation.ElementType;
 import java.lang.reflect.AnnotatedElement;
 
@@ -51,7 +52,7 @@ import com.sun.enterprise.deployment.MessageDestinationReferenceDescriptor;
 import com.sun.enterprise.deployment.JmsDestinationReferenceDescriptor;
 import com.sun.enterprise.deployment.ResourceReferenceDescriptor;
 import com.sun.enterprise.deployment.WritableJndiNameEnvironment;
-import com.sun.enterprise.deployment.annotation.ProcessingContext;
+import org.glassfish.apf.ProcessingContext;
 import com.sun.enterprise.deployment.types.EjbReference;
 import com.sun.enterprise.deployment.types.EjbReferenceContainer;
 import com.sun.enterprise.deployment.types.MessageDestinationReferenceContainer;

@@ -43,9 +43,9 @@ import javax.ejb.Stateful;
 import com.sun.enterprise.deployment.EjbDescriptor;
 import com.sun.enterprise.deployment.EjbSessionDescriptor;
 
-import com.sun.enterprise.deployment.annotation.AnnotationInfo;
-import com.sun.enterprise.deployment.annotation.AnnotationProcessorException;
-import com.sun.enterprise.deployment.annotation.HandlerProcessingResult;
+import org.glassfish.apf.AnnotationInfo;
+import org.glassfish.apf.AnnotationProcessorException;
+import org.glassfish.apf.HandlerProcessingResult;
 import org.jvnet.hk2.annotations.Service;
 
 /**

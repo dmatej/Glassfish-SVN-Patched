@@ -43,7 +43,7 @@ import java.lang.reflect.AnnotatedElement;
 
 import com.sun.enterprise.deployment.WebBundleDescriptor;
 import com.sun.enterprise.deployment.WebComponentDescriptor;
-import com.sun.enterprise.deployment.annotation.AnnotatedElementHandler;
+import org.glassfish.apf.AnnotatedElementHandler;
 import com.sun.enterprise.deployment.types.HandlerChainContainer;
 import com.sun.enterprise.deployment.WebServiceEndpoint;
 import com.sun.enterprise.deployment.ServiceReferenceDescriptor;

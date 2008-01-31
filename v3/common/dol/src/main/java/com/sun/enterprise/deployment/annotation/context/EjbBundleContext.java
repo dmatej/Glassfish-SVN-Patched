@@ -50,7 +50,7 @@ import java.lang.annotation.ElementType;
 import com.sun.enterprise.deployment.EjbBundleDescriptor;
 import com.sun.enterprise.deployment.EjbDescriptor;
 import com.sun.enterprise.deployment.EjbInterceptor;
-import com.sun.enterprise.deployment.annotation.AnnotatedElementHandler;
+import org.glassfish.apf.AnnotatedElementHandler;
 import com.sun.enterprise.deployment.types.ServiceReferenceContainer;
 import com.sun.enterprise.deployment.types.HandlerChainContainer;
 import com.sun.enterprise.deployment.WebServiceEndpoint;

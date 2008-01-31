@@ -59,13 +59,13 @@ import com.sun.enterprise.deployment.EjbInterceptor;
 import static com.sun.enterprise.deployment.LifecycleCallbackDescriptor.CallbackType;
 import com.sun.enterprise.deployment.EjbSessionDescriptor;
 import com.sun.enterprise.deployment.MethodDescriptor;
-import com.sun.enterprise.deployment.annotation.AnnotationInfo;
-import com.sun.enterprise.deployment.annotation.AnnotationProcessorException;
-import com.sun.enterprise.deployment.annotation.HandlerProcessingResult;
-import com.sun.enterprise.deployment.annotation.ProcessingContext;
+import org.glassfish.apf.AnnotationInfo;
+import org.glassfish.apf.AnnotationProcessorException;
+import org.glassfish.apf.HandlerProcessingResult;
+import org.glassfish.apf.ProcessingContext;
 import com.sun.enterprise.deployment.annotation.context.EjbContext;
 import com.sun.enterprise.deployment.annotation.context.EjbInterceptorContext;
-import com.sun.enterprise.deployment.annotation.impl.ComponentDefinition;
+import org.glassfish.apf.impl.ComponentDefinition;
 import org.jvnet.hk2.annotations.Service;
 
 /**

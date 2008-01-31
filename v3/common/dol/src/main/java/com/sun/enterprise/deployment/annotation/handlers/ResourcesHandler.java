@@ -44,12 +44,12 @@ import java.util.List;
 import javax.annotation.Resource;
 import javax.annotation.Resources;
 
-import com.sun.enterprise.deployment.annotation.AnnotatedElementHandler;
-import com.sun.enterprise.deployment.annotation.AnnotationInfo;
-import com.sun.enterprise.deployment.annotation.AnnotationProcessorException;
-import com.sun.enterprise.deployment.annotation.HandlerProcessingResult;
+import org.glassfish.apf.AnnotatedElementHandler;
+import org.glassfish.apf.AnnotationInfo;
+import org.glassfish.apf.AnnotationProcessorException;
+import org.glassfish.apf.HandlerProcessingResult;
 import com.sun.enterprise.deployment.annotation.context.ResourceContainerContext;
-import com.sun.enterprise.deployment.annotation.impl.AnnotationUtils;
+import org.glassfish.apf.impl.AnnotationUtils;
 import org.jvnet.hk2.annotations.Service;
 
 /**

@@ -59,10 +59,10 @@ import com.sun.enterprise.deployment.DummyEjbDescriptor;
 import com.sun.enterprise.deployment.EjbSessionDescriptor;
 import com.sun.enterprise.deployment.MethodDescriptor;
 
-import com.sun.enterprise.deployment.annotation.AnnotatedElementHandler;
-import com.sun.enterprise.deployment.annotation.AnnotationInfo;
-import com.sun.enterprise.deployment.annotation.AnnotationProcessorException;
-import com.sun.enterprise.deployment.annotation.HandlerProcessingResult;
+import org.glassfish.apf.AnnotatedElementHandler;
+import org.glassfish.apf.AnnotationInfo;
+import org.glassfish.apf.AnnotationProcessorException;
+import org.glassfish.apf.HandlerProcessingResult;
 import com.sun.enterprise.deployment.annotation.context.EjbBundleContext;
 import com.sun.enterprise.deployment.annotation.context.EjbContext;
 

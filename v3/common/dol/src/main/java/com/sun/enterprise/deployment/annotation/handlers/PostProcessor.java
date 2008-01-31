@@ -40,9 +40,9 @@
  */
 package com.sun.enterprise.deployment.annotation.handlers;
 
-import com.sun.enterprise.deployment.annotation.AnnotatedElementHandler;
-import com.sun.enterprise.deployment.annotation.AnnotationInfo;
-import com.sun.enterprise.deployment.annotation.AnnotationProcessorException;
+import org.glassfish.apf.AnnotatedElementHandler;
+import org.glassfish.apf.AnnotationInfo;
+import org.glassfish.apf.AnnotationProcessorException;
 
 /**
  * This interface enscapulates behaviour of post annotation processing during

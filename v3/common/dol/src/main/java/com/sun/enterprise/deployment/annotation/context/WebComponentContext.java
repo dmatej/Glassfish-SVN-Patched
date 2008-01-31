@@ -40,7 +40,7 @@ import java.lang.reflect.AnnotatedElement;
 
 import com.sun.enterprise.deployment.WebComponentDescriptor;
 import com.sun.enterprise.deployment.WebServiceEndpoint;
-import com.sun.enterprise.deployment.annotation.ProcessingContext;
+import org.glassfish.apf.ProcessingContext;
 
 /**
  * This provides a context for a of web component.

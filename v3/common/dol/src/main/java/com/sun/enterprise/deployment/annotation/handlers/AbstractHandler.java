@@ -48,14 +48,14 @@ import javax.ejb.MessageDriven;
 import javax.ejb.Stateful;
 import javax.ejb.Stateless;
 
-import com.sun.enterprise.deployment.annotation.AnnotatedElementHandler;
-import com.sun.enterprise.deployment.annotation.AnnotationHandler;
-import com.sun.enterprise.deployment.annotation.AnnotationInfo;
-import com.sun.enterprise.deployment.annotation.AnnotationProcessorException;
-import com.sun.enterprise.deployment.annotation.HandlerProcessingResult;
-import com.sun.enterprise.deployment.annotation.ResultType;
-import com.sun.enterprise.deployment.annotation.impl.AnnotationUtils;
-import com.sun.enterprise.deployment.annotation.impl.HandlerProcessingResultImpl;
+import org.glassfish.apf.AnnotatedElementHandler;
+import org.glassfish.apf.AnnotationHandler;
+import org.glassfish.apf.AnnotationInfo;
+import org.glassfish.apf.AnnotationProcessorException;
+import org.glassfish.apf.HandlerProcessingResult;
+import org.glassfish.apf.ResultType;
+import org.glassfish.apf.impl.AnnotationUtils;
+import org.glassfish.apf.impl.HandlerProcessingResultImpl;
 
 import com.sun.enterprise.util.LocalStringManagerImpl;
 

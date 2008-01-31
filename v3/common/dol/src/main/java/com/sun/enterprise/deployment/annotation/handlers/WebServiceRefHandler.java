@@ -49,14 +49,14 @@ import java.util.Iterator;
 
 import javax.xml.ws.*;
 
-import com.sun.enterprise.deployment.annotation.AnnotationHandler;
-import com.sun.enterprise.deployment.annotation.AnnotatedElementHandler;
-import com.sun.enterprise.deployment.annotation.AnnotationInfo;
-import com.sun.enterprise.deployment.annotation.ProcessingContext;
-import com.sun.enterprise.deployment.annotation.ResultType;
-import com.sun.enterprise.deployment.annotation.HandlerProcessingResult;
-import com.sun.enterprise.deployment.annotation.AnnotationProcessorException;
-import com.sun.enterprise.deployment.annotation.impl.HandlerProcessingResultImpl;
+import org.glassfish.apf.AnnotationHandler;
+import org.glassfish.apf.AnnotatedElementHandler;
+import org.glassfish.apf.AnnotationInfo;
+import org.glassfish.apf.ProcessingContext;
+import org.glassfish.apf.ResultType;
+import org.glassfish.apf.HandlerProcessingResult;
+import org.glassfish.apf.AnnotationProcessorException;
+import org.glassfish.apf.impl.HandlerProcessingResultImpl;
 
 import com.sun.enterprise.deployment.annotation.context.AppClientContext;
 import com.sun.enterprise.deployment.annotation.context.WebBundleContext;
