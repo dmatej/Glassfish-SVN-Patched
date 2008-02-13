@@ -42,17 +42,17 @@ public class WebContainerTimer
 	extends Timer
 {
 	public WebContainerTimer() {
-		super();
+		super("web-container-timer");
 	}
 
 	public WebContainerTimer(boolean isDeamon) {
 		super(isDeamon);
 	}
 
-	public void cancel() {
+/*	public void cancel() {
 		(new Throwable()).printStackTrace();
 	}
-
+*/
 }
 
 

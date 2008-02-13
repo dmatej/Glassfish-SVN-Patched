@@ -45,7 +45,7 @@ public class LogRotationTimer {
     private static LogRotationTimer instance = new LogRotationTimer( );
 
     private LogRotationTimer( ) {
-        rotationTimer = new Timer( );
+        rotationTimer = new Timer("log-rotation-timer" );
     }
 
     public static LogRotationTimer getInstance( ) {
