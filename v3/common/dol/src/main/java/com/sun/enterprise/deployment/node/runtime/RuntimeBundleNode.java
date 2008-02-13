@@ -40,6 +40,7 @@ import java.util.Iterator;
 import org.w3c.dom.Node;
 
 import com.sun.enterprise.deployment.Descriptor;
+import com.sun.enterprise.deployment.RootDeploymentDescriptor;
 import com.sun.enterprise.deployment.BundleDescriptor;
 import com.sun.enterprise.deployment.MessageDestinationDescriptor;
 import com.sun.enterprise.deployment.node.XMLElement;
@@ -47,11 +48,12 @@ import com.sun.enterprise.deployment.node.DeploymentDescriptorNode;
 import com.sun.enterprise.deployment.node.RootXMLNode;
 import com.sun.enterprise.deployment.xml.RuntimeTagNames;
 
-public abstract class RuntimeBundleNode extends DeploymentDescriptorNode implements RootXMLNode {
+public abstract class RuntimeBundleNode<T extends RootDeploymentDescriptor>
+        extends DeploymentDescriptorNode<T> implements RootXMLNode<T> {
 
-    protected Descriptor descriptor=null;
+    protected T descriptor=null;
     
-    public RuntimeBundleNode(Descriptor descriptor) {
+    public RuntimeBundleNode(T descriptor) {
         this.descriptor = descriptor;
 	Init();
     }   
@@ -81,7 +83,7 @@ public abstract class RuntimeBundleNode extends DeploymentDescriptorNode impleme
    /**
     * @return the descriptor instance to associate with this XMLNode
     */    
-    public Object getDescriptor() {
+    public T getDescriptor() {
         return descriptor;
     } 
     

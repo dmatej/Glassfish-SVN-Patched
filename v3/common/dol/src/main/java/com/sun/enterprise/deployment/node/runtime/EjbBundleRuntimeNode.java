@@ -67,7 +67,8 @@ import com.sun.enterprise.deployment.xml.WebServicesTagNames;
  * @author  Jerome Dochez
  * @version 
  */
-public class EjbBundleRuntimeNode extends RuntimeBundleNode {
+public class EjbBundleRuntimeNode extends 
+        RuntimeBundleNode<EjbBundleDescriptor> {
     
     EjbBundleDescriptor descriptor=null;    
     
@@ -135,7 +136,7 @@ public class EjbBundleRuntimeNode extends RuntimeBundleNode {
    /**
     * @return the descriptor instance to associate with this XMLNode
     */    
-    public Object getDescriptor() {
+    public EjbBundleDescriptor getDescriptor() {
         return descriptor;
     }                
 
@@ -176,13 +177,8 @@ public class EjbBundleRuntimeNode extends RuntimeBundleNode {
      * @param the descriptor to write
      * @return the DOM tree top node
      */    
-    public Node writeDescriptor(Node parent, Descriptor descriptor) {    
-        if (! (descriptor instanceof EjbBundleDescriptor)) {
-            throw new IllegalArgumentException(getClass() + 
-                " cannot handles descriptors of type " + descriptor.getClass());
-        }
-        EjbBundleDescriptor bundleDescriptor = (EjbBundleDescriptor) descriptor;
-        Node ejbs = super.writeDescriptor(parent, descriptor);
+    public Node writeDescriptor(Node parent, EjbBundleDescriptor bundleDescriptor) {    
+        Node ejbs = super.writeDescriptor(parent, bundleDescriptor);
 
         // security-role-mapping*
         List<SecurityRoleMapping> roleMappings = bundleDescriptor.getSecurityRoleMappings();

@@ -59,10 +59,10 @@ import com.sun.enterprise.deployment.util.DOLUtils;
  * @author  Jerome Dochez
  * @version 
  */
-public class AppClientRuntimeNode extends RuntimeBundleNode
-{   
+public class AppClientRuntimeNode extends 
+        RuntimeBundleNode<ApplicationClientDescriptor> {   
     
-    public AppClientRuntimeNode(Descriptor descriptor) {
+    public AppClientRuntimeNode(ApplicationClientDescriptor descriptor) {
         super(descriptor);
     }  
     
@@ -147,14 +147,9 @@ public class AppClientRuntimeNode extends RuntimeBundleNode
      * @param the descriptor to write
      * @return the DOM tree top node
      */    
-    public Node writeDescriptor(Node parent, Descriptor descriptor) {       
-        if (! (descriptor instanceof ApplicationClientDescriptor)) {
-            throw new IllegalArgumentException(getClass() + " cannot handles descriptors of type " + descriptor.getClass());
-        }
-        
-        Node appClient = super.writeDescriptor(parent, descriptor);
-        ApplicationClientDescriptor bundleDescriptor = (ApplicationClientDescriptor) descriptor;
-        RuntimeDescriptorNode.writeCommonComponentInfo(appClient, descriptor);
+    public Node writeDescriptor(Node parent, ApplicationClientDescriptor bundleDescriptor) {       
+        Node appClient = super.writeDescriptor(parent, bundleDescriptor);
+        RuntimeDescriptorNode.writeCommonComponentInfo(appClient, bundleDescriptor);
         RuntimeDescriptorNode.writeMessageDestinationInfo(appClient, bundleDescriptor);
         JavaWebStartAccessNode.writeJavaWebStartInfo(appClient, bundleDescriptor.getJavaWebStartAccessDescriptor());
         return appClient;

@@ -84,7 +84,7 @@ import com.sun.enterprise.deployment.util.DOLUtils;
  * @author  Sheetal Vartak
  * @version 
  */
-public class AppClientNode extends BundleNode implements RootXMLNode {
+public class AppClientNode extends BundleNode<ApplicationClientDescriptor> {
 
      // Descriptor class we are using   
     private ApplicationClientDescriptor descriptor; 
@@ -153,14 +153,14 @@ public class AppClientNode extends BundleNode implements RootXMLNode {
     public void addDescriptor(Object  newDescriptor) {       
         if (newDescriptor instanceof EjbReference) {            
             DOLUtils.getDefaultLogger().fine("Adding ejb ref " + newDescriptor);
-            ((ApplicationClientDescriptor)getDescriptor()).addEjbReferenceDescriptor(
+            (getDescriptor()).addEjbReferenceDescriptor(
                         (EjbReference) newDescriptor);
         } else {
             super.addDescriptor(newDescriptor);
         }
     }      
     
-    public Object getDescriptor() {
+    public ApplicationClientDescriptor getDescriptor() {
         if (descriptor == null) {
             descriptor = (ApplicationClientDescriptor) DescriptorFactory.getDescriptor(getXMLPath());
         } 
@@ -216,12 +216,8 @@ public class AppClientNode extends BundleNode implements RootXMLNode {
      * @param the descriptor to write
      * @return the DOM tree top node
      */    
-    public Node writeDescriptor(Node parent, Descriptor descriptor) {
-
-        if (! (descriptor instanceof ApplicationClientDescriptor)) {
-            throw new IllegalArgumentException(getClass() + " cannot handle descriptors of type " + descriptor.getClass());
-        }
-        ApplicationClientDescriptor appclientDesc = (ApplicationClientDescriptor) descriptor;
+    public Node writeDescriptor(Node parent, 
+        ApplicationClientDescriptor appclientDesc) {
         Node appclientNode = super.writeDescriptor(parent, appclientDesc);      
 
 	// env-entry*

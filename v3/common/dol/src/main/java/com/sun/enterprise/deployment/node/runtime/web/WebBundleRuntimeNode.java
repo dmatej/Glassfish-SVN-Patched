@@ -71,9 +71,14 @@ import com.sun.enterprise.deployment.runtime.web.ClassLoader;
 import com.sun.enterprise.deployment.runtime.web.IdempotentUrlPattern;
 import com.sun.enterprise.deployment.runtime.web.Servlet;
 import com.sun.enterprise.deployment.runtime.web.SunWebApp;
+import com.sun.enterprise.deployment.runtime.web.SessionConfig;
+import com.sun.enterprise.deployment.runtime.web.JspConfig;
+import com.sun.enterprise.deployment.runtime.web.LocaleCharsetInfo;
+import com.sun.enterprise.deployment.runtime.web.WebProperty;
 import com.sun.enterprise.deployment.ServiceReferenceDescriptor;
 import com.sun.enterprise.deployment.types.EjbReference;   
 import com.sun.enterprise.deployment.util.DOLUtils;
+import com.sun.enterprise.deployment.BundleDescriptor;
 import com.sun.enterprise.deployment.WebBundleDescriptor;
 import com.sun.enterprise.deployment.WebComponentDescriptor;
 import com.sun.enterprise.deployment.WritableJndiNameEnvironment;
@@ -90,7 +95,7 @@ import com.sun.enterprise.deployment.xml.WebServicesTagNames;
  * @author  Jerome Dochez
  * @version 
  */
-public class WebBundleRuntimeNode extends RuntimeBundleNode {
+public class WebBundleRuntimeNode extends RuntimeBundleNode<WebBundleDescriptor> {
 
     WebBundleDescriptor descriptor=null;
         
@@ -98,7 +103,7 @@ public class WebBundleRuntimeNode extends RuntimeBundleNode {
     public WebBundleRuntimeNode(WebBundleDescriptor descriptor) {
         super(descriptor);
         this.descriptor = descriptor;        
-	getDescriptor();
+	getSunDescriptor();
     }
     
     /** Creates new WebBundleRuntimeNode */
@@ -117,9 +122,9 @@ public class WebBundleRuntimeNode extends RuntimeBundleNode {
                                SecurityRoleMappingNode.class);
 	registerElementHandler(new XMLElement(RuntimeTagNames.SERVLET),
 			       com.sun.enterprise.deployment.node.runtime.ServletNode.class);
-	registerElementHandler(new XMLElement(RuntimeTagNames.IDEMPOTENT_URL_PATTERN), IdempotentUrlPatternNode.class, "addIdempotentUrlPattern");
+	registerElementHandler(new XMLElement(RuntimeTagNames.IDEMPOTENT_URL_PATTERN), IdempotentUrlPatternNode.class);
 	registerElementHandler(new XMLElement(RuntimeTagNames.SESSION_CONFIG),
-			       SessionConfigNode.class, "setSessionConfig");
+			       SessionConfigNode.class);
 	registerElementHandler(new XMLElement(RuntimeTagNames.RESOURCE_ENV_REFERENCE), 
                                ResourceEnvRefNode.class);  
         registerElementHandler(new XMLElement(RuntimeTagNames.MESSAGE_DESTINATION_REFERENCE),
@@ -131,19 +136,19 @@ public class WebBundleRuntimeNode extends RuntimeBundleNode {
                                EjbRefNode.class);    
         
 	registerElementHandler(new XMLElement(RuntimeTagNames.CACHE), 
-                               CacheNode.class, "setCache"); 
+                               CacheNode.class); 
 	
 	registerElementHandler(new XMLElement(RuntimeTagNames.CLASS_LOADER), 
-                               ClassLoaderNode.class, "setClassLoader"); 
+                               ClassLoaderNode.class); 
 	
         registerElementHandler(new XMLElement(RuntimeTagNames.JSP_CONFIG), 
-                               WebPropertyContainerNode.class, "setJspConfig");   
+                               WebPropertyContainerNode.class);   
         
         registerElementHandler(new XMLElement(RuntimeTagNames.LOCALE_CHARSET_INFO), 
-                               LocaleCharsetInfoNode.class, "setLocaleCharsetInfo");   
+                               LocaleCharsetInfoNode.class);   
   	
 	registerElementHandler(new XMLElement(RuntimeTagNames.PROPERTY),
-                               WebPropertyContainerNode.class, "addWebProperty");   
+                               WebPropertyContainerNode.class);   
 			       
         registerElementHandler(new XMLElement(WebServicesTagNames.SERVICE_REF),
                                ServiceRefNode.class); 
@@ -203,7 +208,7 @@ public class WebBundleRuntimeNode extends RuntimeBundleNode {
    /**
     * @return the descriptor instance to associate with this XMLNode
     */    
-    public Object getDescriptor() {    
+    public Object getSunDescriptor() {    
         
 	return descriptor.getSunDescriptor();                
     }
@@ -211,10 +216,14 @@ public class WebBundleRuntimeNode extends RuntimeBundleNode {
        /**
     * @return the web bundle descriptor instance to associate with this XMLNode
     */    
-    public WebBundleDescriptor getWebBundleDescriptor() {    
+    public WebBundleDescriptor getDescriptor() {    
 	return descriptor;               
     }
     
+    public WebBundleDescriptor getWebBundleDescriptor() {    
+        return getDescriptor();               
+    }
+
     /**
      * Adds  a new DOL descriptor instance to the descriptor instance associated with 
      * this XMLNode
@@ -291,13 +300,34 @@ public class WebBundleRuntimeNode extends RuntimeBundleNode {
                     }
                 }
             }                
+        } else if (newDescriptor instanceof IdempotentUrlPattern) {
+            descriptor.getSunDescriptor().addIdempotentUrlPattern(
+                (IdempotentUrlPattern)newDescriptor);
+        } else if (newDescriptor instanceof SessionConfig) {
+            descriptor.getSunDescriptor().setSessionConfig(
+                (SessionConfig)newDescriptor);
+        } else if (newDescriptor instanceof Cache) {
+            descriptor.getSunDescriptor().setCache(
+                (Cache)newDescriptor);
+        } else if (newDescriptor instanceof ClassLoader) {
+            descriptor.getSunDescriptor().setClassLoader(
+                (ClassLoader)newDescriptor);
+        } else if (newDescriptor instanceof JspConfig) {
+            descriptor.getSunDescriptor().setJspConfig(
+                (JspConfig)newDescriptor);
+        } else if (newDescriptor instanceof LocaleCharsetInfo) {
+            descriptor.getSunDescriptor().setLocaleCharsetInfo(
+                (LocaleCharsetInfo)newDescriptor);
+        } else if (newDescriptor instanceof WebProperty) {
+            descriptor.getSunDescriptor().addWebProperty(
+                (WebProperty)newDescriptor);
         }
 	else super.addDescriptor(descriptor);
     }
 
     public void startElement(XMLElement element, Attributes attributes) {
         if (element.getQName().equals(RuntimeTagNames.PARAMETER_ENCODING)) {
-            SunWebApp sunWebApp = (SunWebApp)getDescriptor();
+            SunWebApp sunWebApp = (SunWebApp)getSunDescriptor();
             sunWebApp.setParameterEncoding(true);
             for (int i=0; i<attributes.getLength();i++) {
                 if (RuntimeTagNames.DEFAULT_CHARSET.equals(
@@ -322,7 +352,7 @@ public class WebBundleRuntimeNode extends RuntimeBundleNode {
      */ 
     protected boolean setAttributeValue(XMLElement elementName,
         XMLElement attributeName, String value) {
-        SunWebApp sunWebApp = (SunWebApp)getDescriptor();
+        SunWebApp sunWebApp = (SunWebApp)getSunDescriptor();
         if (attributeName.getQName().equals(RuntimeTagNames.ERROR_URL)) {
             sunWebApp.setAttributeValue(sunWebApp.ERROR_URL, value);
             return true;
@@ -362,12 +392,8 @@ public class WebBundleRuntimeNode extends RuntimeBundleNode {
      * @param the descriptor to write
      * @return the DOM tree top node
      */    
-    public Node writeDescriptor(Node parent, Descriptor descriptor) {    
-        if (! (descriptor instanceof WebBundleDescriptor)) {
-            throw new IllegalArgumentException(getClass() + " cannot handles descriptors of type " + descriptor.getClass());
-        }
-        WebBundleDescriptor bundleDescriptor = (WebBundleDescriptor) descriptor;
-        Element web = (Element)super.writeDescriptor(parent, descriptor); 
+    public Node writeDescriptor(Node parent, WebBundleDescriptor bundleDescriptor) {    
+        Element web = (Element)super.writeDescriptor(parent, bundleDescriptor); 
 	
 	SunWebApp sunWebApp = bundleDescriptor.getSunDescriptor();
         

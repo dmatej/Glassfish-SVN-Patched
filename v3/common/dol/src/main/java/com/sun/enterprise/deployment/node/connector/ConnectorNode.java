@@ -68,7 +68,7 @@ import com.sun.enterprise.deployment.util.DOLUtils;
  * @author Sheetal Vartak
  * @version 
  */
-public class ConnectorNode extends BundleNode implements RootXMLNode {
+public class ConnectorNode extends BundleNode<ConnectorDescriptor> {
 
     // Descriptor class we are using   
     private ConnectorDescriptor descriptor; 
@@ -119,7 +119,7 @@ public class ConnectorNode extends BundleNode implements RootXMLNode {
    /**
     * @return the descriptor instance to associate with this XMLNode
     */    
-    public Object getDescriptor() {
+    public ConnectorDescriptor getDescriptor() {
         if (descriptor == null) {
             descriptor = (ConnectorDescriptor) DescriptorFactory.getDescriptor(getXMLPath());
         } 
@@ -273,12 +273,7 @@ public class ConnectorNode extends BundleNode implements RootXMLNode {
      * @param the descriptor to write
      * @return the DOM tree top node
      */    
-    public Node writeDescriptor(Node parent, Descriptor descriptor) {
-
-        if (! (descriptor instanceof ConnectorDescriptor)) {
-            throw new IllegalArgumentException(getClass() + " cannot handle descriptors of type " + descriptor.getClass());
-        }
-        ConnectorDescriptor conDesc = (ConnectorDescriptor) descriptor;
+    public Node writeDescriptor(Node parent, ConnectorDescriptor conDesc) {
 	conDesc.setSpecVersion(VERSION_15);
         Node connectorNode = super.writeDescriptor(parent, conDesc);      
 	appendTextChild(connectorNode, ConnectorTagNames.VENDOR_NAME, conDesc.getVendorName());  

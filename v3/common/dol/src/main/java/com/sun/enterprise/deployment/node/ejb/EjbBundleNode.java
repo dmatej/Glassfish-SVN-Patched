@@ -81,7 +81,7 @@ import com.sun.enterprise.deployment.Role;
  * @author  Jerome Dochez
  * @version 
  */
-public class EjbBundleNode extends BundleNode implements RootXMLNode {
+public class EjbBundleNode extends BundleNode<EjbBundleDescriptor> {
 
     public final static XMLElement tag = new XMLElement(EjbTagNames.EJB_BUNDLE_TAG);
     public final static String PUBLIC_DTD_ID = "-//Sun Microsystems, Inc.//DTD Enterprise JavaBeans 2.0//EN";
@@ -179,7 +179,7 @@ public class EjbBundleNode extends BundleNode implements RootXMLNode {
    /**
     * @return the descriptor instance to associate with this XMLNode
     */
-    public Object getDescriptor() {
+    public EjbBundleDescriptor getDescriptor() {
         
         if (descriptor==null) {
             descriptor = (EjbBundleDescriptor) DescriptorFactory.getDescriptor(getXMLPath());
@@ -214,11 +214,7 @@ public class EjbBundleNode extends BundleNode implements RootXMLNode {
      * @param the descriptor to write
      * @return the DOM tree top node
      */    
-    public Node writeDescriptor(Node parent, Descriptor descriptor) {        
-        if (! (descriptor instanceof EjbBundleDescriptor)) {
-            throw new IllegalArgumentException(getClass() + " cannot handles descriptors of type " + descriptor.getClass());
-        }
-        EjbBundleDescriptor ejbDesc = (EjbBundleDescriptor) descriptor;
+    public Node writeDescriptor(Node parent, EjbBundleDescriptor ejbDesc) {
         Node jarNode = super.writeDescriptor(parent, ejbDesc);           
         Node entrepriseBeansNode = appendChild(jarNode, EjbTagNames.EJBS);
         for (Iterator ejbs = ejbDesc.getEjbs().iterator();ejbs.hasNext();) {

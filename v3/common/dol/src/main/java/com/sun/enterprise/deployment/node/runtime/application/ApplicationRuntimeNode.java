@@ -71,7 +71,7 @@ import org.w3c.dom.Node;
  * @author  Jerome Dochez
  * @version 
  */
-public class ApplicationRuntimeNode extends RuntimeBundleNode {
+public class ApplicationRuntimeNode extends RuntimeBundleNode<Application> {
     
     private Application descriptor=null;
     private String currentWebUri=null;
@@ -219,12 +219,8 @@ public class ApplicationRuntimeNode extends RuntimeBundleNode {
      * @param descriptor the descriptor to write
      * @return the DOM tree top node
      */    
-    public Node writeDescriptor(Node parent, String nodeName, Descriptor descriptor) {    
-        if (! (descriptor instanceof Application)) {
-            throw new IllegalArgumentException(getClass() + " cannot handles descriptors of type " + descriptor.getClass());
-        }
-        Application application = (Application) descriptor;
-        Node appNode = super.writeDescriptor(parent, nodeName, descriptor);
+    public Node writeDescriptor(Node parent, String nodeName, Application application) {    
+        Node appNode = super.writeDescriptor(parent, nodeName, application);
 	
         // web*
 	for (ModuleDescriptor module : application.getModules()) {

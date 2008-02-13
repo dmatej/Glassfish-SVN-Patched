@@ -55,7 +55,7 @@ import com.sun.enterprise.deployment.xml.DTDRegistry;
  * @author  Jerome Dochez
  * @version 
  */
-public class ConnectorNode extends RuntimeBundleNode {
+public class ConnectorNode extends RuntimeBundleNode<ConnectorDescriptor> {
 
     protected SunConnector descriptor=null;
     protected ConnectorDescriptor connector=null;
@@ -70,11 +70,30 @@ public class ConnectorNode extends RuntimeBundleNode {
 	this.connector = connector;
 	
         registerElementHandler(new XMLElement(RuntimeTagNames.RESOURCE_ADAPTER), 
-                               ResourceAdapterNode.class, "setResourceAdapter");
+                               ResourceAdapterNode.class);
         registerElementHandler(new XMLElement(RuntimeTagNames.ROLE_MAP), 
-                               RoleMapNode.class,"setRoleMap"); 
+                               RoleMapNode.class); 
     }
     
+   /**
+     * Adds  a new DOL descriptor instance to the descriptor instance 
+     * associated with this XMLNode
+     *
+     * @param descriptor the new descriptor
+     */
+    public void addDescriptor(Object newDescriptor) {
+        if (newDescriptor instanceof ResourceAdapter) {
+            getSunConnectorDescriptor().setResourceAdapter(
+                (ResourceAdapter)newDescriptor);
+        } else if (newDescriptor instanceof RoleMap) {
+            getSunConnectorDescriptor().setRoleMap(
+                (RoleMap)newDescriptor);
+        } else {
+            super.addDescriptor(descriptor);
+        }
+    }
+
+
     /** 
      * @return the DOCTYPE that should be written to the XML file
      */
@@ -114,14 +133,18 @@ public class ConnectorNode extends RuntimeBundleNode {
    /**
     * @return the descriptor instance to associate with this XMLNode
     */    
-    public Object getDescriptor() {
+    public SunConnector getSunConnectorDescriptor() {
         if (descriptor==null) {
 	    descriptor = new SunConnector();
             connector.setSunDescriptor(descriptor);
 	}
         return descriptor;
     }
-    
+
+    public ConnectorDescriptor getDescriptor() {
+        return connector;
+    }
+
     /**
      * write the descriptor class to a DOM tree and return it
      *
@@ -130,13 +153,8 @@ public class ConnectorNode extends RuntimeBundleNode {
      * @param the descriptor to write
      * @return the DOM tree top node
      */    
-    public Node writeDescriptor(Node parent, String nodeName, Descriptor descriptor) {
-        if (!(descriptor instanceof ConnectorDescriptor)) {
-            throw new IllegalArgumentException(getClass() + " cannot handles descriptors of type " + descriptor.getClass());
-        }
-        ConnectorDescriptor connector = (ConnectorDescriptor) descriptor;
-            
-	Node connectorNode = super.writeDescriptor(parent, nodeName, descriptor);
+    public Node writeDescriptor(Node parent, String nodeName, ConnectorDescriptor connector) {
+	Node connectorNode = super.writeDescriptor(parent, nodeName, connector);
 	
 	// resource-adapter
         SunConnector sunDesc = connector.getSunDescriptor();

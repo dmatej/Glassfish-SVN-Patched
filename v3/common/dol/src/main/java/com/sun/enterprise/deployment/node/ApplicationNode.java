@@ -58,7 +58,7 @@ import com.sun.enterprise.deployment.util.DOLUtils;
  * @author  Jerome Dochez
  * @version 
  */
-public class ApplicationNode extends BundleNode implements RootXMLNode{
+public class ApplicationNode extends BundleNode<Application> {
 
    /** 
     * The public ID.
@@ -123,7 +123,7 @@ public class ApplicationNode extends BundleNode implements RootXMLNode{
      * @param value it's associated value
      */
     public void setElementValue(XMLElement element, String value) {
-        Application application = (Application)getDescriptor();
+        Application application = getDescriptor();
         if (element.getQName().equals(
             ApplicationTagNames.LIBRARY_DIRECTORY)) {          
             application.setLibraryDirectory(value);
@@ -150,7 +150,7 @@ public class ApplicationNode extends BundleNode implements RootXMLNode{
    /**
     * @return the descriptor instance to associate with this XMLNode
     */    
-    public Object  getDescriptor() {
+    public Application getDescriptor() {
         if (descriptor==null) {
             descriptor = (Application) DescriptorFactory.getDescriptor(getXMLPath());
         }
@@ -185,11 +185,7 @@ public class ApplicationNode extends BundleNode implements RootXMLNode{
      * @param descriptor the descriptor to write
      * @return the DOM tree top node
      */    
-    public Node writeDescriptor(Node parent, Descriptor descriptor) {
-        if (! (descriptor instanceof Application)) {
-            throw new IllegalArgumentException(getClass() + " cannot handles descriptors of type " + descriptor.getClass());
-        }            
-        Application application = (Application) descriptor;
+    public Node writeDescriptor(Node parent, Application application) {
         Node appNode = super.writeDescriptor(parent, application);
         
         // module
