@@ -109,51 +109,6 @@ public class ApplicationValidator extends EjbBundleValidator
      * @param the web bundle descriptor
      */
     public void accept(WebBundleDescriptor descriptor) {
-        bundleDescriptor = descriptor;
-        ModuleDescriptor md = bundleDescriptor.getModuleDescriptor( );
-        // Fix for bug: 4837982
-        String uri = md.getArchiveUri( );
-        if( ( md.getContextRoot() == null )
-         && ( ( uri != null ) && (uri.length() != 0) ) )
-         {
-            // Case 1: If there is a unix style file separator
-            // Example a/b/xxx.war
-            int beginIndex = uri.lastIndexOf( "/" );
-
-            // Case 2: If there is a windows style file separator
-            // Example a\b\xxx.war
-            if( beginIndex < 0 ) {
-                beginIndex = uri.lastIndexOf( File.separator );
-            }
-
-            // Case 3: No File separator
-            // Example xxx.war
-            if( beginIndex < 0 ) {
-                beginIndex = 0;
-            } else {
-                // If there is a separator, we need to increment to get the
-                // string past the last separator 
-                beginIndex++;
-            }
-
-            // If the context-root is not specified, AppServer will use
-            // the file name with the extension removed as the context
-            // root
-            
-            // NOTE: We can safely assume that the file extension is ".war"
-            // So no need to do extra checks
-            int endIndex = uri.lastIndexOf( ".war" );
-            if (endIndex==-1) {
-                return;
-            }
-            String warFileName = uri.substring( beginIndex, endIndex );
-            md.setContextRoot( warFileName );
-            if( DOLUtils.getDefaultLogger().isLoggable(Level.INFO) ) {
-                DOLUtils.getDefaultLogger().info(
-                    "Context Root is not provided by the user, Using ["
-                    + warFileName + "] as Context Root" );
-            }
-        }
     }   
     
     /**
