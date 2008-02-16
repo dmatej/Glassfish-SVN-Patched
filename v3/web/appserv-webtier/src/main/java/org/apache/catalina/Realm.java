@@ -45,9 +45,9 @@ import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.security.Principal;
 import java.security.cert.X509Certificate;
-import java.util.List;
 
 import org.apache.catalina.deploy.SecurityConstraint;
+import org.jvnet.hk2.annotations.Contract;
 /**
  * A <b>Realm</b> is a read-only facade for an underlying security realm
  * used to authenticate individual users, and identify the security roles
@@ -59,6 +59,7 @@ import org.apache.catalina.deploy.SecurityConstraint;
  * @version $Revision: 1.6 $ $Date: 2007/04/18 17:27:22 $
  */
 
+@Contract
 public interface Realm {
 
     // ------------------------------------------------------------- Constants
