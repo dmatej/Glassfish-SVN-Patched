@@ -27,7 +27,7 @@ import com.sun.enterprise.admin.monitor.callflow.Agent;
 import com.sun.enterprise.server.logging.FormatterDelegate;
 import com.sun.enterprise.server.logging.UniformLogFormatter;
 import com.sun.enterprise.v3.logging.AgentFormatterDelegate;
-import com.sun.enterprise.v3.server.Init;
+import org.glassfish.internal.api.Init;
 import com.sun.enterprise.v3.server.V3Environment;
 import org.jvnet.hk2.annotations.Inject;
 import org.jvnet.hk2.annotations.Scoped;
