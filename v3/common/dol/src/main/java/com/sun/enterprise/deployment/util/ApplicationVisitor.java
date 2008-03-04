@@ -38,6 +38,7 @@ package com.sun.enterprise.deployment.util;
 
 
 import com.sun.enterprise.deployment.Application;
+import org.jvnet.hk2.annotations.Contract;
 
 /**
  * This interface defines a cisitor API for the Application related DOL descriptors
@@ -45,6 +46,7 @@ import com.sun.enterprise.deployment.Application;
  * @author  Jerome Dochez
  * @version 
  */
+@Contract
 public interface ApplicationVisitor {
     
     /**
