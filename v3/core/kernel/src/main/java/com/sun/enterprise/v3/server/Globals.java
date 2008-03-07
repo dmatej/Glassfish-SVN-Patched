@@ -25,37 +25,23 @@ package com.sun.enterprise.v3.server;
 
 import com.sun.enterprise.module.ModulesRegistry;
 import org.jvnet.hk2.component.Habitat;
+import org.jvnet.hk2.annotations.Service;
+import org.jvnet.hk2.annotations.Inject;
+import org.glassfish.internal.api.Init;
 
 /**
  * Very sensitive class, anything stored here cannot be garbage collected
  *
  * @author Jerome Dochez
  */
-public class Globals {
-    
-    static Globals globals;
-    
-    Habitat defaultHabitat;
-    ModulesRegistry registry;
-    
-    /** Creates a new instance of ServiceContext */
-    public static synchronized Globals initialize(Habitat defaultHabitat, ModulesRegistry registry) {
-        globals = new Globals();
-        globals.registry = registry;
-        globals.defaultHabitat = defaultHabitat;
-        return globals;
-    }
-    
-    public static Globals getGlobals() {
-        return globals;
-    }
-    
+@Service(name="globals")
+public class Globals implements Init {
 
-    public Habitat getDefaultHabitat() {
+    @Inject
+    static Habitat defaultHabitat;
+
+    public static Habitat getDefaultHabitat() {
         return defaultHabitat;
     }
     
-    public ModulesRegistry getServiceRegistry() {
-        return registry;
-    }
 }
