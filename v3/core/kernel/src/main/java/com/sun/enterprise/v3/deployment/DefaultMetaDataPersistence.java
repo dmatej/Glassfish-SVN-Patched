@@ -3,7 +3,7 @@ package com.sun.enterprise.v3.deployment;
 import org.jvnet.hk2.annotations.Service;
 import org.jvnet.hk2.annotations.Inject;
 import com.sun.enterprise.v3.contract.ApplicationMetaDataPersistence;
-import com.sun.enterprise.v3.server.V3Environment;
+import com.sun.enterprise.v3.server.ServerEnvironment;
 import com.sun.logging.LogDomains;
 
 import java.io.*;
@@ -17,7 +17,7 @@ import java.util.logging.Level;
 public class DefaultMetaDataPersistence implements ApplicationMetaDataPersistence {
 
     @Inject
-    V3Environment env;
+    ServerEnvironment env;
 
     public void save(String name, Properties moduleProps) {
 
