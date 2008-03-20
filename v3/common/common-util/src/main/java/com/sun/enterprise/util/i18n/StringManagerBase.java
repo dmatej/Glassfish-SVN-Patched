@@ -101,7 +101,10 @@ public class StringManagerBase {
     private static Logger _logger=LogDomains.getLogger(LogDomains.UTIL_LOGGER);
 
     /** resource bundle to be used by this manager */
-    private ResourceBundle _resourceBundle  = null;
+    private volatile ResourceBundle _resourceBundle;
+
+    private final String _resourceBundleName;
+    private final ClassLoader _classLoader;
     
     /** default value used for undefined local string */
     private static final String NO_DEFAULT = "No local string defined";
@@ -115,11 +118,27 @@ public class StringManagerBase {
      * @param    resourceBundleName    name of the resource bundle
      */    
     protected StringManagerBase(String resourceBundleName, ClassLoader classLoader) {
-        try {            
-            _resourceBundle = ResourceBundle.getBundle(resourceBundleName, Locale.getDefault(), classLoader);
-        } catch (Exception e) {
-            _logger.log(Level.SEVERE, "iplanet_util.no_resource_bundle", e);
+        this._resourceBundleName = resourceBundleName;
+        this._classLoader = classLoader;
+    }
+
+    /**
+     * Lazily load {@link ResourceBundle}.
+     *
+     * <p>
+     * {@link ResourceBundle} loading is expensive, and since we don't typically look at strings
+     * in start-up, doing this lazily improves overall performance.
+     */
+    private ResourceBundle getResourceBundle() {
+        if(_resourceBundle==null) {
+            // worst case we just end up loading this twice. No big deal.
+            try {
+                _resourceBundle = ResourceBundle.getBundle(_resourceBundleName, Locale.getDefault(), _classLoader);
+            } catch (Exception e) {
+                _logger.log(Level.SEVERE, "iplanet_util.no_resource_bundle", e);
+            }
         }
+        return _resourceBundle;
     }
 
     /**
@@ -167,7 +186,7 @@ public class StringManagerBase {
         String value = null;
 
         try {
-            value = this._resourceBundle.getString(key);
+            value = getResourceBundle().getString(key);
         } catch (Exception e) {
             _logger.log(Level.FINE,"No local string for: " + key, e);
         }

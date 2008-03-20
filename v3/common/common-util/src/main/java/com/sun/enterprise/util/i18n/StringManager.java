@@ -49,10 +49,7 @@
  */
 package com.sun.enterprise.util.i18n;
 
-import java.util.ResourceBundle;
-import java.util.Locale;
 import java.util.Hashtable;
-import java.text.MessageFormat;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -103,9 +100,6 @@ public class StringManager extends StringManagerBase {
 
     /** logger used for this class */
     private static Logger _logger=LogDomains.getLogger(LogDomains.UTIL_LOGGER);
-
-    /** resource bundle to be used by this manager */
-    private ResourceBundle _resourceBundle  = null;
 
     /** name of the resource bundle property file name */
     private static final String RES_BUNDLE_NM = ".LocalStrings";
