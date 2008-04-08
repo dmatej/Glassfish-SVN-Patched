@@ -68,8 +68,8 @@ public class EjbBundleDescriptor extends BundleDescriptor {
     public final static String SPEC_VERSION = "2.1";
    
     private long uniqueId;    
-    private Set ejbs = new HashSet();
-    private Set relationships = new HashSet();
+    private Set<EjbDescriptor> ejbs = new HashSet<EjbDescriptor>();
+    private Set<RelationshipDescriptor> relationships = new HashSet<RelationshipDescriptor>();
     private String relationshipsDescription;
     private String ejbClientJarUri;
     
@@ -166,11 +166,10 @@ public class EjbBundleDescriptor extends BundleDescriptor {
     */
     public Collection getNamedDescriptors() {
 	Collection namedDescriptors = new Vector();
-	for (Iterator ejbs = this.getEjbs().iterator(); ejbs.hasNext();) {
-	    EjbDescriptor ejbDescriptor = (EjbDescriptor) ejbs.next();
-	    namedDescriptors.add(ejbDescriptor);
-	    namedDescriptors.addAll(super.getNamedDescriptorsFrom(ejbDescriptor));
-	}
+        for (EjbDescriptor ejbDescriptor : this.getEjbs()) {
+            namedDescriptors.add(ejbDescriptor);
+            namedDescriptors.addAll(super.getNamedDescriptorsFrom(ejbDescriptor));
+        }
 	return namedDescriptors;
     }
     
@@ -181,12 +180,11 @@ public class EjbBundleDescriptor extends BundleDescriptor {
     
     public Vector<NamedReferencePair> getNamedReferencePairs() {
 	Vector<NamedReferencePair> pairs = new Vector<NamedReferencePair>();
-	for (Iterator ejbs = this.getEjbs().iterator(); ejbs.hasNext();) {
-	    EjbDescriptor ejbDescriptor = (EjbDescriptor) ejbs.next();
-	    pairs.add(NamedReferencePair.createEjbPair(ejbDescriptor, 
-                                                       ejbDescriptor));
-	    pairs.addAll(super.getNamedReferencePairsFrom(ejbDescriptor));
-	}
+        for (EjbDescriptor ejbDescriptor : this.getEjbs()) {
+            pairs.add(NamedReferencePair.createEjbPair(ejbDescriptor,
+                    ejbDescriptor));
+            pairs.addAll(super.getNamedReferencePairsFrom(ejbDescriptor));
+        }
 	return pairs;
     } 
     
@@ -218,7 +216,7 @@ public class EjbBundleDescriptor extends BundleDescriptor {
     /**
     * Return the Set of ejb descriptors that I have.
     */
-    public Set getEjbs() {
+    public Set<EjbDescriptor> getEjbs() {
 	return this.ejbs;
     }
     
@@ -249,18 +247,17 @@ public class EjbBundleDescriptor extends BundleDescriptor {
     * throws an IllegalArgumentException
     */
     public EjbDescriptor getEjbByName(String name, boolean isCreateDummy) {
-	for (Iterator itr = this.getEjbs().iterator(); itr.hasNext();) {
-	    Descriptor next = (Descriptor) itr.next();
-	    if (next.getName().equals(name)) {
-		return (EjbDescriptor) next;
-	    }
-	}
+       for (EjbDescriptor next : this.getEjbs()) {
+           if (next.getName().equals(name)) {
+               return next;
+           }
+       }
 
         if (!isCreateDummy) {   
             throw new IllegalArgumentException(localStrings.getLocalString(
                 "enterprise.deployment.exceptionbeanbundle",
                 "Referencing error: this bundle has no bean of name: {0}",
-                new Object[] {name}));
+                    name));
         }
 
         // there could be cases where the annotation defines the ejb component
@@ -522,7 +519,7 @@ public class EjbBundleDescriptor extends BundleDescriptor {
      * Get all relationships in this ejb-jar.
      * @return a Set of RelationshipDescriptors.
      */
-    public Set getRelationships()
+    public Set<RelationshipDescriptor> getRelationships()
     {
         return relationships;
     }
@@ -600,18 +597,16 @@ public class EjbBundleDescriptor extends BundleDescriptor {
         this.uniqueId  = id;
 
         // First sort the beans in alphabetical order.
-        EjbDescriptor[] descs = (EjbDescriptor[])ejbs.toArray(
-                                    new EjbDescriptor[ejbs.size()]);
+        EjbDescriptor[] descs = ejbs.toArray(new EjbDescriptor[ejbs.size()]);
 
 
         // The sorting algorithm used by this api is a modified mergesort.
         // This algorithm offers guaranteed n*log(n) performance, and 
         // can approach linear performance on nearly sorted lists. 
         Arrays.sort(descs, 
-            new Comparator() {
-                public int compare(Object o1, Object o2) {
-                    return (((EjbDescriptor)o1).getName()).compareTo(
-                                            ((EjbDescriptor)o2).getName());
+            new Comparator<EjbDescriptor>() {
+                public int compare(EjbDescriptor o1, EjbDescriptor o2) {
+                    return o2.getName().compareTo(o1.getName());
                 }
             }
         );
@@ -644,11 +639,10 @@ public class EjbBundleDescriptor extends BundleDescriptor {
      * @return true if this bundle descriptor defines web service clients
      */
     public boolean hasWebServiceClients() {
-        for(Iterator ejbs = getEjbs().iterator();ejbs.hasNext();) {
-            EjbDescriptor next = (EjbDescriptor) ejbs.next();
+        for (EjbDescriptor next : getEjbs()) {
             Collection serviceRefs = next.getServiceReferenceDescriptors();
-            if( !(serviceRefs.isEmpty()) ) {
-               return true;
+            if (!(serviceRefs.isEmpty())) {
+                return true;
             }
         }
         return false;
@@ -658,10 +652,9 @@ public class EjbBundleDescriptor extends BundleDescriptor {
      * @return a set of service-ref from this bundle or null
      * if none
      */
-    public Set getServiceReferenceDescriptors() {
-        Set serviceRefs = new OrderedSet();
-        for(Iterator ejbs = getEjbs().iterator();ejbs.hasNext();) {
-            EjbDescriptor next = (EjbDescriptor) ejbs.next();
+    public Set<ServiceReferenceDescriptor> getServiceReferenceDescriptors() {
+        Set<ServiceReferenceDescriptor> serviceRefs = new OrderedSet<ServiceReferenceDescriptor>();
+        for (EjbDescriptor next : getEjbs()) {
             serviceRefs.addAll(next.getServiceReferenceDescriptors());
         }
         return serviceRefs;        
@@ -675,14 +668,14 @@ public class EjbBundleDescriptor extends BundleDescriptor {
         super.print(toStringBuffer);
         if (cmpResourceReference!=null) {
             toStringBuffer.append("\ncmp resource ");
-            ((Descriptor)cmpResourceReference).print(toStringBuffer);
+            cmpResourceReference.print(toStringBuffer);
         }
 	toStringBuffer.append("\nclient JAR ").append(this.getEjbClientJarUri());
-	for (Iterator itr = this.getEjbs().iterator(); itr.hasNext();) {
-	    toStringBuffer.append("\n------------\n");
-	    ((Descriptor)itr.next()).print(toStringBuffer);
-	    toStringBuffer.append("\n------------") ;
-	}
+        for (Descriptor o : this.getEjbs()) {
+            toStringBuffer.append("\n------------\n");
+            o.print(toStringBuffer);
+            toStringBuffer.append("\n------------");
+        }
     }
     
     /** 
@@ -707,8 +700,7 @@ public class EjbBundleDescriptor extends BundleDescriptor {
         aVisitor.accept(this);
         EjbVisitor ejbVisitor = aVisitor.getEjbVisitor();
         if (ejbVisitor != null) {
-            for (Iterator itr = this.getEjbs().iterator(); itr.hasNext();) {
-                EjbDescriptor anEjb = (EjbDescriptor) itr.next();
+            for (EjbDescriptor anEjb : this.getEjbs()) {
                 anEjb.visit(ejbVisitor);
             }
         }
@@ -718,15 +710,10 @@ public class EjbBundleDescriptor extends BundleDescriptor {
                 aVisitor.accept(rd);
             }
         }
-        for (Iterator itr=getWebServices().getWebServices().iterator();
-             itr.hasNext(); ) {
-            WebService aWebService = (WebService) itr.next();
+        for (WebService aWebService : getWebServices().getWebServices()) {
             aVisitor.accept(aWebService);
         }
-        for (Iterator itr = getMessageDestinations().iterator();
-                itr.hasNext();) {
-            MessageDestinationDescriptor msgDestDescriptor =
-                (MessageDestinationDescriptor)itr.next();
+        for (MessageDestinationDescriptor msgDestDescriptor : getMessageDestinations()) {
             aVisitor.accept(msgDestDescriptor);
         }
     }
@@ -804,7 +791,7 @@ public class EjbBundleDescriptor extends BundleDescriptor {
                 if (debug)
 		    _logger.fine("***IASEjbBundleDescriptor.getPreferredPersistenceManager done -#- ");
 
-                return (IASPersistenceManagerDescriptor)pmdesc;
+                return pmdesc;
 	    }
 	}
 	throw new IllegalArgumentException(localStrings.getLocalString(
@@ -834,8 +821,7 @@ public class EjbBundleDescriptor extends BundleDescriptor {
             findReferencedPUs() {
         Collection<PersistenceUnitDescriptor> pus =
                 new HashSet<PersistenceUnitDescriptor>();
-        for (EjbDescriptor ejb :
-                (Collection<EjbDescriptor>)getEjbs()) {
+        for (EjbDescriptor ejb : getEjbs()) {
             pus.addAll(findReferencedPUsViaPURefs(ejb));
             pus.addAll(findReferencedPUsViaPCRefs(ejb));
         }
