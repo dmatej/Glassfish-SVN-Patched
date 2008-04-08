@@ -37,10 +37,13 @@
 
 package org.glassfish.embed;
 
+import com.sun.enterprise.module.bootstrap.Main;
 import com.sun.enterprise.module.bootstrap.StartupContext;
+import com.sun.enterprise.module.bootstrap.BootException;
 import com.sun.enterprise.module.impl.ModulesRegistryImpl;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Launches a mock-up HK2 environment that doesn't provide
@@ -49,13 +52,23 @@ import java.io.File;
  *
  * @author Kohsuke Kawaguchi
  */
-public class Main2 {
-    public static void main(String[] args) throws Exception {
+public class Main2 extends Main {
+    public static void main(String[] args) {
+        try {
+            new Main2().boot(args);
+            System.exit(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(-1);
+        }
+    }
+
+    public void boot(String[] args) throws IOException, BootException {
         ModulesRegistryImpl mrs = new ModulesRegistryImpl(null);
         mrs.add(new ProxyModuleDefinition(Main2.class.getClassLoader()));
 
         StartupContext startupContext = new StartupContext(new File("./temp"), args);
 
-        new com.sun.enterprise.module.bootstrap.Main().launch(mrs,startupContext);
+        launch(mrs,startupContext);
     }
 }
