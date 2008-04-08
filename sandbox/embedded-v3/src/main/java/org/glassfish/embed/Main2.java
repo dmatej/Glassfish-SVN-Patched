@@ -41,9 +41,16 @@ import com.sun.enterprise.module.bootstrap.Main;
 import com.sun.enterprise.module.bootstrap.StartupContext;
 import com.sun.enterprise.module.bootstrap.BootException;
 import com.sun.enterprise.module.impl.ModulesRegistryImpl;
+import com.sun.enterprise.module.ModulesRegistry;
+import com.sun.enterprise.v3.server.DomainXml;
+import com.sun.hk2.component.InhabitantsParser;
+import com.sun.hk2.component.KeyValuePairParser;
 
 import java.io.File;
 import java.io.IOException;
+
+import org.jvnet.hk2.component.Habitat;
+import org.jvnet.hk2.component.Inhabitant;
 
 /**
  * Launches a mock-up HK2 environment that doesn't provide
@@ -70,5 +77,18 @@ public class Main2 extends Main {
         StartupContext startupContext = new StartupContext(new File("./temp"), args);
 
         launch(mrs,startupContext);
+    }
+
+    @Override
+    protected InhabitantsParser createInhabitantsParser(Habitat habitat) {
+        return new InhabitantsParser(habitat) {
+            protected void add(Inhabitant i, KeyValuePairParser kvpp) {
+                // we'll build the equivalent of domain.xml on our own,
+                // so don't let the default component parse it.
+                if(i.typeName().equals(DomainXml.class.getName()))
+                    return;
+                super.add(i, kvpp);
+            }
+        };
     }
 }
