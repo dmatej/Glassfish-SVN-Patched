@@ -43,6 +43,10 @@ import com.sun.enterprise.module.impl.ModulesRegistryImpl;
 import java.io.File;
 
 /**
+ * Launches a mock-up HK2 environment that doesn't provide
+ * any classloader isolation. Instead, the whole thing is loaded
+ * from the single classloader.
+ *
  * @author Kohsuke Kawaguchi
  */
 public class Main2 {
