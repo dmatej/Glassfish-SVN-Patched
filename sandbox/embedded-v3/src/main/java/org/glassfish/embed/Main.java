@@ -19,8 +19,14 @@ import com.sun.enterprise.module.bootstrap.Which;
 import com.sun.enterprise.v3.server.AppServerStartup;
 
 /**
+ * Experimental launch code that starts Felix.
+ *
+ * Abandoned for now as it requires a multi-jar set up, making it unsuitable for
+ * the embedded use.
+ *
  * @author Kohsuke Kawaguchi
  */
+@Deprecated
 public class Main {
     public static void main(String[] args) throws Exception {
         Properties felixProps = new Properties();
