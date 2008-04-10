@@ -44,16 +44,11 @@ import com.sun.enterprise.module.impl.ModulesRegistryImpl;
 import com.sun.enterprise.v3.admin.adapter.AdminConsoleAdapter;
 import com.sun.enterprise.v3.server.DomainXml;
 import com.sun.enterprise.v3.services.impl.LogManagerService;
-import com.sun.hk2.component.ConstructorWomb;
 import com.sun.hk2.component.InhabitantsParser;
-import com.sun.hk2.component.KeyValuePairParser;
 import org.jvnet.hk2.component.Habitat;
-import org.jvnet.hk2.component.Inhabitant;
-import org.jvnet.hk2.component.MultiMap;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 
 /**
  * Launches a mock-up HK2 environment that doesn't provide
@@ -94,38 +89,30 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
 
         StartupContext startupContext = new StartupContext(new File("./temp"), args);
 
-        // HACK TO BE REMOVED
-        System.setProperty("com.sun.aas.instanceRoot",".");
+//        // HACK TO BE REMOVED
+//        System.setProperty("com.sun.aas.instanceRoot",".");
 
         launch(mrs,startupContext);
     }
 
+    /**
+     * Tweaks the 'recipe' --- for embedded use, we'd like GFv3 to behave a little bit
+     * differently from normal stand-alone use.
+     */
     @Override
     protected InhabitantsParser createInhabitantsParser(Habitat habitat) {
-        return new InhabitantsParser(habitat) {
-            protected void add(Inhabitant i, KeyValuePairParser kvpp) {
-                // we'll build the equivalent of domain.xml on our own,
-                // so don't let the default component parse it.
-//                if(i.typeName().equals(DomainXml.class.getName()))
-//                    return;
+        InhabitantsParser parser = super.createInhabitantsParser(habitat);
 
-                // TODO: need a better way to exclude components
+        // we don't want GFv3 to reconfigure all the loggers
+        parser.drop(LogManagerService.class);
 
-                if(i.typeName().equals(LogManagerService.class.getName()))
-                    return; // we don't want GFv3 to reconfigure all the loggers
-                if(i.typeName().equals(AdminConsoleAdapter.class.getName()))
-                    return; // we don't need admin CLI support
+        // we don't need admin CLI support.
+        // TODO: admin CLI should be really moved to a separate class
+        parser.drop(AdminConsoleAdapter.class);
 
-                if(i.typeName().equals(DomainXml.class.getName())) {
-                    MultiMap metadata = new MultiMap(i.metadata());
-                    metadata.set("class", Collections.singletonList(DomainXmlParser2.class.getName()));
-                    super.add(new ConstructorWomb(DomainXmlParser2.class,habitat, metadata),kvpp);
-                    return;
-                }
+        // we don't really parse domain.xml from disk
+        parser.replace(DomainXml.class, DomainXmlParser2.class);
 
-
-                super.add(i, kvpp);
-            }
-        };
+        return parser;
     }
 }
