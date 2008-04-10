@@ -111,7 +111,7 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
         parser.drop(AdminConsoleAdapter.class);
 
         // we don't really parse domain.xml from disk
-        parser.replace(DomainXml.class, DomainXmlParser2.class);
+        parser.replace(DomainXml.class, DomainXml2.class);
 
         return parser;
     }
