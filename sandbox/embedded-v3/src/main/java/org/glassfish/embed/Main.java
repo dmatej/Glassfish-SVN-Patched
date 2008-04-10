@@ -37,25 +37,23 @@
 
 package org.glassfish.embed;
 
-import com.sun.enterprise.module.bootstrap.StartupContext;
-import com.sun.enterprise.module.bootstrap.BootException;
-import com.sun.enterprise.module.impl.ModulesRegistryImpl;
-import com.sun.enterprise.module.ModulesRegistry;
 import com.sun.enterprise.module.Module;
+import com.sun.enterprise.module.bootstrap.BootException;
+import com.sun.enterprise.module.bootstrap.StartupContext;
+import com.sun.enterprise.module.impl.ModulesRegistryImpl;
+import com.sun.enterprise.v3.admin.adapter.AdminConsoleAdapter;
 import com.sun.enterprise.v3.server.DomainXml;
 import com.sun.enterprise.v3.services.impl.LogManagerService;
+import com.sun.hk2.component.ConstructorWomb;
 import com.sun.hk2.component.InhabitantsParser;
 import com.sun.hk2.component.KeyValuePairParser;
-import com.sun.hk2.component.ExistingSingletonInhabitant;
-import com.sun.hk2.component.ConstructorWomb;
+import org.jvnet.hk2.component.Habitat;
+import org.jvnet.hk2.component.Inhabitant;
+import org.jvnet.hk2.component.MultiMap;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
-
-import org.jvnet.hk2.component.Habitat;
-import org.jvnet.hk2.component.Inhabitant;
-import org.jvnet.hk2.component.MultiMap;
 
 /**
  * Launches a mock-up HK2 environment that doesn't provide
@@ -111,8 +109,12 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
 //                if(i.typeName().equals(DomainXml.class.getName()))
 //                    return;
 
+                // TODO: need a better way to exclude components
+
                 if(i.typeName().equals(LogManagerService.class.getName()))
-                    return;
+                    return; // we don't want GFv3 to reconfigure all the loggers
+                if(i.typeName().equals(AdminConsoleAdapter.class.getName()))
+                    return; // we don't need admin CLI support
 
                 if(i.typeName().equals(DomainXml.class.getName())) {
                     MultiMap metadata = new MultiMap(i.metadata());
