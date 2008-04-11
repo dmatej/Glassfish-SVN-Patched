@@ -44,13 +44,29 @@ import com.sun.enterprise.module.impl.ModulesRegistryImpl;
 import com.sun.enterprise.v3.admin.adapter.AdminConsoleAdapter;
 import com.sun.enterprise.v3.server.DomainXml;
 import com.sun.enterprise.v3.server.ServerEnvironment;
+import com.sun.enterprise.v3.server.ApplicationLifecycle;
+import com.sun.enterprise.v3.server.SnifferManager;
 import com.sun.enterprise.v3.services.impl.LogManagerService;
+import com.sun.enterprise.v3.deployment.DeploymentContextImpl;
+import com.sun.enterprise.v3.deployment.DeployCommand;
+import com.sun.enterprise.v3.data.ApplicationInfo;
+import com.sun.enterprise.v3.common.PlainTextActionReporter;
+import com.sun.enterprise.deploy.shared.ArchiveFactory;
+import com.sun.enterprise.util.io.FileUtils;
+import com.sun.enterprise.security.SecuritySniffer;
 import com.sun.hk2.component.InhabitantsParser;
 import org.glassfish.deployment.autodeploy.AutoDeployService;
+import org.glassfish.api.deployment.archive.WritableArchive;
+import org.glassfish.api.deployment.archive.ReadableArchive;
+import org.glassfish.api.deployment.archive.ArchiveHandler;
+import org.glassfish.api.container.Sniffer;
 import org.jvnet.hk2.component.Habitat;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Properties;
+import java.util.logging.Logger;
 
 /**
  * Launches a mock-up HK2 environment that doesn't provide
@@ -84,7 +100,45 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
 
         StartupContext startupContext = new StartupContext(new File("./temp"), args);
 
-        launch(mrs,startupContext);
+        Habitat habitat = launch(mrs,startupContext);
+
+        deploy(new File("./simple.war"),habitat);
+    }
+
+    // TODO: refactoring of ApplicationLifecycle is crucial to make this code presentable
+    private void deploy(File war, Habitat habitat) throws IOException {
+        ApplicationLifecycle appLife = habitat.getComponent(ApplicationLifecycle.class);
+        SnifferManager snifMan = habitat.getComponent(SnifferManager.class);
+        ArchiveFactory archiveFactory = habitat.getComponent(ArchiveFactory.class);
+        ServerEnvironment env = habitat.getComponent(ServerEnvironment.class);
+
+        ReadableArchive a = archiveFactory.openArchive(war);
+        ArchiveHandler h = appLife.getArchiveHandler(a);
+
+        // explode
+        File tmpDir = new File("./exploded");
+        FileUtils.whack(tmpDir);
+        tmpDir.mkdirs();
+        h.expand(a, archiveFactory.createArchive(tmpDir));
+        a.close();
+        a = archiveFactory.openArchive(tmpDir);
+
+        // now prepare sniffers
+        ClassLoader parentCL = snifMan.createSnifferParentCL(null);
+        ClassLoader cl = h.getClassLoader(parentCL, a);
+        Collection<Sniffer> activeSniffers = snifMan.getSniffers(a, cl);
+
+
+        // TODO: we need to stop this totally type-unsafe way of passing parameters
+        Properties params = new Properties();
+        params.put(DeployCommand.NAME,a.getName());
+        params.put(DeployCommand.ENABLED,"true");
+        final DeploymentContextImpl deploymentContext = new DeploymentContextImpl(Logger.getAnonymousLogger(), a, params, env);
+        deploymentContext.setClassLoader(cl);
+
+        PlainTextActionReporter r = new PlainTextActionReporter();
+        ApplicationInfo appInfo = appLife.deploy(activeSniffers, deploymentContext, r);
+        r.writeReport(System.out);
     }
 
     /**
@@ -107,6 +161,10 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
 
         // we don't really parse domain.xml from disk
         parser.replace(DomainXml.class, DomainXml2.class);
+
+        // security code needs a whole lot more work to work in the modular environment.
+        // disabling it for now.
+        parser.drop(SecuritySniffer.class);
 
         // we provide our own ServerEnvironment
         parser.replace(ServerEnvironment.class,ServerEnvironment2.class);
