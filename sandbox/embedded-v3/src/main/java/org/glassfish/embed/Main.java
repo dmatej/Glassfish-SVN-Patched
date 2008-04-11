@@ -43,9 +43,11 @@ import com.sun.enterprise.module.bootstrap.StartupContext;
 import com.sun.enterprise.module.impl.ModulesRegistryImpl;
 import com.sun.enterprise.v3.admin.adapter.AdminConsoleAdapter;
 import com.sun.enterprise.v3.server.DomainXml;
+import com.sun.enterprise.v3.server.ServerEnvironment;
 import com.sun.enterprise.v3.services.impl.LogManagerService;
 import com.sun.hk2.component.InhabitantsParser;
 import org.jvnet.hk2.component.Habitat;
+import org.jvnet.hk2.component.Inhabitants;
 
 import java.io.File;
 import java.io.IOException;
@@ -89,9 +91,6 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
 
         StartupContext startupContext = new StartupContext(new File("./temp"), args);
 
-//        // HACK TO BE REMOVED
-//        System.setProperty("com.sun.aas.instanceRoot",".");
-
         launch(mrs,startupContext);
     }
 
@@ -112,6 +111,9 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
 
         // we don't really parse domain.xml from disk
         parser.replace(DomainXml.class, DomainXml2.class);
+
+        // we provide our own ServerEnvironment
+        parser.replace(ServerEnvironment.class,ServerEnvironment2.class);
 
         return parser;
     }
