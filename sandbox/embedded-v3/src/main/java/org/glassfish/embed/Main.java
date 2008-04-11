@@ -46,8 +46,8 @@ import com.sun.enterprise.v3.server.DomainXml;
 import com.sun.enterprise.v3.server.ServerEnvironment;
 import com.sun.enterprise.v3.services.impl.LogManagerService;
 import com.sun.hk2.component.InhabitantsParser;
+import org.glassfish.deployment.autodeploy.AutoDeployService;
 import org.jvnet.hk2.component.Habitat;
-import org.jvnet.hk2.component.Inhabitants;
 
 import java.io.File;
 import java.io.IOException;
@@ -62,15 +62,8 @@ import java.io.IOException;
 public class Main extends com.sun.enterprise.module.bootstrap.Main {
     public static void main(String[] args) {
         try {
-            long start = System.currentTimeMillis();
             new Main().boot(args);
-
-            System.out.println("GFv3 started in "+(System.currentTimeMillis()-start)+"ms");
-            // block forever. TODO: show how to shut down v3 cleanly.
-            Object o = new Object();
-            synchronized (o) {
-                o.wait();
-            }
+            // TODO: show how to shut down v3 cleanly.
         } catch (Exception e) {
             e.printStackTrace();
             System.exit(-1);
@@ -108,6 +101,9 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
         // we don't need admin CLI support.
         // TODO: admin CLI should be really moved to a separate class
         parser.drop(AdminConsoleAdapter.class);
+
+        // don't care about auto-deploy either
+        parser.drop(AutoDeployService.class);
 
         // we don't really parse domain.xml from disk
         parser.replace(DomainXml.class, DomainXml2.class);
