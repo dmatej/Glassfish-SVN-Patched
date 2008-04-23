@@ -66,6 +66,8 @@ import org.jvnet.hk2.component.Habitat;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.Properties;
 import java.util.logging.Logger;
@@ -140,6 +142,15 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
 
         PlainTextActionReporter r = new PlainTextActionReporter();
         ApplicationInfo appInfo = appLife.deploy(activeSniffers, deploymentContext, r);
+        r.writeReport(System.out);
+
+        // wait for enter
+        new BufferedReader(new InputStreamReader(System.in)).readLine();
+
+        // undeploy
+        // TODO: API abstraction problem.
+        r = new PlainTextActionReporter();
+        appLife.undeploy(a.getName(),deploymentContext, r);
         r.writeReport(System.out);
     }
 
