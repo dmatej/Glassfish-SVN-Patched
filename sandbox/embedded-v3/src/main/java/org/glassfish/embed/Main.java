@@ -54,7 +54,9 @@ import com.sun.enterprise.v3.common.PlainTextActionReporter;
 import com.sun.enterprise.deploy.shared.ArchiveFactory;
 import com.sun.enterprise.util.io.FileUtils;
 import com.sun.enterprise.security.SecuritySniffer;
+import com.sun.enterprise.web.WebDeployer;
 import com.sun.hk2.component.InhabitantsParser;
+import com.sun.web.security.RealmAdapter;
 import org.glassfish.deployment.autodeploy.AutoDeployService;
 import org.glassfish.api.deployment.archive.WritableArchive;
 import org.glassfish.api.deployment.archive.ReadableArchive;
@@ -168,6 +170,12 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
 
         // we provide our own ServerEnvironment
         parser.replace(ServerEnvironment.class,ServerEnvironment2.class);
+
+        // WebContainer has a bug in how it looks up Realm, but this should work around that.
+        parser.drop(RealmAdapter.class);
+
+        // override the location of default-web.xml
+        parser.replace(WebDeployer.class, WebDeployer2.class);
 
         return parser;
     }
