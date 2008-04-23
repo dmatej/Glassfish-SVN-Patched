@@ -112,6 +112,7 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
 
         // deploy(new File("./simple.war"),habitat);
         deploy(new File("./JSPWiki.war"),habitat);
+        // deploy(new File("./hudson.war"),habitat);
     }
 
     // TODO: refactoring of ApplicationLifecycle is crucial to make this code presentable
