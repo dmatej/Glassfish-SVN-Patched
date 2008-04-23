@@ -62,7 +62,11 @@ import org.glassfish.api.deployment.archive.WritableArchive;
 import org.glassfish.api.deployment.archive.ReadableArchive;
 import org.glassfish.api.deployment.archive.ArchiveHandler;
 import org.glassfish.api.container.Sniffer;
+import org.glassfish.api.Startup;
+import org.glassfish.internal.api.Init;
 import org.jvnet.hk2.component.Habitat;
+import org.jvnet.hk2.component.Inhabitant;
+import org.apache.catalina.startup.DigesterFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -106,7 +110,8 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
 
         Habitat habitat = launch(mrs,startupContext);
 
-        deploy(new File("./simple.war"),habitat);
+        // deploy(new File("./simple.war"),habitat);
+        deploy(new File("./JSPWiki.war"),habitat);
     }
 
     // TODO: refactoring of ApplicationLifecycle is crucial to make this code presentable
@@ -152,6 +157,26 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
         r = new PlainTextActionReporter();
         appLife.undeploy(a.getName(),deploymentContext, r);
         r.writeReport(System.out);
+
+        stopDomain(habitat);
+    }
+
+    private void stopDomain(Habitat habitat) {
+        for (Inhabitant<? extends Startup> svc : habitat.getInhabitants(Startup.class)) {
+            try {
+                svc.release();
+            } catch(Throwable e) {
+                e.printStackTrace();
+            }
+        }
+
+        for (Inhabitant<? extends Init> svc : habitat.getInhabitants(Init.class)) {
+            try {
+                svc.release();
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /**
@@ -187,6 +212,9 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
 
         // override the location of default-web.xml
         parser.replace(WebDeployer.class, WebDeployer2.class);
+
+        // override the location of cached DTDs and schemas
+        parser.replace(DigesterFactory.class, DigesterFactory2.class);
 
         return parser;
     }
