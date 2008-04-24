@@ -64,6 +64,7 @@ import org.glassfish.api.deployment.archive.ArchiveHandler;
 import org.glassfish.api.container.Sniffer;
 import org.glassfish.api.Startup;
 import org.glassfish.internal.api.Init;
+import org.glassfish.web.WebEntityResolver;
 import org.jvnet.hk2.component.Habitat;
 import org.jvnet.hk2.component.Inhabitant;
 import org.apache.catalina.startup.DigesterFactory;
@@ -214,8 +215,9 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
         // override the location of default-web.xml
         parser.replace(WebDeployer.class, WebDeployer2.class);
 
-        // override the location of cached DTDs and schemas
-        parser.replace(DigesterFactory.class, DigesterFactory2.class);
+//        // override the location of cached DTDs and schemas
+//        parser.replace(DigesterFactory.class, DigesterFactory2.class);
+        parser.replace(WebEntityResolver.class, EntityResolverImpl.class);
 
         return parser;
     }
