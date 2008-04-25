@@ -2,7 +2,7 @@
  * Copyright (c) 2008, Your Corporation. All Rights Reserved.
  */
 
-package org.glassfish.embed.test;
+package org.glassfish.embed.impl;
 
 import com.sun.enterprise.web.WebDeployer;
 
@@ -14,6 +14,6 @@ import java.io.IOException;
  */
 public class WebDeployer2 extends WebDeployer {
     protected URL getDefaultWebXML() throws IOException {
-        return getClass().getClassLoader().getResource("default-web.xml");
+        return getClass().getClassLoader().getResource("/org/glassfish/embed/default-web.xml");
     }
 }

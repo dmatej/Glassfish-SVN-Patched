@@ -35,7 +35,7 @@
  *
  */
 
-package org.glassfish.embed;
+package org.glassfish.embed.impl;
 
 import com.sun.enterprise.module.ModulesRegistry;
 import com.sun.enterprise.module.common_impl.AbstractFactory;

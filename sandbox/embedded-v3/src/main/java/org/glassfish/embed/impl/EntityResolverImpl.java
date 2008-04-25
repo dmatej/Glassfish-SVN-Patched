@@ -2,7 +2,7 @@
  * Copyright (c) 2008, Your Corporation. All Rights Reserved.
  */
 
-package org.glassfish.embed.test;
+package org.glassfish.embed.impl;
 
 import org.glassfish.web.WebEntityResolver;
 import org.xml.sax.InputSource;

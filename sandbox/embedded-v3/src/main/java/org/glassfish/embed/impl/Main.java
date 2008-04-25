@@ -35,7 +35,7 @@
  *
  */
 
-package org.glassfish.embed;
+package org.glassfish.embed.impl;
 
 import com.sun.enterprise.module.Module;
 import com.sun.enterprise.module.bootstrap.BootException;
@@ -58,7 +58,6 @@ import com.sun.enterprise.web.WebDeployer;
 import com.sun.hk2.component.InhabitantsParser;
 import com.sun.web.security.RealmAdapter;
 import org.glassfish.deployment.autodeploy.AutoDeployService;
-import org.glassfish.api.deployment.archive.WritableArchive;
 import org.glassfish.api.deployment.archive.ReadableArchive;
 import org.glassfish.api.deployment.archive.ArchiveHandler;
 import org.glassfish.api.container.Sniffer;
@@ -67,7 +66,6 @@ import org.glassfish.internal.api.Init;
 import org.glassfish.web.WebEntityResolver;
 import org.jvnet.hk2.component.Habitat;
 import org.jvnet.hk2.component.Inhabitant;
-import org.apache.catalina.startup.DigesterFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -111,10 +109,13 @@ public class Main extends com.sun.enterprise.module.bootstrap.Main {
 
         Habitat habitat = launch(mrs,startupContext);
 
+        createVirtualServer(habitat,createHttpListener(habitat,8080));
+
         // deploy(new File("./simple.war"),habitat);
         // deploy(new File("./JSPWiki.war"),habitat);
         deploy(new File("./hudson.war"),habitat);
     }
+
 
     // TODO: refactoring of ApplicationLifecycle is crucial to make this code presentable
     private void deploy(File war, Habitat habitat) throws IOException {

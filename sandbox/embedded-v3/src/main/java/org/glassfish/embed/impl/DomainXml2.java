@@ -35,8 +35,9 @@
  *
  */
 
-package org.glassfish.embed;
+package org.glassfish.embed.impl;
 
+import com.sun.enterprise.v3.server.DomainXml;
 import com.sun.enterprise.v3.server.ServerEnvironment;
 
 import java.io.File;
@@ -44,9 +45,10 @@ import java.io.File;
 /**
  * @author Kohsuke Kawaguchi
  */
-public class ServerEnvironment2 extends ServerEnvironment {
-    public ServerEnvironment2() {
-        // TODO: we really don't want to have domainRoot, so it should be eventually just null or something
-        super(new File("."));
+public class DomainXml2 extends DomainXml {
+    @Override
+    protected File getDomainXml(ServerEnvironment env) {
+        System.out.println("Loading custom domain.xml");
+        return new File("./domain.xml");
     }
 }

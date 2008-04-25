@@ -2,7 +2,7 @@
  * Copyright (c) 2008, Kohsuke Kawaguchi. All Rights Reserved.
  */
 
-package org.glassfish.embed.test;
+package org.glassfish.embed.impl;
 
 import org.apache.felix.framework.Felix;
 import org.apache.felix.framework.cache.BundleCache;
