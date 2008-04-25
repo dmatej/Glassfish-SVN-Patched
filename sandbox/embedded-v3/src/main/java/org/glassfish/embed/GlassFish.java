@@ -73,6 +73,7 @@ import org.glassfish.embed.impl.EntityResolverImpl;
 import org.glassfish.embed.impl.ProxyModuleDefinition;
 import org.glassfish.embed.impl.ServerEnvironment2;
 import org.glassfish.embed.impl.WebDeployer2;
+import org.glassfish.embed.impl.SilentActionReport;
 import org.glassfish.internal.api.Init;
 import org.glassfish.web.WebEntityResolver;
 import org.jvnet.hk2.component.Habitat;
@@ -119,7 +120,7 @@ public class GlassFish {
     protected final ArchiveFactory archiveFactory;
     protected final ServerEnvironment env;
 
-    public GlassFish() throws BootException {
+    public GlassFish() throws GFException {
         try {
             final Module[] proxyMod = new Module[1];
             ModulesRegistryImpl mrs = new ModulesRegistryImpl(null) {
@@ -147,7 +148,9 @@ public class GlassFish {
             archiveFactory = habitat.getComponent(ArchiveFactory.class);
             env = habitat.getComponent(ServerEnvironment.class);
         } catch (IOException e) {
-            throw new BootException(e);
+            throw new GFException(e);
+        } catch (BootException e) {
+            throw new GFException(e);
         }
     }
 
@@ -220,7 +223,7 @@ public class GlassFish {
                 }
             }, httpService);
         } catch(TransactionFailure e) {
-            throw new Error(e);
+            throw new GFException(e);
         }
     }
 
@@ -243,7 +246,7 @@ public class GlassFish {
                 }
             }, httpService);
         } catch(TransactionFailure e) {
-            throw new Error(e);
+            throw new GFException(e);
         }
     }
 
@@ -272,13 +275,16 @@ public class GlassFish {
         final DeploymentContextImpl deploymentContext = new DeploymentContextImpl(Logger.getAnonymousLogger(), a, params, env);
         deploymentContext.setClassLoader(cl);
 
-        PlainTextActionReporter r = new PlainTextActionReporter();
+        SilentActionReport r = new SilentActionReport();
         ApplicationInfo appInfo = appLife.deploy(activeSniffers, deploymentContext, r);
-        r.writeReport(System.out);
+        r.check();
 
-        return new GFApplication(appInfo,deploymentContext);
+        return new GFApplication(this,appInfo,deploymentContext);
     }
-    
+
+    /**
+     * Stops the running server.
+     */
     public void stop() {
         for (Inhabitant<? extends Startup> svc : habitat.getInhabitants(Startup.class)) {
             svc.release();

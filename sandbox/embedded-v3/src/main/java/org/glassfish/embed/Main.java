@@ -90,6 +90,7 @@ import java.util.logging.Logger;
 public class Main {
     public static void main(String[] args) throws Exception {
         GlassFish glassfish = new GlassFish();
+        // create one HTTP listener and virtual server
         GFHttpListener listener = glassfish.createHttpListener(8080);
         GFVirtualServer vs = glassfish.createVirtualServer(listener);
 

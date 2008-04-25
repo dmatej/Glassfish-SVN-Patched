@@ -35,41 +35,37 @@
  *
  */
 
-package org.glassfish.embed;
+package org.glassfish.embed.impl;
 
-import com.sun.enterprise.v3.data.ApplicationInfo;
-import org.glassfish.api.deployment.DeploymentContext;
-import org.glassfish.embed.impl.SilentActionReport;
+import com.sun.enterprise.v3.common.ActionReporter;
+
+import java.io.OutputStream;
+import java.io.IOException;
+
+import org.glassfish.api.ActionReport;
+import org.glassfish.embed.GFException;
 
 /**
- * An application deployed on GlassFish.
+ * {@link ActionReport} that swallows the output.
  *
  * @author Kohsuke Kawaguchi
  */
-public final class GFApplication {
-    private final GlassFish owner;
-    private final ApplicationInfo app;
-    private final DeploymentContext deploymentContext;
-
-    protected GFApplication(GlassFish owner, ApplicationInfo app, DeploymentContext deploymentContext) {
-        this.owner = owner;
-        this.app = app;
-        this.deploymentContext = deploymentContext;
+public class SilentActionReport extends ActionReporter {
+    public void writeReport(OutputStream os) throws IOException {
+        // no-op
     }
 
     /**
-     * Which GlassFish is this application deployed on?
+     * If the execution failed, throws an exception.
      */
-    public GlassFish getOwner() {
-        return owner;
-    }
-
-    /**
-     * Undeploys this application.
-     */
-    public void undeploy() {
-        SilentActionReport r = new SilentActionReport();
-        owner.appLife.undeploy(app.getName(),deploymentContext, r);
-        r.check();
+    public void check() {
+        if(isFailure()) {
+            Throwable t = getFailureCause();
+            if (t instanceof Error)
+                throw (Error) t;
+            if (t instanceof RuntimeException)
+                throw (RuntimeException) t;
+            throw new GFException(t);
+        }
     }
 }
