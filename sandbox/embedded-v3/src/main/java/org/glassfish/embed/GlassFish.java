@@ -37,40 +37,56 @@
 
 package org.glassfish.embed;
 
-import org.w3c.dom.Document;
-import org.glassfish.embed.impl.ProxyModuleDefinition;
+import com.sun.enterprise.config.serverbeans.Configs;
+import com.sun.enterprise.config.serverbeans.HttpListener;
+import com.sun.enterprise.config.serverbeans.HttpService;
+import com.sun.enterprise.config.serverbeans.Property;
+import com.sun.enterprise.config.serverbeans.VirtualServer;
+import com.sun.enterprise.deploy.shared.ArchiveFactory;
+import com.sun.enterprise.module.Module;
+import com.sun.enterprise.module.bootstrap.BootException;
+import com.sun.enterprise.module.bootstrap.Main;
+import com.sun.enterprise.module.bootstrap.StartupContext;
+import com.sun.enterprise.module.impl.ModulesRegistryImpl;
+import com.sun.enterprise.security.SecuritySniffer;
+import com.sun.enterprise.util.io.FileUtils;
+import com.sun.enterprise.v3.admin.adapter.AdminConsoleAdapter;
+import com.sun.enterprise.v3.common.PlainTextActionReporter;
+import com.sun.enterprise.v3.data.ApplicationInfo;
+import com.sun.enterprise.v3.deployment.DeployCommand;
+import com.sun.enterprise.v3.deployment.DeploymentContextImpl;
+import com.sun.enterprise.v3.server.ApplicationLifecycle;
+import com.sun.enterprise.v3.server.DomainXml;
+import com.sun.enterprise.v3.server.ServerEnvironment;
+import com.sun.enterprise.v3.server.SnifferManager;
+import com.sun.enterprise.v3.services.impl.LogManagerService;
+import com.sun.enterprise.web.WebDeployer;
+import com.sun.hk2.component.InhabitantsParser;
+import com.sun.web.security.RealmAdapter;
+import org.glassfish.api.Startup;
+import org.glassfish.api.container.Sniffer;
+import org.glassfish.api.deployment.archive.ArchiveHandler;
+import org.glassfish.api.deployment.archive.ReadableArchive;
+import org.glassfish.deployment.autodeploy.AutoDeployService;
 import org.glassfish.embed.impl.DomainXml2;
+import org.glassfish.embed.impl.EntityResolverImpl;
+import org.glassfish.embed.impl.ProxyModuleDefinition;
 import org.glassfish.embed.impl.ServerEnvironment2;
 import org.glassfish.embed.impl.WebDeployer2;
-import org.glassfish.embed.impl.EntityResolverImpl;
-import org.glassfish.deployment.autodeploy.AutoDeployService;
+import org.glassfish.internal.api.Init;
 import org.glassfish.web.WebEntityResolver;
 import org.jvnet.hk2.component.Habitat;
+import org.jvnet.hk2.component.Inhabitant;
 import org.jvnet.hk2.config.ConfigSupport;
 import org.jvnet.hk2.config.SingleConfigCode;
 import org.jvnet.hk2.config.TransactionFailure;
-import com.sun.enterprise.module.Module;
-import com.sun.enterprise.module.bootstrap.StartupContext;
-import com.sun.enterprise.module.bootstrap.BootException;
-import com.sun.enterprise.module.bootstrap.Main;
-import com.sun.enterprise.module.impl.ModulesRegistryImpl;
-import com.sun.enterprise.v3.services.impl.LogManagerService;
-import com.sun.enterprise.v3.admin.adapter.AdminConsoleAdapter;
-import com.sun.enterprise.v3.server.DomainXml;
-import com.sun.enterprise.v3.server.ServerEnvironment;
-import com.sun.enterprise.security.SecuritySniffer;
-import com.sun.enterprise.web.WebDeployer;
-import com.sun.enterprise.config.serverbeans.VirtualServer;
-import com.sun.enterprise.config.serverbeans.HttpListener;
-import com.sun.enterprise.config.serverbeans.Configs;
-import com.sun.enterprise.config.serverbeans.HttpService;
-import com.sun.enterprise.config.serverbeans.Property;
-import com.sun.hk2.component.InhabitantsParser;
-import com.sun.web.security.RealmAdapter;
 
+import java.beans.PropertyVetoException;
 import java.io.File;
 import java.io.IOException;
-import java.beans.PropertyVetoException;
+import java.util.Collection;
+import java.util.Properties;
+import java.util.logging.Logger;
 
 /**
  * Entry point to the embedded GlassFish.
@@ -94,15 +110,14 @@ public class GlassFish {
      */
     private boolean started;
 
-    /**
-     * <tt>domain.xml</tt> built in memory from user's configuration.
-     *
-     * Again, this is only a stop-gap hack until all the key components
-     * support dynamic reconfiguration.
-     */
-    private final Document domainXml;
-
     protected final Habitat habitat;
+
+    // key components inside GlassFish. We access them all the time,
+    // so we might just as well keep them here for ease of access.
+    protected final ApplicationLifecycle appLife;
+    protected final SnifferManager snifMan;
+    protected final ArchiveFactory archiveFactory;
+    protected final ServerEnvironment env;
 
     public GlassFish() throws BootException {
         try {
@@ -126,6 +141,11 @@ public class GlassFish {
                 }
 
             }.launch(mrs,startupContext);
+
+            appLife = habitat.getComponent(ApplicationLifecycle.class);
+            snifMan = habitat.getComponent(SnifferManager.class);
+            archiveFactory = habitat.getComponent(ArchiveFactory.class);
+            env = habitat.getComponent(ServerEnvironment.class);
         } catch (IOException e) {
             throw new BootException(e);
         }
@@ -175,16 +195,16 @@ public class GlassFish {
         return dir;
     }
 
-    public VirtualServer createVirtualServer(Habitat habitat, final HttpListener listener) {
+    public GFVirtualServer createVirtualServer(final GFHttpListener listener) {
         try {
             Configs configs = habitat.getComponent(Configs.class);
 
             HttpService httpService = configs.getConfig().get(0).getHttpService();
-            return (VirtualServer) ConfigSupport.apply(new SingleConfigCode<HttpService>() {
+            return  (GFVirtualServer) ConfigSupport.apply(new SingleConfigCode<HttpService>() {
                 public Object run(HttpService param) throws PropertyVetoException, TransactionFailure {
                     VirtualServer vs = ConfigSupport.createChildOf(param, VirtualServer.class);
                     vs.setId("server");
-                    vs.setHttpListeners(listener.getId());
+                    vs.setHttpListeners(listener.core.getId());
                     vs.setHosts("${com.sun.aas.hostName}");
 //                    vs.setDefaultWebModule("no-such-module");
 
@@ -196,7 +216,7 @@ public class GlassFish {
 
 
                     param.getVirtualServer().add(vs);
-                    return vs;
+                    return new GFVirtualServer(vs);
                 }
             }, httpService);
         } catch(TransactionFailure e) {
@@ -204,12 +224,12 @@ public class GlassFish {
         }
     }
 
-    public HttpListener createHttpListener(Habitat habitat,final int listenerPort) {
+    public GFHttpListener createHttpListener(final int listenerPort) {
         try {
             Configs configs = habitat.getComponent(Configs.class);
 
             HttpService httpService = configs.getConfig().get(0).getHttpService();
-            return (HttpListener)ConfigSupport.apply(new SingleConfigCode<HttpService>() {
+            return (GFHttpListener)ConfigSupport.apply(new SingleConfigCode<HttpService>() {
                 public Object run(HttpService param) throws PropertyVetoException, TransactionFailure {
                     HttpListener newListener = ConfigSupport.createChildOf(param, HttpListener.class);
                     newListener.setId("http-listener-"+listenerPort);
@@ -219,11 +239,53 @@ public class GlassFish {
                     newListener.setEnabled("true");
 
                     param.getHttpListener().add(newListener);
-                    return newListener;
+                    return new GFHttpListener(newListener);
                 }
             }, httpService);
         } catch(TransactionFailure e) {
             throw new Error(e);
+        }
+    }
+
+    public GFApplication deploy(File archive) throws IOException {
+        ReadableArchive a = archiveFactory.openArchive(archive);
+        ArchiveHandler h = appLife.getArchiveHandler(a);
+
+        // explode
+        File tmpDir = new File("./exploded");
+        FileUtils.whack(tmpDir);
+        tmpDir.mkdirs();
+        h.expand(a, archiveFactory.createArchive(tmpDir));
+        a.close();
+        a = archiveFactory.openArchive(tmpDir);
+
+        // now prepare sniffers
+        ClassLoader parentCL = snifMan.createSnifferParentCL(null);
+        ClassLoader cl = h.getClassLoader(parentCL, a);
+        Collection<Sniffer> activeSniffers = snifMan.getSniffers(a, cl);
+
+
+        // TODO: we need to stop this totally type-unsafe way of passing parameters
+        Properties params = new Properties();
+        params.put(DeployCommand.NAME,a.getName());
+        params.put(DeployCommand.ENABLED,"true");
+        final DeploymentContextImpl deploymentContext = new DeploymentContextImpl(Logger.getAnonymousLogger(), a, params, env);
+        deploymentContext.setClassLoader(cl);
+
+        PlainTextActionReporter r = new PlainTextActionReporter();
+        ApplicationInfo appInfo = appLife.deploy(activeSniffers, deploymentContext, r);
+        r.writeReport(System.out);
+
+        return new GFApplication(appInfo,deploymentContext);
+    }
+    
+    public void stop() {
+        for (Inhabitant<? extends Startup> svc : habitat.getInhabitants(Startup.class)) {
+            svc.release();
+        }
+
+        for (Inhabitant<? extends Init> svc : habitat.getInhabitants(Init.class)) {
+            svc.release();
         }
     }
 }
