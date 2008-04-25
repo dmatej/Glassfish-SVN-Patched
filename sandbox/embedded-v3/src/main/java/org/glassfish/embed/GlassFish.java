@@ -263,6 +263,7 @@ public class GlassFish {
         tmpDir.mkdirs();
         h.expand(a, archiveFactory.createArchive(tmpDir));
         a.close();
+        String name = a.getName();
         a = archiveFactory.openArchive(tmpDir);
 
         // now prepare sniffers
@@ -273,7 +274,7 @@ public class GlassFish {
 
         // TODO: we need to stop this totally type-unsafe way of passing parameters
         Properties params = new Properties();
-        params.put(DeployCommand.NAME,a.getName());
+        params.put(DeployCommand.NAME,name);
         params.put(DeployCommand.ENABLED,"true");
         final DeploymentContextImpl deploymentContext = new DeploymentContextImpl(Logger.getAnonymousLogger(), a, params, env);
         deploymentContext.setClassLoader(cl);
