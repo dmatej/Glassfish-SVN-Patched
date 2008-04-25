@@ -51,12 +51,12 @@ import com.sun.enterprise.module.impl.ModulesRegistryImpl;
 import com.sun.enterprise.security.SecuritySniffer;
 import com.sun.enterprise.util.io.FileUtils;
 import com.sun.enterprise.v3.admin.adapter.AdminConsoleAdapter;
-import com.sun.enterprise.v3.common.PlainTextActionReporter;
 import com.sun.enterprise.v3.data.ApplicationInfo;
 import com.sun.enterprise.v3.deployment.DeployCommand;
 import com.sun.enterprise.v3.deployment.DeploymentContextImpl;
 import com.sun.enterprise.v3.server.ApplicationLifecycle;
 import com.sun.enterprise.v3.server.DomainXml;
+import com.sun.enterprise.v3.server.DomainXmlPersistence;
 import com.sun.enterprise.v3.server.ServerEnvironment;
 import com.sun.enterprise.v3.server.SnifferManager;
 import com.sun.enterprise.v3.services.impl.LogManagerService;
@@ -72,8 +72,8 @@ import org.glassfish.embed.impl.DomainXml2;
 import org.glassfish.embed.impl.EntityResolverImpl;
 import org.glassfish.embed.impl.ProxyModuleDefinition;
 import org.glassfish.embed.impl.ServerEnvironment2;
-import org.glassfish.embed.impl.WebDeployer2;
 import org.glassfish.embed.impl.SilentActionReport;
+import org.glassfish.embed.impl.WebDeployer2;
 import org.glassfish.internal.api.Init;
 import org.glassfish.web.WebEntityResolver;
 import org.jvnet.hk2.component.Habitat;
@@ -171,6 +171,9 @@ public class GlassFish {
 
         // we don't really parse domain.xml from disk
         parser.replace(DomainXml.class, DomainXml2.class);
+
+        // ... and we don't persist it either. 
+        parser.replace(DomainXmlPersistence.class, DomainXml2.class);
 
         // security code needs a whole lot more work to work in the modular environment.
         // disabling it for now.

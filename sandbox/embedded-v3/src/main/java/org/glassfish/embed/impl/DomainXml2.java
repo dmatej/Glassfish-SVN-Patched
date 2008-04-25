@@ -41,14 +41,26 @@ import com.sun.enterprise.v3.server.DomainXml;
 import com.sun.enterprise.v3.server.ServerEnvironment;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+
+import org.glassfish.config.support.ConfigurationPersistence;
+import org.jvnet.hk2.config.DomDocument;
+
+import javax.xml.stream.XMLStreamException;
 
 /**
+ * Loads the default empty domain.xml.
+ * 
  * @author Kohsuke Kawaguchi
  */
-public class DomainXml2 extends DomainXml {
+public class DomainXml2 extends DomainXml implements ConfigurationPersistence {
     @Override
-    protected File getDomainXml(ServerEnvironment env) {
-        System.out.println("Loading custom domain.xml");
-        return new File("./domain.xml");
+    protected URL getDomainXml(ServerEnvironment env) {
+        return getClass().getResource("/org/glassfish/embed/domain.xml");
+    }
+
+    public void save(DomDocument doc) throws IOException, XMLStreamException {
+        // we don't want to persist domain.xml
     }
 }
