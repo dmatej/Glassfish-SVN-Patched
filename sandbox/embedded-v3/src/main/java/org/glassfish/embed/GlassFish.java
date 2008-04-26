@@ -74,6 +74,7 @@ import org.glassfish.embed.impl.ProxyModuleDefinition;
 import org.glassfish.embed.impl.ServerEnvironment2;
 import org.glassfish.embed.impl.SilentActionReport;
 import org.glassfish.embed.impl.WebDeployer2;
+import org.glassfish.embed.impl.ScatteredWarArchive;
 import org.glassfish.internal.api.Init;
 import org.glassfish.web.WebEntityResolver;
 import org.jvnet.hk2.component.Habitat;
@@ -87,7 +88,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Properties;
+import java.util.Collections;
 import java.util.logging.Logger;
+import java.net.URL;
 
 /**
  * Entry point to the embedded GlassFish.
@@ -253,28 +256,41 @@ public class GlassFish {
         }
     }
 
+    /**
+     * Deploys WAR/EAR/RAR/etc to this GlassFish.
+     *
+     * @return
+     *      always non-null. Represents the deployed application.
+     */
     public GFApplication deploy(File archive) throws IOException {
         ReadableArchive a = archiveFactory.openArchive(archive);
-        ArchiveHandler h = appLife.getArchiveHandler(a);
 
-        // explode
-        File tmpDir = new File("./exploded");
-        FileUtils.whack(tmpDir);
-        tmpDir.mkdirs();
-        h.expand(a, archiveFactory.createArchive(tmpDir));
-        a.close();
-        String name = a.getName();
-        a = archiveFactory.openArchive(tmpDir);
+        if(!archive.isDirectory()) {
+            // explode (if I don't, WarHandler won't work)
+            ArchiveHandler h = appLife.getArchiveHandler(a);
+
+            File tmpDir = new File(a.getName());
+            FileUtils.whack(tmpDir);
+            tmpDir.mkdirs();
+            h.expand(a, archiveFactory.createArchive(tmpDir));
+            a.close();
+            a = archiveFactory.openArchive(tmpDir);
+        }
+
+        return deploy(a);
+    }
+
+    public GFApplication deploy(ReadableArchive a) throws IOException {
+        ArchiveHandler h = appLife.getArchiveHandler(a);
 
         // now prepare sniffers
         ClassLoader parentCL = snifMan.createSnifferParentCL(null);
         ClassLoader cl = h.getClassLoader(parentCL, a);
         Collection<Sniffer> activeSniffers = snifMan.getSniffers(a, cl);
 
-
         // TODO: we need to stop this totally type-unsafe way of passing parameters
         Properties params = new Properties();
-        params.put(DeployCommand.NAME,name);
+        params.put(DeployCommand.NAME,a.getName());
         params.put(DeployCommand.ENABLED,"true");
         final DeploymentContextImpl deploymentContext = new DeploymentContextImpl(Logger.getAnonymousLogger(), a, params, env);
         deploymentContext.setClassLoader(cl);
