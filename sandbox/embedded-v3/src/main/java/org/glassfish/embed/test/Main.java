@@ -35,9 +35,11 @@
  *
  */
 
-package org.glassfish.embed;
+package org.glassfish.embed.test;
 
 import org.glassfish.embed.ScatteredWar;
+import org.glassfish.embed.GlassFish;
+import org.glassfish.embed.GFApplication;
 
 import java.io.File;
 import java.io.BufferedReader;
