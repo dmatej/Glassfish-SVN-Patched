@@ -70,7 +70,8 @@ public class Main {
             "killer-app",
             new File(killerApp,"web"),
             new File(killerApp,"web.xml"),
-            Collections.<URL>emptySet()
+            Collections.singleton(
+                new File(killerApp,"build/classes").toURI().toURL())
         );
         GFApplication app = glassfish.deploy(war);
 
