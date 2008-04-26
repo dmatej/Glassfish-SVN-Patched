@@ -14,6 +14,9 @@ import java.io.IOException;
  */
 public class WebDeployer2 extends WebDeployer {
     protected URL getDefaultWebXML() throws IOException {
-        return getClass().getClassLoader().getResource("/org/glassfish/embed/default-web.xml");
+        URL url = getClass().getClassLoader().getResource("org/glassfish/embed/default-web.xml");
+        if(url==null)
+            throw new AssertionError("default-web.xml is missing from resources");
+        return url;
     }
 }

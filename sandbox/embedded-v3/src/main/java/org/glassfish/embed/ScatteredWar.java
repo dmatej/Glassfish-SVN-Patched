@@ -47,6 +47,7 @@ import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.Vector;
 import java.util.jar.Manifest;
 
 /**
@@ -90,14 +91,33 @@ public class ScatteredWar implements ReadableArchive {
         this.classes = classes;
     }
 
+    /**
+     * Maps the resource within the war into physical file.
+     *
+     * <p>
+     * This method creates an illusion that we actually have a fully assembled war,
+     * when in reality we don't. The illusion is partial because we can't
+     * emulate WEB-INF/classes and WEB-INF/lib.
+     *
+     * @param name
+     *      Relative path from within the canonical war format.
+     * @return
+     *      concrete location.
+     */
+    private File getFile(String name) {
+        if(name.equals("WEB-INF/web.xml"))
+            return webXml;
+        return new File(resources, name);
+    }
+
     public InputStream getEntry(String name) throws IOException {
-        File f = new File(resources, name);
+        File f = getFile(name);
         if(f.exists())  return new FileInputStream(f);
         return null;
     }
 
     public boolean exists(String name) throws IOException {
-        return new File(resources,name).exists();
+        return getFile(name).exists();
     }
 
     public long getEntrySize(String name) {
@@ -111,8 +131,7 @@ public class ScatteredWar implements ReadableArchive {
     }
 
     public ReadableArchive getSubArchive(String name) throws IOException {
-        // TODO
-        throw new UnsupportedOperationException();
+        return null;
     }
 
     public boolean exists() {
@@ -136,8 +155,9 @@ public class ScatteredWar implements ReadableArchive {
     }
 
     public Enumeration<String> entries() {
-        // TODO
-        throw new UnsupportedOperationException();
+        // TODO: abstraction breakage. We need file-level abstraction for archive
+        // and then more structured abstraction.
+        return EMPTY_ENUMERATOR;
     }
 
     public Enumeration entries(String prefix) {
@@ -146,13 +166,15 @@ public class ScatteredWar implements ReadableArchive {
     }
 
     public Manifest getManifest() throws IOException {
-        // TODO
-        throw new UnsupportedOperationException();
+        // TODO: we can support manifest.
+        // for now I'm not doing this because it seems like the value of this is limited for webapps.
+        return null;
     }
 
     public URI getURI() {
-        // TODO
-        throw new UnsupportedOperationException();
+        return resources.toURI();
+        // see my note on getURI javadoc. This isn't a URI
+//        return URI.create("scattered-war:"+resources.getPath());
     }
 
     public long getArchiveSize() throws SecurityException {
@@ -163,4 +185,6 @@ public class ScatteredWar implements ReadableArchive {
     public String getName() {
         return name;
     }
+
+    private static final Enumeration EMPTY_ENUMERATOR = new Vector().elements();
 }
