@@ -74,7 +74,6 @@ import org.glassfish.embed.impl.ProxyModuleDefinition;
 import org.glassfish.embed.impl.ServerEnvironment2;
 import org.glassfish.embed.impl.SilentActionReport;
 import org.glassfish.embed.impl.WebDeployer2;
-import org.glassfish.embed.impl.ScatteredWarArchive;
 import org.glassfish.internal.api.Init;
 import org.glassfish.web.WebEntityResolver;
 import org.jvnet.hk2.component.Habitat;
@@ -88,9 +87,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Properties;
-import java.util.Collections;
 import java.util.logging.Logger;
-import java.net.URL;
 
 /**
  * Entry point to the embedded GlassFish.

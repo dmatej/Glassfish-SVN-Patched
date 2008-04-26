@@ -37,48 +37,13 @@
 
 package org.glassfish.embed;
 
-import com.sun.enterprise.module.Module;
-import com.sun.enterprise.module.bootstrap.BootException;
-import com.sun.enterprise.module.bootstrap.StartupContext;
-import com.sun.enterprise.module.impl.ModulesRegistryImpl;
-import com.sun.enterprise.v3.admin.adapter.AdminConsoleAdapter;
-import com.sun.enterprise.v3.server.DomainXml;
-import com.sun.enterprise.v3.server.ServerEnvironment;
-import com.sun.enterprise.v3.server.ApplicationLifecycle;
-import com.sun.enterprise.v3.server.SnifferManager;
-import com.sun.enterprise.v3.services.impl.LogManagerService;
-import com.sun.enterprise.v3.deployment.DeploymentContextImpl;
-import com.sun.enterprise.v3.deployment.DeployCommand;
-import com.sun.enterprise.v3.data.ApplicationInfo;
-import com.sun.enterprise.v3.common.PlainTextActionReporter;
-import com.sun.enterprise.deploy.shared.ArchiveFactory;
-import com.sun.enterprise.util.io.FileUtils;
-import com.sun.enterprise.security.SecuritySniffer;
-import com.sun.enterprise.web.WebDeployer;
-import com.sun.hk2.component.InhabitantsParser;
-import com.sun.web.security.RealmAdapter;
-import org.glassfish.deployment.autodeploy.AutoDeployService;
-import org.glassfish.api.deployment.archive.ReadableArchive;
-import org.glassfish.api.deployment.archive.ArchiveHandler;
-import org.glassfish.api.container.Sniffer;
-import org.glassfish.api.Startup;
-import org.glassfish.internal.api.Init;
-import org.glassfish.web.WebEntityResolver;
-import org.glassfish.embed.impl.ProxyModuleDefinition;
-import org.glassfish.embed.impl.DomainXml2;
-import org.glassfish.embed.impl.ServerEnvironment2;
-import org.glassfish.embed.impl.WebDeployer2;
-import org.glassfish.embed.impl.EntityResolverImpl;
-import org.jvnet.hk2.component.Habitat;
-import org.jvnet.hk2.component.Inhabitant;
+import org.glassfish.embed.ScatteredWar;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.util.Collection;
-import java.util.Properties;
-import java.util.logging.Logger;
+import java.util.Collections;
+import java.net.URL;
 
 /**
  * Launches a mock-up HK2 environment that doesn't provide
@@ -96,7 +61,16 @@ public class Main {
 
         // deploy(new File("./simple.war"),habitat);
         // deploy(new File("./JSPWiki.war"),habitat);
-        GFApplication app = glassfish.deploy(new File("./hudson.war"));
+//        GFApplication app = glassfish.deploy(new File("./hudson.war"));
+
+        File killerApp = new File("killer-app");
+        ScatteredWar war = new ScatteredWar(
+            "killer-app",
+            new File(killerApp,"web"),
+            new File(killerApp,"web.xml"),
+            Collections.<URL>emptySet()
+        );
+        GFApplication app = glassfish.deploy(war);
 
         // wait for enter
         new BufferedReader(new InputStreamReader(System.in)).readLine();

@@ -43,6 +43,7 @@ import org.apache.catalina.loader.WebappClassLoader;
 import org.apache.naming.resources.FileDirContext;
 import org.glassfish.api.deployment.archive.ArchiveHandler;
 import org.glassfish.api.deployment.archive.ReadableArchive;
+import org.glassfish.embed.ScatteredWar;
 import org.jvnet.hk2.annotations.Service;
 
 import java.net.URL;
@@ -58,11 +59,11 @@ public class ScatteredWarHandler extends AbstractArchiveHandler implements Archi
     }
 
     public boolean handles(ReadableArchive archive) {
-        return archive instanceof ScatteredWarArchive;
+        return archive instanceof ScatteredWar;
     }
 
     public ClassLoader getClassLoader(ClassLoader parent, ReadableArchive _archive) {
-        ScatteredWarArchive archive = (ScatteredWarArchive) _archive;
+        ScatteredWar archive = (ScatteredWar) _archive;
         WebappClassLoader cloader = new WebappClassLoader(parent);
 
         FileDirContext r = new FileDirContext();

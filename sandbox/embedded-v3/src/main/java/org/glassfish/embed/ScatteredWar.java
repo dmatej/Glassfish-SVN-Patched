@@ -35,26 +35,30 @@
  *
  */
 
-package org.glassfish.embed.impl;
+package org.glassfish.embed;
 
 import org.glassfish.api.deployment.archive.ReadableArchive;
-import org.jvnet.hk2.annotations.Service;
 
-import java.io.InputStream;
-import java.io.IOException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
-import java.util.Enumeration;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.jar.Manifest;
 
 /**
+ * {@link ReadableArchive} representation of an web application that
+ * is not assembled into the canonical war format. 
+ *
  * @author Kohsuke Kawaguchi
  */
-@Service
-public class ScatteredWarArchive implements ReadableArchive {
+public class ScatteredWar implements ReadableArchive {
+    /**
+     * Static resources, JSP, etc.
+     */
     public final File resources;
 
     /**
@@ -62,14 +66,23 @@ public class ScatteredWarArchive implements ReadableArchive {
      */
     public final File webXml;
 
+    /**
+     * Classes and jar files that constitute the web app.
+     */
     public final Collection<URL> classes;
+
+    /**
+     * Name of the web app.
+     */
+    public final String name;
 
     /**
      *
      * @param webXml
      *      if null, defaults to {@code WEB-INF/web.xml} under {@code resources}.
      */
-    public ScatteredWarArchive(File resources, File webXml, Collection<URL> classes) {
+    public ScatteredWar(String name, File resources, File webXml, Collection<URL> classes) {
+        this.name = name;
         this.resources = resources;
         if(webXml==null)
             webXml = new File(resources,"WEB-INF/web.xml");
@@ -148,7 +161,6 @@ public class ScatteredWarArchive implements ReadableArchive {
     }
 
     public String getName() {
-        // TODO
-        throw new UnsupportedOperationException();
+        return name;
     }
 }
