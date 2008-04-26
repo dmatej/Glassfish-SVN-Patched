@@ -65,7 +65,7 @@ public class SilentActionReport extends ActionReporter {
                 throw (Error) t;
             if (t instanceof RuntimeException)
                 throw (RuntimeException) t;
-            throw new GFException(t);
+            throw new GFException(getMessage(),t);
         }
     }
 }
