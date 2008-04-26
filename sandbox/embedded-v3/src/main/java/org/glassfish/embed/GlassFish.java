@@ -87,6 +87,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -137,8 +138,8 @@ public class GlassFish {
 
             habitat = new Main() {
                 @Override
-                protected InhabitantsParser createInhabitantsParser(Habitat habitat) {
-                    return decorateInhabitantsParser(super.createInhabitantsParser(habitat));
+                protected InhabitantsParser createInhabitantsParser(Habitat habitat1) {
+                    return decorateInhabitantsParser(super.createInhabitantsParser(habitat1));
                 }
 
             }.launch(mrs,startupContext);
@@ -152,6 +153,13 @@ public class GlassFish {
         } catch (BootException e) {
             throw new GFException(e);
         }
+    }
+
+    /**
+     * Sets the overall logging level for GlassFish.
+     */
+    public static void setLogLevel(Level level) {
+        Logger.getLogger("javax.enterprise").setLevel(level);
     }
 
     /**

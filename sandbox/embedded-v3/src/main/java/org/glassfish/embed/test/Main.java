@@ -37,15 +37,15 @@
 
 package org.glassfish.embed.test;
 
-import org.glassfish.embed.ScatteredWar;
-import org.glassfish.embed.GlassFish;
 import org.glassfish.embed.GFApplication;
+import org.glassfish.embed.GlassFish;
+import org.glassfish.embed.ScatteredWar;
 
-import java.io.File;
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 import java.util.Collections;
-import java.net.URL;
+import static java.util.logging.Level.WARNING;
 
 /**
  * Launches a mock-up HK2 environment that doesn't provide
@@ -56,6 +56,8 @@ import java.net.URL;
  */
 public class Main {
     public static void main(String[] args) throws Exception {
+        GlassFish.setLogLevel(WARNING);
+
         GlassFish glassfish = new GlassFish();
         // create one HTTP listener and virtual server
 //        GFHttpListener listener = glassfish.createHttpListener(8080);
@@ -71,9 +73,11 @@ public class Main {
             new File(killerApp,"web"),
             new File(killerApp,"web.xml"),
             Collections.singleton(
-                new File(killerApp,"build/classes").toURI().toURL())
+                new File(killerApp,"target/classes").toURI().toURL())
         );
         GFApplication app = glassfish.deploy(war);
+
+        System.out.println("Ready!");
 
         // wait for enter
         new BufferedReader(new InputStreamReader(System.in)).readLine();
