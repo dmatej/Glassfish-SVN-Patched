@@ -60,8 +60,10 @@ import com.sun.enterprise.v3.server.ServerEnvironment;
 import com.sun.enterprise.v3.server.SnifferManager;
 import com.sun.enterprise.v3.services.impl.LogManagerService;
 import com.sun.enterprise.web.WebDeployer;
+import com.sun.enterprise.security.SecuritySniffer;
 import com.sun.hk2.component.InhabitantsParser;
 import com.sun.web.server.DecoratorForJ2EEInstanceListener;
+import com.sun.web.security.RealmAdapter;
 import org.glassfish.api.Startup;
 import org.glassfish.api.container.Sniffer;
 import org.glassfish.api.deployment.archive.ArchiveHandler;
@@ -189,12 +191,17 @@ public class GlassFish {
             parser.drop(DecoratorForJ2EEInstanceListener.class);
 
             // in the webtier-only bundle, these components don't exist to begin with.
-//        // security code needs a whole lot more work to work in the modular environment.
-//        // disabling it for now.
-//        parser.drop(SecuritySniffer.class);
-//
-//        // WebContainer has a bug in how it looks up Realm, but this should work around that.
-//        parser.drop(RealmAdapter.class);
+
+            try {
+                // security code needs a whole lot more work to work in the modular environment.
+                // disabling it for now.
+                parser.drop(SecuritySniffer.class);
+
+                // WebContainer has a bug in how it looks up Realm, but this should work around that.
+                parser.drop(RealmAdapter.class);
+            } catch (LinkageError e) {
+                // maybe we are running in the webtier only bundle
+            }
         }
 
         // override the location of default-web.xml
