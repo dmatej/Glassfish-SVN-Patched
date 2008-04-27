@@ -58,7 +58,7 @@ import java.util.logging.Level;
  */
 public class Main {
     public static void main(String[] args) throws Exception {
-        GlassFish.setLogLevel(INFO);
+        GlassFish.setLogLevel(WARNING);
 
         GlassFish glassfish = new GlassFish();
         // create one HTTP listener and virtual server
@@ -67,17 +67,17 @@ public class Main {
 
         // deploy(new File("./simple.war"),habitat);
         // deploy(new File("./JSPWiki.war"),habitat);
-//        GFApplication app = glassfish.deploy(new File("./hudson.war"));
+        GFApplication app = glassfish.deploy(new File("./hudson.war"));
 
-        File killerApp = new File("killer-app");
-        ScatteredWar war = new ScatteredWar(
-            "killer-app",
-            new File(killerApp,"web"),
-            new File(killerApp,"web.xml"),
-            Collections.singleton(
-                new File(killerApp,"target/classes").toURI().toURL())
-        );
-        GFApplication app = glassfish.deploy(war);
+//        File killerApp = new File("killer-app");
+//        ScatteredWar war = new ScatteredWar(
+//            "killer-app",
+//            new File(killerApp,"web"),
+//            new File(killerApp,"web.xml"),
+//            Collections.singleton(
+//                new File(killerApp,"target/classes").toURI().toURL())
+//        );
+//        GFApplication app = glassfish.deploy(war);
 
         System.out.println("Ready!");
 
