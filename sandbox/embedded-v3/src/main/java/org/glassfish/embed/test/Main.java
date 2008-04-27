@@ -46,6 +46,8 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.util.Collections;
 import static java.util.logging.Level.WARNING;
+import static java.util.logging.Level.INFO;
+import java.util.logging.Level;
 
 /**
  * Launches a mock-up HK2 environment that doesn't provide
@@ -56,7 +58,7 @@ import static java.util.logging.Level.WARNING;
  */
 public class Main {
     public static void main(String[] args) throws Exception {
-        GlassFish.setLogLevel(WARNING);
+        GlassFish.setLogLevel(INFO);
 
         GlassFish glassfish = new GlassFish();
         // create one HTTP listener and virtual server

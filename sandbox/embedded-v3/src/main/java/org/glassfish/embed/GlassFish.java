@@ -48,7 +48,6 @@ import com.sun.enterprise.module.bootstrap.BootException;
 import com.sun.enterprise.module.bootstrap.Main;
 import com.sun.enterprise.module.bootstrap.StartupContext;
 import com.sun.enterprise.module.impl.ModulesRegistryImpl;
-import com.sun.enterprise.security.SecuritySniffer;
 import com.sun.enterprise.util.io.FileUtils;
 import com.sun.enterprise.v3.admin.adapter.AdminConsoleAdapter;
 import com.sun.enterprise.v3.data.ApplicationInfo;
@@ -62,7 +61,7 @@ import com.sun.enterprise.v3.server.SnifferManager;
 import com.sun.enterprise.v3.services.impl.LogManagerService;
 import com.sun.enterprise.web.WebDeployer;
 import com.sun.hk2.component.InhabitantsParser;
-import com.sun.web.security.RealmAdapter;
+import com.sun.web.server.DecoratorForJ2EEInstanceListener;
 import org.glassfish.api.Startup;
 import org.glassfish.api.container.Sniffer;
 import org.glassfish.api.deployment.archive.ArchiveHandler;
@@ -183,15 +182,20 @@ public class GlassFish {
         // ... and we don't persist it either. 
         parser.replace(DomainXmlPersistence.class, DomainXml2.class);
 
-        // security code needs a whole lot more work to work in the modular environment.
-        // disabling it for now.
-        parser.drop(SecuritySniffer.class);
-
         // we provide our own ServerEnvironment
         parser.replace(ServerEnvironment.class, ServerEnvironment2.class);
 
-        // WebContainer has a bug in how it looks up Realm, but this should work around that.
-        parser.drop(RealmAdapter.class);
+        {// adjustment for webtier only bundle
+            parser.drop(DecoratorForJ2EEInstanceListener.class);
+
+            // in the webtier-only bundle, these components don't exist to begin with.
+//        // security code needs a whole lot more work to work in the modular environment.
+//        // disabling it for now.
+//        parser.drop(SecuritySniffer.class);
+//
+//        // WebContainer has a bug in how it looks up Realm, but this should work around that.
+//        parser.drop(RealmAdapter.class);
+        }
 
         // override the location of default-web.xml
         parser.replace(WebDeployer.class, WebDeployer2.class);
