@@ -56,6 +56,7 @@ public final class ServletFilterMappingDescriptor
     public static final String INCLUDE = ServletFilterMapping.INCLUDE;
     public static final String REQUEST = ServletFilterMapping.REQUEST;
     public static final String FORWARD = ServletFilterMapping.FORWARD;
+    public static final String ERROR = ServletFilterMapping.ERROR;
 
     private static Set allowed_dispatchers;
     
@@ -183,6 +184,7 @@ public final class ServletFilterMappingDescriptor
             allowed_dispatchers.add(INCLUDE);
             allowed_dispatchers.add(REQUEST);
             allowed_dispatchers.add(FORWARD);
+            allowed_dispatchers.add(ERROR);
         }
         return allowed_dispatchers;
     }

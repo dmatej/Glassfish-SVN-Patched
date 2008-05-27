@@ -48,6 +48,7 @@ public interface ServletFilterMapping {
     public static String INCLUDE = "INCLUDE";
     public static String REQUEST = "REQUEST";
     public static String FORWARD = "FORWARD";
+    public static String ERROR = "ERROR";
 
     public void setName(String name);
     public String getName();

@@ -44,10 +44,11 @@ import com.sun.enterprise.deployment.web.AppListenerDescriptor;
  * @author Vivek Nagar
  */
 
-public class AppListenerDescriptorImpl implements AppListenerDescriptor, 
-					    java.io.Serializable
+public class AppListenerDescriptorImpl extends Descriptor
+        implements AppListenerDescriptor, java.io.Serializable
 {
     private String listenerClass;
+    private String displayName;
     
     /** The default constructor.
     */
@@ -79,6 +80,20 @@ public class AppListenerDescriptorImpl implements AppListenerDescriptor,
      */
     public void setListener(String clz) {
 	this.listenerClass = clz;
+    }
+
+    /** set display name */
+    public void setDisplayName(String name) {
+	this.displayName = (name != null)? name : "";
+    }
+
+    /** get display name */
+    public String getDisplayName() {
+	String n = this.displayName;
+	if ((n == null) || n.equals("")) {
+	    n = this.getName();
+	}
+	return n;
     }
 
     /** 

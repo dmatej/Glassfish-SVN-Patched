@@ -55,5 +55,17 @@ public interface AppListenerDescriptor {
      * @param the listener class name.
      */
     public void setListener(String listener);
-    
+
+    // add get/set for descriptionGroup
+    public String getDescription();
+    public void setDescription(String description);
+
+    public void setDisplayName(String name);
+    public String getDisplayName();
+
+    public void setLargeIconUri(String largeIconUri);
+    public String getLargeIconUri();
+
+    public void setSmallIconUri(String smallIconUri);
+    public String getSmallIconUri();
 }
