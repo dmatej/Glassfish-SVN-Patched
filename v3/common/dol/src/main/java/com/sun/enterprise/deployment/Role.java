@@ -35,6 +35,8 @@
  */
 package com.sun.enterprise.deployment;
 
+import org.glassfish.security.common.PrincipalImpl;
+
 /**
  * In EJBs, ACL checking is done using the Roles. Roles are an abstraction
  * of an application specific Logical Principals. These Principals do not

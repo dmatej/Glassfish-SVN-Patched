@@ -33,7 +33,9 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package com.sun.enterprise.deployment;
+package org.glassfish.security.common;
+
+import com.sun.enterprise.deployment.*;
 
 /**
  * This class implements the EJB concept of a Group. A Group is

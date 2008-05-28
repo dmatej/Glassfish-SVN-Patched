@@ -35,6 +35,8 @@
  */
 package com.sun.enterprise.deployment;
 
+import org.glassfish.security.common.PrincipalImpl;
+
 /**
  * This class encapsulates the Resource Principal information needed
  * to access the Resource.

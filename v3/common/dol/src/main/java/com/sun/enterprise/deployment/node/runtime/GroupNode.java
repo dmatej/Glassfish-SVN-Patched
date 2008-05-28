@@ -43,7 +43,7 @@ import org.w3c.dom.Element;
 import com.sun.enterprise.deployment.node.DeploymentDescriptorNode;
 import com.sun.enterprise.deployment.node.XMLElement;
 import com.sun.enterprise.deployment.xml.RuntimeTagNames;
-import com.sun.enterprise.deployment.Group;
+import org.glassfish.security.common.Group;
 
 
 /**

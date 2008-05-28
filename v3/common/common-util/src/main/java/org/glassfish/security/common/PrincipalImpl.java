@@ -33,8 +33,9 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package com.sun.enterprise.deployment;
+package org.glassfish.security.common;
 
+import org.glassfish.security.common.Group;
 import java.security.Principal;
 
 /**

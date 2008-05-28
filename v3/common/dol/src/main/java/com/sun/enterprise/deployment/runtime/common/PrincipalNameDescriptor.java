@@ -48,7 +48,7 @@ import java.security.Principal;
 public class PrincipalNameDescriptor extends Descriptor {
 
     private static final String defaultClassName =
-                "com.sun.enterprise.deployment.PrincipalImpl";
+                "org.glassfish.security.common.PrincipalImpl";
     private String principalName = null;
     private String className = null;
 
