@@ -1,8 +1,8 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
- * Copyright 1997-2007 Sun Microsystems, Inc. All rights reserved.
- * 
+ *
+ * Copyright 1997-2008 Sun Microsystems, Inc. All rights reserved.
+ *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
  * and Distribution License("CDDL") (collectively, the "License").  You
@@ -10,7 +10,7 @@
  * a copy of the License at https://glassfish.dev.java.net/public/CDDL+GPL.html
  * or glassfish/bootstrap/legal/LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
- * 
+ *
  * When distributing the software, include this License Header Notice in each
  * file and include the License file at glassfish/bootstrap/legal/LICENSE.txt.
  * Sun designates this particular file as subject to the "Classpath" exception
@@ -19,9 +19,9 @@
  * Header, with the fields enclosed by brackets [] replaced by your own
  * identifying information: "Portions Copyrighted [year]
  * [name of copyright owner]"
- * 
+ *
  * Contributor(s):
- * 
+ *
  * If you wish your version of this file to be governed by only the CDDL or
  * only the GPL Version 2, indicate your decision by adding "[Contributor]
  * elects to include this software in this distribution under the [CDDL or GPL
@@ -37,84 +37,88 @@ package javax.persistence;
 
 import java.lang.annotation.Target;
 import java.lang.annotation.Retention;
-import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Is used to specify the map key for associations of type 
- * {@link java.util.Map}.
- * 
- * <p> If a persistent field or property other than the primary 
- * key is used as a map key then it is expected to have a 
- * uniqueness constraint associated with it.
+ * The <code>MapKeyClass</code> annotation is used to specify the type of the
+ * map key for associations of type java.util.Map. The map key can be a basic
+ * type, an embeddable class, or an entity. If the map is specified using
+ * Java generics, the <code>MapKeyClass</code> annotation and associated type
+ * need not be specified; otherwise they must be specified.
+ * The <code>MapKeyClass</code> annotation is not used when {@link MapKey} is 
+ * specified and vice versa.
  *
  * <pre>
- *
- *    Example 1:
- *
- *    &#064;Entity
- *    public class Department {
- *        ...
- *        &#064;OneToMany(mappedBy="department")
- *        &#064;MapKey(name="empId")
- *        public Map&#060;Integer, Employee> getEmployees() {... }
- *        ...
- *    }
- *
- *    &#064;Entity
- *    public class Employee {
- *        ...
- *        &#064;Id Integer getEmpid() { ... }
- *        &#064;ManyToOne
- *        &#064;JoinColumn(name="dept_id")
- *        public Department getDepartment() { ... }
- *        ...
- *    }
- *
- *    Example 2:
- *
- *    &#064;Entity
- *        public class Department {
- *        ...
- *        &#064;OneToMany(mappedBy="department")
- *        &#064;MapKey(name="empPK")
- *        public Map&#060;EmployeePK, Employee> getEmployees() {... }
- *        ...
- *    }
- *
- *    &#064;Entity
- *        public class Employee {
- *        &#064;EmbeddedId public EmployeePK getEmpPK() { ... }
- *        ...
- *        &#064;ManyToOne
- *        &#064;JoinColumn(name="dept_id")
- *        public Department getDepartment() { ... }
- *        ...
- *    }
- *
- *    &#064;Embeddable
- *    public class EmployeePK {
- *        String name;
- *        Date bday;
- *    }
- * </pre>
- *
- * @since Java Persistence 1.0
+ * <p>Example 1:
+ * 
+ *   &#064;Entity
+ *   public class Item {
+ *     &#064;Id int id;
+ *     ...
+ *     &#064;ElementCollection(targetClass=String.class)
+ *     &#064;MapKeyClass(String.class)
+ *     Map images; // map from image name to image filename
+ *     ...
+ *   }
+ * <p> Example 2:
+ * 
+ * // MapKeyClass and target type of relationship can be defaulted
+ * 
+ *   &#064;Entity
+ *   public class Item {
+ *     &#064;Id int id;
+ *     ...
+ *     &#064;ElementCollection
+ *     Map&#60;String, String> images;
+ *     ...
+ *   }
+ *  
+ * <p> Example 3:
+ * 
+ *   &#064;Entity
+ *   public class Company {
+ *     &#064;Id int id;
+ *     ...
+ *     &#064;OneToMany(targetEntity=com.example.VicePresident.class)
+ *     &#064;MapKeyClass(com.example.Division.class)
+ *     Map organization;
+ *   }
+ * 
+ * Example 4:
+ * 
+ * // MapKeyClass and target type of relationship are defaulted
+ * 
+ *   &#064;Entity
+ *   public class Company {
+ *     &#064;Id int id;
+ *     ...
+ *     &#064;OneToMany
+ *     Map&#60;Division, VicePresident> organization;
+ * }
+ * 
+ *  </pre>
+ * 
+ * 
+ * @see OneToMany
+ * @see ManyToMany
+ * @see ElementCollection
+ * @see MapKey
+ * 
+ * 
+ * 
+ * @since Java Persistence 2.0
+ * 
+ * 
  */
-@Target({METHOD, FIELD}) 
+@Target({METHOD, FIELD})
 @Retention(RUNTIME)
 
-public @interface MapKey {
+public @interface MapKeyClass {
 
     /**
-     * The name of the persistent field or property of the 
-     * associated entity that is used as the map key. If the 
-     * name element is not specified, the primary key of the 
-     * associated entity is used as the map key. If the 
-     * primary key is a composite primary key and is mapped 
-     * as {@link IdClass}, an instance of the primary key 
-     * class is used as the key.
+     * The type of the map key for associations of type java.util.Map
      */
-    String name() default "";
+    Class value() default void.class;
 }
