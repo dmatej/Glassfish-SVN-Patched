@@ -57,7 +57,7 @@ import static javax.persistence.FetchType.LAZY;
  *    In Customer class:
  *
  *    &#064;OneToMany(cascade=ALL, mappedBy="customer")
- *    public Set&#060;Order> getOrders() { return orders; }
+ *    public Set<Order> getOrders() { return orders; }
  *
  *    In Order class:
  *

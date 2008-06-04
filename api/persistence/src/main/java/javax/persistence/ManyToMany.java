@@ -65,12 +65,12 @@ import static javax.persistence.FetchType.LAZY;
  *
  *    &#064;ManyToMany
  *    &#064;JoinTable(name="CUST_PHONES")
- *    public Set&#060;PhoneNumber> getPhones() { return phones; }
+ *    public Set<PhoneNumber> getPhones() { return phones; }
  *
  *    In PhoneNumber class:
  *
  *    &#064;ManyToMany(mappedBy="phones")
- *    public Set&#060;Customer> getCustomers() { return customers; }
+ *    public Set<Customer> getCustomers() { return customers; }
  *
  *    Example 2:
  *
@@ -95,12 +95,12 @@ import static javax.persistence.FetchType.LAZY;
  *        inverseJoinColumns=
  *            &#064;JoinColumn(name="PHONE_ID", referencedColumnName="ID")
  *        )
- *    public Set&#060;PhoneNumber> getPhones() { return phones; }
+ *    public Set<PhoneNumber> getPhones() { return phones; }
  *
  *    In PhoneNumberClass:
  *
  *    &#064;ManyToMany(mappedBy="phones")
- *    public Set&#060;Customer> getCustomers() { return customers; }
+ *    public Set<Customer> getCustomers() { return customers; }
  * </pre>
  *
  * @since Java Persistence 1.0

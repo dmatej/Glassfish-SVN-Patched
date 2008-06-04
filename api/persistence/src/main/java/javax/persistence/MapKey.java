@@ -58,7 +58,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *        ...
  *        &#064;OneToMany(mappedBy="department")
  *        &#064;MapKey(name="empId")
- *        public Map&#060;Integer, Employee> getEmployees() {... }
+ *        public Map<Integer, Employee> getEmployees() {... }
  *        ...
  *    }
  *
@@ -79,7 +79,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  *        ...
  *        &#064;OneToMany(mappedBy="department")
  *        &#064;MapKey(name="empPK")
- *        public Map&#060;EmployeePK, Employee> getEmployees() {... }
+ *        public Map<EmployeePK, Employee> getEmployees() {... }
  *        ...
  *    }
  *
