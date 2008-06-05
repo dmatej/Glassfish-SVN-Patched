@@ -63,6 +63,5 @@ public class HouseKeeper implements Init, PreDestroy
      */
     public void preDestroy() {
         systemRegistry.shutdown();
-        Transactions.get().shutdown();
     }
 }
