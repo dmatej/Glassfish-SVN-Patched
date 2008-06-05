@@ -27,7 +27,7 @@
  * Created on May 22, 2002, 4:54 PM
  */
 
-package com.sun.appserv;
+package org.glassfish.api;
 
 import org.jvnet.hk2.annotations.Contract;
 
