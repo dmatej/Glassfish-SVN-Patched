@@ -47,8 +47,8 @@ import java.net.URI;
 import javax.enterprise.deploy.spi.Target;
 import javax.enterprise.deploy.spi.status.ProgressObject;
 
-import com.sun.enterprise.deployment.deploy.shared.Archive;
-import com.sun.enterprise.deployment.deploy.shared.WritableArchive;
+import org.glassfish.api.deployment.archive.Archive;
+import org.glassfish.api.deployment.archive.WritableArchive;
 
 /**
  *
