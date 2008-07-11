@@ -40,13 +40,15 @@
     <parent>
         <groupId>org.glassfish.api</groupId>
         <artifactId>api</artifactId>
-        <version>1</version>
+        <version>2.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
     <groupId>javax.javaee</groupId>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>javaee</artifactId>
     <version>6.0-alpha-2-SNAPSHOT</version>
+    <!-- The packaging type is hk2-jar so that maven-bundle-plugin
+         does not execute.-->
     <packaging>hk2-jar</packaging>
     <name>Java(TM) EE Specification APIs</name>
 
@@ -66,13 +68,21 @@
                 <groupId>com.sun.enterprise</groupId>
                 <artifactId>hk2-maven-plugin</artifactId>
                 <configuration>
-                    <archive>
-                        <manifestEntries>
-							<HK2-Export-Package>javax.</HK2-Export-Package>
-                        </manifestEntries>
-                    </archive>
+                    <!-- Generate OSGi metadata using hk2-maven-plugin,
+                         as it generates Require-Bundle headers, which we
+                         want for this facade like bundle -->
+                    <generateOSGiHeaders>true</generateOSGiHeaders>
+                    <!-- Mark resolution as optional, so that it can be
+                         loaded when some dependencies are absent.
+                         e.g., in a web distribution, ejb API may be absent
+                    -->
+                    <resolution>optional</resolution>
+                    <!-- This reexports all imported packages, so that
+                         users who depend on javaee API can just depend
+                         on one bundle -->
+                    <visibility>reexport</visibility>
                 </configuration>
-		<extensions>true</extensions>
+                <extensions>true</extensions>
             </plugin>
         </plugins>
     </build>
@@ -145,7 +155,7 @@
         <dependency>
             <groupId>org.glassfish.api</groupId>
             <artifactId>mail</artifactId>
-            <version>${mail.version}</version>
+            <version>${mail-api.version}</version>
         </dependency>
         <dependency>
             <groupId>javax.transaction</groupId>
@@ -160,59 +170,22 @@
         <dependency>
             <groupId>javax.faces</groupId>
             <artifactId>jsf-api</artifactId>
-            <version>${jsf-api.version}</version>        	
+            <version>${jsf-api.version}</version>            
         </dependency>
         <dependency>
             <groupId>javax.servlet.jsp.jstl</groupId>
             <artifactId>jstl-api</artifactId>
-            <version>${jstl-api.version}</version>        	
+            <version>${jstl-api.version}</version>            
         </dependency>  
         <dependency>
-		    <groupId>javax.management.j2ee</groupId>
-    		<artifactId>management-api</artifactId>
-        	<version>${management-api.version}</version>
-       	</dependency>
+            <groupId>javax.management.j2ee</groupId>
+            <artifactId>management-api</artifactId>
+            <version>${management-api.version}</version>
+           </dependency>
         <dependency>
             <groupId>javax.activation</groupId>
             <artifactId>activation</artifactId>
             <version>${activation-api.version}</version>
         </dependency>
     </dependencies>
-
-    <properties>
-        <description><![CDATA[
-            Listing of API versions that we depend on among JavaEE APIs.
-
-            Please do not use these values in your POM <version> declaration under <project>.
-            These should only be used within <dependency>s.
-
-            For discussions about this restriction, see
-            http://www.nabble.com/-Fwd%3A-Re%3A--blocking--Comet-integration--tt15815619.html
-            for more details.
-        ]]></description>
-
-        <activation-api.version>1.1-rev-1</activation-api.version>
-        <transaction-api.version>1.1-rev-1</transaction-api.version>
-        <mail.version>1.4-rev-1</mail.version>
-        <ejb-api.version>3.0-alpha-1</ejb-api.version>
-	<persistence-api.version>1.0-rev-1</persistence-api.version>
-        <connector-api.version>1.6-alpha-1</connector-api.version>
-        <management-api.version>1.1-rev-1</management-api.version>
-        <jms-api.version>1.1-rev-1</jms-api.version>
-        <security-api.version>1.1-rev-1</security-api.version>
-        <servlet-api.version>3.0-alpha-1</servlet-api.version>
-        <jsp-api.version>2.1-rev-1</jsp-api.version>
-        <jstl-api.version>1.2-rev-1</jstl-api.version>
-        <jsf-api.version>1.2_08</jsf-api.version>
-        <deployment-api.version>1.2-rev-1</deployment-api.version>
-        <jaxrpc-api.version>1.1</jaxrpc-api.version>
-        <jaxb-api.version>2.1</jaxb-api.version>
-        <jaxws-api.version>2.0</jaxws-api.version>
-        <jsr250-api.version>1.0</jsr250-api.version>
-        <jsr181-api.version>1.0-MR1</jsr181-api.version>
-        <saaj-api.version>1.3</saaj-api.version>
-        <!--jsr223-api.version>1.0</jsr223-api.version-->
-        <jmac-api.version>1.0-rev-1</jmac-api.version>
-        <!--jaxws-ri.version>2.1.3</jaxws-ri.version-->
-    </properties>
 </project>
