@@ -171,10 +171,9 @@ public class UniformLogFormatter extends Formatter {
                     continue;
                 }
                 if (obj instanceof Map) {
-                    Map map = (Map) obj;
-                    for (Object key : map.keySet()) {
-                        buf.append(key.toString()).append(NV_SEPARATOR).
-                            append(map.get(key).toString()).
+                    for (Map.Entry<Object, Object> entry : ((Map<Object, Object>) obj).entrySet()) {
+                        buf.append(entry.getKey().toString()).append(NV_SEPARATOR).
+                            append(entry.getValue().toString()).
                             append(NVPAIR_SEPARATOR);
                     }
                 } else if (obj instanceof java.util.Collection) {
@@ -288,7 +287,7 @@ public class UniformLogFormatter extends Formatter {
                 ErrorManager.FORMAT_FAILURE );
             // We've already notified the exception, the following
             // return is to keep javac happy
-            return new String("");
+            return "";
         }
     }
  
