@@ -34,53 +34,57 @@
  * holder.
  */
 
-package com.sun.enterprise.util.web;
+package com.sun.enterprise.util.net;
 
-public class URLPattern {
-    
-    // In Ascii table, New Line (NL) decimal value is 10
-    private final static int NL = 10;
-    // In Ascii table, Carriage Return (CR) decimal value is 13
-    private final static int CR = 13;
+import java.io.File;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.regex.Pattern;
 
+public class JarURLPattern {
     /**
-     *  This method is used to check the validity of url pattern 
-     *  according to the spec. It is used in the following places:
-     *
-     *  1. in WebResourceCollection 
-     *  2. in ServletMapping
-     *  3. in ServletFilterMapping
-     *  (above three see Servlet Spec, from version 2.3 on, 
-     *  Secion 13.2: "Rules for Processing the Deployment Descriptor")
-     *
-     *  4. in jsp-property-group 
-     *  (see JSP.3.3: "JSP Property Groups")
-     *
-     *  @param urlPattern the url pattern
-     *  @return false for invalid url pattern
+     * This method is used to extract URL of jar entries that match
+     * a given pattern.
+     * @param url
+     * @param pattern
      */
-    public static boolean isValid(String urlPattern) {
-        // URL Pattern should not contain New Line (NL) or
-        // Carriage Return (CR)
-        if (urlPattern.indexOf(NL) != -1  || urlPattern.indexOf (CR) != -1) {
-            return false;
-        }
+    public static List<String> getJarEntries(URL url, Pattern pattern) {
+        List<String> results = new ArrayList<String>();   
 
-        // Check validity for extension mapping
-        if (urlPattern.startsWith("*.")) {
-            if (urlPattern.indexOf('/') < 0) {
-                return true;
-            } else {
-                return false;
+        File file = null;
+        try {
+            file = new File(url.toURI());
+        } catch(Exception ex) {
+            // ignore
+        }
+        if (file == null || file.isDirectory()) {
+            return results;
+        } 
+
+        String fileName = file.getName();
+
+        // only look at jar file
+        if (fileName != null && fileName.endsWith(".jar")) {
+            try {
+                JarFile jarFile = new JarFile(new File(url.toURI()));
+                Enumeration<JarEntry> entries = jarFile.entries();
+                while (entries.hasMoreElements()) {
+                    JarEntry entry = (JarEntry)entries.nextElement();
+                    String entryName = entry.getName();
+                    if (pattern.matcher(entryName).matches()) {
+                        results.add(entryName);
+                    }
+                }
+            } catch(Exception ex) {
+                throw new RuntimeException(ex);
             }
         }
 
-        // check validity for path mapping
-        if ( urlPattern.startsWith("/") && urlPattern.indexOf("*.") < 0) {
-            return true;
-        } else {
-            return false;
-        }
-
+        return results;
     }
+    
 }
