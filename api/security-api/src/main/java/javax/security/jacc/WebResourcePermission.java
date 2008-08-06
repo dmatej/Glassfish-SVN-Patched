@@ -372,7 +372,10 @@ implements java.io.Serializable
 	     }
 	     if (uri.equals("/")) {
 		 uri = EMPTY_STRING;
-	     }
+	     } else {
+ 		 // encode all colons
+ 		 uri = uri.replaceAll(":","%3A");
+  	     }
 	 } else {
 	     uri = EMPTY_STRING;
 	 }
