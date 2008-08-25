@@ -56,12 +56,12 @@ import java.util.Map;
  * @since S1AS8.0
  * @version $Revision: 1.4 $
  */
-public interface JTAStats extends javax.management.j2ee.statistics.JTAStats {
+public interface JTAStats extends org.glassfish.j2ee.statistics.JTAStats {
 
 	/** Returns the IDs of the transactions that are currently active, as a StrignStatistic. 
 	 * An active transaction is same as an in-flight transaction. Every such transaction can be rolled back after
 	 * freezing the transaction service.
-	 * @see javax.management.j2ee.statistics.JTAStats#getActiveCount
+	 * @see org.glassfish.j2ee.statistics.JTAStats#getActiveCount
 	 * @return		a comma separated String of IDs
 	 */
 	public StringStatistic getActiveIds();

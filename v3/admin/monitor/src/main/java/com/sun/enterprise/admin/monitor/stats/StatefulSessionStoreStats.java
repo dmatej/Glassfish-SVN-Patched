@@ -40,9 +40,9 @@
  */
 
 package com.sun.enterprise.admin.monitor.stats;
-import javax.management.j2ee.statistics.Stats;
-import javax.management.j2ee.statistics.RangeStatistic;
-import javax.management.j2ee.statistics.CountStatistic;
+import org.glassfish.j2ee.statistics.Stats;
+import org.glassfish.j2ee.statistics.RangeStatistic;
+import org.glassfish.j2ee.statistics.CountStatistic;
 import com.sun.enterprise.admin.monitor.stats.AverageRangeStatistic;
 
 /**

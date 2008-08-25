@@ -48,8 +48,8 @@
 
 
 package com.sun.enterprise.admin.monitor.util;
-import javax.management.j2ee.statistics.Stats;
-import javax.management.j2ee.statistics.Statistic;
+import org.glassfish.j2ee.statistics.Stats;
+import org.glassfish.j2ee.statistics.Statistic;
 /**
  * Returns String implementation of all the statistics within the {@link Stats}
  * instance passed in with one statistic per line.
