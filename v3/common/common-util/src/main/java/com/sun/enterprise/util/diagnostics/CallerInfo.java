@@ -60,7 +60,7 @@ import com.sun.logging.LogDomains;
 public class CallerInfo
 {
 //Bug 4677074 begin
-    static Logger _logger=LogDomains.getLogger(LogDomains.UTIL_LOGGER);
+    static Logger _logger=LogDomains.getLogger(CallerInfo.class, LogDomains.UTIL_LOGGER);
 //Bug 4677074 end
 	public CallerInfo() throws CallerInfoException
 	{

@@ -88,7 +88,7 @@ public class PreprocessorUtil {
      * @return - the processed class byte array.
      */    
     public static byte[] processClass (String className, byte[] classBytes) {
-        Logger _logger = LogDomains.getLogger(LogDomains.CMN_LOGGER);
+        Logger _logger = LogDomains.getLogger(PreprocessorUtil.class, LogDomains.CMN_LOGGER);
         byte[] goodBytes = classBytes;
         if (_preprocessorEnabled) {            
             if (_preprocessor != null) {
@@ -130,7 +130,7 @@ public class PreprocessorUtil {
     }
     
     private synchronized static void setupPreprocessor(String[] ppClassNames) {
-        Logger _logger = LogDomains.getLogger(LogDomains.CMN_LOGGER);
+        Logger _logger = LogDomains.getLogger(PreprocessorUtil.class, LogDomains.CMN_LOGGER);
 
         if (_preprocessor != null)
             // The preprocessors have already been set up.

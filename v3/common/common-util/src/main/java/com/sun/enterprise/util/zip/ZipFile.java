@@ -448,7 +448,7 @@ public class ZipFile
 	private static final	String			specialDir		= "META-INF/";//NOI18N
 	private					byte[]			buffer			= new byte[BUFFER_SIZE];
 	private					ZipInputStream	zipStream		= null;
-        private                 Logger          _utillogger                     = LogDomains.getLogger(LogDomains.UTIL_LOGGER);
+        private                 Logger          _utillogger                     = LogDomains.getLogger(ZipFile.class, LogDomains.UTIL_LOGGER);
         private                 File            zipFile         = null;
 }
 

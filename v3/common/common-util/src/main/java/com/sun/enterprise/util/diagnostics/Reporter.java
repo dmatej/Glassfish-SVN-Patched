@@ -56,7 +56,7 @@ public class Reporter implements IReporterEnum
 	///////////////////////////                          //////////////////////////////////////////////////
 	///////////////////////////////////////////////////////////////////////////////////////////////////////
 //Bug 4677074 begin
-    static Logger _logger=LogDomains.getLogger(LogDomains.UTIL_LOGGER);
+    static Logger _logger=LogDomains.getLogger(Reporter.class, LogDomains.UTIL_LOGGER);
 //Bug 4677074 end
 
     /** Gain access to the default ReporterImpl object.

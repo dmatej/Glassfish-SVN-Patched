@@ -301,7 +301,7 @@ public class ClassLoaderUtil {
      *@return the Logger for this component
      */
     private static Logger getLogger() {
-        return LogDomains.getLogger(LogDomains.CMN_LOGGER);
+        return LogDomains.getLogger(ClassLoaderUtil.class, LogDomains.CMN_LOGGER);
     }
     
     /**

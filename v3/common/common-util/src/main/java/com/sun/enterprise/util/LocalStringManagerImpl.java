@@ -66,7 +66,7 @@ public class LocalStringManagerImpl implements LocalStringManager {
     //value 2x.
     private static Logger getLogger() {
         if (_logger == null) {
-            _logger=LogDomains.getLogger(LogDomains.UTIL_LOGGER);
+            _logger=LogDomains.getLogger(LocalStringManagerImpl.class, LogDomains.UTIL_LOGGER);
         }
         return _logger;
     }

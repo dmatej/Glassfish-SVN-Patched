@@ -80,7 +80,7 @@ public class RelativePathResolver {
     
     protected synchronized static Logger getLogger() {
         if (_logger == null) {
-            _logger = LogDomains.getLogger(LogDomains.UTIL_LOGGER);
+            _logger = LogDomains.getLogger(RelativePathResolver.class, LogDomains.UTIL_LOGGER);
         }
         return _logger;
     }

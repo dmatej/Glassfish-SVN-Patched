@@ -58,7 +58,7 @@ public class ReporterImpl implements IReporterEnum
 {
 
 //Bug 4677074 begin
-    static Logger _logger=LogDomains.getLogger(LogDomains.UTIL_LOGGER);
+    static Logger _logger=LogDomains.getLogger(ReporterImpl.class, LogDomains.UTIL_LOGGER);
 //Bug 4677074 end
 	public ReporterImpl()
 	{

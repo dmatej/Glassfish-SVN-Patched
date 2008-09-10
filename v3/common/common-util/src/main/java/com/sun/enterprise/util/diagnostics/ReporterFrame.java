@@ -53,7 +53,7 @@ import com.sun.logging.LogDomains;
 class ReporterFrame extends JFrame implements ActionListener
 {  
 //Bug 4677074 begin
-    static Logger _logger=LogDomains.getLogger(LogDomains.UTIL_LOGGER);
+    static Logger _logger=LogDomains.getLogger(ReporterFrame.class,LogDomains.UTIL_LOGGER);
 //Bug 4677074 end
 	public void pr(String s)
 	{
