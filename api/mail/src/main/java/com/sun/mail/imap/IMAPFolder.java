@@ -35,7 +35,7 @@
  */
 
 /*
- * @(#)IMAPFolder.java	1.84 07/05/15
+ * @(#)IMAPFolder.java	1.85 07/09/05
  */
 
 package com.sun.mail.imap;
@@ -87,7 +87,7 @@ import com.sun.mail.imap.protocol.*;
  * future in ways that are incompatible with applications using the
  * current APIs.
  *
- * @version 1.84, 07/05/15
+ * @version 1.85, 07/09/05
  * @author  John Mani
  * @author  Bill Shannon
  * @author  Jim Glennon
@@ -781,33 +781,46 @@ public class IMAPFolder extends Folder implements UIDFolder, ResponseHandler {
 	    }
 	}
 
-	checkExists();
-
 	// First, the cheap way - use LIST and look for the \Marked
 	// or \Unmarked tag
 
-	Boolean b = (Boolean)doCommandIgnoreFailure(new ProtocolCommand() {
+	ListInfo[] li = null;
+	final String lname;
+	if (isNamespace && separator != '\0')
+	    lname = fullName + separator;
+	else
+	    lname = fullName;
+	li = (ListInfo[])doCommandIgnoreFailure(new ProtocolCommand() {
 	    public Object doCommand(IMAPProtocol p) throws ProtocolException {
-		ListInfo[] li = p.list("", fullName);
-		if (li != null) {
-		    if (li[0].changeState == ListInfo.CHANGED)
-			return Boolean.TRUE;
-		    else if (li[0].changeState == ListInfo.UNCHANGED)
-			return Boolean.FALSE;
-		}
-
-		// LIST didn't work. Try the hard way, using STATUS
-		Status status = getStatus();
-		if (status.recent > 0)
-		    return Boolean.TRUE;
-		else
-		    return Boolean.FALSE;
+		return p.list("", lname);
 	    }
 	});
-	if (b == null)
+
+	// if folder doesn't exist, throw exception
+	if (li == null)
+	    throw new FolderNotFoundException(this, fullName + " not found");
+
+	int i = findName(li, lname);
+	if (li[i].changeState == ListInfo.CHANGED)
+	    return true;
+	else if (li[i].changeState == ListInfo.UNCHANGED)
+	    return false;
+
+	// LIST didn't work. Try the hard way, using STATUS
+	try {
+	    Status status = getStatus();
+	    if (status.recent > 0)
+		return true;
+	    else
+		return false;
+	} catch (BadCommandException bex) {
 	    // Probably doesn't support STATUS, tough luck.
 	    return false;
-	return b.booleanValue();
+	} catch (ConnectionException cex) {
+	    throw new StoreClosedException(store, cex.getMessage());
+	} catch (ProtocolException pex) {
+	    throw new MessagingException(pex.getMessage(), pex);
+	}
     }
 
     /**
