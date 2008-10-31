@@ -117,7 +117,6 @@ public class ModuleToLoggerNameMapper {
         {"security",       new String[] { LogDomains.SECURITY_LOGGER} },
         {"self-management",new String[] { LogDomains.SELF_MANAGEMENT_LOGGER} },
         {"synchronization",new String[] { "javax.ee.enterprise.system.tools.synchronization"} },
-        {"verifier",       new String[] { LogDomains.APPVERIFY_LOGGER} },
         {"web-container",  new String[] { LogDomains.WEB_LOGGER,
                                           "org.apache.catalina",
                                           "org.apache.coyote","org.apache.jasper" 
@@ -127,7 +126,6 @@ public class ModuleToLoggerNameMapper {
         {"util",           new String[] { LogDomains.UTIL_LOGGER } },
         {"core",           new String[] { LogDomains.CORE_LOGGER} },
         {"server",         new String[] { LogDomains.SERVER_LOGGER} },
-        {"root",           new String[] { LogDomains.ROOT_LOGGER} }
     };
     
 
