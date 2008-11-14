@@ -22,6 +22,10 @@
  */
 package com.sun.enterprise.v3.common;
 
+import org.jvnet.hk2.annotations.Service;
+import org.jvnet.hk2.annotations.Scoped;
+import org.jvnet.hk2.component.PerLookup;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.OutputStream;
@@ -32,6 +36,8 @@ import java.util.Properties;
  *
  * @author dochez
  */
+@Service
+@Scoped(PerLookup.class)
 public class HTMLActionReporter extends ActionReporter {
     
     /** Creates a new instance of HTMLActionReporter */
