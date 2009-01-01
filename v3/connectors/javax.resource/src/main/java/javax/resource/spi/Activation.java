@@ -36,34 +36,46 @@
 
 package javax.resource.spi;
 
+import java.lang.annotation.Target;
+import static java.lang.annotation.ElementType.*;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Documented;
+import static java.lang.annotation.RetentionPolicy.*;
+
 /**
- * This interface serves as a marker. An instance of an ActivationSpec must be a
- * JavaBean and must be serializable. This holds the activation configuration
- * information for a message endpoint.
+ * Designates a JavaBean as an <code>ActivationSpec</code>. This annotation may
+ * be placed on a JavaBean. A JavaBean annotated with the Activation annotation
+ * is not required to implement the {@link ActivationSpec ActivationSpec}
+ * interface.
  * 
- * @version 1.0
- * @author Ram Jeyaraman
+ * <p>The ActivationSpec JavaBean contains the configuration information pertaining
+ * to inbound connectivity from an EIS instance. A resource adapter capable of
+ * message delivery to message endpoints must provide an JavaBean class
+ * implementing the {@link ActivationSpec ActivationSpec} interface or annotate
+ * a JavaBean with the <code>Activation</code> annotation for each supported
+ * endpoint message listener type.
+ * 
+ * <p>The ActivationSpec JavaBean has a set of configurable properties specific to
+ * the messaging style and the message provider.
+ * 
+ * <p>Together with the messageListener annotation element type this annotation
+ * specifies information about a specific message listener type supported by the
+ * messaging resource adapter.
+ * 
+ * @since 1.6
+ * @version JSR322-PublicReview
  */
-public interface ActivationSpec extends ResourceAdapterAssociation {
+
+@Documented
+@Retention(RUNTIME)
+@Target(TYPE)
+public @interface Activation {
 
 	/**
-	 * This method may be called by a deployment tool to validate the overall
-	 * activation configuration information provided by the endpoint deployer.
-	 * This helps to catch activation configuration errors earlier on without
-	 * having to wait until endpoint activation time for configuration
-	 * validation. The implementation of this self-validation check behavior is
-	 * optional.
+	 * Indicates the message listener type(s) associated with this activation.
 	 * 
-	 * @throws <code>InvalidPropertyException</code> indicates invalid
-	 *         configuration property settings.
-	 *         
-	 * @deprecated As of Java EE Connectors 1.6 specification, resource adapter
-	 *             implementations are recommended to use the annotations or the
-	 *             XML validation deployment descriptor facilities defined by
-	 *             the Bean Validation specification to express their validation
-	 *             requirements of its configuration properties to the
-	 *             application server.
+	 * @return The Java types of the Message Listener interface this
+	 *         activation-spec is associated with.
 	 */
-	void validate() throws InvalidPropertyException;
-	
+	Class[] messageListeners() default {};
 }

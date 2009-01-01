@@ -34,36 +34,62 @@
  * holder.
  */
 
-package javax.resource.spi;
+package javax.resource.spi.work;
 
 /**
- * This interface serves as a marker. An instance of an ActivationSpec must be a
- * JavaBean and must be serializable. This holds the activation configuration
- * information for a message endpoint.
+ * This class models the possible error conditions that might occur during
+ * associating an <code>InflowContext</code> with a <code>Work</code>
+ * instance.
  * 
- * @version 1.0
- * @author Ram Jeyaraman
+ * <p> This class is not designed as an Enumerated type (Enum), as the error codes
+ * listed below could be expanded to accommodate custom error conditions for
+ * custom <code>InflowContext</code> types.
+ * 
+ * @since 1.6
+ * @version JSR322-EarlyDraft
  */
-public interface ActivationSpec extends ResourceAdapterAssociation {
+public class InflowContextErrorCodes {
+    private InflowContextErrorCodes(){}
 
-	/**
-	 * This method may be called by a deployment tool to validate the overall
-	 * activation configuration information provided by the endpoint deployer.
-	 * This helps to catch activation configuration errors earlier on without
-	 * having to wait until endpoint activation time for configuration
-	 * validation. The implementation of this self-validation check behavior is
-	 * optional.
-	 * 
-	 * @throws <code>InvalidPropertyException</code> indicates invalid
-	 *         configuration property settings.
-	 *         
-	 * @deprecated As of Java EE Connectors 1.6 specification, resource adapter
-	 *             implementations are recommended to use the annotations or the
-	 *             XML validation deployment descriptor facilities defined by
-	 *             the Bean Validation specification to express their validation
-	 *             requirements of its configuration properties to the
-	 *             application server.
-	 */
-	void validate() throws InvalidPropertyException;
-	
+    /**
+     * Indicates that a <code>InflowContext</code> type, that was not
+     * specified as optional, passed in by the <code>Work</code> instance is
+     * not supported by the container.
+     * 
+     * @since 1.6
+     */
+    public static final String UNSUPPORTED_CONTEXT_TYPE = "1";
+
+    /**
+     * Indicates that there are more than instance of a
+     * <code>InflowContext</code> type passed in by the <code>Work</code>
+     * instance.
+     * <p>
+     * 
+     * @since 1.6
+     */
+    public static final String DUPLICATE_CONTEXTS = "2";
+
+    /**
+     * Indicates a failure in recreating the <code>InflowContext</code>
+     * instance. For <code>TransactionInflowContext</code> instances, the
+     * <code>WorkManager</code> must use this failure code when it should have
+     * used {@link WorkException#TX_RECREATE_FAILED} as the error code.
+     * 
+     * @since 1.6
+     */
+    public static final String CONTEXT_SETUP_FAILED = "3";
+
+    /**
+     * Indicates that the container cannot support recreating the
+     * <code>InflowContext</code> instance. For
+     * <code>TransactionInflowContext</code> instances, the
+     * <code>WorkManager</code> must use this failure code when it should have
+     * used {@link WorkException#TX_CONCURRENT_WORK_DISALLOWED} as the error
+     * code.
+     * 
+     * @since 1.6
+     */
+    public static final String CONTEXT_SETUP_UNSUPPORTED = "4";
+
 }

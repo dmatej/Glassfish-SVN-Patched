@@ -38,6 +38,8 @@ package javax.resource.spi;
 
 import java.util.Timer;
 import javax.resource.spi.work.WorkManager;
+import javax.resource.spi.work.InflowContext;
+import javax.transaction.TransactionSynchronizationRegistry;
 
 /**
  * This provides a mechanism to pass a bootstrap context to a resource adapter
@@ -47,8 +49,8 @@ import javax.resource.spi.work.WorkManager;
  * context contains references to useful facilities that could be used by the
  * resource adapter instance.
  *
- * @version 1.0
- * @author  Ram Jeyaraman
+ * @version JSR322-EarlyDraft
+ * @author  Ram Jeyaraman, Sivakumar Thyagarajan
  */
 public interface BootstrapContext {
     /**
@@ -81,4 +83,43 @@ public interface BootstrapContext {
      * @return a new <code>Timer</code> instance.
      */
     Timer createTimer() throws UnavailableException;
+
+    /**
+     * A resource adapter can check an application server’s support 
+     * for a particular InflowContext type through this method. 
+     * This mechanism enables a resource adapter developer to
+     * dynamically change the InflowContexts submitted with a Work instance 
+     * based on the support provided by the application server.
+     *
+     * The application server must employ an exact type equality check (that is
+     * <code>java.lang.Class.equals(java.lang.Class)</code> check) in
+     * this method, to check if it supports the InflowContext type provided
+     * by the resource adapter. This method must be idempotent, that is all 
+     * calls to this method by a resource adapter for a particular 
+     * <code>InflowContext</code> type must return the same boolean value 
+     * throughout the lifecycle of that resource adapter instance.
+     *
+     * @return true if the <code>inflowContextClass</code> is supported
+     * by the application server. false if the <code>inflowContextClass</code>
+     * is unsupported or unknown to the application server.
+     *
+     * @since 1.6
+     */
+
+    boolean isContextSupported(
+            Class<? extends InflowContext> inflowContextClass);
+
+
+    /**
+     * Provides a handle to a <code>TransactionSynchronization</code> instance. The
+     * <code>TransactionSynchronizationRegistry</code> instance could be used by a 
+     * resource adapter to register synchronization objects, get transaction state and
+     * status etc. This interface is implemented by the application server by a 
+     * stateless service object. The same object can be used by any number of 
+     * resource adapter objects with thread safety. 
+     *
+     * @return a <code>TransactionSynchronizationRegistry</code> instance.
+     * @since 1.6
+     */
+    TransactionSynchronizationRegistry getTransactionSynchronizationRegistry();
 }

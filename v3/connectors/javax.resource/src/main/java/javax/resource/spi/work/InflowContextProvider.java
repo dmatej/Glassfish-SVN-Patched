@@ -34,36 +34,34 @@
  * holder.
  */
 
-package javax.resource.spi;
+package javax.resource.spi.work;
+
+import java.util.List;
+import java.io.Serializable;
 
 /**
- * This interface serves as a marker. An instance of an ActivationSpec must be a
- * JavaBean and must be serializable. This holds the activation configuration
- * information for a message endpoint.
+ * This interface specifies the methods a {@link Work Work} instance uses to
+ * associate a <code>List</code> of {@link InflowContext InflowContext}
+ * instances to be set when the <code>Work</code> instance gets executed by a
+ * {@link WorkManager WorkManager}.
  * 
- * @version 1.0
- * @author Ram Jeyaraman
+ * <p> A <code>Work</code> instance could optionally implement this interface to
+ * indicate to the <code>WorkManager</code>, that the
+ * <code>InflowContext</code>s provided by this <code>Work</code> instance
+ * through the {@link #getInflowContexts() getInflowContexts} method must be
+ * used while setting the execution context of the <code>Work</code> instance.<p>
+ * 
+ * @since 1.6
+ * @version JSR322-EarlyDraft
  */
-public interface ActivationSpec extends ResourceAdapterAssociation {
+public interface InflowContextProvider extends Serializable{
 
-	/**
-	 * This method may be called by a deployment tool to validate the overall
-	 * activation configuration information provided by the endpoint deployer.
-	 * This helps to catch activation configuration errors earlier on without
-	 * having to wait until endpoint activation time for configuration
-	 * validation. The implementation of this self-validation check behavior is
-	 * optional.
-	 * 
-	 * @throws <code>InvalidPropertyException</code> indicates invalid
-	 *         configuration property settings.
-	 *         
-	 * @deprecated As of Java EE Connectors 1.6 specification, resource adapter
-	 *             implementations are recommended to use the annotations or the
-	 *             XML validation deployment descriptor facilities defined by
-	 *             the Bean Validation specification to express their validation
-	 *             requirements of its configuration properties to the
-	 *             application server.
-	 */
-	void validate() throws InvalidPropertyException;
-	
+    /**
+     * Gets an instance of <code>InflowContexts</code> that needs to be used
+     * by the <code>WorkManager</code> to set up the execution context while
+     * executing a <code>Work</code> instance.
+     * 
+     * @return an <code>List</code> of <code>InflowContext</code> instances.
+     */
+    List<InflowContext> getInflowContexts();
 }

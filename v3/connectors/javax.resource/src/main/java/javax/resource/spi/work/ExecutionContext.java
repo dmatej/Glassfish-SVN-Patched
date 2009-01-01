@@ -63,6 +63,12 @@ import javax.resource.NotSupportedException;
  * (in the future) without forcing resource adapter implementations 
  * to change.</ul>
  *
+ * Note: Resource adapters that are developed for Connectors 1.6 specification
+ * compliant application servers and above, are recommended to use
+ * the <code>TransactionInflowContext</code> interface instead of this 
+ * class. See Chapter.11 Generic Inflow Context in the Connectors 1.6
+ * specification for more details.
+ *
  * @version 1.0
  * @author  Ram Jeyaraman
  */
@@ -78,10 +84,6 @@ public class ExecutionContext {
      */
     private long transactionTimeout = WorkManager.UNKNOWN;
 
-    /**
-     * security context.
-     */
-    //private SecurityContext securityCtx;
 
     /**
      * set a transaction context.
@@ -90,7 +92,7 @@ public class ExecutionContext {
      */
     public void setXid(Xid xid) { this.xid = xid; }
 
-    /*
+    /**
      * @return an Xid object carrying a transaction context, 
      * if any.
      */
@@ -108,40 +110,23 @@ public class ExecutionContext {
      */
     public void setTransactionTimeout(long timeout) 
 	throws NotSupportedException {
-	if (timeout > 0) {
-	    this.transactionTimeout = timeout;
-	} else {
-	    throw new NotSupportedException("Illegal timeout value");
-	}
+	    if (timeout > 0) {
+	        this.transactionTimeout = timeout;
+	    } else {
+	        throw new NotSupportedException("Illegal timeout value");
+	    }
     }
 
     /** 
      * Get the transaction timeout value for a imported transaction.
      *
      * @return the specified transaction timeout value in seconds. When no
-     * timeout value or an illegal timeout value had been specified, 
-     * a value of -1 (<code>WorkManager.UNKNOWN</code>) 
-     * is returned; such a transaction is excluded from regular 
-     * timeout processing.
+     * timeout value or an illegal timeout value had been specified, a value of
+     * -1 (<code>WorkManager.UNKNOWN</code>) is returned; the timeout 
+     * processing of such a transaction depends on the application server 
+     * implementation.
      */
     public long getTransactionTimeout() {
-	return this.transactionTimeout;
+	    return this.transactionTimeout;
     }
-
-    /**
-     * set a security context.
-     *
-     * @param securityCtx security context.
-     */
-    /*
-    public void setSecurityContext(SecurityContext securityCtx) {
-	this.securityCtx = securityCtx;
-    }
-    */
-    /*
-     * @return a <code>SecurityContext</code> object, if any.
-     */
-    /*
-    public SecurityContext getSecurityContext() { return this.securityCtx; }
-    */
 }

@@ -34,36 +34,37 @@
  * holder.
  */
 
-package javax.resource.spi;
+package javax.resource.spi.work;
 
 /**
- * This interface serves as a marker. An instance of an ActivationSpec must be a
- * JavaBean and must be serializable. This holds the activation configuration
- * information for a message endpoint.
+ * A standard <code>InflowContext</code> that allows a <code>Work</code>
+ * instance to propagate transaction related context information from an EIS to
+ * an application server.<p>
  * 
- * @version 1.0
- * @author Ram Jeyaraman
+ * This class extends <code>ExecutionContext</code> so that a resource adapter
+ * developer could migrate their existing code from
+ * <code>ExecutionContext</code> to <code>TransactionInflowContext</code>
+ * easily.<p>
+ * 
+ * @since 1.6
+ * @see javax.resource.spi.work.InflowContext
+ * @see javax.resource.spi.work.ExecutionContext
+ * @version JSR322-EarlyDraft
  */
-public interface ActivationSpec extends ResourceAdapterAssociation {
 
-	/**
-	 * This method may be called by a deployment tool to validate the overall
-	 * activation configuration information provided by the endpoint deployer.
-	 * This helps to catch activation configuration errors earlier on without
-	 * having to wait until endpoint activation time for configuration
-	 * validation. The implementation of this self-validation check behavior is
-	 * optional.
-	 * 
-	 * @throws <code>InvalidPropertyException</code> indicates invalid
-	 *         configuration property settings.
-	 *         
-	 * @deprecated As of Java EE Connectors 1.6 specification, resource adapter
-	 *             implementations are recommended to use the annotations or the
-	 *             XML validation deployment descriptor facilities defined by
-	 *             the Bean Validation specification to express their validation
-	 *             requirements of its configuration properties to the
-	 *             application server.
-	 */
-	void validate() throws InvalidPropertyException;
-	
+public class TransactionInflowContext extends ExecutionContext implements
+        InflowContext {
+    /**
+     * {@inheritDoc}
+     */
+    public String getDescription() {
+        return "Transaction Inflow Context";
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public String getName() {
+        return "TransactionInflowContext";
+    }
 }

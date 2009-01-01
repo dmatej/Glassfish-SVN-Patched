@@ -34,36 +34,47 @@
  * holder.
  */
 
-package javax.resource.spi;
+package javax.resource.spi.work;
+
+import java.io.Serializable;
 
 /**
- * This interface serves as a marker. An instance of an ActivationSpec must be a
- * JavaBean and must be serializable. This holds the activation configuration
- * information for a message endpoint.
+ * This class serves as a standard mechanism for a resource adapter to propagate
+ * an imported context from an enterprise information system to an application
+ * server.
  * 
- * @version 1.0
- * @author Ram Jeyaraman
+ * <p> A <code>Work</code> instance, that implements the
+ * <code>InflowContextProvider</code>, could provide a
+ * <code>List</code> of these <code>InflowContext</code> instances
+ * (through the getInflowContexts() method), and have them setup as the
+ * execution context by the <code>WorkManager</code> when the
+ * <code>Work</code> instance gets executed.
+ * 
+ * @since 1.6
+ * @version JSR322-EarlyDraft
  */
-public interface ActivationSpec extends ResourceAdapterAssociation {
 
-	/**
-	 * This method may be called by a deployment tool to validate the overall
-	 * activation configuration information provided by the endpoint deployer.
-	 * This helps to catch activation configuration errors earlier on without
-	 * having to wait until endpoint activation time for configuration
-	 * validation. The implementation of this self-validation check behavior is
-	 * optional.
-	 * 
-	 * @throws <code>InvalidPropertyException</code> indicates invalid
-	 *         configuration property settings.
-	 *         
-	 * @deprecated As of Java EE Connectors 1.6 specification, resource adapter
-	 *             implementations are recommended to use the annotations or the
-	 *             XML validation deployment descriptor facilities defined by
-	 *             the Bean Validation specification to express their validation
-	 *             requirements of its configuration properties to the
-	 *             application server.
-	 */
-	void validate() throws InvalidPropertyException;
-	
+// @OpenQ : getName/getDescription useful for debugging purposes?
+public interface InflowContext extends Serializable{
+    /**
+     * Get the associated name of the <code>InflowContext</code>. This could
+     * be used by the WorkManager and the resource adapter for debugging
+     * purposes.
+     * <p>
+     * 
+     * @return the associated name of the <code>InflowContext</code>
+     */
+    String getName();
+
+    /**
+     * Get the brief description of the role played by the
+     * <code>InflowContext</code> and any other related debugging information.
+     * This could be used by the WorkManager and the resource adapter for
+     * debugging purposes.
+     * <p>
+     * 
+     * @return the associated description of the <code>InflowContext</code>
+     */
+    String getDescription();
+
 }

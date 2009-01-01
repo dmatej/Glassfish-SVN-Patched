@@ -76,5 +76,23 @@ public interface LazyAssociatableConnectionManager {
      */
     void associateConnection(Object connection, ManagedConnectionFactory mcf,
 	ConnectionRequestInfo cxReqInfo) throws ResourceException;
+
+    /**
+     * This method is called by the resource adapter (that is capable of
+     * lazy connection association optimization) in order to notify the
+     * application server that a disassociated connection handle is closed.
+     * <p>The application server can then perform any cleanup operations 
+     * related to the disassociated connection handle in its connection pool.
+     *
+     * @param connection the disassociated connection object handle that 
+     * has been closed
+     *
+     * @param mcf The <code>ManagedConnectionFactory</code> instance that was
+     * originally used to create the connection object.
+     *
+     * @since 1.6
+     */
+    void inactiveConnectionClosed(Object connection, 
+                                     ManagedConnectionFactory mcf);
 }
 

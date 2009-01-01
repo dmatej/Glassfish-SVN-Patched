@@ -34,36 +34,75 @@
  * holder.
  */
 
-package javax.resource.spi;
+package javax.resource.spi.work;
+
+import java.io.Serializable;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
- * This interface serves as a marker. An instance of an ActivationSpec must be a
- * JavaBean and must be serializable. This holds the activation configuration
- * information for a message endpoint.
+ * A standard {@link InflowContext InflowContext} that allows a {@link Work
+ * Work} instance to propagate quality-of-service (QoS) hints about the
+ * {@link Work Work} to the <code>WorkManager</code>.
  * 
- * @version 1.0
- * @author Ram Jeyaraman
+ * @since 1.6
+ * @see javax.resource.spi.work.InflowContextProvider
+ * @version JSR322-PublicReview
  */
-public interface ActivationSpec extends ResourceAdapterAssociation {
+
+public class HintsInflowContext implements InflowContext {
+    String description = "Hints Inflow Context";
+    String name = "HintsInflowContext";
 
 	/**
-	 * This method may be called by a deployment tool to validate the overall
-	 * activation configuration information provided by the endpoint deployer.
-	 * This helps to catch activation configuration errors earlier on without
-	 * having to wait until endpoint activation time for configuration
-	 * validation. The implementation of this self-validation check behavior is
-	 * optional.
-	 * 
-	 * @throws <code>InvalidPropertyException</code> indicates invalid
-	 *         configuration property settings.
-	 *         
-	 * @deprecated As of Java EE Connectors 1.6 specification, resource adapter
-	 *             implementations are recommended to use the annotations or the
-	 *             XML validation deployment descriptor facilities defined by
-	 *             the Bean Validation specification to express their validation
-	 *             requirements of its configuration properties to the
-	 *             application server.
+	 * {@inheritDoc}
 	 */
-	void validate() throws InvalidPropertyException;
-	
+	public String getDescription() {
+		return description;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public String getName() {
+		return name;
+	}
+
+    /**
+     * Set a brief description of the role played by the instance of
+     * HintsInflowContext and any other related debugging information.
+     *
+     * This could be used by the resource adapter and the WorkManager
+     * for logging and debugging purposes.
+     */
+    public void setDescription(String description){
+        this.description = description;
+    }
+
+    /**
+     * Set the associated name of the HintsInflowContext. This
+     * could be used by the resource adapter and the WorkManager
+     * for logging and debugging purposes.
+     */
+    public void setName(String name){
+        this.name = name;
+    }
+
+	Map<String, Serializable> hints = new HashMap<String, Serializable>();
+
+    /**
+     * Set a Hint and a related value. The hintName must be non-Null.
+     * Standard HintNames are defined in the Connector specification. Use of
+     * "javax.resource." prefixed hintNames are reserved for use by the 
+     * Connector specification.
+     *
+     */
+	public void setHint(String hintName, Serializable value) {
+		hints.put(hintName, value);
+	}
+
+	public Map<String, Serializable> getHints() {
+		return hints;
+	}
+
 }

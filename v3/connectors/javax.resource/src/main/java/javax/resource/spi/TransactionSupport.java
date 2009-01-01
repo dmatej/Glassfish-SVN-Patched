@@ -36,34 +36,58 @@
 
 package javax.resource.spi;
 
-/**
- * This interface serves as a marker. An instance of an ActivationSpec must be a
- * JavaBean and must be serializable. This holds the activation configuration
- * information for a message endpoint.
- * 
- * @version 1.0
- * @author Ram Jeyaraman
+/** 
+ * This interface may be optionally implemented by a 
+ * <code>ManagedConnectionFactory</code> to provide its level of transaction
+ * support at runtime.
+ *
+ * <p>When a <code>ManagedConnectionFactory</code> implements this interface,
+ * the application server uses the <code>TransactionSupportLevel</code> returned
+ * by getTransactionSupport() method and not the value specified in the 
+ * resource adapter deployment descriptor or deployer configuration
+ *
+ * @since 1.6
+ * @version JSR322-EarlyDraft
  */
-public interface ActivationSpec extends ResourceAdapterAssociation {
+public interface TransactionSupport extends java.io.Serializable {
 
-	/**
-	 * This method may be called by a deployment tool to validate the overall
-	 * activation configuration information provided by the endpoint deployer.
-	 * This helps to catch activation configuration errors earlier on without
-	 * having to wait until endpoint activation time for configuration
-	 * validation. The implementation of this self-validation check behavior is
-	 * optional.
-	 * 
-	 * @throws <code>InvalidPropertyException</code> indicates invalid
-	 *         configuration property settings.
-	 *         
-	 * @deprecated As of Java EE Connectors 1.6 specification, resource adapter
-	 *             implementations are recommended to use the annotations or the
-	 *             XML validation deployment descriptor facilities defined by
-	 *             the Bean Validation specification to express their validation
-	 *             requirements of its configuration properties to the
-	 *             application server.
-	 */
-	void validate() throws InvalidPropertyException;
-	
+    /**
+     * An enumerated type that represents the levels of transaction support
+     * a resource adapter may support.
+     *
+     * @since 1.6
+     * @version JSR322-EarlyDraft
+     */
+    public enum TransactionSupportLevel {
+        /**
+         * The resource adapter supports neither resource manager nor JTA 
+         * transactions.
+         * @since 1.6
+         */
+        NoTransaction, 
+        /**
+         * The resource adapter supports resource manager local transactions 
+         * by implementing the <code>LocalTransaction</code> interface.
+         * @since 1.6
+         */
+        LocalTansaction, 
+        /**
+         * The resource adapter supports both resource manager local 
+         * and JTA transactions by implementing the <code>LocalTransaction</code>
+         * and <code>XAResource</code> interfaces.
+         * @since 1.6
+         */
+        XATransaction 
+    };
+
+    /**
+     * Get the level of transaction support, supported by the 
+     * <code>ManagedConnectionFactory</code>. A resource adapter must always
+     * return a level of transaction support whose ordinal value in
+     * <code>TransactionSupportLevel</code> enum is equal to or lesser than
+     * the resource adapter's transaction support classification.
+     *
+     * @since 1.6
+     */
+    public TransactionSupportLevel getTransactionSupport();
 }

@@ -47,6 +47,13 @@ import javax.resource.ResourceException;
  * <p>This may be used by the application server to prune invalid 
  * <code>ManagedConnection</code> objects from its connection pool.
  *
+ * <p>The application server may use this functionality to test the
+ * validity of a <code>ManagedConnection</code> by passing in a 
+ * <code>Set</code> of size one( with the <code>ManagedConnection</code>
+ * that has to be tested for validity as the only member of the 
+ * <code>Set</code>.
+ * 
+ *
  *  @author  Ram Jeyaraman
  *  @version 1.0
  */    
