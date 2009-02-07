@@ -1,8 +1,8 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
- * 
+ *
  * Copyright 1997-2007 Sun Microsystems, Inc. All rights reserved.
- * 
+ *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
  * and Distribution License("CDDL") (collectively, the "License").  You
@@ -10,7 +10,7 @@
  * a copy of the License at https://glassfish.dev.java.net/public/CDDL+GPL.html
  * or glassfish/bootstrap/legal/LICENSE.txt.  See the License for the specific
  * language governing permissions and limitations under the License.
- * 
+ *
  * When distributing the software, include this License Header Notice in each
  * file and include the License file at glassfish/bootstrap/legal/LICENSE.txt.
  * Sun designates this particular file as subject to the "Classpath" exception
@@ -19,9 +19,9 @@
  * Header, with the fields enclosed by brackets [] replaced by your own
  * identifying information: "Portions Copyrighted [year]
  * [name of copyright owner]"
- * 
+ *
  * Contributor(s):
- * 
+ *
  * If you wish your version of this file to be governed by only the CDDL or
  * only the GPL Version 2, indicate your decision by adding "[Contributor]
  * elects to include this software in this distribution under the [CDDL or GPL
@@ -33,56 +33,59 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package javax.ejb;
+package com.sun.ejb.containers;
+
+import org.glassfish.api.naming.NamedNamingObjectProxy;
+import org.glassfish.api.invocation.ComponentInvocation;
+
+import com.sun.ejb.EjbInvocation;
+
+import org.jvnet.hk2.annotations.Inject;
+import org.jvnet.hk2.annotations.Service;
+
+import javax.naming.NamingException;
 
 /**
- * The EJBException exception is thrown by an enterprise Bean instance to 
- * its container to report that the invoked business method or callback method
- * could not be completed because of an unexpected error (e.g. the instance 
- * failed to open a database connection).
+ * Proxy for accessing EJBContext objects when requested by lookup or injection.
+ * NamingManager will call the handle() method when the JNDI name is looked up.
+ *
+ *
+ * @author Ken Saks
  */
-public class EJBException extends java.lang.RuntimeException {
-    
+@Service
+public class EJBContextNamingProxy 
+        implements NamedNamingObjectProxy {
 
-    /**
-     * Constructs an EJBException with no detail message.
-     */  
-    public EJBException() {
+    private static final String EJB_CONTEXT
+            = "java:comp/EJBContext";
+
+    public Object handle(String name) throws NamingException {
+
+        if (EJB_CONTEXT.equals(name)) {
+            return getEJBContextObject();
+        }
+        return null;
     }
 
-    /**
-     * Constructs an EJBException with the specified
-     * detailed message.
-     */  
-    public EJBException(String message) {
-        super(message);
+    private Object getEJBContextObject() {
+
+        // Cannot store EjbContainerUtilImpl.getInstance() in an instance 
+        // variable because it shouldn't be accessed before EJB container 
+        // is initialized. 
+        // NamedNamingObjectProxy is initialized on the first lookup.
+
+        ComponentInvocation currentInv = 
+                EjbContainerUtilImpl.getInstance().getCurrentInvocation();
+
+        if(currentInv == null) {
+            throw new IllegalStateException("no current invocation");
+        } else if (currentInv.getInvocationType() !=
+                   ComponentInvocation.ComponentInvocationType.EJB_INVOCATION) {
+            throw new IllegalStateException
+                    ("Illegal invocation type for EJB Context : "
+                     + currentInv.getInvocationType());
+        }
+
+        return ((EjbInvocation) currentInv).context;
     }
-
-    /**
-     * Constructs an EJBException that embeds the originally thrown exception.
-     */  
-    public EJBException(Exception  ex) {
-        super(ex);
-    }
-
-    /**
-     * Constructs an EJBException that embeds the originally thrown exception
-     * with the specified detail message. 
-     */  
-    public EJBException(String message, Exception  ex) {
-        super(message, ex);
-    }
-
-
-    /**
-     * Obtain the exception that caused the EJBException to be thrown.
-     * It is recommended that the inherited Throwable.getCause() method
-     * be used to retrieve the cause instead of this method.  This
-     * method can only be used to retrieve a java.lang.Exception that
-     * was set via the constructor.  
-     */
-    public Exception getCausedByException() {
-	    return (Exception) getCause();
-    }
-
 }
