@@ -97,7 +97,8 @@ public interface WorkManager {
 
     /**
      * A constant to indicate timeout duration. A zero timeout value indicates
-     * an action be performed immediately.
+     * an action be performed immediately. The WorkManager implementation
+     * must timeout the action as soon as possible.
      */
     long IMMEDIATE = 0L;
 
@@ -119,7 +120,7 @@ public interface WorkManager {
      * blocks until the <code>Work</code> instance completes execution.
      * There is no guarantee on when the accepted <code>Work</code> 
      * instance would start execution ie., there is no time constraint 
-     * to start execution.
+     * to start execution. (that is, startTimeout=INDEFINITE)
      *
      * @param work The unit of work to be done.  
      * Could be long or short-lived.
@@ -173,6 +174,7 @@ public interface WorkManager {
      * but not until its completion. There is no guarantee on when
      * the accepted <code>Work</code> instance would start
      * execution ie., there is no time constraint to start execution.
+     * (that is, startTimeout=INDEFINITE)
      *
      * @param work The unit of work to be done.  
      * Could be long or short-lived.
@@ -233,6 +235,7 @@ public interface WorkManager {
      * instance has been accepted for processing. There is no guarantee
      * on when the submitted <code>Work</code> instance would start
      * execution ie., there is no time constraint to start execution.
+     * (that is, startTimeout=INDEFINITE).
      *
      * @param work The unit of work to be done.  
      * Could be long or short-lived.

@@ -36,73 +36,34 @@
 
 package javax.resource.spi.work;
 
+import java.util.List;
 import java.io.Serializable;
-import java.util.Map;
-import java.util.HashMap;
 
 /**
- * A standard {@link InflowContext InflowContext} that allows a {@link Work
- * Work} instance to propagate quality-of-service (QoS) hints about the
- * {@link Work Work} to the <code>WorkManager</code>.
+ * This interface specifies the methods a {@link Work Work} instance uses to
+ * associate a <code>List</code> of {@link WorkContext WorkContext} instances to
+ * be set when the <code>Work</code> instance gets executed by a
+ * {@link WorkManager WorkManager}.
+ * 
+ * <p>
+ * A <code>Work</code> instance could optionally implement this interface to
+ * indicate to the <code>WorkManager</code>, that the <code>WorkContext</code>s
+ * provided by this <code>Work</code> instance through the
+ * {@link #getWorkContexts() getWorkContexts} method must be used while setting
+ * the execution context of the <code>Work</code> instance.
+ * <p>
  * 
  * @since 1.6
- * @see javax.resource.spi.work.InflowContextProvider
- * @version JSR322-PublicReview
+ * @version JSR322-EarlyDraft
  */
-
-public class HintsInflowContext implements InflowContext {
-    String description = "Hints Inflow Context";
-    String name = "HintsInflowContext";
+public interface WorkContextProvider extends Serializable {
 
 	/**
-	 * {@inheritDoc}
+	 * Gets an list of <code>WorkContexts</code> that needs to be used by the
+	 * <code>WorkManager</code> to set up the execution context while executing
+	 * a <code>Work</code> instance.
+	 * 
+	 * @return an <code>List</code> of <code>WorkContext</code> instances.
 	 */
-	public String getDescription() {
-		return description;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public String getName() {
-		return name;
-	}
-
-    /**
-     * Set a brief description of the role played by the instance of
-     * HintsInflowContext and any other related debugging information.
-     *
-     * This could be used by the resource adapter and the WorkManager
-     * for logging and debugging purposes.
-     */
-    public void setDescription(String description){
-        this.description = description;
-    }
-
-    /**
-     * Set the associated name of the HintsInflowContext. This
-     * could be used by the resource adapter and the WorkManager
-     * for logging and debugging purposes.
-     */
-    public void setName(String name){
-        this.name = name;
-    }
-
-	Map<String, Serializable> hints = new HashMap<String, Serializable>();
-
-    /**
-     * Set a Hint and a related value. The hintName must be non-Null.
-     * Standard HintNames are defined in the Connector specification. Use of
-     * "javax.resource." prefixed hintNames are reserved for use by the 
-     * Connector specification.
-     *
-     */
-	public void setHint(String hintName, Serializable value) {
-		hints.put(hintName, value);
-	}
-
-	public Map<String, Serializable> getHints() {
-		return hints;
-	}
-
+	List<WorkContext> getWorkContexts();
 }

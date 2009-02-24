@@ -36,35 +36,43 @@
 
 package javax.resource.spi.work;
 
+import java.io.Serializable;
+
 /**
- * A standard <code>InflowContext</code> that allows a <code>Work</code>
- * instance to propagate transaction related context information from an EIS to
- * an application server.<p>
+ * This class serves as a standard mechanism for a resource adapter to propagate
+ * an imported context from an enterprise information system to an application
+ * server.
  * 
- * This class extends <code>ExecutionContext</code> so that a resource adapter
- * developer could migrate their existing code from
- * <code>ExecutionContext</code> to <code>TransactionInflowContext</code>
- * easily.<p>
+ * <p>
+ * A <code>Work</code> instance, that implements the
+ * <code>WorkContextProvider</code>, could provide a <code>List</code> of these
+ * <code>WorkContext</code> instances (through the getWorkContexts() method),
+ * and have them setup as the execution context by the <code>WorkManager</code>
+ * when the <code>Work</code> instance gets executed.
  * 
  * @since 1.6
- * @see javax.resource.spi.work.InflowContext
- * @see javax.resource.spi.work.ExecutionContext
  * @version JSR322-EarlyDraft
  */
 
-public class TransactionInflowContext extends ExecutionContext implements
-        InflowContext {
-    /**
-     * {@inheritDoc}
-     */
-    public String getDescription() {
-        return "Transaction Inflow Context";
-    }
+public interface WorkContext extends Serializable {
+	/**
+	 * Get the associated name of the <code>WorkContext</code>. This could be
+	 * used by the WorkManager and the resource adapter for debugging purposes.
+	 * <p>
+	 * 
+	 * @return the associated name of the <code>WorkContext</code>
+	 */
+	String getName();
 
-    /**
-     * {@inheritDoc}
-     */
-    public String getName() {
-        return "TransactionInflowContext";
-    }
+	/**
+	 * Get the brief description of the role played by the
+	 * <code>WorkContext</code> and any other related debugging information.
+	 * This could be used by the WorkManager and the resource adapter for
+	 * debugging purposes.
+	 * <p>
+	 * 
+	 * @return the associated description of the <code>WorkContext</code>
+	 */
+	String getDescription();
+
 }

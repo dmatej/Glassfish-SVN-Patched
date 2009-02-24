@@ -54,15 +54,14 @@ public interface ActivationSpec extends ResourceAdapterAssociation {
 	 * validation. The implementation of this self-validation check behavior is
 	 * optional.
 	 * 
+	 * Note: Since Java EE Connector 1.6 specification, resource adapter
+	 * implementations are recommended to use the annotations or the XML 
+     * validation deployment descriptor facilities defined by the Bean Validation
+     * specification to express their validation requirements of its configuration 
+     * properties to the application server.
+     *
 	 * @throws <code>InvalidPropertyException</code> indicates invalid
 	 *         configuration property settings.
-	 *         
-	 * @deprecated As of Java EE Connectors 1.6 specification, resource adapter
-	 *             implementations are recommended to use the annotations or the
-	 *             XML validation deployment descriptor facilities defined by
-	 *             the Bean Validation specification to express their validation
-	 *             requirements of its configuration properties to the
-	 *             application server.
 	 */
 	void validate() throws InvalidPropertyException;
 	

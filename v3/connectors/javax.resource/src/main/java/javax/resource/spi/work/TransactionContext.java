@@ -36,45 +36,42 @@
 
 package javax.resource.spi.work;
 
-import java.io.Serializable;
-
 /**
- * This class serves as a standard mechanism for a resource adapter to propagate
- * an imported context from an enterprise information system to an application
- * server.
+ * A standard <code>WorkContext</code> that allows a <code>Work</code> instance
+ * to propagate transaction related context information from an EIS to an
+ * application server.
+ * <p>
  * 
- * <p> A <code>Work</code> instance, that implements the
- * <code>InflowContextProvider</code>, could provide a
- * <code>List</code> of these <code>InflowContext</code> instances
- * (through the getInflowContexts() method), and have them setup as the
- * execution context by the <code>WorkManager</code> when the
- * <code>Work</code> instance gets executed.
+ * This class extends <code>ExecutionContext</code> so that a resource adapter
+ * developer could migrate their existing code from
+ * <code>ExecutionContext</code> to <code>TransactionContext</code> easily.
+ * <p>
  * 
  * @since 1.6
+ * @see javax.resource.spi.work.WorkContext
+ * @see javax.resource.spi.work.ExecutionContext
  * @version JSR322-EarlyDraft
  */
 
-// @OpenQ : getName/getDescription useful for debugging purposes?
-public interface InflowContext extends Serializable{
-    /**
-     * Get the associated name of the <code>InflowContext</code>. This could
-     * be used by the WorkManager and the resource adapter for debugging
-     * purposes.
-     * <p>
-     * 
-     * @return the associated name of the <code>InflowContext</code>
-     */
-    String getName();
+public class TransactionContext extends ExecutionContext implements
+		WorkContext {
+	/**
+	 * Determines if a deserialized instance of this class
+	 * is compatible with this class.
+	 */
+	private static final long serialVersionUID = 6205067498708597824L;
 
-    /**
-     * Get the brief description of the role played by the
-     * <code>InflowContext</code> and any other related debugging information.
-     * This could be used by the WorkManager and the resource adapter for
-     * debugging purposes.
-     * <p>
-     * 
-     * @return the associated description of the <code>InflowContext</code>
-     */
-    String getDescription();
+	/**
+	 * {@inheritDoc}
+	 */
+	public String getDescription() {
+		return "Transaction Context";
+	}
 
+	/**
+	 * {@inheritDoc}
+	 */
+	public String getName() {
+		return "TransactionContext";
+	}
 }

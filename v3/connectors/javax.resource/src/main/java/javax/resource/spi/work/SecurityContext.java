@@ -40,9 +40,9 @@ import javax.security.auth.Subject;
 import javax.security.auth.callback.CallbackHandler;
 
 /**
- * A standard {@link InflowContext InflowContext} that allows a {@link Work
- * Work} instance to propagate security related context information from an EIS
- * to an application server.
+ * A standard {@link WorkContext WorkContext} that allows a {@link Work Work}
+ * instance to propagate security related context information from an EIS to an
+ * application server.
  * <p>
  * 
  * 
@@ -55,9 +55,9 @@ import javax.security.auth.callback.CallbackHandler;
  * 
  * A resource adapter indicates to the WorkManager, that a Work instance needs
  * to be run in a specified security execution context by submitting a Work
- * instance that implements InflowContextProvider interface and ensuring that
- * the List of InflowContexts for that Work instance contains an instance of its
- * subclass of SecurityInflowContext.
+ * instance that implements WorkContextProvider interface and ensuring that the
+ * List of WorkContexts for that Work instance contains an instance of its
+ * subclass of Securitytext.
  * <p>
  * 
  * 
@@ -86,24 +86,30 @@ import javax.security.auth.callback.CallbackHandler;
  * <p>
  * 
  * @since 1.6
- * @see javax.resource.spi.work.InflowContextProvider
+ * @see javax.resource.spi.work.WorkContextProvider
  * @version JSR322-EarlyDraft
  */
 
-public abstract class SecurityInflowContext implements InflowContext {
+public abstract class SecurityContext implements WorkContext {
+
+	/**
+	 * Determines if a deserialized instance of this class
+	 * is compatible with this class.
+	 */
+	private static final long serialVersionUID = 7730296651802712658L;
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public String getDescription() {
-		return "Security Inflow Context";
+		return "Security Context";
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
 	public String getName() {
-		return "SecurityInflowContext";
+		return "SecurityContext";
 	}
 
 	/**
@@ -150,8 +156,8 @@ public abstract class SecurityInflowContext implements InflowContext {
 	 * group principals within the Subject. Otherwise, the handler's processing
 	 * of this callback is additive, yielding the union (without duplicates) of
 	 * the principals existing within the Subject, and those created with the
-	 * names occuring within the argument array. The CallbackHandler will define
-	 * the type of the created principals.”
+	 * names occurring within the argument array. The CallbackHandler will
+	 * define the type of the created principals.”
 	 * <p>
 	 * 
 	 * A resource adapter might use the <code>PasswordValidationCallback</code>
@@ -186,7 +192,7 @@ public abstract class SecurityInflowContext implements InflowContext {
 	 * ones listed above, to an array and invokes the handle() method in the
 	 * container's CallbackHandler implementation passing in the array of
 	 * Callback instances.</li>
-	 * <li>on sucessful return from the CallbackHandler.handle() method the
+	 * <li>on successful return from the CallbackHandler.handle() method the
 	 * setSecurityContext returns after ensuring that the executionSubject is
 	 * populated with the valid Principals and Credentials that represent the
 	 * execution context of the Work instance</li>
