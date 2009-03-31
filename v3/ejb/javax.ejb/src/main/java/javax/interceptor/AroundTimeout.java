@@ -34,77 +34,16 @@
  * holder.
  */
 
-package com.sun.ejb.containers.interceptors;
 
-import java.lang.reflect.Method;
-import javax.interceptor.InvocationContext;
-import javax.ejb.EJBContext;
+package javax.interceptor;
 
-import com.sun.ejb.containers.EJBContextImpl;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.ElementType;
 
-import java.util.Map;
-import java.util.HashMap;
+import java.lang.annotation.Target;
+import java.lang.annotation.Retention;
 
-
-/**
- * Concrete InvocationContext implementation passed to callback methods 
- * defined in interceptor classes.
- */
-public class CallbackInvocationContext implements InvocationContext {
-
-    private EJBContextImpl ejbContext;
-    private Map contextData;
-    private int callbackIndex = 0;
-    private CallbackChainImpl callbackChain;
-
-    public CallbackInvocationContext(EJBContextImpl ejbContextImpl,
-                                     CallbackChainImpl chain) {
-        ejbContext = ejbContextImpl;
-        callbackChain = chain;
-    }
-
-    public Object getTarget() {
-        return ejbContext.getEJB();
-    }
-
-    public Object getTimer() {
-        return null;
-    }
-
-    public Method getMethod() {
-        return null;
-    }
-    
-    public Object[] getParameters() {
-        throw new IllegalStateException("not applicable to Callback methods");
-    }
-
-    public void setParameters(Object[] params) {
-        throw new IllegalStateException("not applicable to Callback methods");
-    }
-
-    public EJBContext getEJBContext() {
-        return ejbContext;
-    }
-
-    public Map<String, Object> getContextData() {
-        if( contextData == null ) {
-            contextData = new HashMap();
-        }
-
-        return contextData;
-    }
-    
-    public Object proceed() throws Exception {
-        try {
-            callbackIndex++;
-            return callbackChain.invokeNext(callbackIndex, this);
-        } catch (Exception ex) {
-            throw ex;
-        } catch (Throwable th) {
-            throw new Exception(th);
-        }
-    }
-
+@Target({ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface AroundTimeout {
 }
-
