@@ -41,10 +41,9 @@
 package com.sun.enterprise.util.zip;
 
 import java.io.*;
+import java.util.logging.*;
 import java.util.zip.*;
 
-import com.sun.enterprise.util.diagnostics.Reporter;
-import com.sun.enterprise.util.diagnostics.StackTrace;
 import com.sun.enterprise.util.io.FileListerRelative;
 
 public class ZipWriter
@@ -99,13 +98,17 @@ public class ZipWriter
 	{
 		try
 		{
-			// note -- these asserts will be caught & repackaged as a ZipFileException
-			Reporter.insist(dirName);
+            if(dirName == null)
+                throw new IllegalArgumentException("null dirName");
 			
 			//make sure it's really a directory
 			File f = new File(dirName);
-			Reporter.insist(f.exists(),		"directory (" + dirName + ") doesn't exist");
-			Reporter.insist(f.isDirectory());
+
+            if(!f.exists())
+                throw new ZipFileException("directory (" + dirName + ") doesn't exist");
+
+            if(!f.isDirectory())
+                throw new ZipFileException(dirName + " is not a directory");
 			
 			// change the filename to be full-path & UNIX style
 			try
@@ -114,7 +117,7 @@ public class ZipWriter
 			}
 			catch(IOException e)
 			{
-				Reporter.warn("Couldn't getCanonicalPath() for " + dirName);
+				dirName = f.getAbsolutePath();
 			}
 			
 			dirName = dirName.replace('\\', '/');	// all UNIX-style filenames...
@@ -128,7 +131,11 @@ public class ZipWriter
 			this.dirName		= dirName;
 			zipStream			= new ZipOutputStream(outStream);
 		}
-		catch(Throwable t)
+        catch(ZipFileException zfe) 
+        {
+            throw zfe;
+        }
+        catch(Throwable t)
 		{
 			throw new ZipFileException(t);
 		}
@@ -161,12 +168,10 @@ public class ZipWriter
 		}
 		catch(ZipFileException z)
 		{
-			Reporter.critical(new StackTrace(z));
 			throw z;
 		}
 		catch(Exception e)
 		{
-			Reporter.critical(new StackTrace(e));
 			throw new ZipFileException(e);
 		}
 	}
@@ -186,12 +191,10 @@ public class ZipWriter
 		}
 		catch(ZipFileException z)
 		{
-			Reporter.critical(new StackTrace(z));
 			throw z;
 		}
 		catch(Exception e)
 		{
-			Reporter.critical(new StackTrace(e));
 			throw new ZipFileException(e);
 		}
 	}
@@ -228,11 +231,11 @@ public class ZipWriter
 		catch(Exception e)
 		{
 			// ignore it
-			Reporter.warn("Couldn't close the FileInputStream for the file: " + item.file);
+			Logger.getAnonymousLogger().warning("Couldn't close the FileInputStream for the file: " + item.file);
 		}
 		
 		zipStream.closeEntry();
-		Reporter.verbose("Wrote " + item.name + " to Zip File.  Wrote " + totalBytes + " bytes.");
+		Logger.getAnonymousLogger().finer("Wrote " + item.name + " to Zip File.  Wrote " + totalBytes + " bytes.");
 	}		
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -284,8 +287,6 @@ public class ZipWriter
 	
 	public static void main(String[] args)
 	{
-		Reporter.setSeverityLevel(0);
-		
 		if(args == null || args.length != 2)
 			usage();
 		
@@ -293,11 +294,9 @@ public class ZipWriter
 		{
 			ZipWriter zw = new ZipWriter(args[0], args[1]);
 			zw.write();
-			Reporter.verbose("" + zw);
 		}
 		catch(ZipFileException e)
 		{
-			Reporter.verbose("ZipFileException: " + e);
 			System.exit(0);
 		}
 	}
