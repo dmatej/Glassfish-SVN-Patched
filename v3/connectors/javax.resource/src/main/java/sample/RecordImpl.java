@@ -76,14 +76,6 @@ class RecordImpl implements Record, Serializable, Streamable {
     return desc;
   }
 
-
-  // Check if this instance is equal to another Record
-  public
-  boolean equals(Object other) {
-    // ...
-    return true;
-  }
-
   // Read data from an InputStream and initialize fields
   public
   void read(InputStream istream) throws IOException {
@@ -98,6 +90,6 @@ class RecordImpl implements Record, Serializable, Streamable {
   }
 
   public Object clone() throws CloneNotSupportedException {
-    return this;
+      return super.clone();
   }
 }
