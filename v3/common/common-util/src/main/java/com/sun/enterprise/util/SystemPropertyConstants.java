@@ -217,6 +217,8 @@ public class SystemPropertyConstants
     
     /** Name of the default config that determines the configuration for the instances */
     public static final String TEMPLATE_CONFIG_NAME = "default-config";
+    public static final String DEFAULT_ADMIN_USER = "anonymous";
+    public static final String DEFAULT_ADMIN_PASSWORD = "";
     
     private static final StringManager sm = StringManager.getManager(SystemPropertyConstants.class);
 
