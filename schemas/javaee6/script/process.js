@@ -647,6 +647,20 @@ function findAllFilesWithExtension(directory, extension) {
 
 //////////////// main
 
+function checkAntVersion() {
+    try {
+        var klass = java.lang.Class.forName("org.apache.tools.ant.taskdefs.condition.AntVersion");
+        return true;
+    }
+    catch (e) {
+        return false;
+    }
+}
+
+if (!checkAntVersion()) {
+    throw new Error("you need Apache Ant 1.7.0 or later to build");
+}
+
 if (phase == "generate") {
     var sourceList = findAllFilesWithExtension(sourceDir, ".xsds");
     processAll(sourceList);
