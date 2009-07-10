@@ -120,15 +120,6 @@ public @interface Connector {
 	boolean licenseRequired() default false;
 
 	/**
-	 * Specifies the version of the Java EE Connector Architecture specification
-	 * that is supported by this resource adapter. This information enables
-	 * deployer to configure the resource adapter to support deployment and
-	 * runtime requirements of the corresponding connector architecture
-	 * specification.
-	 */
-	String specVersion() default "1.6";
-
-	/**
 	 * Specifies the authentication mechanisms supported by the resource
 	 * adapter.
 	 * 
