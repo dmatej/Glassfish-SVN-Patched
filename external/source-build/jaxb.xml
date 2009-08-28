@@ -1,0 +1,605 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="JAXB source integration" default="build" basedir=".">
+
+    <import file="build.xml"/>
+    <import file="wsit-taskdefs.xml"/>
+
+    <target name="build" depends="init">
+        <antcall target="dtd-parser.checkout" />
+        <antcall target="dtd-parser.build" />
+        
+        <antcall target="activation.checkout"/>
+        <antcall target="activation.build"/>
+        <antcall target="activation.publish"/>
+
+        <antcall target="jsr173api.checkout"/>
+        <antcall target="jsr173api.build"/>
+        <antcall target="jsr173api.publish"/>
+
+        <antcall target="stax-ex.checkout" />
+        <antcall target="stax-ex.build" />
+
+        <antcall target="relaxng-datatype.checkout" />
+        <antcall target="relaxng-datatype.build" />
+        <antcall target="relaxng-datatype.publish" />
+
+        <antcall target="resolver.checkout"/>
+        <antcall target="resolver.build"/>
+        <antcall target="resolver.publish"/>
+
+        <antcall target="javacc.checkout"/>
+        <antcall target="javacc.build"/>
+        <antcall target="javacc.publish"/>
+
+        <antcall target="isorelax.checkout"/>
+        <antcall target="isorelax.build"/>
+        <antcall target="isorelax.publish"/>
+
+        <antcall target="xsdlib.checkout"/>
+        <antcall target="xsdlib.build"/>
+        <antcall target="xsdlib.publish"/>
+
+        <antcall target="msv.checkout"/>
+        <antcall target="msv.build"/>
+        <antcall target="msv.publish"/>
+
+        <antcall target="codemodel.checkout"/>
+        <antcall target="codemodel.build"/>
+        
+        <antcall target="istack-commons.checkout"/>
+        <antcall target="istack-commons.build"/>
+        <antcall target="istack-commons.publish"/>
+        
+        <antcall target="args4j.checkout"/>
+        <antcall target="args4j.build"/>
+        
+        <antcall target="rngom.checkout"/>
+        <antcall target="rngom.build"/>
+        <antcall target="rngom.publish"/>
+        
+        <antcall target="relaxngcc.checkout"/>
+        <antcall target="relaxngcc.build"/>
+        <antcall target="relaxngcc.publish"/>
+
+        <antcall target="xsom.checkout"/>
+        <antcall target="xsom.build"/>
+        <antcall target="xsom.publish"/>
+        
+        <antcall target="txw2.checkout"/>
+        <antcall target="txw2.build"/>
+        <antcall target="txw2.publish"/>        
+        
+        <antcall target="fi.checkout"/>
+        <antcall target="fi.build"/>
+        <antcall target="fi.publish"/>
+
+        <antcall target="resolver-comsun.checkout"/>
+        <antcall target="resolver-comsun.build"/>
+        <antcall target="resolver-comsun.publish"/>
+
+        <antcall target="jaxb-api.checkout"/>
+        <antcall target="jaxb-api.build"/>
+        <antcall target="jaxb-api.publish"/>
+
+        <antcall target="jaxb.checkout"/>
+        <antcall target="jaxb.build"/>
+        <antcall target="jaxb.publish"/>
+    </target>
+
+    <!-- dtd-parser.jar -->
+    <target name="dtd-parser.checkout" unless="nocheckout">
+        <echo message="checkout dtd-parser from ${dtd-parser.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${dtd-parser.svn.url}" />
+            <arg line="dtd-parser" />
+    	</exec>
+    </target>
+    <target name="dtd-parser.build">
+        <delete>
+            <fileset dir="${external.dir}/dtd-parser/" includes="**/*.jar"/>
+        </delete>
+        <exec executable="mvn" failonerror="true" >
+            <arg line="-f ${external.dir}/dtd-parser/pom.xml -Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="clean install" />
+        </exec>
+    </target>
+
+    <!-- stax-ex.jar -->
+    <target name="stax-ex.checkout" unless="nocheckout">
+        <echo message="checkout stax-ex from ${stax-ex.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${stax-ex.svn.url}" />
+            <arg line="stax-ex" />
+    	</exec>
+    </target>
+    <target name="stax-ex.build">
+        <delete>
+            <fileset dir="${external.dir}/stax-ex/" includes="**/*.jar"/>
+        </delete>
+        <exec executable="mvn" failonerror="true" >
+            <arg line="-f ${external.dir}/stax-ex/pom.xml -Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="clean install" />
+        </exec>
+    </target>
+
+    <!-- relaxngDatatype.jar -->
+    <target name="relaxng-datatype.checkout" unless="nocheckout">
+        <echo message="checkout relaxng-datatype from ${relaxng-datatype.svn.url}"/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${relaxng-datatype.svn.url}" />
+            <arg line="relaxng-datatype" />
+        </exec>
+    </target>
+    <target name="relaxng-datatype.build">
+        <delete>
+            <fileset dir="${external.dir}/relaxng-datatype/" includes="**/*.jar"/>
+        </delete>
+        <exec executable="ant" dir="${external.dir}/relaxng-datatype/java" failonerror="true" newenvironment="true" >
+            <arg line="-Djavac.target=1.5"/>
+            <arg line="-Djavac.source=1.5"/>
+            <arg line="release"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="relaxng-datatype.publish" >
+        <mvn.publish jar="${external.dir}/relaxng-datatype/java/relaxngDatatype.jar" mvngroup="com.sun.xml" mvnartid="relaxngDatatype" mvnversion="${relaxng-datatype.version}"/>
+    </target>
+
+    <!-- resolver.jar -->
+    <target name="resolver.checkout" unless="nocheckout">
+        <echo message="checkout resolver from ${resolver.svn.url}"/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+    	    <arg line="checkout" />
+            <arg line="${resolver.svn.url}" />
+            <arg line="resolver" />
+        </exec>
+    </target>
+    <target name="resolver.build">
+        <delete>
+            <fileset dir="${external.dir}/resolver" includes="**/*.jar"/>
+        </delete>
+        <!-- use exec to invoke ant since resolver requires jdk 1.4 to compile -->
+        <exec executable="ant" dir="${external.dir}/resolver/java" failonerror="true" newenvironment="true" >
+            <arg line="-f resolver.xml" />
+            <arg line="jar" />
+            <env key="JAVA_HOME" value="${JDK_1.4}" />
+        </exec>
+    </target>
+    <target name="resolver.publish" >
+        <mvn.publish jar="${external.dir}/resolver/java/build/resolver.jar" mvngroup="xml-resolver" mvnartid="xml-resolver" mvnversion="${resolver.version}"/>
+    </target>
+
+    <!-- resolver-comsun.jar -->
+    <target name="resolver-comsun.checkout" unless="nocheckout">
+        <echo message="checkout resolver-comsun from ${resolver-comsun.svn.url}"/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+    	    <arg line="checkout" />
+            <arg line="${resolver-comsun.svn.url}" />
+            <arg line="resolver-comsun" />
+        </exec>
+    </target>
+    <target name="resolver-comsun.build">
+        <delete>
+            <fileset dir="${external.dir}/resolver-comsun" includes="**/*.jar"/>
+        </delete>
+        <subant buildpath="${external.dir}/resolver-comsun" target="dist">
+            <property name="javac.source" value="1.5"/>
+            <property name="javac.target" value="1.5"/>
+        </subant>
+    </target>
+    <target name="resolver-comsun.publish" >
+        <mvn.publish jar="${external.dir}/resolver-comsun/resolver.jar" mvngroup="xml-resolver" mvnartid="xml-resolver-comsun" mvnversion="${resolver-comsun.version}"/>
+    </target>
+
+    <!-- javacc.jar -->
+    <target name="javacc.checkout" unless="nocheckout">
+        <cvs.checkout repo="${javacc.cvs.url}" tag="${javacc.cvs.tag}" module="javacc" dest="javacc"/>
+    </target>
+    <target name="javacc.build">
+<!--        <delete>   - still cannot find javacc classes from Aug 17th 2001 that form the bootstrap jar
+            <fileset dir="${external.dir}/javacc" includes="**/*.jar"/>
+        </delete>-->
+        <!-- use exec to invoke ant since javacc requires jdk 1.4 to compile -->
+        <exec executable="ant" dir="${external.dir}/javacc" failonerror="true" newenvironment="true" >
+            <arg line="jar" />
+            <env key="JAVA_HOME" value="${JDK_1.4}" />
+        </exec>
+    </target>
+    <target name="javacc.publish" >
+        <mvn.publish jar="${external.dir}/javacc/bin/lib/javacc.jar" mvngroup="javacc" mvnartid="javacc" mvnversion="${javacc.version}"/>
+    </target>
+
+    <!-- isorelax.jar -->
+    <target name="isorelax.checkout" unless="nocheckout">
+        <echo message="checkout isorelax from ${isorelax.svn.url}"/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${isorelax.svn.url}" />
+            <arg line="isorelax" />
+        </exec>
+    </target>
+    <target name="isorelax.build">
+        <delete>
+            <fileset dir="${external.dir}/isorelax/" includes="**/*.jar"/>
+        </delete>
+        <!-- use exec to invoke ant since isorelax requires jdk 1.4 to compile -->
+        <exec executable="ant" dir="${external.dir}/isorelax" failonerror="true" newenvironment="true" >
+            <arg line="release" />
+            <env key="JAVA_HOME" value="${JDK_1.4}" />
+        </exec>
+    </target>
+    <target name="isorelax.publish" >
+        <mvn.publish jar="${external.dir}/isorelax/isorelax.jar" mvngroup="isorelax" mvnartid="isorelax" mvnversion="${isorelax.version}"/>
+    </target>
+
+    <!-- xsdlib.jar -->
+    <target name="xsdlib.checkout" unless="nocheckout">
+        <echo message="checkout xsdlib from ${xsdlib.svn.url}"/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+            <arg line="checkout" />
+            <arg line="${xsdlib.svn.url}" />
+            <arg line="xsdlib" />
+        </exec>
+    </target>
+    <target name="xsdlib.build">
+        <delete>
+            <fileset dir="${external.dir}/xsdlib" includes="**/*.jar"/>
+        </delete>
+        <exec executable="ant" dir="${external.dir}/xsdlib" failonerror="true" newenvironment="false" >
+            <arg line="-Djavac.target=1.5"/>
+            <arg line="-Djavac.source=1.5"/>
+            <arg line="-Dmaven.repo.local=${maven.repo.local}"/>
+            <arg line="dist"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="xsdlib.publish" >
+        <mvn.publish jar="${external.dir}/xsdlib/dist/xsdlib.jar" mvngroup="com.sun.msv.datatype.xsd" mvnartid="xsdlib" mvnversion="${xsdlib.version}"/>
+    </target>
+
+    <!-- msv.jar -->
+    <target name="msv.checkout" unless="nocheckout">
+        <echo message="checkout msv from ${msv.svn.url}"/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+            <arg line="checkout" />
+            <arg line="${msv.svn.url}" />
+            <arg line="msv" />
+        </exec>
+    </target>
+    <target name="msv.build">
+        <delete>
+            <fileset dir="${external.dir}/msv/" includes="**/*.jar"/>
+        </delete>
+        <exec executable="ant" dir="${external.dir}/msv/msv" failonerror="true" newenvironment="true" >
+            <arg line="-Djavac.target=1.5"/>
+            <arg line="-Djavac.source=1.5"/>
+            <arg line="-Dfrom.source=true"/>
+            <arg line="-Dcpath.fromsource=${maven.repo.local}/${relaxng-datatype.mvn.path}:${maven.repo.local}/${xsdlib.mvn.path}:${maven.repo.local}/${isorelax.mvn.path}:${maven.repo.local}/${resolver.mvn.path}"/>
+            <arg line="dist"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="msv.publish" >
+        <mvn.publish jar="${external.dir}/msv/msv/dist/msv.jar" mvngroup="com.sun.msv" mvnartid="msv" mvnversion="${msv.version}"/>
+    </target>
+
+    <!-- codemodel.jar -->
+    <target name="codemodel.checkout" unless="nocheckout">
+        <echo message="checkout codemodel from ${codemodel.svn.url}"/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+            <arg line="checkout" />
+            <arg line="-r '{${codemodel.svn.date}}'" />
+            <arg line="${codemodel.svn.url}" />
+            <arg line="codemodel" />
+        </exec>
+    </target>
+    <target name="codemodel.build">
+        <delete>
+            <fileset dir="${external.dir}/codemodel" includes="**/*.jar"/>
+        </delete>
+        <exec executable="mvn" dir="${external.dir}/codemodel" failonerror="true">
+            <arg line="install" />
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+        </exec>
+    </target>
+
+    <!-- istack-commons-runtime.jar istack-commons-tools.jar -->
+    <target name="istack-commons.checkout" unless="nocheckout">
+        <cvs.checkout repo="${istack-commons.cvs.url}" tag="${istack-commons.cvs.tag}" module="istack-commons/istack-commons" dest="istack-commons"/>
+    </target>
+    <target name="istack-commons.build">
+        <delete>
+            <fileset dir="${external.dir}/istack-commons" includes="**/*.jar"/>
+        </delete>
+        <copy file="${maven.repo.local}/${activation.mvn.path}" tofile="${external.dir}/istack-commons/runtime/lib/activation.jar"/>
+        <copy file="${maven.repo.local}/${jsr173api.mvn.path}" tofile="${external.dir}/istack-commons/runtime/lib/jsr173_api.jar"/>
+        <exec executable="ant" dir="${external.dir}/istack-commons" failonerror="true" newenvironment="true" >
+            <arg line="-Djavac.target=1.5"/>
+            <arg line="-Djavac.source=1.5"/>
+            <arg line="-Dfrom.source=true"/>
+            <arg line="dist"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="istack-commons.publish" >
+        <mvn.publish jar="${external.dir}/istack-commons/runtime/build/istack-commons-runtime.jar" mvngroup="com.sun.istack.istack-commons-runtime" mvnartid="istack-commons-runtime" mvnversion="${istack-commons.version}"/>
+        <mvn.publish jar="${external.dir}/istack-commons/tools/build/istack-commons-tools.jar" mvngroup="com.sun.istack.istack-commons-tools" mvnartid="istack-commons-tools" mvnversion="${istack-commons.version}"/>
+    </target>
+
+    <!-- args4j.jar -->
+    <target name="args4j.checkout" unless="nocheckout">
+        <echo message="checkout args4j from ${args4j.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${args4j.svn.url}" />
+            <arg line="args4j" />
+    	</exec>
+    </target>
+    <target name="args4j.build">
+        <delete>
+            <fileset dir="${external.dir}/args4j" includes="**/*.jar"/>
+        </delete>
+        <exec executable="mvn" failonerror="true" >
+            <arg line="-f ${external.dir}/args4j/pom.xml -Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="clean install" />
+        </exec>
+    </target>
+
+    <!-- rngom.jar -->
+    <target name="rngom.checkout" unless="nocheckout">
+        <echo message="checkout rngom from ${rngom.svn.url}"/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+            <arg line="checkout" />
+            <arg line="${rngom.svn.url}" />
+            <arg line="rngom" />
+        </exec>
+    </target>
+    <target name="rngom.build">
+        <delete>
+            <fileset dir="${external.dir}/rngom" includes="**/*.jar"/>
+        </delete>
+        <copy file="${maven.repo.local}/${javacc.mvn.path}" tofile="${external.dir}/rngom/rngom/lib/javacc/javacc.jar"/>
+        <exec executable="ant" dir="${external.dir}/rngom/rngom" failonerror="true" newenvironment="true" >
+            <arg line="-Djavac.target=1.5"/>
+            <arg line="-Djavac.source=1.5"/>
+            <arg line="-Dfrom.source=true"/>
+            <arg line="-Dcpath.fromsource=${maven.repo.local}/${relaxng-datatype.mvn.path}"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+            <arg line="jar"/>
+        </exec>
+    </target>
+    <target name="rngom.publish" >
+        <mvn.publish jar="${external.dir}/rngom/rngom/build/rngom.jar" mvngroup="org.kohsuke.rngom" mvnartid="rngom" mvnversion="${rngom.version}"/>
+    </target>
+
+    <!-- relaxngcc.jar -->
+    <target name="relaxngcc.checkout" unless="nocheckout">
+        <echo message="checkout relaxngcc from ${relaxngcc.svn.url}"/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${relaxngcc.svn.url}" />
+            <arg line="relaxngcc" />
+        </exec>
+    </target>
+    <target name="relaxngcc.build">
+        <delete>
+            <fileset dir="${external.dir}/relaxngcc" includes="**/*.jar"/>
+        </delete>
+        <!-- this is required to overcome the stupidity combination of ant vs maven-->
+        <copy file="${maven.repo.local}/${javacc.mvn.path}" tofile="${external.dir}/relaxngcc/lib/javacc.jar"/>
+        <subant buildpath="${external.dir}/relaxngcc" target="jar">
+            <property name="javac.source" value="1.4"/>
+            <property name="javac.target" value="1.5"/>
+            <property name="cpath.fromsource" value="${maven.repo.local}/${relaxng-datatype.mvn.path}:${maven.repo.local}/${xsdlib.mvn.path}:${maven.repo.local}/${isorelax.mvn.path}:${maven.repo.local}/${msv.mvn.path}"/>
+        </subant>
+    </target>
+
+    <target name="relaxngcc.publish" >
+        <mvn.publish jar="${external.dir}/relaxngcc/relaxngcc.jar" mvngroup="com.sun.xml" mvnartid="relaxngcc" mvnversion="${relaxngcc.version}"/>
+    </target>
+
+    <!-- xsom.jar -->
+    <target name="xsom.checkout" unless="nocheckout">
+        <cvs.checkout repo="${xsom.cvs.url}" tag="${xsom.cvs.tag}" module="jaxb2-sources/xsom" dest="xsom"/>
+    </target>
+    <target name="xsom.build">
+        <delete>
+            <fileset dir="${external.dir}/xsom" includes="**/*.jar"/>
+        </delete>
+        <!-- this is required to overcome the stupidity combination of ant vs maven-->
+        <copy file="${maven.repo.local}/${javacc.mvn.path}" tofile="${external.dir}/xsom/lib/javacc.jar"/>
+        <exec executable="ant" dir="${external.dir}/xsom" failonerror="true" newenvironment="true" >
+            <arg line="-Djavac.target=1.5"/>
+            <arg line="-Djavac.source=1.5"/>
+            <arg line="-Dfrom.source=true"/>
+            <arg line="-Drelaxngcc-jar=${maven.repo.local}/${relaxngcc.mvn.path}"/>
+            <arg line="-Dcpath.fromsource=${maven.repo.local}/${relaxngcc.mvn.path}:${maven.repo.local}/${relaxng-datatype.mvn.path}"/>
+            <arg line="jar"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="xsom.publish">
+        <mvn.publish jar="${external.dir}/xsom/build/xsom.jar" mvngroup="com.sun.xsom" mvnartid="xsom" mvnversion="${xsom.version}"/>
+    </target>
+    
+    <!-- txw2.jar txw2c.jar -->
+    <target name="txw2.checkout" unless="nocheckout">
+        <cvs.checkout repo="${txw2.cvs.url}" tag="${txw2.cvs.tag}" module="jaxb2-sources/txw2" dest="txw2"/>
+    </target>
+    <target name="txw2.build">
+        <delete>
+            <fileset dir="${external.dir}/txw2" includes="**/*.jar"/>
+        </delete>
+        <copy file="${maven.repo.local}/${jsr173api.mvn.path}" tofile="${external.dir}/txw2/lib/runtime/jsr173_1.0_api.jar"/>
+        <exec executable="ant" dir="${external.dir}/txw2" failonerror="true" newenvironment="true" >
+            <arg line="-Djavac.target=1.5"/>
+            <arg line="-Djavac.source=1.5"/>
+            <arg line="-Dfrom.source=true"/>
+            <arg line="-Dcpath.fromsource=${maven.repo.local}/${activation.mvn.path}:${maven.repo.local}/${jsr173api.mvn.path}:${maven.repo.local}/${codemodel.mvn.path}:${maven.repo.local}/${args4j.mvn.path}:${maven.repo.local}/${rngom.mvn.path}:${maven.repo.local}/${xsom.mvn.path}:${maven.repo.local}/${relaxng-datatype.mvn.path}"/>
+            <arg line="jar"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="txw2.publish" >
+        <mvn.publish jar="${external.dir}/txw2/build/txw2.jar" mvngroup="com.sun.xml.txw2" mvnartid="txw2" mvnversion="${txw2.version}"/>
+        <mvn.publish jar="${external.dir}/txw2/build/txwc2.jar" mvngroup="com.sun.xml.txw2" mvnartid="txwc2" mvnversion="${txw2.version}"/>
+    </target>
+
+    <!-- FastInfoset.jar -->
+    <target name="fi.checkout" unless="nocheckout">
+        <mkdir dir="${external.dir}/fi"/>
+        <exec executable="cvs" dir="${external.dir}/fi" failonerror="true" >
+            <arg line="-q -d ${fi.cvs.url}" />
+            <arg line="checkout" />
+            <arg line="-r ${fi.cvs.tag}" />
+            <arg line="-d ${fi.version}" />
+            <arg line="fi/FastInfoset" />
+        </exec>
+    </target>
+    <target name="fi.build">
+        <delete>
+            <fileset dir="${external.dir}/fi/${fi.version}" includes="**/*.jar"/>
+        </delete>
+        <copy file="${maven.repo.local}/${jsr173api.mvn.path}" tofile="${external.dir}/fi/${fi.version}/lib/jsr173_api.jar"/>
+        <exec executable="ant" dir="${external.dir}/fi/${fi.version}" failonerror="true" newenvironment="true" >
+            <arg line="-Djavac.target=1.5"/>
+            <arg line="-Djavac.source=1.5"/>
+            <arg line="jar"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="fi.publish" >
+        <mvn.publish jar="${external.dir}/fi/${fi.version}/dist/FastInfoset.jar" mvngroup="com.sun.xml.fastinfoset" mvnartid="FastInfoset" mvnversion="${fi.version}"/>
+    </target>
+
+    <!-- jaxb-api.jar -->
+    <target name="jaxb-api.checkout" unless="nocheckout">
+        <echo message="checkout jaxb-api from ${jaxb-api.cvs.url}"/>
+        <cvs.checkout repo="${jaxb-api.cvs.url}" tag="${jaxb-api.cvs.tag}" module="jsr222-mirror" dest="jaxb-api"/>
+    </target>
+    <target name="jaxb-api.build">
+        <delete>
+            <fileset dir="${external.dir}/jaxb-api" includes="**/*.jar"/>
+        </delete>
+        <copy file="${maven.repo.local}/${activation.mvn.path}" tofile="${external.dir}/jaxb-api/lib/activation.jar"/>
+        <copy file="${maven.repo.local}/${jsr173api.mvn.path}" tofile="${external.dir}/jaxb-api/lib/jsr173_1.0_api.jar"/>
+        <exec executable="ant" dir="${external.dir}/jaxb-api" failonerror="true" newenvironment="true" >
+            <arg line="-Djavac.target=1.5"/>
+            <arg line="-Djavac.source=1.5"/>
+            <arg line="dist"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="jaxb-api.publish" >
+        <mvn.publish jar="${external.dir}/jaxb-api/dist/jaxb-api.jar" mvngroup="javax.xml.bind" mvnartid="jaxb-api" mvnversion="${jaxb-api.version}"/>
+    </target>
+
+    <!-- jsr173_1.0_api.jar -->
+    <target name="jsr173api.checkout" unless="nocheckout">
+        <echo message="checkout jsr173api from ${jsr173api.svn.url}"/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${jsr173api.svn.url}" />
+            <arg line="jsr173api" />
+        </exec>
+    </target>
+    <target name="jsr173api.build">
+        <delete>
+            <fileset dir="${external.dir}/jsr173api" includes="**/*.jar"/>
+        </delete>
+        <exec executable="ant" dir="${external.dir}/jsr173api" failonerror="true" newenvironment="true" >
+            <arg line="-Djavac.target=1.5"/>
+            <arg line="-Djavac.source=1.5"/>
+            <arg line="dist"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="jsr173api.publish" >
+        <mvn.publish jar="${external.dir}/jsr173api/jsr173_1.0_api.jar" mvngroup="javax.xml" mvnartid="jsr173" mvnversion="${jsr173api.version}"/>
+    </target>
+
+    <!-- activation.jar -->
+    <target name="activation.checkout" unless="nocheckout">
+        <echo message="checkout activation from ${activation.svn.url}"/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${activation.svn.url}" />
+            <arg line="activation" />
+        </exec>
+    </target>
+    <target name="activation.build">
+        <delete>
+            <fileset dir="${external.dir}/activation" includes="**/*.jar"/>
+        </delete>
+        <exec executable="ant" dir="${external.dir}/activation" failonerror="true" newenvironment="true" >
+            <arg line="-Djavac.target=1.5"/>
+            <arg line="-Djavac.source=1.5"/>
+            <arg line="dist"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="activation.publish" >
+        <mvn.publish jar="${external.dir}/activation/activation.jar" mvngroup="javax.activation" mvnartid="activation" mvnversion="${activation.version}"/>
+    </target>
+    
+    <!-- jaxb-impl.jar jaxb-xjc.jar jaxb1-impl.jar -->
+    <target name="jaxb.checkout" unless="nocheckout">
+        <cvs.checkout repo="${jaxb.cvs.url}" tag="${jaxb.cvs.tag}" module="jaxb2-sources/jaxb-ri" dest="jaxb"/>
+    </target>
+    <target name="jaxb.build">
+        <delete>
+            <fileset dir="${external.dir}/jaxb" includes="**/*.jar">
+                <exclude name="**/jaxb1*.jar*"/>
+                <exclude name="**/bnd*.jar*"/>
+            </fileset>
+        </delete>
+        <copy file="${maven.repo.local}/${codemodel.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/compiler/codemodel.jar"/>
+        <copy file="${maven.repo.local}/${dtd-parser.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/compiler/dtd-parser-1.0.jar"/>
+        <copy file="${maven.repo.local}/${istack-commons.tools.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/compiler/istack-commons-tools.jar"/>
+        <copy file="${maven.repo.local}/${relaxng-datatype.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/compiler/relaxngDatatype.jar"/>
+        <copy file="${maven.repo.local}/${resolver-comsun.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/compiler/resolver.jar"/>
+        <copy file="${maven.repo.local}/${rngom.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/compiler/rngom.jar"/>
+        <copy file="${maven.repo.local}/${xsom.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/compiler/xsom.jar"/>
+
+        <copy file="${maven.repo.local}/${isorelax.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/runtime/isorelax.jar"/>
+        <copy file="${maven.repo.local}/${msv.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/runtime/msv.jar"/>
+        <copy file="${maven.repo.local}/${relaxng-datatype.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/runtime/relaxngDatatype.jar"/>
+        <copy file="${maven.repo.local}/${xsdlib.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/runtime/xsdlib.jar"/>
+
+        <copy file="${maven.repo.local}/${istack-commons.runtime.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/runtime2/istack-commons-runtime.jar"/>
+        <copy file="${maven.repo.local}/${txw2.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/rebundle/runtime2/txw2.jar"/>
+
+        <copy file="${maven.repo.local}/${txwc2.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/util/txwc2.jar"/>
+        <copy file="${maven.repo.local}/${args4j.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/util/args4j-1.0-RC.jar"/>
+        
+        <copy file="${maven.repo.local}/${jaxb-api.mvn.path}" tofile="${external.dir}/jaxb/tools/lib/redist/jaxb-api.jar"/>
+
+        <property name="cpath" value="-Dcpath.fromsource=${maven.repo.local}/com/sun/codemodel/codemodel-annotation-compiler/2.1-SNAPSHOT/codemodel-annotation-compiler-2.1-SNAPSHOT.jar:${maven.repo.local}/${relaxngcc.mvn.path}:${maven.repo.local}/${fi.mvn.path}:${maven.repo.local}/${jsr173api.mvn.path}:${maven.repo.local}/${activation.mvn.path}:${maven.repo.local}/${stax-ex.mvn.path}:${maven.repo.local}/${resolver.mvn.path}"/>
+
+        <exec executable="ant" dir="${external.dir}/jaxb" failonerror="true" newenvironment="false" >
+            <arg line="clean hudson" />
+            <arg line="-Dfrom.source=true"/>
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+            <arg line="${cpath}"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+        <exec executable="ant" dir="${external.dir}/jaxb/osgi" failonerror="true" newenvironment="false" >
+            <arg line="clean bundle" />
+            <arg line="-Dfrom.source=true"/>
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+            <arg line="${cpath}"/>
+            <arg line="-Dosgi.build.api=osgi/build"/>
+            <arg line="-Dosgi.build.rt=osgi/build"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="jaxb.publish" >
+        <mvn.publish jar="${external.dir}/jaxb/osgi/build/jaxb-api-osgi.jar" mvngroup="javax.xml.bind" mvnartid="jaxb-api-osgi" mvnversion="${jaxb-api.version}"/>
+        <mvn.publish jar="${external.dir}/jaxb/osgi/build/jaxb-osgi.jar" mvngroup="com.sun.xml.bind" mvnartid="jaxb-osgi" mvnversion="${jaxb.version}"/>
+    </target>
+
+</project>

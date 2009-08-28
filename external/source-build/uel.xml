@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="UEL source integration" default="build" basedir=".">
+
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+
+    <target name="build" depends="init">
+        <antcall target="uel.build" />
+    </target>
+
+    <!--
+        Checkout uel source and build
+        Need to be built before jps since jps has a dependency on this project.
+    -->
+    <target name="uel.checkout" >
+        <echo message="checkout uel from ${uel.svn.url}."/>
+
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${uel.svn.url}" />
+            <arg line="uel" />
+	</exec>
+    </target>
+    <target name="uel.build" depends="uel.checkout" >
+        <!-- build uel -->
+        <exec executable="mvn" dir="${external.dir}/uel" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="install" />
+	</exec>
+    </target>
+
+</project>

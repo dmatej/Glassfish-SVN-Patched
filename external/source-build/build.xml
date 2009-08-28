@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="GFv3 source integration" default="build.all" basedir=".">
+
+    <property file="${basedir}/build.properties"/>
+    <property name="external.dir" value="${basedir}/external" />
+    <!-- default maven home directory -->
+    <property name="maven.repo.local" value="${user.home}/.m2/repository" />
+
+    <target name="init">
+        <mkdir dir="${external.dir}"/>
+    </target>
+
+    <target name="build.all" depends="init">
+        <echo message="external directory: ${external.dir}"/>
+        <echo message="maven.repo.local: ${maven.repo.local}"/>
+
+	<antcall target="eclipselink.project" />
+        <antcall target="jaxb.project" />
+        <ant antfile="bean-validator.xml" target="build" />
+	<ant antfile="hk2.xml" target="build" />
+	<ant antfile="uel.xml" target="build" />
+	<ant antfile="jsp.xml" target="build" />
+	<ant antfile="grizzly.xml" target="build" />
+	<ant antfile="scripting.xml" target="build" />
+	<ant antfile="webbeans.xml" target="build" /> 
+
+<!--
+        <antcall target="jersey.project" />
+-->
+<!--
+	<antcall target="jsf.project" />
+        <antcall target="gfcorba.project" />
+	<antcall target="jstl.project" />
+	<antcall target="wsit.project" />
+	<antcall target="mq.project" />
+        <antcall target="delete.files">
+             <param name="dir" value="${stage}"/>
+        </antcall>
+-->
+    </target>
+    
+
+
+
+
+    <target name="jsf.project" >
+        <exec executable="svn" dir="${stage}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${jsf.svn.url}" />
+            <arg line="jsf" />
+	</exec>
+    </target>
+
+
+    <!-- requires hg (mercurial) installed and in the path -->
+    <target name="gfcorba.project" >
+        <exec executable="hg" dir="${stage}" failonerror="true" >
+	    <arg line="clone" />
+            <arg line="${gfcorba.hg.url}" />
+            <arg line="glassfish-corba" />
+	</exec>
+    </target>
+
+    <target name="jaxb.project">
+        <exec executable="ant" failonerror="true" newenvironment="false" >
+            <arg line="-f jaxb.xml" />
+            <arg line="build" />
+            <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+            <!--<arg line="-Dnocheckout=true" /> -->
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+
+    <target name="jersey.project">
+        <exec executable="ant" failonerror="true" newenvironment="false" >
+            <arg line="-f jersey.xml" />
+            <arg line="build" />
+            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+        </exec>
+    </target>
+
+    <target name="jstl.project" >
+        <exec executable="svn" dir="${stage}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${jstl.svn.url}" />
+            <arg line="jstl" />
+	</exec>
+    </target>
+
+
+    <target name="wsit.project" >
+        <exec executable="cvs" dir="${stage}" failonerror="true" >
+	    <arg line="-d${cvsroot}" />
+            <arg line="checkout" />
+            <arg line="-r" />
+            <arg line="${wsit.cvs.branch}" />
+            <arg line="${wsit.cvs.location}" />
+	</exec>
+    </target>
+
+
+    <target name="eclipselink.project" >
+        <!-- Checkout Eclipselink from internal repo -->
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+			<arg line="checkout" />
+			<arg line="${eclipselink.svn.url}" />
+			<arg line="eclipselink" />
+		</exec>
+		<!-- delete sources that are no used by GFv3 -->
+		<!-- We are checking them into internal source repo just in case they are needed later on-->
+<!--
+		TODO check with Jane what is wrong with following
+		<delete>
+			<dirset dir="${external.dir}/eclipselink" includes="dbws, documentation, project-admin, examples, moxy, sdo, utils"/>
+		</delete>
+-->		
+		<delete dir="${external.dir}/eclipselink/dbws"/>
+		<delete dir="${external.dir}/eclipselink/documentation"/>
+		<delete dir="${external.dir}/eclipselink/project-admin"/>
+		<delete dir="${external.dir}/eclipselink/examples"/>
+		<delete dir="${external.dir}/eclipselink/moxy"/>
+		<delete dir="${external.dir}/eclipselink/sdo"/>
+		<delete dir="${external.dir}/eclipselink/utils"/>
+		<delete>
+			<dirset dir="${stage}/eclipselink/plugins" excludes="org.eclipse.persistence.antlr, org.eclipse.persistence.asm"/>  <!-- TODO this does not delete any dirs. Check with Jane -->
+			<fileset dir="${stage}/eclipselink/plugins" excludes="javax.jms*, javax.mail*.jar, javax.resource*.jar, javax.transaction*.jar, osgi.cmpn_*.jar, osgi.core.zip"/>
+		</delete>
+
+		<exec executable="ant" failonerror="true" newenvironment="false" >
+            <!-- <arg line="-verbose" />  -->
+			<arg line="-f eclipselink.xml" />
+			<!-- parameters required to drive eclipselink build -->		
+			<arg line="-Dbasedir=${external.dir}/eclipselink" />
+                        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+			<arg line="-Declipselink.release.version=${eclipselink.release.version}" />
+			<arg line="-Declipselink.version.qualifier=${eclipselink.version.qualifier}" />
+            <arg line="build-and-upload-to-maven" />
+        </exec>
+    </target>
+
+    <target name="mq.project" >
+	<resolveArtifact artifactId="mq-distribution" property="scripts.zip" classifier="sources"/>
+	<unzip src="${scripts.zip}" dest="${stage}" />
+    </target>
+
+    <target name="delete.files" >
+        <delete includeemptydirs="true">    
+            <fileset dir="${stage}" includes="**/.svn/**,**/.hg*/**" defaultexcludes="false"/>
+        </delete>
+    </target>
+
+</project>
+

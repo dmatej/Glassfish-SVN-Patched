@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="Jersey source integration" default="build" basedir=".">
+
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+
+    <target name="build" depends="init">
+        <antcall target="jersey.build" />
+    </target>
+
+    <!--
+        Checkout jersey source and build
+    -->
+    <target name="jersey.checkout" >
+        <echo message="checkout jersey from ${jersey.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	        <arg line="checkout" />
+          <arg line="${jersey.svn.url}" />
+          <arg line="jersey" />
+	      </exec>
+    </target>
+
+    <target name="jersey.build" depends="jettison.build,jackson.build,jersey.checkout" >
+        <!-- build jersey -->
+        <exec executable="mvn" dir="${external.dir}/jersey" failonerror="true" >
+	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+	        <arg line="-Dmaven.test.skip=true" />
+          <arg line="install" />
+          <env key="JAVA_HOME" value="${JDK_1.5}" />
+	      </exec>
+         <exec executable="mvn" dir="${external.dir}/jersey/glassfish/v3-packages" failonerror="true" >
+	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+	        <arg line="-Dmaven.test.skip=true" />
+          <arg line="install" />
+          <env key="JAVA_HOME" value="${JDK_1.6}" />
+	      </exec>
+    </target>
+
+    <target name="jettison.checkout" >
+        <echo message="checkout jettison from ${jettison.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	        <arg line="checkout" />
+          <arg line="${jettison.svn.url}" />
+          <arg line="jettison" />
+	      </exec>
+    </target>
+
+    <target name="jettison.build" depends="jettison.checkout" >
+        <!-- build jettison -->
+        <exec executable="mvn" dir="${external.dir}/jettison" failonerror="true" >
+	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+	        <arg line="-Dmaven.test.skip=true" />
+          <arg line="install" />
+	      </exec>
+    </target>
+
+    <target name="jackson.checkout" >
+        <echo message="checkout jackson from ${jackson.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	        <arg line="checkout" />
+          <arg line="${jackson.svn.url}" />
+          <arg line="jackson" />
+	      </exec>
+    </target>
+
+    <target name="jackson.build" depends="jackson.checkout" >
+        <!-- build jackson -->
+        <exec executable="ant" dir="${external.dir}/jackson" failonerror="true" >
+          <arg line="jar.asl" />
+	      </exec>
+        <exec executable="mvn" dir="${external.dir}/jackson" failonerror="true" >
+	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+          <arg line="install:install-file" />
+          <arg line="-Dfile=${external.dir}/jackson/build/jackson-asl-${jackson.version}.jar" />
+          <arg line="-DpomFile=src/maven/jackson-asl.pom" />
+          <arg line="-DlocalRepositoryPath=${maven.repo.local}" />
+	      </exec>
+    </target>
+
+
+</project>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="WSIT shared task definitions" basedir=".">
+
+    <import file="build.xml"/>
+
+    <macrodef name="build.jar.from.srczip">
+       <attribute name="jar"/>
+       <attribute name="srczip"/>
+       <attribute name="unzipdir"/>
+       <attribute name="srcdir"/>
+       <attribute name="cp" default=""/>
+       <sequential>
+            <mkdir dir="@{unzipdir}"/>
+            <unzip src="@{srczip}" dest="@{unzipdir}/@{srcdir}"/>
+
+            <property name="build.dir" value="@{unzipdir}/build"/>
+            <mkdir dir="${build.dir}" />
+
+            <mkdir dir="@{unzipdir}/@{srcdir}" />
+            <javac srcdir="@{unzipdir}/@{srcdir}" debug="true" destdir="${build.dir}" source="1.5" target="1.5" classpath="@{cp}"/>
+
+            <jar jarfile="@{jar}" compress="false">
+                <fileset dir="${build.dir}" />
+                <fileset dir="@{unzipdir}/@{srcdir}">
+                    <patternset>
+                        <include name="**/*.properties" />
+                        <include name="**/*.rxm"/>
+                        <include name="**/*.dtd"/>
+                        <include name="**/*.rng"/>
+                        <include name="**/*.mod"/>
+                    </patternset>
+                </fileset>
+            </jar>
+            <delete dir="${build.dir}" />
+       </sequential>
+    </macrodef>
+
+    <macrodef name="mvn.publish">
+       <attribute name="jar"/>
+       <attribute name="mvngroup"/>
+       <attribute name="mvnartid"/>
+       <attribute name="mvnversion"/>
+       <sequential>
+            <exec executable="mvn" failonerror="true" >
+                <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+                <arg line="install:install-file" />
+                <arg line="-Dfile=@{jar}" />
+                <arg line="-DgroupId=@{mvngroup}" />
+                <arg line="-DartifactId=@{mvnartid}" />
+                <arg line="-Dpackaging=jar" />
+                <arg line="-Dversion=@{mvnversion}" />
+                <arg line="-DlocalRepositoryPath=${maven.repo.local}" />
+            </exec>
+       </sequential>
+    </macrodef>
+
+    <macrodef name="cvs.checkout">
+       <attribute name="tag" default="HEAD"/>
+       <attribute name="repo"/>
+       <attribute name="dest"/>
+       <attribute name="module"/>
+       <sequential>
+            <echo message="checkout @{module} from @{repo}"/>
+            <exec executable="cvs" dir="${external.dir}" failonerror="true" >
+                <arg line="-q -d @{repo}" />
+                <arg line="checkout" />
+                <arg line="-r @{tag}" />
+                <arg line="-d @{dest}" />
+                <arg line="@{module}" />
+            </exec>
+       </sequential>
+    </macrodef>
+
+    <macrodef name="svn.checkout">
+       <attribute name="tag"/>
+       <attribute name="repo"/>
+       <attribute name="dest"/>
+       <sequential>
+            <echo message="svn checkout from @{repo}"/>
+            <exec executable="svn" dir="${external.dir}" failonerror="true" >
+                <arg line="checkout" />
+                <arg line="-r @{tag}" />
+                <arg line="@{repo}" />
+                <arg line="@{dest}" />
+            </exec>
+       </sequential>
+    </macrodef>
+
+</project>

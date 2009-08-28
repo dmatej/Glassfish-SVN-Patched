@@ -1,0 +1,638 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="WSIT source integration" default="build" basedir=".">
+
+    <import file="build.xml"/>
+    <import file="wsit-taskdefs.xml"/>
+
+    <target name="clean" depends="init">
+        <antcall target="dtd-parser.clean" />
+    </target>
+    
+    <target name="build" depends="init">
+
+        <antcall target="streambuffer.checkout"/>
+        <antcall target="streambuffer.build"/>
+        <antcall target="streambuffer.publish"/>
+
+        <antcall target="jaxws.checkout" /> <!-- this is required for saaj-api and other sources -->
+
+        <antcall target="saaj-api.build"/>
+        <antcall target="saaj-api.publish"/>
+
+        <antcall target="saaj.checkout"/>
+        <antcall target="saaj.build"/>
+        <antcall target="saaj.publish"/>
+
+        <antcall target="mimepull.checkout"/>
+        <antcall target="mimepull.build"/>
+        <antcall target="mimepull.publish"/>
+
+        <antcall target="http.build"/>
+        <antcall target="http.publish"/>
+
+        <antcall target="xmlsec.checkout"/>
+        <antcall target="xmlsec.build"/>
+        <antcall target="xmlsec.publish"/>
+
+        <antcall target="policy.checkout" />
+        <antcall target="policy.build" />
+
+        <antcall target="jaxws-api.build" />
+        <antcall target="jaxws-api.publish" />
+
+        <antcall target="jaxwsasm.build" />
+        <antcall target="jaxwsasm.publish" />
+
+        <antcall target="jaxws.build" />
+
+        <antcall target="fi1.checkout" />
+        <antcall target="fi1.build" />
+        <antcall target="fi1.publish" />
+
+        <antcall target="stax-utils.checkout" />
+        <antcall target="stax-utils.build" />
+        <antcall target="stax-utils.publish" />
+
+        <antcall target="jaxrpc.checkout" />
+        <antcall target="jaxrpc.build" />
+        <antcall target="jaxrpc.publish" />
+
+        <antcall target="xwss.checkout" />
+        <antcall target="wsit.checkout" /> <!-- need to get wsit first to be able to build wstrust-api.jar  and semixwss wstrust api jars-->
+
+<!--        <antcall target="xwss.build" />
+        <antcall target="xwss.publish"/>-->
+
+        <antcall target="wsit.build" />
+        <antcall target="wsit.publish" />
+    </target>
+
+    <!-- streambuffer.jar -->
+    <target name="streambuffer.checkout" unless="nocheckout">
+        <cvs.checkout repo="${streambuffer.cvs.url}" tag="${streambuffer.cvs.tag}" module="xmlstreambuffer" dest="streambuffer"/>
+    </target>
+    <target name="streambuffer.build">
+        <delete>
+            <fileset dir="${external.dir}/streambuffer" includes="**/*.jar"/>
+        </delete>
+        <subant buildpath="${external.dir}/streambuffer" target="source-package">
+            <property name="jsr173_api.jar" value="${maven.repo.local}/${jsr173api.mvn.path}"/>
+            <property name="activation.jar" value="${maven.repo.local}/${activation.mvn.path}"/>
+            <property name="stax-ex.jar" value="${maven.repo.local}/${stax-ex.mvn.path}"/>
+        </subant>
+        <subant buildpath="${external.dir}/streambuffer" target="dist-package">
+            <property name="jsr173_api.jar" value="${maven.repo.local}/${jsr173api.mvn.path}"/>
+            <property name="activation.jar" value="${maven.repo.local}/${activation.mvn.path}"/>
+            <property name="stax-ex.jar" value="${maven.repo.local}/${stax-ex.mvn.path}"/>
+        </subant>
+    </target>
+    <target name="streambuffer.clean">
+        <subant buildpath="${external.dir}/streambuffer" target="clean"/>
+    </target>
+    <target name="streambuffer.publish">
+        <mvn.publish jar="${external.dir}/streambuffer/streambuffer/dist/streambuffer.jar" mvngroup="com.sun.xml.stream.buffer" mvnartid="streambuffer" mvnversion="${streambuffer.version}"/>
+    </target>
+
+    <!-- stax-utils.jar -->
+    <target name="stax-utils.checkout" unless="nocheckout">
+        <exec executable="cvs" dir="${external.dir}" failonerror="true" >
+            <arg line="-q -d ${stax-utils.cvs.url}" />
+            <arg line="checkout" />
+            <arg line="-D ${stax-utils.cvs.date}" />
+            <arg line="stax-utils" />
+        </exec>
+    </target>
+    <target name="stax-utils.build">
+        <delete>
+            <fileset dir="${external.dir}/stax-utils" includes="**/*.jar"/>
+        </delete>
+        <subant buildpath="${external.dir}/stax-utils" target="dist"/>
+    </target>
+    <target name="stax-utils.clean">
+        <subant buildpath="${external.dir}/stax-utils" target="clean"/>
+    </target>
+    <target name="stax-utils.publish">
+        <tstamp>
+            <format property="a" pattern="yyyyMMdd"/>
+        </tstamp>
+        <mvn.publish jar="${external.dir}/stax-utils/dist/stax-utils-${a}/stax-utils.jar" mvngroup="stax-utils" mvnartid="stax-utils" mvnversion="${stax-utils.version}"/>
+    </target>
+
+    <!--saaj-api.jar-->
+    <target name="saaj-api.build">
+        <property name="saajapi.dir" value="${external.dir}/saajapi"/>
+        <mkdir dir="${saajapi.dir}"/>
+
+        <unzip src="${external.dir}/jaxws/lib/saaj-api-src.zip" dest="${saajapi.dir}/src"/>
+        <!-- compile files -->
+        <mkdir dir="${saajapi.dir}/temp" />
+
+        <javac srcdir="${saajapi.dir}/src" debug="true" destdir="${saajapi.dir}/temp" source="1.4" target="1.4"
+                classpath="${maven.repo.local}/${activation.mvn.path}"/>
+
+        <!-- creates binary jar -->
+        <delete file="${saajapi.dir}/saaj-api.jar"/>
+
+        <jar jarfile="${saajapi.dir}/saaj-api.jar" compress="false">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Specification-Title" value="SAAJ"/>
+                <attribute name="Specification-Version" value="${saaj-api.version}"/>
+                <attribute name="Class-Path" value="jaxp-api.jar jax-qname.jar activation.jar servlet.jar"/>
+            </manifest>
+            <fileset dir="${saajapi.dir}/temp" />
+            <fileset dir="${saajapi.dir}/src">
+                <patternset>
+                    <include name="**/*.properties" />
+                    <include name="**/*.rxm"/>
+                    <include name="**/*.dtd"/>
+                    <include name="**/*.rng"/>
+                    <include name="**/*.mod"/>
+                </patternset>
+            </fileset>
+        </jar>
+        <delete dir="${saajapi.dir}/temp" />
+    </target>
+    <target name="saaj-api.publish">
+        <mvn.publish jar="${external.dir}/saajapi/saaj-api.jar" mvngroup="javax.xml.soap" mvnartid="saaj-api" mvnversion="${saaj-api.version}"/>
+    </target>
+
+    <!-- saaj-impl.jar, soapprocessor.jar-->
+    <target name="saaj.checkout" unless="nocheckout">
+        <cvs.checkout repo="${saaj.cvs.url}" tag="${saaj.cvs.tag}" module="saaj/saaj-ri" dest="saaj"/>
+    </target>
+    <target name="saaj.build">
+        <delete>
+            <fileset dir="${external.dir}/saaj" includes="**/*.jar">
+                <exclude name="**/saaj-api*.jar*"/>
+            </fileset>
+        </delete>
+        <subant buildpath="${external.dir}/saaj" target="image">
+            <property name="jaf.jar" value=""/>
+            <property name="servlet.jar" value="${maven.repo.local}/${servlet.mvn.path}"/>
+            <property name="FastInfoset.jar" value="${maven.repo.local}/${fi.mvn.path}"/>
+            <property name="saaj.jar" value="${maven.repo.local}/${saaj-impl.mvn.path}"/>
+        </subant>        
+        <subant buildpath="${external.dir}/saaj/samples/soapprocessor" target="jar">
+            <property name="jaf.jar" value=""/>
+            <property name="servlet.jar" value="${maven.repo.local}/${servlet.mvn.path}"/>
+            <property name="FastInfoset.jar" value="${maven.repo.local}/${fi.mvn.path}"/>
+            <property name="saaj.jar" value="${maven.repo.local}/${saaj-impl.mvn.path}"/>
+            <property name="saaj.home" value="${external.dir}/saaj/"/>
+        </subant>
+    </target>
+    <target name="saaj.clean">
+        <subant buildpath="${external.dir}/saaj" target="clean"/>
+    </target>
+    <target name="saaj.publish">
+        <mvn.publish jar="${external.dir}/saaj/build/lib/saaj-impl.jar" mvngroup="com.sun.xml.messaging.saaj" mvnartid="saaj-impl" mvnversion="${saaj-impl.version}"/>
+        <mvn.publish jar="${external.dir}/saaj/samples/soapprocessor/lib/soapprocessor.jar" mvngroup="com.sun.xml.messaging.saaj" mvnartid="soapprocessor" mvnversion="${saaj-impl.version}"/>
+    </target>
+
+    <!--mimepull.jar-->
+    <target name="mimepull.checkout" unless="nocheckout">
+        <svn.checkout repo="${mimepull.svn.url}" tag="${mimepull.svn.rev}" dest="mimepull"/>
+    </target>
+    <target name="mimepull.build">
+        <property name="mime.dir" value="${external.dir}/mimepull"/>
+        <mkdir dir="${mime.dir}/temp" />
+        
+        <javac srcdir="${mime.dir}/src/main/java" debug="true" destdir="${mime.dir}/temp" source="1.5" target="1.5"/>
+
+        <!-- creates binary jar -->
+        <delete file="${mime.dir}/mimepull.jar"/>
+
+        <jar jarfile="${mime.dir}/mimepull.jar" compress="false">
+            <fileset dir="${mime.dir}/temp" />
+            <fileset dir="${mime.dir}/src/main/java">
+                <patternset>
+                    <include name="**/*.properties" />
+                    <include name="**/*.rxm"/>
+                    <include name="**/*.dtd"/>
+                    <include name="**/*.rng"/>
+                    <include name="**/*.mod"/>
+                </patternset>
+            </fileset>
+        </jar>
+        <delete dir="${mime.dir}/temp" />
+    </target>
+    <target name="mimepull.publish">
+        <mvn.publish jar="${external.dir}/mimepull/mimepull.jar" mvngroup="org.jvnet" mvnartid="mimepull" mvnversion="${mimepull.version}"/>
+    </target>
+
+    <!--jaxws-asm.jar-->
+    <target name="jaxwsasm.build">
+        <build.jar.from.srczip srcdir="src" jar="${external.dir}/asm/jaxws-asm.jar" unzipdir="${external.dir}/asm" srczip="${external.dir}/jaxws/lib/jaxws-asm-src.zip"/>
+    </target>
+    <target name="jaxwsasm.publish">
+        <mvn.publish jar="${external.dir}/asm/jaxws-asm.jar" mvngroup="asm" mvnartid="jaxws-asm" mvnversion="${jaxws-asm.version}"/>
+    </target>
+
+    <!--http.jar-->
+    <target name="http.build">
+        <build.jar.from.srczip srcdir="src" jar="${external.dir}/http/http.jar" unzipdir="${external.dir}/http" srczip="${external.dir}/jaxws/lib/httpsrc.zip"/>
+    </target>
+    <target name="http.publish">
+        <mvn.publish jar="${external.dir}/http/http.jar" mvngroup="http" mvnartid="http" mvnversion="${http.version}"/>
+    </target>
+
+    <!-- xmlsec.jar -->
+    <target name="xmlsec.checkout" unless="nocheckout">
+        <cvs.checkout repo="${xmlsec.cvs.url}" tag="${xmlsec.cvs.tag}" module="xml-security-internal" dest="xmlsec"/>
+    </target>
+    <target name="xmlsec.build">
+        <delete>
+            <fileset dir="${external.dir}/xmlsec" includes="**/*.jar"/>
+            <fileset dir="${external.dir}/xmlsec/src_samples" includes="**/*" />
+            <fileset dir="${external.dir}/xmlsec/src_unitTests" includes="**/*" />
+        </delete>
+        <subant buildpath="${external.dir}/xmlsec" target="build.jar">
+            <property name="lib.junit" value="${maven.repo.local}/${junit.mvn.path}"/>
+            <property name="lib.xerces.1" value="${xerces.path}"/>
+        </subant>
+    </target>
+    <target name="xmlsec.clean">
+        <subant buildpath="${external.dir}/xmlsec" target="clean"/>
+    </target>
+    <target name="xmlsec.publish">
+        <mvn.publish jar="${external.dir}/xmlsec/build/xmlsec.jar" mvngroup="apache-xmlsec" mvnartid="xmlsec" mvnversion="${xmlsec.version}"/>
+    </target>
+
+    <!-- policy.jar -->
+    <target name="policy.checkout" unless="nocheckout">
+        <cvs.checkout repo="${policy.cvs.url}" tag="${policy.cvs.tag}" module="policy/policy" dest="policy"/>
+    </target>
+    <target name="policy.build">
+        <delete>
+            <fileset dir="${external.dir}/policy/" includes="**/*.jar"/>
+        </delete>
+        <exec executable="mvn" failonerror="true" >
+            <arg line="-f ${external.dir}/policy/pom.xml -Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="clean install" />
+            <arg line="-DskipTests"/>
+        </exec>
+    </target>
+    <target name="policy.clean">
+        <exec executable="mvn" failonerror="true" >
+            <arg line="-f ${external.dir}/policy/pom.xml -Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="clean" />
+        </exec>
+    </target>
+
+    <!--jaxws-api.jar-->
+    <target name="jaxws-api.build">
+        <build.jar.from.srczip srcdir="src" jar="${external.dir}/jaxws-api/jaxws-api.jar" unzipdir="${external.dir}/jaxws-api" srczip="${external.dir}/jaxws/lib/jaxws-api-src.zip"
+            cp="${maven.repo.local}/${jaxb-api-osgi.mvn.path}:${maven.repo.local}/${jaxb-osgi.mvn.path}:${maven.repo.local}/${saaj-api.mvn.path}:${maven.repo.local}/${jsr173api.mvn.path}"/>
+    </target>
+    <target name="jaxws-api.publish">
+        <mvn.publish jar="${external.dir}/jaxws-api/jaxws-api.jar" mvngroup="javax.xml" mvnartid="jaxws-api" mvnversion="${jaxws-api.version}"/>
+    </target>
+
+    <!-- jaxws-rt.jar, jaxws-tools.jar, woodstox.jar -->
+    <target name="jaxws.checkout" unless="nocheckout">
+        <cvs.checkout repo="${jaxws.cvs.url}" tag="${jaxws.cvs.tag}" module="jax-ws-sources/jaxws-ri" dest="jaxws"/>
+    </target>
+    <target name="jaxws.build">
+        <delete>
+            <fileset dir="${external.dir}/jaxws" includes="**/*.jar">
+                <exclude name="**/jaxb1*.jar*"/>
+                <exclude name="**/bnd*.jar*"/>
+                <exclude name="**/gmbal*.jar*"/>
+                <exclude name="**/*grizzly*.jar*"/>
+                <exclude name="**/findbugs/**/*.jar"/>
+                <exclude name="lib/junit.jar"/>
+                <exclude name="lib/ant*.jar"/>
+                <exclude name="lib/GlassFish_Common_APIs.jar"/>
+                <exclude name="tools/lib/*.jar"/>
+            </fileset>
+        </delete>
+
+        <copy file="${maven.repo.local}/${activation.mvn.path}" tofile="${external.dir}/jaxws/lib/activation.jar"/>
+        <copy file="${maven.repo.local}/${fi.mvn.path}" tofile="${external.dir}/jaxws/lib/FastInfoset.jar"/>
+        <copy file="${maven.repo.local}/${jsr173api.mvn.path}" tofile="${external.dir}/jaxws/lib/jsr173_api.jar"/>
+        <copy file="${maven.repo.local}/${resolver-comsun.mvn.path}" tofile="${external.dir}/jaxws/lib/resolver.jar"/>
+        <copy file="${maven.repo.local}/${stax-ex.mvn.path}" tofile="${external.dir}/jaxws/lib/stax-ex.jar"/>
+        <copy file="${maven.repo.local}/${streambuffer.mvn.path}" tofile="${external.dir}/jaxws/lib/streambuffer.jar"/>
+        <copy file="${maven.repo.local}/${saaj-api.mvn.path}" tofile="${external.dir}/jaxws/lib/saaj-api.jar"/>
+        <copy file="${maven.repo.local}/${saaj-impl.mvn.path}" tofile="${external.dir}/jaxws/lib/saaj-impl.jar"/>
+        <copy file="${maven.repo.local}/${mimepull.mvn.path}" tofile="${external.dir}/jaxws/lib/mimepull.jar"/>
+        <copy file="${maven.repo.local}/${jaxws-asm.mvn.path}" tofile="${external.dir}/jaxws/lib/jaxws-asm.jar"/>
+        <copy file="${maven.repo.local}/${http.mvn.path}" tofile="${external.dir}/jaxws/lib/http.jar"/>
+        <copy file="${maven.repo.local}/${jaxws-api.mvn.path}" tofile="${external.dir}/jaxws/lib/jaxws-api.jar"/>
+        <copy file="${maven.repo.local}/${policy.mvn.path}" tofile="${external.dir}/jaxws/lib/policy.jar"/>
+
+        <!-- I see these are already published by JavaEE api v3 build -->
+        <copy file="${maven.repo.local}/${jsr181-api.mvn.path}" tofile="${external.dir}/jaxws/lib/jsr181-api.jar"/>
+        <copy file="${maven.repo.local}/${jsr250-api.mvn.path}" tofile="${external.dir}/jaxws/lib/jsr250-api.jar"/>
+        <copy file="${maven.repo.local}/${servlet.mvn.path}" tofile="${external.dir}/jaxws/servlet/lib/servlet.jar"/>
+        <copy file="${maven.repo.local}/${servlet.mvn.path}" tofile="${external.dir}/jaxws/httpspi-servlet/lib/servlet.jar"/>
+
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb-xjc.jar" tofile="${external.dir}/jaxws/lib/jaxb-xjc.jar"/>
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb-api.jar" tofile="${external.dir}/jaxws/lib/jaxb-api.jar"/>
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb-impl.jar" tofile="${external.dir}/jaxws/lib/jaxb-impl.jar"/>
+
+        <!-- build woodstox -->
+        <property name="unzipdir" value="${external.dir}/woodstox"/>
+        <mkdir dir="${unzipdir}"/>
+        <unzip src="${external.dir}/jaxws/lib/woodstox-src.zip" dest="${unzipdir}"/>
+        <mkdir dir="${unzipdir}/src/samples"/>
+        <subant buildpath="${external.dir}/woodstox" target="jar.wstx.asl">
+            <property name="lib.junit" value="${maven.repo.local}/${junit.mvn.path}"/>
+        </subant>
+        <mvn.publish jar="${external.dir}/woodstox/build/wstx-asl-${woodstox.version}.jar" mvngroup="org.codehaus.woodstox" mvnartid="wstx-asl" mvnversion="${woodstox.version}"/>
+        <copy file="${maven.repo.local}/${woodstox.mvn.path}" tofile="${external.dir}/jaxws/lib/woodstox.jar"/>
+
+        <exec executable="ant" dir="${external.dir}/jaxws" failonerror="true" newenvironment="false" >
+            <arg line="clean tools-build runtime-build" />
+            <arg line="-Dfrom.source=true"/>
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+            <arg line="${cpath}"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+
+    <!-- FastInfoset.jar 1.6.1 version-->
+    <target name="fi1.checkout" unless="nocheckout">
+        <exec executable="cvs" dir="${external.dir}/fi" failonerror="true" >
+            <arg line="-q -d ${fi.cvs.url}" />
+            <arg line="checkout" />
+            <arg line="-r ${fi1.cvs.tag}" />
+            <arg line="-d ${fi1.version}" />
+            <arg line="fi/FastInfoset" />
+        </exec>
+    </target>
+    <target name="fi1.build">
+        <delete>
+            <fileset dir="${external.dir}/fi/${fi1.version}" includes="**/*.jar"/>
+        </delete>
+        <copy file="${maven.repo.local}/${jsr173api.mvn.path}" tofile="${external.dir}/fi/${fi1.version}/lib/jsr173_api.jar"/>
+        <exec executable="ant" dir="${external.dir}/fi/${fi1.version}" failonerror="true" newenvironment="true" >
+            <arg line="-Djavac.target=1.4"/>
+            <arg line="-Djavac.source=1.4"/>
+            <arg line="jar"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="fi1.clean">
+        <subant buildpath="${external.dir}/fi/${fi1.version}" target="clean">
+            <property name="javac.source" value="1.4"/>
+            <property name="javac.target" value="1.4"/>
+        </subant>
+    </target>
+    <target name="fi1.publish" >
+        <mvn.publish jar="${external.dir}/fi/${fi1.version}/dist/FastInfoset.jar" mvngroup="com.sun.xml.fastinfoset" mvnartid="FastInfoset" mvnversion="${fi1.version}"/>
+    </target>
+
+    <!-- wstrust-api.jar -->
+    <target name="wstrust-api.build">
+        <delete>
+            <fileset dir="${external.dir}/wsit/" includes="**/*.jar">
+                <exclude name="**/bnd*.jar*"/>
+                <exclude name="**/*grizzly*.jar*"/>
+                <exclude name="etc/**/*.jar"/>
+                <exclude name="test/**/*.jar"/>
+                <exclude name="samples/**/*.jar"/>
+                <exclude name="docs/**/*.jar"/>
+                <exclude name="lib/releasenotes/*.jar"/>
+                <exclude name="lib/compiletime/ant*.jar"/>
+                <!--<exclude name="lib/runtime/xws-security.jar"/> TEMPORARY-->
+                <exclude name="lib/tmp/*.jar"/>
+                <exclude name="lib/compiletime/appserv-deployment.jar"/> <!-- TEMPORARY -->
+                <exclude name="lib/runtime/GlassFish_Common_APIs.jar"/>
+            </fileset>
+        </delete>
+
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb-xjc.jar" tofile="${external.dir}/wsit/lib/tooltime/jaxb-xjc.jar"/>
+        <copy file="${external.dir}/jaxws/build/lib/jaxws-tools.jar" tofile="${external.dir}/wsit/lib/tooltime/jaxws-tools.jar"/>
+
+        <copy file="${maven.repo.local}/${fi.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/FastInfoset.jar"/>
+        <copy file="${maven.repo.local}/${activation.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/activation.jar"/>
+        <copy file="${maven.repo.local}/${jsr173api.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/jsr173_api.jar"/>
+        <copy file="${maven.repo.local}/${policy.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/policy.jar"/>
+        <copy file="${maven.repo.local}/${saaj-api.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/saaj-api.jar"/>
+        <copy file="${maven.repo.local}/${saaj-impl.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/saaj-impl.jar"/>
+        <copy file="${maven.repo.local}/${jsr173api.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/jsr173_api.jar"/>
+        <copy file="${maven.repo.local}/${stax-ex.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/stax-ex.jar"/>
+        <copy file="${maven.repo.local}/${mimepull.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/mimepull.jar"/>
+        <copy file="${maven.repo.local}/${resolver.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/resolver.jar"/>
+        <copy file="${maven.repo.local}/${http.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/http.jar"/>
+        <copy file="${maven.repo.local}/${jmac-api.mvn.path}" tofile="${external.dir}/wsit/lib/compiletime/jmac-api.jar"/>
+        <copy file="${maven.repo.local}/${jmac-api.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/jmac-api.jar"/>
+        <copy file="${maven.repo.local}/${woodstox.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/woodstox.jar"/>
+        <copy file="${maven.repo.local}/${jaxrpc-api.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/jaxrpc-api.jar"/>
+        <copy file="${maven.repo.local}/${jaxrpc-impl.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/jaxrpc-impl.jar"/>
+        <copy file="${maven.repo.local}/${jaxrpc-spi.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/jaxrpc-spi.jar"/>
+        <copy file="${maven.repo.local}/${stax-utils.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/stax-utils.jar"/>
+
+        <!-- built by GF -->
+        <copy file="${maven.repo.local}/${jsr181-api.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/jsr181-api.jar"/>
+        <copy file="${maven.repo.local}/${jsr250-api.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/jsr250-api.jar"/>
+        <copy file="${maven.repo.local}/${gmbal.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/gmbal.jar"/>
+        <copy file="${maven.repo.local}/${transaction-api.mvn.path}" tofile="${external.dir}/wsit/lib/compiletime/transaction-api-1.1.jar"/>
+        <copy file="${maven.repo.local}/${connector-api.mvn.path}" tofile="${external.dir}/wsit/lib/compiletime/connector-api-1.5.jar"/>
+        <copy file="${maven.repo.local}/${mail.mvn.path}" tofile="${external.dir}/wsit/lib/mail.jar"/>
+
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb-api.jar" tofile="${external.dir}/wsit/lib/runtime/jaxb-api.jar"/>
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb-impl.jar" tofile="${external.dir}/wsit/lib/runtime/jaxb-impl.jar"/>
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb1-impl.jar" tofile="${external.dir}/wsit/lib/runtime/jaxb1-impl.jar"/>
+
+        <copy file="${maven.repo.local}/${jaxws-api.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/jaxws-api.jar"/>
+        <copy file="${external.dir}/jaxws/build/lib/jaxws-rt.jar" tofile="${external.dir}/wsit/lib/runtime/jaxws-rt.jar"/>
+
+        <copy file="${maven.repo.local}/${servlet.mvn.path}" tofile="${external.dir}/wsit/lib/compiletime/servlet.jar"/>
+        <copy file="${maven.repo.local}/${sjsxp.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/sjsxp.jar"/>
+        <copy file="${maven.repo.local}/${streambuffer.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/streambuffer.jar"/>
+        <copy file="${maven.repo.local}/${xmlsec.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/xmlsec.jar"/>
+
+        <build.jar.from.srczip srcdir="src" jar="${external.dir}/wsit/lib/runtime/txnannprocessor.jar" unzipdir="${external.dir}/txntmp" srczip="${external.dir}/wsit/lib/runtime/txnannprocessor-src.zip" cp="${maven.repo.local}/${ejb.mvn.path}"/>
+
+        <exec executable="ant" dir="${external.dir}/wsit/rt" failonerror="true" newenvironment="false" >
+            <arg line="create-wstrust-api-jar" />
+            <arg line="-Dfrom.source=true"/>
+            <arg line="-Dcontainer-auth.path=${maven.repo.local}/${container-auth.mvn.path}"/>
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+            <arg line="${cpath}"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="wstrust-api.publish" >
+        <mvn.publish jar="${external.dir}/wsit/rt/build/wstrust-tmp/lib/wstrust-api.jar" mvngroup="wstrust-api" mvnartid="wstrust-api" mvnversion="${wsit.version}"/>
+    </target>
+
+    <!-- jaxrpc-impl.jar, jaxrpc-spi.jar -->
+    <target name="jaxrpc.checkout" unless="nocheckout">
+        <cvs.checkout repo="${jaxrpc.cvs.url}" tag="${jaxrpc.cvs.tag}" module="jax-rpc/jaxrpc-ri" dest="jaxrpc"/>
+    </target>
+    <target name="jaxrpc.build">
+        <delete>
+            <fileset dir="${external.dir}/jaxrpc" includes="**/*.jar">
+                <exclude name="tools/lib/*.jar"/>
+                <exclude name="maven/lib/*.jar"/>
+                <exclude name="lib/junit.jar"/>
+                <exclude name="lib/optional.jar"/>
+            </fileset>
+        </delete>
+
+        <!-- missing xalan.jar, but that is not required for compile time dependency, and doesn't go to the OSGI build -->
+        <copy file="${maven.repo.local}/${fi1.mvn.path}" tofile="${external.dir}/jaxrpc/lib/FastInfoset.jar"/>
+        <copy file="${maven.repo.local}/${activation.mvn.path}" tofile="${external.dir}/jaxrpc/lib/activation.jar"/>
+        <copy file="${maven.repo.local}/${jaxrpc-api.mvn.path}" tofile="${external.dir}/jaxrpc/lib/jaxrpc-api.jar"/>
+        <copy file="${maven.repo.local}/${jsr173api.mvn.path}" tofile="${external.dir}/jaxrpc/lib/jsr173_api.jar"/>
+        <copy file="${maven.repo.local}/${relaxng-datatype.mvn.path}" tofile="${external.dir}/jaxrpc/lib/relaxngDatatype.jar"/>
+        <copy file="${maven.repo.local}/${saaj-api.mvn.path}" tofile="${external.dir}/jaxrpc/lib/saaj-api.jar"/>
+        <copy file="${maven.repo.local}/${saaj-impl.mvn.path}" tofile="${external.dir}/jaxrpc/lib/saaj-impl.jar"/>
+        <copy file="${maven.repo.local}/${xsdlib.mvn.path}" tofile="${external.dir}/jaxrpc/lib/xsdlib.jar"/>
+
+        <!-- I see these are already published by JavaEE api v3 build -->
+        <copy file="${maven.repo.local}/${servlet.mvn.path}" tofile="${external.dir}/jaxrpc/lib/servlet.jar"/>
+        <copy file="${maven.repo.local}/${mail.mvn.path}" tofile="${external.dir}/jaxrpc/lib/mail.jar"/>
+
+        <exec executable="ant" dir="${external.dir}/jaxrpc" failonerror="true" newenvironment="false" >
+            <arg line="clean main" />
+            <arg line="-Dfrom.source=true"/>
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+            <arg line="${cpath}"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="jaxrpc.clean">
+        <subant buildpath="${external.dir}/jaxrpc" target="clean"/>
+    </target>
+    <target name="jaxrpc.publish" >
+        <mvn.publish jar="${external.dir}/jaxrpc/build/lib/jaxrpc-impl.jar" mvngroup="com.sun.xml.rpc" mvnartid="jaxrpc-impl" mvnversion="${jaxrpc.version}"/>
+        <mvn.publish jar="${external.dir}/jaxrpc/build/lib/jaxrpc-spi.jar" mvngroup="com.sun.xml.rpc" mvnartid="jaxrpc-spi" mvnversion="${jaxrpc.version}"/>
+    </target>
+
+    <target name="xwss.checkout" unless="nocheckout">
+        <cvs.checkout repo="${xwss.cvs.url}" tag="${xwss.cvs.tag}" module="xwss/xwss-ri" dest="xwss"/>
+    </target>
+    <target name="xwss.build">
+        <delete>
+            <fileset dir="${external.dir}/xwss" includes="**/*.jar">
+<!--                <exclude name="lib/KerbLibrary.jar"/> --><!-- TEMPORARY !!!!!!! -->
+<!--                <exclude name="lib/keyidentifierspi.jar"/> --><!-- This can be only compiled with IBM JDK, source are present anyway -->
+                <exclude name="lib/jaxb*saml.jar"/>
+                <exclude name="lib/trust-secconv*.jar"/>
+                <exclude name="lib/junit*.jar*"/>
+                <exclude name="lib/emma*.jar*"/>
+                <exclude name="lib/checkstyle*.jar*"/>
+                <exclude name="samples/**/*.jar*"/>
+                <exclude name="test/**/*.jar*"/>
+            </fileset>
+        </delete>
+
+        <copy file="${maven.repo.local}/${activation.mvn.path}" tofile="${external.dir}/xwss/lib/activation.jar"/>
+        <copy file="${maven.repo.local}/${fi.mvn.path}" tofile="${external.dir}/xwss/lib/FastInfoset.jar"/>
+        <copy file="${maven.repo.local}/${jsr173api.mvn.path}" tofile="${external.dir}/xwss/lib/jsr173_api.jar"/>
+        <copy file="${maven.repo.local}/${jsr173api.mvn.path}" tofile="${external.dir}/xwss/lib/jsr173_1.0_api.jar"/>
+        <copy file="${maven.repo.local}/${relaxng-datatype.mvn.path}" tofile="${external.dir}/xwss/lib/relaxngDatatype.jar"/>
+        <copy file="${maven.repo.local}/${saaj-api.mvn.path}" tofile="${external.dir}/xwss/lib/saaj-api.jar"/>
+        <copy file="${maven.repo.local}/${saaj-impl.mvn.path}" tofile="${external.dir}/xwss/lib/saaj-impl.jar"/>
+        <copy file="${maven.repo.local}/${soapprocessor.mvn.path}" tofile="${external.dir}/xwss/lib/soapprocessor.jar"/>
+        <copy file="${maven.repo.local}/${servlet.mvn.path}" tofile="${external.dir}/xwss/lib/servlet.jar"/>
+        <copy file="${maven.repo.local}/${servlet.mvn.path}" tofile="${external.dir}/xwss/integrations/lib/servlet.jar"/>
+        <copy file="${maven.repo.local}/${sjsxp.mvn.path}" tofile="${external.dir}/xwss/lib/sjsxp.jar"/>
+        <copy file="${maven.repo.local}/${gmbal.mvn.path}" tofile="${external.dir}/xwss/lib/gmbal.jar"/>
+        <copy file="${maven.repo.local}/${stax-ex.mvn.path}" tofile="${external.dir}/xwss/lib/stax-ex.jar"/>
+        <copy file="${maven.repo.local}/${streambuffer.mvn.path}" tofile="${external.dir}/xwss/lib/streambuffer.jar"/>
+        <copy file="${maven.repo.local}/${streambuffer.mvn.path}" tofile="${external.dir}/xwss/integrations/jaxws21/lib/streambuffer.jar"/>
+        <copy file="${maven.repo.local}/${xmlsec.mvn.path}" tofile="${external.dir}/xwss/lib/xmlsec.jar"/>
+        <copy file="${maven.repo.local}/${container-auth.mvn.path}" tofile="${external.dir}/xwss/lib/container-auth.jar"/>
+        <copy file="${maven.repo.local}/${container-auth.mvn.path}" tofile="${external.dir}/xwss/integrations/as81/lib/container-auth.jar"/>
+        <copy file="${maven.repo.local}/${security.mvn.path}" tofile="${external.dir}/xwss/lib/security.jar"/>
+        <copy file="${maven.repo.local}/${jmac-api.mvn.path}" tofile="${external.dir}/xwss/lib/jmac-api.jar"/>
+        <copy file="${maven.repo.local}/${mail.mvn.path}" tofile="${external.dir}/xwss/lib/mail.jar"/>
+        <copy file="${maven.repo.local}/${xsdlib.mvn.path}" tofile="${external.dir}/xwss/lib/xsdlib.jar"/>
+        <copy file="${maven.repo.local}/${jaxrpc-api.mvn.path}" tofile="${external.dir}/xwss/lib/jaxrpc-api.jar"/>
+        <copy file="${maven.repo.local}/${jaxrpc-impl.mvn.path}" tofile="${external.dir}/xwss/integrations/lib/jaxrpc-impl.jar"/>
+        <copy file="${maven.repo.local}/${jaxrpc-spi.mvn.path}" tofile="${external.dir}/xwss/integrations/lib/jaxrpc-spi.jar"/>
+        <copy file="${maven.repo.local}/${wstrust-api.mvn.path}" tofile="${external.dir}/xwss/lib/wstrust-api.jar"/>
+
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb-xjc.jar" tofile="${external.dir}/xwss/lib/jaxb-xjc.jar"/>
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb-xjc.jar" tofile="${external.dir}/xwss/integrations/lib/jaxb-xjc.jar"/>
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb-api.jar" tofile="${external.dir}/xwss/lib/jaxb-api.jar"/>
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb-impl.jar" tofile="${external.dir}/xwss/lib/jaxb-impl.jar"/>
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb-impl.jar" tofile="${external.dir}/xwss/integrations/lib/jaxb-impl.jar"/>
+        <copy file="${external.dir}/jaxb/dist/lib/jaxb1-impl.jar" tofile="${external.dir}/xwss/lib/jaxb1-impl.jar"/>
+
+        <copy file="${maven.repo.local}/${jaxws-api.mvn.path}" tofile="${external.dir}/xwss/integrations/jaxws21/lib/jaxws-api.jar"/>
+        <copy file="${maven.repo.local}/${jaxws-api.mvn.path}" tofile="${external.dir}/xwss/integrations/lib/jaxws-api.jar"/>
+
+        <copy file="${external.dir}/jaxws/build/lib/jaxws-tools.jar" tofile="${external.dir}/xwss/integrations/lib/jaxws-tools.jar"/>
+        <copy file="${external.dir}/jaxws/build/lib/jaxws-tools.jar" tofile="${external.dir}/xwss/lib/jaxws-tools.jar"/>
+
+        <copy file="${external.dir}/jaxws/build/lib/jaxws-rt.jar" tofile="${external.dir}/xwss/integrations/jaxws21/lib/jaxws-rt.jar"/>
+        <copy file="${external.dir}/jaxws/build/lib/jaxws-rt.jar" tofile="${external.dir}/xwss/integrations/lib/jaxws-rt.jar"/>
+        <copy file="${external.dir}/jaxws/build/lib/jaxws-rt.jar" tofile="${external.dir}/xwss/lib/jaxws-rt.jar"/>
+
+        <exec executable="ant" dir="${external.dir}/xwss" failonerror="true" newenvironment="false" >
+            <arg line="clean create.jaxb.jars" />
+            <arg line="-Dfrom.source=true"/>
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+            <arg line="${cpath}"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+
+<!--        <exec executable="ant" dir="${external.dir}/xwss" failonerror="true" newenvironment="false" >
+            <arg line="build-trust-secconv-jaxbbindings.jar" />
+            <arg line="-Dfrom.source=true"/>
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+            <arg line="${cpath}"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+
+        <exec executable="ant" dir="${external.dir}/xwss" failonerror="true" newenvironment="false" >
+            <arg line="build-trust-secconv-wssx-jaxbbindings.jar" />
+            <arg line="-Dfrom.source=true"/>
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+            <arg line="${cpath}"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+-->
+        <exec executable="ant" dir="${external.dir}/xwss" failonerror="true" newenvironment="false" >
+            <arg line="create-xwss-for-trust-api-jar" />
+            <arg line="-Dfrom.source=true"/>
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+            <arg line="${cpath}"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+
+        <copy file="${external.dir}/xwss/dist/wsit/wstrust-tmp/lib/xwss-for-wstrust-api.jar" tofile="${external.dir}/wsit/lib/tmp/xwss-for-wstrust-api.jar"/>
+        <copy file="${external.dir}/xwss/lib/trust-secconv-jaxbbindings.jar" todir="${external.dir}/wsit/lib/tmp/"/>
+        <copy file="${external.dir}/xwss/lib/trust-secconv-wssx-jaxbbindings.jar" todir="${external.dir}/wsit/lib/tmp/"/>
+
+        <antcall target="wstrust-api.build"/>
+        <antcall target="wstrust-api.publish"/>
+        
+<!--        <exec executable="ant" dir="${external.dir}/xwss" failonerror="true" newenvironment="false" >
+            <arg line="wsit" />
+            <arg line="-Dfrom.source=true"/>
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+            <arg line="${cpath}"/>
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>-->
+
+    </target>
+    <target name="xwss.publish" ><!-- TEMPORARY -->
+<!--        <mvn.publish jar="${external.dir}/xwss/" mvngroup="wstrust-api" mvnartid="wstrust-api" mvnversion="${wsit.version}"/>-->
+    </target>
+
+    <!-- webservices*.jar -->
+    <target name="wsit.checkout" unless="nocheckout">
+        <cvs.checkout repo="${wsit.cvs.url}" tag="${wsit.cvs.tag}" module="wsit/wsit" dest="wsit"/>
+    </target>
+    <target name="wsit.build">
+        <exec executable="ant" dir="${external.dir}/wsit" failonerror="true" newenvironment="false" >
+            <arg line="clean compile bundle" />
+            <arg line="-Dfrom.source=true"/>
+            <arg line="-Dexcludes=com/sun/xml/ws/transport/tcp/server/tomcat/**/*"/> <!-- Do not compile Tomcat specific code -->
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+            <env key="JAVA_HOME" value="${JDK_1.6}" />
+        </exec>
+    </target>
+    <target name="wsit.publish" >
+        <mvn.publish jar="${external.dir}/wsit/build/for_v3/webservices-osgi.jar" mvngroup="com.sun.xml.ws" mvnartid="webservices-osgi" mvnversion="${wsit.version}"/>
+        <mvn.publish jar="${external.dir}/wsit/build/for_v3/webservices-api-osgi.jar" mvngroup="javax.xml" mvnartid="webservices-api-osgi" mvnversion="${wsit.version}"/>
+    </target>
+</project>
