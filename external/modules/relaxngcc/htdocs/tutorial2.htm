@@ -1,0 +1,123 @@
+<html>
+<head>
+	<title>RelaxNGCC <?ja?>チュートリアル２<?/ja?><?en?>Tutorial 2<?/en?></title>
+	<link rel="stylesheet" href="ngcc.css">
+	<?ja?><meta HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=shift_jis"><?/ja?>
+</head>
+<body>
+<h1>RelaxNGCC <?ja?>チュートリアル２<?/ja?><?en?>Tutorial 2<?/en?></h1>
+<p>
+<?ja?>　チュートリアル１よりもう少し複雑な例を見てみます。<?/ja?>
+<?en?> Let's see a little more complicated example.<?/en?></p>
+<h2><?ja?>スキーマの説明<?/ja?><?en?>Explanation of Grammar<?/en?></h2>
+<p>
+<?ja?>　このチュートリアルで取り上げるスキーマは、あるディレクトリ以下のディレクトリとファイルの構造を表現したものです。以下のようになります。赤いところはRelaxNGCCのためのマークアップ部分です。青い数字は後述する説明に使います。<?/ja?>
+<?en?> In this tutorial, we use the following grammar, which describes a structure of files and directories. The special mark-ups peculiar to RelaxNGCC are red.<?/en?>
+</p>
+<pre>
+&lt;?xml version="1.0" encoding="utf-8"?&gt;
+&lt;grammar xmlns="http://relaxng.org/ns/structure/1.0"
+  datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"
+  xmlns:c="http://www.xml.gr.jp/xmlns/relaxngcc"&gt;
+
+<span class="remark">[1]</span>
+<span class="emph-code">&lt;c:java-import&gt;
+import java.util.Set;
+import java.util.HashSet;
+&lt;/c:java-import&gt;</span>
+
+&lt;start <span class="emph-code">c:class="sample2"</span>&gt;
+  <span class="remark">[2]</span>
+  <span class="emph-code">&lt;c:java-body&gt;
+  public Set hiddenfiles;
+  &lt;/c:java-body&gt;</span>
+  &lt;element name="files"&gt;
+    &lt;ref name="file-or-dir" <span class="emph-code">c:alias="child"</span>/&gt;
+    <span class="remark">[3]</span>
+    <span class="emph-code">&lt;c:java&gt;hiddenFiles = new HashSet(child.hiddenFiles);&lt;/c:java&gt;</span>
+  &lt;/element&gt;
+&lt;/start&gt;
+
+<span class="remark">[4]</span>
+&lt;define name="file-or-dir" <span class="emph-code">c:class="FileOrDir"</span>&gt;
+  <span class="emph-code">&lt;c:java-body&gt;
+  public Set hiddenFiles;
+  &lt;/c:java-body&gt;</span>
+  <span class="emph-code">&lt;c:java&gt;hiddenFiles = new HashSet();&lt;/c:java&gt;</span>
+  &lt;oneOrMore&gt;
+    &lt;choice&gt;
+      &lt;element name="file"&gt;
+        &lt;attribute name="name"&gt;
+          &lt;text <span class="emph-code">c:alias="filename"</span>/&gt;
+          <span class="remark">[5]</span>
+          <span class="emph-code">&lt;c:java&gt;if(filename.startsWith(".")) hiddenFiles.add(filename);&lt;/c:java&gt;</span>
+        &lt;/attribute&gt;
+      &lt;/element&gt;
+      &lt;element name="directory"&gt;
+        &lt;attribute name="name"&gt;&lt;text/&gt;&lt;/attribute&gt;
+        &lt;ref name="file-or-dir" <span class="emph-code">c:alias="content"</span>/&gt;
+        <span class="remark">[6]</span>
+        <span class="emph-code">&lt;c:java&gt;hiddenFiles.add(content.hiddenFiles);&lt;/c:java&gt;</span>
+      &lt;/element&gt;
+    &lt;/choice&gt;
+  &lt;/oneOrMore&gt;
+&lt;/define&gt;
+
+&lt;/grammar&gt;
+</pre>
+
+<p>
+<?ja?>　このように、このスキーマではルートに<tt>files</tt>エレメントが来て、その下に<tt>directory</tt>または<tt>file</tt>が来ます。<tt>directory</tt>の下にも<tt>directory</vまたは<tt>file</tt>が来ます。<?/ja?>
+<?en?> This grammar allows <tt>files</tt> element as the root and arbitrary number of <tt>directory</tt> and <tt>file</tt> elements under the <tt>files</tt> element. Also it allows <tt>directory</tt> element under <tt>directory</tt> element.<?/en?></p>
+<h2>RelaxNGCC <?ja?>マークアップ<?/ja?><?en?>Mark-ups<?/en?></h2>
+<p>
+<?ja?>　さて、このスキーマに則ったXML文書を読むとき、ピリオドで始まるファイル(Unixでは隠し属性のファイル)のみを集めてきたいと思ったとしましょう。ディレクトリ構造は無視して、ファイル名だけのコレクションを得ることが目的であるとします。<?/ja?>
+<?en?> Now, let's suppose that we want to collect files that begin with a period (in Unix convention, it means "hidden" attribute). Additionaly, suppose that our interest is not directory tree but file names.<?/en?>
+</p>
+
+<p><?ja?>　以下、各部分についての説明です。<?/ja?><?en?> Then, explanations of each part are following.<?/en?></p>
+
+<p><span class="remark">[1]</span>
+<?ja?> <tt>java-import</tt>の中に書いた文は、Javaのクラス定義の本体の外側に出力されます。javaエレメントや<tt>java-body</tt>で使用するコードが<tt>import</tt>文を必要とするならこの位置に書いてください。即ち<tt>import</tt>文とコメントが書けることになります。packageの指定はgrammarエレメントのアトリビュートで行うので、<tt>java-import</tt>内に書くことはできません。なお、<tt>java-import</tt>は、grammarの直下に置いた場合出力されるすべてのJavaファイルに適用されます。単一のファイルに適用するときには対応する<tt>start</tt>または<tt>define</tt>エレメントの直下に置いてください。<?/ja?>
+<?en?> The content of <tt>java-import</tt> element is copied besides the main class definition of Java. If your code within <tt>java</tt> element or <tt>java-body</tt> element[5] requires classes in external packages, you should write <tt>import</tt> declarations using <tt>java-import</tt> element. Note that <tt>java-import</tt> elements under the root grammar element affect all generated code and they under a <tt>start</tt> or <tt>define</tt> element affect only the corresponding class to the element.<?/en?>
+</p>
+
+<p><span class="remark">[2]</span>
+<?ja?> <tt>java-body</tt>は、生成されるJavaコードに追加的なデータメンバやメソッドを定義したいときに使います。ここでは、ファイル名を収録するために<tt>hiddenFiles</tt>という名前のメンバを宣言しています。<?/ja?>
+<?en?> The content of <tt>java-body</tt> element is copied into the class definition of Java. By using this, you can add bodyary methods and data members to the generated class. In this sample, the <tt>java-body</tt> element declares a data member <tt>hiddenFiles</tt> for storing the file names.<?/en?>
+</p>
+<p><span class="remark">[3]</span>
+<?ja?> <tt>java</tt>エレメントは、XML文書を読んでスキーマの該当する位置に来たとき実行するコードを記述します。ここでは、ルートエレメントである<tt>files</tt>が終わったら、hiddenFilesを設定しています。<?/ja?>
+<?en?> The <tt>java</tt> element defines an action to be executed when a corresponding part of the input XML instance comes. In this example, initialize <tt>hiddenFiles</tt> when the <tt>files</tt> element ends.<?/en?></p>
+
+<p><span class="remark">[4]</span>
+<?ja?>　RelaxNGCCは、このブロック単位で対応する１個のJavaファイルを生成するので、このサンプルではJavaファイルは２つ生成されることになります。このクラス名を指定するのが、start、defineそれぞれに追加されたアトリビュート c:class です。特に、define側ではその名前がfile-or-dirでハイフンを含んでいるためそのままではJavaのクラス名としては不正です。そのようなときは<tt>c:class</tt>が必須になります。<?/ja?>
+<?en?> Since RelaxNGCC generates one Java class per a start block or a define block, RelaxNGCC generates 2 files from this grammar. The names of the classes are specified with <tt>c:class</tt> attribute for each <tt>start</tt> and <tt>define</tt> element. Especially the <tt>c:class</tt> attribute for the define element is mandatory because the name <tt>"file-or-dir"</tt> is not valid for a name of Java class.<?/en?>
+</p>
+
+<p><span class="remark">[5]</span>
+<?ja?> ピリオドで始まるファイル名であればコレクションに格納しています。<?/ja?>
+<?en?> At this location, the file name is added if it begins with a period to the <tt>hiddenFiles</tt> collection.<?/en?></p>
+
+<p><span class="remark">[6]</span>
+<?ja?> これも<tt>java</tt>エレメントですが、直前の<tt>ref</tt>エレメントにあるaliasを参照しているところに注意してください。<tt>ref</tt>エレメントに<tt>alias</tt>をつけると、それは<tt>ref</tt>エレメントが参照する<tt>define</tt>ブロックに対応したRelaxNGCCのオブジェクトになります。つまりこの例では、file-or-dirブロックに対応するFileOrDirオブジェクトということになります。<?/ja?>
+<?en?> This is also <tt>java</tt> element, but be careful that the code fragment of Java refers to the previous <tt>define</tt> block with an <tt>alias</tt> attribute. If you add an <tt>alias</tt> attribute to a <tt>ref</tt> element, the Java object accessed by the given alias is a object corrsponding to the <tt>define</tt> block. In this example, the instance <tt>content</tt> refers to <tt>FileOrDir</tt> object. <?/en?>
+</p>
+
+<p>
+<?ja?>　最終的にRelaxNGCCが出力したJavaファイルをコンパイル・実行すると、startエレメントに対応したオブジェクトの<tt>hiddenFiles</tt>メンバにすべての隠し属性ファイルが収録されます。起動手順は出力したファイルの中の<tt>main()</tt>関数を参照してください。<?/ja?>
+<?en?> After you compile and execute the generated code, the <tt>hiddenFiles</tt> member will contain all file names that begins with a period in the input XML instance. The <tt>main()</tt> method generated by RelaxNGCC may be helpful for understanding test procedure.<?/en?></p>
+
+
+<h2><?ja?>Relaxerとの比較<?/ja?><?en?>Comparison to Relaxer<?/en?></h2>
+<p>
+<?ja?>　文法からJavaのソースコードを出力する点では、RelaxNGCCとRelaxerは同じです。ですが、例えばこのサンプルで出したような目的でXML文書を読みたい場合、Relaxerを使ってXML文書を読み込ますと本来不要なdirectoryに対応したオブジェクトまでできてしまいます。もっと限定した情報がほしい場合、Relaxerの出力したオブジェクトモデルにアクセスしていかなければなりません。これに対しRelaxNGCCでは、すべてがSAXベースの１パスで処理が完了するため効率的です。<?/ja?>
+<?en?> Relaxer and RelaxNGCC is same at the point of generating Java source code from a given grammar. But, if you use Relaxer for the case of this tutorial, you may have to traverse the object model includes a directory tree and collect file names that begins with a period. On the other hand, RelaxNGCC is more efficient for this purpose because it obtains the collection through one path via SAX interface.<?/en?>
+</p>
+<p>
+<?ja?>　ただしJavaオブジェクトからXMLへの変換など、RelaxerにあってRelaxNGCCにない機能もあります。目的に応じて使い分ければよいでしょう。<?/ja?>
+<?en?> However, there are some features supported by only Relaxer such as a conversion from Java object into XML instance. It is important to select more suitable tool according to your purpose.<?/en?></p>
+<hr>
+<div align="right"><a href="index.htm">RelaxNGCC home</a></div>
+</body>
+</html>

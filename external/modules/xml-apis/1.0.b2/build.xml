@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+<!-- 
+Simplistic meta-build file to call various other xml-commons build files.
+Currently merely uses <ant> to build all subprojects, then 
+just creates a distribution out of all of them.
+@author shane_curcuru@us.ibm.com
+-->
+<project name="xml-commons" default="all">
+
+  <!-- Allow properties following these statements to be overridden -->
+  <property file="build.properties"/>
+
+  <!-- Name and version information -->
+  <!-- Versions similar to Xalan builds: major.minor [isbeta release | release] 
+       Version flow: 
+        Beta builds leading up to 1.0 gold: 1.0.b1, 1.0.b2, ... 
+         Decide on a gold build: 1.0
+        Beta builds leading up to a 1.1 point release with new features: 1.1.b1, ...
+         Decide on a gold build: 1.1 
+        Ooops! Bugfix needed to 1.0 build: fork, then release 1.0.1
+        etc.
+       version.isbeta is 'b' for beta releases leading up to 
+       a major release; it's blank for gold builds and for 
+       any later point releases that fork from a previous gold.
+  -->
+  <property name="version.major" value="1"/>
+  <property name="version.minor" value="0"/>
+  <property name="version.isbeta" value="b"/><!-- values: 'b'|'' -->
+  <property name="version.release" value="2"/>
+  <property name="version" value="${version.major}.${version.minor}.${version.isbeta}${version.release}" />
+  
+  <!-- Location of the system's temporary directory; all output sent here -->
+  <property name="tmp.dir" value="."/>
+
+  <!-- Overall distribution unit -->
+  <property name="dist.basename" value="xml-commons-${version}"/> 
+  <property name="dist.dir" value="${tmp.dir}/build"/>
+
+  <!-- Public Targets -->
+  <target name="all"
+          depends="jars,dist"
+          description="Default all target; calls every sub-build file directly.">
+  </target>
+
+  <target name="external"
+          description="Calls just java/external/build.xml only.">
+    <ant dir="java/external" antfile="build.xml" target="all" >
+    </ant>
+  </target>
+
+  <target name="jars"
+          depends="external" 
+          description="Calls all other java build files.">
+    <ant dir="java" antfile="which.xml" target="all" >
+    </ant>
+    <ant dir="java" antfile="resolver.xml" target="all" >
+    </ant>
+  </target>
+
+  <target name="dist"
+          description="Create simple distribution of all subprojects">
+    <mkdir dir="${dist.dir}/${dist.basename}"/>
+    <mkdir dir="${dist.dir}/${dist.basename}/java"/>
+        
+    <!-- Copy all sources and their corresponding built files -->
+    <copy todir="${dist.dir}/${dist.basename}/java">
+      <!-- Assumption! Each subproject creates built files within itself -->
+      <fileset dir="java/"/>
+    </copy>  
+
+    <!-- Copy pertinent top-level files -->
+    <copy todir="${dist.dir}/${dist.basename}">
+      <fileset dir="." includes="KEYS,README.html,build.xml"/>
+    </copy>
+
+    <tar tarfile="${dist.dir}/${dist.basename}.tar" >
+      <tarfileset dir="${dist.dir}">
+        <include name="${dist.basename}/"/>
+      </tarfileset>
+    </tar>
+
+    <gzip zipfile="${dist.dir}/${dist.basename}.tar.gz" src="${dist.dir}/${dist.basename}.tar"/>
+    <delete file="${dist.dir}/${dist.basename}.tar" />
+    <zip zipfile="${dist.dir}/${dist.basename}.zip" >
+      <zipfileset dir="${dist.dir}">
+        <include name="${dist.basename}/"/>
+      </zipfileset>
+    </zip>
+  </target>
+
+  <target name="clean"
+          description="Cleanup all files in ${dist.dir} and subprojects">
+    <delete dir="${dist.dir}"/>
+    <ant dir="java/external" antfile="build.xml" target="clean" >
+    </ant>
+    <ant dir="java" antfile="which.xml" target="clean" >
+    </ant>
+    <ant dir="java" antfile="resolver.xml" target="clean" >
+    </ant>
+  </target>
+  
+</project>

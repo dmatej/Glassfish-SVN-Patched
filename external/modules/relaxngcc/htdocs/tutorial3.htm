@@ -1,0 +1,135 @@
+<html>
+<head>
+	<title>RelaxNGCC <?ja?>チュートリアル３<?/ja?><?en?>Tutorial 3<?/en?></title>
+	<link rel="stylesheet" href="ngcc.css">
+<!--	<?ja?><meta HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=shift_jis"><?/ja?>-->
+</head>
+<body>
+<h1>RelaxNGCC <?ja?>チュートリアル３<?/ja?><?en?>Tutorial 3<?/en?></h1>
+<div align=right>
+	$Revision: 1.2 $ by <a href="mailto:kk@kohsuke.org">Kohsuke Kawaguchi</a>
+</div>
+
+<p>
+	So far, we've seen how we can use RelaxNGCC to develop a simple program that works on XML documents. In many real-world applications, it is often quite useful to build so-called "abstract syntax tree" (AST), 
+	AST is somewhat like DOM, but it's better than DOM in the sense that it gives you typed access to your data.
+</p><p>
+	AST is what you get by using other data-binding tools like Relaxer, Castor, or JAXB. In this example, we will see how RelaxNGCC can be used to build AST.
+</p><p>
+	In this example, we will also see a text-based syntax that doesn't use any <tt>c:alias</tt> or <tt>c:java</tt> attributes. This will render a grammar incorrect (because RELAX NG doesn't allow you to write characters), but it saves you a lot of typing.
+</p>
+
+<h2>Grammar</h2>
+<p>
+	We will use the same sample schema as the previous tutorial, but this time we will turn it into AST that consists of the File class and the Dir class.
+</p><p>
+	Since RelaxNGCC will make one class per each define block, you usually find it necessary to modify a grammar to make a good AST. In the following example, the structure of the grammar is refactored to make Dir and File classes out of it.
+</p>
+<pre>
+&lt;?xml version="1.0" ?&gt;
+&lt;grammar xmlns="http://relaxng.org/ns/structure/1.0"
+  xmlns:c="http://www.xml.gr.jp/xmlns/relaxngcc"
+  <em>c:package="test.sample3"</em>&gt;
+
+  <em>&lt;c:java-import&gt;
+    import java.util.*;
+  &lt;/c:java-import&gt;</em>
+
+  &lt;start <em>c:class="Sample3"</em>&gt;
+    &lt;element name="files"&gt;
+      <em>result=</em>&lt;ref name="Dir" /><em>("");</em><span class="remark">[1]</span>
+    &lt;/element&gt;
+  &lt;/start&gt;
+
+  &lt;define name="Dir" <em>c:params="String name"</em>>
+    <em>&lt;c:java-body&gt;
+      private final Set files = new HashSet();
+      private final Set dirs = new HashSet();
+      
+      // accessor methods
+      public Iterator iterateFiles() { return files.iterator(); }
+      public Iterator iterateSubDirs() { return dirs.iterator(); }
+    &lt;/c:java-body&gt;</em>
+    &lt;zeroOrMore&gt;
+      &lt;choice&gt;
+        &lt;group>
+          <em>f=</em>&lt;ref name="File" />
+          <em>files.add(f);</em><span class="remark">[2]</span>
+        &lt;group/>
+        &lt;element name="directory"&gt;
+          <em>dn= </em>&lt;attribute name="name"/>
+          <em>d = </em>&lt;ref name="Dir" /><em>(dn/*dir name*/);</em>
+          <em>dirs.addAll(d);</em>
+        &lt;/element&gt;
+      &lt;/choice&gt;
+    &lt;/zeroOrMore&gt;
+  &lt;/define&gt;
+  
+  &lt;define name="File">
+    <span class="remark">[3]</span>
+    <em>&lt;c:java-body>
+      private String name;
+      public String getName() { return name; }
+    &lt;/c:java-body></em>
+    &lt;element name="file"&gt;
+      <em>name=</em>&lt;attribute name="name" /&gt;
+    &lt;/element>
+  &lt;/define>
+&lt;/grammar&gt;
+</pre>
+
+
+<h2>Text-based syntax</h2>
+<p>
+	<span class="remark">[1]</span> shows how text-based <tt>c:alias</tt> and <tt>c:with-params</tt> work. This example is treated as follows:
+</p>
+<pre>
+  &lt;ref name="Dir" <em>c:alias="result" c:with-params='""'</em> />
+</pre>
+<p>
+	<span class="remark">[2]</span> is the text-based syntax of <tt>c:java</tt> element. This <span class="remark">[2]</span> also highlights one thing that you need to be careful about. When you write <tt>&lt;c:java></tt> inside <tt>&lt;choice></tt> or <tt>&lt;interleave></tt>, you need to use <tt>&lt;group></tt>, or else RelaxNGCC cannot determine whether it should be executed after <tt>&lt;ref name="File"/></tt> is executed or before <tt>&lt;directory></tt> element is found. This additional &lt;group> makes it clear when it is executed.
+</p><p>
+	Text-based syntax is a new experimental feature, and the syntax could be changed in future. Also note that you still need to use <tt>&lt;c:java-import></tt> and <tt>&lt;c:java-body></tt> elements.
+</p>
+
+
+<h2>Abstract Syntax Tree</h2>
+<p>
+	Whenever you define an alias, a corresponding Java field is declared on a Java class. This behavior makes RelaxNGCC very convinient to quickly build AST. For example, with the following fragment, you'll get the <tt>Address</tt> class with three field values.
+</p>
+<pre>
+&lt;define name="address" <em>c:alias="ASTAddress"</em>>
+  &lt;element name="address">
+    <em>name=</em>&lt;attribute name="name"/>
+    &lt;optional>
+      <em>email=</em>&lt;attribute name="e-mail"/>
+    &lt;/optional>
+    &lt;optional>
+      <em>zipCode=</em>&lt;attribute name="zip-code"/>
+    &lt;/optional>
+  &lt;/element>
+&lt;/define>
+</pre>
+<p>
+	Somtimes, you don't want to directly expose values to other classes. <span class="remark">[3]</span> shows how you can make a field private and still provide access to other classes. If you declare the same variable by yourself, RelaxNGCC won't re-declare the same variable. In this way, you can change access modifiers or the type of variables.
+</p><p>
+	If you need to store values in a collection, such as in <span class="remark">[2]</span>, then you need to anchor the value into a variable once, then add it to the collection later.
+</p>
+
+
+
+<h2>Conclusion</h2>
+<p>
+	By using the text-syntax, the source grammar gets easier to read and write. The source grammar isn't a valid grammar anymore, but you can write a simple XSLT transformation that strips away all those texts. And when you are not working on open-source projects, you need to do this anyway, since the grammar will be shipped with your binary.
+</p><p>
+	RelaxNGCC greatly simplifies the development of AST from XML. The obtained AST can be used by other components inside your application. This approach makes it really painless to read XML documents.
+	
+	The downside of this approach is that the obtained AST is not so beautiful compared to a hand-written AST simply because it has a lot of other methods/fields that are meaningless to applications of AST.
+</p><p>
+	Using other data-binding tools will usually give you this kind of AST, but RelaxNGCC gives you much more flexibility.
+</p>
+
+<hr>
+<div align="right"><a href="index.htm">RelaxNGCC home</a></div>
+</body>
+</html>

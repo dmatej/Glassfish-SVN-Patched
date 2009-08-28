@@ -1,0 +1,196 @@
+<?xml version="1.0"?>
+<!--
+	Ant build script for XSDLib.
+	
+	$Id: build.xml 1660 2005-04-25 17:34:59Z kohsuke $
+-->
+<project name="xsdlib" basedir="." default="binary">
+	
+	<!-- import the global configuration file -->
+	<property name="relaxngDatatype.jar" value="${maven.repo.local}/com/sun/xml/relaxngDatatype/1.0/relaxngDatatype-1.0.jar"/>
+
+	<target name="clean" description="remove all the generated files">
+		<delete dir="bin" />
+		<delete dir="dist" />
+		<delete dir="javadoc" />
+		<delete dir="temp" />
+	</target>
+	
+	<echo message="RXNG:     ${relaxngDatatype.jar}"/>
+    
+	<!-- compile Java source files -->
+	<target name="binary-core">
+		<mkdir dir="./bin"/>
+		<javac
+			srcdir="./src"
+			destdir="./bin"
+			debug="on"
+			optimize="off"
+			classpath="${relaxngDatatype.jar}"
+			/>
+	</target>
+	<target name="binary-apache" unless="no.apache">
+		<mkdir dir="./bin"/>
+		<javac
+			srcdir="./src-apache"
+			destdir="./bin"
+			debug="on"
+			optimize="off"
+			classpath="${relaxngDatatype.jar}"
+			/>
+	</target>
+	<target name="binary" depends="binary-core,binary-apache"
+		description="compile everything to the bin directory" />
+	
+	
+	<!-- generate javadoc documentation from the working copy -->
+	<target name="javadoc"
+		description="build javadoc inside the workspace">
+		<mkdir dir="./javadoc"/>
+		<javadoc	locale="en_US"
+					packagenames="com.sun.msv.*"
+					sourcepath="./src"
+					classpath="${relaxngDatatype.jar}"
+					destdir="./javadoc"
+					windowtitle="XSDLib (private build)"
+					public="yes"
+					author="yes"
+					overview="src/com/sun/msv/overview.html"
+					>
+			<link offline="true" href="http://java.sun.com/products/jdk/1.2/docs/api"
+				packagelistLoc="../shared/ExternalPackageLists/CoreAPI" />
+			<link offline="true" href="http://xml.apache.org/apiDocs/"
+				packagelistLoc="../shared/ExternalPackageLists/XML" />
+			<link offline="true" href="http://iso-relax.sourceforge.net/apiDoc/"
+				packagelistLoc="../shared/ExternalPackageLists/ISO-RELAX" />
+			<link offline="true" href="http://relaxng.sourceforge.net/datatype/java/apiDocs/"
+				packagelistLoc="../shared/ExternalPackageLists/RELAXNG" />
+		</javadoc>
+	</target>
+	
+	
+	
+	
+	
+	
+	<!-- test the working directory -->
+	<target name="test">
+		<ant antfile="../shared/ant.test.xml" target="test" />
+	</target>
+	
+	
+	
+	
+	
+	<!-- test the distribution package -->
+	<target name="test_release">
+		<ant antfile="../shared/ant.test.xml" target="test_release">
+			<property name="testJar" value="../package/xsdlib.jar"/>
+		</ant>
+	</target>
+	
+	
+	
+	
+	<!-- generate XSDLib release -->
+	<target name="dist" description="build the distribution package into the dist/ dir">
+    <tstamp>
+      <format property="YEAR" pattern="yyyy" locale="en"/>
+    </tstamp>
+		
+		<delete	dir="dist" />
+		
+		<!-- copy source/example code -->
+		<copy todir="dist/src">
+			<fileset dir="src"/>
+		</copy>
+		<copy todir="dist/src-apache">
+			<fileset dir="src-apache"/>
+		</copy>
+		<copy todir="dist/examples">
+			<fileset dir="examples" />
+		</copy>
+		
+		<!-- copy document files -->
+		<copy todir="dist">
+			<fileset dir="doc" />
+		</copy>
+    <replace dir="dist">
+        <include name="**/*.html"/>
+        <include name="**/*.txt"/>
+        <replacefilter token="@@VERSION@@" value="${DSTAMP}" />
+        <replacefilter token="@@YEAR@@" value="${YEAR}" />
+    </replace>
+		
+		
+		<!-- compile files -->
+		<mkdir	dir="temp" />
+		<javac	srcdir="dist/src" destdir="temp" debug="on">
+			
+			<classpath path="${relaxngDatatype.jar}"/>
+			<include name="**/*.java" />
+		</javac>
+		
+		
+		<!-- create a time stamp file -->
+		<echo file="temp/version.properties">version=${DSTAMP}</echo>
+		
+		<!-- create META-INF/services file -->
+		<mkdir dir="temp/META-INF/services"/>
+		<echo file="temp/META-INF/services/org.relaxng.datatype.DatatypeLibraryFactory"
+			>com.sun.msv.datatype.xsd.ngimpl.DataTypeLibraryImpl</echo>
+		
+		<!-- creates binary jar -->
+		<jar	jarfile="dist/xsdlib.jar"
+				manifest="./MANIFEST.MF"
+				compress="${compress}">
+			<fileset dir="temp" />
+			<!-- resource files -->
+			<fileset dir="dist/src" includes="**/*.properties" />
+		</jar>
+		<delete dir="temp" />
+		<delete dir="xerces"/>
+		
+		
+		<!-- creates javadoc -->
+		<mkdir		dir="dist/javadoc" />
+		<javadoc	locale="en_US"
+					packagenames="com.sun.msv.*"
+					classpath="${relaxngDatatype.jar}"
+					sourcepath="dist/src"
+					destdir="dist/javadoc"
+					windowtitle="Sun XML Datatypes Library"
+					public="yes"
+					author="yes"
+					>
+			<link offline="true" href="http://java.sun.com/products/jdk/1.2/docs/api"
+				packagelistLoc="../shared/ExternalPackageLists/CoreAPI" />
+			<link offline="true" href="http://xml.apache.org/apiDocs/"
+				packagelistLoc="../shared/ExternalPackageLists/XML" />
+			<link offline="true" href="http://relaxng.sourceforge.net/datatype/java/apiDocs/"
+				packagelistLoc="../shared/ExternalPackageLists/RELAXNG" />
+		</javadoc>
+		
+		<!-- copy additional jar files -->
+		<copy file="${relaxngDatatype.jar}" tofile="dist/relaxngDatatype.jar" />
+	</target>
+	
+	<target name="release" depends="dist" description="build the distribution zip file">
+    <tstamp />
+		<property name="stageName" value="xsdlib-${DSTAMP}"/>
+		
+		<!-- copy jar file to package dir -->
+		<copy file="dist/xsdlib.jar" tofile="../package/xsdlib.jar" />
+    
+    <!-- build src zip file -->
+    <zip zipfile="../package/xsdlib-src.zip" compress="true">
+      <fileset dir="dist/src" />
+    </zip>
+		
+		<!-- creates distribution package -->
+		<mkdir dir="../package"/>
+		<zip	zipfile="../package/xsdlib.${DSTAMP}.zip">
+			<zipfileset dir="dist" includes="**/*.*" prefix="${stageName}" />
+		</zip>
+	</target>
+</project>

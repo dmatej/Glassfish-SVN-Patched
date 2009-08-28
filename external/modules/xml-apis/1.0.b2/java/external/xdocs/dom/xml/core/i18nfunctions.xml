@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding='UTF-8'?>
+<!-- $Id: i18nfunctions.xml 225913 2001-06-01 11:15:37Z dims $ -->
+<!--
+ *************************************************************************
+ * BEGINNING OF DOM I18N                                                 * 
+ *************************************************************************
+-->
+<div1 id="i18n"> 
+  <head>Accessing code point boundaries</head> 
+  <orglist> 
+    <member> 
+      <name>Mark Davis</name> 
+      <affiliation>IBM</affiliation> 
+    </member> 
+    <member> 
+      <name>Lauren Wood</name> 
+      <affiliation>SoftQuad Software Inc.</affiliation> 
+    </member> 
+  </orglist><?GENERATE-MINI-TOC?>
+  <div2 id="i18n-introduction"> 
+    <head>Introduction</head>
+    <p>
+      This appendix is an informative, not a normative, part of the Level 2 DOM
+      specification.
+    </p>
+
+    <p>
+      Characters are represented in Unicode by numbers called <i>code
+      points</i> (also called <i>scalar values</i>). These numbers can range
+      from 0 up to 1,114,111 = 10FFFF<sub>16</sub> (although some of these values are
+      illegal). Each code point can be directly encoded with a 32-bit code unit. 
+      This encoding is termed UCS-4 (or UTF-32). 
+      The DOM specification, however, uses UTF-16, in which the most frequent 
+      characters (which have values less than FFFF<sub>16</sub>) are represented 
+      by a single 16-bit code unit, while characters above FFFF<sub>16</sub>
+      use a special pair of code units called a <i>surrogate pair</i>. For more information, 
+      see <bibref ref="Unicode"/> or the Unicode Web site.
+    </p>
+
+    <p>
+      While indexing by code points as opposed to code units is not
+      common in programs, some specifications such as XPath (and therefore XSLT
+      and XPointer) use code point
+      indices.  For interfacing with such formats it is recommended
+      that the programming language provide string processing methods for
+      converting code point indices to code unit indices and back. Some
+      languages do not provide these functions natively; for these it is
+      recommended that the native <code>String</code> type that is bound to
+      <code>DOMString</code> be extended to enable this conversion. An example
+      of how such an API might look is supplied below.
+    </p>
+    <note>
+      <p>
+	Since these methods are supplied as an illustrative example of the type
+	of functionality that is required, the names of the methods,
+	exceptions, and interface may differ from those given here.
+      </p>
+    </note>
+
+  </div2> 
+  <div2 id="i18n-methods"> 
+    <head>Methods</head> 
+    <definitions> 
+      <interface id="i18n-methods-StringExtend" name="StringExtend">
+	<descr>
+	  <p>Extensions to a language's native String class or interface</p>
+	</descr>
+	<method id="i18n-methods-StringExtend-findOffset16" name="findOffset16">
+	  <descr>
+	    <p>Returns the UTF-16 offset that corresponds to a UTF-32 offset.
+	      Used for random access.</p>
+		<note>
+		  <p>
+		    You can always round-trip from a UTF-32 offset to a UTF-16
+		    offset and back. You can round-trip from a UTF-16 offset to
+		    a UTF-32 offset and back if and only if the offset16 is not
+		    in the middle of a surrogate pair. Unmatched surrogates
+		    count as a single UTF-16 value.
+		  </p>
+		</note>
+	  </descr>
+	  <parameters>
+	    <param name="offset32" type="int" attr="in">
+	      <descr> 
+		<p>
+		  UTF-32 offset. 
+		</p>
+	      </descr>
+	    </param>
+	  </parameters>
+	  <returns type="int">
+	    <descr>
+	      <p>UTF-16 offset</p>
+	    </descr>
+	  </returns>
+	  <raises>
+	    <exception name="StringIndexOutOfBoundsException">
+	      <descr>
+		<p>
+		  if <code>offset32</code> is out of bounds.
+		</p>
+	      </descr>
+	    </exception>
+	  </raises>
+	</method>
+	<method id="i18n-methods-StringExtend-findOffset32" name="findOffset32">
+	  <descr>
+	    <p>
+	      Returns the UTF-32 offset corresponding to a UTF-16 offset. Used
+	      for random access. To find the UTF-32 length of a string, use:
+	      <eg>len32 = findOffset32(source, source.length());</eg>
+	    </p>
+	    <note>
+	      <p>
+		If the UTF-16 offset is into the middle of a surrogate pair,
+		then the UTF-32 offset of the <emph>end</emph> of the pair is
+		returned; that is, the index of the char after the end of the
+		pair. You can always round-trip from a UTF-32 offset to a UTF-16
+		offset and back. You can round-trip from a UTF-16 offset to a
+		UTF-32 offset and back if and only if the offset16 is not in
+		the middle of a surrogate pair. Unmatched surrogates count as a
+		single UTF-16 value.
+	      </p>
+	    </note>
+	  </descr>
+	  <parameters>
+	    <param attr="in" type="int" name="offset16">
+	      <descr>
+		<p>UTF-16 offset</p>
+	      </descr>
+	    </param>
+	  </parameters>
+	  <returns type="int">
+	    <descr>
+	      <p>UTF-32 offset</p>
+	    </descr>
+	  </returns>
+	  <raises>
+	    <exception name="StringIndexOutOfBoundsException">
+	      <descr>
+		<p>if offset16 is out of bounds.</p>
+	      </descr>
+	    </exception>
+	  </raises>
+	</method>
+      </interface>
+    </definitions> 
+  </div2>
+</div1>

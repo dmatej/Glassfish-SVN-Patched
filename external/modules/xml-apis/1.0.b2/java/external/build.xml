@@ -1,0 +1,145 @@
+<?xml version="1.0"?>
+<!-- 
+    @author David Megginson, david@megginson.com
+    @author shane_curcuru@lotus.com
+    @author Davanum Srinivas, dims@yaoo.com
+-->
+<project name="xml-commons-external" default="jar" >
+
+  <!-- Name and version information -->
+  <property name="name.external" value="xml-apis"/>
+  <property name="impl.name" value="XmlCommons"/>
+  <!-- If no external version is provided, don't use one -->
+  <property name="version" value=""/>
+  <property name="impl.version" value="${version}"/>
+
+  <!-- Location of the system's temporary directory; all output sent here -->
+  <property name="tmp.dir" value="." />
+
+  <!-- Build directories -->
+  <property name="build.dir" value="${tmp.dir}/build" />
+  <property name="build.classes.dir" value="${build.dir}/classes" />
+  <property name="build.docs.dir" value="${build.dir}/docs" />
+  <property name="build.javadocs.dir" value="${build.docs.dir}/javadoc" />
+  <property name="external.javadoc.title" value="JAXP 1.1, DOM2, SAX2, SAX2-ext 1.0" />
+
+  <!-- Source constants and directories -->
+  <property name="src.dir" value="src" />
+  <property name="docs.dir" value="xdocs" />
+  <property name="api.jar.location" value="${build.dir}" />
+  <property name="api.jar.name" value="${name.external}.jar" />
+  <property name="api.jar" value="${api.jar.location}/${api.jar.name}" />
+
+  <!-- License and readme files of various types -->
+  <property name="licenses.external.dir" value="."/>
+  <patternset id="licenses.external">
+    <include name="LICENSE.dom-documentation.txt" />
+    <include name="LICENSE.dom-software.txt" />
+    <include name="README.dom.txt" />
+    <include name="LICENSE.sax.txt" />
+    <include name="README.sax.txt" />
+  </patternset>
+  <property name="licenses.asf.dir" value="../.."/>
+  <patternset id="licenses.asf" >
+    <include name="LICENSE.txt" />
+    <include name="README.txt" />
+  </patternset>
+
+  <target name="all" depends="jar,javadoc,exportsrc"
+    description="Jar external classes, create javadoc, create sources.tar.gz">
+  </target>
+
+  <target name="prepare" 
+    description="Create build output directories">
+    <echo message="Building ${name.external} (version: ${impl.version}) Buildfile: $Revision: 225956 $"/>
+    <mkdir dir="${build.classes.dir}" />
+    <mkdir dir="${build.docs.dir}" />
+    <mkdir dir="${build.javadocs.dir}" />
+    <filter token="impl.version" value="${impl.version}"/>
+    <filter token="impl.name" value="${impl.name}"/>
+    <copy file="${src.dir}/org/apache/xmlcommons/Version.src" 
+        tofile="${src.dir}/org/apache/xmlcommons/Version.java" 
+        filtering="true" preservelastmodified="true" />
+    <copy todir="${build.dir}" file="${src.dir}/manifest.commons" filtering="true"/>
+  </target>
+
+  <target name="compile" depends="prepare"
+    description="Compile all classes">
+   <javac srcdir="${src.dir}" destdir="${build.classes.dir}" />
+  </target>
+
+  <target name="jar" depends="compile"
+    description="Jar all classes">
+    <echo message="Jarring ${api.jar} from ${build.classes.dir}" />
+
+    <!-- Copy various licenses so they appear in the .jar file -->
+    <property name="jar-licenses" value="${build.classes.dir}/license" />
+    <mkdir dir="${jar-licenses}" />
+    <copy todir="${jar-licenses}">
+      <fileset dir="${licenses.external.dir}">
+        <patternset refid="licenses.external"/>
+      </fileset>
+      <fileset dir="${licenses.asf.dir}">
+        <patternset refid="licenses.asf"/>
+      </fileset>
+    </copy>
+
+    <jar jarfile="${api.jar}" 
+        basedir="${build.classes.dir}" 
+        manifest="${build.dir}/manifest.commons"  />
+  </target>
+
+  <target name="javadoc" depends="prepare"
+    description="Build javadocs and copy doc over">
+    <javadoc packagenames="org.xml.sax.*,org.w3c.dom.*,javax.xml.parsers.*,javax.xml.transform.*"
+      sourcepath="${src.dir}" 
+      destdir="${build.javadocs.dir}" 
+      version="yes" 
+      windowtitle="${external.javadoc.title}" 
+      doctitle="${external.javadoc.title}"
+    />
+    <!-- Legal question: what should the bottom= copyright line be
+         for this mixed set of javadocs? -->
+    <!-- Just copy existing .html files over as well -->
+    <copy todir="${build.docs.dir}">
+      <fileset dir="${docs.dir}"/>
+    </copy>
+   </target>
+
+  <target name="exportsrc" depends="prepare"
+    description="Create a simple distribution of sources">
+    <!-- Note: this *only* a copy of the .java sources that 
+         go into our .jar file, not all our sources! -->
+
+    <patternset id="external-srcs" >
+    <!-- Relative to external/src, which is ${src.dir}  -->
+      <include name="org/"/>
+      <include name="javax/"/>
+    </patternset>
+
+    <tar tarfile="${build.dir}/${name.external}-${impl.version}-src.tar" >
+      <tarfileset dir="${src.dir}">
+        <patternset refid="external-srcs"/>
+      </tarfileset>
+      <tarfileset dir="${build.dir}">
+        <include name="manifest.commons"/>
+      </tarfileset>
+      <tarfileset dir="${licenses.external.dir}">
+        <patternset refid="licenses.external"/>
+      </tarfileset>
+      <tarfileset dir="${licenses.asf.dir}">
+        <patternset refid="licenses.asf"/>
+      </tarfileset>
+    </tar>
+    <gzip src="${build.dir}/${name.external}-${impl.version}-src.tar" zipfile="${build.dir}/${name.external}-${impl.version}-src.tar.gz"/>
+    <delete file="${build.dir}/${name.external}-${impl.version}-src.tar" />
+  </target>
+
+  <target name="clean" 
+      description="Clean the output build area">
+    <delete file="${api.jar}"/>
+    <delete dir="${build.dir}"/>
+    <delete file="${src.dir}/org/apache/xmlcommons/Version.java"/>
+  </target>
+
+</project>

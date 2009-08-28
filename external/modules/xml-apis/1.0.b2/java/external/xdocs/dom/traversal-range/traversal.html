@@ -1,0 +1,2412 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--
+ Generated: Thu Nov 09 17:45:54 EST 2000 jfouffa.w3.org
+ -->
+<html lang='en' xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>Document Object Model Traversal</title>
+<link rel='stylesheet' type='text/css' href='./spec.css' />
+<link rel='stylesheet' type='text/css' href='W3C-REC.css' />
+<link rel='next' href='ranges.html' />
+<link rel='contents' href='Overview.html#contents' />
+<link rel='index' href='def-index.html' />
+<link rel='previous' href='copyright-notice.html' />
+</head>
+<body>
+<div class='navbar' align='center'><a accesskey='p'
+href='copyright-notice.html'>previous</a> &nbsp; <a accesskey='n'
+href='ranges.html'>next</a> &nbsp; <a accesskey='c'
+href='Overview.html#contents'>contents</a> &nbsp; <a accesskey='i'
+href='def-index.html'>index</a> 
+
+<hr title='Navigation area separator' />
+</div>
+
+<div class='noprint' style='text-align: right'>
+<p style='font-family: monospace;font-size:small'>13 November,
+2000</p>
+</div>
+
+<div class='div1'><a id="Traversal" name='Traversal'></a> 
+
+<h1 id='Traversal-h1' class='div1'>1. Document Object Model
+Traversal</h1>
+
+<dl>
+<dt><i>Editors</i></dt>
+
+<dd>Joe Kesselman, IBM</dd>
+
+<dd>Jonathan Robie, Software AG</dd>
+
+<dd>Mike Champion, Software AG</dd>
+</dl>
+
+<div class='noprint'>
+<h2 id='table-of-contents'>Table of contents</h2>
+
+<ul class='toc'>
+<li class='tocline3'><a class='tocxref'
+href='#Traversal-overview'>1.1. Overview</a> 
+
+<ul class='toc'>
+<li class='tocline4'><a class='tocxref'
+href='#Iterator-overview'>1.1.1. NodeIterators</a></li>
+
+<li class='tocline4'><a class='tocxref'
+href='#Traversal-Filters'>1.1.2. NodeFilters</a></li>
+
+<li class='tocline4'><a class='tocxref' href='#TreeWalker'>1.1.3.
+TreeWalker</a></li>
+</ul>
+</li>
+
+<li class='tocline3'><a class='tocxref'
+href='#Traversal-IDLDefinition'>1.2. Formal Interface
+Definition</a> 
+
+<ul class='toc'>
+<li class='tocline4'><a
+href='#Traversal-NodeIterator'>NodeIterator</a>, <a
+href='#Traversal-NodeFilter'>NodeFilter</a>, <a
+href='#Traversal-TreeWalker'>TreeWalker</a>, <a
+href='#Traversal-Document'>DocumentTraversal</a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+<div class='div2'><a id="Traversal-overview"
+name='Traversal-overview'></a> 
+
+<h2 id='Traversal-overview-h2' class='div2'>1.1. Overview</h2>
+
+<p>This chapter describes the optional DOM Level 2
+<em>Traversal</em> feature. Its <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>,
+<a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>,
+and <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+interfaces provide easy-to-use, robust, selective traversal of a
+document's contents.</p>
+
+<p>The interfaces found within this section are not mandatory. A
+DOM application may use the <code>hasFeature(feature,
+version)</code> method of the <code>DOMImplementation</code>
+interface with parameter values "Traversal" and "2.0"
+(respectively) to determine whether or not this module is supported
+by the implementation. In order to fully support this module, an
+implementation must also support the "Core" feature defined defined
+in the DOM Level 2 Core specification [<a class='noxref'
+href='references.html#DOMCore'>DOM Level 2 Core</a>]. Please refer
+to additional information about <a
+href='http://www.w3.org/TR/DOM-Level-2-Core/introduction.html#ID-Conformance'>
+<em>conformance</em></a> in the DOM Level 2 Core specification [<a
+class='noxref' href='references.html#DOMCore'>DOM Level 2
+Core</a>].</p>
+
+<p><a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>
+and <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalkers</code></a>
+are two different ways of representing the nodes of a document
+subtree and a position within the nodes they present. A <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+presents a flattened view of the subtree as an ordered sequence of
+nodes, presented in document order. Because this view is presented
+without respect to hierarchy, iterators have methods to move
+forward and backward, but not to move up and down. Conversely, a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+maintains the hierarchical relationships of the subtree, allowing
+navigation of this hierarchy. In general, <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalkers</code></a>
+are better for tasks in which the structure of the document around
+selected nodes will be manipulated, while <a class='noxref'
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>
+are better for tasks that focus on the content of each selected
+node.</p>
+
+<p><a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>
+and <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalkers</code></a>
+each present a view of a document subtree that may not contain all
+nodes found in the subtree. In this specification, we refer to this
+as the <i>logical view</i> to distinguish it from the <i>physical
+view</i>, which corresponds to the document subtree per se. When an
+iterator or <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+is created, it may be associated with a <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>,
+which examines each node and determines whether it should appear in
+the logical view. In addition, flags may be used to specify which
+node types should occur in the logical view.</p>
+
+<p><a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>
+and <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalkers</code></a>
+are dynamic - the logical view changes to reflect changes made to
+the underlying document. However, they differ in how they respond
+to those changes. <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>,
+which present the nodes sequentially, attempt to maintain their
+location relative to a position in that sequence when the
+sequence's contents change. <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalkers</code></a>,
+which present the nodes as a filtered tree, maintain their location
+relative to their current node and remain attached to that node if
+it is moved to a new context. We will discuss these behaviors in
+greater detail below.</p>
+
+<div class='div3'><a id="Iterator-overview"
+name='Iterator-overview'></a> 
+
+<h3 id='Iterator-overview-h3' class='div3'>1.1.1. <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a></h3>
+
+<p>A <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+allows the members of a list of nodes to be returned sequentially.
+In the current DOM interfaces, this list will always consist of the
+nodes of a subtree, presented in <a
+href='glossary.html#dt-documentorder'><em>document order</em></a>.
+When an iterator is first created, calling its
+<code>nextNode()</code> method returns the first node in the
+logical view of the subtree; in most cases, this is the root of the
+subtree. Each successive call advances the <a class='noxref'
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+through the list, returning the next node available in the logical
+view. When no more nodes are visible, <code>nextNode()</code>
+returns <code>null</code>.</p>
+
+<p><a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>
+are created using the <code>createNodeIterator</code> method found
+in the <a
+href='traversal.html#Traversal-Document'><code>DocumentTraversal</code></a>
+interface. When a <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+is created, flags can be used to determine which node types will be
+"visible" and which nodes will be "invisible" while traversing the
+tree; these flags can be combined using the <code>OR</code>
+operator. Nodes that are "invisible" are skipped over by the
+iterator as though they did not exist.</p>
+
+<p>The following code creates an iterator, then calls a function to
+print the name of each element:</p>
+
+<div class='eg'>
+<pre>
+    NodeIterator iter=
+     ((DocumentTraversal)document).createNodeIterator(
+          root, NodeFilter.SHOW_ELEMENT, null);
+
+    while (Node n = iter.nextNode())
+        printMe(n);
+     
+</pre>
+</div>
+
+<div class='div4'><a id="Iterator-Moving"
+name='Iterator-Moving'></a> 
+
+<h4 id='Iterator-Moving-h4' class='div4'>1.1.1.1. Moving Forward
+and Backward</h4>
+
+<p><a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>
+present nodes as an ordered list, and move forward and backward
+within this list. The iterator's position is always either between
+two nodes, before the first node, or after the last node. When an
+iterator is first created, the position is set before the first
+item. The following diagram shows the list view that an iterator
+might provide for a particular subtree, with the position indicated
+by an asterisk '*' :</p>
+
+<div class='eg'>
+<pre>
+ * A B C D E F G H I
+</pre>
+</div>
+
+<p>Each call to <code>nextNode()</code> returns the next node and
+advances the position. For instance, if we start with the above
+position, the first call to <code>nextNode()</code> returns "A" and
+advances the iterator:</p>
+
+<div class='eg'>
+<pre>
+ [A] * B C D E F G H I
+</pre>
+</div>
+
+<p>The position of a <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+can best be described with respect to the last node returned, which
+we will call the <i>reference node</i>. When an iterator is
+created, the first node is the reference node, and the iterator is
+positioned before the reference node. In these diagrams, we use
+square brackets to indicate the reference node.</p>
+
+<p>A call to <code>previousNode()</code> returns the previous node
+and moves the position backward. For instance, if we start with the
+<a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+between "A" and "B", it would return "A" and move to the position
+shown below:</p>
+
+<div class='eg'>
+<pre>
+ * [A] B C D E F G H I
+</pre>
+</div>
+
+<p>If <code>nextNode()</code> is called at the end of a list, or
+<code>previousNode()</code> is called at the beginning of a list,
+it returns <code>null</code> and does not change the position of
+the iterator. When a <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+is first created, the reference node is the first node:</p>
+
+<div class='eg'>
+<pre>
+ * [A] B C D E F G H I
+</pre>
+</div>
+</div>
+
+<!-- div4 Iterator-Moving -->
+<div class='div4'><a id="Iterator-Robustness"
+name='Iterator-Robustness'></a> 
+
+<h4 id='Iterator-Robustness-h4' class='div4'>1.1.1.2.
+Robustness</h4>
+
+<p>A <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+may be active while the data structure it navigates is being
+edited, so an iterator must behave gracefully in the face of
+change. Additions and removals in the underlying data structure do
+not invalidate a <a class='noxref'
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>;
+in fact, a <a class='noxref'
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+is never invalidated unless its <code>detach()</code> method is
+invoked. To make this possible, the iterator uses the reference
+node to maintain its position. The state of an iterator also
+depends on whether the iterator is positioned before or after the
+reference node.</p>
+
+<p>If changes to the iterated list do not remove the reference
+node, they do not affect the state of the <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>.
+For instance, the iterator's state is not affected by inserting new
+nodes in the vicinity of the iterator or removing nodes other than
+the reference node. Suppose we start from the following
+position:</p>
+
+<div class='eg'>
+<pre>
+A B C [D] * E F G H I
+</pre>
+</div>
+
+<p>Now let's remove "E". The resulting state is:</p>
+
+<div class='eg'>
+<pre>
+A B C [D] * F G H I
+</pre>
+</div>
+
+<p>If a new node is inserted, the <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+stays close to the reference node, so if a node is inserted between
+"D" and "F", it will occur between the iterator and "F":</p>
+
+<div class='eg'>
+<pre>
+A B C [D] * X F G H I
+</pre>
+</div>
+
+<p>Moving a node is equivalent to a removal followed by an
+insertion. If we move "I" to the position before "X" the result
+is:</p>
+
+<div class='eg'>
+<pre>
+A B C [D] * I X F G H
+</pre>
+</div>
+
+<p>If the reference node is removed from the list being iterated
+over, a different node is selected as the reference node. If the
+reference node's position is before that of the <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>,
+which is usually the case after <code>nextNode()</code> has been
+called, the nearest node before the iterator is chosen as the new
+reference node. Suppose we remove the "D" node, starting from the
+following state:</p>
+
+<div class='eg'>
+<pre>
+A B C [D] * F G H I
+</pre>
+</div>
+
+<p>The "C" node becomes the new reference node, since it is the
+nearest node to the <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+that is before the iterator:</p>
+
+<div class='eg'>
+<pre>
+A B [C] * F G H I
+</pre>
+</div>
+
+<p>If the reference node is after the <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>,
+which is usually the case after <code>previousNode()</code> has
+been called, the nearest node after the iterator is chosen as the
+new reference node. Suppose we remove "E", starting from the
+following state:</p>
+
+<div class='eg'>
+<pre>
+A B C D * [E] F G H I
+</pre>
+</div>
+
+<p>The "F" node becomes the new reference node, since it is the
+nearest node to the <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+that is after the iterator:</p>
+
+<div class='eg'>
+<pre>
+A B C D * [F] G H I
+</pre>
+</div>
+
+<p>As noted above, moving a node is equivalent to a removal
+followed by an insertion. Suppose we wish to move the "D" node to
+the end of the list, starting from the following state:</p>
+
+<div class='eg'>
+<pre>
+A B C [D] * F G H I C
+</pre>
+</div>
+
+<p>The resulting state is as follows:</p>
+
+<div class='eg'>
+<pre>
+A B [C] * F G H I D
+</pre>
+</div>
+
+<p>One special case arises when the reference node is the last node
+in the list and the reference node is removed. Suppose we remove
+node "C", starting from the following state:</p>
+
+<div class='eg'>
+<pre>
+A B * [C]
+</pre>
+</div>
+
+<p>According to the rules we have given, the new reference node
+should be the nearest node after the <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>,
+but there are no further nodes after "C". The same situation can
+arise when <code>previousNode()</code> has just returned the first
+node in the list, which is then removed. Hence: If there is no node
+in the original direction of the reference node, the nearest node
+in the opposite direction is selected as the reference node:</p>
+
+<div class='eg'>
+<pre>
+A [B] *
+</pre>
+</div>
+
+<p>If the <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+is positioned within a block of nodes that is removed, the above
+rules clearly indicate what is to be done. For instance, suppose
+"C" is the <a href='glossary.html#dt-parent'><em>parent</em></a>
+node of "D", "E", and "F", and we remove "C", starting with the
+following state:</p>
+
+<div class='eg'>
+<pre>
+A B C [D] * E F G H I D
+</pre>
+</div>
+
+<p>The resulting state is as follows:</p>
+
+<div class='eg'>
+<pre>
+A [B] * G H I D
+</pre>
+</div>
+
+<p>Finally, note that removing a <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>'s
+<code>root</code> node from its <a
+href='glossary.html#dt-parent'><em>parent</em></a> does not alter
+the list being iterated over, and thus does not change the
+iterator's state.</p>
+</div>
+
+<!-- div4 Iterator-Robustness -->
+<div class='div4'><a id="Iterator-Visibility"
+name='Iterator-Visibility'></a> 
+
+<h4 id='Iterator-Visibility-h4' class='div4'>1.1.1.3. Visibility of
+Nodes</h4>
+
+<p>The underlying data structure that is being iterated may contain
+nodes that are not part of the logical view, and therefore will not
+be returned by the <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>.
+If nodes that are to be excluded because of the value of the
+<code>whatToShow</code> flag, <code>nextNode()</code> returns the
+next visible node, skipping over the excluded "invisible" nodes. If
+a <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+is present, it is applied before returning a node; if the filter
+does not accept the node, the process is repeated until a node is
+accepted by the filter and is returned. If no visible nodes are
+encountered, a <code>null</code> is returned and the iterator is
+positioned at the end of the list. In this case, the reference node
+is the last node in the list, whether or not it is visible. The
+same approach is taken, in the opposite direction, for
+<code>previousNode()</code>.</p>
+
+<p>In the following examples, we will use lowercase letters to
+represent nodes that are in the data structure, but which are not
+in the logical view. For instance, consider the following list:</p>
+
+<div class='eg'>
+<pre>
+A [B] * c d E F G
+</pre>
+</div>
+
+<p>A call to <code>nextNode()</code> returns E and advances to the
+following position:</p>
+
+<div class='eg'>
+<pre>
+A B c d [E] * F G
+</pre>
+</div>
+
+<p>Nodes that are not visible may nevertheless be used as reference
+nodes if a reference node is removed. Suppose node "E" is removed,
+started from the state given above. The resulting state is:</p>
+
+<div class='eg'>
+<pre>
+A B c [d] * F G
+</pre>
+</div>
+
+<p>Suppose a new node "X", which is visible, is inserted before
+"d". The resulting state is:</p>
+
+<div class='eg'>
+<pre>
+A B c X [d] * F G
+</pre>
+</div>
+
+<p>Note that a call to <code>previousNode()</code> now returns node
+X. It is important not to skip over invisible nodes when the
+reference node is removed, because there are cases, like the one
+just given above, where the wrong results will be returned. When
+"E" was removed, if the new reference node had been "B" rather than
+"d", calling <code>previousNode()</code> would not return "X".</p>
+</div>
+
+<!-- div4 Iterator-Visibility --></div>
+
+<!-- div3 Iterator-overview -->
+<div class='div3'><a id="Traversal-Filters"
+name='Traversal-Filters'></a> 
+
+<h3 id='Traversal-Filters-h3' class='div3'>1.1.2. <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilters</code></a></h3>
+
+<p><a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilters</code></a>
+allow the user to create objects that "filter out" nodes. Each
+filter contains a user-written function that looks at a node and
+determines whether or not it should be presented as part of the
+traversal's logical view of the document. To use a <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>,
+you create a <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+or a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+that uses the filter. The traversal engine applies the filter to
+each node, and if the filter does not accept the node, traversal
+skips over the node as though it were not present in the document.
+<a class='noxref'
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilters</code></a>
+need not know how to navigate the structure that contains the nodes
+on which they operate.</p>
+
+<p>Filters will be consulted when a traversal operation is
+performed, or when a <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>'s
+reference node is removed from the subtree being iterated over and
+it must select a new one. However, the exact timing of these filter
+calls may vary from one DOM implementation to another. For that
+reason, <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilters</code></a>
+should not attempt to maintain state based on the history of past
+invocations; the resulting behavior may not be portable.</p>
+
+<p>Similarly, <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalkers</code></a>
+and <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>
+should behave as if they have no memory of past filter results, and
+no anticipation of future results. If the conditions a <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+is examining have changed (e.g., an attribute which it tests has
+been added or removed) since the last time the traversal logic
+examined this node, this change in visibility will be discovered
+only when the next traversal operation is performed. For example:
+if the filtering for the current node changes from
+<code>FILTER_SHOW</code> to <code>FILTER_SKIP</code>, a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+will be able to navigate off that node in any direction, but not
+back to it unless the filtering conditions change again. <a
+class='noxref'
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilters</code></a>
+which change during a traversal can be written, but their behavior
+may be confusing and they should be avoided when possible.</p>
+
+<div class='div4'><a id="Traversal-Filters-Usage"
+name='Traversal-Filters-Usage'></a> 
+
+<h4 id='Traversal-Filters-Usage-h4' class='div4'>1.1.2.1. Using <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilters</code></a></h4>
+
+<p>A <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+contains one method named <code>acceptNode()</code>, which allows a
+<a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+or <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+to pass a <code>Node</code> to a filter and ask whether it should
+be present in the logical view. The <code>acceptNode()</code>
+function returns one of three values to state how the
+<code>Node</code> should be treated. If <code>acceptNode()</code>
+returns <code>FILTER_ACCEPT</code>, the <code>Node</code> will be
+present in the logical view; if it returns
+<code>FILTER_SKIP</code>, the <code>Node</code> will not be present
+in the logical view, but the children of the <code>Node</code> may;
+if it returns <code>FILTER_REJECT</code>, neither the
+<code>Node</code> nor its <a
+href='glossary.html#dt-descendant'><em>descendants</em></a> will be
+present in the logical view. Since iterators present nodes as an
+ordered list, without hierarchy, <code>FILTER_REJECT</code> and
+<code>FILTER_SKIP</code> are synonyms for <a class='noxref'
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>,
+skipping only the single current node.</p>
+
+<p>Consider a filter that accepts the named anchors in an HTML
+document. In HTML, an HREF can refer to any A element that has a
+NAME attribute. Here is a <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+in Java that looks at a node and determines whether it is a named
+anchor:</p>
+
+<div class='eg'>
+<pre>
+    class NamedAnchorFilter implements NodeFilter
+    {
+     short acceptNode(Node n) {
+      if (n.getNodeType()==Node.ELEMENT_NODE) {
+       Element e = (Element)n;
+       if (! e.getNodeName().equals("A"))
+        return FILTER_SKIP;
+      if (e.getAttributeNode("NAME") != null)
+        return FILTER_ACCEPT;
+       }
+        return FILTER_SKIP;
+      }
+    }
+</pre>
+</div>
+
+<p>If the above <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+were to be used only with <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>,
+it could have used <code>FILTER_REJECT</code> wherever
+<code>FILTER_SKIP</code> is used, and the behavior would not
+change. For <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>,
+though, <code>FILTER_REJECT</code> would reject the children of any
+element that is not a named anchor, and since named anchors are
+always contained within other elements, this would have meant that
+no named anchors would be found. <code>FILTER_SKIP</code> rejects
+the given node, but continues to examine the children; therefore,
+the above filter will work with either a <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+or a <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>.</p>
+
+<p>To use this filter, the user would create an instance of the <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+and create a <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+using it:</p>
+
+<div class='eg'>
+<pre>
+NamedAnchorFilter myFilter = new NamedAnchorFilter(); 
+NodeIterator iter=
+     ((DocumentTraversal)document).createNodeIterator(
+          node, NodeFilter.SHOW_ELEMENT, myFilter);
+   
+</pre>
+</div>
+
+<p>Note that the use of the <code>SHOW_ELEMENT</code> flag is not
+strictly necessary in this example, since our sample <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+tests the <code>nodeType</code>. However, some implementations of
+the Traversal interfaces may be able to improve
+<code>whatToShow</code> performance by taking advantage of
+knowledge of the document's structure, which makes the use of
+<code>SHOW_ELEMENT</code> worthwhile. Conversely, while we could
+remove the <code>nodeType</code> test from our filter, that would
+make it dependent upon <code>whatToShow</code> to distinguish
+between <code>Elements</code>, <code>Attr</code>'s, and
+<code>ProcessingInstructions</code>.</p>
+</div>
+
+<!-- div4 Traversal-Filters-Usage -->
+<div class='div4'><a id="Traversal-Filters-Exceptions"
+name='Traversal-Filters-Exceptions'></a> 
+
+<h4 id='Traversal-Filters-Exceptions-h4' class='div4'>1.1.2.2. <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilters</code></a>
+and Exceptions</h4>
+
+<p>When writing a <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>,
+users should avoid writing code that can throw an exception.
+However, because a DOM implementation can not prevent exceptions
+from being thrown, it is important that the behavior of filters
+that throw an exception be well-defined. A <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+or <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+does not catch or alter an exception thrown by a filter, but lets
+it propagate up to the user's code. The following functions may
+invoke a <a class='noxref'
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>,
+and may therefore propagate an exception if one is thrown by a
+filter:</p>
+
+<ol>
+<li><a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a><code>
+.nextNode()</code></li>
+
+<li><a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a><code>
+.previousNode()</code></li>
+
+<li><a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a><code>
+.firstChild()</code></li>
+
+<li><a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a><code>
+.lastChild()</code></li>
+
+<li><a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a><code>
+.nextSibling()</code></li>
+
+<li><a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a><code>
+.previousSibling()</code></li>
+
+<li><a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a><code>
+.nextNode()</code></li>
+
+<li><a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a><code>
+.previousNode()</code></li>
+
+<li><a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a><code>
+.parentNode()</code></li>
+</ol>
+</div>
+
+<!-- div4 Traversal-Filters-Exceptions -->
+<div class='div4'><a id="Traversal-Filters-Mutation"
+name='Traversal-Filters-Mutation'></a> 
+
+<h4 id='Traversal-Filters-Mutation-h4' class='div4'>1.1.2.3. <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilters</code></a>
+and Document Mutation</h4>
+
+<p>Well-designed <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilters</code></a>
+should not have to modify the underlying structure of the document.
+But a DOM implementation can not prevent a user from writing filter
+code that does alter the document structure. Traversal does not
+provide any special processing to handle this case. For instance,
+if a <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+removes a node from a document, it can still accept the node, which
+means that the node may be returned by the <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+or <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+even though it is no longer in the subtree being traversed. In
+general, this may lead to inconsistent, confusing results, so we
+encourage users to write <a class='noxref'
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilters</code></a>
+that make no changes to document structures. Instead, do your
+editing in the loop controlled by the traversal object.</p>
+</div>
+
+<!-- div4 Traversal-Filters-Mutation -->
+<div class='div4'><a id="Traversal-Filters-Flags"
+name='Traversal-Filters-Flags'></a> 
+
+<h4 id='Traversal-Filters-Flags-h4' class='div4'>1.1.2.4. <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilters</code></a>
+and <code>whatToShow</code> flags</h4>
+
+<p><a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+and <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+apply their <code>whatToShow</code> flags before applying filters.
+If a node is skipped by the active <code>whatToShow</code> flags, a
+<a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+will not be called to evaluate that node. Please note that this
+behavior is similar to that of <code>FILTER_SKIP</code>; children
+of that node will be considered, and filters may be called to
+evaluate them. Also note that it will in fact be a "skip" even if
+the <a class='noxref'
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+would have preferred to reject the entire subtree; if this would
+cause a problem in your application, consider setting
+<code>whatToShow</code> to <code>SHOW_ALL</code> and performing the
+<code>nodeType</code> test inside your filter.</p>
+</div>
+
+<!-- div4 Traversal-Filters-Flags --></div>
+
+<!-- div3 Traversal-Filters -->
+<div class='div3'><a id="TreeWalker" name='TreeWalker'></a> 
+
+<h3 id='TreeWalker-h3' class='div3'>1.1.3. <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a></h3>
+
+<p>The <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+interface provides many of the same benefits as the <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+interface. The main difference between these two interfaces is that
+the <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+presents a tree-oriented view of the nodes in a subtree, rather
+than the iterator's list-oriented view. In other words, an iterator
+allows you to move forward or back, but a <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+allows you to also move to the <a
+href='glossary.html#dt-parent'><em>parent</em></a> of a node, to
+one of its children, or to a <a
+href='glossary.html#dt-sibling'><em>sibling</em></a>.</p>
+
+<p>Using a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+is quite similar to navigation using the Node directly, and the
+navigation methods for the two interfaces are analogous. For
+instance, here is a function that recursively walks over a tree of
+nodes in document order, taking separate actions when first
+entering a node and after processing any children:</p>
+
+<div class='eg'>
+<pre>
+processMe(Node n) {
+   nodeStartActions(n);
+   for (Node child=n.firstChild(); 
+        child != null;
+        child=child.nextSibling()) {
+      processMe(child);
+   }
+   nodeEndActions(n);
+}
+</pre>
+</div>
+
+<p>Doing the same thing using a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+is quite similar. There is one difference: since navigation on the
+<a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+changes the current position, the position at the end of the
+function has changed. A read/write attribute named
+<code>currentNode</code> allows the current node for a <a
+class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+to be both queried and set. We will use this to ensure that the
+position of the <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+is restored when this function is completed:</p>
+
+<div class='eg'>
+<pre>
+processMe(TreeWalker tw) {
+   Node n = tw.getCurrentNode();
+   nodeStartActions(tw);
+   for (Node child=tw.firstChild(); 
+        child!=null;
+        child=tw.nextSibling()) {
+      processMe(tw);
+   }
+
+   tw.setCurrentNode(n);
+   nodeEndActions(tw);
+}
+</pre>
+</div>
+
+<p>The advantage of using a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+instead of direct <code>Node</code> navigation is that the <a
+class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+allows the user to choose an appropriate view of the tree. Flags
+may be used to show or hide <code>Comments</code> or
+<code>ProcessingInstructions</code>; entities may be expanded or
+shown as <code>EntityReference</code> nodes. In addition, <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilters</code></a>
+may be used to present a custom view of the tree. Suppose a program
+needs a view of a document that shows which tables occur in each
+chapter, listed by chapter. In this view, only the chapter elements
+and the tables that they contain are seen. The first step is to
+write an appropriate filter:</p>
+
+<div class='eg'>
+<pre>
+class TablesInChapters implements NodeFilter {
+
+   short acceptNode(Node n) {
+      if (n.getNodeType()==Node.ELEMENT_NODE) {
+    
+          if (n.getNodeName().equals("CHAPTER"))
+             return FILTER_ACCEPT;
+
+          if (n.getNodeName().equals("TABLE"))
+             return FILTER_ACCEPT;
+
+          if (n.getNodeName().equals("SECT1")
+              || n.getNodeName().equals("SECT2")
+              || n.getNodeName().equals("SECT3")
+              || n.getNodeName().equals("SECT4")
+              || n.getNodeName().equals("SECT5")
+              || n.getNodeName().equals("SECT6")
+              || n.getNodeName().equals("SECT7"))
+             return FILTER_SKIP;
+
+      }
+
+      return FILTER_REJECT;
+    }
+}
+</pre>
+</div>
+
+<p>This filter assumes that TABLE elements are contained directly
+in CHAPTER or SECTn elements. If another kind of element is
+encountered, it and its children are rejected. If a SECTn element
+is encountered, it is skipped, but its children are explored to see
+if they contain any TABLE elements.</p>
+
+<p>Now the program can create an instance of this <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>,
+create a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+that uses it, and pass this <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+to our ProcessMe() function:</p>
+
+<div class='eg'>
+<pre>
+TablesInChapters tablesInChapters  = new TablesInChapters();
+TreeWalker tw  = 
+     ((DocumentTraversal)document).createTreeWalker(
+          root, NodeFilter.SHOW_ELEMENT, tablesInChapters);
+processMe(tw);
+</pre>
+</div>
+
+<p>(Again, we've chosen to both test the <code>nodeType</code> in
+the filter's logic and use <code>SHOW_ELEMENT</code>, for the
+reasons discussed in the earlier <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+example.)</p>
+
+<p>Without making any changes to the above <code>ProcessMe()</code>
+function, it now processes only the CHAPTER and TABLE elements. The
+programmer can write other filters or set other flags to choose
+different sets of nodes; if functions use <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+to navigate, they will support any view of the document defined
+with a <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>.</p>
+
+<p>Note that the structure of a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>'s
+filtered view of a document may differ significantly from that of
+the document itself. For example, a <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+with only <code>SHOW_TEXT</code> specified in its
+<code>whatToShow</code> parameter would present all the
+<code>Text</code> nodes as if they were <a
+href='glossary.html#dt-sibling'><em>siblings</em></a> of each other
+yet had no <a
+href='glossary.html#dt-parent'><em>parent</em></a>.</p>
+
+<div class='div4'><a id="TreeWalker-Robustness"
+name='TreeWalker-Robustness'></a> 
+
+<h4 id='TreeWalker-Robustness-h4' class='div4'>1.1.3.1.
+Robustness</h4>
+
+<p>As with <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>,
+a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+may be active while the data structure it navigates is being
+edited, and must behave gracefully in the face of change. Additions
+and removals in the underlying data structure do not invalidate a
+<a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>;
+in fact, a <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+is never invalidated.</p>
+
+<p>But a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>'s
+response to these changes is quite different from that of a <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>.
+While <a class='noxref'
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>
+respond to editing by maintaining their position within the list
+that they are iterating over, <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalkers</code></a>
+will instead remain attached to their <code>currentNode</code>. All
+the <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>'s
+navigation methods operate in terms of the context of the
+<code>currentNode</code> at the time they are invoked, no matter
+what has happened to, or around, that node since the last time the
+<a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+was accessed. This remains true even if the
+<code>currentNode</code> is moved out of its original subtree.</p>
+
+<p>As an example, consider the following document fragment:</p>
+
+<div class='eg'>
+<pre>
+    ...
+    &lt;subtree&gt;
+        &lt;twRoot&gt;
+            &lt;currentNode/&gt;
+            &lt;anotherNode/&gt;
+        &lt;/twRoot&gt;
+    &lt;/subtree&gt;
+    ...
+ 
+</pre>
+</div>
+
+<p>Let's say we have created a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+whose <code>root</code> node is the &lt;twRoot/&gt; element and
+whose <code>currentNode</code> is the &lt;currentNode/&gt; element.
+For this illustration, we will assume that all the nodes shown
+above are accepted by the <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>'s
+<code>whatToShow</code> and filter settings.</p>
+
+<p>If we use <code>removeChild()</code> to remove the
+&lt;currentNode/&gt; element from its <a
+href='glossary.html#dt-parent'><em>parent</em></a>, that element
+remains the <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>'s
+<code>currentNode</code>, even though it is no longer within the
+<code>root</code> node's subtree. We can still use the <a
+class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+to navigate through any children that the orphaned
+<code>currentNode</code> may have, but are no longer able to
+navigate outward from the <code>currentNode</code> since there is
+no <a href='glossary.html#dt-parent'><em>parent</em></a>
+available.</p>
+
+<p>If we use <code>insertBefore()</code> or
+<code>appendChild()</code> to give the &lt;currentNode/&gt; a new
+<a href='glossary.html#dt-parent'><em>parent</em></a>, then <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+navigation will operate from the <code>currentNode</code>'s new
+location. For example, if we inserted the &lt;currentNode/&gt;
+immediately after the &lt;anotherNode/&gt; element, the <a
+class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>'s
+<code>previousSibling()</code> operation would move it back to the
+&lt;anotherNode/&gt;, and calling <code>parentNode()</code> would
+move it up to the &lt;twRoot/&gt;.</p>
+
+<p>If we instead insert the <code>currentNode</code> into the
+&lt;subtree/&gt; element, like so:</p>
+
+<div class='eg'>
+<pre>
+    ...
+    &lt;subtree&gt;
+        &lt;currentNode/&gt;
+        &lt;twRoot&gt;
+            &lt;anotherNode/&gt;
+        &lt;/twRoot&gt;
+    &lt;/subtree&gt;
+    ...
+</pre>
+</div>
+
+<p>we have moved the <code>currentNode</code> out from under the <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>'s
+<code>root</code> node. This does not invalidate the <a
+class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>;
+it may still be used to navigate relative to the
+<code>currentNode</code>. Calling its <code>parentNode()</code>
+operation, for example, would move it to the &lt;subtree/&gt;
+element, even though that too is outside the original
+<code>root</code> node. However, if the <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>'s
+navigation should take it back into the original <code>root</code>
+node's subtree -- for example, if rather than calling
+<code>parentNode()</code> we called <code>nextNode()</code>, moving
+the <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+to the &lt;twRoot/&gt; element -- the <code>root</code> node will
+"recapture" the <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>,
+and prevent it from traversing back out.</p>
+
+<p>This becomes a bit more complicated when filters are in use.
+Relocation of the <code>currentNode</code> -- or explicit selection
+of a new <code>currentNode</code>, or changes in the conditions
+that the <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+is basing its decisions on -- can result in a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+having a <code>currentNode</code> which would not otherwise be
+visible in the filtered (logical) view of the document. This node
+can be thought of as a "transient member" of that view. When you
+ask the <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+to navigate off this node the result will be just as if it had been
+visible, but you may be unable to navigate back to it unless
+conditions change to make it visible again.</p>
+
+<p>In particular: If the <code>currentNode</code> becomes part of a
+subtree that would otherwise have been Rejected by the filter, that
+entire subtree may be added as transient members of the logical
+view. You will be able to navigate within that subtree (subject to
+all the usual filtering) until you move upward past the Rejected <a
+href='glossary.html#dt-ancestor'><em>ancestor</em></a>. The
+behavior is as if the Rejected node had only been Skipped (since we
+somehow wound up inside its subtree) until we leave it; thereafter,
+standard filtering applies.</p>
+</div>
+
+<!-- div4 TreeWalker-Robustness --></div>
+
+<!-- div3 TreeWalker --></div>
+
+<!-- div2 Traversal-overview -->
+<div class='div2'><a id="Traversal-IDLDefinition"
+name='Traversal-IDLDefinition'></a> 
+
+<h2 id='Traversal-IDLDefinition-h2' class='div2'>1.2. Formal
+Interface Definition</h2>
+
+<dl>
+<dt><b>Interface <i><a id="Traversal-NodeIterator"
+name='Traversal-NodeIterator'>NodeIterator</a></i></b> (introduced
+in <b class='since'>DOM Level 2</b>)</dt>
+
+<dd>
+<p><code>Iterators</code> are used to step through a set of nodes,
+e.g. the set of nodes in a <code>NodeList</code>, the document
+subtree governed by a particular <code>Node</code>, the results of
+a query, or any other set of nodes. The set of nodes to be iterated
+is determined by the implementation of the
+<code>NodeIterator</code>. DOM Level 2 specifies a single
+<code>NodeIterator</code> implementation for document-order
+traversal of a document subtree. Instances of these iterators are
+created by calling <a
+href='traversal.html#Traversal-Document'><code>DocumentTraversal</code></a><code>
+.createNodeIterator()</code>.</p>
+
+<dl>
+<dt><br />
+<b>IDL Definition</b></dt>
+
+<dd>
+<div class='idl-code'>
+<pre>
+// Introduced in DOM Level 2:
+interface NodeIterator {
+  readonly attribute Node             root;
+  readonly attribute unsigned long    whatToShow;
+  readonly attribute NodeFilter       filter;
+  readonly attribute boolean          expandEntityReferences;
+  Node               nextNode()
+                                        raises(DOMException);
+  Node               previousNode()
+                                        raises(DOMException);
+  void               detach();
+};
+</pre>
+</div>
+
+<br />
+</dd>
+
+<dt><b>Attributes</b></dt>
+
+<dd>
+<dl>
+<dt><code class='attribute-name'><a
+id="Traversal-NodeIterator-expandEntityReferences"
+name='Traversal-NodeIterator-expandEntityReferences'>expandEntityReferences</a></code>
+of type <code>boolean</code>, readonly</dt>
+
+<dd>The value of this flag determines whether the children of
+entity reference nodes are visible to the iterator. If false, they
+and their <a
+href='glossary.html#dt-descendant'><em>descendants</em></a> will be
+rejected. Note that this rejection takes precedence over
+<code>whatToShow</code> and the filter. Also note that this is
+currently the only situation where <code>NodeIterators</code> may
+reject a complete subtree rather than skipping individual
+nodes.<br />
+<br />
+ To produce a view of the document that has entity references
+expanded and does not expose the entity reference node itself, use
+the <code>whatToShow</code> flags to hide the entity reference node
+and set <code>expandEntityReferences</code> to true when creating
+the iterator. To produce a view of the document that has entity
+reference nodes but no entity expansion, use the
+<code>whatToShow</code> flags to show the entity reference node and
+set <code>expandEntityReferences</code> to false.<br />
+</dd>
+
+<dt><code class='attribute-name'><a
+id="Traversal-NodeIterator-filter"
+name='Traversal-NodeIterator-filter'>filter</a></code> of type <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>,
+readonly</dt>
+
+<dd>The <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+used to screen nodes.<br />
+</dd>
+
+<dt><code class='attribute-name'><a
+id="Traversal-NodeIterator-root"
+name='Traversal-NodeIterator-root'>root</a></code> of type
+<code>Node</code>, readonly</dt>
+
+<dd>The root node of the <code>NodeIterator</code>, as specified
+when it was created.<br />
+</dd>
+
+<dt><code class='attribute-name'><a
+id="Traversal-NodeIterator-whatToShow"
+name='Traversal-NodeIterator-whatToShow'>whatToShow</a></code> of
+type <code>unsigned long</code>, readonly</dt>
+
+<dd>This attribute determines which node types are presented via
+the iterator. The available set of constants is defined in the <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+interface. Nodes not accepted by <code>whatToShow</code> will be
+skipped, but their children may still be considered. Note that this
+skip takes precedence over the filter, if any.<br />
+</dd>
+</dl>
+</dd>
+
+<dt><b>Methods</b></dt>
+
+<dd>
+<dl>
+<dt><code class='method-name'><a id="Traversal-NodeIterator-detach"
+name='Traversal-NodeIterator-detach'>detach</a></code></dt>
+
+<dd>
+<div class='method'>Detaches the <code>NodeIterator</code> from the
+set which it iterated over, releasing any computational resources
+and placing the iterator in the INVALID state. After
+<code>detach</code> has been invoked, calls to
+<code>nextNode</code> or <code>previousNode</code> will raise the
+exception INVALID_STATE_ERR. 
+
+<div><b>No Parameters</b></div>
+
+<div><b>No Return Value</b></div>
+
+<div><b>No Exceptions</b></div>
+</div>
+
+<!-- method -->
+</dd>
+
+<dt><code class='method-name'><a
+id="Traversal-NodeIterator-nextNode"
+name='Traversal-NodeIterator-nextNode'>nextNode</a></code></dt>
+
+<dd>
+<div class='method'>Returns the next node in the set and advances
+the position of the iterator in the set. After a
+<code>NodeIterator</code> is created, the first call to
+<code>nextNode()</code> returns the first node in the set. 
+
+<div class='return'><b>Return Value</b> 
+
+<div class='returntable'>
+<table
+summary='Layout table: the first cell contains the type of the return value, the second contains a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>Node</code></p>
+</td>
+<td>
+<p>The next <code>Node</code> in the set being iterated over, or
+<code>null</code> if there are no more members in that set.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- return -->
+<div class='exceptions'><b>Exceptions</b> 
+
+<div class='exceptiontable'>
+<table
+summary='Layout table: the first cell contains the type of the exception, the second contains the specific error code and a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>DOMException</code></p>
+</td>
+<td>
+<p>INVALID_STATE_ERR: Raised if this method is called after the
+<code>detach</code> method was invoked.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- exceptions -->
+<div><b>No Parameters</b></div>
+</div>
+
+<!-- method -->
+</dd>
+
+<dt><code class='method-name'><a
+id="Traversal-NodeIterator-previousNode"
+name='Traversal-NodeIterator-previousNode'>previousNode</a></code></dt>
+
+<dd>
+<div class='method'>Returns the previous node in the set and moves
+the position of the <code>NodeIterator</code> backwards in the set.
+
+
+<div class='return'><b>Return Value</b> 
+
+<div class='returntable'>
+<table
+summary='Layout table: the first cell contains the type of the return value, the second contains a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>Node</code></p>
+</td>
+<td>
+<p>The previous <code>Node</code> in the set being iterated over,
+or <code>null</code> if there are no more members in that set.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- return -->
+<div class='exceptions'><b>Exceptions</b> 
+
+<div class='exceptiontable'>
+<table
+summary='Layout table: the first cell contains the type of the exception, the second contains the specific error code and a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>DOMException</code></p>
+</td>
+<td>
+<p>INVALID_STATE_ERR: Raised if this method is called after the
+<code>detach</code> method was invoked.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- exceptions -->
+<div><b>No Parameters</b></div>
+</div>
+
+<!-- method -->
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+
+<dt><b>Interface <i><a id="Traversal-NodeFilter"
+name='Traversal-NodeFilter'>NodeFilter</a></i></b> (introduced in
+<b class='since'>DOM Level 2</b>)</dt>
+
+<dd>
+<p>Filters are objects that know how to "filter out" nodes. If a <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+or <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+is given a <code>NodeFilter</code>, it applies the filter before it
+returns the next node. If the filter says to accept the node, the
+traversal logic returns it; otherwise, traversal looks for the next
+node and pretends that the node that was rejected was not
+there.</p>
+
+<p>The DOM does not provide any filters. <code>NodeFilter</code> is
+just an interface that users can implement to provide their own
+filters.</p>
+
+<p><code>NodeFilters</code> do not need to know how to traverse
+from node to node, nor do they need to know anything about the data
+structure that is being traversed. This makes it very easy to write
+filters, since the only thing they have to know how to do is
+evaluate a single node. One filter may be used with a number of
+different kinds of traversals, encouraging code reuse.</p>
+
+<dl>
+<dt><br />
+<b>IDL Definition</b></dt>
+
+<dd>
+<div class='idl-code'>
+<pre>
+// Introduced in DOM Level 2:
+interface NodeFilter {
+
+  // Constants returned by acceptNode
+  const short               FILTER_ACCEPT                  = 1;
+  const short               FILTER_REJECT                  = 2;
+  const short               FILTER_SKIP                    = 3;
+
+
+  // Constants for whatToShow
+  const unsigned long       SHOW_ALL                       = 0xFFFFFFFF;
+  const unsigned long       SHOW_ELEMENT                   = 0x00000001;
+  const unsigned long       SHOW_ATTRIBUTE                 = 0x00000002;
+  const unsigned long       SHOW_TEXT                      = 0x00000004;
+  const unsigned long       SHOW_CDATA_SECTION             = 0x00000008;
+  const unsigned long       SHOW_ENTITY_REFERENCE          = 0x00000010;
+  const unsigned long       SHOW_ENTITY                    = 0x00000020;
+  const unsigned long       SHOW_PROCESSING_INSTRUCTION    = 0x00000040;
+  const unsigned long       SHOW_COMMENT                   = 0x00000080;
+  const unsigned long       SHOW_DOCUMENT                  = 0x00000100;
+  const unsigned long       SHOW_DOCUMENT_TYPE             = 0x00000200;
+  const unsigned long       SHOW_DOCUMENT_FRAGMENT         = 0x00000400;
+  const unsigned long       SHOW_NOTATION                  = 0x00000800;
+
+  short              acceptNode(in Node n);
+};
+</pre>
+</div>
+
+<br />
+</dd>
+
+<dt><b>Definition group <i><a
+id="Traversal-NodeFilter-acceptNode-constants"
+name='Traversal-NodeFilter-acceptNode-constants'>Constants returned
+by acceptNode</a></i></b></dt>
+
+<dd>
+<p>The following constants are returned by the acceptNode()
+method:</p>
+
+<dl>
+<dt><b>Defined Constants</b></dt>
+
+<dd>
+<dl>
+<dt><code class='constant-name'>FILTER_ACCEPT</code></dt>
+
+<dd>Accept the node. Navigation methods defined for <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+or <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+will return this node.</dd>
+
+<dt><code class='constant-name'>FILTER_REJECT</code></dt>
+
+<dd>Reject the node. Navigation methods defined for <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+or <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+will not return this node. For <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>,
+the children of this node will also be rejected. <a class='noxref'
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>
+treat this as a synonym for <code>FILTER_SKIP</code>.</dd>
+
+<dt><code class='constant-name'>FILTER_SKIP</code></dt>
+
+<dd>Skip this single node. Navigation methods defined for <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+or <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+will not return this node. For both <a class='noxref'
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+and <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>,
+the children of this node will still be considered.</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+
+<dt><b>Definition group <i><a
+id="Traversal-NodeFilter-whatToShow-constants"
+name='Traversal-NodeFilter-whatToShow-constants'>Constants for
+whatToShow</a></i></b></dt>
+
+<dd>
+<p>These are the available values for the <code>whatToShow</code>
+parameter used in <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalkers</code></a>
+and <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterators</code></a>.
+They are the same as the set of possible types for
+<code>Node</code>, and their values are derived by using a bit
+position corresponding to the value of <code>nodeType</code> for
+the equivalent node type. If a bit in <code>whatToShow</code> is
+set false, that will be taken as a request to skip over this type
+of node; the behavior in that case is similar to that of
+<code>FILTER_SKIP</code>.</p>
+
+<p>Note that if node types greater than 32 are ever introduced,
+they may not be individually testable via <code>whatToShow</code>.
+If that need should arise, it can be handled by selecting
+<code>SHOW_ALL</code> together with an appropriate
+<code>NodeFilter</code>.</p>
+
+<dl>
+<dt><b>Defined Constants</b></dt>
+
+<dd>
+<dl>
+<dt><code class='constant-name'>SHOW_ALL</code></dt>
+
+<dd>Show all <code>Nodes</code>.</dd>
+
+<dt><code class='constant-name'>SHOW_ATTRIBUTE</code></dt>
+
+<dd>Show <code>Attr</code> nodes. This is meaningful only when
+creating an iterator or tree-walker with an attribute node as its
+<code>root</code>; in this case, it means that the attribute node
+will appear in the first position of the iteration or traversal.
+Since attributes are never children of other nodes, they do not
+appear when traversing over the document tree.</dd>
+
+<dt><code class='constant-name'>SHOW_CDATA_SECTION</code></dt>
+
+<dd>Show <code>CDATASection</code> nodes.</dd>
+
+<dt><code class='constant-name'>SHOW_COMMENT</code></dt>
+
+<dd>Show <code>Comment</code> nodes.</dd>
+
+<dt><code class='constant-name'>SHOW_DOCUMENT</code></dt>
+
+<dd>Show <code>Document</code> nodes.</dd>
+
+<dt><code class='constant-name'>SHOW_DOCUMENT_FRAGMENT</code></dt>
+
+<dd>Show <code>DocumentFragment</code> nodes.</dd>
+
+<dt><code class='constant-name'>SHOW_DOCUMENT_TYPE</code></dt>
+
+<dd>Show <code>DocumentType</code> nodes.</dd>
+
+<dt><code class='constant-name'>SHOW_ELEMENT</code></dt>
+
+<dd>Show <code>Element</code> nodes.</dd>
+
+<dt><code class='constant-name'>SHOW_ENTITY</code></dt>
+
+<dd>Show <code>Entity</code> nodes. This is meaningful only when
+creating an iterator or tree-walker with an <code>Entity</code>
+node as its <code>root</code>; in this case, it means that the
+<code>Entity</code> node will appear in the first position of the
+traversal. Since entities are not part of the document tree, they
+do not appear when traversing over the document tree.</dd>
+
+<dt><code class='constant-name'>SHOW_ENTITY_REFERENCE</code></dt>
+
+<dd>Show <code>EntityReference</code> nodes.</dd>
+
+<dt><code class='constant-name'>SHOW_NOTATION</code></dt>
+
+<dd>Show <code>Notation</code> nodes. This is meaningful only when
+creating an iterator or tree-walker with a <code>Notation</code>
+node as its <code>root</code>; in this case, it means that the
+<code>Notation</code> node will appear in the first position of the
+traversal. Since notations are not part of the document tree, they
+do not appear when traversing over the document tree.</dd>
+
+<dt><code
+class='constant-name'>SHOW_PROCESSING_INSTRUCTION</code></dt>
+
+<dd>Show <code>ProcessingInstruction</code> nodes.</dd>
+
+<dt><code class='constant-name'>SHOW_TEXT</code></dt>
+
+<dd>Show <code>Text</code> nodes.</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+
+<dt><b>Methods</b></dt>
+
+<dd>
+<dl>
+<dt><code class='method-name'><a
+id="Traversal-NodeFilter-acceptNode"
+name='Traversal-NodeFilter-acceptNode'>acceptNode</a></code></dt>
+
+<dd>
+<div class='method'>Test whether a specified node is visible in the
+logical view of a <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+or <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>.
+This function will be called by the implementation of <a
+class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+and <a class='noxref'
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>;
+it is not normally called directly from user code. (Though you
+could do so if you wanted to use the same filter to guide your own
+application logic.) 
+
+<div class='parameters'><b>Parameters</b> 
+
+<div class='paramtable'>
+<dl>
+<dt><code class='parameter-name'>n</code> of type
+<code>Node</code></dt>
+
+<dd>The node to check to see if it passes the filter or not.<br />
+</dd>
+</dl>
+</div>
+</div>
+
+<!-- parameters -->
+<div class='return'><b>Return Value</b> 
+
+<div class='returntable'>
+<table
+summary='Layout table: the first cell contains the type of the return value, the second contains a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>short</code></p>
+</td>
+<td>
+<p>a constant to determine whether the node is accepted, rejected,
+or skipped, as defined <a
+href='#Traversal-NodeFilter-acceptNode-constants'>above</a>.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- return -->
+<div><b>No Exceptions</b></div>
+</div>
+
+<!-- method -->
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+
+<dt><b>Interface <i><a id="Traversal-TreeWalker"
+name='Traversal-TreeWalker'>TreeWalker</a></i></b> (introduced in
+<b class='since'>DOM Level 2</b>)</dt>
+
+<dd>
+<p><code>TreeWalker</code> objects are used to navigate a document
+tree or subtree using the view of the document defined by their
+<code>whatToShow</code> flags and filter (if any). Any function
+which performs navigation using a <code>TreeWalker</code> will
+automatically support any view defined by a
+<code>TreeWalker</code>.</p>
+
+<p>Omitting nodes from the logical view of a subtree can result in
+a structure that is substantially different from the same subtree
+in the complete, unfiltered document. Nodes that are <a
+href='glossary.html#dt-sibling'><em>siblings</em></a> in the
+<code>TreeWalker</code> view may be children of different, widely
+separated nodes in the original view. For instance, consider a <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+that skips all nodes except for Text nodes and the root node of a
+document. In the logical view that results, all text nodes will be
+<a href='glossary.html#dt-sibling'><em>siblings</em></a> and appear
+as direct children of the root node, no matter how deeply nested
+the structure of the original document.</p>
+
+<dl>
+<dt><br />
+<b>IDL Definition</b></dt>
+
+<dd>
+<div class='idl-code'>
+<pre>
+// Introduced in DOM Level 2:
+interface TreeWalker {
+  readonly attribute Node             root;
+  readonly attribute unsigned long    whatToShow;
+  readonly attribute NodeFilter       filter;
+  readonly attribute boolean          expandEntityReferences;
+           attribute Node             currentNode;
+                                        // raises(DOMException) on setting
+
+  Node               parentNode();
+  Node               firstChild();
+  Node               lastChild();
+  Node               previousSibling();
+  Node               nextSibling();
+  Node               previousNode();
+  Node               nextNode();
+};
+</pre>
+</div>
+
+<br />
+</dd>
+
+<dt><b>Attributes</b></dt>
+
+<dd>
+<dl>
+<dt><code class='attribute-name'><a
+id="Traversal-TreeWalker-currentNode"
+name='Traversal-TreeWalker-currentNode'>currentNode</a></code> of
+type <code>Node</code></dt>
+
+<dd>The node at which the <code>TreeWalker</code> is currently
+positioned.<br />
+Alterations to the DOM tree may cause the current node to no longer
+be accepted by the <code>TreeWalker</code>'s associated filter.
+<code>currentNode</code> may also be explicitly set to any node,
+whether or not it is within the subtree specified by the
+<code>root</code> node or would be accepted by the filter and
+<code>whatToShow</code> flags. Further traversal occurs relative to
+<code>currentNode</code> even if it is not part of the current
+view, by applying the filters in the requested direction; if no
+traversal is possible, <code>currentNode</code> is not
+changed.<br />
+ 
+
+<div class='exceptions'><b>Exceptions on setting</b> 
+
+<div class='exceptiontable'>
+<table
+summary='Layout table: the first cell contains the type of the exception, the second contains the specific error code and a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>DOMException</code></p>
+</td>
+<td>
+<p>NOT_SUPPORTED_ERR: Raised if an attempt is made to set
+<code>currentNode</code> to <code>null</code>.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- exceptions -->
+</dd>
+
+<dt><code class='attribute-name'><a
+id="Traversal-TreeWalker-expandEntityReferences"
+name='Traversal-TreeWalker-expandEntityReferences'>expandEntityReferences</a></code>
+of type <code>boolean</code>, readonly</dt>
+
+<dd>The value of this flag determines whether the children of
+entity reference nodes are visible to the <code>TreeWalker</code>.
+If false, they and their <a
+href='glossary.html#dt-descendant'><em>descendants</em></a> will be
+rejected. Note that this rejection takes precedence over
+<code>whatToShow</code> and the filter, if any.<br />
+ To produce a view of the document that has entity references
+expanded and does not expose the entity reference node itself, use
+the <code>whatToShow</code> flags to hide the entity reference node
+and set <code>expandEntityReferences</code> to true when creating
+the <code>TreeWalker</code>. To produce a view of the document that
+has entity reference nodes but no entity expansion, use the
+<code>whatToShow</code> flags to show the entity reference node and
+set <code>expandEntityReferences</code> to false.<br />
+</dd>
+
+<dt><code class='attribute-name'><a
+id="Traversal-TreeWalker-filter"
+name='Traversal-TreeWalker-filter'>filter</a></code> of type <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>,
+readonly</dt>
+
+<dd>The filter used to screen nodes.<br />
+</dd>
+
+<dt><code class='attribute-name'><a id="Traversal-TreeWalker-root"
+name='Traversal-TreeWalker-root'>root</a></code> of type
+<code>Node</code>, readonly</dt>
+
+<dd>The <code>root</code> node of the <code>TreeWalker</code>, as
+specified when it was created.<br />
+</dd>
+
+<dt><code class='attribute-name'><a
+id="Traversal-TreeWalker-whatToShow"
+name='Traversal-TreeWalker-whatToShow'>whatToShow</a></code> of
+type <code>unsigned long</code>, readonly</dt>
+
+<dd>This attribute determines which node types are presented via
+the <code>TreeWalker</code>. The available set of constants is
+defined in the <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+interface. Nodes not accepted by <code>whatToShow</code> will be
+skipped, but their children may still be considered. Note that this
+skip takes precedence over the filter, if any.<br />
+</dd>
+</dl>
+</dd>
+
+<dt><b>Methods</b></dt>
+
+<dd>
+<dl>
+<dt><code class='method-name'><a
+id="Traversal-TreeWalker-firstChild"
+name='Traversal-TreeWalker-firstChild'>firstChild</a></code></dt>
+
+<dd>
+<div class='method'>Moves the <code>TreeWalker</code> to the first
+visible <a href='glossary.html#dt-child'><em>child</em></a> of the
+current node, and returns the new node. If the current node has no
+visible children, returns <code>null</code>, and retains the
+current node. 
+
+<div class='return'><b>Return Value</b> 
+
+<div class='returntable'>
+<table
+summary='Layout table: the first cell contains the type of the return value, the second contains a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>Node</code></p>
+</td>
+<td>
+<p>The new node, or <code>null</code> if the current node has no
+visible children in the <code>TreeWalker</code>'s logical view.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- return -->
+<div><b>No Parameters</b></div>
+
+<div><b>No Exceptions</b></div>
+</div>
+
+<!-- method -->
+</dd>
+
+<dt><code class='method-name'><a
+id="Traversal-TreeWalker-lastChild"
+name='Traversal-TreeWalker-lastChild'>lastChild</a></code></dt>
+
+<dd>
+<div class='method'>Moves the <code>TreeWalker</code> to the last
+visible <a href='glossary.html#dt-child'><em>child</em></a> of the
+current node, and returns the new node. If the current node has no
+visible children, returns <code>null</code>, and retains the
+current node. 
+
+<div class='return'><b>Return Value</b> 
+
+<div class='returntable'>
+<table
+summary='Layout table: the first cell contains the type of the return value, the second contains a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>Node</code></p>
+</td>
+<td>
+<p>The new node, or <code>null</code> if the current node has no
+children in the <code>TreeWalker</code>'s logical view.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- return -->
+<div><b>No Parameters</b></div>
+
+<div><b>No Exceptions</b></div>
+</div>
+
+<!-- method -->
+</dd>
+
+<dt><code class='method-name'><a id="Traversal-TreeWalker-nextNode"
+name='Traversal-TreeWalker-nextNode'>nextNode</a></code></dt>
+
+<dd>
+<div class='method'>Moves the <code>TreeWalker</code> to the next
+visible node in document order relative to the current node, and
+returns the new node. If the current node has no next node, or if
+the search for nextNode attempts to step upward from the
+<code>TreeWalker</code>'s <code>root</code> node, returns
+<code>null</code>, and retains the current node. 
+
+<div class='return'><b>Return Value</b> 
+
+<div class='returntable'>
+<table
+summary='Layout table: the first cell contains the type of the return value, the second contains a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>Node</code></p>
+</td>
+<td>
+<p>The new node, or <code>null</code> if the current node has no
+next node in the <code>TreeWalker</code>'s logical view.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- return -->
+<div><b>No Parameters</b></div>
+
+<div><b>No Exceptions</b></div>
+</div>
+
+<!-- method -->
+</dd>
+
+<dt><code class='method-name'><a
+id="Traversal-TreeWalker-nextSibling"
+name='Traversal-TreeWalker-nextSibling'>nextSibling</a></code></dt>
+
+<dd>
+<div class='method'>Moves the <code>TreeWalker</code> to the next
+<a href='glossary.html#dt-sibling'><em>sibling</em></a> of the
+current node, and returns the new node. If the current node has no
+visible next <a
+href='glossary.html#dt-sibling'><em>sibling</em></a>, returns
+<code>null</code>, and retains the current node. 
+
+<div class='return'><b>Return Value</b> 
+
+<div class='returntable'>
+<table
+summary='Layout table: the first cell contains the type of the return value, the second contains a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>Node</code></p>
+</td>
+<td>
+<p>The new node, or <code>null</code> if the current node has no
+next <a href='glossary.html#dt-sibling'><em>sibling</em></a>. in
+the <code>TreeWalker</code>'s logical view.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- return -->
+<div><b>No Parameters</b></div>
+
+<div><b>No Exceptions</b></div>
+</div>
+
+<!-- method -->
+</dd>
+
+<dt><code class='method-name'><a
+id="Traversal-TreeWalker-parentNode"
+name='Traversal-TreeWalker-parentNode'>parentNode</a></code></dt>
+
+<dd>
+<div class='method'>Moves to and returns the closest visible <a
+href='glossary.html#dt-ancestor'><em>ancestor</em></a> node of the
+current node. If the search for <code>parentNode</code> attempts to
+step upward from the <code>TreeWalker</code>'s <code>root</code>
+node, or if it fails to find a visible <a
+href='glossary.html#dt-ancestor'><em>ancestor</em></a> node, this
+method retains the current position and returns <code>null</code>. 
+
+<div class='return'><b>Return Value</b> 
+
+<div class='returntable'>
+<table
+summary='Layout table: the first cell contains the type of the return value, the second contains a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>Node</code></p>
+</td>
+<td>
+<p>The new <a href='glossary.html#dt-parent'><em>parent</em></a>
+node, or <code>null</code> if the current node has no parent in the
+<code>TreeWalker</code>'s logical view.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- return -->
+<div><b>No Parameters</b></div>
+
+<div><b>No Exceptions</b></div>
+</div>
+
+<!-- method -->
+</dd>
+
+<dt><code class='method-name'><a
+id="Traversal-TreeWalker-previousNode"
+name='Traversal-TreeWalker-previousNode'>previousNode</a></code></dt>
+
+<dd>
+<div class='method'>Moves the <code>TreeWalker</code> to the
+previous visible node in document order relative to the current
+node, and returns the new node. If the current node has no previous
+node, or if the search for <code>previousNode</code> attempts to
+step upward from the <code>TreeWalker</code>'s <code>root</code>
+node, returns <code>null</code>, and retains the current node. 
+
+<div class='return'><b>Return Value</b> 
+
+<div class='returntable'>
+<table
+summary='Layout table: the first cell contains the type of the return value, the second contains a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>Node</code></p>
+</td>
+<td>
+<p>The new node, or <code>null</code> if the current node has no
+previous node in the <code>TreeWalker</code>'s logical view.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- return -->
+<div><b>No Parameters</b></div>
+
+<div><b>No Exceptions</b></div>
+</div>
+
+<!-- method -->
+</dd>
+
+<dt><code class='method-name'><a
+id="Traversal-TreeWalker-previousSibling"
+name='Traversal-TreeWalker-previousSibling'>previousSibling</a></code></dt>
+
+<dd>
+<div class='method'>Moves the <code>TreeWalker</code> to the
+previous <a href='glossary.html#dt-sibling'><em>sibling</em></a> of
+the current node, and returns the new node. If the current node has
+no visible previous <a
+href='glossary.html#dt-sibling'><em>sibling</em></a>, returns
+<code>null</code>, and retains the current node. 
+
+<div class='return'><b>Return Value</b> 
+
+<div class='returntable'>
+<table
+summary='Layout table: the first cell contains the type of the return value, the second contains a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>Node</code></p>
+</td>
+<td>
+<p>The new node, or <code>null</code> if the current node has no
+previous <a href='glossary.html#dt-sibling'><em>sibling</em></a>.
+in the <code>TreeWalker</code>'s logical view.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- return -->
+<div><b>No Parameters</b></div>
+
+<div><b>No Exceptions</b></div>
+</div>
+
+<!-- method -->
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+
+<dt><b>Interface <i><a id="Traversal-Document"
+name='Traversal-Document'>DocumentTraversal</a></i></b> (introduced
+in <b class='since'>DOM Level 2</b>)</dt>
+
+<dd>
+<p><code>DocumentTraversal</code> contains methods that create
+iterators and tree-walkers to traverse a node and its children in
+document order (depth first, pre-order traversal, which is
+equivalent to the order in which the start tags occur in the text
+representation of the document). In DOMs which support the
+Traversal feature, <code>DocumentTraversal</code> will be
+implemented by the same objects that implement the Document
+interface.</p>
+
+<dl>
+<dt><br />
+<b>IDL Definition</b></dt>
+
+<dd>
+<div class='idl-code'>
+<pre>
+// Introduced in DOM Level 2:
+interface DocumentTraversal {
+  NodeIterator       createNodeIterator(in Node root, 
+                                        in unsigned long whatToShow, 
+                                        in NodeFilter filter, 
+                                        in boolean entityReferenceExpansion)
+                                        raises(DOMException);
+  TreeWalker         createTreeWalker(in Node root, 
+                                      in unsigned long whatToShow, 
+                                      in NodeFilter filter, 
+                                      in boolean entityReferenceExpansion)
+                                        raises(DOMException);
+};
+</pre>
+</div>
+
+<br />
+</dd>
+
+<dt><b>Methods</b></dt>
+
+<dd>
+<dl>
+<dt><code class='method-name'><a
+id="Traversal-NodeIteratorFactory-createNodeIterator"
+name='Traversal-NodeIteratorFactory-createNodeIterator'>createNodeIterator</a></code></dt>
+
+<dd>
+<div class='method'>Create a new <a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>
+over the subtree rooted at the specified node. 
+
+<div class='parameters'><b>Parameters</b> 
+
+<div class='paramtable'>
+<dl>
+<dt><code class='parameter-name'>root</code> of type
+<code>Node</code></dt>
+
+<dd>The node which will be iterated together with its children. The
+iterator is initially positioned just before this node. The
+<code>whatToShow</code> flags and the filter, if any, are not
+considered when setting this position. The root must not be
+<code>null</code>.<br />
+</dd>
+
+<dt><code class='parameter-name'>whatToShow</code> of type
+<code>unsigned long</code></dt>
+
+<dd>This flag specifies which node types may appear in the logical
+view of the tree presented by the iterator. See the description of
+<a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+for the set of possible <code>SHOW_</code> values.<br />
+These flags can be combined using <code>OR</code>.<br />
+</dd>
+
+<dt><code class='parameter-name'>filter</code> of type <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a></dt>
+
+<dd>The <a class='noxref'
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+to be used with this <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>,
+or <code>null</code> to indicate no filter.<br />
+</dd>
+
+<dt><code class='parameter-name'>entityReferenceExpansion</code> of
+type <code>boolean</code></dt>
+
+<dd>The value of this flag determines whether entity reference
+nodes are expanded.<br />
+</dd>
+</dl>
+</div>
+</div>
+
+<!-- parameters -->
+<div class='return'><b>Return Value</b> 
+
+<div class='returntable'>
+<table
+summary='Layout table: the first cell contains the type of the return value, the second contains a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><a
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a></p>
+</td>
+<td>
+<p>The newly created <a class='noxref'
+href='traversal.html#Traversal-NodeIterator'><code>NodeIterator</code></a>.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- return -->
+<div class='exceptions'><b>Exceptions</b> 
+
+<div class='exceptiontable'>
+<table
+summary='Layout table: the first cell contains the type of the exception, the second contains the specific error code and a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>DOMException</code></p>
+</td>
+<td>
+<p>NOT_SUPPORTED_ERR: Raised if the specified <code>root</code> is
+<code>null</code>.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- exceptions -->
+</div>
+
+<!-- method -->
+</dd>
+
+<dt><code class='method-name'><a
+id="NodeIteratorFactory-createTreeWalker"
+name='NodeIteratorFactory-createTreeWalker'>createTreeWalker</a></code></dt>
+
+<dd>
+<div class='method'>Create a new <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+over the subtree rooted at the specified node. 
+
+<div class='parameters'><b>Parameters</b> 
+
+<div class='paramtable'>
+<dl>
+<dt><code class='parameter-name'>root</code> of type
+<code>Node</code></dt>
+
+<dd>The node which will serve as the <code>root</code> for the <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>.
+The <code>whatToShow</code> flags and the <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+are not considered when setting this value; any node type will be
+accepted as the <code>root</code>. The <code>currentNode</code> of
+the <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>
+is initialized to this node, whether or not it is visible. The
+<code>root</code> functions as a stopping point for traversal
+methods that look upward in the document structure, such as
+<code>parentNode</code> and nextNode. The <code>root</code> must
+not be <code>null</code>.<br />
+</dd>
+
+<dt><code class='parameter-name'>whatToShow</code> of type
+<code>unsigned long</code></dt>
+
+<dd>This flag specifies which node types may appear in the logical
+view of the tree presented by the tree-walker. See the description
+of <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+for the set of possible SHOW_ values.<br />
+These flags can be combined using <code>OR</code>.<br />
+</dd>
+
+<dt><code class='parameter-name'>filter</code> of type <a
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a></dt>
+
+<dd>The <a class='noxref'
+href='traversal.html#Traversal-NodeFilter'><code>NodeFilter</code></a>
+to be used with this <a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>,
+or <code>null</code> to indicate no filter.<br />
+</dd>
+
+<dt><code class='parameter-name'>entityReferenceExpansion</code> of
+type <code>boolean</code></dt>
+
+<dd>If this flag is false, the contents of
+<code>EntityReference</code> nodes are not presented in the logical
+view.<br />
+</dd>
+</dl>
+</div>
+</div>
+
+<!-- parameters -->
+<div class='return'><b>Return Value</b> 
+
+<div class='returntable'>
+<table
+summary='Layout table: the first cell contains the type of the return value, the second contains a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><a
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a></p>
+</td>
+<td>
+<p>The newly created <a class='noxref'
+href='traversal.html#Traversal-TreeWalker'><code>TreeWalker</code></a>.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- return -->
+<div class='exceptions'><b>Exceptions</b> 
+
+<div class='exceptiontable'>
+<table
+summary='Layout table: the first cell contains the type of the exception, the second contains the specific error code and a short description'
+ border='0'>
+<tr>
+<td valign='top'>
+<p><code>DOMException</code></p>
+</td>
+<td>
+<p>NOT_SUPPORTED_ERR: Raised if the specified <code>root</code> is
+<code>null</code>.</p>
+</td>
+</tr>
+</table>
+</div>
+</div>
+
+<!-- exceptions -->
+</div>
+
+<!-- method -->
+</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+</div>
+
+<!-- div2 Traversal-IDLDefinition --></div>
+
+<!-- div1 Traversal -->
+<div class='navbar' align='center'>
+<hr title='Navigation area separator' />
+<a accesskey='p' href='copyright-notice.html'>previous</a> &nbsp;
+<a accesskey='n' href='ranges.html'>next</a> &nbsp; <a
+accesskey='c' href='Overview.html#contents'>contents</a> &nbsp; <a
+accesskey='i' href='def-index.html'>index</a></div>
+</body>
+</html>
+

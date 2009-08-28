@@ -1,0 +1,1385 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- $Id: range.xml 225913 2001-06-01 11:15:37Z dims $ -->
+<!--
+ *************************************************************************
+ * BEGINNING OF LEVEL TWO RANGE                                           *
+ *************************************************************************
+-->
+<div1 id="Range"> 
+  <head>Document Object Model Range</head> 
+  <orglist role="editors"> 
+	 <member> 
+		<name>Peter Sharpe</name> 
+		<affiliation>SoftQuad Software Inc.</affiliation> 
+	 </member> 
+	 <member> 
+		<name>Vidur Apparao</name> 
+		<affiliation>Netscape Communications Corp.</affiliation> 
+	 </member> 
+	 <member> 
+		<name>Lauren Wood</name> 
+		<affiliation>SoftQuad Software Inc.</affiliation> 
+	 </member> 
+  </orglist> <?GENERATE-MINI-TOC?>
+<!--
+  ******************************************************
+  | INTRODUCTION                                       |
+  ******************************************************
+  -->
+  <div2 id="Level-2-Range-introduction"> 
+	 <head>Introduction</head> 
+	 <p> A Range identifies a range of content in a Document, DocumentFragment
+		or Attr. It is contiguous in the sense that it can be characterized as
+		selecting all of the content between a pair of boundary-points. </p> 
+	 <note> 
+		<p> In a text editor or a word processor, a user can make a selection by
+		  pressing down the mouse at one point in a document, moving the mouse to another
+		  point, and releasing the mouse. The resulting selection is contiguous and
+		  consists of the content between the two points. </p> 
+	 </note> 
+	 <p> The term 'selecting' does not mean that every Range corresponds to a
+		selection made by a GUI user; however, such a selection can be returned to a
+		DOM user as a Range. </p> 
+	 <note> 
+		<p> In bidirectional writing (Arabic, Hebrew), a range may correspond to
+		  a logical selection that is not necessarily contiguous when displayed. A
+		  visually contiguous selection, also used in some cases, may not correspond to a
+		  single logical selection, and may therefore have to be represented by more than
+		  one range. </p> 
+	 </note> 
+	 <p> The Range interface provides methods for accessing and manipulating the
+		document tree at a higher level than similar methods in the Node interface. The
+		expectation is that each of the methods provided by the Range interface for the
+		insertion, deletion and copying of content can be directly mapped to a series
+		of Node editing operations enabled by DOM Core. In this sense, the Range
+		operations can be viewed as convenience methods that also enable the
+		implementation to optimize common editing patterns. </p> 
+	 <p> This chapter describes the Range interface, including methods for
+		creating and moving a Range and methods for manipulating content with Ranges.</p>
+    <p>
+      The interfaces found within this section are not mandatory. A DOM
+      application may use the <code>hasFeature(feature, version)</code> method
+      of the <code>DOMImplementation</code> interface with parameter values
+      "Range" and "2.0" (respectively) to determine whether or not this module
+      is supported by the implementation. In order to fully support this
+      module, an implementation must also support the "Core" feature defined
+      defined in the DOM Level 2 Core specification <bibref
+      ref="DOMCore"/>. Please refer to additional information about <xspecref
+      href='&core.latest.url;/introduction.html#ID-Conformance'>conformance</xspecref>
+      in the DOM Level 2 Core specification <bibref ref="DOMCore"/>.
+    </p>
+  </div2> 
+  <div2 id="Level-2-Range-Definitions"> 
+	 <head>Definitions and Notation</head> 
+	 <div3 id="Level-2-Range-Position"> 
+		<head>Position</head> 
+		<p> This chapter refers to two different representations of a document:
+		  the text or source form that includes the document markup and the tree
+		  representation similar to the one described in the
+	          introduction section of the DOM Level 2 Core <bibref ref="DOMCore"/>. </p> 
+		<p>A Range consists of two <term>boundary-points</term> corresponding to
+		  the start and the end of the Range.
+		  <termdef id="td-boundarypoint" term="boundary-point">A boundary-point's
+		  position in a Document or DocumentFragment tree can be characterized by a node
+		  and an offset.</termdef> <termdef id="td-container" term="container">The node
+		  is called the <term>container</term> of the boundary-point and of its
+		  position.</termdef> <termdef id="td-ancestor-container" term="ancestor
+	        container">The container and its ancestors are the <term>ancestor
+		  container</term>s of the boundary-point and of its position.</termdef>
+		  <termdef id="td-offset" term="offset">The offset within the node is called the
+		  <term>offset</term> of the boundary-point and its position.</termdef> If the
+		  container is an Attr, Document, DocumentFragment, Element or EntityReference
+	node, the offset is between its <termref def="dt-child">child</termref> nodes. If the container is a
+		  CharacterData, Comment or ProcessingInstruction node, the offset is between the
+	<termref def="dt-16-bit-unit">16-bit units</termref> of the UTF-16 encoded string contained by it.</p> 
+		<p>The <termref def="td-boundarypoint">boundary-points</termref> of a
+		  Range must have a common <termref def="td-ancestor-container">ancestor
+		  container</termref> which is either a Document, DocumentFragment or Attr node.
+		  That is, the content of a Range must be entirely within the subtree rooted by a
+		  single Document, DocumentFragment or Attr Node.
+		  <termdef id="td-root-container" term="root container">This common
+		  <termref def="td-ancestor-container">ancestor container</termref> is known as
+		  the <term>root container</term> of the Range.</termdef>
+		  <termdef id="td-context-tree" term="context tree">The tree rooted by the
+		  <termref def="td-root-container">root container</termref> is known as the
+		  Range's <term>context tree</term>.</termdef> </p> 
+		<p> The <termref def="td-container">container</termref> of a 
+		  <termref def="td-boundarypoint">boundary-point</termref> of a Range must be an 
+		  Element, Comment, ProcessingInstruction, EntityReference, CDATASection,
+		  Document, DocumentFragment, Attr, or Text node. None of the 
+		  <termref def="td-ancestor-container">ancestor container</termref>s of the 
+		  <termref def="td-boundarypoint">boundary-point</termref> of a Range can be a
+		  DocumentType, Entity or Notation node.</p> 
+		<p>In terms of the text representation of a document, the 
+		  <termref def="td-boundarypoint">boundary-points</termref> of a Range can only
+		  be on token boundaries. That is, the <termref
+		  def="td-boundarypoint">boundary-point</termref> of the text range cannot be in
+		  the middle of a start- or end-tag of an element or within the name of an entity
+		  or character reference. A Range locates a contiguous portion of the content of
+		  the structure model.</p> 
+		<p>The relationship between locations in a text representation of the
+		  document and in the Node tree interface of the DOM is illustrated in the
+		  following diagram:</p>
+		<graphic source="images/RangeExample.gif" alt="Range Example"/> 
+		<p> In this diagram, four different Ranges are illustrated. The
+		  <termref def="td-boundarypoint">boundary-points</termref> of each Range are
+		  labelled with <i>s#</i> (the start of the Range) and <i>e#</i> (the end of the
+		  Range), where # is the number of the Range. For Range 2, the start is in the
+		  BODY element and is immediately after the H1 element and immediately before the
+		  P element, so its position is between the H1 and P children of BODY. The
+		  <termref def="td-offset">offset</termref> of a <termref
+		  def="td-boundarypoint">boundary-point</termref> whose
+		  <termref def="td-container">container</termref> is not a CharacterData node is
+		  0 if it is before the first child, 1 if between the first and second child, and
+		  so on. So, for the start of the Range 2, the <termref
+		  def="td-container">container</termref> is BODY and the <termref
+		  def="td-offset">offset</termref> is 1. The <termref
+		  def="td-offset">offset</termref> of a <termref
+		  def="td-boundarypoint">boundary-point</termref> whose
+		  <termref def="td-container">container</termref> is a CharacterData node is
+	obtained similarly but using <termref def="dt-16-bit-unit">16-bit unit</termref> positions instead. For example, the
+		  <termref def="td-boundarypoint">boundary-point</termref> labelled s1 of the
+		  Range 1 has a Text node (the one containing "Title") as its
+		  <termref def="td-container">container</termref> and an <termref
+		  def="td-offset">offset</termref> of 2 since it is between the second and third
+	<termref def="dt-16-bit-unit">16-bit unit</termref>.</p> 
+		<p>Notice that the <termref
+		  def="td-boundarypoint">boundary-point</termref>s of Ranges 3 and 4 correspond
+		  to the same location in the text representation. An important feature of the
+		  Range is that a <termref def="td-boundarypoint">boundary-point</termref> of a
+		  Range can unambiguously represent every position within the document tree.</p> 
+		<p>The <termref def="td-container">container</termref>s and
+		  <termref def="td-offset">offset</termref>s of the
+		  <termref def="td-boundarypoint">boundary-point</termref>s can be obtained
+		  through the following read-only Range attributes: 
+		  <eg>  readonly attribute Node startContainer; 
+  readonly attribute long startOffset;
+  readonly attribute Node endContainer; 
+  readonly attribute long endOffset;
+</eg> </p> 
+	 <p><termdef id="td-collapsed" term="collapsed">If the
+		<termref def="td-boundarypoint">boundary-point</termref>s of a Range have the
+		same <termref def="td-container">container</termref>s and
+		<termref def="td-offset">offset</termref>s, the Range is said to be a
+		<term>collapsed</term> Range.</termdef> (This is often referred to as an
+		insertion point in a user agent.)</p> 
+  </div3> 
+  <div3 id="Level-2-Range-Containment"> 
+	 <head>Selection and Partial Selection</head> 
+	 <p><termdef id="td-selected" term="selected">A node or <termref def="dt-16-bit-unit">16-bit unit</termref> unit is said
+		to be <term>selected</term> by a Range if it is between the two
+		<termref def="td-boundarypoint">boundary-point</termref>s of the
+		Range,</termdef> that is, if the position immediately before the node or 16-bit
+		unit is before the end of the Range and the position immediately after the node
+		or 16-bit unit is after the start of the range. For example, in terms of a text
+		representation of the document, an element would be <termref
+		def="td-selected">selected</termref> by a Range if its corresponding start-tag
+		was located after the start of the Range and its end-tag was located before the
+		end of the Range. In the examples in the above diagram, the Range 2
+		<termref def="td-selected">selects</termref> the P node and the Range 3
+		<termref def="td-selected">selects</termref> the text node containing the text
+		"Blah xyz."</p> 
+	 <p><termdef id="td-partially-selected" term="partially
+                selected">A node is said to be <term>partially selected</term>
+		by a Range if it is an <termref def="td-ancestor-container">ancestor
+		container</termref> of exactly one <termref
+		def="td-boundarypoint">boundary-point</termref> of the Range</termdef>. For
+		example, consider Range 1 in the above diagram. The element H1 is
+		<termref def="td-partially-selected">partially selected</termref> by that Range
+		since the start of the Range is within one of its children.</p> 
+  </div3> 
+  <div3 id="Level-2-Range-Notation"> 
+	 <head>Notation</head> 
+	 <p>Many of the examples in this chapter are illustrated using a text
+		representation of a document. The <termref
+		def="td-boundarypoint">boundary-point</termref>s of a Range are indicated by
+		displaying the characters (be they markup or data characters) between the two
+		<termref def="td-boundarypoint">boundary-point</termref>s in bold, as in 
+		<eg>    &lt;FOO&gt;A<b>BC&lt;BAR&gt;DE</b>F&lt;/BAR&gt;&lt;/FOO&gt;
+                  </eg> </p> 
+  <p>When both <termref def="td-boundarypoint">boundary-point</termref>s are at
+	 the same position, they are indicated with a bold caret ('<b>^</b>'), as in 
+	 <eg>    &lt;FOO&gt;A<b>^</b>BC&lt;BAR&gt;DEF&lt;/BAR&gt;&lt;/FOO&gt;
+</eg> </p> 
+<!--
+<p>And when referring to a single <termref
+  def="td-boundarypoint">boundary-point</termref>, it will be shown as a bold
+  asterisk ('<b>*</b>') as in 
+  <eg>    &lt;FOO&gt;A<b>*</b>BC&lt;BAR&gt;DEF&lt;/BAR&gt;&lt;/FOO&gt;
+</eg> </p> 
+-->
+</div3> 
+</div2> 
+<div2 id="Level-2-Range-Creating"> 
+<head>Creating a Range </head> 
+<p>A Range is created by calling the <code>createRange()</code> method on
+the <code>DocumentRange</code> interface. This interface can be obtained from
+the object implementing the <code>Document</code> interface using
+binding-specific casting methods.
+<eg>  interface DocumentRange {
+    Range createRange();
+  }</eg> </p> 
+<p>The initial state of the Range returned from this method is such that both
+of its <termref def="td-boundarypoint">boundary-point</termref>s are positioned
+at the beginning of the corresponding Document, before any content. In other
+words, the <termref def="td-container">container</termref> of each <termref
+def="td-boundarypoint">boundary-point</termref> is the Document node and the
+offset within that node is 0.</p> 
+<p>Like some objects created using methods in the Document interface (such as
+Nodes and DocumentFragments), Ranges created via a particular document instance
+can select only content associated with that Document, or with
+DocumentFragments and Attrs for which that Document is
+the <code>ownerDocument</code>. Such Ranges, then, can not be used with other
+Document instances.</p> 
+</div2> 
+<div2 id="Level-2-Range-Changing"> 
+<head>Changing a Range's Position</head> 
+<p>A Range's position can be specified by setting the <termref
+def="td-container">container</termref> and <termref
+def="td-offset">offset</termref> of each boundary-point with
+the <code>setStart</code> and <code>setEnd</code> methods.
+<eg>  void setStart(in Node parent, in long offset)
+                        raises(RangeException);
+  void setEnd(in Node parent, in long offset)
+                raises(RangeException);
+</eg> </p> 
+<p>If one boundary-point of a Range is set to have a <termref
+def="td-root-container">root container</termref> other than the current one for
+the Range, the Range is <termref def="td-collapsed">collapsed</termref> to the
+new position. This enforces the restriction that both boundary-points of a
+Range must have the same <termref def="td-root-container">root
+container</termref>.</p> 
+<p>The start position of a Range is guaranteed to never be after the end
+position. To enforce this restriction, if the start is set to be at a position
+after the end, the Range is <termref def="td-collapsed">collapsed</termref> to
+that position. Similarly, if the end is set to be at a position before the
+start, the Range is <termref def="td-collapsed">collapsed</termref> to that
+position. </p> 
+<p>It is also possible to set a Range's position relative to nodes in the tree:
+<eg>  void setStartBefore(in Node node);
+                              raises(RangeException);
+  void setStartAfter(in Node node);
+                       raises(RangeException);
+  void setEndBefore(in Node node);
+                      raises(RangeException);
+  void setEndAfter(in Node node);
+                     raises(RangeException);
+</eg> </p> 
+    <p>The <termref def="dt-parent">parent</termref> of the node becomes the <termref
+def="td-container">container</termref> of the <termref
+def="td-boundarypoint">boundary-point</termref> and the Range is subject to the
+same restrictions as given above in the description
+of <code>setStart()</code>and <code>setEnd()</code>.</p> 
+<p>A Range can be <termref def="td-collapsed">collapsed</termref> to either
+boundary-point: 
+<eg>  void collapse(in boolean toStart);</eg> </p> 
+<p>Passing <code>TRUE</code> as the parameter <code>toStart</code> will <termref
+def="td-collapsed">collapse</termref> the Range to its start, <code>FALSE</code>
+to its end.</p> 
+<p>Testing whether a Range is <termref
+def="td-collapsed">collapsed</termref> can be done by examining the
+<code>collapsed</code> attribute: 
+<eg>  readonly attribute boolean collapsed;</eg> </p> 
+<p>The following methods can be used to make a Range select the contents of a
+node or the node itself. 
+<eg>  void selectNode(in Node n);
+  void selectNodeContents(in Node n);</eg> </p> 
+<p>The following examples demonstrate the operation of the
+methods <code>selectNode</code> and <code>selectNodeContents</code>: 
+<eg>Before:
+  <b>^</b>&lt;BAR&gt;&lt;FOO&gt;A&lt;MOO&gt;B&lt;/MOO&gt;C&lt;/FOO&gt;&lt;/BAR&gt;
+After Range.selectNodeContents(FOO):
+  &lt;BAR&gt;&lt;FOO&gt;<b>A&lt;MOO&gt;B&lt;/MOO&gt;C</b>&lt;/FOO&gt;&lt;/BAR&gt;
+(In this case, FOO is the parent of both boundary-points)
+After Range.selectNode(FOO):
+
+&lt;BAR&gt;<b>&lt;FOO&gt;A&lt;MOO&gt;B&lt;/MOO&gt;C&lt;/FOO&gt;</b>&lt;/BAR&gt;</eg></p> 
+</div2> 
+<div2 id="Level-2-Range-Comparing"> 
+<head>Comparing Range Boundary-Points</head> 
+<p>It is possible to compare two Ranges by comparing their boundary-points: 
+<eg>  short compareBoundaryPoints(in CompareHow how, in Range sourceRange) raises(RangeException);</eg> </p> 
+<p>where <code>CompareHow</code> is one of four
+values: <code>START_TO_START</code>, <code> START_TO_END</code>, <code>
+END_TO_END</code> and <code>END_TO_START</code>. The return value is -1, 0 or 1
+depending on whether the corresponding boundary-point of the Range is before,
+equal to, or after the corresponding boundary-point of
+<code>sourceRange</code>. An exception is thrown if the two Ranges have
+different <termref def="td-root-container">root container</termref>s.</p> 
+<p>The result of comparing two boundary-points (or positions) is specified
+below. An informal but not always correct specification is that an
+boundary-point is before, equal to, or after another if it corresponds to a
+location in a text representation before, equal to, or after the other's
+corresponding location.</p> 
+<p><termdef id="td-comparison" term="before/after/equal
+                to">Let A and B be two boundary-points or positions. Then one
+of the following holds: A is <term>before</term> B, A is <term>equal
+to</term> B, or A is <term>after</term> B. Which one holds is specified in the
+following by examining four cases:</termdef></p> 
+<p>In the first case the boundary-points have the same <termref
+def="td-container">container</termref>. A is <term>before</term> B if its
+<termref def="td-offset">offset</termref> is less than the <termref
+def="td-offset">offset</termref> of B, A is <term>equal to</term> B if its
+<termref def="td-offset">offset</termref> is equal to the <termref
+def="td-offset">offset</termref> of B, and A is <term>after</term> B if its
+<termref def="td-offset">offset</termref> is greater than the <termref
+def="td-offset">offset</termref> of B.</p> 
+<p>In the second case a child node C of the <termref
+def="td-container">container</termref> of A is an <termref
+def="td-ancestor-container">ancestor container</termref> of B. In this case, A
+is <term>before</term> B if the <termref def="td-offset">offset</termref> of A
+is less than or equal to the index of the child node C and A is <term>after</term> B
+otherwise.</p> 
+<p>In the third case a child node C of the <termref
+def="td-container">container</termref> of B is an <termref
+def="td-ancestor-container">ancestor container</termref> of A. In this case, A
+is <term>before</term> B if the index of the child node C is less than the <termref
+def="td-offset">offset</termref> of B and A is <term>after</term> B
+otherwise.</p> 
+<p>In the fourth case, none of three other cases hold: the containers of A and
+      B are <termref def="dt-sibling">siblings</termref> or <termref
+								     def="dt-descendant">descendants</termref> of sibling nodes. In this case, A
+is <term>before</term> B if the <termref def="td-container">container</termref>
+of A is before the <termref def="td-container">container</termref> of B in a
+pre-order traversal of the Ranges' <termref def="td-context-tree">context
+tree</termref> and A is <term>after</term> B otherwise.</p> 
+<p>Note that because the same location in a text representation of the document
+can correspond to two different positions in the DOM tree, it is possible for
+two boundary-points to not compare equal even though they would be equal in the
+text representation. For this reason, the informal definition above can
+sometimes be incorrect.</p> 
+</div2> 
+<div2 id="Level-2-Range-Deleting-Content"> 
+<head>Deleting Content with a Range</head> 
+<p>One can delete the contents selected by a Range with: 
+<eg>  void deleteContents();</eg> </p> 
+<p><code>deleteContents()</code> deletes all nodes and characters selected by
+the Range. All other nodes and characters remain in the <termref
+def="td-context-tree">context tree</termref> of the Range. Some examples of
+this deletion operation are: 
+<eg>(1) &lt;FOO&gt;A<b>B&lt;MOO&gt;CD&lt;/MOO&gt;</b>CD&lt;/FOO&gt;  --&gt;
+&lt;FOO&gt;A<b>^</b>CD&lt;/FOO&gt;</eg> 
+<eg>(2) &lt;FOO&gt;A&lt;MOO&gt;B<b>C&lt;/MOO&gt;D</b>E&lt;/FOO&gt;  --&gt;
+&lt;FOO&gt;A&lt;MOO&gt;B&lt;/MOO&gt;<b>^</b>E&lt;/FOO&gt;</eg> 
+<eg>(3) &lt;FOO&gt;X<b>Y&lt;BAR&gt;Z</b>W&lt;/BAR&gt;Q&lt;/FOO&gt;  --&gt;
+&lt;FOO&gt;X<b>^</b>&lt;BAR&gt;W&lt;/BAR&gt;Q&lt;/FOO&gt;</eg> 
+<eg>(4) &lt;FOO&gt;&lt;BAR1&gt;A<b>B&lt;/BAR1&gt;&lt;BAR2/&gt;&lt;BAR3&gt;C</b>D&lt;/BAR3&gt;&lt;/FOO&gt;
+--&gt;  &lt;FOO&gt;&lt;BAR1&gt;A&lt;/BAR1&gt;<b>^</b>&lt;BAR3&gt;D&lt;/BAR3&gt;</eg> </p> 
+<p>After <code>deleteContents()</code> is invoked on a Range, the Range
+is <termref def="td-collapsed">collapsed</termref>. If no node was <termref
+def="td-partially-selected">partially selected</termref> by the Range, then it
+is <termref def="td-collapsed">collapsed</termref> to its original start point,
+as in example (1). If a node was <termref def="td-partially-selected">partially
+selected</termref> by the Range and was an <termref
+def="td-ancestor-container">ancestor container</termref> of the start of the
+      Range and no <termref def="dt-ancestor">ancestor</termref> of the node satisfies these two conditions, then the
+Range is collapsed to the position immediately after the node, as in examples
+(2) and (4). If a node was <termref def="td-partially-selected">partially
+selected</termref> by the Range and was an <termref
+def="td-ancestor-container">ancestor container</termref> of the end of the
+Range and no ancestor of the node satisfies these two conditions, then the
+Range is collapsed to the position immediately before the node, as in examples
+(3) and (4). </p>
+<p>Note that if deletion of a Range leaves adjacent Text nodes, they are not
+automatically merged, and empty Text nodes are not automatically removed. Two
+Text nodes should be joined only if each is the container of one of the
+boundary-points of a Range whose contents are deleted. To merge adjacent Text
+nodes, or remove empty text nodes, the <code>normalize()</code> method on
+the <code>Node</code> interface should be used. </p> 
+</div2> 
+<div2 id="Level-2-Range-Extracting"> 
+<head>Extracting Content</head> 
+<p>If the contents of a Range need to be extracted rather than deleted, the
+following method may be used: 
+<eg>  DocumentFragment extractContents();</eg> </p> 
+<p>The <code>extractContents()</code> method removes nodes from the
+Range's <termref def="td-context-tree">context tree</termref> similarly to the
+<code>deleteContents()</code> method. In addition, it places the deleted
+contents in a new <code>DocumentFragment</code>. The following examples
+illustrate the contents of the returned DocumentFragment: 
+<eg>(1) &lt;FOO&gt;A<b>B&lt;MOO&gt;CD&lt;/MOO&gt;</b>CD&lt;/FOO&gt;  --&gt;
+B&lt;MOO&gt;CD&lt;/MOO&gt;</eg> 
+<eg>(2) &lt;FOO&gt;A&lt;MOO&gt;B<b>C&lt;/MOO&gt;D</b>E&lt;/FOO&gt;  --&gt;
+&lt;MOO&gt;C&lt;MOO&gt;D</eg> 
+<eg>(3) &lt;FOO&gt;X<b>Y&lt;BAR&gt;Z</b>W&lt;/BAR&gt;Q&lt;/FOO&gt;  --&gt;
+Y&lt;BAR&gt;Z&lt;/BAR&gt;</eg> 
+<eg>(4)
+&lt;FOO&gt;&lt;BAR1&gt;A<b>B&lt;/BAR1&gt;&lt;BAR2/&gt;&lt;BAR3&gt;C</b>D&lt;/BAR3&gt;&lt;/FOO&gt; --&gt;
+&lt;BAR1&gt;B&lt;/BAR1&gt;&lt;BAR2/&gt;&lt;BAR3&gt;C&lt;/BAR3&gt;</eg> </p> 
+<p>It is important to note that nodes that are <termref
+def="td-partially-selected">partially selected</termref> by the Range are
+cloned. Since part of such a node's contents must remain in the Range's <termref
+def="td-context-tree">context tree</termref> and part of the contents must be
+moved to the new DocumentFragment, a clone of the <termref
+def="td-partially-selected">partially selected</termref> node is included in
+the new DocumentFragment. Note that cloning does not take place for <termref def="td-selected">selected</termref>
+elements; these nodes are moved to the new DocumentFragment.</p> 
+</div2> 
+<div2 id="Level-2-Range-Cloning"> 
+<head>Cloning Content</head> 
+<p>The contents of a Range may be duplicated using the following method: 
+<eg>  DocumentFragment cloneContents();</eg> </p> 
+<p>This method returns a <code>DocumentFragment</code> that is similar to the
+one returned by the method <code>extractContents()</code>. However, in this
+case, the original nodes and character data in the Range are not removed from
+the Range's <termref def="td-context-tree"> context tree</termref>. Instead, all
+of the nodes and text content within the returned
+<code>DocumentFragment</code> are cloned.</p>
+</div2> 
+<div2 id="Level-2-Range-Inserting"> 
+<head>Inserting Content</head> 
+<p>A node may be inserted into a Range using the following method: 
+<eg>  void insertNode(in Node n) raises(RangeException);</eg> </p> 
+<p>The <code>insertNode()</code> method inserts the specified node into the
+Range's <termref def="td-context-tree">context tree</termref>. The node is
+inserted at the start <termref
+def="td-boundarypoint">boundary-point</termref> of the Range, without modifying
+it.</p> 
+<p>If the start boundary point of the Range is in a <code>Text</code> node, the
+<code>insertNode</code> operation splits the <code>Text</code> node at the 
+boundary point. If the node to be inserted is also a <code>Text</code> node, 
+the resulting adjacent <code>Text</code> nodes are not normalized automatically;
+this operation is left to the application.</p>
+<p>The Node passed into this method can be a <code>DocumentFragment</code>. In
+that case, the contents of the <code>DocumentFragment</code> are inserted at
+the start <termref def="td-boundarypoint">boundary-point</termref> of the
+Range, but the <code>DocumentFragment</code> itself is not. Note that if the
+Node represents the root of a sub-tree, the entire sub-tree is inserted.</p> 
+<p>The same rules that apply to the <code>insertBefore()</code> method on the
+Node interface apply here. Specifically, the Node passed in, if it already has
+a parent, will be removed from its existing position.</p>
+</div2> 
+<div2 id="Level-2-Range-Surrounding"> 
+<head>Surrounding Content</head> 
+<p>The insertion of a single node to subsume the content selected by a Range
+can be performed with: 
+<eg>  void surroundContents(in Node newParent);</eg> </p> 
+<p>The <code>surroundContents()</code> method causes all of the content
+selected by the Range to be rooted by the specified node. The nodes may not be
+Attr, Entity, DocumentType, Notation, Document, or DocumentFragment nodes.
+Calling <code>surroundContents()</code> with the Element node FOO in the following
+examples yields: 
+<eg>     Before:
+       &lt;BAR&gt;A<b>B&lt;MOO&gt;C&lt;/MOO&gt;D</b>E&lt;/BAR&gt;
+
+     After surroundContents(FOO):
+
+&lt;BAR&gt;A<b>&lt;FOO&gt;B&lt;MOO&gt;C&lt;/MOO&gt;D&lt;/FOO&gt;</b>E&lt;/BAR&gt;</eg> </p> 
+<p>Another way of describing the effect of this method on the Range's <termref
+def="td-context-tree">context tree</termref> is to decompose it in terms of
+other operations: </p> 
+<olist> 
+<item> 
+<p>Remove the contents selected by the Range with a call
+to <code>extractContents()</code>.</p> 
+</item> 
+<item> 
+<p>Insert the node <code>newParent</code> where the Range is collapsed (after the
+extraction) with <code>insertNode().</code></p> 
+</item> 
+<item> 
+<p>Insert the entire contents of the extracted DocumentFragment
+into <code>newParent</code>. Specifically, invoke the <code>appendChild()</code>
+on <code>newParent</code> passing in the DocumentFragment returned as a result of the
+call to <code>extractContents()</code> </p> 
+</item> 
+<item> 
+<p>Select <code>newParent</code> and all of its contents with
+<code>selectNode()</code>.</p> 
+</item> 
+</olist> 
+<p>The <code>surroundContents()</code> method raises an exception if the
+Range <termref def="td-partially-selected">partially selects</termref> a
+non-Text node. An example of a Range for
+which <code>surroundContents()</code>raises an exception is: 
+<eg>     &lt;FOO&gt;A<b>B&lt;BAR&gt;C</b>D&lt;/BAR&gt;E&lt;/FOO&gt;</eg> </p> 
+<p>If the node <code>newParent</code> has any children, those children are removed before its
+insertion. Also, if the node <code>newParent</code> already has a parent, it is removed from
+the original parent's <code>childNodes</code> list.</p> 
+</div2> 
+<div2 id="Level-2-Range-Misc"> 
+<head>Miscellaneous Members</head> 
+<p>One can clone a Range: 
+<eg>  Range cloneRange();</eg> </p> 
+<p>This creates a new Range which selects exactly the same content as that
+selected by the Range on which the method <code>cloneRange</code> was invoked.
+No content is affected by this operation.</p> 
+<p>Because the boundary-points of a Range do not necessarily have the
+same <termref def="td-container">container</termref>s, use: 
+<eg>  readonly attribute Node commonAncestorContainer;</eg> </p> 
+<p>to get the <termref def="td-ancestor-container">ancestor
+container</termref> of both boundary-points that is furthest down from the
+Range's <termref def="td-root-container"> root container</termref></p> 
+<p>One can get a copy of all the character data selected or partially selected
+by a Range with: 
+<eg>  DOMString toString();</eg> </p> 
+<p>This does nothing more than simply concatenate all the character data
+selected by the Range. This includes character data in both
+<code>Text</code> and <code>CDATASection</code> nodes.</p> 
+</div2> 
+<div2 id="Level-2-Range-Mutation"> 
+<head>Range modification under document mutation</head> 
+<p>As a document is modified, the Ranges within the document need to be
+updated. For example, if one boundary-point of a Range is within a node and
+that node is removed from the document, then the Range would be invalid unless
+it is fixed up in some way. This section describes how Ranges are modified
+under document mutations so that they remain valid.</p> 
+<p>There are two general principles which apply to Ranges under document
+mutation: The first is that all Ranges in a document will remain valid after
+any mutation operation and the second is that, as much as possible, all Ranges
+will select the same portion of the document after any mutation operation.</p> 
+<p>Any mutation of the document tree which affect Ranges can be considered to
+be a combination of basic deletion and insertion operations. In fact, it can be
+convenient to think of those operations as being accomplished using the
+<code>deleteContents()</code> and <code>insertNode()</code> Range methods and,
+in the case of Text mutations, the <code>splitText()</code> and
+<code>normalize()</code> methods.</p> 
+<div3 id="Level-2-Range-Insertions"> 
+<head>Insertions </head> 
+<p>An insertion occurs at a single point, the insertion point, in the document.
+For any Range in the document tree, consider each boundary-point. The only case
+in which the boundary-point will be changed after the insertion is when the
+boundary-point and the insertion point have the same <termref
+def="td-container">container</termref> and the <termref
+def="td-offset">offset</termref> of the insertion point is strictly less than
+the <termref def="td-offset">offset</termref> of the Range's boundary-point. In
+that case the <termref def="td-offset">offset</termref> of the Range's
+boundary-point will be increased so that it is between the same nodes or
+characters as it was before the insertion.</p> 
+<p>Note that when content is inserted at a boundary-point, it is ambiguous as
+to where the boundary-point should be repositioned if its relative position is
+to be maintained. There are two possibilities: at the start or at the end of
+the newly inserted content. We have chosen that in this case neither
+the <termref def="td-container"> container</termref> nor <termref
+def="td-offset">offset</termref> of the boundary-point is changed. As a result,
+the boundary-point will be positioned at the start of the newly inserted
+content.</p> 
+<p><emph>Examples:</emph></p> 
+<p>Suppose the Range selects the following: 
+<eg>&lt;P&gt;Abcd efgh X<b>Y blah i</b>jkl&lt;/P&gt;</eg> </p> 
+<p>Consider the insertion of the text "<i>inserted text</i>" at the following
+positions: 
+<eg>1. Before the 'X':
+
+&lt;P&gt;Abcd efgh <i>inserted text</i>X<b>Y blah i</b>jkl&lt;/P&gt;
+
+2. After the 'X':
+
+&lt;P&gt;Abcd efgh X<b><i>inserted text</i>Y blah i</b>jkl&lt;/P&gt;
+
+3. After the 'Y':
+
+&lt;P&gt;Abcd efgh X<b>Y<i>inserted text</i> blah i</b>jkl&lt;/P&gt;
+
+4. After the 'h' in "Y blah":
+
+&lt;P&gt;Abcd efgh X<b>Y blah<i>inserted text</i> i</b>jkl&lt;/P&gt;
+
+</eg> </p> 
+</div3> 
+<div3 id="Level-2-Range-Deletions"> 
+<head>Deletions</head> 
+<p>Any deletion from the document tree can be considered as a sequence
+of <code>deleteContents()</code> operations applied to a minimal set of disjoint
+Ranges. To specify how a Range is modified under deletions we need only
+consider what happens to a Range under a single
+<code>deleteContents()</code>operation of another Range. And, in fact, we need
+only consider what happens to a single boundary-point of the Range since both
+boundary-points are modified using the same algorithm.</p> 
+<p>If a boundary-point of the original Range is within the content being
+deleted, then after the deletion it will be at the same position as the
+resulting boundary-point of the (now <termref
+def="td-collapsed">collapsed</termref>) Range used to delete the contents.</p> 
+<p>If a boundary-point is after the content being deleted then it is not
+affected by the deletion unless its <termref
+def="td-container">container</termref> is also the <termref
+def="td-container">container</termref> of one of the boundary-points of the
+Range being deleted. If there is such a common <termref
+def="td-container">container</termref>, then the index of the boundary-point is
+modified so that the boundary-point maintains its position relative to the
+content of the <termref def="td-container">container</termref>.</p> 
+<p>If a boundary-point is before the content being deleted then it is not
+affected by the deletion at all.</p> 
+<p><emph>Examples:</emph></p> 
+<p>In these examples, the Range on which <code>deleteContents()</code>is
+invoked is indicated by the underline. </p> 
+<p><emph>Example 1. </emph></p> 
+<p>Before: </p>
+<eg>&lt;P&gt;Abcd <u>efgh T</u><b><u>he </u>Range i</b>jkl&lt;/P&gt;</eg> 
+<p>After:</p> 
+<eg>&lt;P&gt;Abcd <b>Range i</b>jkl&lt;/P&gt;</eg> 
+<p><emph>Example 2. </emph></p> 
+<p>Before:</p> 
+<eg>&lt;p&gt;Abcd <u>efgh T<b>he Range i</b>j</u>kl&lt;/p&gt;</eg> 
+<p>After:</p> 
+<eg>&lt;p&gt;Abcd <b>^</b>kl&lt;/p&gt;</eg> 
+<p><emph>Example 3. </emph></p> 
+<p>Before:</p> 
+<eg>&lt;P&gt;ABCD <u>efgh T</u><b><u>he &lt;EM&gt;R</u>ange</b>&lt;/EM&gt; ijkl&lt;/P&gt;</eg> 
+<p>After:</p> 
+<eg>&lt;P&gt;ABCD &lt;EM&gt;<b>ange</b>&lt;/EM&gt; ijkl&lt;/P&gt;</eg> 
+<p>In this example, the container of the start boundary-point after the
+deletion is the Text node holding the string "ange".</p> 
+<p><emph>Example 4. </emph></p> 
+<p>Before:</p> 
+<eg>&lt;P&gt;Abcd <u>efgh T</u><b>he Range i</b>jkl&lt;/P&gt;</eg> 
+<p>After:</p> 
+<eg>&lt;P&gt;Abcd <b>he Range i</b>jkl&lt;/P&gt;</eg> 
+<p><emph>Example 5. </emph></p> 
+<p>Before:</p> 
+<eg>&lt;P&gt;Abcd <u>&lt;EM&gt;efgh T<b>he Range i</b>j&lt;/EM&gt;</u>kl&lt;/P&gt;</eg> 
+<p>After:</p> 
+<eg>&lt;P&gt;Abcd <b>^</b>kl&lt;/P&gt;</eg> 
+</div3> 
+</div2> 
+<div2 id="Level-2-Range-Interface"> 
+<head>Formal Description of the Range Interface</head>
+<p>To summarize, the complete, formal description of the <code>Range</code>
+interface is given below:</p> 
+<definitions> 
+<interface name="Range" id="Level-2-Range-idl" since="DOM Level 2"> 
+<descr> 
+</descr> 
+<attribute name="startContainer" type="Node" readonly="yes"
+id="Level-2-Range-attr-startParent"> 
+<descr> 
+<p>Node within which the Range begins </p> 
+</descr> 
+<getraises> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</getraises> 
+</attribute> 
+<attribute name="startOffset" type="long" readonly="yes"
+id="Level-2-Range-attr-startOffset"> 
+<descr> 
+<p>Offset within the starting node of the Range. </p> 
+</descr> 
+<getraises> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</getraises> 
+</attribute> 
+<attribute name="endContainer" type="Node" readonly="yes"
+id="Level-2-Range-attr-endParent"> 
+<descr> 
+<p>Node within which the Range ends </p> 
+</descr> 
+<getraises> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</getraises> 
+</attribute> 
+<attribute name="endOffset" type="long" readonly="yes"
+id="Level-2-Range-attr-endOffset"> 
+<descr> 
+<p>Offset within the ending node of the Range. </p> 
+</descr> 
+<getraises> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</getraises> 
+</attribute> 
+<attribute name="collapsed" type="boolean" readonly="yes"
+id="Level-2-Range-attr-collapsed"> 
+<descr> 
+<p>TRUE if the Range is collapsed </p> 
+</descr> 
+<getraises> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</getraises> 
+</attribute> 
+<attribute name="commonAncestorContainer" type="Node" readonly="yes"
+id="Level-2-Range-attr-commonParent"> 
+<descr> 
+<p>The <termref def="dt-deepest">deepest</termref> common <termref
+def="td-ancestor-container">ancestor container</termref> of the Range's two
+boundary-points.</p> 
+</descr> 
+<getraises> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</getraises> 
+</attribute> 
+<method name="setStart" id="Level2-Range-method-setStart"> 
+<descr> 
+<p>Sets the attributes describing the start of the Range. </p> 
+</descr> 
+<parameters> 
+<param name="refNode" type="Node" attr="in"> 
+<descr> 
+<p>The <code>refNode</code> value. This parameter must be different from
+<code>null</code>.</p> 
+</descr> 
+</param> 
+<param name="offset" type="long" attr="in"> 
+<descr> 
+<p>The <code>startOffset</code> value.</p> 
+</descr> 
+</param> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+<p> </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="RangeException"> 
+<descr> 
+<p>INVALID_NODE_TYPE_ERR: Raised if <code>refNode</code> or an ancestor of
+<code>refNode</code> is an Entity, Notation, or DocumentType node.</p> 
+</descr> 
+</exception> 
+<exception name="DOMException"> 
+<descr> 
+<p>INDEX_SIZE_ERR: Raised if <code>offset</code> is negative or greater than
+the number of child units in <code>refNode</code>. Child units are <termref def="dt-16-bit-unit">16-bit units</termref>
+if <code>refNode</code> is a type of CharacterData node (e.g., a Text or Comment node) or a ProcessingInstruction
+node. Child units are Nodes in all other cases.</p> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="setEnd" id="Level2-Range-method-setEnd"> 
+<descr> 
+<p>Sets the attributes describing the end of a Range.</p> 
+</descr> 
+<parameters> 
+<param name="refNode" type="Node" attr="in"> 
+<descr> 
+<p>The <code>refNode</code> value. This parameter must be different from
+<code>null</code>.</p> 
+</descr> 
+</param> 
+<param name="offset" type="long" attr="in"> 
+<descr> 
+<p>The <code>endOffset</code> value.</p> 
+</descr> 
+</param> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+<p> </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="RangeException"> 
+<descr> 
+<p>INVALID_NODE_TYPE_ERR: Raised if <code>refNode</code> or an ancestor of
+<code>refNode</code> is an Entity, Notation, or DocumentType node.</p> 
+</descr> 
+</exception> 
+<exception name="DOMException"> 
+<descr> 
+<p>INDEX_SIZE_ERR: Raised if <code>offset</code> is negative or greater than
+the number of child units in <code>refNode</code>. Child units are <termref def="dt-16-bit-unit">16-bit units</termref>
+if <code>refNode</code> is a type of CharacterData node (e.g., a Text or Comment node) or a ProcessingInstruction
+node. Child units are Nodes in all other cases.</p> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="setStartBefore" id="Level2-Range-setStartBefore"> 
+<descr> 
+<p>Sets the start position to be before a node</p> 
+</descr> 
+<parameters> 
+<param name="refNode" type="Node" attr="in"> 
+<descr> 
+<p>Range starts before <code>refNode</code></p> 
+</descr> 
+</param> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+<p> </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="RangeException"> 
+<descr> 
+<p>INVALID_NODE_TYPE_ERR: Raised if the root container of
+<code>refNode</code> is not an Attr, Document, or DocumentFragment node or if
+<code>refNode</code> is a Document, DocumentFragment, Attr, Entity, or Notation
+node.</p> 
+</descr> 
+</exception> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="setStartAfter" id="Level2-Range-method-setStartAfter"> 
+<descr> 
+<p>Sets the start position to be after a node</p> 
+</descr> 
+<parameters> 
+<param name="refNode" type="Node" attr="in"> 
+<descr> 
+<p>Range starts after <code>refNode</code></p> 
+</descr> 
+</param> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+<p> </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="RangeException"> 
+<descr> 
+<p>INVALID_NODE_TYPE_ERR: Raised if the root container of <code>refNode</code> is
+not an Attr, Document, or DocumentFragment node or if <code>refNode</code> is a
+Document, DocumentFragment, Attr, Entity, or Notation node.</p> 
+</descr> 
+</exception> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="setEndBefore" id="Level2-Range-method-setEndBefore"> 
+<descr> 
+<p>Sets the end position to be before a node. </p> 
+</descr> 
+<parameters> 
+<param name="refNode" type="Node" attr="in"> 
+<descr> 
+<p>Range ends before <code>refNode</code></p> 
+</descr> 
+</param> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+<p> </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="RangeException"> 
+<descr> 
+<p>INVALID_NODE_TYPE_ERR: Raised if the root container of <code>refNode</code> is
+not an Attr, Document, or DocumentFragment node or if <code>refNode</code> is a
+Document, DocumentFragment, Attr, Entity, or Notation node.</p> 
+</descr> 
+</exception> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="setEndAfter" id="Level2-Range-method-setEndAfter"> 
+<descr> 
+<p>Sets the end of a Range to be after a node </p> 
+</descr> 
+<parameters> 
+<param name="refNode" type="Node" attr="in"> 
+<descr> 
+<p>Range ends after <code>refNode</code>.</p> 
+</descr> 
+</param> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+<p> </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="RangeException"> 
+<descr> 
+<p>INVALID_NODE_TYPE_ERR: Raised if the root container of
+<code>refNode</code> is not an Attr, Document or DocumentFragment node or if
+<code>refNode</code> is a Document, DocumentFragment, Attr, Entity, or Notation
+node.</p> 
+</descr> 
+</exception> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="collapse" id="Level2-Range-method-collapse"> 
+<descr> 
+<p>Collapse a Range onto one of its boundary-points </p> 
+</descr> 
+<parameters> 
+<param name="toStart" type="boolean" attr="in"> 
+<descr> 
+<p>If TRUE, collapses the Range onto its start; if FALSE, collapses it onto its
+end.</p> 
+</descr> 
+</param> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+<p> </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="selectNode" id="Level2-Range-method-selectNode"> 
+<descr> 
+<p>Select a node and its contents </p> 
+</descr> 
+<parameters> 
+<param name="refNode" type="Node" attr="in"> 
+<descr> 
+<p>The node to select.</p> 
+</descr> 
+</param> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+<p> </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="RangeException"> 
+<descr> 
+<p>INVALID_NODE_TYPE_ERR: Raised if an ancestor of <code>refNode</code> is an
+Entity, Notation or DocumentType node or if <code>refNode</code> is a Document,
+DocumentFragment, Attr, Entity, or Notation node.</p> 
+</descr> 
+</exception> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="selectNodeContents" id="Level2-Range-method-selectNodeContents"> 
+<descr> 
+<p>Select the contents within a node </p> 
+</descr> 
+<parameters> 
+<param name="refNode" type="Node" attr="in"> 
+<descr> 
+<p>Node to select from</p> 
+</descr> 
+</param> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+<p> </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="RangeException"> 
+<descr> 
+<p>INVALID_NODE_TYPE_ERR: Raised if <code>refNode</code> or an ancestor of
+<code>refNode</code> is an Entity, Notation or DocumentType node.</p> 
+</descr> 
+</exception> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<group id="Level2-Range-compareHow" name="CompareHow"> 
+<descr> 
+<p>Passed as a parameter to the <code>compareBoundaryPoints</code> method.</p> 
+</descr> 
+<constant name="START_TO_START" type="unsigned short" value="0"> 
+<descr> 
+<p>Compare start boundary-point of <code>sourceRange</code> to start
+boundary-point of Range on which <code>compareBoundaryPoints</code> is
+invoked.</p> 
+</descr> 
+</constant> 
+<constant name="START_TO_END" type="unsigned short" value="1"> 
+<descr> 
+<p>Compare start boundary-point of <code>sourceRange</code> to end
+boundary-point of Range on which <code>compareBoundaryPoints</code> is
+invoked.</p> 
+</descr> 
+</constant> 
+<constant name="END_TO_END" type="unsigned short" value="2"> 
+<descr> 
+<p>Compare end boundary-point of <code>sourceRange</code> to end boundary-point
+of Range on which <code>compareBoundaryPoints</code> is invoked.</p> 
+</descr> 
+</constant> 
+<constant name="END_TO_START" type="unsigned short" value="3"> 
+<descr> 
+<p>Compare end boundary-point of <code>sourceRange</code> to start
+boundary-point of Range on which <code>compareBoundaryPoints</code> is
+invoked.</p> 
+</descr> 
+</constant> 
+</group> 
+<method name="compareBoundaryPoints"
+ id="Level2-Range-method-compareBoundaryPoints"> 
+<descr> 
+<p>Compare the boundary-points of two Ranges in a document.</p> 
+</descr> 
+<parameters> 
+<param name="how" type="unsigned short" attr="in"> 
+<descr> 
+<p>A code representing the type of comparison, as defined above.</p> 
+</descr> 
+</param> 
+<param name="sourceRange" type="Range" attr="in"> 
+<descr> 
+<p>The <code>Range</code> on which this current <code>Range</code> is compared to.</p> 
+</descr> 
+</param> 
+</parameters> 
+<returns type="short"> 
+<descr> 
+<p> -1, 0 or 1 depending on whether the corresponding boundary-point of the
+Range is respectively before, equal to, or after the corresponding boundary-point
+of <code>sourceRange</code>. </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="DOMException"> 
+<descr> 
+<p>WRONG_DOCUMENT_ERR: Raised if the two Ranges are not in the same Document or
+DocumentFragment.</p> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="deleteContents" id="Level2-Range-method-deleteContents"> 
+<descr> 
+<p>Removes the contents of a Range from the containing document or document
+fragment without returning a reference to the removed content. </p> 
+</descr> 
+<parameters> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+<p> </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="DOMException"> 
+<descr> 
+<p>NO_MODIFICATION_ALLOWED_ERR: Raised if any portion of the content of the
+Range is read-only or any of the nodes that contain any of the content of the
+Range are read-only.</p> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="extractContents" id="Level2-Range-method-extractContents"> 
+<descr> 
+<p>Moves the contents of a Range from the containing document or document
+fragment to a new DocumentFragment. </p> 
+</descr> 
+<parameters> 
+</parameters> 
+<returns type="DocumentFragment"> 
+<descr> 
+<p>A DocumentFragment containing the extracted contents. </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="DOMException"> 
+<descr> 
+<p>NO_MODIFICATION_ALLOWED_ERR: Raised if any portion of the content of the
+Range is read-only or any of the nodes which contain any of the content of the
+Range are read-only.</p> 
+<p>HIERARCHY_REQUEST_ERR: Raised if a DocumentType node would be extracted into
+the new DocumentFragment.</p> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="cloneContents" id="Level2-Range-method-cloneContents"> 
+<descr> 
+<p>Duplicates the contents of a Range </p> 
+</descr> 
+<parameters> 
+</parameters> 
+<returns type="DocumentFragment"> 
+<descr> 
+<p>A DocumentFragment that contains content equivalent to this Range.</p>
+</descr> 
+</returns> 
+<raises> 
+<exception name="DOMException"> 
+<descr> 
+<p>HIERARCHY_REQUEST_ERR: Raised if a DocumentType node would be extracted into
+the new DocumentFragment.</p> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="insertNode" id="Level2-Range-method-insertNode"> 
+<descr> 
+<p>Inserts a node into the Document or DocumentFragment at the start of the
+Range. If the container is a Text node, this will be split at the start of the
+Range (as if the Text node's splitText method was performed at the insertion
+point) and the insertion will occur between the two resulting Text nodes.
+Adjacent Text nodes will not be automatically merged. If the node to be inserted is a 
+DocumentFragment node, the children will be inserted rather than the DocumentFragment node
+itself.</p> 
+</descr> 
+<parameters> 
+<param name="newNode" type="Node" attr="in"> 
+<descr> 
+<p>The node to insert at the start of the Range</p> 
+</descr> 
+</param> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+<p> </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="DOMException"> 
+<descr> 
+<p>NO_MODIFICATION_ALLOWED_ERR: Raised if an <termref
+def="td-ancestor-container">ancestor container</termref> of the start of the
+Range is read-only.</p> 
+<p>WRONG_DOCUMENT_ERR: Raised if <code>newNode</code> and the <termref
+def="td-container">container</termref> of the start of the Range were not
+created from the same document.</p> 
+<p>HIERARCHY_REQUEST_ERR: Raised if the <termref
+def="td-container">container</termref> of the start of the Range is of a type
+that does not allow children of the type of <code>newNode</code> or
+if <code>newNode</code> is an ancestor of the <termref
+def="td-container">container</termref>.</p> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+<exception name="RangeException"> 
+<descr> 
+<p>INVALID_NODE_TYPE_ERR: Raised if <code>newNode</code> is an Attr, Entity,
+Notation, or Document node.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="surroundContents" id="Level2-Range-method-surroundContents"> 
+<descr> 
+<p>Reparents the contents of the Range to the given node and inserts the node
+at the position of the start of the Range. </p> 
+</descr> 
+<parameters> 
+<param name="newParent" type="Node" attr="in"> 
+<descr> 
+<p>The node to surround the contents with.</p> 
+</descr> 
+</param> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+<p> </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="DOMException"> 
+<descr> 
+<p>NO_MODIFICATION_ALLOWED_ERR: Raised if an <termref
+def="td-ancestor-container">ancestor container</termref> of either
+boundary-point of the Range is read-only.</p> 
+<p>WRONG_DOCUMENT_ERR: Raised if <code> newParent</code> and the <termref
+def="td-container">container</termref> of the start of the Range were not
+created from the same document.</p> 
+<p>HIERARCHY_REQUEST_ERR: Raised if the <termref
+def="td-container">container</termref> of the start of the Range is of a type
+that does not allow children of the type of <code>newParent</code> or
+if <code>newParent</code> is an ancestor of the <termref
+def="td-container">container</termref> or if <code>node</code> would end up with
+a child node of a type not allowed by the type of <code>node</code>.</p> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+<exception name="RangeException"> 
+<descr> 
+<p>BAD_BOUNDARYPOINTS_ERR: Raised if the Range <termref
+def="td-partially-selected">partially selects</termref> a non-text node.</p> 
+<p>INVALID_NODE_TYPE_ERR: Raised if <code> node</code> is an Attr, Entity,
+DocumentType, Notation, Document, or DocumentFragment node.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="cloneRange" id="Level2-Range-method-clone"> 
+<descr> 
+<p>Produces a new Range whose boundary-points are equal to the boundary-points
+of the Range. </p> 
+</descr> 
+<parameters> 
+</parameters> 
+<returns type="Range"> 
+<descr> 
+<p>The duplicated Range. </p> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="toString" id="Level2-Range-method-toString"> 
+<descr> 
+<p>Returns the contents of a Range as a string. This string contains only the
+data characters, not any markup. </p> 
+</descr> 
+<parameters> 
+</parameters> 
+<returns type="DOMString"> 
+<descr> 
+<p>The contents of the Range.</p> 
+</descr> 
+</returns>
+<raises> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+<method name="detach" id="Level2-Range-method-detach"> 
+<descr> 
+<p>Called to indicate that the Range is no longer in use and that the
+implementation may relinquish any resources associated with this Range.
+Subsequent calls to any methods or attribute getters on this Range will result
+in a <code>DOMException</code> being thrown with an error code of
+<code>INVALID_STATE_ERR</code>.</p> 
+</descr> 
+<parameters> 
+</parameters> 
+<returns type="void"> 
+<descr> 
+</descr> 
+</returns> 
+<raises> 
+<exception name="DOMException"> 
+<descr> 
+<p>INVALID_STATE_ERR: Raised if <code>detach()</code> has already been invoked
+on this object.</p> 
+</descr> 
+</exception> 
+</raises> 
+</method> 
+</interface> 
+<interface name="DocumentRange" id="Level-2-DocumentRange-idl"
+ since="DOM Level 2"> 
+<descr> 
+</descr> 
+<method name="createRange" id="Level2-DocumentRange-method-createRange"> 
+<descr> 
+<p>This interface can be obtained from the object implementing
+the <code>Document</code> interface using binding-specific casting methods.</p> 
+</descr> 
+<parameters> 
+</parameters> 
+<returns type="Range"> 
+<descr> 
+<p>The initial state of the Range returned from this method is such that both
+of its boundary-points are positioned at the beginning of the corresponding
+Document, before any content. The Range returned can only be used to select
+content associated with this Document, or with DocumentFragments and Attrs for
+which this Document is the <code>ownerDocument</code>.</p> 
+</descr> 
+</returns> 
+<raises> 
+</raises> 
+</method> 
+</interface> 
+<exception name="RangeException" id="RangeException" since="DOM Level 2"> 
+<descr> 
+<p>Range operations may throw a <code>RangeException</code> as specified in
+their method descriptions.</p> 
+</descr> 
+<component id="RangeExceptionComponent" name="code"> 
+<typename>unsigned short</typename> 
+</component> 
+</exception> 
+<group id="RangeExceptionCode" name="RangeExceptionCode"> 
+<descr> 
+<p>An integer indicating the type of error generated.</p> 
+</descr> 
+<constant name="BAD_BOUNDARYPOINTS_ERR" type="unsigned short" value="1"> 
+<descr> 
+<p>If the boundary-points of a Range do not meet specific requirements.</p> 
+</descr> 
+</constant> 
+<constant name="INVALID_NODE_TYPE_ERR" type="unsigned short" value="2"> 
+<descr> 
+<p>If the <termref def="td-container">container</termref> of an boundary-point
+of a Range is being set to either a node of an invalid type or a node with an
+ancestor of an invalid type.</p> 
+</descr> 
+</constant> 
+</group> 
+</definitions> 
+</div2> 
+</div1>      <!--
+      *************************************************************************
+      * END OF LEVEL TWO RANGE                                                 *
+      *************************************************************************
+      -->

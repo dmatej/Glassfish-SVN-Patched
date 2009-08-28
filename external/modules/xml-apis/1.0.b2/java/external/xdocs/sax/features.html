@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SAX2: Features and Properties</title>
+<link rel="stylesheet" type="text/css" href="sax-style.css" />
+</head>
+
+<body>
+<h1>SAX2: Features and Properties</h1>
+
+<blockquote>
+<p class="copyright">This document is in the Public Domain.</p>
+</blockquote>
+
+<p>SAX2 adds standard methods to query and set features and properties
+in an <a href="javadoc/org/xml/sax/XMLReader.html">XMLReader</a>.  It
+is now possible to request an XML reader to validate (or not to
+validate) a document, or to internalize (or not to internalize) all
+names, using the <var>getFeature</var>, <var>setFeature</var>,
+<var>getProperty</var>, and <var>setProperty</var> methods:</p>
+
+<blockquote><pre xml:space="preserve">
+try {
+  if (xmlReader.getFeature("http://xml.org/sax/features/validation")) {
+    System.out.println("Parser is validating.");
+  } else {
+    System.out.println("Parser is not validating.");
+  }
+} catch (SAXException e) {
+  System.out.println("Parser may or may not be validating.");
+}
+</pre></blockquote>
+
+<p>There is no fixed set of features or properties available for SAX2:
+implementors are free to define new features and properties as needed.
+All feature and property names are fully-qualified URIs (often URLs),
+such as "http://www.acme.com/features/foo"; as with Namespace URIs,
+people should always define feature and property names based on URIs
+that they control.</p>
+
+<p>If an application attempts to query or set a feature that the XML
+reader does not recognize, the XML reader throws a <a
+href="javadoc/org/xml/sax/SAXNotRecognizedException.html"
+>SAXNotRecognizedException</a>; if the application attempts to set a
+feature state or property value that the XML reader cannot support at
+that time, or attempts to modify a feature or property when it is
+read-only, the XML reader throws a <a
+href="javadoc/org/xml/sax/SAXNotSupportedException.html"
+>SAXNotSupportedException</a>.</p>
+
+<p>One important application for properties is getting and setting
+extension event handlers, for event types not supported by the four
+core SAX2 handlers, <a
+href="javadoc/org/xml/sax/EntityResolver.html">EntityResolver</a>, <a
+href="javadoc/org/xml/sax/DTDHandler.html">DTDHandler</a>, <a
+href="javadoc/org/xml/sax/ContentHandler.html">ContentHandler</a>, and
+<a href="javadoc/org/xml/sax/ErrorHandler.html">ErrorHandler</a>.
+Outside parties are free to define handlers for any kinds of events,
+and to create properties for setting and querying them.</p>
+
+<p>All XML readers are required to recognize the
+"http://xml.org/sax/features/namespaces" and the
+"http://xml.org/sax/features/namespace-prefixes" features (see below),
+and to support a <var>true</var> value for the namespaces property and
+a false value for the <var>namespace-prefixes</var> property: these
+requirements ensure that all SAX2 XML readers can provide the minimal
+required Namespace support for higher-level specs such as RDF, XSL,
+XML Schemas, and XLink.  XML readers are not required to recognize or
+support any other features or any properties, even the core ones
+listed below.</p>
+
+
+<div>
+<h2>Core Features</h2>
+
+<p>While anyone is free to define new SAX2 features, there is a core
+reference set of features that are application to a wide range of
+applications, and that many SAX2 XML readers may choose to support.
+Note that features may be read-only or read/write, and that they may
+be modifiable only when parsing, or only when not parsing.</p>
+
+<dl>
+
+<dt><code>http://xml.org/sax/features/namespaces</code></dt>
+<dd><strong>true:</strong> Perform Namespace processing.</dd>
+<dd><strong>false:</strong> Optionally do not perform Namespace processing (implies
+<var>namespace-prefixes</var>).  See <a href="namespaces.html">SAX2:
+Namespaces</a> for further information.</dd>
+<dd><strong>access:</strong> (parsing) read-only; (not parsing)
+read/write</dd>
+
+<dt><code>http://xml.org/sax/features/namespace-prefixes</code></dt>
+<dd><strong>true:</strong> Report the original prefixed names and
+attributes used for Namespace declarations.</dd>
+<dd><strong>false:</strong> Do not report attributes used for
+Namespace declarations, and optionally do not report original prefixed
+names.</dd>
+<dd><strong>access:</strong> (parsing) read-only; (not parsing)
+read/write</dd>
+
+<dt><code>http://xml.org/sax/features/string-interning</code></dt>
+<dd><strong>true:</strong> All element names, prefixes, attribute
+names, Namespace URIs, and local names are internalized using
+java.lang.String.intern.</dd>
+<dd><strong>false:</strong> Names are not necessarily
+internalized.</dd>
+<dd><strong>access:</strong> (parsing) read-only; (not parsing)
+read/write</dd>
+
+<dt><code>http://xml.org/sax/features/validation</code></dt>
+<dd><strong>true:</strong> Report all validation errors (implies
+<var>external-general-entities</var> and
+<var>external-parameter-entities</var>).</dd>
+<dd><strong>false:</strong> Do not report validation errors.</dd>
+<dd><strong>access:</strong> (parsing) read-only; (not parsing)
+read/write</dd>
+
+<dt><code>http://xml.org/sax/features/external-general-entities</code></dt>
+<dd><strong>true:</strong> Include all external general (text)
+entities.</dd>
+<dd><strong>false:</strong> Do not include external general
+entities.</dd>
+<dd><strong>access:</strong> (parsing) read-only; (not parsing)
+read/write</dd>
+
+<dt><code>http://xml.org/sax/features/external-parameter-entities</code></dt>
+<dd><strong>true:</strong> Include all external parameter entities,
+including the external DTD subset.</dd>
+<dd><strong>false:</strong> Do not include any external parameter
+entities, even the external DTD subset.</dd>
+<dd><strong>access:</strong> (parsing) read-only; (not parsing)
+read/write</dd>
+
+</dl>
+
+<!-- end of "Core Features" -->
+</div>
+
+
+<div>
+<h2>Core Properties</h2>
+
+<p>While anyone is free to define new SAX2 properties, there is a core
+reference set of properties that are application to a wide range of
+applications, and that many SAX2 XML readers may choose to support.
+Note that properties may be read-only or read/write, and that they may
+be modifiable only when parsing, or only when not parsing.</p>
+
+<dl>
+
+<dt><code>http://xml.org/sax/properties/dom-node</code></dt>
+<dd><strong>data type:</strong> <code>org.w3c.dom.Node</code></dd>
+<dd><strong>description:</strong> When parsing, the current DOM node
+being visited if this is a DOM iterator; when not parsing, the root
+DOM node for iteration.</dd>
+<dd><strong>access:</strong> (parsing) read-only; (not parsing)
+read/write</dd>
+
+<dt><code>http://xml.org/sax/properties/xml-string</code></dt>
+<dd><strong>data type:</strong> <code>java.lang.String</code></dd>
+<dd><strong>description:</strong> The literal string of characters
+that was the source for the current event.</dd>
+<dd><strong>access:</strong> read-only</dd>
+
+</dl>
+
+<!-- end of "Core Properties" -->
+</div>
+
+<hr />
+
+<address>$Id: features.html 225904 2001-05-20 03:12:59Z curcuru $</address>
+
+</body>
+</html>

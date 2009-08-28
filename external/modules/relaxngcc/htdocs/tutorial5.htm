@@ -1,0 +1,130 @@
+<html>
+<head>
+	<title>RelaxNGCC <?ja?>チュートリアル５<?/ja?><?en?>Tutorial 5<?/en?></title>
+	<link rel="stylesheet" href="ngcc.css">
+	<!--<?ja?><meta HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=shift_jis"><?/ja?>-->
+</head>
+<body>
+<h1>RelaxNGCC <?ja?>チュートリアル５<?/ja?><?en?>Tutorial 5<?/en?></h1>
+<div align=right>
+	$Revision: 1.2 $ by <a href="mailto:kk@kohsuke.org">Kohsuke Kawaguchi</a>
+</div>
+
+<p>
+	When you are building a non-trivial parser by using RelaxNGCC, you'll often find it useful to make a sort of "context" information available to all the parsing code. Such context information can include an error handler to report problems, a global dictionary where you keep ID values, a stack that tracks <tt>xml:base</tt> attribute, or a map that keeps track of in-scope namespace bindings.
+</p><p>
+	In this tutorial, I will explain how you can extend <tt>NGCCRuntime</tt> to meet those needs.
+</p>
+
+<h2>How NGCCRuntime work?</h2>
+<p>
+	The primary role of <tt>NGCCRuntime</tt> is to receive SAX events and choreograph <tt>NGCCHandler</tt>-derived classes, which are generated from the schema. For this purpose, it implements <tt>XMLFilter</tt>. In turn, each <tt>NGCCHandler</tt> class has the <tt>$runtime</tt> field, which points back to the instance of <tt>NGCCRuntime</tt> in charge.
+</p><p>
+	RelaxNGCC allows applications to use its own class instead of <tt>NGCCRuntime</tt>, provided that it extends <tt>NGCCRuntime</tt>. There you define your own methods and fields, and you can have your <tt>NGCCHandler</tt>s use those methods and fields.
+</p><p>
+	Let's see a very simple example of this. First, you define your own class by extending <tt>NGCCRuntime</tt>.
+</p>
+<pre>
+package org.acme.parser;
+import org.acme.parser.gen.NGCCRuntime;
+
+public class MyRuntime extends NGCCRuntime {
+    public void sayHello() {
+        System.out.println("Hello, world!");
+    }
+}
+</pre>
+<p>
+	It's usually a good idea to use a dedicated package for the NGCC-generated files (because you can easily delete all the generated files), so I assumed that the generated code will go to <tt>org.acme.parser.gen</tt> package.
+</p><p>
+	Then, you put a <tt>cc:runtime-type</tt> attribute to your grammar, so that the compiler can generate a reference to the runtime by using a proper type.
+</p>
+<pre>
+&lt;element name="root"
+  xmlns="http://relaxng.org/ns/structure/1.0"
+  xmlns:cc="http://www.xml.gr.jp/xmlns/relaxngcc"
+  <em>cc:runtime-type="org.acme.parser.Runtime"</em>
+  >
+  &lt;text/>
+  <em>&lt;cc:java>
+    $runtime.sayHello();
+  &lt;/cc:java></em>
+&lt;/element>
+</pre>
+<p>
+	Each handler class will be generated with the <tt>$runtime</tt> field declared as the specified type (when you don't specify <tt>cc:runtime-type</tt>, it will still be declared but as the default <tt>NGCCRuntime</tt> type.)
+	
+	Thus to access the runtime, you simply need to use this field, as shown in the example.
+</p>
+
+
+
+<h2>Built-in Functionalities of NGCCRuntime</h2>
+<p>
+	Default <tt>NGCCRuntime</tt> comes with many functionalities that are useful to many applications.
+</p>
+<dl>
+	<dt>org.xml.sax.Locator getLocator()</dt>
+	<dd>
+		This method returns a Locator object which keeps information about the source location information (such as line numbers.) Note that you need to take a snapshot of Locator if you want to remember the value. (Usually by <code>new org.xml.sax.helpers.LocatorImpl(getLocator())</code>)
+	</dd>
+	
+	<dt>String resolveNamespacePrefix( String prefix )</dt>
+	<dd>
+		This method resolves a namespace prefix to the corresponding namespace URI. Thus this method can be used to process QNames.
+	</dd>
+	
+	<dt>void redirectSubtree( ContentHandler child, String uri, String local, String qname )</dt>
+	<dd>
+		This method allows you to redirect a sub-tree to another <tt>ContentHandler</tt>. The specified ContentHandler will receive this sub-tree as if it were the whole document (that is, <tt>startDocument</tt> and <tt>endDocument</tt> are properly invoked, for example.) This mechanism can be used to delegate a processing to some other library. In the following example, a dom4j tree is built from a sub-tree.
+		<pre>
+&lt;element name="root"
+  xmlns="http://relaxng.org/ns/structure/1.0"
+  xmlns:cc="http://www.xml.gr.jp/xmlns/relaxngcc"
+  >
+  <em>&lt;cc:java-body>
+    private org.dom4j.io.SAXContentHandler domBuilder
+      = new org.dom4j.io.SAXContentHandler();
+  &lt;/cc:java-body></em>
+  &lt;zeroOrMore>
+    &lt;choice>
+      &lt;element name="child">
+        &lt;text/>
+      &lt;/element>
+      &lt;group>
+        &lt;element>
+          &lt;anyName>
+            &lt;except>
+              &lt;nsName/>
+            &lt;/except>
+          &lt;/anyName>
+          <em>$runtime.redirectSubtree(domBuilder,uri,localName,qname);</em>
+          &lt;empty/>
+        &lt;/element>
+        <em>Document result = domBuilder.getDocument();</em>
+    &lt;/choice>
+  &lt;/zeroOrMore>
+&lt;/element>
+		</pre>
+		
+		Three variables <tt>uri,localName,qname</tt> are variables that defined locally. For now, just think of it as a magic. The key here is to define RELAX NG as if the content of that element is empty. By the time your code after the <tt>&lt;/element</tt> is executed, the whole sub-tree is completely fed to the specified ContentHandler.
+	</dd>
+</dl>
+
+
+
+<h2>Overriding ContentHandler methods</h2>
+<p>
+	Unless you know what you are doing, it is not recommended to override methods like <tt>startElement</tt> or <tt>characters</tt>, because there is a delay between the time a runtime receives those events and the time a handler receives those events.
+</p>
+
+
+<h2>Conclusion</h2>
+<p>
+	Writing a lengthy Java code inside schema is painful and makes it less legible. This is yet another reason why you want to use this mechanism. For a real world example, see the source code of RELAX NG parser of RelaxNGCC itself. Also, check out the javadoc of <tt>NGCCRuntime</tt> for details.
+</p>
+
+<hr>
+<div align="right"><a href="index.htm">RelaxNGCC home</a></div>
+</body>
+</html>

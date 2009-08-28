@@ -1,0 +1,104 @@
+<?xml version="1.0"?>
+<project name="rngom" default="jar">
+  
+	<target name="compile">
+		<mkdir dir="build/classes"/>
+		<mkdir dir="build/classes-1.3"/>
+		<mkdir dir="build/qname-classes"/>
+		<mkdir dir="build/test-classes"/>
+    <mkdir dir="build/parsed-classes"/>
+
+		<javacc    target="src/org/kohsuke/rngom/parse/compact/CompactSyntax.jj"
+			outputdirectory="src/org/kohsuke/rngom/parse/compact"
+			javacchome="lib/javacc" />
+		
+		<javac source="1.3" target="1.3" srcdir="qname" destdir="build/qname-classes" />
+		
+		<javac source="1.5" srcdir="src" destdir="build/classes" debug="on">
+			<classpath>
+				<pathelement path="${cpath.fromsource}"/>
+				<fileset dir="lib" includes="*.jar"/>
+				<pathelement path="build/qname-classes"/>
+			</classpath>
+		</javac>
+		
+    <copy todir="build/classes-1.3">
+    	<fileset dir="build/classes"/>
+    </copy>
+    
+		<javac source="1.3" target="1.3" srcdir="test" destdir="build/test-classes">
+			<classpath>
+				<fileset dir="lib" includes="*.jar"/>
+				<pathelement path="build/qname-classes"/>
+				<pathelement path="build/classes"/>
+			</classpath>
+		</javac>
+	</target>
+	
+	<target name="javadoc">
+		<mkdir dir="build/javadoc"/>
+		<javadoc locale="en_US" destdir="build/javadoc">
+			<fileset dir="src"/>
+		</javadoc>
+	</target>
+	
+	<target name="jar" depends="compile">
+		<tstamp/>
+		<zip destfile="build/rngom-src.zip">
+			<fileset dir="src" includes="**/*"/>
+			<fileset dir="qname" includes="**/*"/>
+		</zip>
+		<jar destfile="build/jax-qname.jar">
+			<fileset dir="build/qname-classes" includes="**/*.class"/>
+		</jar>
+		<jar destfile="build/rngom-1.3.jar">
+			<manifest>
+				<attribute name="Date" value="${TODAY}"/>
+				<attribute name="Class-Path" value="relaxngDatatype.jar jax-qname.jar"/>
+			</manifest>
+			<metainf dir="../www/doc" includes="jing-copying.html, LICENSE.txt"/>
+			
+			<fileset dir="build/classes-1.3" includes="**/*.class"/>
+			<fileset dir="src" includes="**/*.properties"/>
+		</jar>
+		<jar destfile="build/rngom.jar">
+			<manifest>
+				<attribute name="Date" value="${TODAY}"/>
+				<attribute name="Class-Path" value="relaxngDatatype.jar jax-qname.jar"/>
+			</manifest>
+			<metainf dir="../www/doc" includes="jing-copying.html, LICENSE.txt"/>
+			
+			<fileset dir="build/classes" includes="**/*.class"/>
+			<fileset dir="src" includes="**/*.properties"/>
+		</jar>
+		<jar destfile="build/rngom-sample.jar">
+			<manifest>
+				<attribute name="Main-Class" value="Main"/>
+				<attribute name="Class-Path" value="rngom-1.3.jar relaxngDatatype.jar jax-qname.jar"/>
+			</manifest>
+			
+			<fileset dir="build/test-classes" includes="**/*.class"/>
+		</jar>
+	</target>
+	
+	<target name="dist" depends="clean, javadoc, jar">
+		<tstamp/>
+		<zip zipfile="build/rngom-${DSTAMP}.zip">
+			<zipfileset prefix="rngom-${DSTAMP}" dir="build"
+				includes="*.jar"/>
+			<zipfileset prefix="rngom-${DSTAMP}" dir="lib"
+				includes="relaxngDatatype.jar"/>
+			<zipfileset prefix="rngom-${DSTAMP}" dir="build"
+				includes="javadoc/**/*"/>
+			<zipfileset prefix="rngom-${DSTAMP}" dir="."
+				includes="src/**/*, test/**/*"
+				excludes="**/CVS" />
+			<zipfileset prefix="rngom-${DSTAMP}" dir="../www/doc"
+				includes="*" excludes="CVS" />
+		</zip>
+	</target>
+	
+	<target name="clean">
+		<delete dir="build"/>
+	</target>
+</project>

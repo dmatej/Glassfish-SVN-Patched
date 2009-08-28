@@ -1,0 +1,383 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- $Date: 2001-06-01 07:15:37 -0400 (Fri, 01 Jun 2001) $ $Revision: 225913 $ -->
+<!--
+ *************************************************************************
+ * BEGINNING OF CORE                                                     *
+ *************************************************************************
+-->
+<div1 id="Core"> 
+  <head>Document Object Model Core</head> 
+  <orglist role="editors"> 
+	 <member> 
+		<name>Arnaud Le Hors</name> 
+		<affiliation>IBM</affiliation> 
+	 </member> 
+	 <member> 
+		<name>Gavin Nicol</name> 
+		<affiliation>Inso EPS (for DOM Level 1)</affiliation> 
+	 </member> 
+	 <member> 
+		<name>Lauren Wood</name> 
+		<affiliation>SoftQuad, Inc. (for DOM Level 1)</affiliation> 
+	 </member> 
+	 <member> 
+		<name>Mike Champion</name> 
+		<affiliation>ArborText (for DOM Level 1 from November 20,
+		  1997)</affiliation> 
+	 </member> 
+	 <member> 
+		<name>Steve Byrne</name> 
+		<affiliation>JavaSoft (for DOM Level 1 until November 19,
+		  1997)</affiliation> 
+	 </member> 
+  </orglist> <?GENERATE-MINI-TOC?>
+<!--
+  ******************************************************
+  | INTRODUCTION                                       |
+  ******************************************************
+  -->
+  <div2 id="ID-1590626201"> 
+	 <head>Overview of the DOM Core Interfaces</head> 
+	 <p>This section defines a set of objects and interfaces for accessing and
+		manipulating document objects. The functionality specified in this section (the
+		<emph>Core</emph> functionality) is sufficient to allow software developers and
+		web script authors to access and manipulate parsed HTML and XML content inside
+		conforming products. The DOM Core API also allows creation and population of a <code>Document</code> object using only DOM API calls; loading a <code>Document</code> and saving it persistently is left to the product that implements the
+		DOM API.</p> 
+	 <div3 id="ID-1590626202"><head>The DOM Structure Model</head>	
+		<p>The DOM presents documents as a hierarchy of <code>Node</code> objects that also implement other, more specialized interfaces. Some
+		  types of nodes may have <termref def="dt-child">child</termref> nodes of
+		  various types, and others are leaf nodes that cannot have anything below them
+		  in the document structure. For XML and HTML, the node types, and which node
+		  types they may have as children, are as follows: 
+		  <ulist>	
+			 <item>
+				<p><code>Document</code> -- <code>Element</code> (maximum of one), <code>ProcessingInstruction</code>, <code>Comment</code>, <code>DocumentType</code> (maximum of one) </p>
+			 </item>	
+			 <item>
+				<p><code>DocumentFragment</code> -- <code>Element</code>, <code>ProcessingInstruction</code>, <code>Comment</code>, <code>Text</code>, <code>CDATASection</code>, <code>EntityReference</code> </p>
+			 </item>	
+			 <item>
+				<p><code>DocumentType</code> -- no children</p>
+			 </item>	
+			 <item>
+				<p><code>EntityReference</code> -- <code>Element</code>, <code>ProcessingInstruction</code>, <code>Comment</code>, <code>Text</code>, <code>CDATASection</code>, <code>EntityReference</code> </p>
+			 </item>	
+			 <item>
+				<p><code>Element</code> -- <code>Element</code>, <code>Text</code>, <code>Comment</code>, <code>ProcessingInstruction</code>, <code>CDATASection</code>, <code>EntityReference</code></p>
+			 </item>	
+			 <item>
+				<p><code>Attr</code> -- <code>Text</code>, <code>EntityReference</code></p>
+			 </item>	
+			 <item>
+				<p><code>ProcessingInstruction</code> -- no children</p>
+			 </item>	
+			 <item>
+				<p><code>Comment</code> -- no children</p>
+			 </item>	
+			 <item>
+				<p><code>Text</code> -- no children</p>
+			 </item>	
+			 <item>
+				<p><code>CDATASection</code> -- no children</p>
+			 </item>	
+			 <item>
+				<p><code>Entity</code> -- <code>Element</code>, <code>ProcessingInstruction</code>, <code>Comment</code>, <code>Text</code>, <code>CDATASection</code>, <code>EntityReference</code></p>
+			 </item>	
+			 <item>
+				<p><code>Notation</code> -- no children</p>
+			 </item>	
+		  </ulist> </p> 
+		<p>The DOM also specifies a <code>NodeList</code> interface to handle ordered lists of <code>Nodes</code>, such as the children of a <code>Node</code>, or the <termref def="dt-element">elements</termref> returned by the <code>getElementsByTagName</code> method of the <code>Element</code> interface, and also a <code>NamedNodeMap</code> interface to handle unordered sets of nodes referenced by their name
+		  attribute, such as the attributes of an <code>Element</code>. <termdef id="td-live" term="live"> <code>NodeList</code> and <code>NamedNodeMap</code> objects in the DOM are <term>live</term>; that is, changes to the
+		  underlying document structure are reflected in all relevant <code>NodeList</code> and <code>NamedNodeMap</code> objects. For example, if a DOM user gets a <code>NodeList</code> object containing the children of an <code>Element</code>, then subsequently adds more children to that <termref
+		  def="dt-element">element</termref> (or removes children, or modifies them),
+		  those changes are automatically reflected in the <code>NodeList</code>, without further action on the user's part. Likewise, changes to a <code>Node</code> in the tree are reflected in all references to that <code>Node</code> in <code>NodeList</code> and <code>NamedNodeMap</code> objects.</termdef></p> 
+		<p>Finally, the interfaces <code>Text</code>, <code>Comment</code>, and <code>CDATASection</code> all inherit from the <code>CharacterData</code> interface.</p> 
+	 </div3> 
+	 <div3 id="ID-249F15BA"><head>Memory Management</head> 
+		<p>Most of the APIs defined by this specification are
+		  <emph>interfaces</emph> rather than classes. That means that an implementation
+		  need only expose methods with the defined names and specified operation, not
+		  implement classes that correspond directly to the interfaces. This allows the
+		  DOM APIs to be implemented as a thin veneer on top of legacy applications with
+		  their own data structures, or on top of newer applications with different class
+		  hierarchies. This also means that ordinary constructors (in the Java or C++
+		  sense) cannot be used to create DOM objects, since the underlying objects to be
+		  constructed may have little relationship to the DOM interfaces. The
+		  conventional solution to this in object-oriented design is to define
+		  <emph>factory</emph> methods that create instances of objects that implement
+		  the various interfaces. Objects implementing some interface "X" are created by
+		  a "createX()" method on the <code>Document</code> interface; this is because all DOM objects live in the context of a
+		  specific Document.</p>	
+		<p>The DOM Level 2 API does <emph>not</emph> define a standard way to
+		  create <code>DOMImplementation</code> objects; DOM implementations must provide some proprietary way of
+		  bootstrapping these DOM interfaces, and then all other objects can be built
+		  from there.</p> 
+		<p>The Core DOM APIs are designed to be compatible with a wide range of
+		  languages, including both general-user scripting languages and the more
+		  challenging languages used mostly by professional programmers. Thus, the DOM
+		  APIs need to operate across a variety of memory management philosophies, from
+		  language bindings that do not expose memory management to the user at all,
+		  through those (notably Java) that provide explicit constructors but provide an
+		  automatic garbage collection mechanism to automatically reclaim unused memory,
+		  to those (especially C/C++) that generally require the programmer to explicitly
+		  allocate object memory, track where it is used, and explicitly free it for
+		  re-use. To ensure a consistent API across these platforms, the DOM does not
+		  address memory management issues at all, but instead leaves these for the
+		  implementation. Neither of the explicit language bindings defined by the DOM
+		  API (for <termref def="dt-ECMAScript">ECMAScript</termref> and Java)
+		  require any memory management methods, but DOM bindings for other languages
+		  (especially C or C++) may require such support. These extensions will be the
+		  responsibility of those adapting the DOM API to a specific language, not the
+		  DOM Working Group. </p> 
+	 </div3> 
+	 <div3 id="ID-45A944CB"> 
+		<head>Naming Conventions</head> 
+		<p>While it would be nice to have attribute and method names that are
+		  short, informative, internally consistent, and familiar to users of similar
+		  APIs, the names also should not clash with the names in legacy APIs supported
+		  by DOM implementations. Furthermore, both OMG IDL and <code>ECMAScript</code> have significant limitations in their ability to disambiguate names
+		  from different namespaces that make it difficult to avoid naming conflicts with
+		  short, familiar names. So, DOM names tend to be long and descriptive
+		  in order to be unique across all environments. </p> 
+		<p>The Working Group has also attempted to be internally consistent in
+		  its use of various terms, even though these may not be common distinctions in
+		  other APIs. For example, the DOM API uses the method name "remove" when the method
+		  changes the structural model, and the method name "delete" when the method gets
+		  rid of something inside the structure model. The thing that is deleted is not
+		  returned. The thing that is removed may be returned, when it makes sense to
+		  return it. </p> 
+	 </div3> 
+	 <div3 id="ID-1CED5498"> 
+		<head>Inheritance vs. Flattened Views of the API</head> 
+		<p>The DOM Core <termref def="dt-API">APIs</termref> present two somewhat
+		  different sets of interfaces to an XML/HTML document: one presenting an "object
+		  oriented" approach with a hierarchy of <termref
+		  def="dt-inheritance">inheritance</termref>, and a "simplified" view that allows
+		  all manipulation to be done via the <code>Node</code> interface without requiring casts (in Java and other C-like languages)
+		  or query interface calls in <termref def="dt-COM">COM</termref> environments.
+		  These operations are fairly expensive in Java and COM, and the DOM may be used
+		  in performance-critical environments, so we allow significant functionality
+		  using just the <code>Node</code> interface. Because many other users will find the
+		  <termref def="dt-inheritance">inheritance</termref> hierarchy easier to
+		  understand than the "everything is a <code>Node</code>" approach to the DOM, we also support the full higher-level interfaces
+		  for those who prefer a more object-oriented <termref
+		  def="dt-API">API</termref>. </p> 
+		<p>In practice, this means that there is a certain amount of redundancy
+		  in the <termref def="dt-API">API</termref>. The Working Group considers the
+		  "<termref def="dt-inheritance">inheritance</termref>" approach the primary view
+		  of the API, and the full set of functionality on <code>Node</code> to be "extra" functionality that users may employ, but that does not
+		  eliminate the need for methods on other interfaces that an object-oriented
+		  analysis would dictate. (Of course, when the O-O analysis yields an attribute
+		  or method that is identical to one on the <code>Node</code> interface, we don't specify a completely redundant one.) Thus, even
+		  though there is a generic <code>nodeName</code> attribute on the <code>Node</code> interface, there is still a <code>tagName</code> attribute on the <code>Element</code> interface; these two attributes must contain the same value, but the
+		  it is worthwhile to support both, given the different
+		  constituencies the DOM <termref def="dt-API">API</termref> must satisfy. </p> 
+	 </div3> 
+	 <div3 id="ID-C74D1578"> 
+		<head>The <code>DOMString</code> type</head> 
+		<p>To ensure interoperability, the DOM specifies the following:</p> 
+		<ulist>	
+		  <item> 
+			 <definitions> 
+				<typedef name="DOMString" id="DOMString"> 
+				  <descr>
+					 <p>A <code>DOMString</code> is a sequence of <termref def="dt-16-bit-unit">16-bit
+						units</termref>.</p> 
+				  </descr> 
+				  <sequence type="unsigned short"/> 
+				</typedef> 
+			 </definitions>	
+		  </item> 
+		  <item>
+			 <p>Applications must encode <code>DOMString</code> using UTF-16 (defined in <bibref ref="Unicode"/> and Amendment 1 of
+				<bibref ref="ISO10646"/>).</p> 
+			 <p>The UTF-16 encoding was chosen because of its widespread industry
+				practice. Note that for both HTML and XML, the document character set (and
+				therefore the notation of numeric character references) is based on UCS
+				[ISO-10646]. A single numeric character reference in a source document may
+				therefore in some cases correspond to two 16-bit units in a <code>DOMString</code> (a high surrogate and a low surrogate).</p> 
+			 <note>
+				<p>Even though the DOM defines the name of the string type to be <code>DOMString</code>, bindings may use different names. For example for Java, <code>DOMString</code> is bound to the <code>String</code> type because it also uses UTF-16 as its encoding.</p>
+			 </note>
+		  </item> 
+		</ulist> 
+		<note>
+		  <p>As of August 2000, the OMG IDL specification (<bibref
+			 ref="OMGIDL"/>) included a <code>wstring</code> type. However, that definition did not meet the interoperability
+			 criteria of the DOM <termref def="dt-API">API</termref> since it relied on
+			 negotiation to decide the width and encoding of a character.</p>
+		</note> 
+	 </div3> 
+	 <div3 id="Core-DOMTimeStamp"> 
+		<head>The <code>DOMTimeStamp</code> type</head> 
+		<p>To ensure interoperability, the DOM specifies the following:</p> 
+		<ulist>	
+		  <item> 
+			 <definitions> 
+				<typedef name="DOMTimeStamp" id="DOMTimeStamp"> 
+				  <descr> 
+					 <p> A <code>DOMTimeStamp</code> represents a number of milliseconds. </p> 
+				  </descr> 
+				  <typename>unsigned long long</typename> 
+				</typedef> 
+			 </definitions>	
+		  </item> 
+		  <item> 
+			 <note> 
+				<p> Even though the DOM uses the type <code>DOMTimeStamp</code>, bindings may use different types. For example for Java, <code>DOMTimeStamp</code> is bound to the <code>long</code> type. In ECMAScript, <code>TimeStamp</code> is bound to the <code>Date</code> type because the range of the <code>integer</code> type is too small. </p> 
+			 </note>	
+		  </item> 
+		</ulist> 
+	 </div3> 
+	 <div3 id="ID-5DFED1F0"> 
+		<head>String comparisons in the DOM</head> 
+		<p>The DOM has many interfaces that imply string matching. HTML
+		  processors generally assume an uppercase (less often, lowercase) normalization
+		  of names for such things as <termref def="dt-element">elements</termref>, while
+		  XML is explicitly case sensitive. For the purposes of the DOM, string matching
+		  is performed purely by binary <termref
+		  def="dt-string-compare">comparison</termref> of the
+		  <termref def="dt-16-bit-unit">16-bit units</termref> of the <code>DOMString</code>. In addition, the DOM assumes that any case normalizations take place
+		  in the processor, <emph>before</emph> the DOM structures are built.</p> 
+		<note>	
+		  <p>Besides case folding, there are additional normalizations that can
+			 be applied to text. The W3C I18N Working Group is in the process of defining
+			 exactly which normalizations are necessary, and where they should be applied.
+			 The W3C I18N Working Group expects to require early normalization, which means
+			 that data read into the DOM is assumed to already be normalized. The DOM and
+			 applications built on top of it in this case only have to assure that text
+			 remains normalized when being changed. For further details, please see
+			 <bibref ref="Charmod"/>.</p> 
+		</note> 
+	 </div3> 
+	 <div3 id="Namespaces-Considerations"> 
+		<head>XML Namespaces</head> 
+		<p>The DOM Level 2 supports XML namespaces <bibref ref="Namespaces"/> by
+		  augmenting several interfaces of the DOM Level 1 Core to allow creating and
+		  manipulating <termref def="dt-element">elements</termref> and attributes
+		  associated to a namespace.</p> 
+		<p>As far as the DOM is concerned, special attributes used for declaring
+		  <termref def="dt-XML-namespace">XML namespaces</termref> are still exposed and
+		  can be manipulated just like any other attribute. However, nodes are
+		  permanently bound to <termref def="dt-namespaceURI">namespace URIs</termref> as
+		  they get created. Consequently, moving a node within a document, using the DOM,
+		  in no case results in a change of its <termref
+		  def="dt-namespaceprefix">namespace prefix</termref> or namespace URI.
+		  Similarly, creating a node with a namespace prefix and namespace URI, or
+		  changing the namespace prefix of a node, does not result in any addition,
+		  removal, or modification of any special attributes for declaring the
+		  appropriate XML namespaces. Namespace validation is not enforced; the DOM
+		  application is responsible. In particular, since the mapping between prefixes
+		  and namespace URIs is not enforced, in general, the resulting document cannot
+		  be serialized naively. For example, applications may have to declare every
+		  namespace in use when serializing a document.</p> 
+		<p>DOM Level 2 doesn't perform any URI normalization or canonicalization.
+		  The URIs given to the DOM are assumed to be valid (e.g., characters such as
+		  whitespaces are properly escaped), and no lexical checking is performed.
+		  Absolute URI references are treated as strings and
+		  <termref def="dt-string-compare">compared literally</termref>. How relative
+		  namespace URI references are treated is undefined. To ensure interoperability
+		  only absolute namespace URI references (i.e., URI references beginning with a
+		  scheme name and a colon) should be used. Note that because the DOM does no 
+                  lexical checking, the empty string will be treated as a real namespace URI 
+                  in DOM Level 2 methods. Applications must use the value <code>null</code> 
+                  as the namespaceURI parameter for methods if they wish to have no
+		  namespace.</p> 
+		<note>
+		  <p>In the DOM, all namespace declaration attributes are <emph>by
+			 definition</emph> bound to the namespace URI: "<loc
+			 href="&xmlns-ns;">&xmlns-ns;</loc>". These are the attributes whose
+			 <termref def="dt-namespaceprefix">namespace prefix</termref> or
+			 <termref def="dt-qualifiedname">qualified name</termref> is "xmlns". Although,
+			 at the time of writing, this is not part of the XML Namespaces specification
+			 <bibref ref="Namespaces"/>, it is planned to be incorporated in a future
+			 revision.</p> 
+		</note> 
+		<p>In a document with no namespaces, the <termref
+		  def="dt-child">child</termref> list of an <code>EntityReference</code> node is always the same as that of the corresponding <code>Entity</code>. This is not true in a document where an entity contains unbound
+		  <termref def="dt-namespaceprefix">namespace prefixes</termref>. In such a case,
+		  the <termref def="dt-descendant">descendants</termref> of the corresponding <code>EntityReference</code> nodes may be bound to different <termref
+		  def="dt-namespaceURI">namespace URIs</termref>, depending on where the entity
+		  references are. Also, because, in the DOM, nodes always remain bound to the
+		  same namespace URI, moving such <code>EntityReference</code> nodes can lead to documents that cannot be serialized. This is also
+		  true when the DOM Level 1 method <code>createEntityReference</code> of the <code>Document</code> interface is used to create entity references that correspond to such
+		  entities, since the <termref def="dt-descendant">descendants</termref> of the
+		  returned <code>EntityReference</code> are unbound. The DOM Level 2 does not support any mechanism to resolve
+		  namespace prefixes. For all of these reasons, use of such entities and entity
+		  references should be avoided or used with extreme care. A future Level of the
+		  DOM may include some additional support for handling these.</p> 
+		<p>The new methods, such as <code>createElementNS</code> and <code>createAttributeNS</code> of the <code>Document</code> interface, are meant to be used by namespace aware applications. Simple
+		  applications that do not use namespaces can use the DOM Level 1 methods, such
+		  as <code>createElement</code> and <code>createAttribute</code>. Elements and attributes created in this way do not have any namespace
+		  prefix, namespace URI, or local name.</p> 
+		<note>
+		  <p>DOM Level 1 methods are namespace ignorant. Therefore, while it is
+			 safe to use these methods when not dealing with namespaces, using them and the
+			 new ones at the same time should be avoided. DOM Level 1 methods solely
+			 identify attribute nodes by their <code>nodeName</code>. On the contrary, the DOM Level 2 methods related to namespaces,
+			 identify attribute nodes by their <code>namespaceURI</code> and <code>localName</code>. Because of this fundamental difference, mixing both sets of methods
+			 can lead to unpredictable results. In particular, using <code>setAttributeNS</code>, an <termref def="dt-element">element</termref> may have two attributes
+			 (or more) that have the same <code>nodeName</code>, but different <code>namespaceURI</code>s. Calling <code>getAttribute</code> with that <code>nodeName</code> could then return any of those attributes. The result depends on the
+			 implementation. Similarly, using <code>setAttributeNode</code>, one can set two attributes (or more) that have different <code>nodeNames</code> but the same <code>prefix</code> and <code>namespaceURI</code>. In this case <code>getAttributeNodeNS</code> will return either attribute, in an implementation dependent manner.
+			 The only guarantee in such cases is that all methods that access a named item
+			 by its <code>nodeName</code> will access the same item, and all methods which access a node by its
+			 URI and local name will access the same node. For instance, <code>setAttribute</code> and <code>setAttributeNS</code> affect the node that <code>getAttribute</code> and <code>getAttributeNS</code>, respectively, return.</p>
+		</note> 
+	 </div3> 
+  </div2>  <!--
+  ******************************************************
+  | DOCUMENT OBJECT MODEL APIs                        |
+  ******************************************************
+  -->
+  <div2 id="ID-BBACDC08"> 
+	 <head>Fundamental Interfaces</head> 
+	 <p>The interfaces within this section are considered
+		<emph>fundamental</emph>, and must be fully implemented by all conforming
+		implementations of the DOM, including all HTML DOM implementations
+		<bibref ref="DOMHTML-inf"/>, unless otherwise specified. 
+         </p> 
+	 <p>
+           A DOM application may use the <code>hasFeature(feature,
+           version)</code> method of the <code>DOMImplementation</code>
+           interface with parameter values "Core" and "2.0" (respectively) to
+           determine whether or not this module is supported by the
+           implementation. Any implementation that conforms to DOM Level 2 or a
+           DOM Level 2 module must conform to the Core module. Please refer to
+           additional information about <xspecref
+           href='&core.latest.url;/introduction.html#ID-Conformance'>conformance</xspecref>
+           in this specification.
+         </p>
+
+	 <definitions> &exceptions; &core-dom; &core-document; &core-node;
+		&core-node-list; &core-named-node-map; &core-data; &core-attribute;
+		&core-element; &core-text; &core-comment; 
+	 </definitions> 
+  </div2> 
+  <div2 id="ID-E067D597"> 
+	 <head>Extended Interfaces</head> 
+	 <p>The interfaces defined here form part of the DOM Core specification, but
+		objects that expose these interfaces will never be encountered in a DOM
+		implementation that deals only with HTML. As such, HTML-only DOM
+		implementations <bibref ref="DOMHTML-inf"/> do not need to have objects that
+		implement these interfaces.</p> 
+    <p>
+      The interfaces found within this section are not mandatory. A DOM
+      application may use the <code>hasFeature(feature, version)</code> method
+      of the <code>DOMImplementation</code> interface with parameter values
+      "XML" and "2.0" (respectively) to determine whether or not this module
+      is supported by the implementation. In order to fully support this
+      module, an implementation must also support the "Core" feature defined in
+      <specref ref="ID-BBACDC08"/>. Please refer to additional information about
+      <specref ref='ID-Conformance'/> in this specification.
+    </p>
+
+    <definitions> &core-cdata-section; &core-doctype; &core-notation;
+      &core-entity; &core-entity-reference; &core-pi; 
+    </definitions> 
+  </div2></div1><!--
+ *************************************************************************
+ * END OF CORE                                                           *
+ *************************************************************************
+-->

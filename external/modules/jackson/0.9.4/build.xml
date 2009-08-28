@@ -1,0 +1,489 @@
+<?xml version="1.0" standalone='yes'?>
+
+  <project name="Jackson JSON parser" basedir="." default="readme">
+
+    <!-- Source directories -->
+    <property name="dir.src" location="${basedir}/src" />
+    <property name="dir.src.java" location="${dir.src}/java" />
+    <property name="src.dir.test" location="${dir.src}/test" />
+    <property name="dir.releasenotes" location="${basedir}/release-notes" />
+
+    <!-- Libs -->
+    <property name="dir.lib" location="${basedir}/lib" />
+    <!-- Build-related -->
+    <property name="dir.build" location="${basedir}/build" />
+    <property name="dir.build.classes" location="${dir.build}/classes" />
+
+    <!-- Test suite -->
+    <property name="dir.test" location="${basedir}/test" />
+    <property name="dir.test.classes" location="${dir.test}/classes" />
+    <property name="dir.test.results" location="${dir.test}/results" />
+    <property name="dir.test.xmlresults" location="${dir.test.results}/xml" />
+    <!-- some support for perf testing -->
+    <property name="dir.perf.classes" location="${dir.build}/perf-classes" />
+
+    <!-- Documentation -->
+    <property name="dir.doc" location="${basedir}/doc" />
+    <property name="dir.javadoc" location="${dir.build}/javadoc" />
+
+    <!-- Distribution -->
+    <property name="dir.dist" location="${basedir}/dist" />
+
+    <!-- Version information -->
+
+    <!-- Version -->
+    <property name="JSON_TITLE" value="Json - JavaScript Object Notation" />
+    <property name="JSON_VERSION" value="1.0" />
+    <property name="JSON_VENDOR" value="http://www.ietf.org/rfc/rfc4627.txt" />
+    <property name="IMPL_TITLE" value="Jackson JSON parser" />
+    <property name="IMPL_VERSION" value="0.9.4" />
+    <property name="IMPL_VENDOR" value="http://www.cowtowncoder.com/" />
+
+    <!-- jars needed for compilation? None as of yet -->
+    <path id="compile-classpath">
+    </path>
+    <path id="junit-libs">
+       <fileset dir="${dir.lib}">
+            <include name="junit/junit*.jar" />
+       </fileset>
+    </path>
+
+    <!-- Source files to include in source packages (tar, zip) -->
+    <patternset id="dist-src-files">
+          <include name="src/**/*.java" />
+          <include name="release-notes/*" />
+          <include name="build.xml" />
+          <include name="project.xml" />
+    </patternset>
+
+    <patternset id="dist-misc-files">
+          <include name="src/test/**/*.java" />
+          <include name="src/java/**/*.html" />
+          <include name="src/maven/*.pom" />
+          <include name="release-notes/*" />
+          <include name="release-notes/asl/*" />
+          <include name="release-notes/lgpl/*" />
+          <!-- need jars for auxiliary tasks (tests), although jackson
+               itself does not depend on any other packages, just JDK 1.5
+            -->
+          <include name="lib/**/*.jar" />
+          <include name="samples/**/*.jsn" />
+    </patternset>
+
+  <!-- Need BND task for OSGi bundle/metadata creation -->
+  <taskdef name="osgiJar" classname="net.luminis.build.plugin.bnd.BuildTask">
+    <classpath>
+     <fileset dir="${dir.lib}/ant" includes="bndtask*.jar" />
+    </classpath>
+  </taskdef>
+
+    <!-- Support for Cobertura code coverage tool -->
+    <property name="cobertura.coverage.dir" value="${dir.build}/coverage" />
+    <path id="cobertura.lib">
+      <fileset dir="${dir.lib}/cobertura" includes="*.jar" />
+    </path>
+    <taskdef classpathref="cobertura.lib" resource="tasks.properties" />
+
+
+    <!-- Need BND task for OSGi bundle/metadata creation -->
+    <taskdef name="bundle" classname="net.luminis.build.plugin.bnd.BuildTask">
+      <classpath>
+       <fileset dir="${dir.lib}/ant" includes="bndtask*.jar" />
+      </classpath>
+    </taskdef>
+
+    <!--*********************************************************************-->
+    <!-- The readme target shows a brief description of all targets          -->
+    <!-- supported by this ant build file                                    -->
+    <!--*********************************************************************-->
+    <target name="readme">
+        <echo message = "${ant.project.name}'s Available Targets" />
+        <echo message = "---------------------------------------------------" />
+        <echo message = "1)  readme - Displays this information (default target)." />
+        <echo message = "2)  clean - Remove any generated files/directories." />
+        <echo message = "3)  compile.core - Compile all non-test ${ant.project.name} code." />
+        <echo message = "4)  jars - Compile and create all jars for non-test ${ant.project.name} code (see below for specific ones)." />
+        <echo message = "4b)  jar.asl - Compile and create jar for non-test ${ant.project.name} cod, under Apache (2.0) license." />
+        <echo message = "5)  javadoc - Generate ${ant.project.name} code documentation." />
+        <echo message = "6)  compile.test - Compile ${ant.project.name} code and test code" />
+        <echo message = "       for JUnit tests." />
+        <echo message = "7)  test - Run JUnit tests." />
+        <echo message = "8)  dist - Create distribution directory and copy necessary files there" />
+        <echo message = "9) all - Run the clean, compile, javadoc," />
+        <echo message = "         test and dist targets." />  
+        <echo message = "" />
+        <echo message = "Available command-line arguments:" />
+        <echo message = "---------------------------------" />
+        <echo message = "none" />
+    </target>
+
+    <target name="prepare">
+        <!-- make build directories -->
+        <mkdir dir="${dir.build}" />
+        <mkdir dir="${dir.build.classes}" />
+
+        <!-- make docs directories -->
+        <mkdir dir="${dir.doc}" />
+        <mkdir dir="${dir.javadoc}" />
+
+        <!-- make test output directories -->
+        <mkdir dir="${dir.test}" />
+        <mkdir dir="${dir.test.classes}" />
+        <mkdir dir="${dir.test.results}" />
+        <mkdir dir="${dir.test.xmlresults}" />
+
+        <!-- and finally distribution dir -->
+        <mkdir dir="${dir.dist}" />
+    </target>
+
+    <!-- ***********************************************
+       - supporting dummy tasks
+       - ***********************************************-->
+
+
+    <!-- ***********************************************
+       - clean - Removes all generated files/directories
+       - ***********************************************-->
+
+    <target name="clean">
+        <delete dir="${dir.build}"/>
+        <delete dir="${dir.doc}"/>
+        <delete dir="${dir.test}"/>
+        <delete dir="${dir.dist}"/>
+        <delete file="cobertura.ser" />
+    </target>
+
+    <target name="compile" depends="compile.core, compile.test" />
+
+    <target name="compile.core" depends="prepare">
+        <javac srcdir="${dir.src.java}" destdir="${dir.build.classes}"
+            source="1.5" target="1.5"
+            debug="true"
+        >
+            <compilerarg value="-Xlint:unchecked" />
+            <include name="org/codehaus/**/*.java" />
+            <include name="test/**/*.java" />
+            <classpath refid="compile-classpath" />
+        </javac>
+    </target>
+
+    <target name="compile-perf" depends="compile">
+      <mkdir dir="${dir.perf.classes}" />
+        <!-- Let's also compile micro-benchmarks... -->
+        <javac srcdir="${dir.src}/perf" destdir="${dir.perf.classes}" debug="false"
+        >
+            <classpath>
+               <fileset dir="${dir.lib}/perf">
+                    <include name="*.jar" />
+               </fileset>
+               <pathelement path="${dir.build.classes}"/>  
+            </classpath>
+            <include name="**/*.java" />
+        </javac>
+    </target>
+
+    <!-- Dummy target that just includes all individual jars... --> 
+    <target name="jars"
+       depends="jar.asl, jar.lgpl"
+    />
+
+    <!-- Let's build our JARs as OSGi bundles; then they work
+        both within and outside of OSGi containers
+     -->
+
+    <!-- Jackson requires Java5 (enums, some generics) -->
+    <property name="REQ_JDK_VERSION" value="J2SE-1.5" />
+
+    <target name="jar.asl" depends="compile.core">
+        <osgiJar
+         outputdir="${dir.build}"
+         bundleName="${IMPL_TITLE}"
+         bundleVendor="${IMPL_VENDOR}"
+         bundleSymbolicName="jackson-asl"
+         bundleVersion="${IMPL_VERSION}"
+         bundleLicense="http://www.apache.org/licenses/LICENSE-2.0.txt"
+         bundleRequiredExecutionEnvironment="${REQ_JDK_VERSION}"
+         exportpackage='org.codehaus.jackson;version=${IMPL_VERSION}
+,org.codehaus.jackson.io;version=${IMPL_VERSION}
+,org.codehaus.jackson.map;version=${IMPL_VERSION}
+,org.codehaus.jackson.map.node;version=${IMPL_VERSION}
+'
+         privatePackage="!test
+,!org.codehaus.jackson
+,!org.codehaus.jackson.io
+,!org.codehaus.jackson.map
+,!org.codehaus.jackson.map.node
+,*"
+         includeResource="META-INF=release-notes/asl"
+         includeIncludeResourceHeader="false"
+        >
+        <classpath>
+              <pathelement path="${dir.build.classes}" />
+        </classpath>
+        <manifest>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Implementation-Title"   value="${IMPL_TITLE}"/>
+            <attribute name="Implementation-Version" value="${IMPL_VERSION}"/>
+            <attribute name="Implementation-Vendor"  value="${IMPL_VENDOR}"/>
+            <attribute name="Specification-Title"   value="${JSON_TITLE}"/>
+            <attribute name="Specification-Version" value="${JSON_VERSION}"/>
+            <attribute name="Specification-Vendor"  value="${JSON_VENDOR}"/>
+          </manifest>
+        </osgiJar>
+    </target> 
+
+    <target name="osgi">
+      <bundle bundleName="jackson-asl"
+        exportPackage="com.ctc.wstx.stax, com.ctc.wstx.api"
+      >
+        <classpath>
+<!--
+          <pathelement path="${BuildClassesDir}"/>  
+-->
+          <pathelement location="${BuildClassesDir}"/>  
+        </classpath>
+      </bundle>
+    </target> 
+
+    <target name="jar.lgpl" depends="compile.core">
+        <osgiJar
+         outputdir="${dir.build}"
+         bundleName="${IMPL_TITLE}"
+         bundleVendor="${IMPL_VENDOR}"
+         bundleSymbolicName="jackson-lgpl"
+         bundleVersion="${IMPL_VERSION}"
+         bundleLicense="http://www.apache.org/licenses/LICENSE-2.0.txt"
+         bundleRequiredExecutionEnvironment="${REQ_JDK_VERSION}"
+         exportpackage='org.codehaus.jackson;version=${IMPL_VERSION}
+,org.codehaus.jackson.io;version=${IMPL_VERSION}
+,org.codehaus.jackson.map;version=${IMPL_VERSION}
+'
+         privatePackage="!test
+,!org.codehaus.jackson
+,!org.codehaus.jackson.io
+,!org.codehaus.jackson.map
+,*"
+         includeResource="META-INF=release-notes/lgpl"
+         includeIncludeResourceHeader="false"
+        >
+        <classpath>
+              <pathelement path="${dir.build.classes}" />
+        </classpath>
+        <manifest>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Implementation-Title"   value="${IMPL_TITLE}"/>
+            <attribute name="Implementation-Version" value="${IMPL_VERSION}"/>
+            <attribute name="Implementation-Vendor"  value="${IMPL_VENDOR}"/>
+            <attribute name="Specification-Title"   value="${JSON_TITLE}"/>
+            <attribute name="Specification-Version" value="${JSON_VERSION}"/>
+            <attribute name="Specification-Vendor"  value="${JSON_VENDOR}"/>
+          </manifest>
+        </osgiJar>
+    </target> 
+
+    <target name="javadoc" depends="prepare">
+        <!-- Build a dirpath that contains just the "source" tree -->
+        <javadoc windowtitle="Jackson JSON Processor"
+            destdir="${dir.javadoc}" 
+            author="true" 
+            version="true">
+            <packageset dir="${dir.src.java}" defaultexcludes="yes">
+                <include name="org/codehaus/**" />
+            </packageset>
+            <classpath refid="compile-classpath" />
+        </javadoc>
+    </target> 
+ 
+    <target name="dist" depends="compile,jars,javadoc"
+    >
+       <!-- First, let's copy the binary jars to dist -->
+       <copy todir="${dir.dist}">
+          <fileset dir="${dir.build}" includes="*.jar" />
+       </copy>
+       <!-- Then let's create the source distribution tar package
+          -->
+       <tar basedir="${basedir}" destfile="${dir.dist}/jackson-src-${IMPL_VERSION}.tar">
+          <patternset refid="dist-src-files" />
+          <patternset refid="dist-misc-files" />
+       </tar>
+       <gzip zipfile="${dir.dist}/jackson-src-${IMPL_VERSION}.tar.gz" src="${dir.dist}/jackson-src-${IMPL_VERSION}.tar" />
+       <delete file="${dir.dist}/jackson-src-${IMPL_VERSION}.tar" />
+
+       <!-- as well as zip -->
+       <zip basedir="${basedir}" destfile="${dir.dist}/jackson-src-${IMPL_VERSION}.zip">
+          <patternset refid="dist-src-files" />
+          <patternset refid="dist-misc-files" />
+       </zip>
+
+       <!-- And create source jars for IDE support -->
+       <jar jarfile="${dir.dist}/jackson-asl-${IMPL_VERSION}-sources.jar" filesonly="true" >
+          <fileset dir="${basedir}">
+              <patternset refid="dist-src-files" />
+          </fileset>
+       </jar>
+       <jar jarfile="${dir.dist}/jackson-lgpl-${IMPL_VERSION}-sources.jar" filesonly="true" >
+          <fileset dir="${basedir}">
+              <patternset refid="dist-src-files" />
+          </fileset>
+       </jar>
+
+       <!-- Then copy javadocs -->
+       <copy todir="${dir.dist}">
+         <fileset dir="${dir.javadoc}/.." includes="javadoc/**/*" />
+       </copy>
+       <!-- Plus, let's also just copy README and compatibility files, in
+            addition to being included in source package
+         -->
+       <copy todir="${dir.dist}" >
+            <fileset dir="." includes="release-notes/*" />
+            <fileset dir="." includes="release-notes/asl/*" />
+            <fileset dir="." includes="release-notes/lgpl/*" />
+       </copy>
+       <!-- And also additional Maven stuff -->
+       <copy todir="${dir.dist}">
+            <fileset dir="${dir.src}/maven" includes="*.pom" />
+            <globmapper from="*.pom" to="*-${IMPL_VERSION}.pom" />
+            <filterset>
+              <filter token="VERSION" value="${IMPL_VERSION}" />
+            </filterset>
+       </copy>
+    </target>
+
+    <target name="all" depends="clean,javadoc,test,dist">
+        <!-- This target simply depends on others to do its job -->
+    </target>
+
+    <!--*********************************************************************-->
+    <!-- Tasks from here down are in support of junit tests.                 -->
+    <!--*********************************************************************-->
+    <target name="all-tests" depends="test" />
+
+
+    <!-- Compiling and running test cases
+      -->
+
+    <target name="compile.test" depends="compile.core">
+        <javac srcdir="${src.dir.test}" destdir="${dir.test.classes}"
+            source="1.5" target="1.5"
+            debug="true"
+        >
+            <include name="**/*.java" />
+            <classpath refid="compile-classpath" />
+            <classpath>
+                <pathelement path="${dir.build.classes}"/>  
+                <path refid="junit-libs"/>
+            </classpath>
+        </javac>
+    </target>
+
+
+    <target name="test" depends="compile.test">
+       <!-- showoutput 'yes' to allow outputting debug msgs... -->
+        <junit fork="no" printsummary="yes" haltonfailure="no"
+         showoutput="yes">
+            <batchtest fork="no" todir="${dir.test.xmlresults}">
+                <fileset dir="${dir.test.classes}">
+                    <!-- Need to exclude inner classes... -->
+                    <exclude name="**/*$*.class"/>
+                    <!-- And manual non-junit test classes -->
+                    <exclude name="test/*.class"/>
+                    <include name="**/Test*.class"/>
+                </fileset>
+            </batchtest>
+            <formatter type="xml" />
+            <classpath refid="compile-classpath" />
+            <classpath>
+                <pathelement path="${dir.build.classes}" />
+                <pathelement location="${dir.test.classes}" /> 
+                <path refid="junit-libs"/>
+            </classpath>     
+        </junit>
+
+        <junitreport todir="${dir.test.results}">
+            <fileset dir="${dir.test.xmlresults}">
+                <include name="TEST-*.xml" />
+            </fileset>
+            <report todir="${dir.test.results}" />
+        </junitreport>
+    </target>
+
+  <!-- Code coverage using Cobertura: -->
+
+  <target name="build.coverage" depends="compile.test">
+      <!-- First, need to instrument classes -->
+      <property name="cobertura.instr.dir" value="${dir.build}/cobertura-instr" />
+      <cobertura-instrument todir="${cobertura.instr.dir}">
+        <fileset dir="${dir.build.classes}">
+          <include name="org/codehaus/jackson/**/*.class"/>
+        </fileset>
+      </cobertura-instrument>
+
+      <junit fork="once" printsummary="yes" haltonfailure="no" showoutput="yes"
+        maxmemory="300M"
+      >
+        <sysproperty key="net.sourceforge.cobertura.datafile" file="${basedir}/cobertura.ser" />
+            <batchtest fork="no" todir="${dir.test.xmlresults}">
+                <fileset dir="${dir.test.classes}">
+                    <!-- Need to exclude inner classes... -->
+                    <exclude name="**/*$*.class"/>
+
+<!-- !!!! TEST -->
+                    <exclude name="**/TestStringGeneration.class"/>
+
+                    <include name="**/Test*.class"/>
+                </fileset>
+            </batchtest>
+            <formatter type="xml" />
+            <!-- Order is important: must first have instrumented classes -->
+            <classpath location="${cobertura.instr.dir}" />
+
+            <classpath refid="compile-classpath" />
+            <!-- Actual tests: -->
+            <classpath path="${dir.test.classes}" />
+            <!-- Cobertura support: -->
+            <classpath refid="cobertura.lib" />
+            <classpath>
+                <!-- Note: while this may seem superfluous, it is actually
+                     needed because Cobertura does not instrument things
+                     like interfaces. So some of the class files are
+                     needed from non-instrumented location
+                  -->
+                <pathelement path="${dir.build.classes}" />
+                <path refid="junit-libs"/>
+            </classpath>     
+        </junit>
+        <!-- and then reporting -->
+        <cobertura-report format="html" destdir="${cobertura.coverage.dir}" >
+          <fileset dir="${dir.src.java}">
+            <include name="**/*.java" />
+          </fileset>
+        </cobertura-report>
+
+        <!-- Let's also report junit results? (at least if they fail) -->
+<!--
+        <junitreport todir="${dir.test.results}">
+            <fileset dir="${dir.test.xmlresults}">
+                <include name="TEST-*.xml" />
+            </fileset>
+            <report todir="${dir.test.results}" />
+        </junitreport>
+-->
+    </target>
+
+    <!-- Running a single Unit Test -->
+    <target name="test.single" depends="compile.test">
+         <fail unless="test" message="Must define -Dtest" />
+       <!-- showoutput 'yes' to allow outputting debug msgs... -->
+        <junit fork="no" maxmemory="128M" showoutput="no" printsummary="yes">
+          <formatter type="plain" usefile="no" />
+          <test name="${test}" />
+          <classpath refid="compile-classpath" />
+          <classpath>
+                <pathelement path="${dir.build.classes}" />
+                <pathelement location="${dir.test.classes}" /> 
+                <path refid="junit-libs"/>
+          </classpath>     
+        </junit>
+    </target>
+
+</project>

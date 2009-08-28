@@ -1,0 +1,502 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SAX2: Quick Start</title>
+<link rel="stylesheet" type="text/css" href="sax-style.css" />
+</head>
+
+<body>
+<h1>SAX2: Quick Start</h1>
+
+<blockquote>
+<p class="copyright">This document is in the Public Domain.</p>
+</blockquote>
+
+<p>This document provides a quick-start tutorial for Java programmers
+who wish to use SAX2 in their programs.</p>
+
+
+<div>
+<h2>Requirements</h2>
+
+<p>SAX is not an XML parser.</p>
+
+<p>SAX is a common interface implemented for many different XML
+parsers (and things that pose as XML parsers), just as the JDBC is a
+common interface implemented for many different relational databases
+(and things that pose as relational databases).  If you want to use
+SAX, you'll need all of the following:</p>
+
+<ul>
+
+<li><p>Java 1.1 or higher.</p></li>
+
+<li><p>The SAX2 distribution installed on your Java
+classpath.</p></li>
+
+<li><p>A SAX2-compatible XML parser installed on your Java
+classpath.</p></li>
+
+<li><p>The name of the SAX2 driver class in your XML parser (read the
+documentation that came with the parser, and <em>write down the class
+name</em>).</p></li>
+
+</ul>
+
+<!-- end of "Requirements" -->
+</div>
+
+
+<div>
+<h2>Parsing a document</h2>
+
+<p>Start by creating a class that extends <a
+href="javadoc/org/xml/sax/helpers/DefaultHandler.html"
+>DefaultHandler</a>:</p>
+
+<blockquote><pre xml:space="preserve">
+import org.xml.sax.helpers.DefaultHandler;
+
+public class MySAXApp extends DefaultHandler
+{
+
+    public MySAXApp ()
+    {
+	super();
+    }
+
+}
+</pre></blockquote>
+
+<p>Now, let's assume that the SAX driver for your XML parser is named
+"com.acme.xml.SAXDriver" (this does not really exist: you
+<em>must</em> find out the name of the real driver for your parser).
+Since this is a Java application, we'll create a static
+<var>main</var> method that creates a new instance of this driver
+(note the "throws Exception" wimp-out):</p>
+
+<blockquote><pre xml:space="preserve">
+    public static void main (String args[])
+	throws Exception
+    {
+	XMLReader xr = new com.acme.xml.SAXDriver();
+    }
+</pre></blockquote>
+
+<p>Alternatively, if you don't want to tie your application to a
+specific SAX driver, you can use the <a
+href="javadoc/org/xml/sax/helpers/XMLReaderFactory.html#createXMLReader()">createXMLReader</a>
+method from the <a
+href="javadoc/org/xml/sax/helpers/XMLReaderFactory.html"
+>XMLReaderFactory</a> class to choose a SAX driver dynamically:</p>
+
+<blockquote><pre>
+    public static void main (String args[])
+	throws Exception
+    {
+	XMLReader xr = XMLReaderFactory.createXMLReader();
+    }
+</pre></blockquote>
+
+<p>In this case, it will be necessary at runtime to set the
+org.xml.sax.driver Java system property to the full classname of the
+SAX driver, as in</p>
+
+<blockquote><pre xml:space="preserve">
+java -Dorg.xml.sax.driver=com.acme.xml.SAXDriver MySAXApp sample.xml
+</pre></blockquote>
+
+<p>We can use this object to parse XML documents, but first, we have
+to register event handlers that the parser can use for reporting
+information, using the <a
+href="javadoc/org/xml/sax/XMLReader.html#setContentHandler(org.xml.sax.ContentHandler)"
+>setContentHandler</a> and <a
+href="javadoc/org/xml/sax/XMLReader.html#setErrorHandler(org.xml.sax.ErrorHandler)"
+>setErrorHandler</a> methods from the <a
+href="javadoc/org/xml/sax/XMLReader.html">XMLReader</a> interface.  In
+a real-world application, the handlers will usually be separate
+objects, but for this simple demo, we've bundled the handlers into the
+top-level class, so we just have to instantiate the class and register
+it with the XML reader:</p>
+
+<blockquote><pre xml:space="preserve">
+    public static void main (String args[])
+	throws Exception
+    {
+	XMLReader xr = XMLReaderFactory.createXMLReader();
+	MySAXApp handler = new MySAXApp();
+	xr.setContentHandler(handler);
+	xr.setErrorHandler(handler);
+    }
+</pre></blockquote>
+
+<p>This code creates an instance of MySAXApp to receive XML parsing
+events, and registers it with the XML reader for regular content
+events and error events (there are other kinds, but they're rarely
+used).  Now, let's assume that all of the command-line args are file
+names, and we'll try to parse them one-by-one using the <a
+href="javadoc/org/xml/sax/XMLReader.html#parse(org.xml.sax.InputSource)"
+>parse</a> method from the <a
+href="javadoc/org/xml/sax/XMLReader.html"
+>XMLReader</a> interface:</p>
+
+<blockquote><pre xml:space="preserve">
+    public static void main (String args[])
+	throws Exception
+    {
+	XMLReader xr = XMLReaderFactory.createXMLReader();
+	MySAXApp handler = new MySAXApp();
+	xr.setContentHandler(handler);
+	xr.setErrorHandler(handler);
+
+				// Parse each file provided on the
+				// command line.
+	for (int i = 0; i < args.length; i++) {
+	    FileReader r = new FileReader(args[i]);
+	    xr.parse(new InputSource(r));
+	}
+    }
+</pre></blockquote>
+
+<p>Note that each reader must be wrapped in an <a
+href="javadoc/org/xml/sax/InputSource.html"
+>InputSource</a> object to be parsed.  Here's the whole demo class
+together (so far):</p>
+
+<blockquote><pre xml:space="preserve">
+import java.io.FileReader;
+
+import org.xml.sax.XMLReader;
+import org.xml.sax.InputSource;
+import org.xml.sax.helpers.XMLReaderFactory;
+import org.xml.sax.helpers.DefaultHandler;
+
+
+public class MySAXApp extends DefaultHandler
+{
+
+    public static void main (String args[])
+	throws Exception
+    {
+	XMLReader xr = XMLReaderFactory.createXMLReader();
+	MySAXApp handler = new MySAXApp();
+	xr.setContentHandler(handler);
+	xr.setErrorHandler(handler);
+
+				// Parse each file provided on the
+				// command line.
+	for (int i = 0; i < args.length; i++) {
+	    FileReader r = new FileReader(args[i]);
+	    xr.parse(new InputSource(r));
+	}
+    }
+
+
+    public MySAXApp ()
+    {
+	super();
+    }
+}
+</pre></blockquote>
+
+<p>You can compile this code and run it (make sure you specify the SAX
+driver class in the org.xml.sax.driver property), but nothing much
+will happen unless the document contains malformed XML, because you
+have not yet set up your application to handle SAX events.</p>
+
+<!-- end of "Parsing a document" -->
+</div>
+
+
+<div>
+<h2>Handling events</h2>
+
+<p>Things get interesting when you start implementing methods to
+respond to XML parsing events (remember that we registered our class
+to receive XML parsing events in the previous section).  The most
+important events are the start and end of the document, the start and
+end of elements, and character data.</p>
+
+<p>To find out about the start and end of the document, the client
+application implements the <a
+href="javadoc/org/xml/sax/ContentHandler.html#startDocument()"
+>startDocument</a> and <a
+href="javadoc/org/xml/sax/ContentHandler.html#endDocument()"
+>endDocument</a> methods:</p>
+
+<blockquote><pre xml:space="preserve">
+    public void startDocument ()
+    {
+	System.out.println("Start document");
+    }
+
+    public void endDocument ()
+    {
+	System.out.println("End document");
+    }
+</pre></blockquote>
+
+<p>The start/endDocument event handlers take no arguments.  When the
+SAX driver finds the beginning of the document, it will invoke the
+<var>startDocument</var> method once; when it finds the end, it will
+invoke the <var>endDocument</var> method once (if there have been
+errors, endDocument may not be invoked).</p>
+
+<p>These examples simply print a message to standard output, but your
+application can contain any arbitrary code in these handlers: most
+commonly, the code will build some kind of an in-memory tree, produce
+output, populate a database, or extract information from the XML
+stream.</p>
+
+<p>The SAX driver will signal the start and end of elements in much
+the same way, except that it will also pass some parameters to the <a
+href="javadoc/org/xml/sax/ContentHandler.html#startElement(java.lang.String, java.lang.String, java.lang.String, org.xml.sax.Attributes)">startElement</a> and <a
+href="javadoc/org/xml/sax/ContentHandler.html#endElement(java.lang.String, java.lang.String, java.lang.String)">endElement</a> methods:</p>
+
+<blockquote><pre xml:space="preserve">
+    public void startElement (String uri, String name,
+			      String qName, Attributes atts)
+    {
+	System.out.println("Start element: {" + uri + "}" + name);
+    }
+
+    public void endElement (String uri, String name, String qName)
+    {
+	System.out.println("End element:   {" + uri + "}" + name);
+    }
+</pre></blockquote>
+
+<p>These methods print a message every time an element starts or ends,
+with the Namespace URI in braces before the element's local name.  The
+<var>qName</var> contains the raw XML 1.0 name, and since not all
+SAX drivers will report it, it is best to ignore that parameter for
+now.</p>
+
+<p>Finally, SAX2 reports regular character data through the <a
+href="javadoc/org/xml/sax/ContentHandler.html#characters(char[], int, int)"
+>characters</a> method; the following implementation will print all
+character data to the screen; it is a little longer because it
+pretty-prints the output by escaping special characters:</p>
+
+<blockquote><pre xml:space="preserve">
+    public void characters (char ch[], int start, int length)
+    {
+	System.out.print("Characters:    \"");
+	for (int i = start; i < start + length; i++) {
+	    switch (ch[i]) {
+	    case '\\':
+		System.out.print("\\\\");
+		break;
+	    case '"':
+		System.out.print("\\\"");
+		break;
+	    case '\n':
+		System.out.print("\\n");
+		break;
+	    case '\r':
+		System.out.print("\\r");
+		break;
+	    case '\t':
+		System.out.print("\\t");
+		break;
+	    default:
+		System.out.print(ch[i]);
+		break;
+	    }
+	}
+	System.out.print("\"\n");
+    }
+</pre></blockquote>
+
+<p>Note that a SAX driver is free to chunk the character data any way
+it wants, so you cannot count on all of the character data content of
+an element arriving in a single <var>characters</var> event.</p>
+
+<!-- end of "Handling events" -->
+</div>
+
+
+<div>
+<h2>Sample SAX2 application</h2>
+
+<p>Here is the complete sample application (again, in a serious app
+the event handlers would probably be implemented in a separate
+class):</p>
+
+<blockquote><pre>
+import java.io.FileReader;
+
+import org.xml.sax.XMLReader;
+import org.xml.sax.Attributes;
+import org.xml.sax.InputSource;
+import org.xml.sax.helpers.XMLReaderFactory;
+import org.xml.sax.helpers.DefaultHandler;
+
+
+public class MySAXApp extends DefaultHandler
+{
+
+    public static void main (String args[])
+	throws Exception
+    {
+	XMLReader xr = XMLReaderFactory.createXMLReader();
+	MySAXApp handler = new MySAXApp();
+	xr.setContentHandler(handler);
+	xr.setErrorHandler(handler);
+
+				// Parse each file provided on the
+				// command line.
+	for (int i = 0; i &lt; args.length; i++) {
+	    FileReader r = new FileReader(args[i]);
+	    xr.parse(new InputSource(r));
+	}
+    }
+
+
+    public MySAXApp ()
+    {
+	super();
+    }
+
+
+    ////////////////////////////////////////////////////////////////////
+    // Event handlers.
+    ////////////////////////////////////////////////////////////////////
+
+
+    public void startDocument ()
+    {
+	System.out.println("Start document");
+    }
+
+
+    public void endDocument ()
+    {
+	System.out.println("End document");
+    }
+
+
+    public void startElement (String uri, String name,
+			      String qName, Attributes atts)
+    {
+	System.out.println("Start element: {" + uri + "}" + name);
+    }
+
+
+    public void endElement (String uri, String name, String qName)
+    {
+	System.out.println("End element:   {" + uri + "}" + name);
+    }
+
+
+    public void characters (char ch[], int start, int length)
+    {
+	System.out.print("Characters:    \"");
+	for (int i = start; i &lt; start + length; i++) {
+	    switch (ch[i]) {
+	    case '\\':
+		System.out.print("\\\\");
+		break;
+	    case '"':
+		System.out.print("\\\"");
+		break;
+	    case '\n':
+		System.out.print("\\n");
+		break;
+	    case '\r':
+		System.out.print("\\r");
+		break;
+	    case '\t':
+		System.out.print("\\t");
+		break;
+	    default:
+		System.out.print(ch[i]);
+		break;
+	    }
+	}
+	System.out.print("\"\n");
+    }
+
+}
+</pre></blockquote>
+
+<!-- end of "Sample SAX2 application" -->
+</div>
+
+
+<div>
+<h2>Sample Output</h2>
+
+<p>Consider the following XML document:</p>
+
+<blockquote><pre xml:space="preserve">
+&lt;?xml version="1.0"?>
+
+&lt;poem xmlns="http://www.megginson.com/ns/exp/poetry">
+&lt;title>Roses are Red&lt;/title>
+&lt;l>Roses are red,&lt;/l>
+&lt;l>Violets are blue;&lt;/l>
+&lt;l>Sugar is sweet,&lt;/l>
+&lt;l>And I love you.&lt;/l>
+&lt;/poem>
+</pre></blockquote>
+
+<p>If this document is named <code>roses.xml</code> and there is a
+SAX2 driver on your classpath named
+<code>com.acme.xml.SAXDriver</code> (this driver does not actually
+exist), you can invoke the sample application like this:</p>
+
+<blockquote><pre xml:space="preserve">
+java -Dcom.acme.xml.SAXDriver MySAXApp roses.xml
+</pre></blockquote>
+
+<p>When you run this, you'll get output something like this:</p>
+
+<blockquote><pre xml:space="preserve">
+Start document
+Start element: {http://www.megginson.com/ns/exp/poetry}poem
+Characters:    "\n"
+Start element: {http://www.megginson.com/ns/exp/poetry}title
+Characters:    "Roses are Red"
+End element:   {http://www.megginson.com/ns/exp/poetry}title
+Characters:    "\n"
+Start element: {http://www.megginson.com/ns/exp/poetry}l
+Characters:    "Roses are red,"
+End element:   {http://www.megginson.com/ns/exp/poetry}l
+Characters:    "\n"
+Start element: {http://www.megginson.com/ns/exp/poetry}l
+Characters:    "Violets are blue;"
+End element:   {http://www.megginson.com/ns/exp/poetry}l
+Characters:    "\n"
+Start element: {http://www.megginson.com/ns/exp/poetry}l
+Characters:    "Sugar is sweet,"
+End element:   {http://www.megginson.com/ns/exp/poetry}l
+Characters:    "\n"
+Start element: {http://www.megginson.com/ns/exp/poetry}l
+Characters:    "And I love you."
+End element:   {http://www.megginson.com/ns/exp/poetry}l
+Characters:    "\n"
+End element:   {http://www.megginson.com/ns/exp/poetry}poem
+End document
+</pre></blockquote>
+
+<p>Note that even a short document generates (at least) 25 events: one
+for the start and end of each of the six elements used (or, if you
+prefer, one for each start tag and one for each end tag), one of each
+of the eleven chunks of character data (including whitespace between
+elements), one for the start of the document, and one for the end.</p>
+
+<!-- end of "Sample Output" -->
+</div>
+
+
+<hr />
+
+<address>$Id: quick-start.html 225904 2001-05-20 03:12:59Z curcuru $</address>
+
+</body>
+
+</html>
+

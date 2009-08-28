@@ -1,0 +1,825 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- $Id: events.xml 225913 2001-06-01 11:15:37Z dims $ -->
+<!--
+ *************************************************************************
+ * BEGINNING OF EVENTS                                                   *
+ *************************************************************************
+-->
+<div1 id="Events">
+  <head>Document Object Model Events</head>
+  <orglist role="editors">
+    <member>
+      <name>Tom Pixley</name>
+      <affiliation>Netscape Communications Corp.</affiliation>
+    </member>
+  </orglist>
+  <?GENERATE-MINI-TOC?>
+  <!--
+  ******************************************************
+  | INTRODUCTION                                       |
+  ******************************************************
+  -->
+  <div2 id="Events-overview">
+    <head>Overview of the DOM Level 2 Event Model</head>
+		<p>The DOM Level 2 Event Model is designed with two main goals.  The first goal is the design
+		of a generic event system which allows registration of event handlers, describes event flow 
+		through a tree structure, and provides basic contextual information for each event.  
+		Additionally, the specification will provide standard modules of events for user 
+		interface control and document mutation notifications, including defined contextual information 
+		for each of these event modules.</p>
+		<p>The second goal of the event model is to provide a common subset of the current event 
+		systems used in <termref def='dt-DOM-Level-0'>DOM 
+	Level 0</termref> browsers.  This is
+		intended to foster interoperability of existing scripts and content.  It is not expected that 
+		this goal will be met with full backwards compatibility.  However, the specification attempts
+		to achieve this when possible.</p>
+    <p>The following sections of the Event Model specification define both the specification
+    for the DOM Event Model and a number of conformant event modules designed for use within the
+    model.  The Event Model consists of the two sections on event propagation and event listener
+    registration and the Event interface.</p>
+
+    <p>
+      A DOM application may use the <code>hasFeature(feature, version)</code>
+      method of the <code>DOMImplementation</code> interface with parameter
+      values "Events" and "2.0" (respectively) to determine whether or not the
+      event module is supported by the implementation. In order to fully support this
+      module, an implementation must also support the "Core" feature defined in
+      the DOM Level 2 Core specification <bibref ref="DOMCore"/>. Please, refer
+      to additional information about <xspecref
+      href='&core.latest.url;/introduction.html#ID-Conformance'>conformance</xspecref>
+      in the DOM Level 2 Core specification <bibref ref="DOMCore"/>.
+    </p>
+    <p>
+      Each event module describes its own feature string in the event module
+      listing.
+    </p>
+
+		<div3 id="Events-overview-terminology">
+			<head>Terminology</head>
+
+			<glist>
+			<gitem>
+			<label>UI events</label>
+			<def><p>User interface events. These events are generated
+			by user interaction through an external device (mouse, keyboard, etc.)</p></def>
+			</gitem>
+
+			<gitem>
+			<label>UI Logical events</label>
+			<def><p>Device independent user interface events such as focus change 
+			messages or element triggering notifications.</p></def>
+			</gitem>
+
+			<gitem>
+			<label>Mutation events</label>
+			<def><p>Events caused by any action which modifies the structure of the
+			document.</p></def>
+			</gitem>
+
+			<gitem>
+			<label>Capturing</label>
+			<def><p>The process by which an event can be handled by one of the event's
+	      target's <termref def="dt-ancestor">ancestors</termref> before being handled by the event's target.</p></def>
+			</gitem>
+
+			<gitem>
+			<label>Bubbling</label>
+	                <def><p>The process by which an event propagates upward through its
+	      <termref def="dt-ancestor">ancestors</termref>
+			after being handled by the event's target.</p></def>
+			</gitem>
+
+			<gitem>
+			<label>Cancelable</label>
+			<def><p>A designation for events which indicates that upon handling the event
+			the client may choose to prevent the DOM implementation from processing any default
+			action associated with the event.</p></def>
+			</gitem>
+			</glist>
+		</div3>
+  </div2>
+  <div2 id="Events-flow">
+	<head>Description of event flow</head>
+	  <p>Event flow is the process through which the an event originates from the DOM implementation
+	  and is passed into the Document Object Model.  The methods of event capture and event
+	  bubbling, along with various event listener registration techniques, allow the event
+	  to then be handled in a number of ways.  It can be handled locally at the <code>
+	  EventTarget</code> level or centrally from an <code>EventTarget</code> higher in the document tree.</p>
+	<div3 id="Events-flow-basic">
+	  <head>Basic event flow</head>
+	  <p>Each event has an <code>EventTarget</code> toward which the event is directed by the DOM implementation. This
+	  <code>EventTarget</code> is specified in the <code>Event</code>'s <code>target</code> attribute. When 
+    the event reaches the target, any event 
+	  listeners registered on the <code>EventTarget</code> are triggered.  Although all <code>EventListeners</code>
+	  on the <code>EventTarget</code> are guaranteed to be triggered by any event which is received by that <code>
+    EventTarget</code>, no specification is made as to the order
+	  in which they will receive the event with regards to the other <code>EventListeners</code> on the
+	  <code>EventTarget</code>. If neither event 
+	  capture or event bubbling are in use for that particular event, 
+	  the event flow process will complete after all listeners have been triggered.  If event capture
+	  or event bubbling is in use, the event flow will be modified as described in the sections below.</p>
+    <p>Any exceptions thrown inside an <code>EventListener</code> will not stop propagation of the
+    event.  It will continue processing any additional <code>EventListener</code> in the described manner.</p>
+    <p>It is expected that actions taken by <code>EventListener</code>s may cause additional events to
+    fire.  Additional events should be handled in a synchronous manner and may cause reentrancy into
+    the event model.</p>
+	</div3>
+	<div3 id="Events-flow-capture">
+	  <head>Event capture</head>
+      <p>Event capture is the process by which an EventListener registered on
+	an <termref def="dt-ancestor">ancestor</termref> 
+    of the event's target can intercept events of a given type before they
+    are received by the event's target.  Capture operates from
+		the top of the tree, generally the <code>Document</code>, downward, making it the symmetrical opposite of bubbling 
+		which is described below.  The chain of <code>EventTarget</code>s from the top of the tree
+    to the event's target is determined before the initial dispatch of the event.  If modifications
+    occur to the tree during event processing, event flow will proceed based on the initial state of the tree.</p>
+		<p>An <code>EventListener</code> being registered on an <code>EventTarget</code>
+		may choose to have that <code>EventListener</code> capture events by
+		specifying the <code>useCapture</code> parameter of the <code>addEventListener</code>
+	method to be <code>true</code>.  Thereafter, when an event of the given type is 
+	dispatched toward a <termref def="dt-descendant">descendant</termref> of the capturing object, the event 
+		will trigger any capturing event listeners of the appropriate type 
+		which exist in the direct line between the top of the document and the
+		event's target.  This downward propagation continues until the event's target is 
+		reached.  A capturing <code>EventListener</code> will not be triggered by events 
+    dispatched directly to the <code>EventTarget</code> upon which it is registered.</p>
+		<p>If the capturing <code>EventListener</code> wishes to prevent further
+		processing of the event from occurring it may call the <code>stopProgagation</code> method of 
+    the <code>Event</code> interface.  This will prevent further dispatch of the event, although additional <code>EventListeners</code> registered at
+		the same hierarchy level will still receive the event.  Once an event's 
+    <code>stopPropagation</code> method has been called, further calls to that method have
+    no additional effect.  If no additional capturers exist and <code>stopPropagation</code> 
+    has not been called,
+		the event triggers the appropriate <code>EventListeners</code> on the target  
+		itself.</p>
+		<p>Although event capture is similar to the delegation based event 
+		model in which all interested parties register their listeners directly on the target
+    about which they wish to receive notifications, it is different in two important respects.  
+	First, event capture only allows interception of events which are
+	targeted at <termref def="dt-descendant">descendants</termref> 
+		of the capturing <code>EventTarget</code>.  It does not allow interception of events 
+	targeted to the capturer's <termref
+					    def="dt-ancestor">ancestors</termref>, its <termref def="dt-sibling">siblings</termref>, or its 
+		sibling's <termref def="dt-descendant">descendants</termref>.  Secondly, event capture is not specified for 
+		a single <code>EventTarget</code>, it is specified for a specific type of event.  
+		Once specified, event capture intercepts all events 
+		of the specified type targeted toward any of the capturer's <termref def="dt-descendant">descendants</termref>.</p>
+	</div3>
+	<div3 id="Events-flow-bubbling">
+	  <head>Event bubbling</head>
+	  <p>Events which are designated as bubbling will initially proceed with the
+		same event flow as non-bubbling events.  The event is dispatched to its target
+		<code>EventTarget</code> and any event listeners found there are triggered.  Bubbling
+		events will then trigger any additional event listeners found by following the 
+		<code>EventTarget</code>'s parent chain upward, checking for any event listeners
+		registered on each successive <code>EventTarget</code>.  This upward propagation will continue
+		up to and including the <code>Document</code>.  <code>EventListener</code>s registered as
+    capturers will not be triggered during this phase.  The chain of <code>EventTarget</code>s from the event 
+    target to the top of the tree is determined before the initial dispatch of the event.  If modifications
+    occur to the tree during event processing, event flow will proceed based on the initial state of the tree.</p>
+		<p>Any event handler may choose to prevent further event propagation 
+    by calling the <code>stopPropagation</code> method of the <code>Event</code> interface.  If
+    any <code>EventListener</code> calls this method, all additional <code>EventListeners</code>
+    on the current <code>EventTarget</code> will be triggered but bubbling
+		will cease at that level.  Only one call to <code>stopPropagation</code> is required to
+    prevent further bubbling.</p>
+	</div3>
+	<div3 id="Events-flow-cancelation">
+	  <head>Event cancelation</head>
+	  <p>Some events are specified as cancelable.  For these events, the 
+	  DOM implementation generally has a default action associated with the
+	  event.  An example of this is a hyperlink in a web browser.  When the user clicks on the
+    hyperlink the default action is generally to active that hyperlink.
+    Before processing these events, the implementation must check for 
+	  event listeners registered to receive the event and dispatch the event to 
+	  those listeners.  These listeners then have the option of canceling the 
+	  implementation's default action or allowing the default action to proceed.  In the
+    case of the hyperlink in the browser, canceling the action would have the result
+    of not activating the hyperlink.</p>
+    <p>Cancelation is accomplished by calling the <code>Event</code>'s <code>
+		preventDefault</code> method.  If one or more <code>EventListeners</code> call <code>
+    preventDefault</code> during any phase of event flow the default action will
+    be canceled.</p>
+    <p>Different implementations will specify their own default actions, if any, associated
+    with each event.  The DOM does not attempt to specify these actions.</p>
+	</div3>
+  </div2>
+  <div2 id="Events-registration">
+    <head>Event listener registration</head>
+	<div3 id="Events-Registration-interfaces">
+	  <head>Event registration interfaces</head>
+	  <definitions>
+        &events-eventtarget;
+        &events-eventlistener;
+	  </definitions>
+	</div3>
+	<div3 id="Events-registration-html40">
+	   <head>Interaction with HTML 4.0 event listeners</head>
+	   <p>In HTML 4.0, event listeners were specified as attributes of an element.  As such,
+	   registration of a second event listener of the same type would replace the 
+	   first listener.  The DOM Event Model allows registration of multiple event listeners on
+	   a single <code>EventTarget</code>.  To achieve this, event listeners are no longer stored as attribute
+	   values.</p>
+	   <p>In order to achieve compatibility with HTML 4.0, implementors may view the setting of 
+	   attributes which represent event handlers as the creation and registration of an <code>
+	   EventListener</code> on the <code>EventTarget</code>.  The value of <code>useCapture</code>
+	defaults to <code>false</code>.  This <code>EventListener</code> behaves in
+	   the same manner as any other <code>EventListeners</code> which may be registered on the
+	   <code>EventTarget</code>. If the attribute representing the event listener is changed, this may be
+	   viewed as the removal of the previously registered <code>EventListener</code> and the 
+	   registration of a new one. No technique is provided to allow HTML 4.0 event listeners 
+     access to the context information defined for each event.</p>
+	</div3>
+  </div2>
+  <div2 id="Events-interface">
+    <head>Event interface</head>
+    <definitions>
+      &events-event;
+      &events-eventexception;
+    </definitions>
+  </div2>
+  <div2 id="Events-document">
+    <head>DocumentEvent interface</head>
+    <definitions>
+      &events-documentevent;
+    </definitions>
+  </div2>
+  <div2 id="Events-eventgroupings">
+    <head>Event module definitions</head>
+		<p>The DOM Level 2 Event Model allows a DOM implementation to support multiple modules of events. The
+		model has been designed to allow addition of new event modules as is required.  The DOM will
+		not attempt to define all possible events.  For purposes of interoperability, the DOM will
+		define a module of user interface events including lower level device dependent events, a module
+            of UI logical events, and a module of document mutation events.
+
+            Any new event types defined by third parties must not begin with any upper, lower, or mixed 
+		case version of the string "DOM".  This prefix is reserved for future DOM event modules.  It is also
+            strongly recommended that third parties adding their own events use their own prefix to avoid
+            confusion and lessen the probability of conflicts with other new events.
+		</p>
+    <div3 id="Events-eventgroupings-uievents">
+		<head>User Interface event types</head>
+		<p>The User Interface event module is composed of events listed in HTML 4.0 and additional
+		events which are supported in <termref def='dt-DOM-Level-0'>DOM 
+	Level 0</termref> browsers.</p>
+
+    <p>
+      A DOM application may use the <code>hasFeature(feature, version)</code>
+      method of the <code>DOMImplementation</code> interface with parameter
+      values "UIEvents" and "2.0" (respectively) to determine whether or not
+      the User Interface event module is supported by the implementation. In
+      order to fully support this module, an implementation must also support
+      the "Events" feature defined in this specification and the
+      "Views" feature defined in the DOM Level 2 Views specification <bibref
+      ref="DOMViews"/>. Please, refer to additional information about
+      <xspecref
+      href='&core.latest.url;/introduction.html#ID-Conformance'>conformance</xspecref>
+      in the DOM Level 2 Core specification <bibref ref="DOMCore"/>.
+    </p>
+
+      <note>
+	<p>To create an instance of the <code>UIEvent</code> interface, use the
+	feature string "UIEvents" as the value of the input parameter used with
+	  the <code>createEvent</code> method of the <code>DocumentEvent</code>
+	  interface.</p>
+      </note>
+
+    <definitions>
+      &events-uievent;
+    </definitions>
+
+      <p>The different types of such events that can occur are:
+	<glist>
+	  <gitem>
+	    <label>DOMFocusIn</label>
+	    <def>
+	      <p>The DOMFocusIn event occurs when an <code>EventTarget</code> receives focus, for
+		instance via a pointing device being moved onto an element or
+		by tabbing navigation to the element. Unlike the HTML event
+		focus, DOMFocusIn can be applied to any focusable <code>EventTarget</code>, not just FORM
+		controls.</p>
+	      <ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+
+	      </ulist>
+	    </def>
+	  </gitem>
+
+	  <gitem>
+	    <label>DOMFocusOut</label>
+	    <def>
+	      <p>The DOMFocusOut event occurs when a <code>EventTarget</code> loses focus, for
+		instance via a pointing device being moved out of an element or
+		by tabbing navigation out of the element. Unlike the HTML event
+		blur, DOMFocusOut can be applied to any focusable <code>EventTarget</code>, not just FORM
+		controls.</p>
+	      <ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+	      </def>
+	  </gitem>
+
+	  <gitem>
+	    <label>DOMActivate</label>
+	    <def>
+	      <p>The activate event occurs when an element is activated, for
+		instance, thru a mouse click or a keypress. A numerical
+		argument is provided to give an indication of the type of
+		activation that occurs: 1 for a simple activation (e.g. a
+		simple click or Enter), 2 for hyperactivation (for instance a
+		double click or Shift Enter).</p>
+	      <ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: Yes</p></item>
+		<item><p>Context Info: detail (the numerical value)</p></item>
+	      </ulist>
+	    </def>
+	  </gitem>
+	</glist>
+      </p>
+    </div3>
+    <div3 id="Events-eventgroupings-mouseevents">
+      <head>Mouse event types</head>
+      <p>The Mouse event module is composed of events listed in HTML 4.0 and additional
+	events which are supported in <termref def='dt-DOM-Level-0'>DOM 
+	Level 0</termref> browsers.  This event module is specifically designed for use with mouse
+    input devices.</p>
+
+    <p>
+      A DOM application may use the <code>hasFeature(feature, version)</code>
+      method of the <code>DOMImplementation</code> interface with parameter
+      values "MouseEvents" and "2.0" (respectively) to determine whether or not
+      the Mouse event module is supported by the implementation. In order to
+      fully support this module, an implementation must also support the
+      "UIEvents" feature defined in this specification. Please, refer to
+      additional information about <xspecref
+      href='&core.latest.url;/introduction.html#ID-Conformance'>conformance</xspecref>
+      in the DOM Level 2 Core specification <bibref ref="DOMCore"/>.
+    </p>
+
+      <note>
+	<p>To create an instance of the <code>MouseEvent</code> interface, use the
+	feature string "MouseEvents" as the value of the input parameter used with
+	the <code>createEvent</code> method of the <code>DocumentEvent</code>
+	  interface.</p>
+      </note>
+
+    <definitions>
+      &events-mouseevent;
+    </definitions>
+
+      <p>The different types of Mouse events that can occur are:
+	<glist>
+	  <gitem>
+		<label>click</label>
+		<def>
+		<p>The click event occurs when the pointing device button is clicked over
+		an element. A click is defined as a mousedown and mouseup over the same screen
+    location.  The sequence of these events is:
+    <eg>
+    mousedown
+    mouseup
+    click
+    </eg>
+    If multiple clicks occur at the same screen location, the sequence repeats 
+    with the <code>detail</code> attribute incrementing with each repetition.  
+    This event is valid for most elements.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: Yes</p></item>
+		<item><p>Context Info: screenX, screenY, clientX, clientY, altKey, ctrlKey, shiftKey, metaKey, button, detail</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>mousedown</label>
+		<def>
+		<p>The mousedown event occurs when the pointing device button is pressed over
+		an element. This event is valid for most elements.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: Yes</p></item>
+		<item><p>Context Info: screenX, screenY, clientX, clientY, altKey, ctrlKey, shiftKey, metaKey, button, detail</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>mouseup</label>
+		<def>
+		<p>The mouseup event occurs when the pointing device button is released over
+		an element. This event is valid for most elements.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: Yes</p></item>
+		<item><p>Context Info: screenX, screenY, clientX, clientY, altKey, ctrlKey, shiftKey, metaKey, button, detail</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>mouseover</label>
+		<def>
+		<p>The mouseover event occurs when the pointing device is moved onto an element.
+		This event is valid for most elements.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: Yes</p></item>
+		<item><p>Context Info: screenX, screenY, clientX, clientY, altKey, ctrlKey, shiftKey, metaKey, relatedTarget
+    indicates the <code>EventTarget</code> the pointing device is exiting.</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>mousemove</label>
+		<def>
+		<p>The mousemove event occurs when the pointing device is moved while it is
+		over an element. This event is valid for most elements.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: screenX, screenY, clientX, clientY, altKey, ctrlKey, shiftKey, metaKey</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+  	<gitem>
+		<label>mouseout</label>
+		<def>
+		<p>The mouseout event occurs when the pointing device is moved away from an
+		element. This event is valid for most elements..</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: Yes</p></item>
+		<item><p>Context Info: screenX, screenY, clientX, clientY, altKey, ctrlKey, shiftKey, metaKey, relatedTarget
+    indicates the <code>EventTarget</code> the pointing device is entering.</p></item>
+		</ulist>
+		</def>
+	  </gitem>
+
+	</glist>
+      </p>
+    </div3>
+
+    <div3 id="Events-eventgroupings-keyevents">
+      <head>Key events</head>
+      <p>The DOM Level 2 Event specification does not provide a key event module.  An event module designed 
+      for use with keyboard
+      input devices will be included in a later version of the DOM specification.</p>
+    </div3>
+
+    <div3 id="Events-eventgroupings-mutationevents">
+      <head>Mutation event types</head>
+		<p>The mutation event module is designed to allow notification of any changes
+		to the structure of a document, including attr and text modifications.  It may 
+		be noted that none of the mutation events listed are designated as cancelable.
+		This stems from the fact that it is very difficult to make
+		use of existing DOM interfaces which cause document modifications if any change
+		to the document might or might not take place due to cancelation of the related
+		event.  Although this is still a desired capability, it was decided that it would
+		be better left until the addition of transactions into the DOM.</p>
+    <p>Many single modifications of the tree can cause multiple mutation events to be fired.
+    Rather than attempt to specify the ordering of mutation events due to every
+    possible modification of the tree, the ordering of these events is left to the implementation.</p>
+
+    <p>
+      A DOM application may use the <code>hasFeature(feature, version)</code>
+      method of the <code>DOMImplementation</code> interface with parameter
+      values "MutationEvents" and "2.0" (respectively) to determine whether or not
+      the Mutation event module is supported by the implementation. In order to
+      fully support this module, an implementation must also support the
+      "Events" feature defined in this specification. Please, refer to
+      additional information about <xspecref
+      href='&core.latest.url;/introduction.html#ID-Conformance'>conformance</xspecref>
+      in the DOM Level 2 Core specification <bibref ref="DOMCore"/>.
+    </p>
+
+      <note>
+	<p>To create an instance of the <code>MutationEvent</code> interface, use the
+	feature string "MutationEvents" as the value of the input parameter used with
+	the <code>createEvent</code> method of the <code>DocumentEvent</code>
+	  interface.</p>
+      </note>
+
+
+    <definitions>
+      &events-mutationevent;
+    </definitions>
+
+      <p>The different types of Mutation events that can occur are:
+	<glist>
+	  <gitem>
+		<label>DOMSubtreeModified</label>
+		<def>
+		<p>  This is a general event for notification of all changes to the
+    document. It can be used instead of the more specific events listed
+    below. It may be fired after a single modification to the document or, at
+    the implementation's discretion, after multiple changes have occurred.  The
+    latter use should generally be used to accomodate multiple changes which occur
+    either simultaneously or in rapid succession.  The target of this event
+    is the lowest common parent of the changes which have taken place.  This
+    event is dispatched after any other events caused by the mutation have
+    fired.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>DOMNodeInserted</label>
+		<def>
+		<p>Fired when a node has been added as a <termref def='dt-child'>child</termref> of another node.  This
+    event is dispatched after the insertion has taken place.  The target of
+    this event is the node being inserted.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: relatedNode holds the parent node</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>DOMNodeRemoved</label>
+		<def>
+		<p>Fired when a node is being removed from its parent node.  This event is
+    dispatched before the node is removed from the tree.  The target of this
+    event is the node being removed.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: relatedNode holds the parent node</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>DOMNodeRemovedFromDocument</label>
+		<def>
+		<p>Fired when a node is being removed from a document, either through
+    direct removal of the Node or removal of a subtree in which it is
+    contained.  This event is dispatched before the removal takes place. 
+    The target of this event is the Node being removed.  If the Node is
+    being directly removed the DOMNodeRemoved event will fire before the
+    DOMNodeRemovedFromDocument event.</p>
+		<ulist>
+		<item><p>Bubbles: No</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>DOMNodeInsertedIntoDocument</label>
+		<def>
+		<p>Fired when a node is being inserted into a document, either through
+    direct insertion of the Node or insertion of a subtree in which it is
+    contained.  This event is dispatched after the insertion has taken
+    place.  The target of this event is the node being inserted.  If the
+    Node is being directly inserted the DOMNodeInserted event will fire before
+    the DOMNodeInsertedIntoDocument event.</p>
+		<ulist>
+		<item><p>Bubbles: No</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>DOMAttrModified</label>
+		<def>
+		<p>Fired after an <code>Attr</code> has been modified on a node. The target of this
+	event is the <code>Node</code> whose <code>Attr</code> changed.  The value of attrChange indicates
+	whether the <code>Attr</code> was modified, added, or removed.  The
+	value of relatedNode indicates the <code>Attr</code> node whose value has been affected.  It is expected
+      that string based replacement of an <code>Attr</code> value will be viewed as a modification of the <code>Attr</code>
+	since its identity does not change.  Subsequently replacement of the <code>Attr</code> node with a different
+	<code>Attr</code> node is viewed as the removal of the first <code>Attr</code> node and the addition of the second.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: attrName, attrChange, prevValue, newValue, relatedNode</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>DOMCharacterDataModified</label>
+		<def>
+		<p>Fired after CharacterData within a node has been modified but the node
+    itself has not been inserted or deleted.  This event is also triggered by
+    modifications to PI elements. The target of this event is the
+    CharacterData node.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: prevValue, newValue</p></item>
+		</ulist>
+		</def>
+		</gitem>
+	</glist>
+      </p>
+
+    </div3>
+    <div3 id="Events-eventgroupings-htmlevents">
+      <head>HTML event types</head>
+      <p>The HTML event module is composed of events listed in HTML 4.0 and additional
+	events which are supported in <termref def='dt-DOM-Level-0'>DOM 
+	Level 0</termref> browsers.</p>
+
+    <p>
+      A DOM application may use the <code>hasFeature(feature, version)</code>
+      method of the <code>DOMImplementation</code> interface with parameter
+      values "HTMLEvents" and "2.0" (respectively) to determine whether or not
+      the HTML event module is supported by the implementation. In order to
+      fully support this module, an implementation must also support the
+      "Events" feature defined in this specification. Please, refer to
+      additional information about <xspecref
+      href='&core.latest.url;/introduction.html#ID-Conformance'>conformance</xspecref>
+      in the DOM Level 2 Core specification <bibref ref="DOMCore"/>.
+    </p>
+
+      <note>
+	<p>To create an instance of the <code>Event</code> interface for
+	  the HTML event module, use the
+	feature string "HTMLEvents" as the value of the input parameter used with
+	the <code>createEvent</code> method of the <code>DocumentEvent</code>
+	  interface.</p>
+      </note>
+
+    <p>The HTML events use the base DOM Event interface to pass contextual information.</p>
+
+      <p>The different types of such events that can occur are:
+	<glist>
+	  <gitem>
+		<label>load</label>
+		<def>
+		<p>The load event occurs when the DOM implementation finishes loading all content within
+		a document, all frames within a FRAMESET, or an OBJECT element.</p>
+		<ulist>
+		<item><p>Bubbles: No</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>unload</label>
+		<def><p>The unload event occurs when the DOM implementation removes a document from a window
+		or frame. This event is valid for BODY and FRAMESET elements.</p>
+		<ulist>
+		<item><p>Bubbles: No</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>abort</label>
+		<def><p>The abort event occurs when page loading is stopped before an image has
+		been allowed to completely load. This event applies to OBJECT elements.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>error</label>
+		<def><p>The error event occurs when an image does not load properly or when an
+		error occurs during script execution. This event is valid for OBJECT
+		elements, BODY elements, and FRAMESET element.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>select</label>
+		<def><p>The select event occurs when a user selects some text in a text field.
+		This event is valid for INPUT and TEXTAREA elements.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>change</label>
+		<def><p>The change event occurs when a control loses the input focus and its value
+		has been modified since gaining focus. This event is valid for INPUT, SELECT, and TEXTAREA.
+    element.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>submit</label>
+		<def><p>The submit event occurs when a form is submitted. This event only applies to the
+		FORM element.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: Yes</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>reset</label>
+		<def><p>The reset event occurs when a form is reset. This event only applies to the FORM
+		element.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>focus</label>
+		<def><p>The focus event occurs when an element receives focus either via a pointing
+		device or by tabbing navigation. This event is valid for the following
+		elements: LABEL, INPUT, SELECT, TEXTAREA, and BUTTON.</p>
+		<ulist>
+		<item><p>Bubbles: No</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+		<gitem>
+		<label>blur</label>
+		<def><p>The blur event occurs when an element loses focus either via the pointing
+		device or by tabbing navigation. This event is valid for the following
+		elements: LABEL, INPUT, SELECT, TEXTAREA, and BUTTON.</p>
+		<ulist>
+		<item><p>Bubbles: No</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+		</gitem>
+
+	  <gitem>
+		<label>resize</label>
+		<def>
+		<p>The resize event occurs when a document view is resized.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+	  </gitem>
+
+	  <gitem>
+		<label>scroll</label>
+		<def>
+		<p>The scroll event occurs when a document view is
+		scrolled.</p>
+		<ulist>
+		<item><p>Bubbles: Yes</p></item>
+		<item><p>Cancelable: No</p></item>
+		<item><p>Context Info: None</p></item>
+		</ulist>
+		</def>
+	  </gitem>
+	</glist>
+      </p>
+    </div3>
+  </div2>
+</div1>
+<!--
+ *************************************************************************
+ * END OF EVENTS                                                         *
+ *************************************************************************
+-->
+

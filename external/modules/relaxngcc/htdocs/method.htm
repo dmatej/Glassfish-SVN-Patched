@@ -1,0 +1,201 @@
+<html>
+<head>
+	<title><?ja?>RelaxNGCC 動作原理<?/ja?><?en?>RelaxNGCC Algorithm<?/en?></title>
+	<link rel="stylesheet" href="ngcc.css">
+	<?ja?><meta HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=shift_jis"><?/ja?>
+</head>
+<body>
+<h1><?ja?>RelaxNGCC 動作原理<?/ja?><?en?>RelaxNGCC Algorithm<?/en?></h1>
+<p><?ja?>　ここではRelaxNGCCがどうやって動くかの説明をします。この説明を理解するには、オートマトンについての基礎知識が必要です。<?/ja?><?en?> This page describes how RelaxNGCC generates Java source code. It also assumes you are familiar with automaton.<?/en?></p>
+<p><?ja?>　このページですべての仕様を説明しているわけではないですし、そこまでのドキュメントを書くのも大変なのでややさぼり気味です。深く知りたい方は疑問点はソースコードを調べたりメーリングリスト等で質問してください。<?/ja?><?en?>This explanation is not a detailed algorithm but an outline. If you hava any question about internal behavior of RelaxNGCC, please analyse source code or send me via mail. <?/en?></p>
+<h2>Step 1　<?ja?>スコープへの切り分け<?/ja?><?en?>Dividing into scopes<?/en?></h2>
+<p>
+<?ja?>　まず、RelaxNG grammarにおいて、<tt>start</tt>または<tt>define</tt>エレメントで定義される要素と属性のブロックをスコープと定義します。<tt>include</tt>エレメントと、<tt>start</tt>および<tt>define</tt>の<tt>combine</tt>属性を処理することにより、grammar全体は１個以上のスコープに分解されます。<?/ja?>
+<?en?> A scope is a block that consists of elements, attributes, and data defined by a <tt>start</tt> or a <tt>define</tt> element of a RelaxNG grammar. A grammar is devided into one or more scopes by processing <tt>include</tt> elements and <tt>combine</tt> attributes.<?/en?>
+</p>
+<p><?ja?>　RelaxNGCCは、スコープ１個について１個の文字列オートマトンと１個のJavaクラスを生成します。<?/ja?><?en?> RelaxNGCC generates an automaton and a Java class per a scope.<?/en?></p>
+<h2>Step 2　<?ja?>オートマトンの作成<?/ja?><?en?>Constructing automaton<?/en?></h2>
+<p><?ja?>　次にそれぞれのスコープについて文字列オートマトンを作成します。このオートマトンでは、アルファベットの種類は<?/ja?><?en?>Next step is generating an automaton about each scope. In this automaton, there are following 5 kinds of alphabet. <?/en?></p>
+<ul>
+<li>startElement</li>
+<li>endElement</li>
+<li>attribute</li>
+<li>ref</li>
+<li>value</li>
+</ul>
+<p>
+<?ja?>の５つがあります。このうち、startElement, endElement, attributeの３種類はnamespace-URIとlocalname属性を持っています。以降では、namespace-URIとlocalnameの組を単に「名前」と呼び、startElement[x]で名前 x のstartElementタイプのアルファベットを表現します。
+<?/ja?>
+<?en?> The kinds "startElement", "endElement", and "attribute" have properties about namespace-URI and localname. We call the pair of the namespace-URI and the localname "name" simply. Additionally, we introduce an expression "startElement[x]" for a startElement type alphabet whose name is "x".<?/en?>
+</p>
+<p>
+<?ja?>　refはそれが参照するスコープで区別がなされます。スコープ S を参照するrefタイプのアルファベットをref[S]で表現します。また、refタイプのアルファベット r に対し、それが参照するスコープを scope(r) と表記します。<?/ja?>
+<?en?> A "ref" type alphabet is identified by a scope it refers to. We introduce an expression ref[S] for a ref type alphabet that refers to a scope "S" and another expression scope(r) for a scope that is referred to by a ref type alphabet "r".<?/en?>
+</p>
+<p>
+<?ja?>　valueは、アルファベットの属性として型があります。型はMulti-Schema Validatorに組み込まれたW3C XML Schema Part2のデータ型です。<?/ja?>
+<?en?> On the other hand, the value type alphabet has a datatype property. The data type is detailed in W3C XML Schema Part2, and RelaxNGCC uses datatype.<?/en?></p>
+<p><?ja?>　たとえば、次のスコープ<?/ja?><?en?> For example, following scope<?/en?></p>
+<pre>
+&lt;define name="foo"&gt;
+  &lt;element name="x"&gt;
+    &lt;oneOrMore&gt;
+      &lt;element name="y"&gt;&lt;text/&gt;&lt;/element&gt;
+    &lt;/oneOrMore&gt;
+    &lt;attribute name="a"&gt;&lt;text/&gt;&lt;/attribute&gt;
+  &lt;/element&gt;
+&lt;/define&gt;
+</pre>
+<p><?ja?>に対しては、次のオートマトン<?/ja?><?en?>generates following automaton<?/en?></p>
+<pre>
+  startE[x]   startE[y]   value[string]  endE[y]     attribute[a]   endE[x]
+S --------&gt; O --------&gt; O -----------&gt; O --------&gt; O ------------&gt; O ------&gt; F
+                        &and;                         |
+                        |__________________________|
+                               startE[y]
+</pre>
+<p><?ja?>が作成されます。ここでSは初期状態、Fは受理状態です。<?/ja?><?en?> where S is the initial state and F is the final state.<?/en?></p>
+<p><?ja?>　もう一つ例を出します。<?/ja?><?en?>Here is another example.<?/en?></p>
+<pre>
+&lt;define name="foo"&gt;
+  &lt;zeroOrMore&gt;
+    &lt;element name="y"&gt;&lt;data type="int"/&gt;&lt;/element&gt;
+  &lt;/zeroOrMore&gt;
+  &lt;choice&gt;
+    &lt;ref name="a"/&gt;&lt;
+    &lt;ref name="b"/&gt;&lt;
+  &lt;/choice&gt;
+&lt;/define&gt;
+</pre>
+<pre>
+                     startE[y]
+                ------------------------
+                |                      |
+      startE[y] v value[int]   endE[y] |
+|-- S --------&gt; O ---------&gt; O ------&gt; O --
+|   |                                  |  |
+|   |   ref[a]           ref[a]        |  |
+|   ------------&gt; F &lt;-------------------  |
+----------------&gt; F &lt;----------------------
+     ref[b]              ref[b]
+
+</pre>
+<p>
+<?ja?>　なお、アトリビュートの終端を示すアルファベットは存在しません。このことは後でオートマトンの遷移手順で説明します。また、状態 x からアルファベット a で状態 y へ遷移する遷移規則をtr(x,a,y)と表現します。<?/ja?>
+<?en?> Note that there are no alphabets that represent the end of attribute.<br> We introduce a expression tr(x,a,y) for a transition from a state <tt>x</tt> to <tt>y</tt> with an alphabet <tt>a</tt>.<?/en?>
+</p>
+<h2>Step 3　<?ja?>ユーザアクションの付加<?/ja?><?en?>Adding actions defined by user<?/en?></h2>
+<p>
+<?ja?>　RelaxNGCCではユーザの書いたコード断片を実行するわけですが、どのタイミングで実行するかはオートマトンの遷移規則の実行時です。例えば上記の例で、<?/ja?>
+<?en?> The result source code generated by RelaxNGCC must execute the code fragment embedded by the user at appropriate moment. This moment is associated with a transition of the automaton constructed in Step 2. <?/en?>
+</p>
+<pre>
+&lt;define name="foo"&gt;
+  &lt;element name="x"&gt;
+    &lt;oneOrMore&gt;
+      &lt;element name="y"&gt;&lt;text c:alias="t"/&gt;<span class="emph-code">&lt;c:java&gt;System.out.println(t);&lt;/c:java&gt;</span>&lt;/element&gt;
+    &lt;/oneOrMore&gt;
+    &lt;attribute name="a"&gt;&lt;text/&gt;&lt;/attribute&gt;
+  &lt;/element&gt;
+&lt;/define&gt;
+</pre>
+<?ja?>となっていれば、<?/ja?>
+<pre>
+  start "x"   start "y"   <span class="emph-code">value[string]</span>  end "y"     attribute "a"   end "x"
+S --------&gt; O --------&gt; O <span class="emph-code">-----------&gt;</span> O --------&gt; O ------------&gt; O ------&gt; F
+                        ^                          |
+                        |__________________________|
+                               start "y"
+</pre>
+<p>
+<?ja?>この強調した遷移規則を実行するときにユーザの書いた<tt>System.out.println(t);</tt>を実行すればよいことになります。このようにして、ユーザアクションつきオートマトンを作成します。<?/ja?>
+<?en?>In the example above, the code fragment <tt>System.out.println(t);</tt> is executed at the emphasized transition. Thus, RelaxNGCC associates the code fragment embedded by user with transitions of automaton. <?/en?>
+</p>
+
+<h2>Step 4　FIRST<?ja?>と<?/ja?><?en?> and <?/en?>FOLLOW</h2>
+<p><?ja?>　あるスコープ S について、アルファベットの集合 FIRST(S) を次のように定義します。<?/ja?><?en?>For each scope S, we define a set of alphabets FIRST(S) as ollows.<?/en?></p>
+<p style="border-width:1px; border-style:solid;">
+a &isin; FIRST(S) &hArr; <br>
+&nbsp;&nbsp;<?ja?>Sの作るオートマトンの初期状態からrefタイプでないアルファベット a で遷移可能である。または<?/ja?><?en?>A Transition (initial(S),a,j) exists, where <tt> a </tt> is not "ref" type. Or, <?/en?><br>
+&nbsp;&nbsp;<?ja?>a &isin; FIRST(S')かつ、Sの作るオートマトンの初期状態からscope(r)=S'なるrefタイプのアルファベットで遷移可能である。<?/ja?><?en?><tt>a</tt> &isin; FIRST(S'), and a transition (initial(S),r,j) exists where r is a ref type alphabet and scope(r)=S'.<?/en?>
+</p>
+<p><?en?>Note that initial(S) is the initial state of the automaton constructed from S.<?/en?></p>
+<p>
+<?ja?>　次に FOLLOW(S) を次のように定義します。<?/ja?>
+<?en?> Next, we define a set of alphabet FOLLOW(S) as follows.<?/en?>
+</p>
+<p style="border-width:1px; border-style:solid;">
+a &isin; FOLLOW(S) &hArr; <?ja?>あるスコープ S' において、scope(r)=Sであるようなrefタイプのアルファベット r が存在し、tr(x, r, y)かつtr(y, a, z)となる遷移規則が存在する。<?/ja?><?en?>If there is a ref type alphabet <tt>r</tt> in a scope S' where scope(r)=S, two transition tr(x,r,y) and tr(y,a,z) must exist in the scope S.<?/en?></p>
+<p><?ja?>　くだけた言い方をすれば、FIRSTはスコープの開始を告げるアルファベット、FOLLOWはスコープの終了を告げるアルファベットです。すべてのスコープについてFIRSTとFOLLOWを計算します。これらは文脈自由文法からコンパイラをつくるときに使うFIRSTとFOLLOWに倣った概念です。<?/ja?><?en?>Frankly speaking, FIRST alphabet notifies start of an scope and FOLLOW alphabet notifies end of an scope. I borrowed the concept of FIRST and FOLLOW from the compiler theory about LR context free grammar. RelaxNGCC computes FIRST and FOLLOW for all scopes.<?/en?></p>
+<h2>Step 5　<?ja?>決定性チェック<?/ja?><?en?>Determinacy check<?/en?></h2>
+<p><?ja?>　RelaxNGCCでは、オートマトンが非決定的になる場合はサポートしていません。手をかければ先読みをしたりバックトラックをしたりといったことは理論的には可能ですが、そこまではやっていません。<?/ja?>
+<?en?>As for RelaxNGCC, the automaton constructed by each scope must be deterministic. It is possible theoretically to avoid this restriction by looking ahead more tokens, but it is hard to implement.<?/en?>
+</p>
+<p>
+<?ja?>　スコープ X がつくるオートマトンが非決定的になるのは、次のいずれかの条件を満たす状態 O が１つでも存在する場合です。<?/ja?>
+<?en?> An automaton generated by a scope X is non-deterministic if a state O that satisfies any of following conditions exists.<?/en?>
+</p>
+<ol>
+<li><?ja?>Oから同一のアルファベットで異なる状態へ遷移可能<?/ja?><?en?>Multiple transition from O with an identical alphabet exist.<?/en?></li>
+<li><?ja?>refタイプのアルファベット r でOから遷移可能で、FIRST(scope(r))に含まれるアルファベットでも遷移可能<?/ja?><?en?>A transition from O with a <tt>ref</tt> type alphabet <tt>r</tt> exists, and another transition from O with an alphabet in FIRST(scope(r)).<?/en?></li>
+<li><?ja?>refタイプのアルファベット r, r' でOから遷移可能で、FIRST(scope(r))とFIRST(scope(r'))の両方に含まれるアルファベットが存在する<?/ja?><?en?>Two ref type transition from O with <tt>ref</tt> type alphabet r and r' exist, and the intersection of FIRST(scope(r)) and FIRST(scope(r')) is not empty.<?/en?></li>
+<li><?ja?>Oが受理状態で、FOLLOW(X)に含まれるアルファベットでOから遷移可能。これは厳密にはオートマトンの非決定性ではないですが、スコープの終端が判定できなくなるためRelaxNGCCで処理できないものの１つです。<?/ja?><?en?>O is an accept state and a transition from O with an alphabet in FOLLOW(X) exists. This condition is not irrelevant to the determinacy of the automaton, but violation of this condition exceeds the ability of RelaxNGCC since it causes ambifuousity of end of scope.<?/en?></li>
+</ol>
+<p><?ja?>　２番目の条件は、次のような例であてはまります。choiceの先頭では、startElement[x]で遷移できますが、名前aのdefineのスコープのFIRSTにもstartElement[x]が含まれるからです。<?/ja?><?en?>Here is an example of violating the second condition. At the head of <tt>choice</tt> a transition with <tt>startElement[x]</tt> is allowd, though <tt>startElement[x]</tt> is contained the FIRST of the scope with name <tt>a</tt>.<?/en?> </p>
+<pre>
+&lt;define name="a"&gt;
+  &lt;element name="x"&gt;...&lt;/element&gt;
+&lt;/define&gt;
+&lt;start&gt;
+  &lt;choice&gt;
+    &lt;element name="x"&gt;...&lt;/element&gt;
+    &lt;ref name="a"/&gt;
+  &lt;/choice&gt;
+&lt;/start&gt;
+</pre>
+<p><?ja?>　４番目の条件は、次のような例であてはまります。名前aのスコープAの受理状態からはさらにstartElement[x]で遷移可能ですが、(*)の行を見るとFOLLOW(A)がstartElement[x]を含んでいるからです。<?/ja?><?en?>Here is an example of violating the fourth condition. A transition with <tt>startElement[x]</tt> is allowed from the accept state of the scope <tt>a</tt>, however the line (*) indicates the FOLLOW of the scope contains <tt>startElement[x]</tt>.<?/en?></p>
+<pre>
+&lt;define name="a"&gt;
+  &lt;oneOrMore&gt;&lt;element name="x"&gt;...&lt;/element&gt;&lt;/oneOrMore&gt;
+&lt;/define&gt;
+&lt;start&gt;
+  &lt;ref name="a"/&gt;
+  &lt;element name="x"&gt;...&lt;/element&gt; (*)
+&lt;/start&gt;
+</pre>
+<p><?ja?>　決定性チェックに失敗した場合、RelaxNGCCはそのことを示すメッセージを出力し終了します。<?/ja?><?en?> If the determinacy check is failed, RelaxNGCC outputs warning message and quits.<?/en?></p>
+<h2>Step 6　<?ja?>コード生成<?/ja?><?en?>Generating code<?/en?></h2>
+<p>
+<?ja?>　ここまできたら、いよいよコード生成です。状態遷移のトリガはstartElement, endElementなどのSAXイベントです。SAXのstartElementで名前 x を受け取ったら、アルファベットstartElement[x]を受け取ったことになります。ただしアトリビュートはstartElementの時点で通知されるだけなので、扱いを変える必要があります。次のルールを導入します。<?/ja?>
+<?en?> Then RelaxNGCC generates source code. The trigger of transition is SAX events such as <tt>startElement</tt>, <tt>endElement</tt>, and so on. But a special rule is needed since attributes are notified only at <tt>startElement</tt>.<?/en?>
+</p>
+<ul>
+<li><?ja?>startElementでアトリビュートの集合を受け取ったらスタックへプッシュする<?/ja?><?en?>When the code receives a set of attributes at <tt>startElement</tt>, the code pushes it into a stack.<?/en?></li>
+<li><?ja?>endElementを受け取ったらスタックからポップする<?/ja?><?en?>At <tt>endElement</tt> the code pops the attribute set from the stack.<?/en?></li>
+<li><?ja?>オートマトンの状態遷移が起こるたびに、遷移先の状態が次のすべての条件<?/ja?><?en?>On every transition, the code checks if the destination state of the transition satisfies all of following conditions:<?/en?>
+<ul>
+<li><?ja?>アトリビュートタイプのアルファベット x で遷移可能である<?/ja?><?en?>A transition with attribute type alphabet <tt>x</tt> is allowd.<?/en?></li>
+<li><?ja?>スタックのトップのアトリビュート集合に、xと同じ名前のアトリビュート a が存在する<?/ja?><?en?>The attribute set located on the top of the stack contains an attribute whose name is the name of <tt>x</tt>.<?/en?></li>
+</ul>
+<?ja?>を満たすかを調べ、その場合には x での遷移および aの値のテキスト v での遷移を行う。<?/ja?><?en?>If so, the transitions with <tt>x</tt> and the text of the value of <tt>x</tt> are processed.<?/en?>
+</ul>
+
+<p><?ja?>また、スコープの開始と終了の処理のために次の処理を導入します。<?/ja?><?en?> Additionally, here is rules of the start and end of scope.<?/en?></p>
+<ul>
+<li><?ja?>refタイプのアルファベット r で遷移可能な状態 O において、FIRST(scope(r))に含まれるアルファベット x を受け取ったら、<?/ja?><?en?>If the current state O has a transition with ref type alphabet r and the code receives an alphabet <tt>x</tt> contained in FIRST(scope(r)),<?/en?>
+<ul>
+<li><?ja?>遷移先の状態 P を保存し、<?/ja?><?en?>preserves the destination state P,<?/en?></li>
+<li><?ja?>現在状態をscope(r)の作るオートマトンの初期状態とし、<?/ja?><?en?>sets the current state the initial state of the automaton of <tt>scope(r)</tt><?/en?>,</li>
+<li><?ja?>xで遷移する。<?/ja?><?en?> and the transition with <tt>x</tt> is processed.<?/en?></li>
+</ul>
+<li><?ja?>現在状態 O が受理状態で、FOLLOW(scope(O))に含まれるアルファベット x を受け取ったら、<?/ja?><?en?>If the current state O is accept state and the code receives an alphabet <tt>x</tt> contained in FOLLOW(scope(O)),<?/en?>
+<ul>
+<li><?ja?>保存してあった P を現在状態とし、<?/ja?><?en?>sets the current state the preserved state P,<?/en?></li>
+<li><?ja?>xで遷移する。<?/ja?><?en?> and the transition with <tt>x</tt> is processed.<?/en?></li>
+</ul>
+</ul>
+<p><?ja?>　SAXの言葉で言えば、スコープを開始するときにContentHandlerを置換し、スコープを終了するときにContentHandlerを復帰することになります。<?/ja?><?en?>In terms of SAX, the <tt>ContentHandler</tt> is replaced at the start of a scope, and it is recovered at the end of the scope.<?/en?></p>
+<hr>
+<div align="right"><a href="index.htm">RelaxNGCC home</a></div>
+</body>
+</html>

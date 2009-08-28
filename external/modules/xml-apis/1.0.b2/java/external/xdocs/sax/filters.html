@@ -1,0 +1,135 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>SAX2: Filters</title>
+<link rel="stylesheet" type="text/css" href="sax-style.css" />
+</head>
+
+<body>
+<h1>SAX2: Filters</h1>
+
+<blockquote>
+<p class="copyright">This document is in the Public Domain.</p>
+</blockquote>
+
+<p>The SAX interface assumes two basic streams:</p>
+
+<ol>
+<li>a stream of requests flowing from the application to the SAX
+driver; and</li>
+<li>a stream of events (and other information) flowing from the SAX
+driver to the application.</li>
+</ol>
+
+<p>With SAX1, programmers quickly realized that it was possible to
+extend this model to support a processing chain, where requests could
+flow through several different components, or filters, before arriving 
+at the original SAX driver, and events could flow through the same
+filters before arriving at the application.  Each filter can make
+changes to the stream of events as it passes through, but the whole
+chain of filters still appears to be a single SAX driver to the
+application.</p>
+
+<p>SAX2 formalizes this design technique by adding a new interface, <a
+href="javadoc/org/xml/sax/XMLFilter.html">org.xml.sax.XMLFilter</a>,
+and a new helper class, <a
+href="javadoc/org/xml/sax/helpers/XMLFilterImpl.html"
+>org.xml.sax.XMLFilterImpl</a>.</p>
+
+<p>The <var>XMLFilter</var> interface itself is very simple, extending
+the basic <var>XMLReader</var> interface with two additional
+methods:</p>
+
+<blockquote><pre xml:space="preserve">
+public interface XMLFilter extends XMLReader
+{
+  public abstract void setParent (XMLReader parent);
+  public abstract XMLReader getParent ();
+}
+</pre></blockquote>
+
+<p>In other words, a SAX2 filter is simply an XMLReader that has
+another XMLReader as its parent.</p>
+
+<p>In normal use, a filter will implement not only the
+<var>XMLFilter</var> interface but also one or all of the various
+resolver and handler interfaces (<var>EntityResolver</var>,
+<var>DTDHandler</var>, <var>ContentHandler</var>, and
+<var>ErrorHandler</var>).  To the parent XML reader, the filter is the
+client application receiving the events; to the client application,
+the filter is the SAX driver producing the events.</p>
+
+<p>The <var>XMLFilterImpl</var> helper class provides a convenient
+base for deriving SAX2 filters.  This class implements the
+<var>XMLFilter</var>, <var>EntityResolver</var>,
+<var>DTDHandler</var>, <var>ContentHandler</var>, and
+<var>ErrorHandler</var> interfaces.  By default, it passes all events
+on unmodified, but the derived filter can override specific
+methods.</p>
+
+<p>Here's an example of a very simple filter that changes the
+Namespace URI <code>http://www.foo.com/ns/</code> to
+<code>http://www.bar.com/</code> wherever it appears in an element
+name (but not an attribute name):</p>
+
+<blockquote><pre xml:space="preserve">
+public class FooFilter extends XMLFilterImpl
+{
+  public FooFilter ()
+  {
+  }
+
+  public FooFilter (XMLReader parent)
+  {
+    super(parent);
+  }
+
+
+  /**
+   * Filter the Namespace URI for start-element events.
+   */
+  public void startElement (String uri, String localName,
+                            String qName, Attributes atts)
+    throws SAXException
+  {
+    if (uri.equals("http://www.foo.com/ns/")) {
+      uri = "http://www.bar.com/ns/";
+    }
+    super.startElement(uri, localName, qName, atts);
+  }
+
+
+  /**
+   * Filter the Namespace URI for end-element events.
+   */
+  public void endElement (String uri, String localName, String qName)
+    throws SAXException
+  {
+    if (uri.equals("http://www.foo.com/ns/")) {
+      uri = "http://www.bar.com/ns/";
+    }
+    super.endElement(uri, localName, qName);
+  }
+
+}
+</pre></blockquote>
+
+<p>Note the use of <var>super.startElement</var> and
+<var>super.endElement</var> to send the event on to the client.  In a
+real filter, it would be good to override the
+<var>ContentHandler.startPrefixMapping</var> and
+<var>ContentHandler.endPrefixMapping</var> methods as well.</p>
+
+<p>Long filter chains are not always the best approach, but you will
+find that it is sometimes easier to build complex XML applications if
+you can break them down into a collection of simple SAX filters, each
+one reading the events from its parent.</p>
+
+<hr />
+
+<address>$Id: filters.html 225904 2001-05-20 03:12:59Z curcuru $</address>
+
+</body>
+</html>
