@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!-- hk2 depends on tiger-types artifact -->
+
+<project name="tiger-types source integration" default="build" basedir=".">
+
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+
+    <target name="build" depends="init">
+        <antcall target="tiger-types.build" />
+    </target>
+
+    <!--
+        Checkout tiger-types source and build
+    -->
+    <target name="tiger-types.checkout" >
+        <echo message="checkout tiger-types from ${tiger-types.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${tiger-types.svn.url}" />
+            <arg line="--username" />
+            <arg line="guest" />
+            <arg line="tiger-types" />
+	</exec>
+    </target>
+    <target name="tiger-types.build" depends="tiger-types.checkout" >
+        <!-- since the original repository in tiger-types/pom.xml no longer exists, so had to create a settings.xml with an valid remove maven repository -->
+	<antcall target="create.settings.xml" />
+        <!-- build tiger-types -->
+        <exec executable="mvn" dir="${external.dir}/tiger-types" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="-s" />
+            <arg line="${external.dir}/tiger-types/tiger-types.settings.xml" />
+            <arg line="install" />
+	</exec>
+        <delete file="${external.dir}/tiger-types/tiger-types.settings.xml"/>
+    </target>
+
+    <target name="create.settings.xml" >
+        <echo message="&lt;settings&gt; &#xa;&lt;profiles&gt; &#xa;&lt;profile&gt; &#xa;&lt;id&gt;dev&lt;/id&gt; &#xa;&lt;activation&gt; &#xa;&lt;activeByDefault&gt;true&lt;/activeByDefault&gt; &#xa;&lt;/activation&gt;  &#xa;&lt;repositories&gt; &#xa; &lt;repository&gt; &#xa; &lt;id&gt;java.net2&lt;/id&gt; &#xa; &lt;name&gt;Nexus repository collection for Glassfish&lt;/name&gt; &#xa; &lt;url&gt;http://maven.glassfish.org/content/groups/glassfish&lt;/url&gt; &#xa; &lt;/repository&gt; &#xa;&lt;/repositories&gt; &#xa;&lt;/profile&gt; &#xa;&lt;/profiles&gt; &#xa; &lt;/settings&gt;" file="${external.dir}/tiger-types/tiger-types.settings.xml" />
+    </target>
+
+</project>
