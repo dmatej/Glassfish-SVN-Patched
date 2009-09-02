@@ -21,8 +21,10 @@
         <antcall target="saaj-api.publish"/>
 
         <antcall target="saaj.checkout"/>
-        <antcall target="saaj.build"/>
-        <antcall target="saaj.publish"/>
+        <antcall target="saaj-impl.build"/>
+        <antcall target="saaj-impl.publish"/>
+        <antcall target="soapprocessor.build"/>
+        <antcall target="soapprocessor.publish"/>
 
         <antcall target="mimepull.checkout"/>
         <antcall target="mimepull.build"/>
@@ -162,7 +164,7 @@
     <target name="saaj.checkout" unless="nocheckout">
         <cvs.checkout repo="${saaj.cvs.url}" tag="${saaj.cvs.tag}" module="saaj/saaj-ri" dest="saaj"/>
     </target>
-    <target name="saaj.build">
+    <target name="saaj-impl.build">
         <delete>
             <fileset dir="${external.dir}/saaj" includes="**/*.jar">
                 <exclude name="**/saaj-api*.jar*"/>
@@ -172,8 +174,13 @@
             <property name="jaf.jar" value=""/>
             <property name="servlet.jar" value="${maven.repo.local}/${servlet.mvn.path}"/>
             <property name="FastInfoset.jar" value="${maven.repo.local}/${fi.mvn.path}"/>
-            <property name="saaj.jar" value="${maven.repo.local}/${saaj-impl.mvn.path}"/>
+            <!--<property name="saaj.jar" value="${maven.repo.local}/${saaj-impl.mvn.path}"/>-->
         </subant>        
+    </target>
+    <target name="saaj-impl.publish">
+        <mvn.publish jar="${external.dir}/saaj/build/lib/saaj-impl.jar" mvngroup="com.sun.xml.messaging.saaj" mvnartid="saaj-impl" mvnversion="${saaj-impl.version}"/>
+    </target>
+    <target name="soapprocessor.build">
         <subant buildpath="${external.dir}/saaj/samples/soapprocessor" target="jar">
             <property name="jaf.jar" value=""/>
             <property name="servlet.jar" value="${maven.repo.local}/${servlet.mvn.path}"/>
@@ -182,12 +189,11 @@
             <property name="saaj.home" value="${external.dir}/saaj/"/>
         </subant>
     </target>
+    <target name="soapprocessor.publish">
+        <mvn.publish jar="${external.dir}/saaj/samples/soapprocessor/lib/soapprocessor.jar" mvngroup="com.sun.xml.messaging.saaj" mvnartid="soapprocessor" mvnversion="${saaj-impl.version}"/>
+    </target>
     <target name="saaj.clean">
         <subant buildpath="${external.dir}/saaj" target="clean"/>
-    </target>
-    <target name="saaj.publish">
-        <mvn.publish jar="${external.dir}/saaj/build/lib/saaj-impl.jar" mvngroup="com.sun.xml.messaging.saaj" mvnartid="saaj-impl" mvnversion="${saaj-impl.version}"/>
-        <mvn.publish jar="${external.dir}/saaj/samples/soapprocessor/lib/soapprocessor.jar" mvngroup="com.sun.xml.messaging.saaj" mvnartid="soapprocessor" mvnversion="${saaj-impl.version}"/>
     </target>
 
     <!--mimepull.jar-->
