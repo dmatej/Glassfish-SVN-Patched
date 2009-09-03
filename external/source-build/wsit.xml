@@ -56,6 +56,13 @@
         <antcall target="stax-utils.build" />
         <antcall target="stax-utils.publish" />
 
+        <antcall target="mail.checkout" />
+        <antcall target="mail.build" />
+
+        <antcall target="jaxrpc-api.checkout" />
+        <antcall target="jaxrpc-api.build" />
+        <antcall target="jaxrpc-api.publish" />
+
         <antcall target="jaxrpc.checkout" />
         <antcall target="jaxrpc.build" />
         <antcall target="jaxrpc.publish" />
@@ -466,6 +473,45 @@
         <mvn.publish jar="${external.dir}/wsit/rt/build/wstrust-tmp/lib/wstrust-api.jar" mvngroup="wstrust-api" mvnartid="wstrust-api" mvnversion="${wsit.version}"/>
     </target>
 
+    <!-- mail.jar -->
+    <target name="mail.checkout" unless="nocheckout">
+        <delete dir="${external.dir}/mail"/>
+        <hg.clone repo="${mail.hg.url}" tag="${mail.hg.tag}" dest="mail"/>
+    </target>
+    <target name="mail.build">
+        <delete>
+            <fileset dir="${external.dir}/jaxrpc-api" includes="**/*.jar"/>
+        </delete>
+        <exec executable="mvn" failonerror="true" >
+            <arg line="-f ${external.dir}/mail/pom.xml -Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="clean install" />
+            <arg line="-DskipTests"/>
+        </exec>
+    </target>
+
+    <!-- jaxrpc-api.jar -->
+    <target name="jaxrpc-api.checkout" unless="nocheckout">
+        <cvs.checkout repo="${jaxrpc-api.cvs.url}" tag="${jaxrpc-api.cvs.tag}" module="jaxrpc-api" dest="jaxrpc-api"/>
+    </target>
+    <target name="jaxrpc-api.build">
+        <delete>
+            <fileset dir="${external.dir}/jaxrpc-api" includes="**/*.jar"/>
+        </delete>
+        <copy file="${maven.repo.local}/${servlet.mvn.path}" tofile="${external.dir}/jaxrpc-api/lib/servlet.jar"/>
+        <exec executable="ant" dir="${external.dir}/jaxrpc-api" failonerror="true" newenvironment="true" >
+            <arg line="clean main" />
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
+    	    <arg line="-Djaxp.jar=${maven.repo.local}/${saaj-api.mvn.path}" />
+            <env key="JAVA_HOME" value="${JDK_1.5}" />
+        </exec>
+    </target>
+    <target name="jaxrpc-api.clean">
+        <subant buildpath="${external.dir}/jaxrpc-api" target="clean"/>
+    </target>
+    <target name="jaxrpc-api.publish" >
+        <mvn.publish jar="${external.dir}/jaxrpc-api/build/lib/jaxrpc-api.jar" mvngroup="org.glassfish" mvnartid="javax.xml.rpc" mvnversion="${jaxrpc-api.version}"/>
+    </target>
+
     <!-- jaxrpc-impl.jar, jaxrpc-spi.jar -->
     <target name="jaxrpc.checkout" unless="nocheckout">
         <cvs.checkout repo="${jaxrpc.cvs.url}" tag="${jaxrpc.cvs.tag}" module="jax-rpc/jaxrpc-ri" dest="jaxrpc"/>
@@ -492,14 +538,14 @@
 
         <!-- I see these are already published by JavaEE api v3 build -->
         <copy file="${maven.repo.local}/${servlet.mvn.path}" tofile="${external.dir}/jaxrpc/lib/servlet.jar"/>
-        <copy file="${maven.repo.local}/${mail.mvn.path}" tofile="${external.dir}/jaxrpc/lib/mail.jar"/>
+       <copy file="${maven.repo.local}/${mail.mvn.path}" tofile="${external.dir}/jaxrpc/lib/mail.jar"/>
 
         <exec executable="ant" dir="${external.dir}/jaxrpc" failonerror="true" newenvironment="false" >
             <arg line="clean main" />
             <arg line="-Dfrom.source=true"/>
     	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
             <arg line="${cpath}"/>
-            <env key="JAVA_HOME" value="${JDK_1.5}" />
+            <env key="JAVA_HOME" value="${JDK_1.6}" />
         </exec>
     </target>
     <target name="jaxrpc.clean">
@@ -516,7 +562,7 @@
     <target name="xwss.build">
         <delete>
             <fileset dir="${external.dir}/xwss" includes="**/*.jar">
-<!--                <exclude name="lib/KerbLibrary.jar"/> --><!-- TEMPORARY !!!!!!! -->
+<!--                <exclude name="lib/KerbLibrary.jar"/> --><!-- TEMPORARY -->
 <!--                <exclude name="lib/keyidentifierspi.jar"/> --><!-- This can be only compiled with IBM JDK, source are present anyway -->
                 <exclude name="lib/jaxb*saml.jar"/>
                 <exclude name="lib/trust-secconv*.jar"/>
@@ -577,7 +623,7 @@
             <arg line="-Dfrom.source=true"/>
     	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
             <arg line="${cpath}"/>
-            <env key="JAVA_HOME" value="${JDK_1.5}" />
+            <env key="JAVA_HOME" value="${JDK_1.6}" />
         </exec>
 
 <!--        <exec executable="ant" dir="${external.dir}/xwss" failonerror="true" newenvironment="false" >
@@ -601,7 +647,7 @@
             <arg line="-Dfrom.source=true"/>
     	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
             <arg line="${cpath}"/>
-            <env key="JAVA_HOME" value="${JDK_1.5}" />
+            <env key="JAVA_HOME" value="${JDK_1.6}" />
         </exec>
 
         <copy file="${external.dir}/xwss/dist/wsit/wstrust-tmp/lib/xwss-for-wstrust-api.jar" tofile="${external.dir}/wsit/lib/tmp/xwss-for-wstrust-api.jar"/>
@@ -619,9 +665,6 @@
             <env key="JAVA_HOME" value="${JDK_1.5}" />
         </exec>-->
 
-    </target>
-    <target name="xwss.publish" ><!-- TEMPORARY -->
-<!--        <mvn.publish jar="${external.dir}/xwss/" mvngroup="wstrust-api" mvnartid="wstrust-api" mvnversion="${wsit.version}"/>-->
     </target>
 
     <!-- webservices*.jar -->
