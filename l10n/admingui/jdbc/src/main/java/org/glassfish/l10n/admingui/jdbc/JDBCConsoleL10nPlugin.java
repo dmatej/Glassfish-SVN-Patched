@@ -39,7 +39,7 @@
  * and open the template in the editor.
  */
 
-package org.glassfish.l10n.admingui.security;
+package org.glassfish.l10n.admingui.jdbc;
 
 import org.glassfish.api.admingui.ConsoleProvider;
 import org.jvnet.hk2.annotations.Service;
@@ -52,7 +52,7 @@ import java.net.URL;
  * @author Shinya Ogino
  */
 @Service
-public class SecurityConsoleL10nPlugin implements ConsoleProvider {
+public class JDBCConsoleL10nPlugin implements ConsoleProvider {
     
     public URL getConfiguration(){ 
             return null;
