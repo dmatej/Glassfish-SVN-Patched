@@ -6,25 +6,172 @@
     <import file="build.xml"/>
 
     <target name="build" depends="init">
-        <antcall target="scripting.build" />
+        <antcall target="jcodings.build"/>
+
+        <asm.build version="3.1"/>
+
+        <antcall target="bytelist.build"/>
+        <antcall target="jline.build"/>
+        <antcall target="joda-time.build"/>
+        <antcall target="joni.build"/>
+        <antcall target="jvyamlb.build"/>
+        <antcall target="jna.build"/>
+        <antcall target="jna-posix.build"/>
+        <antcall target="constantine.build"/>
+        <antcall target="jaffi.build"/>
+        <antcall target="jruby.build"/>
+        <antcall target="scripting.build"/>
     </target>
 
     <!--
         Checkout scripting source and build
     -->
-    <target name="scripting.checkout" >
-        <echo message="checkout Scripting from ${scripting.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${scripting.svn.url}" />
-            <arg line="scripting" />
-	</exec>
+    <target name="scripting.checkout">
+        <svnco name="jruby-container" url="${scripting.svn.url}"/>
     </target>
-    <target name="scripting.build" depends="scripting.checkout" >
-        <!-- build scripting -->
-        <exec executable="mvn" dir="${external.dir}/scripting" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+
+    <target name="scripting.build" depends="scripting.checkout">
+        <svnco name="jruby-container" url="${scripting.svn.url}"/>
+        <mvnbuild name="jruby-container" dir="${external.dir}/jruby-container"/>
+    </target>
+
+    <!-- Build dependencies -->
+
+
+
+    <macrodef name="hgco">
+        <attribute name="version" default="tip"/>
+        <attribute name="url"/>
+        <attribute name="name"/>
+        <sequential>
+            <echo message="checkout @{name} from @{url}."/>
+            <exec executable="hg" dir="${external.dir}" failonerror="true">
+                <arg line="clone"/>
+                <arg line="-r @{version}"/>
+                <arg line="@{url}"/>
+                <arg line="@{name}"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="gitco">
+        <attribute name="url"/>
+        <attribute name="name"/>
+        <sequential>
+            <echo message="checkout @{name} from @{url}."/>
+            <exec executable="git" dir="${external.dir}" failonerror="true">
+                <arg line="clone"/>
+                <arg line="@{url}"/>
+                <arg line="@{name}"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="gitswitch" description="Switches the git repo to specified tag version">
+        <attribute name="dir"/>
+        <attribute name="name"/>
+        <attribute name="version"/>
+        <sequential>
+            <echo message="Switching @{name} to @{version}."/>
+            <exec executable="git" dir="@{dir}" failonerror="true">
+                <arg line="checkout"/>
+                <arg line="@{version}"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+
+    <macrodef name="mvnbuild">
+        <attribute name="dir"/>
+        <attribute name="name"/>
+        <sequential>
+            <echo message="Building @{name}."/>
+            <exec executable="mvn" dir="@{dir}" failonerror="true">
+                <arg line="-Dmaven.repo.local=${maven.repo.local}"/>
+                <arg line="clean install"/>
+                <arg line="-Dmaven.test.skip=true"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+
+
+    <!-- jline -->
+    <target name="jline.build">
+        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/jline/0.9.93"
+               name="jline-0.9.93"/>
+        <mvnbuild dir="${external.dir}/jline-0.9.93" name="jline-0.9.93"/>
+    </target>
+
+    <!-- joda-time -->
+    <target name="joda-time.build">
+        <!--<svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/joda-time/1.5.1" name="joda-time_1.5.1"/>-->
+        <property name="junit.ant" value="true"/>
+        <ant dir="${external.dir}/joda-time_1.5.1/" antfile="build.xml" target="jar"/>
+        <mvn-local-install artifactid="joda-time" groupid="joda-time" version="1.5.1" pomfile="pom-release.xml"
+                           dir="${external.dir}/joda-time_1.5.1" file="build/joda-time-1.5.1.jar"/>
+    </target>
+
+    <!-- bytelist -->
+    <target name="bytelist.build">
+        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/bytelist/1.0.3"
+               name="bytelist-1.0.3"/>
+        <mvnbuild dir="${external.dir}/bytelist-1.0.3" name="bytelist-1.0.3"/>
+    </target>
+
+    <!-- jcodings -->
+    <target name="jcodings.build">
+        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/jcodings/1.0.1"
+               name="jcodings-1.0.1"/>
+        <mvnbuild dir="${external.dir}/jcodings-1.0.1" name="jcodings-1.0.1"/>
+    </target>
+
+
+
+    <!-- joni -->
+    <target name="joni.build">
+        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/joni/1.1.3"
+               name="joni-1.1.3"/>
+        <mvnbuild dir="${external.dir}/joni-1.1.3" name="joni-1.1.3"/>
+    </target>
+
+
+    <!-- jvyamlb -->
+    <target name="jvyamlb.build">
+        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/jvyamlb/0.2.5"
+               name="jvyamlb-0.2.5"/>
+        <mvnbuild dir="${external.dir}/jvyamlb-0.2.5" name="jvyamlb-0.2.5"/>
+    </target>
+
+    <!-- jna -->
+    <target name="jna.build">
+        <svnco url="https://jna.dev.java.net/svn/jna/tags/3.0.9/jnalib" name="jna-3.0.9"/>
+        <mvnbuild dir="${external.dir}/jna-3.0.9" name="jna-3.0.9"/>
+    </target>
+
+    <!-- jna-posix -->
+    <target name="jna-posix.build">
+        <hgco name="jna-posix-1.0.1" url="https://hg.kenai.com/hg/jna-posix~mercurial" version="1.0.1"/>
+        <mvnbuild dir="${external.dir}/jna-posix-1.0.1" name="jna-posix-1.0.1"/>
+    </target>
+
+    <!-- constantine -->
+    <target name="constantine.build">
+        <!-- there is no tag for 0.6, the tip appears to be 0.6 -->
+        <hgco name="constantine-0.6" url="https://hg.kenai.com/hg/constantine~mercurial"/>
+        <mvnbuild dir="${external.dir}/constantine-0.6" name="constantine-0.6"/>
+    </target>
+
+    <!-- jaffi -->
+    <target name="jaffi.build">
+        <hgco name="jaffi-0.4.1" url="https://hg.kenai.com/hg/jffi~core" version="0.4.1"/>
+        <mvnbuild dir="${external.dir}/jaffi-0.4.1" name="jaffi-0.4.1"/>
+    </target>
+
+    <!-- jruby-complete -->
+    <target name="jruby.build">
+        <gitco name="jruby-1.3.1" url="git://kenai.com/jruby~main"/>
+        <gitswitch name="jruby-1.3.1" version="1.3.1"/>
+        <mvnbuild name="jruby-1.3.1" dir="${external.dir}/jruby-1.3.1/maven/jruby-complete"/>
     </target>
 </project>

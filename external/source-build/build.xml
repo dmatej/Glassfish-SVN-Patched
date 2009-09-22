@@ -149,5 +149,84 @@
         </delete>
     </target>
 
+    <!-- asm  macro
+         It assumes the asm repo is located at:
+
+         https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/asm/@{version}
+
+         To use, simply use the following ant task:
+
+         <asm.build version="..."/>
+
+         Currently there is only 3.1 version added to glassfish-svn. For other asm version you need to add the version
+         there.
+    -->
+
+    <macrodef  name="asm.build" description="Checksout asm and build at ${external.dir}, then install it local maven repo">
+        <attribute name="version" default="3.1"/>
+        <sequential>
+            <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/asm/@{version}"
+                   name="asm-@{version}"/>
+            <echo message="Building asm @{version}..."/>
+            <ant dir="${external.dir}/asm-@{version}" target="jar"/>
+
+            <echo message="Installing asm @{version} to local maven repo..."/>
+            <mvn-local-install artifactId="asm-parent" groupId="asm" version="@{version}" pomFile="asm-parent-@{version}.pom"
+                               dir="${external.dir}/asm-@{version}/output/dist/lib" file="asm-parent-@{version}.pom" package="pom"/>
+
+            <mvn-local-install artifactid="asm" groupid="asm" version="@{version}" pomfile="asm-@{version}.pom"
+                               dir="${external.dir}/asm-@{version}/output/dist/lib" file="asm-@{version}.jar"/>
+            <mvn-local-install artifactid="asm-analysis" groupid="asm" version="@{version}" pomfile="asm-analysis-@{version}.pom"
+                               dir="${external.dir}/asm-@{version}/output/dist/lib" file="asm-analysis-@{version}.jar"/>
+            <mvn-local-install artifactid="asm-commons" groupid="asm" version="@{version}" pomfile="asm-commons-@{version}.pom"
+                               dir="${external.dir}/asm-@{version}/output/dist/lib" file="asm-commons-@{version}.jar"/>
+            <mvn-local-install artifactid="asm-tree" groupid="asm" version="@{version}" pomfile="asm-tree-@{version}.pom"
+                               dir="${external.dir}/asm-@{version}/output/dist/lib" file="asm-tree-@{version}.jar"/>
+            <mvn-local-install artifactid="asm-util" groupid="asm" version="@{version}" pomfile="asm-util-@{version}.pom"
+                               dir="${external.dir}/asm-@{version}/output/dist/lib" file="asm-util-@{version}.jar"/>
+            <mvn-local-install artifactid="asm-xml" groupid="asm" version="@{version}" pomfile="asm-xml-@{version}.pom"
+                               dir="${external.dir}/asm-@{version}/output/dist/lib" file="asm-xml-@{version}.jar"/>
+
+        </sequential>
+    </macrodef>
+
+    <macrodef name="mvn-local-install" description="Install local jar in to maven">
+        <attribute name="dir"/>
+        <attribute name="file"/>
+        <attribute name="artifactId"/>
+        <attribute name="groupId"/>
+        <attribute name="pomFile"/>
+        <attribute name="version"/>
+        <attribute name="package" default="jar"/>
+        <sequential>
+            <echo message="Installing @{file} at ${maven.repo.local}"/>
+            <echo message="mvn install:install -Dfile=@{file} -DpomFile=@{pomFile} -DgroupId=@{groupId} -DartifactId=@{artifactId} -Dversion=@{version}"/>
+            <exec executable="mvn" dir="@{dir}" failonerror="true">
+                <arg line="install:install-file"/>
+                <arg line="-Dfile=@{file}"/>
+                <arg line="-DpomFile=@{pomFile}"/>
+                <arg line="-DgroupId=@{groupId}"/>
+                <arg line="-DartifactId=@{artifactId}"/>
+                <arg line="-Dversion=@{version}"/>
+                <arg line="-Dmaven.repo.local=${maven.repo.local}"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="svnco">
+        <attribute name="url"/>
+        <attribute name="name"/>
+        <sequential>
+            <echo message="checkout @{name} from @{url}."/>
+            <exec executable="svn" dir="${external.dir}" failonerror="true">
+                <arg line="checkout"/>
+                <arg line="@{url} @{name}"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+
+
+
 </project>
 
