@@ -1,0 +1,54 @@
+#
+# The contents of this file are subject to the terms 
+# of the Common Development and Distribution License 
+# (the License).  You may not use this file except in
+# compliance with the License.
+# 
+# You can obtain a copy of the license at 
+# https://glassfish.dev.java.net/public/CDDLv1.0.html or
+# glassfish/bootstrap/legal/CDDLv1.0.txt.
+# See the License for the specific language governing 
+# permissions and limitations under the License.
+# 
+# When distributing Covered Code, include this CDDL 
+# Header Notice in each file and include the License file 
+# at glassfish/bootstrap/legal/CDDLv1.0.txt.  
+# If applicable, add the following below the CDDL Header, 
+# with the fields enclosed by brackets [] replaced by
+# you own identifying information: 
+# "Portions Copyrighted [year] [name of copyright owner]"
+# 
+# Copyright 2006 Sun Microsystems, Inc. All rights reserved.
+#
+
+# User customizable variable definitions only
+
+# The BUILD_ROOT variable must be defined
+BUILD_ROOT=.
+# include bootstrap variable definitions
+include $(BUILD_ROOT)/make/defines.mk
+include $(BUILD_ROOT)/make/defines-bootstrap.mk
+include $(BUILD_ROOT)/project.properties
+
+# User customizable rules
+ifeq ($(OS_ARCH), SunOS)
+
+SOLARIS_DIR=src/cpp/solaris
+
+post_build:: build_all publish_solaris
+
+build_all::
+	$(JAVA_HOME)/bin/java -d64 -version 1>&2 2> /dev/null; \
+	if [ $$? = 0 ] ; \
+	then \
+	$(STD_GMAKE_CMD) COMPILE64=true ; \
+	fi ;
+	$(STD_GMAKE_CMD)
+
+publish_solaris::
+	$(AT)if test -d $(BUILD_ROOT)/$(SOLARIS_DIR)/build; then \
+			$(ECHO) "Copy ... $(BUILD_ROOT)/$(SOLARIS_DIR)/build/*"; \
+			$(CP) -R $(BUILD_ROOT)/$(SOLARIS_DIR)/build/* $(BUILD_ROOT); \
+	fi
+	echo OBJDIR64 : $(OBJDIR64)
+endif # ifeq SunOS
