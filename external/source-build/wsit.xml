@@ -9,7 +9,7 @@
         <antcall target="dtd-parser.clean" />
     </target>
     
-    <target name="build" depends="init">
+    <target name="build" depends="init, check-gf-dependencies">
 
         <antcall target="streambuffer.checkout"/>
         <antcall target="streambuffer.build"/>
@@ -89,6 +89,20 @@
 
         <antcall target="wsit.build" />
         <antcall target="wsit.publish" />
+    </target>
+
+    <target name="check-gf-dependencies">
+        <available file="${maven.repo.local}/${jmac-api.mvn.path}" property="is-jmacapi-avail"/>
+        <fail unless="is-jmacapi-avail" message="${maven.repo.local}/${jmac-api.mvn.path} missing! It is a required dependency for wsit build."/>
+
+        <available file="${maven.repo.local}/${gmbal.mvn.path}" property="is-gmbal-avail"/>
+        <fail unless="is-gmbal-avail" message="${maven.repo.local}/${gmbal.mvn.path} missing! It is a required dependency for wsit build."/>
+
+        <available file="${maven.repo.local}/${transaction-api.mvn.path}" property="is-txapi-avail"/>
+        <fail unless="is-txapi-avail" message="${maven.repo.local}/${transaction-api.mvn.path} missing! It is a required dependency for wsit build."/>
+
+        <available file="${maven.repo.local}/${connector-api.mvn.path}" property="is-connector-avail"/>
+        <fail unless="is-connector-avail" message="${maven.repo.local}/${connector-api.mvn.path} missing! It is a required dependency for wsit build."/>
     </target>
 
     <!-- streambuffer.jar -->
@@ -391,7 +405,7 @@
         <copy file="${maven.repo.local}/${jaxws-api.mvn.path}" tofile="${external.dir}/jaxws/lib/jaxws-api.jar"/>
         <copy file="${maven.repo.local}/${policy.mvn.path}" tofile="${external.dir}/jaxws/lib/policy.jar"/>
 
-        <build.jar.from.srczip srcdir="src" jar="${external.dir}/jaxws/lib/management-api.jar" unzipdir="${external.dir}/management-api" srczip="${external.dir}/jaxws/lib/management-api-sources.jar"/>
+        <build.jar.from.srczip srcdir="src" jar="${external.dir}/jaxws/lib/management-api.jar" unzipdir="${external.dir}/management-api" srczip="${external.dir}/jaxws/lib/management-api-src.jar"/>
 
         <build.jar.from.srczip srcdir="src" jar="${external.dir}/jaxws/lib/jsr181-api.jar" unzipdir="${external.dir}/jsr181" srczip="${external.dir}/jaxws/lib/jsr181-api.src.zip"/>
         <mvn.publish jar="${external.dir}/jaxws/lib/jsr181-api.jar" mvngroup="javax.jws" mvnartid="jsr181-api" mvnversion="${jsr181-api.version}"/>
@@ -509,6 +523,7 @@
         <copy file="${maven.repo.local}/${jsr250-api.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/jsr250-api.jar"/>
         <copy file="${maven.repo.local}/${mail.mvn.path}" tofile="${external.dir}/wsit/lib/mail.jar"/>
 
+        <copy file="${external.dir}/jaxws/lib/management-api.jar" tofile="${external.dir}/wsit/lib/runtime/management-api.jar"/>
         <copy file="${external.dir}/jaxb/dist/lib/jaxb-api.jar" tofile="${external.dir}/wsit/lib/runtime/jaxb-api.jar"/>
         <copy file="${external.dir}/jaxb/dist/lib/jaxb-impl.jar" tofile="${external.dir}/wsit/lib/runtime/jaxb-impl.jar"/>
         <copy file="${external.dir}/jaxb/dist/lib/jaxb1-impl.jar" tofile="${external.dir}/wsit/lib/runtime/jaxb1-impl.jar"/>
@@ -599,7 +614,7 @@
 
         <!-- I see these are already published by JavaEE api v3 build -->
         <copy file="${maven.repo.local}/${servlet.mvn.path}" tofile="${external.dir}/jaxrpc/lib/servlet.jar"/>
-       <copy file="${maven.repo.local}/${mail.mvn.path}" tofile="${external.dir}/jaxrpc/lib/mail.jar"/>
+        <copy file="${maven.repo.local}/${mail.mvn.path}" tofile="${external.dir}/jaxrpc/lib/mail.jar"/>
 
         <exec executable="ant" dir="${external.dir}/jaxrpc" failonerror="true" newenvironment="false" >
             <arg line="clean main" />
