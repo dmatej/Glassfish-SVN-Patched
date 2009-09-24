@@ -34,6 +34,11 @@
 # holder.
 #
 
+#
+# Copyright 2004-2005 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+
 # This file determines the hardware and OS architecture we're running and the
 # build variant that we want, then it includes the other files.
 
@@ -127,6 +132,18 @@ OS_RELEASE=$(UNAME_OS_RELEASE)
 BUILD_ARCH=POWER
 BUILD_OS=$(OS_ARCH)
 BUILD_VER=$(OS_RELEASE)
+CP      =/bin/cp
+CVS     =/usr/bin/cvs
+ECHO    =/bin/echo -e
+LN      =where_is_ln_on_linux
+MKDIR   =/bin/mkdir
+RM      =/bin/rm
+SED     =/bin/sed
+SHELL   =/bin/sh
+TR      =/usr/bin/tr
+UNZIP   =/usr/bin/unzip
+ZIP     =/usr/bin/zip
+CHMOD     =/bin/chmod
 endif
 
 ##############
@@ -461,6 +478,9 @@ ifeq ($(OS_ARCH), Darwin)
 ANT_JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home
 else
 ANT_JAVA_HOME=$(CUR_DIR)/$(PUBLISH_ROOT)/$(HOST_OBJDIR)/jdk
+endif
+ifeq ($(OS_ARCH), AIX)
+ANT_JAVA_HOME=/usr/java5
 endif
 ANT_HOME=$(CUR_DIR)/$(PUBLISH_HOME)/ant
 
