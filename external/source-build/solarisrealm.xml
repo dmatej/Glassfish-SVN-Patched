@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="SolarisRealm source integration for security" default="build" basedir=".">
+
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+
+    <target name="build" depends="init">
+        <antcall target="solrealm.build" />
+    </target>
+
+    <!--
+        Checkout solarisrealm source and build
+    -->
+    <target name="solrealm.checkout" >
+        <echo message="checkout solarisrealm from ${solrealm.svn.url}."/>
+	<mkdir dir="${external.dir}/solarisrealm"/>
+        <exec executable="svn" dir="${external.dir}/solarisrealm" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${solrealm.svn.url}" />
+	</exec>
+    </target>
+	<!--Build is possible only for solaris systems, do not run for other OS-->
+    <target name="solrealm.build" depends="os-init,solrealm.checkout" if="isSolaris">
+        <!-- build solrealm -->
+        <exec executable="ant" dir="${external.dir}/solarisrealm/1.0" failonerror="true" >
+	    <arg line="-Dmodule.jar.file=${maven.repo.local}/org/glassfish/security/security/${project.version}/security-${project.version}.jar" />
+            <arg line="build-solrealm" />
+	</exec>
+	<antcall target="install-solrealm"/>
+    </target>
+    <target name="install-solrealm">
+	<antcall target="install-sparc"/>
+	<antcall target="install-x86"/>
+    </target>
+    <target name="install-sparc" if="isSolarisSparc">
+        <exec executable="mvn" dir="${external.dir}/solarisrealm/1.0" failonerror="true" >
+                <arg line="-Dpackaging=so"/>
+                <arg line="-Dfile=libsolarisauth.so"/>
+                <arg line="-DgroupId=solarisrealm"/>
+                <arg line="-DartifactId=libsolsparcauth"/>
+                <arg line="-Dversion=${solrealm.version}"/>
+                <arg line="install:install-file"/>
+        </exec>
+    </target>
+    <target name="install-x86" if="isSolarisx86">
+        <exec executable="mvn" dir="${external.dir}/solarisrealm/1.0" failonerror="true" >
+                <arg line="-Dpackaging=so"/>
+                <arg line="-Dfile=libsolarisauth.so"/>
+                <arg line="-DgroupId=solarisrealm"/>
+                <arg line="-DartifactId=libsolx86auth"/>
+                <arg line="-Dversion=${solrealm.version}"/>
+                <arg line="install:install-file"/>
+        </exec>
+    </target>
+    <target name="os-init">
+	  <condition property="isSolaris">
+	    <os name="SunOS"/>
+  	 </condition>
+	  <condition property="isSolarisSparc">
+	    <os name="SunOS" arch="sparc"/>
+  	 </condition>
+	  <condition property="isSolarisx86">
+	    <os name="SunOS" arch="x86"/>
+  	 </condition>
+    </target>
+</project>

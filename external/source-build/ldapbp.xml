@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="LDAP-BP source integration for security" default="build" basedir=".">
+
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+
+    <target name="build" depends="init">
+        <antcall target="ldapbp.build" />
+    </target>
+
+    <!--
+        Checkout ldapbp  source and build
+    -->
+    <target name="ldapbp.checkout" >
+        <echo message="checkout ldapbp from ${ldapbp.url}."/>
+	<mkdir dir="${external.dir}/ldapbp"/>
+	<get src="http://download.java.net/javaee5/external/shared/ldapbp-src/jars/ldapbp-src-1_1_01.jar" verbose="true" dest="${external.dir}/ldapbp/ldapbp-src-1_1_01.jar"/>
+<!--	<get src="${ldapbp.url}" dest="${external.dir}/ldapbp/ldapbp-src-1_1_01.jar"/>-->
+    </target>
+    <target name="ldapbp.build" depends="ldapbp.checkout" >
+	<exec executable="jar" dir="${external.dir}/ldapbp" failonerror="true">
+		<arg line="xvf"/>
+		<arg line="${ldapbp.src.artifact}"/>
+	</exec>
+        <exec executable="ant" dir="${external.dir}/ldapbp" failonerror="true" />
+        <exec executable="mvn" dir="${external.dir}/ldapbp" failonerror="true" >
+		<arg line="-Dpackaging=jar"/>
+		<arg line="-Dfile=${ldapbp.artifact}"/>
+		<arg line="-DgroupId=org.glassfish.external"/>
+		<arg line="-DartifactId=ldapbp-repackaged"/>
+		<arg line="-Dversion=${security.version}"/>
+		<arg line="install:install-file"/>
+	</exec>
+    </target>
+
+</project>
