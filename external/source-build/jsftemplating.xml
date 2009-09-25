@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="JSFTemplating source integration" default="build" basedir=".">
+
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+    <property name="jsftemplating.tag" value="JSFTEMPLATING_1_2_11"/> <!-- Update the next line when this changes -->
+    <property name="version" value="1.2.11"/>
+
+    <macrodef name="mvn.install">
+        <attribute name="artifact"/>
+        <sequential>
+            <exec executable="mvn" dir="${external.dir}/jsftemplating" failonerror="true" >
+                <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+                <arg line="-Dfile=dist/@{artifact}.jar" />
+                <arg line="-DgroupId=com.sun.jsftemplating" />
+                <arg line="-DartifactId=@{artifact}" />
+                <arg line="-Dversion=${version}" />
+                <arg line="-Dpackaging=jar" />
+                <arg line="-DlocalRepositoryPath=${maven.repo.local}" />
+                <arg line="install:install-file" />
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <target name="build" depends="init">
+        <antcall target="jsftemplating.build" />
+    </target>
+
+    <target name="jsftemplating.checkout" >
+        <echo message="Checking out JSFTemplating tag ${jsftemplating.tag} from ${cvsroot}."/>
+        <exec executable="cvs" dir="${external.dir}" failonerror="true" >
+            <arg line="-d ${cvsroot}"/>
+            <arg line="checkout"/>
+            <arg line="-r ${jsftemplating.tag}"/>
+            <arg line="jsftemplating" />
+        </exec>
+    </target>
+
+    <target name="jsftemplating.build"  depends="jsftemplating.checkout">
+        <get src="https://maven-repository.dev.java.net/nonav/repository/javaee/jars/javaee-api-5.jar" dest="${external.dir}/jsftemplating/lib/javaee.jar" usetimestamp="true"/>
+        <exec executable="ant" dir="${external.dir}/jsftemplating" failonerror="true" >
+            <arg line="-Dglassfish-home=${external.dir}/jsftemplating" />
+            <arg line="jar" />
+        </exec>
+        
+        <mvn.install artifact="jsftemplating"/>
+        <mvn.install artifact="jsftemplating-dt"/>
+        <mvn.install artifact="jsftemplating-dynafaces"/>
+        <mvn.install artifact="jsftemplating-base"/>
+    </target>
+</project>
