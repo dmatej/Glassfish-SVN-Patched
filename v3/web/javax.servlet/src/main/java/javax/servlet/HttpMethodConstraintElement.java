@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright 1997-2009 Sun Microsystems, Inc. All rights reserved.
+ * Copyright 2008-2009 Sun Microsystems, Inc. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -33,59 +33,61 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+package javax.servlet;
 
-package org.apache.catalina.core;
+import javax.servlet.annotation.HttpMethodConstraint;
 
-import java.util.*;
-import javax.servlet.*;
-import org.apache.catalina.core.StandardWrapper;
-import org.apache.catalina.util.StringManager;
+/**
+ * Java Class represntation of an {@link HttpMethodConstraint} annotation value.
+ *
+ * @since Servlet 3.0
+ */
+public class HttpMethodConstraintElement extends HttpConstraintElement {
 
-public class DynamicServletRegistrationImpl
-    extends ServletRegistrationImpl
-    implements ServletRegistration.Dynamic {
+    private String methodName;
 
     /**
-     * Constructor
+     * Constructs an instance with default {@link HttpConstraintElement}
+     * value.
+     *
+     * @param methodName the name of an HTTP protocol method. The name must
+     * not be null, or the empty string, and must be a legitimate HTTP
+     * Method name as defined by RFC 2616
      */
-    protected DynamicServletRegistrationImpl(StandardWrapper wrapper,
-            StandardContext ctx) {
-        super(wrapper, ctx);
-    }
-
-    public void setLoadOnStartup(int loadOnStartup) {
-        if (ctx.isContextInitializedCalled()) {
-            throw new IllegalStateException(
-                sm.getString("servletRegistration.alreadyInitialized",
-                             "load-on-startup", wrapper.getName(),
-                             ctx.getName()));
+    public HttpMethodConstraintElement(String methodName) {
+        if (methodName == null || methodName.length() == 0) {
+            throw new IllegalArgumentException("invalid HTTP method name");
         }
-
-        wrapper.setLoadOnStartup(loadOnStartup);
+        this.methodName = methodName;
     }
-
-    public void setAsyncSupported(boolean isAsyncSupported) {
-        if (ctx.isContextInitializedCalled()) {
-            throw new IllegalStateException(
-                sm.getString("servletRegistration.alreadyInitialized",
-                             "async-supported", wrapper.getName(),
-                             ctx.getName()));
+    /**
+     * Constructs an instance with specified {@link HttpConstraintElement}
+     * value.
+     *
+     * @param methodName the name of an HTTP protocol method. The name must
+     * not be null, or the empty string, and must be a legitimate HTTP
+     * Method name as defined by RFC 2616
+     *
+     * @param constraint the HTTPconstraintElement value to assign to the
+     * named HTTP method
+     */
+    public HttpMethodConstraintElement(String methodName,
+            HttpConstraintElement constraint) {
+        super(constraint.getEmptyRoleSemantic(),
+                constraint.getRolesAllowed(),
+                constraint.getTransportGuarantee());
+        if (methodName == null || methodName.length() == 0) {
+            throw new IllegalArgumentException("invalid HTTP method name");
         }
-
-        wrapper.setIsAsyncSupported(isAsyncSupported);
+        this.methodName = methodName;
     }
 
-    public void setServletSecurity(ServletSecurityElement constraint) {
-        // TBD
+    /**
+     * Gets the HTTP method name.
+     *
+     * @return the Http method name
+     */
+    public String getMethodName() {
+        return this.methodName;
     }
-
-    public void setMultipartConfig(MultipartConfigElement multipartConfig) {
-        // TBD
-    }
-
-    public void setRunAsRole(String roleName) {
-        // TBD
-    }
-
 }
-
