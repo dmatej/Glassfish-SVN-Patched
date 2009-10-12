@@ -63,7 +63,7 @@
 
       DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
-      Copyright 2003-2007 Sun Microsystems, Inc. All rights reserved.
+      Copyright 2003-2009 Sun Microsystems, Inc. All rights reserved.
 
       The contents of this file are subject to the terms of either the
       GNU General Public License Version 2 only ("GPL") or the Common
@@ -686,18 +686,22 @@
     <xsd:sequence>
       <xsd:group ref="javaee:descriptionGroup"/>
       <xsd:element name="vendor-name"
-		   type="javaee:xsdStringType">
+		   type="javaee:xsdStringType" minOccurs="0">
 	<xsd:annotation>
 	  <xsd:documentation>
 
 	    The element vendor-name specifies the name of
 	    resource adapter provider vendor.
+	    
+	    If there is no vendor-name specified, the application 
+	    server must consider the default "" (empty string) as
+	    the name of the resource adapter provider vendor.
 
 	  </xsd:documentation>
 	</xsd:annotation>
       </xsd:element>
       <xsd:element name="eis-type"
-		   type="javaee:xsdStringType">
+		   type="javaee:xsdStringType" minOccurs="0">
 	<xsd:annotation>
 	  <xsd:documentation>
 
@@ -709,11 +713,15 @@
 	    This helps in identifying EIS instances that can be
 	    used with this resource adapter.
 
+	    If there is no eis-type specified, the application 
+	    server must consider the default "" (empty string) as
+	    the type of the EIS.
+
 	  </xsd:documentation>
 	</xsd:annotation>
       </xsd:element>
       <xsd:element name="resourceadapter-version"
-		   type="javaee:xsdStringType">
+		   type="javaee:xsdStringType" minOccurs="0">
 	<xsd:annotation>
 	  <xsd:documentation>
 
@@ -721,6 +729,10 @@
 	    of the resource adapter from the resource adapter
 	    provider.
 
+	    If there is no resourceadapter-version specified, the application 
+	    server must consider the default "" (empty string) as
+	    the version of the resource adapter.
+		
 	  </xsd:documentation>
 	</xsd:annotation>
 
@@ -729,21 +741,7 @@
 		   type="javaee:licenseType"
 		   minOccurs="0"/>
       <xsd:element name="resourceadapter"
-		   type="javaee:resourceadapterType">
-	      <xsd:unique name="adminobject-type-uniqueness">
-		   <xsd:annotation>
-		        <xsd:documentation>
-		        The adminobject-interface and adminobject-class element content must be
-		        unique in the resourceadapterType. Several admin objects
-		        can not use the same adminobject-interface and adminobject-class.
-		        </xsd:documentation>
-		   </xsd:annotation>
-		   <xsd:selector xpath="javaee:adminobject"/>
-		   <xsd:field    xpath="javaee:adminobject-interface"/>
-		   <xsd:field    xpath="javaee:adminobject-class"/>
-	      </xsd:unique>
-      </xsd:element>
-
+		   type="javaee:resourceadapterType"/>
       <xsd:element name="required-work-context"
            type="javaee:fully-qualified-classType"
            minOccurs="0"
@@ -990,41 +988,56 @@
 	provided, one or more authentication mechanisms supported
 	and additional required security permissions.
 
+	If there is no connection-definition specified as part of
+	resource adapter element, then the application server must
+	search for connection definitions specified through annotations
+	in the resource adapter archive. If no connection-definition
+	is specified as part of the resource adapter element and the
+	application server cannot discover Connection definitions 
+	through annotations, the application server must consider 
+	this as an error and fail deployment. 
+
 	If there is no authentication-mechanism specified as part of
 	resource adapter element then the resource adapter does not
 	support any standard security authentication mechanisms as
 	part of security contract. The application server ignores
 	the security part of the system contracts in this case.
 
+	If there is no transaction-support specified as part of
+	resource adapter element, then the application server must
+	consider that the resource adapter does not support either 
+	the resource manager local or JTA transactions and must consider
+	the transaction support as NoTransaction. 
+	
       </xsd:documentation>
     </xsd:annotation>
 
     <xsd:sequence>
       <xsd:element name="connection-definition"
 		   type="javaee:connection-definitionType"
-		   maxOccurs="unbounded"/>
+		   maxOccurs="unbounded" minOccurs="0"/>
       <xsd:element name="transaction-support"
-		   type="javaee:transaction-supportType"/>
+		   type="javaee:transaction-supportType"
+		   minOccurs="0"/>
       <xsd:element name="authentication-mechanism"
 		   type="javaee:authentication-mechanismType"
 		   minOccurs="0"
 		   maxOccurs="unbounded"/>
       <xsd:element name="reauthentication-support"
-		   type="javaee:true-falseType">
-	<xsd:annotation>
-	  <xsd:documentation>
-
-	    The element reauthentication-support specifies
-	    whether the resource adapter implementation supports
-	    re-authentication of existing Managed- Connection
-	    instance. Note that this information is for the
-	    resource adapter implementation and not for the
-	    underlying EIS instance. This element must have
-	    either a "true" or "false" value.
-
-	  </xsd:documentation>
-	</xsd:annotation>
-
+		   type="javaee:true-falseType" minOccurs="0">
+		<xsd:annotation>
+		  <xsd:documentation>
+	
+		    The element reauthentication-support specifies
+		    whether the resource adapter implementation supports
+		    re-authentication of existing Managed- Connection
+		    instance. Note that this information is for the
+		    resource adapter implementation and not for the
+		    underlying EIS instance. This element must have
+		    either a "true" or "false" value.
+	
+		  </xsd:documentation>
+		</xsd:annotation>
       </xsd:element>
     </xsd:sequence>
     <xsd:attribute name="id" type="xsd:ID"/>
@@ -1124,7 +1137,6 @@
 	  <xsd:field    xpath="javaee:connectionfactory-interface"/>
 	</xsd:unique>
       </xsd:element>
-
       <xsd:element name="inbound-resourceadapter"
 		   type="javaee:inbound-resourceadapterType"
 		   minOccurs="0"/>
@@ -1132,6 +1144,18 @@
 		   type="javaee:adminobjectType"
 		   minOccurs="0"
 		   maxOccurs="unbounded">
+      <xsd:unique name="adminobject-type-uniqueness">
+           <xsd:annotation>
+                <xsd:documentation>
+                The adminobject-interface and adminobject-class element content must be
+                unique in the resourceadapterType. Several admin objects
+                can not use the same adminobject-interface and adminobject-class.
+                </xsd:documentation>
+           </xsd:annotation>
+           <xsd:selector xpath="javaee:adminobject"/>
+           <xsd:field    xpath="javaee:adminobject-interface"/>
+           <xsd:field    xpath="javaee:adminobject-class"/>
+      </xsd:unique>
       </xsd:element>
       <xsd:element name="security-permission"
 		   type="javaee:security-permissionType"
@@ -1175,8 +1199,8 @@
 	    syntax. Refer to the following URL for Sun's
 	    implementation of the security permission
 	    specification:
-
-	    http://java.sun.com/products/jdk/1.4/docs/guide/security/PolicyFiles.html#FileSyntax
+    
+        http://java.sun.com/javase/6/docs/technotes/guides/security/PolicyFiles.html
 	  </xsd:documentation>
 	</xsd:annotation>
       </xsd:element>
