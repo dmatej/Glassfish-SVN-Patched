@@ -192,6 +192,7 @@ function passTwo(outputFilename, reader) {
                 var lines = this.collectedDocstring.split("\n");
                 if (lines.length > 0) {
                     if (needsCDATA) {
+			            this.doindent(this.indent);
                         this.w.print("<![CDATA[[");
                     }
                     this.w.println();
@@ -222,6 +223,7 @@ function passTwo(outputFilename, reader) {
                 }
             }
             if (needsCDATA) {
+	            this.doindent(this.indent);
                 this.w.println("]]>");
             }
             this.level--;
