@@ -140,16 +140,16 @@ public abstract class SecurityContext implements WorkContext {
 	 * </ul>
 	 * <p>
 	 * 
-	 * A resource adapter might use the <code>CallerPrincipalCallback</code> “to
+	 * A resource adapter might use the <code>CallerPrincipalCallback</code> "to
 	 * set the container's representation of the caller principal. The
 	 * CallbackHandler must establish the argument Principal as the caller
 	 * principal associated with the invocation being processed by the
 	 * container. When the argument Principal is null, the handler will
 	 * establish the container's representation of the unauthenticated caller
-	 * principal.”
+	 * principal."
 	 * <p>
 	 * 
-	 * A resource adapter might use the <code>GroupPrincipalCallback</code> “to
+	 * A resource adapter might use the <code>GroupPrincipalCallback</code> "to
 	 * establish the container's representation of the corresponding group
 	 * principals within the Subject. When a null value is passed to the groups
 	 * argument, the handler will establish the container's representation of no
@@ -157,11 +157,11 @@ public abstract class SecurityContext implements WorkContext {
 	 * of this callback is additive, yielding the union (without duplicates) of
 	 * the principals existing within the Subject, and those created with the
 	 * names occurring within the argument array. The CallbackHandler will
-	 * define the type of the created principals.”
+	 * define the type of the created principals."
 	 * <p>
 	 * 
 	 * A resource adapter might use the <code>PasswordValidationCallback</code>
-	 * “to employ the password validation facilities of its containing runtime.”
+	 * “to employ the password validation facilities of its containing runtime."
 	 * <p>
 	 * 
 	 * The executionSubject argument must be non-null and it must not be

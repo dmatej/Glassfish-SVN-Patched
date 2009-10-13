@@ -85,7 +85,7 @@ public interface BootstrapContext {
     Timer createTimer() throws UnavailableException;
 
     /**
-     * A resource adapter can check an application server’s support 
+     * A resource adapter can check an application server's support 
      * for a particular WorkContext type through this method. 
      * This mechanism enables a resource adapter developer to
      * dynamically change the WorkContexts submitted with a Work instance 
