@@ -49,7 +49,7 @@ import javax.transaction.TransactionSynchronizationRegistry;
  * context contains references to useful facilities that could be used by the
  * resource adapter instance.
  *
- * @version JSR322-EarlyDraft
+ * @version Java EE Connector Architecture 1.6
  * @author  Ram Jeyaraman, Sivakumar Thyagarajan
  */
 public interface BootstrapContext {
@@ -85,7 +85,7 @@ public interface BootstrapContext {
     Timer createTimer() throws UnavailableException;
 
     /**
-     * A resource adapter can check an application server's support 
+     * A resource adapter can check an application server’s support 
      * for a particular WorkContext type through this method. 
      * This mechanism enables a resource adapter developer to
      * dynamically change the WorkContexts submitted with a Work instance 

@@ -46,7 +46,7 @@ import static java.lang.annotation.RetentionPolicy.*;
  * Designates a JavaBean property as a configuration property
  * 
  * @since 1.6
- * @version JSR322-PublicReview
+ * @version Java EE Connector Architecture 1.6
  */
 
 @Documented
@@ -62,7 +62,7 @@ public @interface ConfigProperty {
     /**
      * Describes the configuration property.
      */
-	String description() default "";
+	String[] description() default {};
 
 	/**
 	 * Inferred by the container for field based annotations if possible.

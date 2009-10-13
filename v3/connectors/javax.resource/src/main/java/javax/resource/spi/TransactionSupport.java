@@ -47,7 +47,7 @@ package javax.resource.spi;
  * resource adapter deployment descriptor or deployer configuration
  *
  * @since 1.6
- * @version JSR322-EarlyDraft
+ * @version Java EE Connector Architecture 1.6
  */
 public interface TransactionSupport extends java.io.Serializable {
 
@@ -56,7 +56,7 @@ public interface TransactionSupport extends java.io.Serializable {
      * a resource adapter may support.
      *
      * @since 1.6
-     * @version JSR322-EarlyDraft
+     * @version Java EE Connector Architecture 1.6
      */
     public enum TransactionSupportLevel {
         /**

@@ -44,14 +44,18 @@ import static java.lang.annotation.RetentionPolicy.*;
 
 @Documented
 @Retention(RUNTIME)
-@Target(TYPE)
+@Target({})
+/* The <code>AuthenticationMechanism</code> declared type is intended 
+solely for use as a member type in complex annotation type declarations
+like <code>Connector</code>.
+*/
 
 /**
  * An annotation used to specify the authentication mechanism 
  * supported by the resource adapter.
  *
  * @since 1.6
- * @version JSR322-PublicReview
+ * @version Java EE Connector Architecture 1.6
  */
 public @interface AuthenticationMechanism {
 
@@ -61,7 +65,7 @@ public @interface AuthenticationMechanism {
      * of the credentials.
      *
      * @since 1.6
-     * @version JSR322-PublicReview
+     * @version Java EE Connector Architecture 1.6
      */
     public enum CredentialInterface {
         /**
@@ -97,7 +101,7 @@ public @interface AuthenticationMechanism {
      * any resource adapter specific requirement for the support of
      * security contract and authentication mechanism.
      */
-    String description() default "";
+    String[] description() default {};
 
     /**
      * Represents the interface that the resource adapter implementation

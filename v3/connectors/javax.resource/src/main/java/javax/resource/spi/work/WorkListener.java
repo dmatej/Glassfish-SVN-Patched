@@ -60,22 +60,34 @@ public interface WorkListener extends EventListener {
 
     /** 
      * Invoked when a <code>Work</code> instance has been accepted.
+     *
+     * @param e A <code>WorkEvent</code> object that provides more 
+     * information about the accepted Work.
      */
     void workAccepted(WorkEvent e);
 
     /** 
      * Invoked when a <code>Work</code> instance has been rejected.
+     *
+     * @param e A <code>WorkEvent</code> object that provides more 
+     * information about the rejected Work.
      */
     void workRejected(WorkEvent e);
 
     /** 
      * Invoked when a <code>Work</code> instance has started execution.
      * This only means that a thread has been allocated.
+     *
+     * @param e A <code>WorkEvent</code> object that provides more 
+     * information about the rejected Work.
      */
     void workStarted(WorkEvent e);
 
     /** 
      * Invoked when a <code>Work</code> instance has completed execution.
+     *
+     * @param e A <code>WorkEvent</code> object that provides more 
+     * information about the completed Work.
      */
     void workCompleted(WorkEvent e);
 }

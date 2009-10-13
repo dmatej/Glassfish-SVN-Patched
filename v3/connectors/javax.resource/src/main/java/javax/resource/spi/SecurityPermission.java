@@ -48,18 +48,23 @@ import static java.lang.annotation.RetentionPolicy.*;
  * required by the resource adapter
  * 
  * @since 1.6
- * @version JSR322-PublicReview
+ * @version Java EE Connector Architecture 1.6
  */
 
 @Documented
 @Retention(RUNTIME)
-@Target(TYPE)
+@Target({})
+/* The <code>SecurityPermission</code> declared type is intended 
+solely for use as a member type in complex annotation type declarations
+like <code>Connector</code>.
+*/
+
 public @interface SecurityPermission {
 	/**
 	 * Specifies an optional description to mention any specific reason that a
 	 * resource requires a given security permission.
 	 */
-	String description() default "";
+	String[] description() default {};
 
 	/**
 	 * Specifies a security permission based on the Security policy file syntax.

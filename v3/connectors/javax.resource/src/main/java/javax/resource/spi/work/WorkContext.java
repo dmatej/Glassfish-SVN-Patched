@@ -49,9 +49,13 @@ import java.io.Serializable;
  * <code>WorkContext</code> instances (through the getWorkContexts() method),
  * and have them setup as the execution context by the <code>WorkManager</code>
  * when the <code>Work</code> instance gets executed.
- * 
+ *
+ * The resource adapter must not make any changes to the state of the 
+ * <code>WorkContext</code> after the <code>Work</code> instance corresponding 
+ * to that <code>WorkContext</code> has been submitted to the <code>WorkManager</code>.
+ *
  * @since 1.6
- * @version JSR322-EarlyDraft
+ * @version Java EE Connector Architecture 1.6
  */
 
 public interface WorkContext extends Serializable {

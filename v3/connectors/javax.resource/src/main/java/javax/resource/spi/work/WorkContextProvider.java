@@ -51,10 +51,14 @@ import java.io.Serializable;
  * provided by this <code>Work</code> instance through the
  * {@link #getWorkContexts() getWorkContexts} method must be used while setting
  * the execution context of the <code>Work</code> instance.
+ *
+ * If the {@link #getWorkContexts() getWorkContexts} method returns an empty List
+ * or null, the WorkManager must treat it as if no additional execution contexts
+ * are associated with that Work instance.
  * <p>
  * 
  * @since 1.6
- * @version JSR322-EarlyDraft
+ * @version Java EE Connector Architecture 1.6
  */
 public interface WorkContextProvider extends Serializable {
 
@@ -62,8 +66,9 @@ public interface WorkContextProvider extends Serializable {
 	 * Gets an list of <code>WorkContexts</code> that needs to be used by the
 	 * <code>WorkManager</code> to set up the execution context while executing
 	 * a <code>Work</code> instance.
-	 * 
+     * 
 	 * @return an <code>List</code> of <code>WorkContext</code> instances.
+     * 
 	 */
 	List<WorkContext> getWorkContexts();
 }

@@ -50,7 +50,7 @@ import javax.resource.spi.work.WorkContext;
  * JavaBean class.
  * 
  * @since 1.6
- * @version JSR322-PublicReview
+ * @version Java EE Connector Architecture 1.6
  */
 
 @Documented
