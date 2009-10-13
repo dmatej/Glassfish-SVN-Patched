@@ -161,7 +161,7 @@ public abstract class SecurityContext implements WorkContext {
 	 * <p>
 	 * 
 	 * A resource adapter might use the <code>PasswordValidationCallback</code>
-	 * “to employ the password validation facilities of its containing runtime."
+	 * "to employ the password validation facilities of its containing runtime."
 	 * <p>
 	 * 
 	 * The executionSubject argument must be non-null and it must not be
