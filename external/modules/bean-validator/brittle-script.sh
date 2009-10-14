@@ -1,7 +1,7 @@
 # remove the binaries from the origin source tree
-find ../../../../glassfishv3-external-trunk/bean-validator-source-build -name target -type d -exec rm -rf {} \;
+find ../bean-validator-source-build -name target -type d -exec rm -rf {} \;
 # copy everything else from the origin source tree
-cp -r ../../../../glassfishv3-external-trunk/bean-validator-source-build/* .
+cp -r ../bean-validator-source-build/* .
 # remove the .svn directories
 find . -name .svn -exec rm -rf {} \; -print
 # remove some unnecessary directories and files
