@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<modelVersion>4.0.0</modelVersion>
+<parent>
+    <groupId>org.glassfish.l10n</groupId>
+    <artifactId>l10n</artifactId>
+    <version>3.0-SNAPSHOT</version>
+  </parent>
+<artifactId>upgrade-tool-l10n</artifactId>
+<packaging>hk2-jar</packaging>
+<name>Upgrade Tool localization</name>
+<build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+           <phase>generate-resources</phase>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                    <groupId>org.glassfish.upgrade</groupId>
+                    <artifactId>upgrade-tool</artifactId>
+                    <version>${build_id}</version>
+                    <classifier>sources</classifier>
+                    <overWrite>true</overWrite>
+                    <outputDirectory>src/main/resources_en</outputDirectory>
+                    <includes>**/LocalStrings.properties</includes>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+             <goals>
+                <goal>unpack</goal>
+                </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.glassfish.l10n</groupId>
+        <artifactId>maven-l10n-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>l10n-prepare</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.felix</groupId>
+        <artifactId>maven-bundle-plugin</artifactId>
+        <configuration>
+          <!-- Enable the plugin for hk2-jar packaging type -->
+          <supportedProjectTypes>
+            <supportedProjectType>hk2-jar</supportedProjectType>
+            <supportedProjectType>jar</supportedProjectType>
+            <supportedProjectType>bundle</supportedProjectType>
+          </supportedProjectTypes>
+          <instructions>
+            <!-- _include does not work. See Felix-620.  <_include>osgi.bundle</_include> -->
+            <Export-Package>com.sun.enterprise</Export-Package>
+            <Fragment-Host>org.glassfish.upgrade</Fragment-Host>
+          </instructions>
+        </configuration>
+        <executions>
+          <execution>
+            <id>bundle-manifest</id>
+            <phase>process-classes</phase>
+            <goals>
+              <goal>manifest</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.sun.enterprise</groupId>
+        <artifactId>hk2-maven-plugin</artifactId>
+        <version>${hk2.plugin.version}</version>
+        <configuration>
+          <archive>
+            <!-- Use the manifest.mf produced by maven-bundle-plugin;manifest -->
+            <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF</manifestFile>
+          </archive>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
