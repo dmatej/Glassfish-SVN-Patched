@@ -43,7 +43,7 @@ import java.io.IOException;
 
 /**
  * The DeployableObject interface is an abstract representation 
- * of a J2EE deployable module (JAR, WAR, RAR, EAR). A 
+ * of a Java EE deployable module (JAR, WAR, RAR, EAR). A 
  * DeployableObject provides access to the module's deployment
  * descriptor and class files.
  *
@@ -110,7 +110,7 @@ public interface DeployableObject
 
    /**
     * Returns the DTD version number given in the XML
-    * DOCTYPE text provided in every standard J2EE module's
+    * DOCTYPE text provided in every standard Java EE module's
     * deployment descriptor file.
     * @return a string containing the DTD version number
     * 
@@ -136,7 +136,7 @@ public interface DeployableObject
 	*                 language encoding of th DTD.
 	* location - is the URL of the DTD.
 	*
-	* An example J2EE deployment descriptor DOCTYPE statement is:
+	* An example Java EE deployment descriptor DOCTYPE statement is:
 	*<ul>
 	*   &lt!DOCTYPE application-client PUBLIC
     *   "-//Sun Microsystems, Inc.//DTD J2EE Application Client 1.3//EN"

@@ -37,7 +37,7 @@
 package javax.enterprise.deploy.shared;
 
 /**
- * Class ModuleTypes defines enumeration values for the J2EE
+ * Class ModuleTypes defines enumeration values for the Java EE
  * module types.
  *
  * @author Rebecca Searls

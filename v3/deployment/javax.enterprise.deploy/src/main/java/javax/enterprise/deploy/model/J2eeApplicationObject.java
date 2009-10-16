@@ -39,7 +39,7 @@ package javax.enterprise.deploy.model;
 import javax.enterprise.deploy.shared.ModuleType;
 
 /**
- * J2eeApplicationObject is an interface that represents a J2EE 
+ * J2eeApplicationObject is an interface that represents a Java EE 
  * application (EAR); it maintains a DeployableObject for each 
  * module in the archive.
  */

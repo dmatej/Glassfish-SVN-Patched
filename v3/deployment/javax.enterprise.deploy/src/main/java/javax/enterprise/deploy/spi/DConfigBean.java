@@ -58,7 +58,7 @@ import javax.enterprise.deploy.spi.exceptions.BeanNotFoundException;
  * 
  * <p>
  * A DConfigBean is a JavaBean component that presents the dynamic 
- * deployment configuration information for a J2EE plugin to the deployer.
+ * deployment configuration information for a Java EE plugin to the deployer.
  * It is a JavaBean.  The JavaBean architecture was chosen because
  * of its versatility in providing both simple and complex components.
  * JavaBeans also enable the development of property sheets and property

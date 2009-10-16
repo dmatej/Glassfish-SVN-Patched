@@ -39,7 +39,7 @@ package javax.enterprise.deploy.spi;
 
 /**
  * A Target interface represents a single logical
- * core server of one instance of a J2EE platform 
+ * core server of one instance of a Java EE platform 
  * product.  It is a designator for a server and
  * the implied location to copy a configured 
  * application for the server to access.

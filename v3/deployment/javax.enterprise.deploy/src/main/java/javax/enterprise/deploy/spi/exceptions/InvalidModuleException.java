@@ -37,7 +37,7 @@
 package javax.enterprise.deploy.spi.exceptions;
 
 /**
- * This exception is to report an invalid J2EE deployment 
+ * This exception is to report an invalid Java EE deployment 
  * module type. 
  */
 public class InvalidModuleException extends Exception

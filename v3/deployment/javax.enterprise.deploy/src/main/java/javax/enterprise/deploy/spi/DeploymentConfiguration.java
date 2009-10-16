@@ -51,7 +51,7 @@ import java.io.OutputStream;
 /**
  * An interface that defines a container for all the 
  * server-specific configuration information for a 
- * single top-level J2EE module.  The DeploymentConfiguration 
+ * single top-level Java EE module.  The DeploymentConfiguration 
  * object could represent a single stand alone module or an 
  * EAR file that contains several sub-modules.
  *
@@ -63,7 +63,7 @@ public interface DeploymentConfiguration {
     /**
 	 * Returns an object that provides access to
      * the deployment descriptor data and classes
-     * of a J2EE module.
+     * of a Java EE module.
      * @return DeployableObject
      */
     public DeployableObject getDeployableObject();

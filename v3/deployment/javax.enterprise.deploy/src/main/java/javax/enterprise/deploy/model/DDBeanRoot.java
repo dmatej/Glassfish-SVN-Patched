@@ -79,7 +79,7 @@ public interface DDBeanRoot extends DDBean {
     * Returns the version number of an XML instance document.
     * This method is replacing the methods DDBeanRoot.getModuleDTDVersion 
     * and DeployableObject.getModuleDTDVersion. This method returns 
-    * the version number of any J2EE XML instance document. 
+    * the version number of any Java EE XML instance document. 
     *
     * @return a string that is the version number of the XML instance 
     *   document. Null is returned if no version number can be found. 

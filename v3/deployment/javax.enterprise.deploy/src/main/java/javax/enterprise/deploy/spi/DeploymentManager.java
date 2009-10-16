@@ -49,7 +49,7 @@ import java.lang.Deprecated;
 
 /**
  * The DeploymentManager object provides the core set
- * of functions a J2EE platform must provide for J2EE
+ * of functions a Java EE platform must provide for Java EE
  * application deployment.  It provides server related
  * information, such as, a list of deployment targets,
  * and vendor unique runtime configuration information.
@@ -70,11 +70,11 @@ public interface DeploymentManager {
     
     
     /**
-     * Retrieve the list of J2EE application modules distributed
+     * Retrieve the list of Java EE application modules distributed
      * to the identified targets and that are currently running
      * on the associated server or servers.
      *
-     * @param moduleType A predefined designator for a J2EE
+     * @param moduleType A predefined designator for a Java EE
      *                   module type.
      *
      * @param targetList A list of deployment Target designators
@@ -95,11 +95,11 @@ public interface DeploymentManager {
             IllegalStateException;
     
     /**
-     * Retrieve the list of J2EE application modules distributed
+     * Retrieve the list of Java EE application modules distributed
      * to the identified targets and that are currently not
      * running on the associated server or servers.
      *
-     * @param moduleType A predefined designator for a J2EE
+     * @param moduleType A predefined designator for a Java EE
      *                   module type.
      *
      * @param targetList A list of deployment Target designators
@@ -120,10 +120,10 @@ public interface DeploymentManager {
             IllegalStateException;
     
     /**
-     * Retrieve the list of all J2EE application modules running
+     * Retrieve the list of all Java EE application modules running
      * or not running on the identified targets.
      *
-     * @param moduleType A predefined designator for a J2EE
+     * @param moduleType A predefined designator for a Java EE
      *                   module type.
      *
      * @param targetList A list of deployment Target designators
@@ -145,9 +145,9 @@ public interface DeploymentManager {
     
     /**
      * Retrieve the object that provides server-specific deployment
-     * configuration information for the J2EE deployable component.
+     * configuration information for the Java EE deployable component.
      *
-     * @param dObj An object representing a J2EE deployable component.
+     * @param dObj An object representing a Java EE deployable component.
      * @throws InvalidModuleException The DeployableObject is an
      *                      unknown or unsupport component for this
      *                      configuration tool.
@@ -304,7 +304,7 @@ public interface DeploymentManager {
     /**
      * (optional)
      * The redeploy method provides a means for updating currently
-     * deployed J2EE applications.  This is an optional method for
+     * deployed Java EE applications.  This is an optional method for
      * vendor implementation.
      *
      * Redeploy replaces a currently deployed application with an
@@ -345,7 +345,7 @@ public interface DeploymentManager {
     /**
      * (optional)
      * The redeploy method provides a means for updating currently
-     * deployed J2EE applications.  This is an optional method for
+     * deployed Java EE applications.  This is an optional method for
      * vendor implementation.
      *
      * Redeploy replaces a currently deployed application with an
@@ -395,7 +395,7 @@ public interface DeploymentManager {
      * mode or it is planning to shutdown.
      *
      * When release is called the DeploymentManager may close any
-     * J2EE resource connections it had for deployment configuration
+     * Java EE resource connections it had for deployment configuration
      * and perform other related resource cleanup.  It should not
      * accept any new operation requests (i.e., distribute, start
      * stop, undeploy, redeploy.  It should finish any operations
@@ -449,9 +449,9 @@ public interface DeploymentManager {
     public boolean isLocaleSupported(Locale locale);
     
     /**
-     * Returns the J2EE platform version number for which the
+     * Returns the Java EE platform version number for which the
      * configuration beans are provided.  The beans must have
-     * been compiled with the J2SE version required by the J2EE
+     * been compiled with the J2SE version required by the Java EE
      * platform.
      *
      * @return a DConfigBeanVersionType object representing the
@@ -460,22 +460,22 @@ public interface DeploymentManager {
     public DConfigBeanVersionType getDConfigBeanVersion();
     
     /**
-     * Returns 'true' if the configuration beans support the J2EE platform
+     * Returns 'true' if the configuration beans support the Java EE platform
      * version specified.  It returns 'false' if the version is
      * not supported.
      *
      * @param version a DConfigBeanVersionType object representing the
-     *	J2EE platform version for which support is requested.
+     *	Java EE platform version for which support is requested.
      * @return 'true' if the version is supported and 'false if not.
      */
     public boolean isDConfigBeanVersionSupported(DConfigBeanVersionType version);
     
     /**
-     * Set the configuration beans to be used to the J2EE platform
+     * Set the configuration beans to be used to the Java EE platform
      * version specificed.
      *
      * @param version a DConfigBeanVersionType object representing the
-     * J2EE platform version for which support is requested.
+     * Java EE platform version for which support is requested.
      * @throws DConfigBeanVersionUnsupportedException when the
      *        requested bean version is not supported.
      */
