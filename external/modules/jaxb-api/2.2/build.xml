@@ -1,0 +1,177 @@
+<?xml version="1.0"?>
+<project name="spec" basedir="." default="dist">
+ 
+    <description>
+        This build file will create the binary products for JAXB 2.0 (JSR-222)
+
+        The default target will create:
+        
+            dist/jaxb-api.jar      &lt;-- compiled API
+            dist/jaxb-api-doc.zip  &lt;-- javadoc zip bundle
+            dist/jaxb-api-src.zip  &lt;-- api source zip bundle
+
+        This build file is NOT responsible for updating the live javadoc on
+        the JSR-222 home page or uploading the binary products.  These are
+        controlled by a Sun internal process.
+    </description>
+
+    <!-- properties -->
+    <property name="release.spec.title"    value="Final Release"/>
+    <property name="release.spec.version"  value="2.2"/>
+    <property name="release.spec.date"     value="Summer, 2009"/>
+    <property name="release.spec.feedback" value="spec-comments@jsr222.dev.java.net"/>
+    <property name="compilerarg"           value=""/>
+
+    <!-- libraries that are referenced when compiling Java source files -->
+    <path id="javac.classpath">
+        <pathelement path="lib/jsr173_1.0_api.jar" />
+        <pathelement path="lib/activation.jar" />
+    </path>
+
+    <!-- libraries that are referenced when generating docs -->
+    <path id="doc.classpath">
+        <pathelement path="build/classes" />
+        <pathelement path="lib/jsr173_1.0_api.jar" />
+        <pathelement path="lib/activation.jar" />
+    </path>
+
+    <!-- prepare to build -->
+    <target name="prepare">
+        <mkdir dir="build" />
+        <mkdir dir="build/lib" />
+        <mkdir dir="build/docs" />
+    </target>
+
+    <!-- compile Java source files -->
+    <target name="compile"
+            depends="prepare"
+            description="Compile API sources into build/classes">
+        <mkdir dir="build/classes" />
+        <javac srcdir="src" destdir="build/classes"
+	       source="1.5" target="1.5"
+               debug="on" optimize="off"
+               deprecation="off" >
+            <classpath refid="javac.classpath" />
+            <!--compilerarg line="-Xlint:unchecked"/--> 
+            <compilerarg line="${compilerarg}"/>
+        </javac>
+        <!-- copy i18n props into build dir -->
+        <copy toDir="build/classes">
+            <fileset dir="src" includes="**/*.properties" />
+        </copy>
+    </target>
+
+    <!-- create the jaxb-api.jar -->
+    <target name="jar" 
+            depends="compile"
+            description="create build/lib/jaxb-api.jar from compiled API sources">
+        <mkdir dir="build/classes/META-INF"/>
+        <copy tofile="build/classes/META-INF/LICENSE.txt" file="LICENSE.txt" />
+        <jar jarfile="build/lib/jaxb-api.jar"
+             basedir="build/classes"
+             manifest="manifest.mf" />
+    </target>
+
+    <!-- create the jaxb-api-doc.zip -->
+    <target name="zip-javadoc" 
+            depends="javadoc"
+            description="create build/lib/jaxb-api-doc.zip from API javadoc">
+        <zip zipfile="build/lib/jaxb-api-doc.zip" basedir="build/docs/api"/>      
+    </target>
+
+    <!-- create the jaxb-api-src.zip -->
+    <target name="zip-src" 
+            depends="compile"
+            description="create build/lib/jaxb-api-src.zip from API sources">
+        <zip zipfile="build/lib/jaxb-api-src.zip" 
+            basedir="src" 
+            excludes="**/.nbattrs, CVS/**" 
+            includes="**/*.java, **/*.html" />
+    </target>
+
+    <!-- generate javadoc -->
+    <target name="javadoc" 
+            depends="compile"
+            description="create javadoc into build/docs/api">
+        <javadoc locale="en_US"
+                 packagenames="javax.xml.*" 
+                 destdir="build/docs/api"
+                 nodeprecated="false"
+                 use="false"
+                 author="true"
+                 version="true"
+                 windowtitle="JAXB ${release.spec.version}">
+            <sourcepath>
+                <pathelement path="src"/>
+            </sourcepath>
+            <classpath refid="doc.classpath" />
+            <group title="JAXB Packages" packages="javax.xml*"/> 
+            <doctitle>
+<![CDATA[<br>
+JAXB ${release.spec.version} Runtime Library</h2>
+${release.spec.title} specification, ${release.spec.date}<br>
+Comments to: <i><a href='mailto:${release.spec.feedback}'>${release.spec.feedback}</a></i><br>
+More information at: <i><a target='_top'
+href='http://java.sun.com/xml/jaxb'>http://java.sun.com/xml/jaxb</a></i><br>
+&nbsp;<br>&nbsp;<br><hr width='65%'><h1>${release.spec.title}</h1><hr width='75%'>
+<br>&nbsp;<br>]]>
+            </doctitle>
+            <header>
+<![CDATA[JAXB<br>v${release.spec.version}]]>
+            </header>
+            <footer>
+<![CDATA[<a href='https://jaxb.dev.java.net/jaxb20-pfd/222-pfd-eval-spec-web.txt'>JAXB 2.0 PFD Specification License</a>]]>
+            </footer>
+            <bottom>
+<![CDATA[<font size=-1>
+<br>Comments to: <a href='mailto:${release.spec.feedback}'><i>${release.spec.feedback}</i></a>
+<br>More information at: <a target='_top'
+href='http://java.sun.com/xml/jaxb'><i>http://java.sun.com/xml/jaxb</i></a> 
+<p>Copyright &copy; 2004 by Sun Microsystems, Inc., 901 San Antonio Road, 
+<br>Palo Alto, California, 94303, U.S.A.  All Rights Reserved.  </font>]]>
+            </bottom>
+            <link href="http://java.sun.com/j2se/1.5.0/docs/api"
+                  offline="true"
+                  packagelistLoc="lib/j2se-javadoc" />
+        </javadoc>
+    </target>
+
+    <target name="dist"
+            depends="prepare, jar, javadoc, zip-javadoc, zip-src"
+            description="run the entire build and copy binary products into dist">
+        <mkdir dir="dist"/>
+        <copy file="build/lib/jaxb-api.jar"     toDir="dist" />
+        <copy file="build/lib/jaxb-api-doc.zip" toDir="dist" />
+        <copy file="build/lib/jaxb-api-src.zip" toDir="dist" />
+    </target>
+
+    <!-- remove all intermediate files -->
+    <target name="clean"
+            description="remove intermediate files">
+        <delete dir="build" />
+        <delete dir="dist" />
+    </target>
+
+    <target name="jdiff">
+      <property  name="JDIFF_HOME" value="${basedir}/tools" />
+        <taskdef classname="jdiff.JDiffAntTask" name="jdiff">
+          <classpath>
+            <fileset dir="tools" />
+          </classpath>
+        </taskdef>
+
+      <mkdir dir="build/api-2.1" />
+      <unzip src="tools/jaxb-api-2.1.zip" dest="build/api-2.1" />
+
+      <mkdir dir="build/jdiff"/>
+      <jdiff destdir="build/jdiff" docchanges="on">
+        <old name="JAXB 2.1 API">
+          <dirset dir="build/api-2.1" />
+        </old>
+        <new name="JAXB 2.2 API">
+          <dirset dir="src" />
+        </new>
+      </jdiff>
+      <zip file="build/javadoc-diff.zip" basedir="build/jdiff" />
+    </target>
+</project>
