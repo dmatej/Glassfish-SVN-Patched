@@ -105,6 +105,28 @@
         <fail unless="is-connector-avail" message="${maven.repo.local}/${connector-api.mvn.path} missing! It is a required dependency for wsit build."/>
     </target>
 
+    <!-- ant.jar-->
+    <target name="ant.checkout" unless="nocheckout">
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${antdep.svn.url}" />
+            <arg line="ant" />
+    	</exec>
+    </target>
+    <target name="ant.build">
+        <delete>
+            <fileset dir="${external.dir}/ant" includes="**/*.jar"/>
+        </delete>
+        <subant buildpath="${external.dir}/ant" target="main"/>
+    </target>
+    <target name="ant.publish">
+        <mvn.publish jar="${external.dir}/ant/dist/lib/ant.jar" mvngroup="org.apache.ant" mvnartid="ant" mvnversion="${antdep.version}"/>
+        <mvn.publish jar="${external.dir}/ant/dist/lib/ant-trax.jar" mvngroup="org.apache.ant" mvnartid="ant-trax" mvnversion="${antdep.version}"/>
+        <mvn.publish jar="${external.dir}/ant/dist/lib/ant-junit.jar" mvngroup="org.apache.ant" mvnartid="ant-junit" mvnversion="${antdep.version}"/>
+        <mvn.publish jar="${external.dir}/ant/dist/lib/ant-launcher.jar" mvngroup="org.apache.ant" mvnartid="ant-launcher" mvnversion="${antdep.version}"/>
+        <mvn.publish jar="${external.dir}/ant/dist/lib/ant-nodeps.jar" mvngroup="org.apache.ant" mvnartid="ant-nodeps" mvnversion="${antdep.version}"/>
+    </target>
+
     <!-- streambuffer.jar -->
     <target name="streambuffer.checkout" unless="nocheckout">
         <cvs.checkout repo="${streambuffer.cvs.url}" tag="${streambuffer.cvs.tag}" module="xmlstreambuffer" dest="streambuffer"/>
@@ -391,11 +413,15 @@
                 <exclude name="**/*grizzly*.jar*"/>
                 <exclude name="**/findbugs/**/*.jar"/>
                 <exclude name="lib/junit.jar"/>
-                <exclude name="lib/ant*.jar"/>
                 <exclude name="tools/lib/*.jar"/>
             </fileset>
         </delete>
 
+        <copy file="${maven.repo.local}/${antdep.mvn.path}" tofile="${external.dir}/jaxws/lib/ant.jar"/>
+        <copy file="${maven.repo.local}/${ant-trax.mvn.path}" tofile="${external.dir}/jaxws/lib/ant-trax.jar"/>
+        <copy file="${maven.repo.local}/${ant-junit.mvn.path}" tofile="${external.dir}/jaxws/lib/ant-junit.jar"/>
+        <copy file="${maven.repo.local}/${ant-nodeps.mvn.path}" tofile="${external.dir}/jaxws/lib/ant-nodeps.jar"/>
+        <copy file="${maven.repo.local}/${ant-launcher.mvn.path}" tofile="${external.dir}/jaxws/lib/ant-launcher.jar"/>
         <copy file="${maven.repo.local}/${activation.mvn.path}" tofile="${external.dir}/jaxws/lib/activation.jar"/>
         <copy file="${maven.repo.local}/${fi.mvn.path}" tofile="${external.dir}/jaxws/lib/FastInfoset.jar"/>
         <copy file="${maven.repo.local}/${jsr173api.mvn.path}" tofile="${external.dir}/jaxws/lib/jsr173_api.jar"/>
@@ -489,7 +515,6 @@
                 <exclude name="samples/**/*.jar"/>
                 <exclude name="docs/**/*.jar"/>
                 <exclude name="lib/releasenotes/*.jar"/>
-                <exclude name="lib/compiletime/ant*.jar"/>
                 <exclude name="lib/tmp/*.jar"/>
 
                  <!-- TEMPORARY - coming from GF projects -->
@@ -502,6 +527,7 @@
         <copy file="${maven.repo.local}/${gmbal.mvn.path}" tofile="${external.dir}/wsit/lib/runtime/gmbal.jar"/>
         <copy file="${maven.repo.local}/${transaction-api.mvn.path}" tofile="${external.dir}/wsit/lib/compiletime/transaction-api-1.1.jar"/>
         <copy file="${maven.repo.local}/${connector-api.mvn.path}" tofile="${external.dir}/wsit/lib/compiletime/connector-api-1.5.jar"/>
+        <copy file="${maven.repo.local}/${ant.mvn.path}" tofile="${external.dir}/wsit/lib/compiletime/ant.jar"/>
 
         <copy file="${external.dir}/jaxb/dist/lib/jaxb-xjc.jar" tofile="${external.dir}/wsit/lib/tooltime/jaxb-xjc.jar"/>
         <copy file="${external.dir}/jaxws/build/lib/jaxws-tools.jar" tofile="${external.dir}/wsit/lib/tooltime/jaxws-tools.jar"/>
