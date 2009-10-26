@@ -1,0 +1,177 @@
+<?xml version="1.0"?>
+<!-- This build file should be used to convert an Apache XML Security
+     source code tree for use with Metro/GlassFish. It automatically
+     renames the packages, changes logging calls to java.util.logging, and
+     other stuff.
+-->
+<project name="Rename Apache XMLSec packages" default="build-renamed-apache-tree" basedir=".">
+
+  <target name="build-renamed-apache-tree" depends="package-rename">
+    <ant dir="${tmp.renamed}" antfile="build.xml" target="build.src.jar" inheritAll="false">
+        <property file="${basedir}/build.properties"/>
+        <property file="${basedir}/provider.properties"/>
+        <!-- override apache proxy properties with our own properties file -->
+        <property file="${basedir}/proxy.properties"/>
+    </ant>
+  </target>
+
+  <target name="package-rename" depends="rm-renamed-tree, copy-tree">
+    <replace dir="${tmp.renamed}/src"  summary="true"
+             value="INVALID-VALUE-see-ant-build-file">
+        <!-- The following is for the core Apache security library -->
+        <replacefilter
+             token="org.apache.xml.security"
+             value="com.sun.org.apache.xml.internal.security"/>
+        <replacefilter
+             token="org/apache/xml/security"
+             value="com/sun/org/apache/xml/internal/security" />
+        <!-- JAXP related renaming -->
+        <replacefilter token="org.apache.xalan"
+                       value="com.sun.org.apache.xalan.internal"/>
+        <replacefilter token="org.apache.xerces"
+                       value="com.sun.org.apache.xerces.internal"/>
+        <replacefilter token="org.apache.xml.utils"
+                       value="com.sun.org.apache.xml.internal.utils"/>
+        <replacefilter token="org.apache.xml.dtm"
+                       value="com.sun.org.apache.xml.internal.dtm"/>
+        <replacefilter token="org.apache.xpath"
+                       value="com.sun.org.apache.xpath.internal"/>
+        <replacefilter token="org.apache.xml.serialize"
+                       value="com.sun.org.apache.xml.internal.serialize"/>
+    </replace>
+
+    <replace dir="${tmp.renamed}/src_unitTests"  summary="true"
+             value="INVALID-VALUE-see-ant-build-file">
+        <replacefilter
+             token="org.apache.xml.security"
+             value="com.sun.org.apache.xml.internal.security"/>
+        <replacefilter  token="org/apache/xml/security"
+                        value="com/sun/org/apache/xml/internal/security" />
+        <!-- <replacefilter token="org.apache.xalan"
+                     value="com.sun.org.apache.xalan.internal"/> -->
+        <replacefilter token="org.apache.xerces"
+                       value="com.sun.org.apache.xerces.internal"/>
+        <replacefilter token="org.apache.xml.utils"
+                       value="com.sun.org.apache.xml.internal.utils"/>
+        <replacefilter token="org.apache.xml.dtm"
+                       value="com.sun.org.apache.xml.internal.dtm"/>
+        <replacefilter token="org.apache.xpath"
+                       value="com.sun.org.apache.xpath.internal"/>
+        <replacefilter token="org.apache.xml.serialize"
+                       value="com.sun.org.apache.xml.internal.serialize"/>
+    </replace>
+
+    <replace dir="${tmp.renamed}/src_samples"  summary="true"
+             value="INVALID-VALUE-see-ant-build-file">
+        <replacefilter
+             token="org.apache.xml.security"
+             value="com.sun.org.apache.xml.internal.security"/>
+        <replacefilter  token="org/apache/xml/security"
+                        value="com/sun/org/apache/xml/internal/security" />
+        <replacefilter token="org.apache.xalan"
+                       value="com.sun.org.apache.xalan.internal"/>
+        <replacefilter token="org.apache.xerces"
+                       value="com.sun.org.apache.xerces.internal"/>
+        <replacefilter token="org.apache.xml.utils"
+                       value="com.sun.org.apache.xml.internal.utils"/>
+        <replacefilter token="org.apache.xml.dtm"
+                       value="com.sun.org.apache.xml.internal.dtm"/>
+        <replacefilter token="org.apache.xpath"
+                       value="com.sun.org.apache.xpath.internal"/>
+    </replace>
+
+    <!-- Changes for the build.xml file -->
+    <replace dir="${tmp.renamed}/" summary="true"
+             value="INVALID-VALUE-see-ant-build-file">
+        <replacefilter  token="org/apache/xml/security"
+                        value="com/sun/org/apache/xml/internal/security" />
+        <replacefilter  token="org/apache/**"
+                        value="com/sun/org/apache/**" />
+        <replacefilter  token="org.apache.xml.security"
+                        value="com.sun.org.apache.xml.internal.security" />
+        <!-- the following two are automated fixes to not download the Bouncy Ca
+stle provider -->
+        <replacefilter  token="do.check.libs,do.build.src,env.mk.dirs,"
+                        value="do.build.src,env.mk.dirs," />
+        <replacefilter  token='if="has.jce.provider"'
+                        value=' ' />
+        <replacefilter  token="xmlsec-${product.version}.jar"
+                        value="xmlsec.jar" />
+        <include name="*.xml" />
+    </replace>
+
+    <!-- Replacing commons-logging usage with JDK 1.4 logging -->
+    <replace dir="${tmp.renamed}/" summary="true"
+             value="INVALID-VALUE-see-ant-build-file">
+      <replacefilter token="org.apache.commons.logging.LogFactory.getLog"
+                     value="java.util.logging.Logger.getLogger"/>
+      <replacefilter token="LogFactory.getLog"
+                     value="Logger.getLogger"/>
+      <replacefilter token="org.apache.commons.logging.LogFactory"
+                     value="java.util.logging.Logger"/>
+      <replacefilter token="getLog("
+                     value="getLogger("/>
+      <replacefilter token="org.apache.commons.logging.Log"
+                     value="java.util.logging.Logger"/>
+      <replacefilter token="static Log "
+                     value="static Logger "/>
+      <replacefilter token="org.apache.commons.logging"
+                     value="java.util.logging"/>
+      <replacefilter token="logger.fatal("
+                     value="logger.log(java.util.logging.Level.SEVERE, "/>
+      <replacefilter token="log.fatal("
+                     value="log.log(java.util.logging.Level.SEVERE, "/>
+      <replacefilter token="log.warn("
+                     value="log.log(java.util.logging.Level.WARNING, "/>
+      <replacefilter token="logger.warn("
+                     value="logger.log(java.util.logging.Level.WARNING, "/>
+      <replacefilter token="log.error("
+                     value="log.log(java.util.logging.Level.SEVERE, "/>
+      <replacefilter token="logger.error("
+                     value="logger.log(java.util.logging.Level.SEVERE, "/>
+      <replacefilter token="log.info("
+                     value="log.log(java.util.logging.Level.INFO, "/>
+      <replacefilter token="logger.info("
+                     value="logger.log(java.util.logging.Level.INFO, "/>
+      <replacefilter token="log.debug(currMeth.getDeclaringClass()"
+                     value="log.log(java.util.logging.Level.FINE, currMeth.getDe
+claringClass().toString()"/>
+      <replacefilter token="logger.debug ("
+                     value="logger.log(java.util.logging.Level.FINE, "/>
+      <replacefilter token="log.debug("
+                     value="log.log(java.util.logging.Level.FINE, "/>
+      <replacefilter token="logger.debug("
+                     value="logger.log(java.util.logging.Level.FINE, "/>
+      <replacefilter token="log.trace("
+                     value="log.log(java.util.logging.Level.FINER, "/>
+      <replacefilter token="logger.trace("
+                     value="logger.log(java.util.logging.Level.FINER, "/>
+      <replacefilter token="log.isDebugEnabled()"
+                     value="log.isLoggable(java.util.logging.Level.FINE)" />
+      <include name="**/*.java" />
+    </replace>
+
+    <delete file="${tmp.renamed}/libs/commons-logging-api.jar"/>
+    <delete file="${tmp.renamed}/libs/commons-logging.jar"/>
+  </target>
+
+  <target name="rm-renamed-tree" depends="internal-init-rename">
+    <delete dir="${tmp.renamed}"/>
+  </target>
+
+  <target name="internal-init-rename"
+          description="Init properties for rename tasks">
+    <property name="tmp.dir" value="${basedir}/tmp"/>
+    <property name="tmp.src" value="${tmp.dir}/xml-security"/>
+    <property name="tmp.renamed" value="${tmp.dir}/xml-security-internal"/>
+  </target>
+
+  <target name="copy-tree" depends="internal-init-rename">
+    <copy todir="${tmp.renamed}">
+      <fileset dir=".">
+        <exclude name="build/"/>
+      </fileset>
+    </copy>
+  </target>
+
+</project>
