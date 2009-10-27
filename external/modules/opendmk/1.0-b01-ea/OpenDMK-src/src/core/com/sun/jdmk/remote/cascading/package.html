@@ -1,0 +1,437 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<!--
+ - 
+ - DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ - 
+ - Copyright (c) 2007 Sun Microsystems, Inc. All Rights Reserved.
+ - 
+ - The contents of this file are subject to the terms of either the GNU General
+ - Public License Version 2 only ("GPL") or the Common Development and
+ - Distribution License("CDDL")(collectively, the "License"). You may not use
+ - this file except in compliance with the License. You can obtain a copy of the
+ - License at http://opendmk.dev.java.net/legal_notices/licenses.txt or in the 
+ - LEGAL_NOTICES folder that accompanied this code. See the License for the 
+ - specific language governing permissions and limitations under the License.
+ - 
+ - When distributing the software, include this License Header Notice in each
+ - file and include the License file found at
+ -     http://opendmk.dev.java.net/legal_notices/licenses.txt
+ - or in the LEGAL_NOTICES folder that accompanied this code.
+ - Sun designates this particular file as subject to the "Classpath" exception
+ - as provided by Sun in the GPL Version 2 section of the License file that
+ - accompanied this code.
+ - 
+ - If applicable, add the following below the License Header, with the fields
+ - enclosed by brackets [] replaced by your own identifying information:
+ - 
+ -       "Portions Copyrighted [year] [name of copyright owner]"
+ - 
+ - Contributor(s):
+ - 
+ - If you wish your version of this file to be governed by only the CDDL or
+ - only the GPL Version 2, indicate your decision by adding
+ - 
+ -       "[Contributor] elects to include this software in this distribution
+ -        under the [CDDL or GPL Version 2] license."
+ - 
+ - If you don't indicate a single choice of license, a recipient has the option
+ - to distribute your version of this file under either the CDDL or the GPL
+ - Version 2, or to extend the choice of license to its licensees as provided
+ - above. However, if you add GPL Version 2 code and therefore, elected the
+ - GPL Version 2 license, then the option applies only if the new code is made
+ - subject to such option by the copyright holder.
+ - 
+ -->
+<html>
+  <head>
+      <-- %W -->
+      <title>Cascading over JMX[tm] Remote API Connectors</title>
+  </head>
+
+  <body>
+    Provides the classes that implement 
+    cascading over JMX Remote API connectors. Several implementations
+    of cascading (proxy-based, interceptor-based) may coexist.
+    
+    <p>A proxy-based cascading agent is implemented in the 
+      {@link com.sun.jdmk.remote.cascading.proxy} package.</p>
+    
+    <h3><a name="Overview"></a>Overview</h3>
+
+    <p>The cascading service proposed in this package makes it possible
+      to <i>mount</i> a partial view of a <i>source MBeanServer</i> into 
+      a <i>target MBeanServer</i>. The source <tt>MBeanServer</tt> is also 
+      sometimes called the <i>cascaded MBeanServer</i>, while the target 
+      <tt>MBeanServer</tt> is called the <i>cascading MBeanServer</i>.
+    </p>
+    <p> The Java DMK cascading API introduces the notion of a
+      <i>domain path</i>.
+      An ObjectName is thus decomposed into three parts:
+    <pre>
+ &lt;domain-path&gt;&lt;domain-base-name&gt;:&lt;key-property-list&gt;
+    </pre>
+    The <i>domain path</i> is a hierarchical name similar to a UNIX path name,
+    and uses the character `/' as separator.
+    <br>  
+    The Java DMK cascading API provides the ability to mount MBeans from
+    a source <tt>MBeanServer</tt> under a <i>target domain path</i> in a 
+    target <tt>MBeanServer</tt>.
+    <br>
+    For instance, this makes it possible in a target <tt>MBeanServer</tt> to:
+    <ul>
+      <li>
+	mount <tt>"java.lang:*"</tt> MBeans from a subagent 1 under 
+	<tt>"server1/instance1"</tt> 
+      </li>
+      <li>
+	mount <tt>"java.lang:*"</tt> MBeans from a subagent 2 under 
+	<tt>"server1/instance2"</tt>
+      </li>
+    </ul>
+    The content of that target MBeanServer as returned by 
+    <tt>queryNames(null,null)</tt> would then appear as:
+    <pre>
+ [...]
+ java.lang:type=Compilation                    <i>(local MBean)</i>
+ java.lang:type=Threading                      <i>(local MBean)</i>
+ [...]                                         ...
+ server1/instance1/java.lang:type=Threading    <i>(mounted from sugagent 1)</i>
+ server1/instance1/java.lang:type=Compilation  <i>(mounted from sugagent 1)</i>
+ [...]                                         ...
+ server1/instance2/java.lang:type=Threading    <i>(mounted from sugagent 2)</i>
+ server1/instance2/java.lang:type=Compilation  <i>(mounted from sugagent 2)</i>
+ [...]                                         ...
+ </pre> 
+<p>See <a href="#The_File_System_Analogy">The File System Analogy</a> below.</p>
+
+    <h3><a name="Cascading_Service"></a>CascadingServiceMBean</h3>
+
+    <p>The cascading service proposed in this package is based on a 
+      simple MBean class:
+    <ul><li>The {@link com.sun.jdmk.remote.cascading.CascadingServiceMBean} 
+	provides methods that make it possible to mount MBeans from a 
+	<i>source MBeanServer</i> in a <i>target MBeanServer</i> under a 
+	<i>target domain path</i>.
+	Usually the target <tt>MBeanServer</tt> is the <tt>MBeanServer</tt> 
+	in which the {@link 
+	com.sun.jdmk.remote.cascading.CascadingService} is registered.
+	<br>
+	There should be only one <tt>CascadingServiceMBean</tt> per 
+	target <tt>MBeanServer</tt>.</li>
+      <li>The {@link 
+	com.sun.jdmk.remote.cascading.CascadingServiceMBean#mount 
+	CascadingServiceMBean.mount} method  
+	mounts a partial view of a source <tt>MBeanServer</tt> known by its 
+	<tt>JMXServiceURL</tt> in the target <tt>MBeanServer</tt> of
+	the <tt>CascadingServiceMBean</tt>. 
+	</li>
+      <li>The {@link 
+	com.sun.jdmk.remote.cascading.CascadingServiceMBean#unmount 
+	CascadingServiceMBean.unmount}  method cancels a previous
+	 <tt>mount</tt> operation. The <tt>unmount</tt> operation will
+	close the connection that was opened by the <tt>mount</tt>
+	operation.
+	</li>
+      </ul>
+
+    <p>This package provides a default {@link 
+      com.sun.jdmk.remote.cascading.CascadingService} class which implements
+      the {@link com.sun.jdmk.remote.cascading.CascadingServiceMBean} 
+      interface. This default <tt>CascadingService</tt> implementation relies
+      on proxy-based cascading and implements the 
+      <tt>mount</tt> operation by instantiating behind the scene a {@link 
+      com.sun.jdmk.remote.cascading.proxy.ProxyCascadingAgent}.
+    </p>
+
+    <h3><a name="The_File_System_Analogy"></a>The File System Analogy</h3>
+    <p>As explained in the <a href="#Overview">Overview</a>, The Java DMK 
+      cascading API introduces the notion of a <i>domain path</i>.
+      This <i>domain path</i> is a hierarchical name similar to a 
+      UNIX path name and makes it possible to handle cascading in a
+      similar way to a File System <i>mount</i> operation.
+      </p>
+    <p>Although our API allows you to implement many cascading schemes, we
+      recommend that applications only implement those schemes that can
+      be compared to a regular File System <i>mount</i>:
+      <ul>
+      <li>When calling the {@link 
+	com.sun.jdmk.remote.cascading.CascadingServiceMBean#mount 
+	CascadingServiceMBean.mount} operation, always 
+	use a non null <i>targetPath</i>. The target path can be assimilated 
+	to a target mount point in the File System analogy.</li>
+      <li>Never use a <i>targetPath</i> under which MBeans are already
+	registered in the target <tt>MBeanServer</tt>. Using such
+	a target path could cause name conflict when mounting the
+	source MBeans to the target MBeanServer.</li>
+      <li>Never give the same <i>targetPath</i> to two different 
+	<tt>mount</tt> operations.
+	Like in the file system analogy, you should not attempt to mount 
+	two sources to the same target path.</li>
+      </ul>
+    </p>
+    <p>Our implementation does not enforce those rules, but applications
+      which are concerned with naming consistency and coherency should 
+      make sure to respect them.
+    </p>
+    
+    <h3><a name="Advanced_Programming_API"></a>Advanced Programming API</h3>
+
+    In order to perform its <tt>mount</tt> operation the 
+    <tt>CascadingService</tt> relies on a lower level API. This lower level
+    API offers a greater control on the connectivity (through 
+    <a href="#MBeanServerConnectionFactories">MBeanServerConnectionFactories
+    </a>) as well as a deeper control of the underlying implementation.
+    <br>This API is however more complex and requires a deeper knowledge 
+    of the inner structure of the cascading service implementation.
+    <p><b>We thus recommend using the</b> {@link 
+      com.sun.jdmk.remote.cascading.CascadingService} <b>rather than working
+      with the underlying implementation classes</b>.</p>
+
+    The <tt>CascadingService</tt> provided in this package relies on the 
+    following implementation classes:
+
+    <ul><li>Like the <tt>CascadingServiceMBean</tt>, the 
+	    {@link com.sun.jdmk.remote.cascading.CascadingAgentMBean} 
+	    is an MBean that makes it possible to cascade MBeans from a 
+	    <i>source MBeanServer</i> in a <i>target MBeanServer</i> under a 
+	    <i>target domain path</i>.
+	    Usually the target <tt>MBeanServer</tt> is also the 
+	    <tt>MBeanServer</tt> in which the {@link 
+	com.sun.jdmk.remote.cascading.CascadingAgent} is registered.
+	In the <a href="#The_File_System_Analogy">File System Analogy</a> 
+	the <tt>CascadingAgent</tt> would be used to implement a single 
+	mount point.
+	<br>
+	The <tt>CascadingAgent</tt> can be created with an 
+	{@link javax.management.ObjectName} pattern filter and a 
+	{@link javax.management.QueryExp} query filter
+	which makes it possible to select which MBeans should be cascaded.
+	Using a non null query filter is however discouraged.
+	<br>
+	The <tt>CascadingAgent</tt> also holds a pointer to an 
+	{@link com.sun.jdmk.remote.cascading.MBeanServerConnectionFactory}
+	which it uses to obtain {@link javax.management.MBeanServerConnection}
+	objects connected to the source <tt>MBeanServer</tt>.
+      </li>
+      <li>The {@link 
+	com.sun.jdmk.remote.cascading.MBeanServerConnectionFactory} is an
+	interface implemented by classes that are able to return an
+	<tt>MBeanServerConnection</tt> to an <tt>MBeanServer</tt>. This 
+	package defines two trivial implementations of the 
+	<tt>MBeanServerConnectionFactory</tt>:
+	<ul><li>The {@link
+	    com.sun.jdmk.remote.cascading.LocalMBeanServerConnectionFactory}
+	    is an <tt>MBeanServerConnectionFactory</tt> that wraps a local 
+	    <tt>MBeanServerConnection</tt> - for instance an 
+	    <tt>MBeanServer</tt>. It makes it possible to cascade MBeans 
+	    residing in a local source <tt>MBeanServer</tt>.
+	  </li>
+	  <li>The {@link
+	    com.sun.jdmk.remote.cascading.BasicMBeanServerConnectionFactory}
+	    is an <tt>MBeanServerConnectionFactory</tt> that simply wraps a 
+	    <tt>JMXConnector</tt>. It makes it possible to cascade MBeans 
+	    residing in a remote source <tt>MBeanServer</tt>, accessible 
+	    through a <tt>JMXConnector</tt></li>
+	</ul>
+	Additional non trivial implementations of the 
+	<tt>MBeanServerConnectionFactory</tt> could
+	be developed in order to handle transparent reconnection in case
+	of network/server failure by e.g. looking up a new 
+	<tt>JMXConnector</tt> from a naming service (such as SLP, LDAP, 
+	or Jini).</li>
+    </ul></p>
+
+    <h4><a name="MBeanServerConnectionFactories"></a>
+      MBeanServerConnectionFactories</h4>
+    <p><tt>MBeanServerConnectionFactories</tt> serve several objectives. 
+      First, they make it possible to share connections between 
+      <tt>CascadingAgents</tt>, and with the application code.<br>
+      Typically, an application will create a <code>JMXConnector</code>, 
+      and connect it to the remote <tt>MBeanServer</tt>. Then the application
+      will wrap this <tt>JMXConnector</tt> into a {@link 
+      com.sun.jdmk.remote.cascading.BasicMBeanServerConnectionFactory}.
+      The application can then create several <tt>CascadingAgents</tt>, 
+      each with its own pattern and filter, but all sharing the same
+      <tt>MBeanServerConnectionFactory</tt>, hence the same 
+      underlying <tt>MBeanServerConnection</tt>. The <tt>JMXConnector</tt>
+      that was passed to <tt>MBeanServerConnectionFactory</tt> (or the
+      <tt>MBeanServerConnectionFactory</tt> itself) can also be used by the 
+      application code for its own purposes.</p>
+    <p>Another advantage of the <tt>MBeanServerConnectionFactory</tt> is to
+      make it possible to transparently handle reconnection when a server 
+      goes down. Although this feature is not implemented by the provided
+      implementations, the <tt>MBeanServerConnectionFactory</tt> could 
+      embed the necessary logic to detect that the underlying connection
+      can no longer be used (e.g. IOException was thrown by a method
+      of <tt>MBeanServerConnection</tt>) and attempt to create and connect
+      a new JMXConnector.</p> 
+    <p>Note that creating a new JMXConnector would usually involve looking up 
+      a new JMXServiceURL for the server in a naming service, which usually
+      depends on the application logic.</p> 
+      
+    <h4>Patterns and Filters</h4>
+
+    <p>Each <tt>CascadingAgent</tt> can be instantiated with an {@link 
+      javax.management.ObjectName} pattern filter and a {@link 
+      javax.management.QueryExp} query filter. Only the source MBeans that 
+      satisfy both of them will be cascaded into the target 
+      <tt>MBeanServer</tt>.
+      <br>Note that in a proxy-based cascading solution, as implemented by
+      the {@link com.sun.jdmk.remote.cascading.proxy} package, the pattern 
+      and query filters will only be evaluated at the time where the 
+      target proxy MBean is registered in the target MBeanServer.
+      Therefore, the <tt>QueryExp</tt> filter should 
+      only involve attributes/properties that do not change over time.
+      <br>
+      As a general rule, <b>using non null <tt>QueryExp</tt> filters is thus
+      highly discouraged</b>.
+    </p>
+
+    <p>It is possible, using disjoint patterns and filters, to use several
+      <tt>CascadingAgents</tt> in order to cascade several disjoint sets
+      of MBeans from the same remote <tt>MBeanServer</tt>. As explained in 
+      the previous section, all these <tt>CascadingAgents</tt> can share
+      the same <tt>MBeanServerConnectionFactory</tt>. However if the sets
+      of MBeans they cascade are not disjoint, then only one of the 
+      <tt>CascadingAgents</tt> will be able to cascade the conflicting 
+      MBeans. The other agents will usually skip conflicting names - 
+      though how conflicting names are managed is usually implementation 
+      dependent - see {@link 
+      com.sun.jdmk.remote.cascading.proxy.ProxyCascadingAgent}.
+      <br>
+      Although our Java DMK API permit such cascading schemes - we 
+      recommend to refrain from implementing them in an application.
+      <br><b>We recommend using the Java DMK cascading API in a way that
+      emulate FileSystem mountpoints, as explained in</b>
+      <a href="#The_File_System_Analogy">The File System Analogy</a>.
+    </p>
+
+    <p>Note that the pattern and query filters passed to the 
+      <tt>CascadingAgent</tt> are always evaluated in the 
+      context of the source <tt>MBeanServer</tt> - that is, using
+      the <tt>ObjectNames</tt> of the source MBeans.
+    </p>
+
+    <h4>Notifications</h4>
+
+    <p><tt>CascadingAgents</tt> are {@link 
+      javax.management.NotificationEmitter Notification Emitters}. 
+      More specifically, they emit the {@link 
+      javax.management.remote.JMXConnectionNotification JMX Connection 
+      Notifications} received through their underlying 
+      <tt>MBeanServerConnectionFactory</tt>. Client application which are
+      concerned about potential notifications loss from cascaded MBeans should
+      therefore register for these notifications.</p>
+    
+    <p>The cascading solution makes it also possible for a client application
+      to transparently register for notifications emitted by source MBeans.
+      This is done by invoking the regular add/remove notification listener 
+      methods of the target {@link javax.management.MBeanServer}. 
+      In the proxy-based cascading solution, the appropriate glue that
+      makes this happen is implemented by the {@link 
+      com.sun.jdmk.remote.cascading.proxy.CascadingProxy} object, and is
+      completely transparent to the application code. However, depending on
+      the cascading implementation, some of the 
+      <tt>addNotificationListener(...)</tt> forms may not work - e.g. the
+      proxy-based cascading may not always support the form where the listener
+      is an <tt>ObjectName</tt> (e.g: when the listener is a cascaded 
+      MBean).</p>
+
+    <h4><a name="Subclassing"></a>Subclassing</h4>
+    
+    <p>As explained in the <a href="#File_System_Analogy">
+	File System Analogy</a>, The Java DMK <tt>CascadingService</tt> and
+      <tt>CascadingAgents</tt> makes it possible to emulate a File System
+      mount operation. However, this analogy only goes so far: the 
+      mount operation is not completely transparent, in particular
+      with regards to <tt>ObjectNames</tt> returned or passed to
+      mounted MBeans.
+
+    <h5>Interpreting ObjectNames returned by cascaded MBeans</h5>
+    <p>The names returned by MBeans
+      that are mounted through a cascading agent needs to be interpreted
+      <b>in the context of the source MBean</b>. The 
+      cascading solution proposed in this package will not translate any
+      <tt>ObjectName</tt> passed as MBean method parameters, or returned
+      as Attribute values or MBean method invocations.
+    </p> 
+    <p>Applications that would need to perform these substitutions can do 
+      so by providing their own <tt>CascadingProxy</tt> class - see {@link 
+      com.sun.jdmk.remote.cascading.proxy.ProxyCascadingAgent#createProxy 
+      ProxyCascadingAgent.createProxy(name,factory)}. 
+      That class could extend {@link
+      com.sun.jdmk.remote.cascading.proxy.CascadingProxy CascadingProxy} 
+      in order to override the {@link 
+      com.sun.jdmk.remote.cascading.proxy.CascadingProxy#getAttribute
+      getAttribute}, {@link 
+      com.sun.jdmk.remote.cascading.proxy.CascadingProxy#getAttributes
+      getAttributes}, and {@link 
+      com.sun.jdmk.remote.cascading.proxy.CascadingProxy#invoke
+      invoke} methods. In that case the <tt>setAttribute</tt> and 
+      <tt>setAttributes</tt> methods will probably need to be 
+      also overridden in a consistent manner.</p>
+
+    <h5>Interpreting ObjectNames in Forwarded Notifications</h5>
+    <p>The {@link 
+      com.sun.jdmk.remote.cascading.proxy.CascadingProxy} class used
+      by the {@link 
+      com.sun.jdmk.remote.cascading.proxy.ProxyCascadingAgent} does not make
+      the assumption that the name of the target cascading proxy in the
+      target <tt>MBeanServer</tt> is the same than that of the proxied source
+      MBean in the source MBeanServer. The CascadingProxy class thus contains
+      the logic that will substitute the {@link javax.management.Notification}
+      source with the target proxy <tt>ObjectName</tt>, as if the notification
+      originated directly from the proxy object. Note however that only the
+      <tt>Notification</tt> source is substituted, and only if it
+      corresponds to the source <tt>ObjectName</tt> of the source MBean
+      proxied by that <tt>CascadingProxy</tt>. Other <tt>ObjectNames</tt>
+      that may be contained in the <tt>Notification</tt> are ignored.</p>
+    <p>Applications that would need deeper substitutions can do so by providing
+      their own <tt>CascadingProxy</tt> class - see {@link 
+      com.sun.jdmk.remote.cascading.proxy.ProxyCascadingAgent#createProxy 
+      ProxyCascadingAgent.createProxy(name,factory)}. 
+      That class could extend {@link
+      com.sun.jdmk.remote.cascading.proxy.CascadingProxy CascadingProxy} 
+      in order to override {@link 
+      com.sun.jdmk.remote.cascading.proxy.CascadingProxy#translate 
+      CascadingProxy.translate(Notification)}.</p>
+
+    <p><b>Note:</b> The default <tt>CascadingService</tt> implementation 
+      does not let you provide your own CascadingAgent implementation. 
+      If your application needs to perform such substitutions you will
+      thus have to provide your own implementation of 
+      <tt>CascadingServiceMBean</tt>, or work directly with 
+      <tt>CascadingAgents</tt>.
+      
+
+    <h5>Name Conflict Detection</h5>
+
+    <p>The <tt>CascadingAgent</tt> provides a <tt>{@link 
+      com.sun.jdmk.remote.cascading.CascadingAgentMBean#start(boolean)
+      start(boolean conflictAllowed)}</tt> method that will throw
+      an exception if a name conflict is detected at start time when
+      <tt>conflictAllowed</tt> is <tt>false</tt>. Further name conflicts 
+      detected after start time are simply ignored and resolved by not 
+      registering a proxy in the target MBeanServer when a conflict
+      arises.</p>
+
+    <p>The <tt>CascadingService</tt> provided in this package always
+      calls <tt>CascadingAgent.start(false)</tt> in order to detect
+      initial name conflicts. However it has no means to check that
+      new MBeans locally created in the target <tt>MBeanServer</tt>
+      will not conflict with new MBeans that may later appear in
+      the cascaded source <tt>MBeanServer</tt>.</p>
+
+    <p>This kind of name conflicts can usually be avoided by using appropriate 
+      <i>targetPaths</i> as explained in the
+      <a href="#The_File_System_Analogy">File System Analogy</a>.</p>
+
+
+    <h3>Example</h3>
+
+    <p>An example of cascading over JSR 160 connector using this API is
+      provided with Java DMK 5.1 examples.</p>
+
+    @since Java DMK 5.1
+  </body>
+</html>

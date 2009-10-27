@@ -1,0 +1,1405 @@
+/*
+ * @(#)file      Parser.jjt
+ * @(#)author    Sun Microsystems, Inc.
+ * @(#)version   4.13
+ * @(#)date      07/04/04
+ *
+ * 
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ * 
+ * Copyright (c) 2007 Sun Microsystems, Inc. All Rights Reserved.
+ * 
+ * The contents of this file are subject to the terms of either the GNU General
+ * Public License Version 2 only ("GPL") or the Common Development and
+ * Distribution License("CDDL")(collectively, the "License"). You may not use
+ * this file except in compliance with the License. You can obtain a copy of the
+ * License at http://opendmk.dev.java.net/legal_notices/licenses.txt or in the 
+ * LEGAL_NOTICES folder that accompanied this code. See the License for the 
+ * specific language governing permissions and limitations under the License.
+ * 
+ * When distributing the software, include this License Header Notice in each
+ * file and include the License file found at
+ *     http://opendmk.dev.java.net/legal_notices/licenses.txt
+ * or in the LEGAL_NOTICES folder that accompanied this code.
+ * Sun designates this particular file as subject to the "Classpath" exception
+ * as provided by Sun in the GPL Version 2 section of the License file that
+ * accompanied this code.
+ * 
+ * If applicable, add the following below the License Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
+ * 
+ *       "Portions Copyrighted [year] [name of copyright owner]"
+ * 
+ * Contributor(s):
+ * 
+ * If you wish your version of this file to be governed by only the CDDL or
+ * only the GPL Version 2, indicate your decision by adding
+ * 
+ *       "[Contributor] elects to include this software in this distribution
+ *        under the [CDDL or GPL Version 2] license."
+ * 
+ * If you don't indicate a single choice of license, a recipient has the option
+ * to distribute your version of this file under either the CDDL or the GPL
+ * Version 2, or to extend the choice of license to its licensees as provided
+ * above. However, if you add GPL Version 2 code and therefore, elected the
+ * GPL Version 2 license, then the option applies only if the new code is made
+ * subject to such option by the copyright holder.
+ * 
+ *
+ */
+
+options {
+  MULTI=true;
+  STATIC=false;
+  NODE_PACKAGE="com.sun.jdmk.tools.mibgen";
+}
+
+
+PARSER_BEGIN(Parser)
+
+package com.sun.jdmk.tools.mibgen;
+
+
+import java.io.*;
+import java.math.*;
+
+public class Parser {
+protected boolean snmpV2= false;
+static BigInteger max64= new BigInteger("18446744073709551615");
+}
+
+PARSER_END(Parser)
+
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+| <"--" (~["\n","\r"])* ("\n"|"\r"|"\r\n")>
+
+}
+
+
+
+/* RESERVED WORDS AND LITERALS */
+
+TOKEN : 
+{
+ <ACCESS: "ACCESS">
+| <AFN: "accessible-for-notify">
+| <AGENT: "AGENT-CAPABILITIES">
+| <APPLICATION: "APPLICATION">
+| <ASSIGN: "::=">
+| <AUGMENTS: "AUGMENTS">
+| <BEGIN: "BEGIN">
+| <BIT: "BIT">
+| <BITS: "BITS">
+| <CHOICE: "CHOICE">
+| <CONTACT: "CONTACT-INFO">
+| <CURRENT: "current">
+| <DEFINITIONS: "DEFINITIONS" >
+| <DEFVAL: "DEFVAL" >
+| <DEPRECATED: "deprecated">
+| <DESCRIPTION: "DESCRIPTION">
+| <DISPLAY: "DISPLAY-HINT">
+| <EMPTY: "empty">
+| <END: "END">
+| <ENTERPRISE: "ENTERPRISE">
+| <EXPLICIT: "EXPLICIT">
+| <EXPORTS: "EXPORTS">
+| <FALSE: "FALSE">
+| <FROM: "FROM">
+| <GROUP: "GROUP">
+| <IDENT: "IDENTIFIER">
+| <ID: "identifier">
+| <IMPLICIT: "IMPLICIT">
+| <IMPLIED: "IMPLIED">
+| <IMPORTS: "IMPORTS">
+| <INDEX: "INDEX">
+| <INTEGER: "INTEGER">
+| <LASTUPDATE: "LAST-UPDATED">
+| <MACRO: "MACRO">
+| <MANDATGROUPS: "MANDATORY-GROUPS">
+| <MANDATORY: "mandatory">
+| <MAXACCESS: "MAX-ACCESS">
+| <MIN_ACCESS: "MIN-ACCESS">
+| <MODULE: "MODULE">
+| <MODULE_COMPLIANCE: "MODULE-COMPLIANCE">
+| <MODULE_IDENTITY: "MODULE-IDENTITY">
+| <NA: "not-accessible">
+| <NOTATION: "NOTATION">
+| <NOTIFICATIONS: "NOTIFICATIONS">
+| <NOTIFICATION_GROUP: "NOTIFICATION-GROUP">
+| <NOTIFICATION_TYPE: "NOTIFICATION-TYPE">
+| <NULL: "NULL">
+| <NUMBER: "number">
+| <OBJECT: "OBJECT">
+| <OBJECTS: "OBJECTS">
+| <OBJECT_IDENTITY: "OBJECT-IDENTITY">
+| <OBJECT_GROUP: "OBJECT-GROUP">
+| <OBJECT_TYPE: "OBJECT-TYPE">
+| <OBSOLETE: "obsolete">
+| <OCTET: "OCTET">
+| <OF: "OF">
+| <OPTIONAL: "optional">
+| <ORG: "ORGANIZATION">
+| <REFERENCE: "REFERENCE">
+| <REVISION: "REVISION">
+| <RC: "read-create">
+| <RO: "read-only">
+| <RW: "read-write">
+| <SEQUENCE: "SEQUENCE">
+| <SIZE: "SIZE">
+| <STATUS: "STATUS">
+| <STR: "string">
+| <STRING: "STRING">
+| <SYNTAX: "SYNTAX">
+| <TEXTUAL_CONVENTION: "TEXTUAL-CONVENTION">
+| <TRAP_TYPE: "TRAP-TYPE">
+| <TRUE: "TRUE">
+| <TYPE: "TYPE">
+| <TYPE_MACRO: "type">
+| <UNITS: "UNITS">
+| <UNIVERSAL: "UNIVERSAL">
+| <VAL: "value">
+| <VALUE: "VALUE">
+| <VARIABLES: "VARIABLES">
+| <WO: "write-only">
+| <WRITE_SYNTAX: "WRITE-SYNTAX">
+}
+
+TOKEN : /* IDENTIFIERS */
+{
+  < IDENTIFIER: ["a"-"z"] (<LETTER>|<DIGIT>)* >
+|
+  < TYPEREFERENCE: ["A"-"Z"] (<LETTER>|<DIGIT>)* >
+|
+  < #LETTER: ["_","-","a"-"z","A"-"Z"] >
+|
+  < #DIGIT: ["0"-"9"] >
+}
+
+TOKEN : /* VALUES */
+{
+  < INTEGER_LITERAL: ["0"-"9"] (["0"-"9"])* >
+|
+  <NEGATIVE_INTEGER: "-" <INTEGER_LITERAL> >
+|
+  <BSTRING: "'" (["0"-"1"])* ("'B"|"'b")>
+|
+  <HSTRING: "'"(["0"-"9","A"-"F", "a"-"f"])* ("'H"|"'h")>
+|
+  <CSTRING: "\"" (~["\""])* "\"">
+}
+ 
+
+TOKEN: /* SEPARATOR */
+{
+  < SEMICOLON: ";" >
+| < COMMA: "," >
+| < RANGE: "..">
+}
+
+// A file can contain several different modules
+//
+ASTMibs Mibs(ModulesHandler handler) throws SemanticException : {}
+{
+  (Mib(handler))+
+  {return jjtThis;}
+  
+}
+
+// Definition of a MIB. Identical to an ASN.1 module
+//
+void Mib(ModulesHandler handler) throws SemanticException: { }
+{
+  jjtThis.moduleIdentifier= ModuleIdentifier() 
+  "DEFINITIONS" "::=" "BEGIN" ModuleBody(jjtThis) "END"
+  {
+     // Register the mib !
+     //
+     handler.addMibModule(jjtThis.moduleIdentifier.getModuleName(), jjtThis);
+  }
+}
+
+// Definition of a module identifier. Can contain an oid ...
+//
+ASTModuleIdentifier ModuleIdentifier(): 
+{
+  Token t;
+}
+{
+   t= <TYPEREFERENCE> [OidValue()]
+   { 
+     jjtThis.moduleName= t.image;
+     if (jjtThis.moduleName.equals("SNMPv2-SMI")) {
+	snmpV2= true;
+     }
+     return jjtThis; 
+   }
+}
+
+// Definition of a ModuleBody. 
+//
+void ModuleBody(ASTMib myMib)  throws SemanticException: {}
+{
+[Exports()] [Imports()] (Assignment(myMib))* 
+}
+
+void Assignment(ASTMib myMib) throws SemanticException : {} 
+{
+( jjtThis.symbolName= Identifier() 
+  ( 
+    ValueDefinition(myMib, jjtThis.symbolName) 
+  | 
+    ObjectTypeDefinition(myMib, jjtThis.symbolName)
+  |
+    ModuleIdentity(myMib, jjtThis.symbolName)
+  |  
+    ModuleCompliance()
+  |  
+    AgentCapabilities()
+  |
+    ObjectIdentity(myMib, jjtThis.symbolName)
+  |
+    TrapType()
+  | 
+    NotificationType(myMib, jjtThis.symbolName)
+  |
+    ObjectGroup(myMib, jjtThis.symbolName)
+  |
+    NotificationGroup(myMib, jjtThis.symbolName)
+  )
+) 
+|
+  LOOKAHEAD(<TYPEREFERENCE> "::=" "TEXTUAL-CONVENTION")
+  TextualConvention(myMib)
+|
+  LOOKAHEAD(<TYPEREFERENCE> "::=")
+  SyntaxDefinition(myMib)
+| 
+  MacroDefinition()
+}
+
+
+void SyntaxDefinition(ASTMib myMib): { }
+{
+  jjtThis.symbolName=TypeReference() "::=" jjtThis.type=NamedType() 
+  { 
+    myMib.registerSyntaxDef(jjtThis.symbolName, jjtThis);
+  }
+}
+
+// At the moment only accept types supported by the different SNMP SMI.
+// 
+ASTNamedType NamedType(): {}
+{
+Type()
+{ return jjtThis; }
+}
+
+
+
+void ObjectTypeDefinition(ASTMib myMib, String symbolName): { }
+{
+  "OBJECT-TYPE" "SYNTAX" jjtThis.syntax= NamedType()
+
+// Be really cool ... Allow to mix V1 and V2 definitions...
+//
+(  jjtThis.def= ObjectTypeDefinitionV2() { myMib.registerV2ObjectType(symbolName,jjtThis); }
+| 
+  jjtThis.def= ObjectTypeDefinitionV1() { myMib.registerV1ObjectType(symbolName,jjtThis); }
+)
+   
+}
+
+// Start Handling of values.
+//
+
+// The identifier is read in the previous rule (Assignment)
+//
+void ValueDefinition(ASTMib myMib, String symbolName): { }
+{
+Type() "::=" Value() { myMib.registerValueDef(symbolName,jjtThis); }
+}
+
+// Handle list of exports. Somewhere in one of the RFC it says that
+// export should not be used. We never know ...
+//
+void Exports() :
+{
+  Token t;
+} 
+{
+t="EXPORTS" {
+    // Get the line number ...
+    //
+    int lineNb= t.beginLine;
+    Integer val= new Integer(lineNb);
+    Trace.warning(MessageHandler.getMessage("compile.w.export",val));
+  }
+(SymbolsList()) ";"
+}
+
+void Imports() : {} 
+{
+"IMPORTS" (SymbolsImported()) ";"
+}
+
+void SymbolsImported(): {}
+{
+(SymbolsList() "FROM" ModuleIdentifier())*
+}
+
+
+void SymbolsList(): {}
+{
+ (Identifier()| TypeReference() | Reserved()) ("," (Identifier()|TypeReference()| Reserved()))*
+}
+
+
+
+void Type(): { }
+{
+[jjtThis.tag=Tag()] BuiltinType()| DefinedType()
+}
+
+void BuiltinType(): { }
+{
+
+  "INTEGER" {jjtThis.type= INTEGER;} (IntSubType())?
+|
+  "OCTET" "STRING" {jjtThis.type= OCTET;} (SubType())?
+|
+  "OBJECT" "IDENTIFIER" {jjtThis.type= OBJECT;}
+|
+  "BIT" "STRING" {jjtThis.type=BIT;}  [NamedBitList()]
+|
+  "BITS" {jjtThis.type=BIT;}  [NamedBitList()]
+|
+  "NULL" {jjtThis.type= NULL;}
+|
+ "SEQUENCE" {jjtThis.type= SEQUENCE;} SequenceType()
+|
+ "CHOICE" {jjtThis.type= CHOICE;} ChoiceType()
+}
+
+ASTTag Tag(): 
+{
+  Token t;
+}
+{
+"[" [ "UNIVERSAL" { jjtThis.classType= UNIVERSAL; }
+      |
+      "APPLICATION" { jjtThis.classType= APPLICATION;}
+
+      // Do not need to support PRIVATE for SNMP vX
+    ]
+jjtThis.classNumber= IntegerValue()
+
+"]"
+
+[
+  "IMPLICIT" { jjtThis.implicit= true; }
+  |
+  "EXPLICIT" {jjtThis.implicit= false;}
+]
+
+{return jjtThis;}
+}
+
+void SubType(): { }
+{
+"(" 
+  (
+    "SIZE" "(" Range()  ("|" Range())* ")" 
+  |
+    Range()
+  )
+")"
+}
+
+void SequenceType(): { }
+{
+"{" [Identifier()] Type() ( "," [Identifier()] Type())* "}"
+  {jjtThis.type= SEQUENCE;}
+|
+"OF" { jjtThis.type= OF;}  Type()
+}
+
+void ChoiceType(): { }
+{
+"{" [Identifier()] Type() ( "," [Identifier()] Type())* "}"
+}
+
+// Support only the kibble form i.e identifier(nonNegativeNumber) !
+//
+void NamedBitList(): { }
+{
+ "{" Kibble(jjtThis) ("," Kibble(jjtThis))* "}"
+}
+
+void Kibble(ASTNamedBitList sup): 
+{
+Token t;
+}
+{
+jjtThis.name= Identifier() "(" t=<INTEGER_LITERAL> 
+  {  
+    jjtThis.value= Integer.parseInt(t.image);
+    // Add the enumeratiom into the hashtable ...
+    //
+    sup.addEnumDef(jjtThis.name, new String(t.image.trim()));
+  }  ")"
+}
+
+
+// When dealing with an INTEGER, we can have an enumeratiom
+// or a size restriction.
+void IntSubType(): {}
+{
+"{" Enum(jjtThis) ("," Enum(jjtThis))* "}"
+|
+"(" Range() ("|" Range())* ")"
+}
+
+void Range():
+{ 
+  Token t;
+}
+{
+  jjtThis.low= RangeValue() 
+[
+  t=".." jjtThis.high=RangeValue()
+  { 
+    if (jjtThis.low > jjtThis.high) {
+      // Get the line number ...
+      //
+      int lineNb= t.beginLine;
+      Integer val= new Integer(lineNb);
+      Trace.warning(MessageHandler.getMessage("compile.w.range",val));
+    } 
+  }
+// |
+// ("|" jjtThis.low= IntegerValue())+
+
+]
+}
+
+long RangeValue() : 
+{
+  Token t;
+}
+{
+  t=<BSTRING>
+    {
+    try {
+      int length= t.image.length();
+      if (length >=3) {
+         String val= t.image.toLowerCase();
+         val= val.substring(0, val.lastIndexOf("b"));
+         val= val.replace('\'', ' ').trim();
+         jjtThis.val=  (long) Integer.parseInt(val, 2);
+      } else {
+        jjtThis.val=0;
+      }
+    } catch(java.lang.NumberFormatException e) {
+      int lineNb= t.beginLine;
+      Integer val= new Integer(lineNb);
+      Trace.warning(MessageHandler.getMessage("compile.w.value",t.image, val));
+      jjtThis.val=0;
+    }
+    return jjtThis.val;
+    }
+|
+  t=<HSTRING>
+    {
+    try {
+      int length= t.image.length();
+      if (length >=3) {
+         String val= t.image.toLowerCase();
+         val= val.substring(0, val.lastIndexOf("h"));
+         val= val.replace('\'', ' ').trim();
+         if (val.length() > 8) 
+            throw new NumberFormatException();
+         jjtThis.val=  (long) Long.parseLong(val, 16);
+      } else {
+        jjtThis.val=0;
+      }
+    } catch(java.lang.NumberFormatException e) {
+      int lineNb= t.beginLine;
+      Integer val= new Integer(lineNb);
+      Trace.warning(MessageHandler.getMessage("compile.w.value",t.image, val));
+      jjtThis.val=0;
+    }
+    return jjtThis.val;
+    }
+|
+ t= <INTEGER_LITERAL>
+    {
+    try {
+      jjtThis.val=  (long) Long.parseLong(t.image);
+    } catch(java.lang.NumberFormatException e) {
+      // Ok try to see if we can parse a Big int 
+      //
+      try {
+         BigInteger v= new BigInteger(t.image);
+         if ( max64.compareTo(v) < 0) {
+            throw new NumberFormatException();
+         }
+         // So far so good. Say the value is max a long can be ...
+         //
+         jjtThis.val=  (long) Long.MAX_VALUE;
+      } catch (java.lang.NumberFormatException ee) {
+        int lineNb= t.beginLine;
+        Integer val= new Integer(lineNb);
+        Trace.warning(MessageHandler.getMessage("compile.w.value",t.image, val));
+        jjtThis.val=0;
+      }
+    }
+    return jjtThis.val;
+    }
+| t=<NEGATIVE_INTEGER>
+    {
+     try {
+      jjtThis.val= (long) Long.parseLong(t.image);
+    } catch(java.lang.NumberFormatException e) {
+      int lineNb= t.beginLine;
+      Integer val= new Integer(lineNb);
+      Trace.warning(MessageHandler.getMessage("compile.w.value",t.image, val));
+      jjtThis.val=0;
+    }
+    return jjtThis.val;
+    }
+}
+
+
+
+void Enum(ASTIntSubType sup): 
+{
+long val;
+Token t;
+}
+{
+jjtThis.identifier= Identifier() t="(" jjtThis.val= IntegerValue() 
+  {  
+    // Add the enumeratiom into the hashtable ...
+    //
+    sup.addEnumDef(jjtThis.identifier, String.valueOf(jjtThis.val));
+    if (jjtThis.val == 0) {
+     // Get the line number ...
+      //
+      int lineNb= t.beginLine;
+      Trace.warning(MessageHandler.getMessage("compile.w.enum",new Integer(lineNb)));
+    }
+  }  ")"
+}
+
+void DefinedType(): { }
+{
+(
+   LOOKAHEAD(ExternalTypeReference()) 
+   ExternalTypeReference()
+| 
+  TypeReference()
+) 
+[
+  LOOKAHEAD("(" "SIZE")
+  SubType()
+| 
+  IntSubType()
+]
+}
+
+String TypeReference(): 
+{
+  Token t;
+}
+{
+  t=<TYPEREFERENCE>
+  {
+    jjtThis.symbolName= t.image; 
+    return jjtThis.symbolName;
+  }
+}
+
+// Similar to ASN.1 X.208
+//
+void ExternalTypeReference(): 
+{
+  Token t1;
+  Token t2;
+}
+{
+  t1=<TYPEREFERENCE> "." t2 =<TYPEREFERENCE>
+  {
+    jjtThis.moduleName = t1.image; 
+    jjtThis.symbolName= t2.image;
+  }
+}
+
+// Start handling values
+//-----------------------
+
+ASTValue Value(): { }
+{
+  DefinedValue()
+  { return jjtThis; }
+| 
+  BooleanValue() 
+  { return jjtThis; }
+| 
+  IntegerValue() 
+  { return jjtThis; }
+|
+  LOOKAHEAD(3) OidValue()
+  { return jjtThis; }
+| 
+  BitStringValue()
+  { return jjtThis; }
+}
+
+
+void DefinedValue():
+{
+  Token t;
+}
+{
+  jjtThis.symbolName=Identifier()
+|
+  t=<TYPEREFERENCE> "."  jjtThis.symbolName= Identifier()
+  {
+    jjtThis.moduleName = t.image; 
+  }
+}
+
+// Corresponds to  the ObjectIdentifierValue definition of ASN.1 X.208
+//
+ASTOidValue OidValue(): {}
+{
+"{" (ObjectSubID())+ "}"
+{  
+  return jjtThis; 
+}
+}
+
+// Corresponds to the ObjIdComponent definition of ASN.1 X.208.
+// In addition it contains the notion of DefinedValue which is defined
+// as part of the NumberForm in ASN.1
+// There are three different forms:
+// - NamedForm (identifier)
+// - NumberForm (integer)
+// - NamedAndNumber form
+//
+void ObjectSubID(): {}
+{
+IntegerValue()
+|
+Identifier() ["(" IntegerValue() ")"]
+|
+TypeReference() "." Identifier()
+}
+
+long IntegerValue() : 
+{
+  Token t;
+}
+{
+  t= <INTEGER_LITERAL>
+    {
+    jjtThis.valStr = t.image;
+    try {
+      jjtThis.val=  Long.parseLong(t.image);
+    } catch(java.lang.NumberFormatException e) {
+      jjtThis.val=0;
+    }
+    return jjtThis.val;
+    }
+| 
+  t=<NEGATIVE_INTEGER>
+    {
+    jjtThis.valStr = t.image;
+    try {
+      jjtThis.val= Long.parseLong(t.image);
+    } catch(java.lang.NumberFormatException e) {
+      jjtThis.val=0;
+    }
+    return jjtThis.val;
+    }
+}
+
+boolean BooleanValue(): { }
+{
+"TRUE" 
+    {
+    jjtThis.value= true;
+    return jjtThis.value;
+    }
+|
+"FALSE" 
+    {
+    jjtThis.value= false;
+    return jjtThis.value;
+    }
+}
+
+String BitStringValue(): 
+{
+  Token t;
+  ASTNameBitList list;
+} 
+{
+  t=<BSTRING>
+    {
+      jjtThis.type= BSTRING;
+      jjtThis.value= t.image;
+      return jjtThis.value;
+    }
+| 
+  t=<HSTRING>
+    {
+      jjtThis.type= HSTRING;
+      jjtThis.value= t.image;
+      return jjtThis.value;
+    }
+|
+ t=<CSTRING>
+    {
+      jjtThis.type= CSTRING;
+      jjtThis.value= t.image;
+      return jjtThis.value;
+    }
+|
+  list=NameBitList()
+    {
+      jjtThis.value = list.getDefValBITS();
+      return jjtThis.value;
+    }
+}
+
+ASTNameBitList NameBitList(): { }
+{
+ LOOKAHEAD(2) "{" Identifier() ( "," Identifier())* "}"
+{  
+  return jjtThis; 
+}
+|
+ "{" "}"
+{  
+  return jjtThis; 
+}
+}
+
+String Identifier() :
+{
+ Token t;
+}
+{
+  t=<IDENTIFIER>
+  { jjtThis.name = t.image; 
+    return jjtThis.name;
+  }
+|
+  t=<NUMBER>
+  { jjtThis.name = t.image; 
+    return jjtThis.name;
+  }
+|
+  t=<STR>
+  { jjtThis.name = t.image; 
+    return jjtThis.name;
+  }
+|
+  t=<DEPRECATED>
+  { jjtThis.name = t.image; 
+    return jjtThis.name;
+  }
+|
+  t=<CURRENT>
+  { jjtThis.name = t.image; 
+    return jjtThis.name;
+  }
+|
+   t=<EMPTY>
+  { jjtThis.name = t.image; 
+    return jjtThis.name;
+  }
+|
+   t=<ID>
+  { jjtThis.name = t.image; 
+    return jjtThis.name;
+  }
+|
+   t=<OPTIONAL>
+  { jjtThis.name = t.image; 
+    return jjtThis.name;
+  }
+}
+
+// SNMPv1 or SNMPv2 stuff
+//-----------------------
+
+// Index clause
+//
+ASTIndexTypes IndexTypes(): {}
+{
+ "{" Identifier() ("," Identifier())* "}"
+ { return jjtThis;}
+}
+
+// SNMPv1 specific macros
+//-----------------------
+ObjectTypeDefinition ObjectTypeDefinitionV1():
+{
+  Token t;
+}
+{
+"ACCESS"
+  (
+    "read-only" { jjtThis.access= RO;}
+  |
+    "read-write" { jjtThis.access= RW;}
+  |
+    "write-only" { jjtThis.access= WO;}
+  |
+    "not-accessible" { jjtThis.access= NA;}
+  )
+"STATUS"
+  (
+    "mandatory" { jjtThis.status= MANDATORY;}
+  |
+    "optional" { jjtThis.status= OPTIONAL;}
+  |
+    "obsolete" { jjtThis.status= OBSOLETE;}
+  |
+    "deprecated" { jjtThis.status= DEPRECATED;}
+  )
+// All the other elements are optional !
+//
+[ "DESCRIPTION" t=<CSTRING> { jjtThis.description= t.image; }]
+[ "REFERENCE" t=<CSTRING> { jjtThis.reference= t.image; }]
+["INDEX"  jjtThis.indexNode=IndexTypes()]
+[ "DEFVAL" "{" jjtThis.defValue=Value() "}"]
+"::=" jjtThis.oidNode=OidValue()
+
+{ return (ObjectTypeDefinition) jjtThis; }
+}
+
+// Trap definition ...
+//
+void TrapType(): 
+{
+  Token t;
+}
+{
+  "TRAP-TYPE" 
+  "ENTERPRISE" (DefinedValue() | OidValue())
+[ "VARIABLES" "{" Identifier() ("," Identifier())* "}" ]
+[ "DESCRIPTION" t=<CSTRING> { jjtThis.description= t.image; }]
+[ "REFERENCE" t=<CSTRING> { jjtThis.reference= t.image; }]
+"::="  jjtThis.value= IntegerValue()
+
+
+}
+
+// SNMPv2 specific macros
+//------------------------
+
+ObjectTypeDefinition ObjectTypeDefinitionV2():
+{
+  Token t;
+}
+{
+[ "UNITS" t=<CSTRING> { jjtThis.description= t.image; }]
+"MAX-ACCESS"
+  (
+    "read-only" { jjtThis.access= RO;}
+  |
+    "read-write" { jjtThis.access= RW;}
+  |
+    "read-create" { jjtThis.access= RC;}
+  |
+    "not-accessible" { jjtThis.access= NA;}
+  |
+    "accessible-for-notify" {jjtThis.access= AFN;}
+  )
+"STATUS"
+  (
+    "current" { jjtThis.status= CURRENT;}
+  |
+    "obsolete" { jjtThis.status= OBSOLETE;}
+  |
+    "deprecated" { jjtThis.status= DEPRECATED;}
+  )
+
+[ "DESCRIPTION" t=<CSTRING> { jjtThis.description= t.image; }]
+
+// All the other elements are optional !
+//
+[ "REFERENCE" t=<CSTRING> { jjtThis.reference= t.image; }]
+
+[ jjtThis.indexNode= IndexParts()]
+[ "DEFVAL" "{" jjtThis.defValue=Value() "}"]
+"::=" jjtThis.oidNode=OidValue()
+
+{ return (ObjectTypeDefinition) jjtThis; }
+}
+
+// The index clause is a bit more complex in V2 than in V1.
+//
+ASTIndexParts IndexParts(): { }
+{
+  "INDEX" {jjtThis.type= INDEX;} IndexTypesV2()
+  {return jjtThis;}
+|
+  "AUGMENTS" {jjtThis.type= AUGMENTS;} "{" Value() "}"
+
+  {return jjtThis;}
+}
+
+void IndexTypesV2(): { }
+{
+"{" 
+  (
+    "IMPLIED" Identifier()
+  |
+    Identifier()
+  )
+  ("," 
+   (
+     "IMPLIED" Identifier()
+    |
+      Identifier()
+    ) 
+  )*
+"}"
+}
+
+// We allow the module identify to be located anywhere in the
+// Mib whereas an RFC states that it should be next after the
+// import close ...
+
+void ModuleIdentity(ASTMib myMib, String symbolName): 
+{
+ Token t;
+ ASTOidValue oid= null;
+}
+
+{
+"MODULE-IDENTITY"
+"LAST-UPDATED"  t=<CSTRING>
+  {
+     jjtThis.lastUpdate= t.image;
+  }
+
+"ORGANIZATION" t=<CSTRING>
+  {
+     jjtThis.org = t.image;
+  }
+"CONTACT-INFO" t=<CSTRING>
+  {
+     jjtThis.contact = t.image;
+  }
+"DESCRIPTION" t=<CSTRING>
+  {
+     jjtThis.description= t.image;
+  }
+(Revision())*
+"::=" 
+oid= OidValue() {  myMib.registerValueDef(symbolName,oid); }
+}
+
+void Revision(): 
+{
+ Token t;
+}
+{
+"REVISION" t=<CSTRING>
+  {
+     jjtThis.date= t.image;
+  }
+"DESCRIPTION" t=<CSTRING>
+  {
+     jjtThis.description= t.image;
+  }
+}
+
+// Textual Convention 
+//-------------------
+
+void TextualConvention(ASTMib myMib): 
+{
+  Token t;
+}
+{
+ t=<TYPEREFERENCE> {jjtThis.symbolName= t.image;}
+ "::=" "TEXTUAL-CONVENTION"
+[
+  "DISPLAY-HINT" t=<CSTRING>  { jjtThis.hint= t.image; }
+]
+"STATUS"
+(
+    "current" { jjtThis.status= CURRENT;}
+  |
+    "obsolete" { jjtThis.status= OBSOLETE;}
+  |
+    "deprecated" { jjtThis.status= DEPRECATED;}
+)
+"DESCRIPTION" t=<CSTRING> { jjtThis.description= t.image; }
+[
+  "REFERENCE" t=<CSTRING> { jjtThis.reference= t.image; }
+]
+"SYNTAX" Type() 
+  { 
+    myMib.registerSyntaxDef(jjtThis.symbolName, jjtThis);
+  }
+}
+
+// Module Compliance
+//------------------
+void ModuleCompliance(): 
+{
+  Token t;
+}
+{
+"MODULE-COMPLIANCE"
+"STATUS"
+  (
+    "current" { jjtThis.status= CURRENT;}
+  |
+    "obsolete" { jjtThis.status= OBSOLETE;}
+  |
+    "deprecated" { jjtThis.status= DEPRECATED;}
+  )
+"DESCRIPTION" t=<CSTRING>
+  {
+     jjtThis.description= t.image;
+  }
+[ "REFERENCE" t=<CSTRING> { jjtThis.reference= t.image; }]
+(Module())*
+ "::=" jjtThis.oidNode= OidValue()
+}
+
+void Module():
+{
+  Token t;
+}
+{
+  "MODULE" [jjtThis.moduleIdentifier= ModuleIdentifier()]
+  "MANDATORY-GROUPS" "{" Identifier() ("," Identifier())* "}"
+  (Compliance())*
+ 
+}
+
+void Compliance(): { }
+{
+  ComplianceGroup()
+|
+  Object()
+}
+
+void ComplianceGroup(): 
+{
+  Token t;
+}
+{
+  "GROUP" jjtThis.identifier=Identifier()
+  // do not store this description ! Who cares ?
+  //
+  "DESCRIPTION" <CSTRING>
+}
+
+void Object(): { }
+{
+  "OBJECT" jjtThis.identifier= Identifier()
+  ["SYNTAX" Type()]
+  ["WRITE-SYNTAX" Type()]
+  [ "MIN-ACCESS"
+    (
+      "read-only" { jjtThis.access= RO;}
+    |
+      "read-write" { jjtThis.access= RW;}
+    |
+      "read-create" { jjtThis.access= RC;}
+    |
+      "not-accessible" { jjtThis.access= NA;}
+    |
+      "accessible-for-notify" {jjtThis.access= AFN;}
+    )
+  ]
+
+  // do not store this description ! Who cares ?
+  //
+  "DESCRIPTION" <CSTRING>
+}
+
+void ObjectIdentity(ASTMib myMib, String symbolName): 
+{
+  Token t;
+}
+{
+"OBJECT-IDENTITY"
+
+"STATUS"
+  (
+    "current" { jjtThis.status= CURRENT;}
+  |
+    "obsolete" { jjtThis.status= OBSOLETE;}
+  |
+    "deprecated" { jjtThis.status= DEPRECATED;}
+  )
+"DESCRIPTION" t=<CSTRING> { jjtThis.description= t.image; }
+[ "REFERENCE" t=<CSTRING> { jjtThis.reference= t.image; }]
+"::=" jjtThis.oid= OidValue() { 
+    myMib.registerObjectIdentity(symbolName, jjtThis);
+  }
+}
+
+void NotificationType(ASTMib myMib, String symbolName): 
+{
+  Token t;
+}
+{
+"NOTIFICATION-TYPE" 
+[
+  "OBJECTS" jjtThis.objectParts=ObjectsPart()
+]
+"STATUS"
+  (
+    "current" { jjtThis.status= CURRENT;}
+  |
+    "obsolete" { jjtThis.status= OBSOLETE;}
+  |
+    "deprecated" { jjtThis.status= DEPRECATED;}
+  )
+"DESCRIPTION" t=<CSTRING> { jjtThis.description= t.image; }
+[ "REFERENCE" t=<CSTRING> { jjtThis.reference= t.image; }]
+"::=" jjtThis.oid= OidValue() {
+	myMib.registerNotificationType(symbolName,jjtThis);
+    }
+}
+
+Node ObjectsPart(): { }
+{
+"{" Identifier()  ("," Identifier())* "}"
+   { return jjtThis; }
+}
+
+
+// Handle the OBJECT-GROUP macro...
+//---------------------------------
+void ObjectGroup(ASTMib myMib, String symbolName):
+{
+  Token t;
+}
+{
+"OBJECT-GROUP"
+[
+  "OBJECTS" ObjectsPart()
+]
+"STATUS"
+  (
+    "current" { jjtThis.status= CURRENT;}
+  |
+    "obsolete" { jjtThis.status= OBSOLETE;}
+  |
+    "deprecated" { jjtThis.status= DEPRECATED;}
+  )
+"DESCRIPTION" t=<CSTRING> { jjtThis.description= t.image; }
+[ 
+  "REFERENCE" t=<CSTRING> { jjtThis.reference= t.image; }
+]
+"::=" jjtThis.oid= OidValue() {
+    myMib.registerObjectGroup(symbolName, jjtThis);
+ }
+}
+
+// Handle the Notification Group macro
+//------------------------------------
+void NotificationGroup(ASTMib myMib, String symbolName):
+{
+  Token t;
+}
+{
+
+"NOTIFICATION-GROUP"
+
+"NOTIFICATIONS" ObjectsPart()
+
+"STATUS"
+  (
+    "current" { jjtThis.status= CURRENT;}
+  |
+    "obsolete" { jjtThis.status= OBSOLETE;}
+  |
+    "deprecated" { jjtThis.status= DEPRECATED;}
+  )
+"DESCRIPTION" t=<CSTRING> { jjtThis.description= t.image; }
+[ 
+  "REFERENCE" t=<CSTRING> { jjtThis.reference= t.image; }
+]
+"::=" jjtThis.oid= OidValue()  {
+    myMib.registerNotifGroup(symbolName, jjtThis);
+ }
+}
+
+
+// Hack to simplify parsing ...
+//-----------------------------
+String Reserved(): 
+{
+  Token t;
+}
+{
+ t=<TEXTUAL_CONVENTION> {jjtThis.type= TEXTUAL_CONVENTION; return t.image;}
+|
+ t=<OBJECT_TYPE> {jjtThis.type= OBJECT_TYPE; return t.image;}
+|
+t=<OBJECT_IDENTITY> {jjtThis.type= OBJECT_IDENTITY;return t.image;}
+|
+t=<MODULE_IDENTITY> {jjtThis.type= MODULE_IDENTITY;return t.image;}
+|
+t=<MODULE_COMPLIANCE> {jjtThis.type= MODULE_COMPLIANCE;return t.image;}
+|
+t=<AGENT> {jjtThis.type= AGENT;return t.image;}
+|
+t=<TRAP_TYPE> {jjtThis.type= TRAP_TYPE;return t.image;}
+|
+t=<NOTIFICATION_TYPE>{jjtThis.type= NOTIFICATION_TYPE;return t.image;}
+|
+t=<OBJECT_GROUP>{jjtThis.type= OBJECT_GROUP;return t.image;}
+|
+t=<NOTIFICATION_GROUP>{jjtThis.type= NOTIFICATION_GROUP;return t.image;}
+|
+t=<TYPE> {jjtThis.type= TYPE;return t.image;}
+|
+t=<SYNTAX> {jjtThis.type= SYNTAX;return t.image;}
+}
+
+
+// Simple handling of macro. Just parse the XXX stuff !
+//-------------------------
+void MacroDefinition(): { }
+{
+(jjtThis.symbolName= TypeReference()| jjtThis.symbolName=Reserved())
+"MACRO" "::=" "BEGIN" MacroBody() "END"
+}
+
+void MacroBody(): { }
+{
+// Type Production ...
+"TYPE" "NOTATION" "::=" MacroAlternativeList()
+
+// Value Production ...
+//
+"VALUE" "NOTATION" "::=" MacroAlternativeList()
+
+// Supporting Production (optional)
+//
+(TypeReference() "::=" MacroAlternativeList())*
+}
+
+void MacroAlternativeList(): { }
+{
+MacroAlternative() ("|" MacroAlternative())*
+}
+
+void MacroAlternative(): { }
+{
+(SymbolElement())+
+}
+
+void SymbolElement(): { }
+{
+  SymbolDefn() 
+|
+  "<" EmbeddedDefinitions() ">"
+}
+
+void SymbolDefn(): 
+{ 
+  Token t;
+}
+{
+"string"
+|
+"identifier"
+|
+"number"
+|
+"empty"
+|
+<CSTRING>
+|
+"value" "("  ("VALUE" MacroType() | TypeReference() [Type()]) ")"
+|
+"type" [ "(" MacroType() ")"]
+|
+LOOKAHEAD(TypeReference(), {getToken(2).kind != ASSIGN})
+TypeReference()
+|
+t=<IDENTIFIER>
+}
+
+void EmbeddedDefinitions(): { }
+{
+LocalTypeAssignment()
+|
+LocalValueAssignment()
+}
+
+void LocalTypeAssignment(): { }
+{
+TypeReference() "::=" MacroType()
+}
+
+void LocalValueAssignment(): { }
+{
+Identifier() MacroType() "::=" Value()
+}
+
+void MacroType(): { }
+{
+(
+Reserved()
+|
+Type()
+)+
+}
+
+// Finally handle the AGENT-CAPABILITIES
+//--------------------------------------
+void AgentCapabilities() #void: { }
+{
+"AGENT-CAPABILITIES" skip_agentCapabilitiesDef() OidValue()
+}
+
+void skip_agentCapabilitiesDef() #void: {
+  Token tok;
+}
+{
+{
+  tok= getNextToken();
+  while (tok.kind != EOF) {
+    if (tok.kind == ASSIGN) {
+       break;
+    }
+    tok= getNextToken();
+  }
+  if (tok.kind == EOF) {
+    String eol = System.getProperty("line.separator", "\n");
+    throw new ParseException(MessageHandler.getMessage("parse.exception.msg.pos",
+      "<EOF>",
+      new Integer(tok.beginLine),
+      new Integer(tok.beginColumn)) +
+      eol + "    " + 
+      MessageHandler.getMessage("parse.exception.msg.exp", "::="));
+  }
+}
+}
+    
+
+
+

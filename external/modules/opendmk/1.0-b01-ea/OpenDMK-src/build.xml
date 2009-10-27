@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ - 
+ - DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ - 
+ - Copyright (c) 2007 Sun Microsystems, Inc. All Rights Reserved.
+ - 
+ - The contents of this file are subject to the terms of either the GNU General
+ - Public License Version 2 only ("GPL") or the Common Development and
+ - Distribution License("CDDL")(collectively, the "License"). You may not use
+ - this file except in compliance with the License. You can obtain a copy of the
+ - License at http://opendmk.dev.java.net/legal_notices/licenses.txt or in the 
+ - LEGAL_NOTICES folder that accompanied this code. See the License for the 
+ - specific language governing permissions and limitations under the License.
+ - 
+ - When distributing the software, include this License Header Notice in each
+ - file and include the License file found at
+ -     http://opendmk.dev.java.net/legal_notices/licenses.txt
+ - or in the LEGAL_NOTICES folder that accompanied this code.
+ - Sun designates this particular file as subject to the "Classpath" exception
+ - as provided by Sun in the GPL Version 2 section of the License file that
+ - accompanied this code.
+ - 
+ - If applicable, add the following below the License Header, with the fields
+ - enclosed by brackets [] replaced by your own identifying information:
+ - 
+ -       "Portions Copyrighted [year] [name of copyright owner]"
+ - 
+ - Contributor(s):
+ - 
+ - If you wish your version of this file to be governed by only the CDDL or
+ - only the GPL Version 2, indicate your decision by adding
+ - 
+ -       "[Contributor] elects to include this software in this distribution
+ -        under the [CDDL or GPL Version 2] license."
+ - 
+ - If you don't indicate a single choice of license, a recipient has the option
+ - to distribute your version of this file under either the CDDL or the GPL
+ - Version 2, or to extend the choice of license to its licensees as provided
+ - above. However, if you add GPL Version 2 code and therefore, elected the
+ - GPL Version 2 license, then the option applies only if the new code is made
+ - subject to such option by the copyright holder.
+ - 
+-->
+<!-- You may freely edit this file. See commented blocks below for -->
+<!-- some examples of how to customize the build. -->
+<!-- (If you delete it and reopen the project it will be recreated.) -->
+<project name="OpenDMK" default="default" basedir="." xmlns:j2seproject3="http://www.netbeans.org/ns/j2se-project/3">
+    <description>Builds, tests, and runs the project OpenDMK.</description>
+    <import file="nbproject/build-impl.xml"/>
+    <target name="default"  depends="buildall" 
+            description="Build and generates the Javadoc."/>
+    <target name="buildall" depends="jars,javadoc,binaries"/>
+    <!--
+
+    There exist several targets which are by default empty and which can be
+    used for execution of your tasks. These targets are usually executed
+    before and after some main targets. They are:
+
+      -pre-init:                 called before initialization of project properties
+      -post-init:                called after initialization of project properties
+      -pre-compile:              called before javac compilation
+      -post-compile:             called after javac compilation
+      -pre-compile-single:       called before javac compilation of single file
+      -post-compile-single:      called after javac compilation of single file
+      -pre-compile-test:         called before javac compilation of JUnit tests
+      -post-compile-test:        called after javac compilation of JUnit tests
+      -pre-compile-test-single:  called before javac compilation of single JUnit test
+      -post-compile-test-single: called after javac compilation of single JUunit test
+      -pre-jar:                  called before JAR building
+      -post-jar:                 called after JAR building
+      -post-clean:               called after cleaning build products
+
+    (Targets beginning with '-' are not intended to be called on their own.)
+
+    Example of inserting an obfuscator after compilation could look like this:
+
+        <target name="-post-compile">
+            <obfuscate>
+                <fileset dir="${build.classes.dir}"/>
+            </obfuscate>
+        </target>
+
+    For list of available properties check the imported
+    nbproject/build-impl.xml file.
+
+
+    Another way to customize the build is by overriding existing main targets.
+    The targets of interest are:
+
+      -init-macrodef-javac:     defines macro for javac compilation
+      -init-macrodef-junit:     defines macro for junit execution
+      -init-macrodef-debug:     defines macro for class debugging
+      -init-macrodef-java:      defines macro for class execution
+      -do-jar-with-manifest:    JAR building (if you are using a manifest)
+      -do-jar-without-manifest: JAR building (if you are not using a manifest)
+      run:                      execution of project
+      -javadoc-build:           Javadoc generation
+      test-report:              JUnit report generation
+
+    An example of overriding the target for project execution could look like this:
+
+        <target name="run" depends="OpenDMK-impl.jar">
+            <exec dir="bin" executable="launcher.exe">
+                <arg file="${dist.jar}"/>
+            </exec>
+        </target>
+
+    Notice that the overridden target depends on the jar target and not only on
+    the compile target as the regular run target does. Again, for a list of available
+    properties which you can use, check the target you are overriding in the
+    nbproject/build-impl.xml file.
+
+    -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Call tests subtargets -->
+    <target name="-pre-init">
+        
+        <!-- Set the values for build date and time -->
+        <tstamp>
+            <format property="BUILD_DATE" pattern="yyyy.MM.dd_HH:mm:ss_z" />
+            <format property="BUILD_DATE_SIMPLE" pattern="dd_MMM_yyyy" />
+            <format property="ZIP_DATE" pattern="dd-MMM-yyyy_HH-mm-ss" />
+        </tstamp>
+        
+        <!-- These properties are set here instead of in the build.properties file, -->
+        <!-- because they depend on the values of BUILD_DATE and BUILD_DATE_SIMPLE  -->
+        <property file="./build.properties" />
+        <property name="jdmk.build.fulltag"
+                  value="${jdmk.build.ident} ${BUILD_DATE}" />
+    </target>
+    <target name="-post-init">
+        <condition property="jdk.home" value="${java.home}/..">
+            <isfalse value="${jdk.home}"/>
+        </condition>
+        <condition property="platform.home" value="${jdk.home}">
+            <isfalse value="${platform.home}"/>
+        </condition>
+        <condition property="platform.java" value="${jdk.home}/bin/java">
+            <isfalse value="${platform.java}"/>
+        </condition>
+        <condition property="platform.javadoc" value="${platform.home}/../docs/api">
+            <available file="${platform.home}/../docs/api/package-list"/>
+        </condition>
+        <condition property="platform.javadoc" value="${platform.home}/docs/api">
+            <available file="${platform.home}/docs/api/package-list"/>
+        </condition>
+        <echo message="platform.home=${platform.home}"/>
+    </target>
+    
+    <target name="-javadoc-build" depends="init">
+        
+        <javadoc destdir="${dist.javadoc.dir}"
+                 source="${javac.source}"
+                 notree="${javadoc.notree}"
+                 use="${javadoc.use}"
+                 nonavbar="${javadoc.nonavbar}"
+                 noindex="${javadoc.noindex}"
+                 splitindex="${javadoc.splitindex}"
+                 author="${javadoc.author}"
+                 version="${javadoc.version}"
+                 windowtitle="${javadoc.windowtitle}"
+                 private="${javadoc.private}"
+                 doctitle="${html.javadoc.doctitle.impl}"
+                 footer="${html.javadoc.footer}"
+                 bottom="${html.javadoc.copyright}"
+                 additionalparam="${javadoc.additionalparam}"
+                 failonerror="true"
+                 useexternalfile="true">
+            <classpath>
+                <path path="${javac.classpath}"/>
+            </classpath>
+            <packageset dir="${src.core.dir}" defaultexcludes="yes">
+                <include name="javax/management/**" />
+                <include name="com/sun/jdmk/**" />
+                <exclude name="com/sun/jdmk/security/sasl/plain/**" />
+                <exclude name="com/sun/jdmk/security/sasl/util/**" />
+                <exclude name="com/sun/jdmk/defaults"/>
+                <exclude name="**/internal/**" />
+                <exclude name="**/*test*" />
+                <exclude name="**/*Test*" />
+            </packageset>
+            <packageset dir="${src.toolkit.dir}" defaultexcludes="yes">
+                <include name="javax/management/**" />
+                <include name="com/sun/jdmk/tools" />
+                <exclude name="**/internal/**" />
+                <exclude name="**/*test*" />
+                <exclude name="**/*Test*" />
+            </packageset>
+            
+            <packageset dir="${src.jmx_optional.dir}" defaultexcludes="yes">
+                <include name="javax/management/**" />
+            </packageset>
+            
+            <group title="${text.javadoc.packagegroup.jmx_optional}"    packages="${list.javadoc.packagegroup.jmx_optional}" />
+            <group title="${text.javadoc.packagegroup.core}"            packages="${list.javadoc.packagegroup.core}" />
+            <group title="${text.javadoc.packagegroup.toolkit}"         packages="${list.javadoc.packagegroup.toolkit}" />
+            <!--
+            <link  href="${link.javadoc.url.j2se}" />
+             -->
+            <link offline="true" href="${link.javadoc.url.j2se}" 
+                  packagelistLoc="${platform.javadoc}"/>
+        </javadoc>
+    </target>
+    
+    <target name="-pre-pre-compile" depends="init">
+        <mkdir dir="build"/>
+    </target>
+    
+    <target name="-do-compile" depends="init,compile-jmx_optional,compile-jdmkrt,compile-jdmktk"
+            description="compiles and creates project OpenDMK jars"/>
+    <target name="jars" depends="init,compile"
+            description="creates project OpenDMK jars"/>
+    
+    <target name="-init-fileset" depends="init">
+        <fileset id="legal" dir="${basedir}">
+            <include name="LEGAL_NOTICES/*"/>
+        </fileset>
+        <fileset id="tools" dir="${basedir}/tools" includes="**/bin/**" 
+                     excludes="**/bin"/>
+    </target>
+    
+    <target name="-init-jars" depends="-init-fileset">
+        <mkdir dir="${dist.dir}"/>
+        <mkdir dir="${dist.lib.dir}"/>
+        <macrodef name="compile-module"
+                  description="compiles sources for a module, and build its jar">
+            <attribute name="destdir" default="build" description="where to place class files"/>
+            <attribute name="srcdir" description="column separated list of source dirs"/>
+            <attribute name="classpath" default="${javac.classpath}"/>
+            <attribute name="legalref" default="legal" 
+                       description="fileset refid to copy to @{destdir}/META-INF"/>
+            <attribute name="jarfile" description="path to the output jar"/>
+            <attribute name="spectitle" default="${jar.default.specification.title}" 
+                       description="Specification title"/>
+            <attribute name="specversion" default="${jar.default.specification.version}" 
+                       description="Specification version"/>
+            <attribute name="impltitle" default="${jar.default.implementation.title}" 
+                       description="Implementation title"/>
+            <element name="copyset" optional="true" 
+                     description="a list of filesets to add to the jar"/>
+            <sequential>
+                <mkdir dir="@{destdir}"/>
+                <j2seproject3:javac srcdir="@{srcdir}"
+                                    destdir="@{destdir}" debug="true"
+                                    classpath="@{classpath}">
+                    <customize>
+                        <patternset includes="**/*.java"/>
+                    </customize>
+                </j2seproject3:javac>
+                <mkdir dir="@{destdir}/META-INF"/>
+                <copy  todir="@{destdir}" verbose="true"> 
+                    <copyset/>
+                </copy>
+                
+                <copy todir="@{destdir}/META-INF" overwrite="false" 
+                      verbose="true">
+                    <fileset refid="@{legalref}"/>
+                </copy>
+                <property name="builder.name" value="${user.name}"/>
+                <jar jarfile="@{jarfile}" compress="${jar.compress}"
+                     basedir="@{destdir}" includes="**">
+                    <manifest >
+                        <attribute name="Distribution"             value="${project.name}"/>
+                        <attribute name="Built-By"                 value="${builder.name}"/>
+                        <section name="common">
+                            <attribute name="Sealed"                 value="${jar.default.sealed}" />
+                            <attribute name="Specification-Title"    value="@{spectitle}" />
+                            <attribute name="Specification-Version"  value="@{specversion}" />
+                            <attribute name="Specification-Vendor"   value="${jar.default.specification.vendor}" />
+                            <attribute name="Implementation-Title"   value="@{impltitle}" />
+                            <attribute name="Implementation-Version" value="${jdmk.build.fulltag}" /> 
+                            <attribute name="Implementation-Vendor"  value="${jar.default.implementation.vendor}" />
+                        </section>
+                    </manifest>
+                </jar>
+            </sequential>
+        </macrodef>
+    </target>
+    
+    
+    <target name="jar" depends="jars,binaries" description="creates project OpenDMK jars"/>
+    
+    
+    <target name="compile-jmx_optional" depends="init,-init-jars"
+            description="compiles sources for ${dist.jmx_optional.jar}">
+        <compile-module destdir="${build.jmx_optional.dir}"
+                        srcdir="${src.jmx_optional.dir}"
+                        jarfile="${dist.jmx_optional.jar}"
+                        spectitle="${jar.jmx_optional.specification.title}"
+                        specversion="${jar.jmx_optional.specification.version}"
+                        impltitle="${jar.jmx_optional.implementation.title}">
+            <copyset>
+                <fileset dir="${src.jmx_optional.dir}" includes="META-INF/**"
+                         excludes="${build.classes.excludes}"/>
+                
+            </copyset>
+        </compile-module>
+    </target>
+    
+    <target name="compile-jdmkrt" depends="init,-init-jars"
+            description="compiles sources for ${dist.jdmkrt.jar}">
+        
+        <compile-module destdir="${build.jdmkrt.dir}"
+               srcdir="${src.core.dir}:${src.core-rmic.dir}"
+               jarfile="${dist.jdmkrt.jar}"
+               impltitle="${jar.jdmkrt.implementation.title}">
+            <copyset>
+                <fileset dir="${src.core.dir}" includes="META-INF/**"
+                         excludes="${build.classes.excludes}"/>
+            </copyset>
+        </compile-module>
+    </target>
+
+    <target name="compile-jdmktk" depends="init,-init-jars"
+            description="compiles sources for ${dist.jdmktk.jar}">
+        <compile-module destdir="${build.jdmktk.dir}"
+            srcdir="${src.toolkit.dir}"
+            classpath="${javac.classpath}:${build.jdmkrt.dir}"
+            jarfile="${dist.jdmktk.jar}"
+            impltitle="${jar.jdmktk.implementation.title}">
+            <copyset>
+                <fileset dir="${src.toolkit.dir}" includes="META-INF/**"
+                         excludes="${build.classes.excludes}"/>
+                <fileset dir="${src.toolkit.dir}" >
+                    <include name="**/mibgen.properties.jdmk*" />
+                </fileset>
+                <mapper type="glob" from="*/mibgen.properties.jdmk"
+                    to="*/mibgen.properties"/>
+            </copyset>
+        </compile-module>
+    </target>
+
+    <target name="binaries" depends="init,-init-fileset" 
+            description="places binaries, etc, and license, under ${dist.dir}">
+        <mkdir dir="${dist.dir}/bin"/>
+        <copy todir="${dist.dir}/bin">
+            <fileset refid="tools"/>
+            <mapper type="flatten"/>
+        </copy>
+        <chmod perm="a+rx">
+            <fileset dir="${dist.dir}/bin"/>
+        </chmod>
+        <mkdir dir="${dist.dir}/etc"/>
+        <copy todir="${dist.dir}/etc">
+            <fileset dir="${basedir}/etc"/> 
+        </copy>
+        <copy todir="${dist.dir}">
+              <fileset refid="legal"/>
+        </copy>
+    </target>
+    
+</project>
