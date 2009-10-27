@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="jaxr-ra source integration" default="build" basedir=".">
+
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+
+    <property name="jaxr-ra.url" value="https://svn.kenai.com/svn/jaxr-ra~source-code-repository"/>
+    <target name="build" depends="init">
+        <antcall target="jaxr-ra.build" />
+    </target>
+
+    <target name="jaxr-ra.checkout"  depends="init">
+        <echo message="Checking out jaxr-ra from ${jaxr-ra.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+            <arg line="checkout"/>
+            <arg line="${jaxr-ra.url}"/>
+            <arg line="jaxr-ra" />
+        </exec>
+    </target>
+    <target name="jaxr-ra.build" depends="jaxr-ra.checkout" >
+        <exec executable="ant" dir="${external.dir}/jaxr-ra/" failonerror="true">
+            <arg line="-Djavac.target=1.5 -Djavac.source=1.5"/>
+        </exec>
+        <exec executable="mvn" dir="${external.dir}/jaxr-ra" failonerror="true" >
+            <arg line="deploy:deploy-file" />
+            <arg line="-Durl=file://${maven.repo.local}" />
+            <arg line="-Dfile=${external.dir}/jaxr-ra/build/lib/jaxr-ra.rar" />
+            <arg line="-DpomFile=${external.dir}/jaxr-ra/pom.xml" />
+        </exec>
+    </target>
+</project>
