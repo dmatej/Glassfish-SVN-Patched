@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="OpenDMK source integration" default="build" basedir=".">
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+    <import file="wsit-taskdefs.xml"/>
+
+    <target name="build" depends="init">
+        <antcall target="opendmk.build" />
+    </target>
+
+    <!-- checkout opendmk source and build -->
+    <target name="opendmk.checkout">
+        <echo message="checkout opendmk from ${opendmk.src.zip.url}."/>
+        <exec executable="wget" dir="${external.dir}" failonerror="true" >
+	    <arg line="--no-check-certificate" />
+            <arg line="${opendmk.src.zip.url}" />
+	</exec>
+        <echo message="expand opendmk zip"/>
+        <unzip src="${external.dir}/${opendmk.src.zip}" dest="${external.dir}"/>
+    </target>
+
+    <target name="opendmk.build" depends="opendmk.checkout" >
+        <!-- build opendmk -->
+        <echo message="building opendmk"/>
+        <subant target="buildall">
+            <fileset dir="${external.dir}/OpenDMK-src" includes="build.xml"/>
+        </subant>
+        <mvn.publish 
+            jar="${external.dir}/OpenDMK-src/dist/lib/jdmkrt.jar" 
+            mvngroup="org.glassfish.external"
+            mvnartid="opendmk_jdmkrt_jar"
+            mvnversion="${opendmk.version}"/>
+        <mvn.publish 
+            jar="${external.dir}/OpenDMK-src/dist/lib/jmxremote_optional.jar"
+            mvngroup="org.glassfish.external"
+            mvnartid="opendmk_jmxremote_optional_jar"
+            mvnversion="${opendmk.version}"/>
+    </target>
+</project>
