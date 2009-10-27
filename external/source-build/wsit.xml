@@ -11,6 +11,10 @@
     
     <target name="build" depends="init, check-gf-dependencies">
 
+        <antcall target="xerces.checkout"/>
+        <antcall target="xerces.build"/>
+        <antcall target="xerces.publish"/>
+
         <antcall target="ant.checkout"/>
         <antcall target="ant.build"/>
         <antcall target="ant.publish"/>
@@ -107,6 +111,27 @@
 
         <available file="${maven.repo.local}/${connector-api.mvn.path}" property="is-connector-avail"/>
         <fail unless="is-connector-avail" message="${maven.repo.local}/${connector-api.mvn.path} missing! It is a required dependency for wsit build."/>
+    </target>
+
+    <!-- xercesImpl.jar-->
+    <target name="xerces.checkout" unless="nocheckout">
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${xerces.svn.url}" />
+            <arg line="xerces" />
+    	</exec>
+    </target>
+    <target name="xerces.build">
+        <delete>
+            <fileset dir="${external.dir}/xerces" includes="**/*.jar">
+                <exclude name="**/xjavac*.jar*"/>
+            </fileset>
+        </delete>
+        <copy file="${maven.repo.local}/${resolver.mvn.path}" tofile="${external.dir}/xerces/tools/resolver.jar"/>
+        <subant buildpath="${external.dir}/xerces" target="jar"/>
+    </target>
+    <target name="xerces.publish">
+        <mvn.publish jar="${external.dir}/xerces/build/xercesImpl.jar" mvngroup="org.apache.xerces" mvnartid="xercesImpl" mvnversion="${xerces.version}"/>
     </target>
 
     <!-- ant.jar-->
@@ -319,7 +344,7 @@
         </delete>
         <subant buildpath="${external.dir}/xmlsec" target="build.jar">
             <property name="lib.junit" value="${maven.repo.local}/${junit.mvn.path}"/>
-            <property name="lib.xerces.1" value="${xerces.path}"/>
+            <property name="lib.xerces.1" value="${xerces.mvn.path}"/>
         </subant>
     </target>
     <target name="xmlsec.clean">
