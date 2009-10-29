@@ -16,7 +16,7 @@
 
   <!-- views -->
   <view>
-    <name>TDC</name>
+    <name>TOC</name>
     <label>Tabla de contenido</label>
     <type>javax.help.TOCView</type>
     <data>es/UpgradeToolHelpTOC.xml</data>
