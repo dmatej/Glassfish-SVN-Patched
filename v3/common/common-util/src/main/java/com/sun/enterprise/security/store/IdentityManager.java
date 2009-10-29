@@ -300,7 +300,10 @@ public class IdentityManager {
         }
     }
 
-    
+    public static void setMasterPassword(char[] passwd) {
+       _masterPassword = new String(passwd);
+    }
+  
     public static String getMasterPassword() {
         return _masterPassword;
     }
