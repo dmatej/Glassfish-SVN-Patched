@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="Weld source integration" default="build" basedir=".">
+
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+
+    <target name="build" depends="init">
+<!--
+        <antcall target="javassist.build" />
+        <antcall target="googlecollections.build" />
+        <antcall target="log4j.build" />
+        <antcall target="log4j.publish" />
+        <antcall target="xml-apis.build" />
+        <antcall target="dom4j.build" />
+        <antcall target="dom4j.publish" />
+-->
+        <antcall target="weld.build" />
+    </target>
+
+    <!--
+        Checkout weld source and its dependencies and build
+        Dependencies: javassist
+    -->
+    <target name="javassist.checkout" >
+        <echo message="checkout javassist from ${javassist.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${javassist.svn.url}" />
+            <arg line="javassist" />
+	</exec>
+    </target>
+    <target name="javassist.build" depends="javassist.checkout" >
+        <!-- build javassist -->
+        <exec executable="mvn" dir="${external.dir}/javassist" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="install" />
+	</exec>
+    </target>
+    <target name="googlecollections.checkout" >
+        <echo message="checkout google collections from ${googlecollections.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${googlecollections.svn.url}" />
+            <arg line="google-collections" />
+	</exec>
+    </target>
+    <target name="googlecollections.build" depends="googlecollections.checkout" >
+        <!-- build google collections-->
+        <exec executable="mvn" dir="${external.dir}/google-collections" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="install" />
+	</exec>
+    </target>
+    <target name="log4j.checkout" >
+        <echo message="checkout log4j from ${log4j.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${log4j.svn.url}" />
+            <arg line="log4j" />
+	</exec>
+    </target>
+    <target name="log4j.build" depends="log4j.checkout" >
+        <subant target="jar" buildpath="${external.dir}/log4j" >
+            <property name="javac.source" value="1.6"/>
+            <property name="javac.target" value="1.6"/>
+        </subant>
+    </target>
+    <!-- publish log4j artifact to local maven repo -->
+    <target name="log4j.publish" >
+        <exec executable="mvn" dir="${external.dir}/log4j" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="install:install-file" />
+            <arg line="-Dfile=${external.dir}/log4j/dist/lib/log4j-1.2.14.jar" />
+            <arg line="-DgroupId=log4j" />
+            <arg line="-DartifactId=log4j" />
+            <arg line="-Dversion=1.2.14" />
+            <arg line="-DpomFile=pom.xml" />
+            <arg line="-DlocalRepositoryPath=${maven.repo.local}" />
+	</exec>
+    </target>
+    <target name="xml-apis.checkout" >
+        <echo message="checkout xml-apis from ${xml-apis.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${xml-apis.svn.url}" />
+            <arg line="xml-apis" />
+	</exec>
+    </target>
+    <target name="xml-apis.build" depends="xml-apis.checkout" >
+        <subant target="external" buildpath="${external.dir}/xml-apis" />
+    </target>
+    <target name="weld.checkout" >
+        <echo message="checkout weld from ${weld.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${weld.svn.url}" />
+            <arg line="weld" />
+	</exec>
+    </target>
+    <target name="weld.build" depends="weld.checkout" >
+        <!-- build weld-->
+        <exec executable="mvn" dir="${external.dir}/weld" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="install" />
+	</exec>
+    </target>
+
+</project>
