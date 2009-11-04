@@ -452,7 +452,7 @@ function containsAngleBrackets(s) {
 }
 
 function escapeAttributeValue(s) {
-    return s.replace("<", "&#60;").replace(">", "&#62;").replace('"', "&#34;");
+    return s.replace("&", "&#38;").replace("<", "&#60;").replace(">", "&#62;").replace('"', "&#34;");
 }
 
 function printDebug(s) {
