@@ -53,13 +53,15 @@ import org.hibernate.validator.metadata.ConstraintHelper;
 import org.hibernate.validator.metadata.MetaConstraint;
 import org.hibernate.validator.util.ReflectionHelper;
 
+import java.io.Serializable;
+
 /**
  * The main Bean Validation class. This is the core processing class of Hibernate Validator.
  *
  * @author Emmanuel Bernard
  * @author Hardy Ferentschik
  */
-public class ValidatorImpl implements Validator {
+public class ValidatorImpl implements Validator, Serializable {
 
 	/**
 	 * The default group array used in case any of the validate methods is called without a group.
