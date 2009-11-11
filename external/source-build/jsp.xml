@@ -13,16 +13,43 @@
         Checkout jsp source and build
     -->
     <target name="jsp.checkout" >
-        <echo message="checkout jsp from ${jsp.svn.url}."/>
+        <echo message="checkout jsp from ${jsp-pom.svn.url}."/>
         <exec executable="svn" dir="${external.dir}" failonerror="true" >
 	    <arg line="checkout" />
-            <arg line="${jsp.svn.url}" />
-            <arg line="jsp" />
+            <arg line="${jsp-pom.svn.url}" />
+            <arg line="jsp/pom" />
+	</exec>
+        <!-- since the jsp-pom tag contains all the files/directories, -->
+        <!-- we want to move those files before checkout out rest of -->
+        <!-- api and impl directories. -->
+        <delete dir="${external.dir}/jsp/pom/api"/>
+        <delete dir="${external.dir}/jsp/pom/impl"/>
+        <delete dir="${external.dir}/jsp/pom/repo"/>
+        <delete dir="${external.dir}/jsp/pom/www"/>
+
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${jsp-api.svn.url}" />
+            <arg line="jsp/api" />
+	</exec>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${jsp-impl.svn.url}" />
+            <arg line="jsp/impl" />
 	</exec>
     </target>
+
     <target name="jsp.build" depends="jsp.checkout" >
         <!-- build jsp -->
-        <exec executable="mvn" dir="${external.dir}/jsp" failonerror="true" >
+        <exec executable="mvn" dir="${external.dir}/jsp/pom" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="install" />
+	</exec>
+        <exec executable="mvn" dir="${external.dir}/jsp/api" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="install" />
+	</exec>
+        <exec executable="mvn" dir="${external.dir}/jsp/impl" failonerror="true" >
 	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
             <arg line="install" />
 	</exec>
