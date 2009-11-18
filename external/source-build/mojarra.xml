@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="Mojarra source integration" default="build" basedir=".">
+
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+    <property name="jsf.build.home" value="${external.dir}/mojarra"/>
+    <property name="container.name" value="glassfishV3"/>
+
+    <target name="build" depends="init">
+        <antcall target="mojarra.build" />
+    </target>
+
+    <!--
+        Checkout Mojarra source and build
+    -->
+    <target name="mojarra.checkout" >
+        <echo message="checkout Mojarra from ${mojarra.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${mojarra.svn.url}" />
+            <arg line="mojarra" />
+	</exec>
+    </target>
+    <target name="mojarra.build" depends="mojarra.checkout" >
+        <!-- build mojarra -->
+	<exec executable="ant" dir="${external.dir}/mojarra" failonerror="true" >
+            <arg line="-Djsf.build.home=${jsf.build.home}" />
+            <arg line="-Dcontainer.name=${container.name}" />
+            <arg line="main.from.source" />
+	</exec>
+	<exec executable="ant" dir="${external.dir}/mojarra/jsf-api" failonerror="true" >
+            <arg line="-Djsf.build.home=${jsf.build.home}" />
+            <arg line="-Dcontainer.name=${container.name}" />
+            <arg line="-Dbuild.number=${mojarra.version}" />
+            <arg line="mvn.deploy.promoted.local" />
+	</exec>
+	<exec executable="ant" dir="${external.dir}/mojarra/jsf-ri" failonerror="true" >
+            <arg line="-Djsf.build.home=${jsf.build.home}" />
+            <arg line="-Dcontainer.name=${container.name}" />
+            <arg line="-Dbuild.number=${mojarra.version}" />
+            <arg line="mvn.deploy.promoted.local" />
+	</exec>
+
+    </target>
+
+</project>
