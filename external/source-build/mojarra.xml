@@ -6,7 +6,11 @@
     <import file="build.xml"/>
     <property name="jsf.build.home" value="${external.dir}/mojarra"/>
     <property name="container.name" value="glassfishV3"/>
-
+    <property name="yuicompressor.jar" value="${external.dir}/yuicompressor/build/yuicompressor-2.4.2.jar"/>
+    <property name="yuicompressor.jar.dest" value="${external.dir}/mojarra/dependencies/jars/yuicompressor.jar"/>
+    <property name="jargs.jar.dest" value="${external.dir}/yuicompressor/lib/jargs-1.0.jar"/>
+    <property name="jargs.jar" value="${external.dir}/jargs/lib/jargs.jar"/>
+    
     <target name="build" depends="init">
         <antcall target="mojarra.build" />
     </target>
@@ -14,36 +18,69 @@
     <!--
         Checkout Mojarra source and build
     -->
-    <target name="mojarra.checkout" >
+    <target name="mojarra.checkout" depends="yuicompressor.build">
         <echo message="checkout Mojarra from ${mojarra.svn.url}."/>
         <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
+            <arg line="checkout" />
             <arg line="${mojarra.svn.url}" />
             <arg line="mojarra" />
-	</exec>
+        </exec>
+        <!-- copy jargs jar -->
+        <copy file="${yuicompressor.jar}" tofile="${yuicompressor.jar.dest}" overwrite="true"/>    
     </target>
+    
     <target name="mojarra.build" depends="mojarra.checkout" >
         <!-- build mojarra -->
-	<exec executable="ant" dir="${external.dir}/mojarra" failonerror="true" >
+        <exec executable="ant" dir="${external.dir}/mojarra" failonerror="true" >
             <arg line="-Djsf.build.home=${jsf.build.home}" />
             <arg line="-Dcontainer.name=${container.name}" />
             <arg line="main.from.source" />
-	</exec>
-	<exec executable="ant" dir="${external.dir}/mojarra/jsf-api" failonerror="true" >
+        </exec>
+        <exec executable="ant" dir="${external.dir}/mojarra/jsf-api" failonerror="true" >
             <arg line="-Djsf.build.home=${jsf.build.home}" />
             <arg line="-Dcontainer.name=${container.name}" />
             <arg line="-Dbuild.number=${mojarra.version}" />
             <arg line="-Dmaven.repo.local=${maven.repo.local}" />
             <arg line="mvn.deploy.promoted.local" />
-	</exec>
-	<exec executable="ant" dir="${external.dir}/mojarra/jsf-ri" failonerror="true" >
+        </exec>
+        <exec executable="ant" dir="${external.dir}/mojarra/jsf-ri" failonerror="true" >
             <arg line="-Djsf.build.home=${jsf.build.home}" />
             <arg line="-Dcontainer.name=${container.name}" />
             <arg line="-Dbuild.number=${mojarra.version}" />
             <arg line="-Dmaven.repo.local=${maven.repo.local}" />
             <arg line="mvn.deploy.promoted.local" />
-	</exec>
+        </exec>
+    </target>
 
+    <target name="yuicompressor.checkout" depends="jargs.build">
+        <echo message="checkout YUI Compressor from ${yuicompressor.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+            <arg line="checkout" />
+            <arg line="${yuicompressor.svn.url}" />
+            <arg line="yuicompressor" />
+        </exec>
+        <!-- copy jargs jar -->
+        <copy file="${jargs.jar}" tofile="${jargs.jar.dest}" overwrite="true"/>    
+    </target>
+
+    <target name="yuicompressor.build" depends="yuicompressor.checkout" >
+        <!-- build YUI Compressor -->
+        <exec executable="ant" dir="${external.dir}/yuicompressor" failonerror="true" />
+    </target>
+
+
+    <target name="jargs.checkout">
+        <echo message="checkout JArgs from ${jargs.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+            <arg line="checkout" />
+            <arg line="${jargs.svn.url}" />
+            <arg line="jargs" />
+        </exec>    
+    </target>
+
+    <target name="jargs.build" depends="jargs.checkout" >
+        <!-- build JArgs -->
+        <exec executable="ant" dir="${external.dir}/jargs" failonerror="true" />
     </target>
 
 </project>
