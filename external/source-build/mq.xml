@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="MQ source integration" default="build" basedir=".">
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+    <import file="build-taskdefs.xml"/>
+
+    <target name="build" depends="init">
+        <antcall target="mq.build" />
+    </target>
+
+    <!-- checkout mq source and build -->
+    <target name="mq.checkout" depends="init">
+        <echo message="checkout mq from ${mq.src.zip.url}."/>
+        <exec executable="wget" dir="${external.dir}" failonerror="true" >
+	    <arg line="--no-check-certificate" />
+            <arg line="${mq.src.zip.url}" />
+	</exec>
+        <echo message="expand mq zip"/>
+        <unzip src="${external.dir}/${mq.src.zip}" dest="${external.dir}"/>
+    </target>
+
+    <!-- download javaee6-api.jar -->
+    <target name="mq.dep1" depends="init">
+        <echo message="get javaee6-api.jar from ${mq.src.dep.url1}."/>
+	<mkdir dir="${external.dir}/mq/extjars"/>
+        <exec executable="wget" dir="${external.dir}/mq/extjars" failonerror="true" >
+	    <arg line="--no-check-certificate" />
+            <arg line="${mq.src.dep.url1}" />
+	</exec>
+	<move file="${external.dir}/mq/extjars/${mq.src.dep.jar1}" tofile="${external.dir}/mq/extjars/javaee-api-6.0.jar"/>
+    </target>
+
+    <!-- copy grizzly NIO from local maven repo -->
+    <target name="mq.dep2" depends="init">
+        <echo message="copy grizzly.jar from ${maven.repo.local}/com/sun/grizzly."/>
+	<mkdir dir="${external.dir}/mq/extjars"/>
+	<copy file="${maven.repo.local}/com/sun/grizzly/grizzly-nio-framework/1.9.18b/${mq.src.dep.jar2}" tofile="${external.dir}/mq/extjars/grizzly.jar"/>
+    </target>
+
+    <!-- download javahelp jhall.jar -->
+    <target name="mq.dep3" depends="init">
+        <echo message="get jhall.jar from ${mq.src.dep.url3}."/>
+	<mkdir dir="${external.dir}/mq/extjars"/>
+        <exec executable="wget" dir="${external.dir}/mq/extjars" failonerror="true" >
+	    <arg line="--no-check-certificate" />
+            <arg line="${mq.src.dep.url3}" />
+	</exec>
+	<move file="${external.dir}/mq/extjars/${mq.src.dep.jar3}" tofile="${external.dir}/mq/extjars/jhall.jar"/>
+    </target>
+
+    <target name="mq.extjars"
+	    depends="mq.dep1, mq.dep2, mq.dep3"
+	    description="Download external dependences for MQ">
+    </target>
+
+    <target name="mq.build" depends="mq.checkout, mq.extjars">
+        <!-- build mq -->
+        <echo message="building mq"/>
+        <subant target="all">
+            <fileset dir="${external.dir}/mq" includes="build.xml"/>
+	    <property name="javaeehome" value="${external.dir}/mq/extjars"/>
+	    <property name="javahelphome" value="${external.dir}/mq/extjars"/>
+	    <property name="grizzlyhome" value="${external.dir}/mq/extjars"/>
+        </subant>
+        <mvn.publish.local
+            jar="${external.dir}/mq/dist/bundles/${mq.zip.artifact}" 
+            mvngroup="org.glassfish"
+            mvnartid="mq-distribution"
+            mvnversion="${mq.version}"/>
+    </target>
+
+    <target name="mq.publish" depends="mq.build" >
+        <mvn.publish.remote
+            jar="${external.dir}/mq/dist/bundles/${mq.zip.artifact}" 
+            mvngroup="org.glassfish"
+            mvnartid="mq-distribution"
+            mvnversion="${mq.version}"/>
+    </target>
+
+</project>
