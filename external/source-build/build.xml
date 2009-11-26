@@ -18,6 +18,9 @@
 	<ant antfile="felix-build.xml" target="build" />
 	<antcall target="eclipselink.project" />
         <antcall target="jaxb.project" />
+        <antcall target="management-api.project"/>
+        <antcall target="gmbal.project"/>
+        <antcall target="gfcorba.project"/>
         <ant antfile="bean-validator.xml" target="build" />
 	<ant antfile="tiger-types.xml" target="build" />
 	<ant antfile="metainf-services.xml" target="build" />
@@ -36,15 +39,7 @@
 	<ant antfile="solarisrealm.xml" target="build" /> 
 	<ant antfile="jaxr-ra.xml" target="build" /> 
 	<ant antfile="slf4j.xml" target="build" /> 
-        <ant antfile="management-api.xml" target="build"/>
-        <ant antfile="gmbal.xml" target="build"/>
-	<antcall target="wsit.project" />
-<!--
-        <antcall target="gfcorba.project" />
-        <antcall target="delete.files">
-             <param name="dir" value="${stage}"/>
-        </antcall>
--->
+        <antcall target="wsit.project" />
 
         <!-- scripting(jruby) integrates in to glassfish v3 as binary. It depends on different v3 apis 
              as well as grizzly. Also nothing in v3 depends on it so this MUST be last one to build.
@@ -53,15 +48,29 @@
         <ant antfile="opendmk.xml" target="build" />
     </target>
     
+     <target name="management-api.project" >
+       <exec executable="ant" failonerror="true" newenvironment="false" >
+            <arg line="-f management-api.xml" />
+            <arg line="build" />
+            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+      </exec>
+    </target>
 
+     <target name="gmbal.project" >
+       <exec executable="ant" failonerror="true" newenvironment="false" >
+            <arg line="-f gmbal.xml" />
+            <arg line="build" />
+            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+      </exec>
+    </target>
 
     <!-- requires hg (mercurial) installed and in the path -->
-    <target name="gfcorba.project" >
-        <exec executable="hg" dir="${stage}" failonerror="true" >
-	    <arg line="clone" />
-            <arg line="${gfcorba.hg.url}" />
-            <arg line="glassfish-corba" />
-	</exec>
+    <target name="gfcorba.project" depends="management-api.project,gmbal.project" >
+       <exec executable="ant" failonerror="true" newenvironment="false" >
+            <arg line="-f glassfish-corba.xml" />
+            <arg line="build" />
+            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+      </exec>
     </target>
 
     <target name="jaxb.project">
