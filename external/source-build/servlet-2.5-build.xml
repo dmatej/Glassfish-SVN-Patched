@@ -1,0 +1,72 @@
+<project name="servlet-2.5" default="make_jar" basedir=".">
+
+  <!-- IMPORTANT VARIABLE HERE -->
+  <property name="src.dir" value="${basedir}/glassfish/servlet-api/src/jakarta-servletapi-5/jsr154"/>
+
+  <target name="init">
+     <property name="project_name"   value="servlet-2.5"/>
+     <property name="release.version"   value="2.5"/>
+     <property name="servlet-jarfile"            value="${basedir}/dist/${project_name}.jar"/>
+     <mkdir dir="${basedir}/classes"/>
+     <mkdir dir="${basedir}/dist"/>
+  </target>
+
+  <!-- CLEAN TARGET -->
+  <target name="clean">
+    <delete dir="${basedir}/classes"/>
+    <delete dir="${basedir}/manifest"/>
+    <delete dir="${basedir}/dist"/>
+  </target>
+
+  <!-- CHECKOUT TARGET -->
+  <target name="checkout">
+      <cvs package="glassfish/servlet-api/src/jakarta-servletapi-5/jsr154" 
+           tag="SGES211_FCS_BRANCH"
+           dest="." />
+  </target>
+
+  <!-- COMPILE TARGET -->
+  <target name="compile" depends="init, checkout">
+    <javac destdir="${basedir}/classes" source="1.4" target="1.4">
+        <src path="${src.dir}/src/share"/>
+      <include name="**/*.java"/>
+    </javac>
+
+    <!-- Add Associated property files -->
+    <copy todir="${basedir}/classes">
+        <fileset dir="${src.dir}/src/share">
+          <include name="**/*.properties"/>
+        </fileset>
+    </copy>
+
+    <!-- Add Servlet resources -->
+    <copy todir="${basedir}/classes/javax/servlet/resources">
+        <fileset dir="${src.dir}/src/share/dtd" includes="*.dtd,*.xsd">
+          <exclude name="jsp*.dtd"/>
+          <exclude name="web-jsp*.dtd"/>
+        </fileset>
+    </copy>
+
+  </target>
+
+  <!-- Prepare manifest files for jars -->
+  <target name="cook-manifest"
+          description="Generate MANIFEST.MF files">
+      <copy todir="${basedir}/manifest">
+          <fileset dir="${src.dir}" includes="*.mf" />
+          <filterset>
+              <filter token="VERSION" value="${release.version}"/>
+          </filterset>
+      </copy>
+  </target>
+
+  <!-- MAKE JAR TARGET -->
+  <target name="make_jar" depends="compile, cook-manifest">
+    <jar basedir="${basedir}/classes" 
+         jarfile="${servlet-jarfile}" 
+         manifest="${basedir}/manifest/servlet-api.mf"
+         includes="**/*.*"/>
+  </target>
+
+</project>
+
