@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="JavaHelp source integration" default="build" basedir=".">
+
+  <import file="build.xml"/>
+  <import file="build-taskdefs.xml"/>
+
+  <!-- really just here to keep target names consistent in build.xml -->
+  <target name="build" depends="javahelp.build" />
+
+  <!-- this target actually does the building -->
+  <target name="javahelp.build" depends="jdic.build, copy.javahelp.dependencies">
+    <echo message="Building javahelp." />
+    <ant antfile="${external.dir}/javahelp/javahelp_nbproject/build.xml"
+        inheritall="false" />
+    <copy file="${external.dir}/javahelp/javahelp_nbproject/dist/lib/jhall.jar"
+        tofile="${external.dir}/javahelp/javahelp_nbproject/dist/lib/javahelp.jar" />
+    <mvn.publish.local
+        jar="${external.dir}/javahelp/javahelp_nbproject/dist/lib/javahelp.jar"
+        mvngroup="javax.help"
+        mvnartid="javahelp"
+        mvnversion="2.0.02" />
+  </target>
+
+  <target name="copy.javahelp.dependencies" depends="javahelp.checkout">
+    <!--
+      Still todo: build jdic and use the locally built jar. Without
+      this, jdic will download the jdic bin zip file. Once we're building
+      successfully, uncomment the <touch> task below.
+    -->
+
+    <!-- grab from local repo -->
+    <mkdir dir="${external.dir}/javahelp/javahelp_nbproject/lib" />
+    <copy file="${maven.repo.local}/javax/servlet/jsp/jsp-api/2.1.3-b06/jsp-api-2.1.3-b06.jar"
+        tofile="${external.dir}/javahelp/javahelp_nbproject/lib/jsp-api.jar" />
+    <copy file="${maven.repo.local}/${servlet.mvn.path}"
+        tofile="${external.dir}/javahelp/javahelp_nbproject/lib/servlet-api.jar"/>
+
+    <!--
+      Workaround for bugs in javahelp's build.xml. Even though the
+      servlet and jsp jars are present, it will still try to download
+      tomcat.zip if it's not there. (It would then ignore the zip
+      file since the jars are present.) Ditto for jdic zip.
+    -->
+    <touch file="${java.io.tmpdir}/apache-tomcat-5.5.20.zip" />
+    <!--<touch file="${java.io.tmpdir}/jdic-0.8.4.1-bin-windows.zip" />-->
+  </target>
+
+  <target name="javahelp.checkout" depends="init">
+    <echo message="Checkout javahelp from ${javahelp.svn.url}."/>
+    <exec executable="svn" dir="${external.dir}" failonerror="true" >
+      <arg line="checkout" />
+      <arg line="${javahelp.svn.url}" />
+      <arg line="javahelp" />
+    </exec>
+  </target>
+
+  <target name="jdic.build" depends="jdic.checkout">
+    <echo message="Attempting to build jdic. Keep your fingers crossed." />
+
+  </target>
+
+  <target name="jdic.checkout" depends="init">
+    <echo message="Checking out jdic." />
+    <cvs.checkout repo="${jdic.cvs.url}"
+        tag="${jdic.cvs.tag}"
+        module="jdic"
+        dest="jdic" />
+  </target>
+
+</project>
