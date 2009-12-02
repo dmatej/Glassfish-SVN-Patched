@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<project basedir="." default="build" name="org.eclipse.persistence.example.jpa.employee.annotations">
+    <property environment="env"/>
+    <property name="ORACLE_JDBC_LIB" value="../../../../../oracle/DB/11/jdbc/lib/ojdbc5_g.jar"/>
+    <property name="ECLIPSE_HOME" value="../../../../ganymede/eclipse"/>
+    <property name="ECLIPSELINK_HOME" value="../../"/>
+    <property name="eclipselink-agent" value="-javaagent:${ECLIPSELINK_HOME}eclipselink.jar"/>
+    <property name="junit.output.dir" value="junit"/>
+    <property name="debuglevel" value="source,lines,vars"/>
+    <property name="target" value="1.5"/>
+    <property name="source" value="1.5"/>
+    <path id="JUnit 4.libraryclasspath">
+        <pathelement location="${ECLIPSE_HOME}/plugins/org.junit4_4.3.1/junit.jar"/>
+    </path>
+    <path id="EclipseLink TRUNK.userclasspath">
+        <pathelement location="${ECLIPSELINK_HOME}eclipselink.jar"/>
+        <pathelement location="${ECLIPSELINK_HOME}/plugins/javax.persistence_1.0.0.jar"/>
+    </path>
+    <path id="example.classpath">
+        <pathelement location="classes"/>
+        <path refid="JUnit 4.libraryclasspath"/>
+        <pathelement location="${ORACLE_JDBC_LIB}"/>
+        <path refid="EclipseLink TRUNK.userclasspath"/>
+    </path>
+    <target name="init">
+        <mkdir dir="classes"/>
+        <copy includeemptydirs="false" todir="classes">
+            <fileset dir="src" excludes="**/*.launch, **/*.java"/>
+        </copy>
+    </target>
+    <target name="clean">
+        <delete dir="classes"/>
+        <delete dir="junit"/>
+    </target>
+
+    <target depends="init" name="build">
+        <echo message="${ant.project.name}: ${ant.file}"/>
+        <javac debug="true" debuglevel="${debuglevel}" destdir="classes" source="${source}" target="${target}">
+            <src path="src"/>
+            <exclude name="**/.svn/**"/>
+            <classpath refid="example.classpath"/>
+        </javac>
+    </target>
+
+    <target name="AllTests" depends="build">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" forkmode="once" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="testing.AllTests" todir="${junit.output.dir}"/>
+            <jvmarg line="${eclipselink-agent}"/>
+            <classpath refid="example.classpath"/>
+        </junit>
+    </target>
+
+    <target name="CreateDatabase">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" forkmode="once" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="testing.CreateDatabase" todir="${junit.output.dir}"/>
+            <classpath refid="example.classpath"/>
+        </junit>
+    </target>
+
+    <target name="QueryExamples">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" forkmode="once" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="testing.QueryExamples" todir="${junit.output.dir}"/>
+            <jvmarg line="${eclipselink-agent}"/>
+            <classpath refid="example.classpath"/>
+        </junit>
+    </target>
+
+    <target name="TransactionExamples">
+        <mkdir dir="${junit.output.dir}"/>
+        <junit fork="yes" forkmode="once" printsummary="withOutAndErr">
+            <formatter type="xml"/>
+            <test name="testing.TransactionExamples" todir="${junit.output.dir}"/>
+            <classpath refid="example.classpath"/>
+        </junit>
+    </target>
+
+    <target name="junitreport">
+        <junitreport todir="${junit.output.dir}">
+            <fileset dir="${junit.output.dir}">
+                <include name="TEST-*.xml"/>
+            </fileset>
+            <report format="frames" todir="${junit.output.dir}"/>
+        </junitreport>
+    </target>
+</project>

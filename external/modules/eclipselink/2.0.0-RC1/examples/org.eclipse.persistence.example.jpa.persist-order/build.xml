@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<!-- *******************************************************************************
+ * Copyright (c) 1998, 2008 Oracle. All rights reserved.
+ * This program and the accompanying materials are made available under the
+ * terms of the Eclipse Public License v1.0 and Eclipse Distribution License v. 1.0
+ * which accompanies this distribution.
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * and the Eclipse Distribution License is available at
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * Contributors:
+ *     dclarke - Example: Maintaining Collection Order (Bug 218321)
+ *     			 http://wiki.eclipse.org/EclipseLink/Examples/JPA/Collectionordering
+ *
+ ****************************************************************************** -->
+<project name="eclipselink.example.jpa.collection-order" default="build" basedir=".">
+
+	<property file="./build.properties" />
+
+	<!-- Set Compile Path-->
+	<path id="compile.path">
+		<pathelement path="${eclipselink.home}/jlib/jpa/javax.persistence_1.0.0.jar" />
+		<pathelement path="${eclipselink.home}/jlib/eclipselink.jar" />
+	</path>
+
+	<path id="test.path">
+		<path refid="compile.path" />
+		<pathelement path="classes" />
+		<pathelement path="${junit.jar}" />
+	</path>
+
+	<target name="build" depends="clean,compile,package" />
+
+	<!-- clean -->
+	<target name="clean" description="Clean all generated content">
+		<delete includeEmptyDirs="true" failonerror="false">
+			<fileset dir="${classes.dir}" />
+		</delete>
+	</target>
+
+	<!-- compile -->
+	<target name="compile">
+		<mkdir dir="classes" />
+		<javac srcdir="src" destdir="classes" includes="**/*.java" debug="${javac.debug}" optimize="${javac.optimize}" source="${javac.version}" target="${javac.version}" deprecation="${javac.deprecation}" failonerror="true" memoryMaximumSize="512m" fork="true" classpathref="compile.path" />
+	</target>
+
+	<target name="package" >
+		<delete file="${example.zip}" />
+
+		<!-- include order is important. original eclipselink jar must be -->
+		<!-- included last to allow inclusion of incubation classes, and  -->
+		<!-- exclusion of original eclipselink classes                    -->
+		<jar jarfile="${example.zip}" duplicate="preserve">
+			<fileset dir="classes" />
+			<fileset dir="src" />
+		</jar>
+	</target>
+
+	<target name="run-test" depends="compile">
+		<junit printsummary="yes" haltonfailure="yes" fork="yes" forkmode="once" showoutput="true" maxmemory="512m" dir="junit">
+			<classpath>
+				<path refid="test.path" />
+			</classpath>
+
+			<test name="testing.AllTests" haltonfailure="no" outfile="${eclipselink.jpa.test}/${report.dir}/${TEST_CLASS}-test-results">
+			</test>
+		</junit>
+	</target>
+
+</project>
