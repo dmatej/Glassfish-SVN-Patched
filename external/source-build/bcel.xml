@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="Apache BCEL Library source integration" default="build" basedir=".">
+
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+    <import file="build-taskdefs.xml"/>
+
+    <target name="build" depends="init">
+        <antcall target="bcel.publish" />
+    </target>
+
+    <!--
+        Checkout jersey source and build
+    -->
+    <target name="bcel.checkout" >
+        <echo message="checkout bcel from ${bcel.svn.url}."/>
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${bcel.svn.url}" />
+            <arg line="bcel" />
+	</exec>
+    </target>
+
+    <target name="bcel.build" depends="bcel.checkout">
+        <!-- build Apache BCEL -->
+        <exec executable="maven" dir="${external.dir}/bcel" failonerror="true" >
+	    <!--<arg line="-Dmaven.repo.local=${maven.repo.local}" />
+	    <arg line="-Dmaven.test.skip=true" />
+            <arg line="install" />-->
+	</exec>
+   </target>
+
+   <target name="bcel.publish" depends="bcel.build" >
+        <mvn.publish.local 
+	    jar="${external.dir}/bcel/target/bcel-${bcel.version}.jar" 
+            mvngroup="org.apache.bcel" 
+            mvnartid="bcel" 
+            mvnversion="${bcel.version}"/>
+        <!--<mvn.publish.remote
+            jar="${external.dir}/bcel/target/bcel-${bcel.version}.jar"
+            mvngroup="org.apache.bcel"
+            mvnartid="bcel"
+            mvnversion="${bcel.version}"/>-->
+    </target>
+
+</project>
