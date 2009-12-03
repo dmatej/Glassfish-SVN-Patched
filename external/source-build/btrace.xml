@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="BTrace source integration" default="build" basedir=".">
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+    <import file="build-taskdefs.xml"/>
+
+    <target name="build" depends="init">
+        <property name="local.maven.ant.tasks.jar" value="../../${maven.ant.tasks.jar}"/>
+
+        <echo message="checkout btrace from ${btrace.hg.url}"/>
+        <hg.clone tag="${btrace.hg.tag}" repo="${btrace.hg.url}" dest="${btrace.dir}"/>
+
+        <echo message="build btrace"/>
+        <ant antfile="build.xml" dir="external/btrace/make">
+            <target name="all"/>
+        </ant>
+
+        <echo message="publish btrace to local repository"/>
+        <mvn.publish.local
+            jar="${external.dir}/btrace/build/btrace-agent.jar" 
+            mvngroup="org.glassfish.external"
+            mvnartid="btrace-agent"
+            mvnversion="${btrace.version}"/>
+        <mvn.publish.local
+            jar="${external.dir}/btrace/build/btrace-boot.jar" 
+            mvngroup="org.glassfish.external"
+            mvnartid="btrace-boot"
+            mvnversion="${btrace.version}"/>
+    </target>
+
+    <target name="btrace.publish" depends="build" >
+        <mvn.publish.remote
+            jar="${external.dir}/btrace/build/btrace-agent.jar" 
+            mvngroup="org.glassfish.external"
+            mvnartid="btrace-agent"
+            mvnversion="${btrace.version}"/>
+        <mvn.publish.remote
+            jar="${external.dir}/btrace/build/btrace-boot.jar" 
+            mvngroup="org.glassfish.external"
+            mvnartid="btrace-boot"
+            mvnversion="${btrace.version}"/>
+    </target>
+</project>
