@@ -5,11 +5,9 @@
   <import file="build.xml"/>
   <import file="build-taskdefs.xml"/>
 
-  <!-- really just here to keep target names consistent in build.xml -->
-  <target name="build" depends="javahelp.build" />
+  <target name="build" depends="jdic.checkout, javahelp.build" />
 
-  <!-- this target actually does the building -->
-  <target name="javahelp.build" depends="jdic.build, copy.javahelp.dependencies">
+  <target name="javahelp.build" depends="copy.javahelp.dependencies">
     <echo message="Building javahelp." />
     <ant antfile="${external.dir}/javahelp/javahelp_nbproject/build.xml"
         inheritall="false" />
@@ -23,12 +21,6 @@
   </target>
 
   <target name="copy.javahelp.dependencies" depends="javahelp.checkout">
-    <!--
-      Still todo: build jdic and use the locally built jar. Without
-      this, jdic will download the jdic bin zip file. Once we're building
-      successfully, uncomment the <touch> task below.
-    -->
-
     <!-- grab from local repo -->
     <mkdir dir="${external.dir}/javahelp/javahelp_nbproject/lib" />
     <copy file="${maven.repo.local}/javax/servlet/jsp/jsp-api/2.1.3-b06/jsp-api-2.1.3-b06.jar"
@@ -40,10 +32,10 @@
       Workaround for bugs in javahelp's build.xml. Even though the
       servlet and jsp jars are present, it will still try to download
       tomcat.zip if it's not there. (It would then ignore the zip
-      file since the jars are present.) Ditto for jdic zip.
+      file since the jars are present.)
     -->
+    <echo message="Touching file ${java.io.tmpdir}/apache-tomcat-5.5.20.zip to avoid javahelp downloading it." />
     <touch file="${java.io.tmpdir}/apache-tomcat-5.5.20.zip" />
-    <!--<touch file="${java.io.tmpdir}/jdic-0.8.4.1-bin-windows.zip" />-->
   </target>
 
   <target name="javahelp.checkout" depends="init">
@@ -55,17 +47,14 @@
     </exec>
   </target>
 
-  <target name="jdic.build" depends="jdic.checkout">
-    <echo message="Attempting to build jdic. Keep your fingers crossed." />
-
-  </target>
-
   <target name="jdic.checkout" depends="init">
     <echo message="Checking out jdic." />
     <cvs.checkout repo="${jdic.cvs.url}"
         tag="${jdic.cvs.tag}"
         module="jdic"
         dest="jdic" />
+    <copy file="javahelp_jdic.txt"
+        tofile="${external.dir}/jdic/GLASSFISH_SOURCE_README.txt" />
   </target>
 
 </project>
