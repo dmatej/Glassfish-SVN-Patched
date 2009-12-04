@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<project name="JMS-API source integration" default="build" basedir=".">
+
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="build.xml"/>
+    <import file="build-taskdefs.xml"/>
+    <target name="build" depends="init">
+        <antcall target="jms.api.build" />
+    </target>
+    
+    <!-- checkout jms-api source and build -->
+    <target name="jms.api.checkout" depends="init">
+       <echo message="checkout JMS-API from ${jms-api.src.zip.url}."/>
+       <exec executable="wget" dir="${external.dir}" failonerror="true">
+          <arg line="${jms-api.src.zip.url}" />
+   	   </exec>
+       <echo message="expand JMS-API zip"/>
+       <mkdir dir="${external.dir}/jms-api" /> 
+       <unzip src="${external.dir}/${jms-api.src.zip}" dest="${external.dir}/jms-api"/>
+    </target>
+       
+    <target name="jms.api.build" depends="jms.api.checkout">
+       <echo message="building JMS API"/>
+       <echo message="Creating ${external.dir}/jms-api/target"/>
+       <mkdir dir="${external.dir}/jms-api/target"/>
+       <javac srcdir="${external.dir}/jms-api" 
+              destdir="${external.dir}/jms-api/target"/>
+       <jar destfile="${external.dir}/jms-api/${jms-api.zip.artifact}.jar" basedir="${external.dir}/jms-api/target"/>
+       <mvn.publish.local
+             jar="${external.dir}/jms-api/${jms-api.zip.artifact}.jar" 
+             mvngroup="org.glassfish"
+             mvnartid="jms-api"
+             mvnversion="${jms-api.version}"/>
+</target>
+</project>
