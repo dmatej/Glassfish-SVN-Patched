@@ -22,13 +22,24 @@
     </target>
 
     <target name="jsr311-api.build" depends="jsr311-api.checkout">
+        <!-- backup plugin-registry.xml file if it exists -->
+        <delete failonerror="false" file="${external.dir}/jsr311-api/plugin-registry.xml"/> 
+        <copy failonerror="false" file="${maven.repo.local}/../plugin-registry.xml" todir="${external.dir}/jsr311-api"/>
+        <!-- and install a new one to make the jsr311-api build work -->
+        <copy overwrite="true" file="${basedir}/aux/plugin-registry.xml" todir="${maven.repo.local}/.."/>
         <!-- build jsr311-api -->
         <exec executable="mvn" dir="${external.dir}/jsr311-api" failonerror="true" >
+	        <arg line="-s ${basedir}/aux/jsr311-settings.xml" />
+	        <arg line="-npu" />
+	        <arg line="-DusePluginRegistry=true" />
 	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
 	        <arg line="-Dmaven.test.skip=true" />
           <arg line="install" />
           <env key="JAVA_HOME" value="${JDK_1.5}" />
 	      </exec>
+        <!-- restore original plugin-registry file -->
+        <delete file="${maven.repo.local}/../plugin-registry.xml"/>
+        <copy failonerror="false" file="${external.dir}/jsr311-api/plugin-registry.xml" todir="${maven.repo.local}/.."/>
    </target>
 
 </project>
