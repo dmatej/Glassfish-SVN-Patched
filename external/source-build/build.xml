@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="GFv3 source integration" default="build.all" basedir=".">
+<project name="GFv3 source integration" default="build.all" basedir="." xmlns:artifact="urn:maven-artifact-ant" >
 
     <property file="${basedir}/build.properties"/>
     <property name="external.dir" value="${basedir}/external" />
@@ -153,41 +153,84 @@ script.xml requires native build
 
 
     <target name="eclipselink.project" >
-        <!-- Checkout Eclipselink from internal repo -->
+				<!--** Checkout Eclipselink from internal repo **-->
         <exec executable="svn" dir="${external.dir}" failonerror="true" >
 			<arg line="checkout" />
 			<arg line="${eclipselink.svn.url}" />
 			<arg line="eclipselink" />
 		</exec>
-		<!-- delete sources that are no used by GFv3 -->
-		<!-- We are checking them into internal source repo just in case they are needed later on-->
-<!--
-		TODO check with Jane what is wrong with following
-		<delete>
-			<dirset dir="${external.dir}/eclipselink" includes="dbws, documentation, project-admin, examples, moxy, sdo, utils"/>
-		</delete>
--->		
-		<delete dir="${external.dir}/eclipselink/dbws"/>
-		<delete dir="${external.dir}/eclipselink/documentation"/>
-		<delete dir="${external.dir}/eclipselink/project-admin"/>
-		<delete dir="${external.dir}/eclipselink/examples"/>
-		<delete dir="${external.dir}/eclipselink/moxy"/>
-		<delete dir="${external.dir}/eclipselink/sdo"/>
-		<delete dir="${external.dir}/eclipselink/utils"/>
-<!--
-		<delete>
-			<fileset dir="${external.dir}/eclipselink/plugins" excludes="javax.jms*, javax.mail*.jar, javax.resource*.jar, javax.transaction*.jar, osgi.cmpn_*.jar, osgi.core.zip"/>
-		</delete>
--->
+
+		<!-- TODO check with Jane should this be moved outside eclipselink.project task ? -->
+		<path id="maven-ant-tasks.classpath" path="${maven.ant.tasks.jar}" />
+		<typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="urn:maven-artifact-ant" classpathref="maven-ant-tasks.classpath" />
+		
+		<artifact:dependencies pathId="bnd.classpath">
+			   <remoteRepository url="${bnd.repository}"/>
+			   <dependency groupId="${bnd.groupid}" artifactId="${bnd.artifactid}" version="${bnd.version}" scope="compile"/>
+		</artifact:dependencies>
+		
+		<!-- 
+		TODO check with Jane why following does not work. ant translates it to ${${bnd.groupid}:${bnd.artifactid}:jar} Interestingly the first $ sign inside ${} is always interpreted as literal. 
+		<echo message="bnd path = ${${bnd.groupid}:${bnd.artifactid}:jar}" />
+		-->
+		
+
+        <property name="eclipselink.dir" value ="${external.dir}/eclipselink"/>
+		<property name="plugins.dir" value ="${eclipselink.dir}/plugins"/>
+		
+		
+				<!--** Delete sources not used by GFv3 **-->
+        <!-- They are checked into source build repo just in case they are needed later on-->
+        <delete dir="${eclipselink.dir}/dbws"/>
+        <delete dir="${eclipselink.dir}/documentation"/>
+        <delete dir="${eclipselink.dir}/project-admin"/>
+        <delete dir="${eclipselink.dir}/examples"/>
+        <delete dir="${eclipselink.dir}/moxy"/>
+        <delete dir="${eclipselink.dir}/sdo"/>
+        <delete dir="${eclipselink.dir}/utils"/>
+        
+				<!--**- Delete binaries not used by GFv3 **-->
+		<delete includeemptydirs = "true">
+		 <fileset dir="${plugins.dir}" excludes="org.eclipse.persistence.antlr/**/*, org.eclipse.persistence.asm/**/*"/>
+        </delete>
+
+
+				<!--** Copy binaries built from source build to EclipseLink workspace to compile against **-->
+		<!-- It would have been nice to pass reference to these binaries to EclipseLink. Unfortunately EclipseLink build scripts have the names hard coded
+		     for example see eclipselink/build.properties#eclipselink.core.depend
+	     -->
+		<property name = "javax.jms.jar.name" value = "javax.jms_1.1.0.jar"/>
+		<property name = "javax.mail.jar.name" value = "javax.mail_1.4.0.v200804091730.jar"/>
+		<property name = "javax.resource.jar.name" value = "javax.resource_1.5.0.jar"/>
+		<property name = "javax.transaction.jar.name" value = "javax.transaction_1.1.0.jar"/>
+		<property name = "osgi.cmpn.jar.name" value = "osgi.cmpn_4.1.0.jar"/>
+		<property name = "osgi.core.jar.name" value = "osgi.core.zip"/>
+		<copy file="${maven.repo.local}/${jms-api.mvn.path}" tofile="${plugins.dir}/${javax.jms.jar.name}" />
+		<copy file="${maven.repo.local}/${mail.mvn.path}" 		   tofile="${plugins.dir}/${javax.mail.jar.name}" />
+		<copy file="${maven.repo.local}/${connector-api.mvn.path}" tofile="${plugins.dir}/${javax.resource.jar.name}" />
+		<copy file="${maven.repo.local}/${transaction-api.mvn.path}" tofile="${plugins.dir}/${javax.transaction.jar.name}" />
+		<copy file="${maven.repo.local}/${felix.mvn.path}" tofile="${plugins.dir}/${osgi.core.jar.name}" />
+		<copy file="${maven.repo.local}/${osgi-cmpn.mvn.path}" tofile="${plugins.dir}/${osgi.cmpn.jar.name}" />
+		
+		
+				<!--** Call into EclipseLink build scripts to compile and upload to mave **-->
+		<!-- EclipseLink build scripts expect the build to be run with base 
+		     dir set to where eclipselink is checked out. Convert path to 
+			 dependencies to full path before passing them to Eclipseink scripts
+		-->
+		<property name="maven.ant.tasks.jar.fullpath" location="${maven.ant.tasks.jar}"/>
 		<exec executable="ant" failonerror="true" newenvironment="false" >
-            <!-- <arg line="-verbose" />  -->
-			<arg line="-f eclipselink.xml" />
-			<!-- parameters required to drive eclipselink build -->		
-			<arg line="-Dbasedir=${external.dir}/eclipselink" />
-                        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-			<arg line="-Declipselink.release.version=${eclipselink.release.version}" />
-			<arg line="-Declipselink.version.qualifier=${eclipselink.version.qualifier}" />
+            <!--<arg line="-verbose" /> -->
+            <arg line="-f eclipselink.xml" />
+            <!-- parameters required to drive eclipselink build -->     
+            <arg line="-Dbasedir=${eclipselink.dir}" />
+            <arg line="-Dmaven.repo.local=${project.maven.repo}" />
+			<arg line="-Dmaven.ant.tasks.jar=${maven.ant.tasks.jar.fullpath}" />
+            <arg line="-Dbnd.path=${maven.repo.local}/${bnd.mvn.path}" />
+            <arg line="-Declipselink.release.version=${eclipselink.release.version}" />
+            <arg line="-Declipselink.version.qualifier=${eclipselink.version.qualifier}" />
             <arg line="build-and-upload-to-maven" />
+            <!-- <arg line="build" /> -->
         </exec>
     </target>
 

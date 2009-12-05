@@ -1,137 +1,198 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
  <!-- This script assumes it is executing with basedir set to ${stage}/eclipselink. -->
-<project name="build-from-source" default="build" >
+<project name="build-from-source" xmlns:artifact="urn:maven-artifact-ant" >
 
     <!-- source build.properties from eclipselink to initialize variables required by build below -->
     <property file="build.properties"/>          
-    
-    <target name="build-and-upload-to-maven" depends = "build, upload-to-maven"/>
+	
+    <target name="build-and-upload-to-maven" depends = "build, upload-maven-all"/>
 	<target name="build">
 
 		<!-- Properties used by eclipselink build scripts -->
 		<property name="version.qualifier"          value="${eclipselink.version.qualifier}"/> <!-- Used by EL build scripts for naming jars and stamping Version.java -->
 		<property name="implementation.vendor" value="Glassfish Project"/> <!-- Used in stamping MANIFEST attribute Implementation-Vendor, Bundle-Vendor -->
-
+		<tstamp>
+		   <format property="build.date" pattern="yyyyMMdd"/>
+		   <format property="build.time" pattern="HHmm"/>
+		</tstamp>
+        <!-- build.type is used to determine maven version. It is expected to be RELEASE for final release and name of the milestone for milestone releases -->
+		<!-- set build.type to eclipselink.version.qualifier if it is  defined in build.properties else to RELEASE -->
+		<condition property="build.type" value="RELEASE" else="${eclipselink.version.qualifier}">
+			<length string="${eclipselink.version.qualifier}" trim="true" length="0" />
+        </condition>
+		
         <ant antfile="build.xml" dir="${jpa.prototype}"               target="build"/>
         <ant antfile="build.xml" dir="${eclipselink.asm}"             target="build"/>
         <ant antfile="build.xml" dir="${eclipselink.antlr}"           target="build"/>
         <ant antfile="build.xml" dir="${eclipselink.core}"            target="build"/>
         <ant antfile="build.xml" dir="${eclipselink.extension.oracle}" target="repackage"/>
         <ant antfile="build.xml" dir="${eclipselink.jpa}"             target="build"/>
+		<ant antfile="build.xml" dir="${eclipselink.modelgen}"        target="build"/>
     </target>
-    
-    <target name = "upload-to-maven-init">
-<!--         <fail message="Cannot upload to Maven without a release.version defined!" unless="release.version"/> -->
-<!--        <fail message="Cannot upload to Maven without a build.type defined!"      unless="build.type"/> -->
 
-        <echo message="eclipselink.version.qualifier = ${eclipselink.version.qualifier}"/>
-		<condition property="is.release">
-				<length string="${eclipselink.version.qualifier}" trim="true" length="0" />
-		</condition>
-		
-        <condition property="version.string" value="${eclipselink.release.version}" 
-                                              else="${eclipselink.release.version}.${eclipselink.version.qualifier}">
-            <istrue value="${is.release}" />
-        </condition>
-		
-        <condition property="maven.version.string" value="${eclipselink.release.version}" 
-                                              else="${eclipselink.release.version}-${eclipselink.version.qualifier}">
-            <istrue value="${is.release}" />
-        </condition>
 
+	<target name = "upload-maven-init">
+		<path id="maven-ant-tasks.classpath" path="${maven.ant.tasks.jar}" />
+		<typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="urn:maven-artifact-ant" classpathref="maven-ant-tasks.classpath" />
+		
+
+		<!-- The repository where maven artifacts will be uploaded -->
+		<artifact:remoteRepository id="eclipselink.repository" url="${project.maven.repo}" /> 
+
+		<fail message="Cannot upload to Maven without a release.version defined!" unless="release.version"/>
+        <fail message="Cannot upload to Maven without a build.date defined!"      unless="build.date"/>
+        <fail message="Cannot upload to Maven without a build.type defined!"      unless="build.type"/>
+
+        <property name="version.string" value="${release.version}.${eclipselink.version.qualifier}"/>
+
+        <!-- Set maven.version appropriately depending upon ${build.type}.        -->
+        <!--    variable should only be used for maven version element in POM.    -->
+        <condition property="maven.version" value="${release.version}-${build.type}">
+            <equals arg1="${build.type}" arg2="SNAPSHOT"/>
+        </condition>
+        <condition property="maven.version" value="${release.version}">
+            <equals arg1="${build.type}" arg2="RELEASE"/>
+        </condition>
+        <property name="maven.version" value="${release.version}-${build.type}"/>
+
+        <echo message="release.version: ${release.version}"/>
+        <echo message="build.date:      ${build.date}"/>
+        <echo message="build.type:      ${build.type}"/>
+        <echo message="svn.revision:    ${svn.revision}"/>
         <echo message="version.string:  ${version.string}"/>
-        <echo message="maven.version.string:   ${maven.version.string}"/>
+        <echo message="maven.version:   ${maven.version}"/>
+
+        <!-- Setup static dependency definitions -->
+        <!--  Would be nice to setup in the beginning, but the library definitions need version.string defined -->
+        
+        <!-- These need to be used in order -->
+        <property name="deps.head" value="&lt;dependencies&gt;"/>
+        <property name="dep.grp"   value="&lt;dependency&gt;&lt;groupId&gt;"/>
+        <property name="dep.art"   value="&lt;/groupId&gt;&lt;artifactId&gt;"/>
+        <property name="dep.ver"   value="&lt;/artifactId&gt;&lt;version&gt;"/>
+        <property name="dep.type"  value="&lt;/version&gt;&lt;type&gt;"/>
+        <property name="dep.scope" value="&lt;/type&gt;&lt;scope&gt;"/>
+        <property name="dep.opt"   value="&lt;/scope&gt;&lt;optional&gt;"/>
+        <property name="dep.foot"  value="&lt;/optional&gt;&lt;/dependency&gt;"/>
+        <property name="deps.foot" value="&lt;/dependencies&gt;"/>
+
+        <!-- These use above, in order, to define a single library for an artifact dependency -->
+        <property name="dep.antlr"         value="${dep.grp}org.eclipse.persistence${dep.art}org.eclipse.persistence.antlr${dep.ver}${maven.version}${dep.type}jar${dep.scope}compile${dep.opt}false${dep.foot}"/>
+        <property name="dep.asm"           value="${dep.grp}org.eclipse.persistence${dep.art}org.eclipse.persistence.asm${dep.ver}${maven.version}${dep.type}jar${dep.scope}compile${dep.opt}false${dep.foot}"/>
+        <property name="dep.core"          value="${dep.grp}org.eclipse.persistence${dep.art}org.eclipse.persistence.core${dep.ver}${maven.version}${dep.type}jar${dep.scope}compile${dep.opt}false${dep.foot}"/>
+        <property name="dep.oracle"        value="${dep.grp}org.eclipse.persistence${dep.art}org.eclipse.persistence.oracle${dep.ver}${maven.version}${dep.type}jar${dep.scope}compile${dep.opt}false${dep.foot}"/>
+        <property name="dep.jpa"           value="${dep.grp}org.eclipse.persistence${dep.art}org.eclipse.persistence.jpa${dep.ver}${maven.version}${dep.type}jar${dep.scope}compile${dep.opt}false${dep.foot}"/>
+        <property name="dep.jpa.modelgen"  value="${dep.grp}org.eclipse.persistence${dep.art}org.eclipse.persistence.jpa.modelgen${dep.ver}${maven.version}${dep.type}jar${dep.scope}compile${dep.opt}false${dep.foot}"/>
+		<property name="dep.jpa.processor" value="${dep.grp}org.eclipse.persistence${dep.art}org.eclipse.persistence.jpa.modelgen.processor${dep.ver}${maven.version}${dep.type}jar${dep.scope}runtime${dep.opt}false${dep.foot}"/>		
+        <property name="dep.persistence2"  value="${dep.grp}org.eclipse.persistence${dep.art}javax.persistence${dep.ver}2.0.0.v200911271158${dep.type}jar${dep.scope}compile${dep.opt}false${dep.foot}"/>
+
+        <!-- These define the dependency block for a given artifact -->
+        <!-- * JPA does have a dependency upon javax.persistence, but it is left unstated because while 2.0 functionality -->
+        <!--   depends upon javax.persistence_2.0.0 jpa 1.0 functionality can run with just javax.persistence_1.0         -->
+        <!-- * The modelgen processor is a jar containing a single data resource used by the compiler to establish a      -->
+        <!--   canonical modelgen processor during compilation. It has no real dependencies, nor is anything really       -->
+        <!--   dependant upon it, but it is needed for this compiler functionality to work. (think of it as a compiler    -->
+        <!--   add-on). It will need to be downloaded independently for this feature (modelgen) to work.                  -->
+        <property name="core.dependencies" value="${deps.head}${dep.asm}${dep.antlr}${deps.foot}"/>
+        <property name="oracle.dependencies" value="${deps.head}${dep.asm}${dep.core}${deps.foot}"/>
+        <property name="jpa.dependencies" value="${deps.head}${dep.asm}${dep.core}${deps.foot}"/>
+        <property name="modelgen.dependencies" value="${deps.head}${dep.core}${dep.jpa}${dep.jpa.processor}${deps.foot}"/>
     </target>
 
-   <target name = "upload-to-maven" depends = "upload-to-maven-init">
-     <!-- call upload for each artifact we want to upload -->
+    <target name = "upload-maven-all" depends = "upload-maven-init">
+        <!-- call upload for each artifact we want to upload -->
         <antcall target="upload-artifact">
             <param name="groupId" value="org.eclipse.persistence"/>
-            <param name="artifactId" value="org.eclipse.persistence.core"/>
-            <param name="artifactVersion" value="${maven.version.string} "/>
-            <param name="artifact" value="${eclipselink.plugins}/${eclipselink.core.bndl.prefix}_${version.string}.jar"/>
-            <param name="artifactSrc" value="${eclipselink.plugins}/${eclipselink.core.bndl.prefix}.source_${version.string}.jar"/>
-            <param name="artifactName" value="EclipseLink Core"/>
-        </antcall>
-        <antcall target="upload-artifact">
-            <param name="groupId" value="org.eclipse.persistence"/>
-            <param name="artifactId" value="org.eclipse.persistence.jpa"/>
-            <param name="artifactVersion" value="${maven.version.string} "/>
-            <param name="artifact" value="${eclipselink.plugins}/${eclipselink.jpa.bndl.prefix}_${version.string}.jar"/>
-            <param name="artifactSrc" value="${eclipselink.plugins}/${eclipselink.jpa.bndl.prefix}.source_${version.string}.jar"/>
-            <param name="artifactName" value="EclipseLink JPA"/>
-        </antcall>
-        <antcall target="upload-artifact">
-            <param name="groupId" value="org.eclipse.persistence"/>
-            <param name="artifactId" value="org.eclipse.persistence.oracle"/>
-            <param name="artifactVersion" value="${maven.version.string} "/>
-            <param name="artifact" value="${eclipselink.plugins}/${eclipselink.extension.oracle.bndl.prefix}_${version.string}.jar"/>
-            <param name="artifactSrc" value="${eclipselink.plugins}/${eclipselink.extension.oracle.bndl.prefix}.source_${version.string}.jar"/>
-            <param name="artifactName" value="EclipseLink Oracle Extensions"/>
+            <param name="artifactId" value="javax.persistence"/>
+            <param name="artifactVersion" value="2.0.0"/>
+            <param name="artifact" value="${eclipselink.jpa.base}/${plugins.dir}/javax.persistence_2.0.0.v200911271158.jar"/>
+            <param name="artifactSrc" value="${eclipselink.jpa.base}/${plugins.dir}/javax.persistence.source_2.0.0.v200911271158.jar"/>
+            <param name="artifactName" value="Javax Persistence API 2.0"/>
+            <param name="dependencies" value=""/>
         </antcall>
         <antcall target="upload-artifact">
             <param name="groupId" value="org.eclipse.persistence"/>
             <param name="artifactId" value="org.eclipse.persistence.antlr"/>
-            <param name="artifactVersion" value="${maven.version.string} "/>
+            <param name="artifactVersion" value="${maven.version}"/>
             <param name="artifact" value="${eclipselink.plugins}/${eclipselink.antlr.bndl.prefix}_${version.string}.jar"/>
             <param name="artifactSrc" value="${eclipselink.plugins}/${eclipselink.antlr.bndl.prefix}.source_${version.string}.jar"/>
             <param name="artifactName" value="EclipseLink ANTLR"/>
+            <param name="dependencies" value=""/>
         </antcall>
         <antcall target="upload-artifact">
             <param name="groupId" value="org.eclipse.persistence"/>
             <param name="artifactId" value="org.eclipse.persistence.asm"/>
-            <param name="artifactVersion" value="${maven.version.string} "/>
+            <param name="artifactVersion" value="${maven.version}"/>
             <param name="artifact" value="${eclipselink.plugins}/${eclipselink.asm.bndl.prefix}_${version.string}.jar"/>
             <param name="artifactSrc" value="${eclipselink.plugins}/${eclipselink.asm.bndl.prefix}.source_${version.string}.jar"/>
             <param name="artifactName" value="EclipseLink ASM"/>
+            <param name="dependencies" value=""/>
         </antcall>
         <antcall target="upload-artifact">
             <param name="groupId" value="org.eclipse.persistence"/>
-            <param name="artifactId" value="javax.persistence"/>
-            <param name="artifactVersion" value="${maven.version.string} "/>
-            <param name="artifact" value="${eclipselink.jpa.base}/${plugins.dir}/javax.persistence_2.0_preview.jar"/>
-            <param name="artifactSrc" value="${eclipselink.jpa.base}/${plugins.dir}/javax.persistence.source_2.0_preview.jar"/>
-            <param name="artifactName" value="Javax Persistence 2.0 Preview"/>
+            <param name="artifactId" value="org.eclipse.persistence.core"/>
+            <param name="artifactVersion" value="${maven.version}"/>
+            <param name="artifact" value="${eclipselink.plugins}/${eclipselink.core.bndl.prefix}_${version.string}.jar"/>
+            <param name="artifactSrc" value="${eclipselink.plugins}/${eclipselink.core.bndl.prefix}.source_${version.string}.jar"/>
+            <param name="artifactName" value="EclipseLink Core"/>
+            <param name="dependencies" value="${core.dependencies}"/>
         </antcall>
-   </target>
-    
-    
-    <!-- Uploads a single artifact to maven repository -->
-    <target name="upload-artifact" >
-      <!-- Copy pom.template to pom.xml filtering various properties -->
-      <copy file="pom.xml.template" tofile="pom.xml" overwrite="true">
-        <filterset>
-          <filter token="groupId"      value="${groupId}"/>
-          <filter token="version"      value="${artifactVersion}"/>
-          <filter token="svn.revision" value="${svn.revision}"/>
-          <filter token="artifactId"   value="${artifactId}"/>
-          <filter token="artifactName" value="${artifactName}"/>
-         </filterset>
-      </copy>
+        <antcall target="upload-artifact">
+            <param name="groupId" value="org.eclipse.persistence"/>
+            <param name="artifactId" value="org.eclipse.persistence.oracle"/>
+            <param name="artifactVersion" value="${maven.version}"/>
+            <param name="artifact" value="${eclipselink.plugins}/${eclipselink.oracle.bndl.prefix}_${version.string}.jar"/>
+            <param name="artifactSrc" value="${eclipselink.plugins}/${eclipselink.oracle.bndl.prefix}.source_${version.string}.jar"/>
+            <param name="artifactName" value="EclipseLink Oracle Extensions"/>
+            <param name="dependencies" value="${oracle.dependencies}"/>
+        </antcall>
+        <antcall target="upload-artifact">
+            <param name="groupId" value="org.eclipse.persistence"/>
+            <param name="artifactId" value="org.eclipse.persistence.jpa"/>
+            <param name="artifactVersion" value="${maven.version}"/>
+            <param name="artifact" value="${eclipselink.plugins}/${eclipselink.jpa.bndl.prefix}_${version.string}.jar"/>
+            <param name="artifactSrc" value="${eclipselink.plugins}/${eclipselink.jpa.bndl.prefix}.source_${version.string}.jar"/>
+            <param name="artifactName" value="EclipseLink JPA"/>
+            <param name="dependencies" value="${jpa.dependencies}"/>
+        </antcall>
+        <antcall target="upload-artifact">
+            <param name="groupId" value="org.eclipse.persistence"/>
+            <param name="artifactId" value="org.eclipse.persistence.jpa.modelgen"/>
+            <param name="artifactVersion" value="${maven.version}"/>
+            <param name="artifact" value="${eclipselink.plugins}/${eclipselink.modelgen.bndl.prefix}_${version.string}.jar"/>
+            <param name="artifactSrc" value="${eclipselink.plugins}/${eclipselink.modelgen.bndl.prefix}.source_${version.string}.jar"/>
+            <param name="artifactName" value="EclipseLink JPA Modelgen (non-OSGi)"/>
+            <param name="dependencies" value="${modelgen.dependencies}"/>
+        </antcall>
+    </target>
 
-      <!-- Delploy the jar to maven repository along with sources -->
-<!--    TODO Need to work with Jane to integrate maven ant tasks
-      <artifact:pom id="maven.project" file="pom.xml" />
-      <artifact:deploy file="${artifact}">
-        <remoteRepository refid="eclipselink.repository"/>
-        <pom refid="maven.project"/>
-        <artifact:attach file="${artifactSrc}" classifier="sources"/>
-      </artifact:deploy>
+    <target name="prepare-pom">
+        <!-- Copy pom.template to pom.xml filtering various properties -->
+        <copy file="pom.xml.template" tofile="pom.xml" overwrite="true">
+          <filterset>
+            <filter token="groupId"      value="${groupId}"/>
+            <filter token="version"      value="${artifactVersion}"/>
+            <filter token="svn.revision" value="${svn.revision}"/>
+            <filter token="artifactId"   value="${artifactId}"/>
+            <filter token="artifactName" value="${artifactName}"/>
+            <filter token="dependencies" value="${dependencies}"/>
+           </filterset>
+        </copy>
+     </target>
 
--->
-        <exec executable="mvn"  failonerror="true" >
-	      <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-          <arg line="install:install-file" />
-          <arg line="-Dfile=${artifact}" />
-		  <arg line="-Dsources=${artifactSrc}" />
-          <arg line="-DpomFile=pom.xml" />
-          <arg line="-DlocalRepositoryPath=${maven.repo.local}" />
-	   </exec>
+    <!-- Uploads a single artifact & source to maven repository -->
+    <target name="upload-artifact" depends="prepare-pom">
+     	<!-- Delploy the jar to maven repository along with sources -->
+        <artifact:pom id="maven.project" file="pom.xml" />
+        <artifact:deploy file="${artifact}">
+          <remoteRepository refid="eclipselink.repository"/>
+          <pom refid="maven.project"/>
+          <artifact:attach file="${artifactSrc}" classifier="sources"/>
+        </artifact:deploy>
 
-      <!-- cleanup -->
-      <delete file="pom.xml"/>
-
+        <!-- cleanup -->
+        <delete file="pom.xml"/>
     </target>
 
     
