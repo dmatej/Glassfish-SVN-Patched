@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="JavaMail source integration" default="build" basedir=".">
+
+    <import file="build.xml"/>
+    <import file="build-taskdefs.xml"/>
+    
+    <target name="build" depends="init">
+        <antcall target="mail.build" />
+    </target>
+
+    <target name="mail.checkout" unless="nocheckout">
+        <delete dir="${external.dir}/mail"/>
+        <hg.clone repo="${mail.hg.url}" tag="${mail.hg.tag}" dest="mail"/>
+    </target>
+    
+    <target name="mail.build" depends="mail.checkout" >
+        <delete>
+            <fileset dir="${external.dir}/mail" includes="**/*.jar"/>
+        </delete>
+        
+        <exec executable="mvn" failonerror="true" >
+            <arg line="-f ${external.dir}/mail/pom.xml -Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="clean install" />
+            <arg line="-DskipTests"/>
+	</exec>
+    </target>
+
+    <target name="mail.publish" >
+        <exec executable="mvn" dir="${external.dir}/mail" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+	    <arg line="-DaltDeploymentRepository=rator.sfbay::default::dav:http://glassfish-maven-repository.sfbay/maven/repositories/glassfish/" />
+            <arg line="deploy" />
+	</exec>
+    </target>
+</project>
