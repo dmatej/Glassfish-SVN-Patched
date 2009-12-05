@@ -14,8 +14,10 @@
     <target name="build.all" depends="init">
         <echo message="external directory: ${external.dir}"/>
         <echo message="maven.repo.local: ${maven.repo.local}"/>
-
+        <echo message="v3.dir: ${v3.dir}"/>
+        <antcall target="v3.modules" />
 	<ant antfile="felix-build.xml" target="build" />
+        <ant antfile="servlet-2.5-build.xml" />
 	<antcall target="eclipselink.project" />
         <antcall target="jaxb.project" />
         <antcall target="management-api.project"/>
@@ -44,6 +46,7 @@ comment this module for now.
 	<ant antfile="jsr311-api.xml" target="build" /> 
 -->
         <ant antfile="mq.xml" target="build" /> 
+        <ant antfile="javax-jms.xml" target="build" /> 
 	<ant antfile="jersey.xml" target="build" /> 
 	<ant antfile="woodstock.xml" target="build" /> 
 	<ant antfile="jsftemplating.xml" target="build" /> 
@@ -51,17 +54,34 @@ comment this module for now.
 	<ant antfile="solarisrealm.xml" target="build" /> 
 	<ant antfile="jaxr-ra.xml" target="build" /> 
 	<ant antfile="slf4j.xml" target="build" /> 
+<!--
+wsit build is failing so commenting out for now.
         <antcall target="wsit.project" />
+-->
 
     <!-- Must come after jsp and wsit -->
     <ant antfile="javahelp.xml" target="build" />
     
         <!-- scripting(jruby) integrates in to glassfish v3 as binary. It depends on different v3 apis 
              as well as grizzly. Also nothing in v3 depends on it so this MUST be last one to build.
+
         -->
+<!-- 
+script.xml requires native build 
         <ant antfile="scripting.xml" target="build" />
+-->
         <ant antfile="opendmk.xml" target="build" />
         <ant antfile="btrace.xml" target="build" />
+    </target>
+
+    <!-- build some v3 modules since the external modules have dependencies on them -->
+    <target name="v3.modules" if="v3.dir" >
+        <exec executable="ant" failonerror="true" newenvironment="false" >
+            <arg line="-f v3-build.xml" />
+            <arg line="build" />
+            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="-Dv3.dir=${v3.dir}" />
+        </exec>
     </target>
     
      <target name="management-api.project" >
