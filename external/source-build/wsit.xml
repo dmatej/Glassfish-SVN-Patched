@@ -124,10 +124,17 @@
         <delete>
             <fileset dir="${external.dir}/xerces" includes="**/*.jar">
                 <exclude name="**/xjavac*.jar*"/>
+                <exclude name="**/xml-apis*.jar*"/>
             </fileset>
         </delete>
         <copy file="${maven.repo.local}/${resolver.mvn.path}" tofile="${external.dir}/xerces/tools/resolver.jar"/>
-        <subant buildpath="${external.dir}/xerces" target="jar"/>
+        <exec executable="ant" dir="${external.dir}/xerces" failonerror="true">
+            <arg line="clean jar" />
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.4 -Djavac.source=1.4" />
+            <arg line="${cpath}"/>
+            <env key="JAVA_HOME" value="${JDK_1.4}" />
+        </exec>
     </target>
     <target name="xerces.publish">
         <mvn.publish.local jar="${external.dir}/xerces/build/xercesImpl.jar" mvngroup="org.apache.xerces" mvnartid="xercesImpl" mvnversion="${xerces.version}"/>
@@ -341,9 +348,13 @@
         <delete>
             <fileset dir="${external.dir}/xmlsec" includes="**/*.jar"/>
         </delete>
+        <mkdir dir="${external.dir}/xmlsec/samples"/>
+        <mkdir dir="${external.dir}/xmlsec/test"/>
         <subant buildpath="${external.dir}/xmlsec" target="build.jar">
             <property name="lib.junit" value="${maven.repo.local}/${junit.mvn.path}"/>
             <property name="lib.xerces.1" value="${xerces.mvn.path}"/>
+            <property name="dir.build.samples" value="${external.dir}/xmlsec/samples"/>
+            <property name="dir.build.test" value="${external.dir}/xmlsec/test"/>
         </subant>
     </target>
     <target name="xmlsec.clean">
