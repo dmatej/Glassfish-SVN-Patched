@@ -14,18 +14,14 @@
     <target name="build.all" depends="init">
         <echo message="external directory: ${external.dir}"/>
         <echo message="maven.repo.local: ${maven.repo.local}"/>
-        <echo message="v3.dir: ${v3.dir}"/>
-        <antcall target="v3.modules" />
 	<ant antfile="felix-build.xml" target="build" />
         <ant antfile="servlet-2.5-build.xml" />
-	<antcall target="eclipselink.project" />
         <antcall target="jaxb.project" />
         <antcall target="management-api.project"/>
         <antcall target="gmbal.project"/>
         <antcall target="gfcorba.project"/>
 <!--
 bean-validator source build is failing so commenting out for now.
-
         <ant antfile="bean-validator.xml" target="build" />
 -->
 	<ant antfile="tiger-types.xml" target="build" />
@@ -33,9 +29,6 @@ bean-validator source build is failing so commenting out for now.
 	<ant antfile="bcel.xml" target="build" />
 	<ant antfile="jakarta-regexp.xml" target="build" />
 	<ant antfile="hk2.xml" target="build" />
-	<ant antfile="uel.xml" target="build" />
-	<ant antfile="jsp.xml" target="build" />
-	<ant antfile="jstl.xml" target="build" />
 	<ant antfile="grizzly.xml" target="build" />
 	<ant antfile="mojarra.xml" target="build" />
 <!--
@@ -49,7 +42,7 @@ comment this module for now.
         <ant antfile="mq.xml" target="build" /> 
         <ant antfile="javax-jms.xml" target="build" /> 
 <!--
-jersey build is failing so temporary commented out
+jersey build is failing so temporary commenting out
 	<ant antfile="jersey.xml" target="build" /> 
 -->
 	<ant antfile="woodstock.xml" target="build" /> 
@@ -59,17 +52,19 @@ jersey build is failing so temporary commented out
 	<ant antfile="jaxr-ra.xml" target="build" /> 
 	<ant antfile="slf4j.xml" target="build" /> 
         <ant antfile="mail.xml" target="build" />
+
+        <echo message="v3.dir: ${v3.dir}"/>
+        <antcall target="v3.modules" />
+	<antcall target="eclipselink.project" />
 <!--
-wsit build is failing so commenting out for now.
+wsit build is failing so comment out for now.
         <antcall target="wsit.project" />
 -->
-
-    <!-- Must come after jsp and wsit -->
-    <ant antfile="javahelp.xml" target="build" />
+        <!-- Must come after jsp and wsit -->
+        <ant antfile="javahelp.xml" target="build" />
     
         <!-- scripting(jruby) integrates in to glassfish v3 as binary. It depends on different v3 apis 
              as well as grizzly. Also nothing in v3 depends on it so this MUST be last one to build.
-
         -->
 <!-- 
 script.xml requires native build 
@@ -77,7 +72,11 @@ script.xml requires native build
 -->
         <ant antfile="opendmk.xml" target="build" />
         <ant antfile="btrace.xml" target="build" />
+	<ant antfile="uel.xml" target="build" />
+	<ant antfile="jsp.xml" target="build" />
+	<ant antfile="jstl.xml" target="build" />
     </target>
+
 
     <!-- build some v3 modules since the external modules have dependencies on them -->
     <target name="v3.modules" if="v3.dir" >
@@ -151,23 +150,16 @@ script.xml requires native build
         </exec>
     </target>
 
-
     <target name="eclipselink.project" >
 				<!--** Checkout Eclipselink from internal repo **-->
+<!--
         <exec executable="svn" dir="${external.dir}" failonerror="true" >
 			<arg line="checkout" />
 			<arg line="${eclipselink.svn.url}" />
 			<arg line="eclipselink" />
 		</exec>
-
-		<!-- TODO check with Jane should this be moved outside eclipselink.project task ? -->
-		<path id="maven-ant-tasks.classpath" path="${maven.ant.tasks.jar}" />
-		<typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="urn:maven-artifact-ant" classpathref="maven-ant-tasks.classpath" />
-		
-		<artifact:dependencies pathId="bnd.classpath">
-			   <remoteRepository url="${bnd.repository}"/>
-			   <dependency groupId="${bnd.groupid}" artifactId="${bnd.artifactid}" version="${bnd.version}" scope="compile"/>
-		</artifact:dependencies>
+-->
+	<ant antfile="build-taskdefs.xml" target="bnd.download" />
 		
 		<!-- 
 		TODO check with Jane why following does not work. ant translates it to ${${bnd.groupid}:${bnd.artifactid}:jar} Interestingly the first $ sign inside ${} is always interpreted as literal. 
