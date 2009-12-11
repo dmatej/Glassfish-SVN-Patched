@@ -10,7 +10,6 @@
     </target>
     
     <target name="build" depends="init, check-gf-dependencies">
-
         <antcall target="xerces.checkout"/>
         <antcall target="xerces.build"/>
         <antcall target="xerces.publish"/>
@@ -22,8 +21,10 @@
         <antcall target="streambuffer.checkout"/>
         <antcall target="streambuffer.build"/>
         <antcall target="streambuffer.publish"/>
+	
+        <antcall target="jaxws.checkout" /> 
 
-        <antcall target="jaxws.checkout" /> <!-- this is required for saaj-api and other sources -->
+        <!-- this is required for saaj-api and other sources -->
 
         <antcall target="saaj-api.build"/>
         <antcall target="saaj-api.publish"/>
@@ -57,6 +58,7 @@
         <antcall target="jaxws.build" />
 
         <!-- BUILD JAX-WS 2.0 for XWSS -->
+
         <antcall target="jaxws20.checkout" />
         <antcall target="jaxws20-api.build" />
         <antcall target="jaxws20-api.publish" />
@@ -80,10 +82,14 @@
 
         <!-- this is an odd call but has to be called here since javax.ejb has a dependency on -->
         <!-- javax.xml.rpc and that has dependency on jaxrpc-api -->
-	<ant antfile="v3-build.xml" target="javax.ejb.build" >
-            <property name="maven.repo.local" value="${maven.repo.local}"/>
-            <property name="v3.dir" value="${v3.dir}"/>
-        </ant>
+
+        <exec executable="ant" dir="${basedir}" failonerror="true" newenvironment="false" >
+    	    <arg line="-Dmaven.repo.local=${maven.repo.local} " />
+            <arg line="-Dv3.dir=${v3.dir}"/>
+            <arg line="-f v3-build.xml" />
+            <arg line="javax.ejb.build" />
+            <env key="JAVA_HOME" value="${JDK_1.6}" />
+        </exec>
 
         <antcall target="jaxr-api.checkout" />
         <antcall target="jaxr-api.build" />
@@ -356,15 +362,15 @@
         </delete>
         <mkdir dir="${external.dir}/xmlsec/samples"/>
         <mkdir dir="${external.dir}/xmlsec/test"/>
-        <subant buildpath="${external.dir}/xmlsec" target="build.jar">
+        <subant buildpath="${external.dir}/xmlsec" >
+	    <target name="clean" />
+	    <target name="build.src" />
+	    <target name="build.jar" />
             <property name="lib.junit" value="${maven.repo.local}/${junit.mvn.path}"/>
             <property name="lib.xerces.1" value="${xerces.mvn.path}"/>
             <property name="dir.build.samples" value="${external.dir}/xmlsec/samples"/>
             <property name="dir.build.test" value="${external.dir}/xmlsec/test"/>
         </subant>
-    </target>
-    <target name="xmlsec.clean">
-        <subant buildpath="${external.dir}/xmlsec" target="clean"/>
     </target>
     <target name="xmlsec.publish">
         <mvn.publish.local jar="${external.dir}/xmlsec/build/xmlsec.jar" mvngroup="apache-xmlsec" mvnartid="xmlsec" mvnversion="${xmlsec.version}"/>
