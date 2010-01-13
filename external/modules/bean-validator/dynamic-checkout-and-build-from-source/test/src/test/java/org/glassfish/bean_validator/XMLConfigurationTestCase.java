@@ -1,5 +1,3 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<!--
 /*
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 *
@@ -35,20 +33,60 @@
 * only if the new code is made subject to such option by the copyright
 * holder.
 */
--->
 
-<html>
-  <head>
-    <title>Bean Validation Tests</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=MacRoman">
-  </head>
-  <body>
-      <ul>
+package org.glassfish.bean_validator;
 
-          <li><a href="HeartbeatTestServlet">HeartbeatTestServlet</a></li>
-          <li><a href="Injection01TestServlet">Injection01TestServlet</a></li>
-          <li><a href="XMLConfigurationTestServlet">XMLConfigurationTestServlet</a></li>
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
-      </ul>
-  </body>
-</html>
+public class XMLConfigurationTestCase extends BVTestCaseBase {
+    
+    public XMLConfigurationTestCase() {
+        this("HeartbeatTestCase");
+    }
+
+    public XMLConfigurationTestCase(String name) {
+        super(name);
+    }
+
+    /**
+     * Set up instance variables required by this test case.
+     */
+    public void setUp() throws Exception {
+        super.setUp();
+    }
+
+
+    /**
+     * Return the tests included in this test suite.
+     */
+    public static Test suite() {
+        return (new TestSuite(XMLConfigurationTestCase.class));
+    }
+
+
+    /**
+     * Tear down instance variables required by this test case.
+     */
+    public void tearDown() {
+        super.tearDown();
+    }
+
+    public void testHeartbeat() throws Exception {
+        HtmlPage page = getPage("/XMLConfigurationTestServlet/index.html");
+        String pageText = page.asText();
+        assertTrue(pageText.contains("Obtained ValidatorFactory:"));
+        assertTrue(pageText.contains("case1: No ConstraintViolations found."));
+        assertTrue(pageText.contains("case2: caught IllegalArgumentException. Message: Invalid property path. There is no property nonExistentProperty in entity org.glassfish.bean_validator.Person"));
+        assertTrue(pageText.contains("case3: ConstraintViolation: message: may not be null propertyPath: lastName"));
+        assertTrue(pageText.contains("case3: ConstraintViolation: message: may not be null propertyPath: firstName"));
+        assertTrue(pageText.contains("case3: ConstraintViolation: message: may not be null propertyPath: listOfString"));
+        assertTrue(pageText.contains("case4: No ConstraintViolations found."));
+
+
+    }
+
+
+
+}
