@@ -1,5 +1,3 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
 /*
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 *
@@ -35,25 +33,60 @@
 * only if the new code is made subject to such option by the copyright
 * holder.
 */
--->
-<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
-    <servlet>
-        <servlet-name>HeartbeatTestServlet</servlet-name>
-        <servlet-class>org.glassfish.bean_validator.HeartbeatTestServlet</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>Injection01TestServlet</servlet-name>
-        <servlet-class>org.glassfish.bean_validator.Injection01TestServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>HeartbeatTestServlet</servlet-name>
-        <url-pattern>/HeartbeatTestServlet/*</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>Injection01TestServlet</servlet-name>
-        <url-pattern>/Injection01TestServlet/*</url-pattern>
-    </servlet-mapping>
-    <session-config>
-        <session-timeout>30</session-timeout>
-    </session-config>
-</web-app>
+
+package org.glassfish.bean_validator;
+
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
+public class Injection01TestCase extends BVTestCaseBase {
+    
+    public Injection01TestCase() {
+        this("HeartbeatTestCase");
+    }
+
+    public Injection01TestCase(String name) {
+        super(name);
+    }
+
+    /**
+     * Set up instance variables required by this test case.
+     */
+    public void setUp() throws Exception {
+        super.setUp();
+    }
+
+
+    /**
+     * Return the tests included in this test suite.
+     */
+    public static Test suite() {
+        return (new TestSuite(Injection01TestCase.class));
+    }
+
+
+    /**
+     * Tear down instance variables required by this test case.
+     */
+    public void tearDown() {
+        super.tearDown();
+    }
+
+    public void testHeartbeat() throws Exception {
+        HtmlPage page = getPage("/Injection01TestServlet/index.html");
+        String pageText = page.asText();
+        assertTrue(pageText.contains("Obtained ValidatorFactory:"));
+        assertTrue(pageText.contains("case1: No ConstraintViolations found."));
+        assertTrue(pageText.contains("case2: caught IllegalArgumentException. Message: Invalid property path. There is no property nonExistentProperty in entity org.glassfish.bean_validator.Person"));
+        assertTrue(pageText.contains("case3: ConstraintViolation: message: may not be null propertyPath: lastName"));
+        assertTrue(pageText.contains("case3: ConstraintViolation: message: may not be null propertyPath: firstName"));
+        assertTrue(pageText.contains("case3: ConstraintViolation: message: may not be null propertyPath: listOfString"));
+        assertTrue(pageText.contains("case4: No ConstraintViolations found."));
+
+
+    }
+
+
+
+}

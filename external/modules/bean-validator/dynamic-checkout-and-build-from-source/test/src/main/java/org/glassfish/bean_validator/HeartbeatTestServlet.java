@@ -63,7 +63,7 @@ public class HeartbeatTestServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         PrintWriter out = response.getWriter();
         try {
-            out.print("<html><head><title>SimpleBVServlet</title></head><body>");
+            out.print("<html><head><title>HeartbeatTestServlet</title></head><body>");
 
             ValidatorFactory validatorFactory = null;
 
