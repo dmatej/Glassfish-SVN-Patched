@@ -3,7 +3,8 @@
   <groupId>org.glassfish</groupId>
   <artifactId>bean-validator-test</artifactId>
   <name>bean-validator-test</name>
-  <version>0.1</version>
+  <!-- This must match the version of ../bundle/osgi/pom.xml -->
+  <version>3.0-JBoss-4.0.2_02</version> 
   <description>Automated tests for Sun's integration of JBoss's implementation of JSR-303 Bean Validation</description>
 
   <repositories>
@@ -100,6 +101,46 @@ mvn -Dglassfish.home=/Users/edburns/Documents/JavaEE/workareas/glassfishv3-targe
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>move-aside-existing-bv-jar</id>
+            <phase>generate-test-sources</phase>
+            <configuration>
+              <tasks>
+                <echo message="Moving aside ${bean-validator.jar} in Glassfish installed at ${glassfish.home}."/>
+                <move failonerror="false" overwrite="true"
+                      file="${glassfish.home}/modules/${bean-validator.jar}"
+                      tofile="${glassfish.home}/${bean-validator-jar-original-name}"/>
+                <echo message="Installing  ${new-bean-validator.jar} into Glassfish installed at ${glassfish.home}."/>
+                <copy failonerror="false" overwrite="true"
+                      file="${new-bean-validator.jar}"
+                      tofile="${glassfish.home}/modules/${bean-validator.jar}" />
+             </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>restore-existing-bv-jar</id>
+            <phase>package</phase>
+            <configuration>
+              <tasks>
+                <echo message="Restoring ${glassfish.home}/${bean-validator-jar-original-name} to Glassfish installed at ${glassfish.home}."/>
+                <move overwrite="true"
+                      file="${glassfish.home}/${bean-validator-jar-original-name}"
+                      tofile="${glassfish.home}/modules/${bean-validator.jar}"/>
+             </tasks>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-dependency-plugin</artifactId>
@@ -126,5 +167,13 @@ mvn -Dglassfish.home=/Users/edburns/Documents/JavaEE/workareas/glassfishv3-targe
       </exclusions>
     </dependency>
   </dependencies>
+
+  <properties>
+      <bean-validator-jar-name>bean-validator</bean-validator-jar-name>
+      <bean-validator.jar>${bean-validator-jar-name}.jar</bean-validator.jar>
+      <bean-validator-jar-original-name>${bean-validator-jar-name}_jar.ORIGINAL</bean-validator-jar-original-name>
+      <new-bean-validator.jar>${settings.localRepository}/org/glassfish/bean-validator/${pom.version}/${bean-validator-jar-name}-${pom.version}.jar</new-bean-validator.jar>
+  </properties>
+
 
 </project>
