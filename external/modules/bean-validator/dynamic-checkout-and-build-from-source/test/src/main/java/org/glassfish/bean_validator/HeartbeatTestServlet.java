@@ -69,9 +69,12 @@ public class HeartbeatTestServlet extends HttpServlet {
 
             validatorFactory = Validation.buildDefaultValidatorFactory();
 
-            out.print("<p>");
-            out.print("Obtained ValidatorFactory: " + validatorFactory + ".");
-            out.print("</p>");
+            if (null != validatorFactory) {
+
+                out.print("<p>");
+                out.print("Obtained ValidatorFactory: " + validatorFactory + ".");
+                out.print("</p>");
+            }
 
             ValidatorContext validatorContext = validatorFactory.usingContext();
             javax.validation.Validator beanValidator = validatorContext.getValidator();

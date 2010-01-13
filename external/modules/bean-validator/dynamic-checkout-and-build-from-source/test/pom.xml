@@ -38,15 +38,16 @@
 --> 
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <groupId>org.glassfish</groupId>
-  <artifactId>bean-validator-test</artifactId>
-  <name>bean-validator-test</name>
-  <!-- This must match the version of ../bundle/osgi/pom.xml -->
-  <version>3.0-JBoss-4.0.2_02</version> 
-  <packaging>war</packaging>
-  <description>Automated tests for Sun's integration of JBoss's implementation of JSR-303 Bean Validation</description>
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.glassfish</groupId>
+    <artifactId>bean-validator-test</artifactId>
+    <name>bean-validator-test</name>
+    <!-- This must match the version of ../bundle/osgi/pom.xml -->
+    <version>3.0-JBoss-4.0.2_02</version>
+    <packaging>war</packaging>
+    <description>Automated tests for Sun's integration of JBoss's implementation of JSR-303 Bean Validation</description>
     <build>
+        <finalName>${project.name}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -59,195 +60,270 @@
             </plugin>
         </plugins>
     </build>
+    <properties>
+        <bean-validator-jar-name>bean-validator</bean-validator-jar-name>
+        <bean-validator.jar>${bean-validator-jar-name}.jar</bean-validator.jar>
+        <bean-validator-jar-original-name>${bean-validator-jar-name}_jar.ORIGINAL</bean-validator-jar-original-name>
+        <new-bean-validator.jar>${settings.localRepository}/org/glassfish/bean-validator/${project.version}/${bean-validator-jar-name}-${project.version}.jar</new-bean-validator.jar>
+        <netbeans.hint.deploy.server>gfv3ee6</netbeans.hint.deploy.server>
+        <context.path>/${project.name}</context.path>
+        <host>localhost</host>
+        <port>8080</port>
+        <adminPort>4848</adminPort>
+        <browser>FF3</browser>
+    </properties>
+    <profiles>
+        <profile>
+            <id>run-test</id>
+            <build>
+                <defaultGoal>test</defaultGoal>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <testFailureIgnore>true</testFailureIgnore>
+                            <excludes>
+                                <exclude>**/BVTestCaseBase.*</exclude>
+                            </excludes>
+                            <systemProperties>
+                                <property>
+                                    <name>host</name>
+                                    <value>${host}</value>
+                                </property>
+                                <property>
+                                    <name>port</name>
+                                    <value>${port}</value>
+                                </property>
+                                <property>
+                                    <name>browser</name>
+                                    <value>${browser}</value>
+                                </property>
+                                <property>
+                                    <name>context.path</name>
+                                    <value>${context.path}</value>
+                                </property>
+                            </systemProperties>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <version>2.0.2</version>
+                        <executions>
+                            <execution>
+                                <id>build-war</id>
+                                <phase>process-classes</phase>
+                                <goals>
+                                    <goal>war</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.glassfish.maven.plugin</groupId>
+                        <artifactId>maven-glassfish-plugin</artifactId>
+                        <version>2.2-SNAPSHOT</version>
+                        <executions>
+                            <execution>
+                                <id>start-server</id>
+                                <phase>process-test-classes</phase>
+                                <configuration>
+                                    <glassfishDirectory>${glassfish.home}</glassfishDirectory>
+                                    <user>admin</user>
+                                    <passwordFile>${passwordFile}</passwordFile>
+                                    <domain>
+                                        <name>domain1</name>
+                                        <adminPort>${adminPort}</adminPort>
+                                        <httpPort>${port}</httpPort>
+                                        <reuse>true</reuse>
+                                    </domain>
+                                    <components>
+                                        <component>
+                                            <name>${project.name}</name>
+                                            <artifact>${project.build.directory}/${project.build.finalName}.war</artifact>
+                                        </component>
+                                    </components>
+                                </configuration>
+                                <goals>
+                                    <goal>stop-domain</goal>
+                                    <goal>start-domain</goal>
+                                    <goal>deploy</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>stop-server</id>
+                                <phase>prepare-package</phase>
+                                <configuration>
+                                    <glassfishDirectory>${glassfish.home}</glassfishDirectory>
+                                    <user>admin</user>
+                                    <passwordFile>${passwordFile}</passwordFile>
+                                    <domain>
+                                        <name>domain1</name>
+                                        <adminPort>${adminPort}</adminPort>
+                                        <httpPort>${port}</httpPort>
+                                        <reuse>true</reuse>
+                                    </domain>
+                                    <components>
+                                        <component>
+                                            <name>${project.name}</name>
+                                            <artifact>${project.build.directory}/${project.build.finalName}.war</artifact>
+                                        </component>
+                                    </components>
+                                </configuration>
+                                <goals>
+                                    <goal>undeploy</goal>
+                                    <goal>stop-domain</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>move-aside-existing-bv-jar</id>
+                                <phase>generate-test-sources</phase>
+                                <configuration>
+                                    <tasks>
+                                        <echo message="Moving aside ${bean-validator.jar} in Glassfish installed at ${glassfish.home}."/>
+                                        <move failonerror="false" overwrite="true"
+                                              file="${glassfish.home}/modules/${bean-validator.jar}"
+                                              tofile="${glassfish.home}/${bean-validator-jar-original-name}"/>
+                                        <echo message="Installing  ${new-bean-validator.jar} into Glassfish installed at ${glassfish.home}."/>
+                                        <copy failonerror="false" overwrite="true"
+                                              file="${new-bean-validator.jar}"
+                                              tofile="${glassfish.home}/modules/${bean-validator.jar}" />
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>restore-existing-bv-jar</id>
+                                <phase>package</phase>
+                                <configuration>
+                                    <tasks>
+                                        <echo message="Restoring ${glassfish.home}/${bean-validator-jar-original-name} to Glassfish installed at ${glassfish.home}."/>
+                                        <move overwrite="true"
+                                              file="${glassfish.home}/${bean-validator-jar-original-name}"
+                                              tofile="${glassfish.home}/modules/${bean-validator.jar}"/>
+                                    </tasks>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-bean-validator-osgi-module</id>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <maven.test.skip>true</maven.test.skip>
+            </properties>
+        </profile>
+        <profile>
+            <id>edburns</id>
+            <properties>
+                <glassfish.home>/Users/edburns/Documents/JavaEE/workareas/glassfishv3-target/glassfish</glassfish.home>
+                <passwordFile>/Users/edburns/.javaee-passwordfile</passwordFile>
+            </properties>
+        </profile>
+        <profile>
+            <id>debug-test-client</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <argLine>-Xdebug -Xrunjdwp:transport=dt_socket,address=8000,server=y,suspend=y</argLine>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
     <repositories>
-    <repository>
-      <id>maven2-repository.dev.java.net</id>
-      <name>Java.net Repository for Maven</name>
-      <url>http://download.java.net/maven/2</url>
-    </repository>
-    <repository>
-      <id>maven-repository.dev.java.net</id>
-      <name>Java.net Repository for Maven</name>
-      <url>https://maven-repository.dev.java.net/repository</url>
-      <layout>legacy</layout>
-    </repository>
-    <repository>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-      <id>central</id>
-      <name>Maven Repository Switchboard</name>
-      <url>http://repo1.maven.org/maven2</url>
-    </repository>
-  </repositories>
-  <pluginRepositories>
-    <pluginRepository>
-      <id>maven2-repository</id>
-      <name>Java.net maven2 repository</name>
-      <url>http://download.java.net/maven/2/</url>
-    </pluginRepository>
-    <pluginRepository>
-      <id>ocean</id>
-      <url>http://maven.ocean.net.au/snapshot</url>
-      <releases>
-              <enabled>false</enabled>
-              <updatePolicy>never</updatePolicy>
-      </releases>
-      <snapshots>
-              <enabled>true</enabled>
-      </snapshots>
-    </pluginRepository>
-  </pluginRepositories>
-
-
-
-  <dependencies>
-    <dependency>
-      <groupId>javax</groupId>
-      <artifactId>javaee-api</artifactId>
-      <version>6.0</version>
-      <scope>provided</scope>
-    </dependency>
-    <dependency>
-      <groupId>net.sourceforge.htmlunit</groupId>
-      <artifactId>htmlunit</artifactId>
-      <version>2.4</version>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>javax.xml</groupId>
-          <artifactId>jsr173</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-  </dependencies>
-
-  <properties>
-      <bean-validator-jar-name>bean-validator</bean-validator-jar-name>
-      <bean-validator.jar>${bean-validator-jar-name}.jar</bean-validator.jar>
-      <bean-validator-jar-original-name>${bean-validator-jar-name}_jar.ORIGINAL</bean-validator-jar-original-name>
-      <new-bean-validator.jar>${settings.localRepository}/org/glassfish/bean-validator/${pom.version}/${bean-validator-jar-name}-${pom.version}.jar</new-bean-validator.jar>
-      <netbeans.hint.deploy.server>gfv3ee6</netbeans.hint.deploy.server>
-  </properties>
-
-  <profiles>
-    <profile>
-      <id>run-test</id>
-<!-- 
-
-invocation example
-
-mvn -Prun-test -Dglassfish.home=/Users/edburns/Documents/JavaEE/workareas/glassfishv3-target/glassfish -DpasswordFile=/Users/edburns/.javaee-passwordfile glassfish:start-domain
-
--->
-      <build>
-	<defaultGoal>test</defaultGoal>
-	<plugins>
-	  <plugin>
-	    <groupId>org.glassfish.maven.plugin</groupId>
-	    <artifactId>maven-glassfish-plugin</artifactId>
-	    <version>2.2-SNAPSHOT</version>
-	    <executions>
-	      <execution>
-		<id>start-server</id>
-		<phase>process-test-classes</phase>
-		<configuration>
-		  <glassfishDirectory>${glassfish.home}</glassfishDirectory>
-		  <user>admin</user>
-		  <passwordFile>${passwordFile}</passwordFile>
-		  <domain>
-		    <name>domain1</name>
-		    <adminPort>4848</adminPort>
-		    <httpPort>8080</httpPort>
-		    <reuse>true</reuse>
-		  </domain>          
-		</configuration>
-		<goals>
-		   <goal>start-domain</goal>
-		</goals>
-	      </execution>
-	      <execution>
-		<id>stop-server</id>
-		<phase>prepare-package</phase>
-		<configuration>
-		  <glassfishDirectory>${glassfish.home}</glassfishDirectory>
-		  <user>admin</user>
-		  <passwordFile>${passwordFile}</passwordFile>
-		  <domain>
-		    <name>domain1</name>
-		    <adminPort>4848</adminPort>
-		    <httpPort>8080</httpPort>
-		    <reuse>true</reuse>
-		  </domain>          
-		</configuration>
-		<goals>
-		   <goal>stop-domain</goal>
-		</goals>
-	      </execution>
-	    </executions>
-	  </plugin>
-
-	  <plugin>
-	    <artifactId>maven-antrun-plugin</artifactId>
-	    <executions>
-	      <execution>
-		<id>move-aside-existing-bv-jar</id>
-		<phase>generate-test-sources</phase>
-		<configuration>
-		  <tasks>
-		    <echo message="Moving aside ${bean-validator.jar} in Glassfish installed at ${glassfish.home}."/>
-		    <move failonerror="false" overwrite="true"
-			  file="${glassfish.home}/modules/${bean-validator.jar}"
-			  tofile="${glassfish.home}/${bean-validator-jar-original-name}"/>
-		    <echo message="Installing  ${new-bean-validator.jar} into Glassfish installed at ${glassfish.home}."/>
-		    <copy failonerror="false" overwrite="true"
-			  file="${new-bean-validator.jar}"
-			  tofile="${glassfish.home}/modules/${bean-validator.jar}" />
-		 </tasks>
-		</configuration>
-		<goals>
-		  <goal>run</goal>
-		</goals>
-	      </execution>
-	      <execution>
-		<id>restore-existing-bv-jar</id>
-		<phase>package</phase>
-		<configuration>
-		  <tasks>
-		    <echo message="Restoring ${glassfish.home}/${bean-validator-jar-original-name} to Glassfish installed at ${glassfish.home}."/>
-		    <move overwrite="true"
-			  file="${glassfish.home}/${bean-validator-jar-original-name}"
-			  tofile="${glassfish.home}/modules/${bean-validator.jar}"/>
-		 </tasks>
-		</configuration>
-		<goals>
-		  <goal>run</goal>
-		</goals>
-	      </execution>
-	    </executions>
-	  </plugin>
-	  <plugin>
-	    <groupId>org.apache.maven.plugins</groupId>
-	    <artifactId>maven-dependency-plugin</artifactId>
-	    <executions>
-	      <execution>
-		<id>install-bean-validator-osgi-module</id>
-	      </execution>
-	    </executions>
-	  </plugin>
-	</plugins>
-      </build>
-    </profile>
-    <profile>
-      <id>default</id>
-      <activation>
-        <activeByDefault>true</activeByDefault>
-      </activation>
-      <properties>
-        <maven.test.skip>true</maven.test.skip>
-      </properties>
-    </profile>
-  </profiles>
-
+        <repository>
+            <id>maven2-repository.dev.java.net</id>
+            <name>Java.net Repository for Maven</name>
+            <url>http://download.java.net/maven/2</url>
+        </repository>
+        <repository>
+            <id>maven-repository.dev.java.net</id>
+            <name>Java.net Repository for Maven</name>
+            <url>https://maven-repository.dev.java.net/repository</url>
+            <layout>legacy</layout>
+        </repository>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>central</id>
+            <name>Maven Repository Switchboard</name>
+            <url>http://repo1.maven.org/maven2</url>
+        </repository>
+    </repositories>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>maven2-repository</id>
+            <name>Java.net maven2 repository</name>
+            <url>http://download.java.net/maven/2/</url>
+        </pluginRepository>
+        <pluginRepository>
+            <id>ocean</id>
+            <url>http://maven.ocean.net.au/snapshot</url>
+            <releases>
+                <enabled>false</enabled>
+                <updatePolicy>never</updatePolicy>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+    <dependencies>
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-api</artifactId>
+            <version>6.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.sourceforge.htmlunit</groupId>
+            <artifactId>htmlunit</artifactId>
+            <version>2.6</version>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>javax.xml</groupId>
+                    <artifactId>jsr173</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.7</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
 </project>
