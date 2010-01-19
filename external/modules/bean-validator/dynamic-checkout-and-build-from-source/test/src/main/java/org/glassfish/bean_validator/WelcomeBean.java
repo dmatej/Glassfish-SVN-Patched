@@ -1,5 +1,3 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<!--
 /*
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 *
@@ -35,21 +33,106 @@
 * only if the new code is made subject to such option by the copyright
 * holder.
 */
--->
+package org.glassfish.bean_validator;
 
-<html>
-  <head>
-    <title>Bean Validation Tests</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=MacRoman">
-  </head>
-  <body>
-      <ul>
+import javax.faces.bean.ManagedBean;
 
-          <li><a href="HeartbeatTestServlet">HeartbeatTestServlet</a></li>
-          <li><a href="Injection01TestServlet">Injection01TestServlet</a></li>
-          <li><a href="XMLConfigurationTestServlet">XMLConfigurationTestServlet</a></li>
-          <li><a href="faces/webtier-20100119.xhtml">webtier forum posting 20100119</a></li>
+import javax.faces.bean.SessionScoped;
 
-      </ul>
-  </body>
-</html>
+import javax.validation.constraints.NotNull;
+
+import javax.validation.constraints.Size;
+
+
+
+@SessionScoped
+
+@ManagedBean(name = "welcome", eager = true)
+
+public class WelcomeBean {
+
+
+
+    String title;
+
+    String name;
+
+    String employee;
+
+
+
+    public WelcomeBean() {
+
+        System.out.println("WelcomeBean instantiated");
+
+    }
+
+    public String getMessage() {
+
+        return "I'm alive!";
+
+    }
+
+
+
+    @NotNull
+
+    @Size(min=2, message = "{validator.notEmpty}")
+
+    public String getName() {
+
+        return name;
+
+    }
+
+
+
+    public void setName(String name) {
+
+        this.name = name;
+
+    }
+
+
+
+    @NotNull
+
+    @Size(min=3, max=5, message = "Invalid text length; must be between {min} and {max}")
+
+    public String getTitle() {
+
+        return title;
+
+    }
+
+
+
+    public void setTitle(String title) {
+
+        this.title = title;
+
+    }
+
+
+
+
+
+    @NotNull
+
+    @Size(min=1, message = "{validator.notEmpty}")
+
+    public String getEmployee() {
+
+        return employee;
+
+    }
+
+
+
+    public void setEmployee(String employee) {
+
+        this.employee = employee;
+
+    }
+
+}

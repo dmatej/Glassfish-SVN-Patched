@@ -1,5 +1,3 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<!--
 /*
 * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 *
@@ -35,21 +33,54 @@
 * only if the new code is made subject to such option by the copyright
 * holder.
 */
--->
 
-<html>
-  <head>
-    <title>Bean Validation Tests</title>
-    <meta http-equiv="Content-Type" content="text/html; charset=MacRoman">
-  </head>
-  <body>
-      <ul>
+package org.glassfish.bean_validator;
 
-          <li><a href="HeartbeatTestServlet">HeartbeatTestServlet</a></li>
-          <li><a href="Injection01TestServlet">Injection01TestServlet</a></li>
-          <li><a href="XMLConfigurationTestServlet">XMLConfigurationTestServlet</a></li>
-          <li><a href="faces/webtier-20100119.xhtml">webtier forum posting 20100119</a></li>
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
-      </ul>
-  </body>
-</html>
+public class JsfRenderPageTestCase extends BVTestCaseBase {
+    
+    public JsfRenderPageTestCase() {
+        this("JsfRenderPageTestCase");
+    }
+
+    public JsfRenderPageTestCase(String name) {
+        super(name);
+    }
+
+    /**
+     * Set up instance variables required by this test case.
+     */
+    public void setUp() throws Exception {
+        super.setUp();
+    }
+
+
+    /**
+     * Return the tests included in this test suite.
+     */
+    public static Test suite() {
+        return (new TestSuite(JsfRenderPageTestCase.class));
+    }
+
+
+    /**
+     * Tear down instance variables required by this test case.
+     */
+    public void tearDown() {
+        super.tearDown();
+    }
+
+    public void testHeartbeat() throws Exception {
+        HtmlPage page = getPage("/faces/webtier-20100119.xhtml");
+        String pageText = page.asText();
+        assertTrue(pageText.contains("I\'m alive!"));
+
+
+    }
+
+
+
+}
