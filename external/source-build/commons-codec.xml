@@ -6,7 +6,9 @@
     <import file="build.xml"/>
 
     <target name="build" depends="init">
-        <antcall target="commons-codec.build" />
+        <antcall target="commons-codec.checkout" />
+        <ant antfile="build.xml" dir="${external.dir}/commons-codec" target="install-jar" />
+        <antcall target="commons-codec.local.promote" />
     </target>
     <!--
         Checkout Commons Codec source and build
@@ -20,12 +22,19 @@
             <arg line="commons-codec" />
 	</exec>
     </target>
-    <target name="commons-codec.build" depends="commons-codec.checkout" >
-        <!-- build commons-codec buildn -->
+
+    <target name="commons-codec.local.promote"  >
         <exec executable="mvn" dir="${external.dir}/commons-codec" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+          <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+          <arg line="install:install-file" />
+          <arg line="-DgroupId=commons-codec" />
+          <arg line="-DartifactId=commons-codec" />
+          <arg line="-Dversion=${commons-codec.version}" />
+          <arg line=" -Dpackaging=jar" />
+          <arg line="-Dfile=${external.dir}/commons-codec/dist/commons-codec-${commons-codec.version}.jar" />
+          <arg line="-DlocalRepositoryPath=${maven.repo.local}" />
+        </exec>
     </target>
+
 
 </project>
