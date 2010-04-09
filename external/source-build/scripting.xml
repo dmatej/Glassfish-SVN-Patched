@@ -89,36 +89,78 @@
         <antcall target="scripting.build"/>
     </target>
 
-
-    <target name="scripting.build" depends="jruby.build">
-
-        <!-- grizzly-scripting-common -->
+    <!-- grizzly-scripting-common -->
+    <target name="grizzly-scripting-common.checkout">
         <svnco  name="grizzly-scripting-common-${grizzly-scripting-common.version}" url="https://svn.dev.java.net/svn/glassfish-scripting/tags/grizzly-scripting-common-${grizzly-scripting-common.version}"/>
+    </target>
+    <target name="grizzly-scripting-common.build" depends="grizzly-scripting-common.checkout">
         <mvnbuild name="grizzly-scripting-common-${grizzly-scripting-common.version}" dir="${external.dir}/grizzly-scripting-common-${grizzly-scripting-common.version}"/>
+    </target>
 
         <!-- jruby commons -->
+    <target name="jruby-common.checkout">
         <svnco  name="jruby-commons-${jruby-commons.version}" url="https://svn.dev.java.net/svn/glassfish-scripting/tags/jruby-commons-${jruby-commons.version}"/>
+    </target>
+    <target name="jruby-common.build" depends="jruby-common.checkout">
         <mvnbuild name="jruby-commons-${jruby-commons.version}" dir="${external.dir}/jruby-commons-${jruby-commons.version}"/>
+    </target>
 
         <!-- jruby monitoring -->
+    <target name="jruby-monitoring.checkout">
         <svnco  name="jruby-monitoring-${jruby-monitor.version}" url="https://svn.dev.java.net/svn/glassfish-scripting/tags/jruby-monitor-${jruby-monitor.version}"/>
+    </target>
+    <target name="jruby-monitoring.build" depends="jruby-monitoring.checkout">
         <mvnbuild name="jruby-monitoring-${jruby-monitor.version}" dir="${external.dir}/jruby-monitoring-${jruby-monitor.version}"/>
+    </target>
 
         <!-- jruby config -->
+    <target name="jruby-config.checkout">
         <svnco  name="jruby-config-${jruby-config.version}" url="https://svn.dev.java.net/svn/glassfish-scripting/tags/jruby-config-${jruby-config.version}"/>
+    </target>
+    <target name="jruby-config.build" depends="jruby-config.checkout">
         <mvnbuild name="jruby-config-${jruby-config.version}" dir="${external.dir}/jruby-config-${jruby-config.version}"/>
+    </target>
 
         <!-- grizzly-jruby -->
+    <target name="grizzly-jruby.checkout">
         <svnco  name="grizzly-jruby-${grizzly-jruby.version}" url="https://svn.dev.java.net/svn/glassfish-scripting/tags/grizzly-jruby-${grizzly-jruby.version}"/>
+    </target>
+    <target name="grizzly-jruby.build" depends="grizzly-jruby.checkout">
         <mvnbuild name="grizzly-jruby-${grizzly-jruby.version}" dir="${external.dir}/grizzly-jruby-${grizzly-jruby.version}"/>
+    </target>
 
         <!-- jruby-container -->
+    <target name="jruby-container.checkout">
         <svnco name="jruby-container-${jruby-container.version}" url="https://svn.dev.java.net/svn/glassfish-scripting/tags/rails-${jruby-container.version}"/>
+    </target>
+    <target name="jruby-container.build" depends="jruby-container.checkout">
         <mvnbuild name="jruby-container-${jruby-container.version}" dir="${external.dir}/jruby-container-${jruby-container.version}"/>
     </target>
 
+    <target name="scripting.build" depends="jruby.build">
+        <antcall target="grizzly-scripting-common.build"/>
+        <antcall target="jruby-common.build"/>
+        <antcall target="jruby-monitoring.build"/>
+        <antcall target="jruby-config.build"/>
+        <antcall target="grizzly-jruby.build"/>
+        <antcall target="jruby-conatiner.build"/>
+    </target>
 
     <!-- jruby-complete -->
+    <target name="jruby.checkout">
+        <gitco name="jruby-${jruby.version}" url="git://kenai.com/jruby~main"/>
+        <gitswitch name="jruby-${jruby.version}" version="${jruby.version}" dir="${external.dir}/jruby-${jruby.version}/maven/jruby-complete"/>
+        <replace file="${external.dir}/jruby-${jruby.version}/pom.xml">
+            <replacetoken><![CDATA[<dependency>
+                <groupId>bsf</groupId>
+                <artifactId>bsf</artifactId>
+                <version>2.3.0</version>
+                <scope>provided</scope>
+            </dependency>]]></replacetoken>
+            <replacevalue></replacevalue>
+        </replace>
+    </target>
+
     <target name="jruby.build">
         <antcall target="jcodings.build"/>
         <asm.build version="${asm.version}"/>
@@ -131,34 +173,26 @@
         <antcall target="jna-posix.build"/>
         <antcall target="constantine.build"/>
         <antcall target="jaffi.build"/>
+        <antcall target="jruby.chheckout"/>
 
         <!-- now that all jruby dependencies are built, time to build jruby itself -->
-        <gitco name="jruby-${jruby.version}" url="git://kenai.com/jruby~main"/>
-        <gitswitch name="jruby-${jruby.version}" version="${jruby.version}" dir="${external.dir}/jruby-${jruby.version}/maven/jruby-complete"/>
-        <replace file="${external.dir}/jruby-${jruby.version}/pom.xml">
-          <replacetoken><![CDATA[<dependency>
-      <groupId>bsf</groupId>
-      <artifactId>bsf</artifactId>
-      <version>2.3.0</version>
-      <scope>provided</scope>
-    </dependency>]]></replacetoken>
-          <replacevalue></replacevalue>
-        </replace>
-
         <mvnbuild name="jruby-${jruby.version}" dir="${external.dir}/jruby-${jruby.version}/maven/jruby-complete"/>
     </target>
 
 
     <!-- jline -->
-    <target name="jline.build">
-        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/jline/${jline.version}"
-               name="jline-${jline.version}"/>
+    <target name="jline.checkout">
+        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/jline/${jline.version}" name="jline-${jline.version}"/>
+    </target>
+    <target name="jline.build" depends="jline.checkout">
         <mvnbuild dir="${external.dir}/jline-${jline.version}" name="jline-${jline.version}"/>
     </target>
 
     <!-- joda-time -->
-    <target name="joda-time.build">
+    <target name="joda-time.checkout">
         <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/joda-time/${joda-time.version}" name="joda-time-${joda-time.version}"/>
+    </target>
+    <target name="joda-time.build" depends="joda-time.checkout">
         <property name="junit.ant" value="true"/>
         <ant dir="${external.dir}/joda-time-${joda-time.version}/" antfile="build.xml" target="jar"/>
         <mvn-local-install artifactid="joda-time" groupid="joda-time" version="${joda-time.version}" pomfile="pom-release.xml"
@@ -166,56 +200,69 @@
     </target>
 
     <!-- bytelist -->
-    <target name="bytelist.build">
-        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/bytelist/${bytelist.version}"
-               name="bytelist-${bytelist.version}"/>
+    <target name="bytelist.checkout">
+        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/bytelist/${bytelist.version}" name="bytelist-${bytelist.version}"/>
+    </target>
+    <target name="bytelist.build" depends="bytelist.checkout" >
         <mvnbuild dir="${external.dir}/bytelist-${bytelist.version}" name="bytelist-${bytelist.version}"/>
     </target>
 
     <!-- jcodings -->
-    <target name="jcodings.build">
-        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/jcodings/${jcondings.version}"
-               name="jcodings-${jcondings.version}"/>
+    <target name="jcodings.checkout">
+        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/jcodings/${jcondings.version}" name="jcodings-${jcondings.version}"/>
+    </target>
+    <target name="jcodings.build" depends="jcodings.checkout" >
         <mvnbuild dir="${external.dir}/jcodings-${jcondings.version}" name="jcodings-${jcondings.version}"/>
     </target>
 
     <!-- joni -->
-    <target name="joni.build">
-        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/joni/${joni.version}"
-               name="joni-${joni.version}"/>
+    <target name="joni.checkout">
+        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/joni/${joni.version}"  name="joni-${joni.version}"/>
+    </target>
+    <target name="joni.build" depends="joni.checkout" >
         <mvnbuild dir="${external.dir}/joni-${joni.version}" name="joni-${joni.version}"/>
     </target>
 
 
     <!-- jvyamlb -->
-    <target name="jvyamlb.build">
-        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/jvyamlb/${jvyamlb.version}"
-               name="jvyamlb-${jvyamlb.version}"/>
+    <target name="jvyamlb.checkout">
+        <svnco url="https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/jvyamlb/${jvyamlb.version}" name="jvyamlb-${jvyamlb.version}"/>
+    </target>
+    <target name="jvyamlb.build" depends="jvyamlb.checkout">
         <mvnbuild dir="${external.dir}/jvyamlb-${jvyamlb.version}" name="jvyamlb-${jvyamlb.version}"/>
     </target>
 
     <!-- jna -->
-    <target name="jna.build">
+    <target name="jna.checkout">
         <svnco url="https://jna.dev.java.net/svn/jna/tags/${jna.version}/jnalib" name="jna-${jna.version}"/>
+    </target>
+    <target name="jna.build" depends="jna.checkout">
         <mvnbuild dir="${external.dir}/jna-${jna.version}" name="jna-${jna.version}"/>
     </target>
 
     <!-- jna-posix -->
-    <target name="jna-posix.build">
+    <target name="jna-posix.checkout">
         <hgco name="jna-posix-${jna-posix.version}" url="https://hg.kenai.com/hg/jna-posix~mercurial" version="${jna-posix.version}"/>
+    </target>
+    <target name="jna-posix.build" depends="jna-posix.checkout">
         <mvnbuild dir="${external.dir}/jna-posix-${jna-posix.version}" name="jna-posix-${jna-posix.version}"/>
     </target>
 
     <!-- constantine -->
-    <target name="constantine.build">
+    <target name="constantine.checkout">
         <!-- there is no tag for 0.6, the tip appears to be 0.6 -->
-        <hgco name="constantine-${constantine.version}" url="https://hg.kenai.com/hg/constantine~mercurial"/>
+        <svnco url=" https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/constantine/${constantine.version}" name="constantine-${constantine.version}"/>
+    </target>
+    <target name="constantine.build" depends="constantine.checkout">
+        <!-- there is no tag for 0.6, the tip appears to be 0.6 -->
         <mvnbuild dir="${external.dir}/constantine-${constantine.version}" name="constantine-${constantine.version}"/>
     </target>
 
     <!-- jaffi -->
-    <target name="jaffi.build">
-        <hgco name="jaffi-${jaffi.version}" url="https://hg.kenai.com/hg/jffi~core" version="${jaffi.version}"/>
+    <target name="jaffi.checkout">
+        <svnco url=" https://glassfish-svn.dev.java.net/svn/glassfish-svn/trunk/external/modules/jaffi/${jaffi.version}" name="jaffi-${jaffi.version}"/>
+    </target>
+    <target name="jaffi.build" depends="jaffi.checkout">
         <mvnbuild dir="${external.dir}/jaffi-${jaffi.version}" name="jaffi-${jaffi.version}"/>
     </target>
 

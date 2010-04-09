@@ -149,32 +149,25 @@ script.xml requires native build
     </target>
 
     <target name = "checkout.eclipselink" unless="skip.eclipselink.checkout">
-		<echo message="Inside EL checkout"/>
-		
-		<!-- Checkout Eclipselink from svn  repo -->
-		<exec executable="svn" dir="${external.dir}" failonerror="true" >
-			<arg line="checkout" />
-			<arg line="${eclipselink.svn.url}" />
-			<arg line="eclipselink" />
-		</exec>
-	</target>
-	
-	<target name="eclipselink.project" depends="checkout.eclipselink">
-	
-	
-		<ant antfile="build-taskdefs.xml" target="bnd.download" />
-		
-		<!-- 
-		TODO check with Jane why following does not work. ant translates it to ${${bnd.groupid}:${bnd.artifactid}:jar} Interestingly the first $ sign inside ${} is always interpreted as literal. 
-		<echo message="bnd path = ${${bnd.groupid}:${bnd.artifactid}:jar}" />
-		-->
-		
+        <echo message="Inside EL checkout"/>
+        <!-- Checkout Eclipselink from svn  repo -->
+        <exec executable="svn" dir="${external.dir}" failonerror="true" >
+            <arg line="checkout" />
+            <arg line="${eclipselink.svn.url}" />
+            <arg line="eclipselink" />
+        </exec>
+    </target>
+    <target name="eclipselink.project" depends="checkout.eclipselink">
+        <ant antfile="build-taskdefs.xml" target="bnd.download" />
+	<!-- 
+            TODO check with Jane why following does not work. ant translates it to ${${bnd.groupid}:${bnd.artifactid}:jar} Interestingly the first $ sign inside ${} is always interpreted as literal. 
+            <echo message="bnd path = ${${bnd.groupid}:${bnd.artifactid}:jar}" />
+	-->
 
         <property name="eclipselink.dir" value ="${external.dir}/eclipselink"/>
-		<property name="plugins.dir" value ="${eclipselink.dir}/plugins"/>
-		
-		
-				<!--** Delete sources not used by GFv3 **-->
+        <property name="plugins.dir" value ="${eclipselink.dir}/plugins"/>
+			
+        <!--** Delete sources not used by GFv3 **-->
         <!-- They are checked into source build repo just in case they are needed later on-->
         <delete dir="${eclipselink.dir}/dbws"/>
         <delete dir="${eclipselink.dir}/documentation"/>
@@ -184,37 +177,36 @@ script.xml requires native build
         <delete dir="${eclipselink.dir}/sdo"/>
         <delete dir="${eclipselink.dir}/utils"/>
         
-				<!--**- Delete binaries not used by GFv3 **-->
-		<delete includeemptydirs = "true">
-		 <fileset dir="${plugins.dir}" excludes="org.eclipse.persistence.antlr/**/*, org.eclipse.persistence.asm/**/*"/>
+        <!--**- Delete binaries not used by GFv3 **-->
+        <delete includeemptydirs = "true">
+            <fileset dir="${plugins.dir}" excludes="org.eclipse.persistence.antlr/**/*, org.eclipse.persistence.asm/**/*"/>
         </delete>
 
 
-				<!--** Copy binaries built from source build to EclipseLink workspace to compile against **-->
-		<!-- It would have been nice to pass reference to these binaries to EclipseLink. Unfortunately EclipseLink build scripts have the names hard coded
-		     for example see eclipselink/build.properties#eclipselink.core.depend
-	     -->
-		<property name = "javax.jms.jar.name" value = "javax.jms_1.1.0.jar"/>
-		<property name = "javax.mail.jar.name" value = "javax.mail_1.4.0.v200804091730.jar"/>
-		<property name = "javax.resource.jar.name" value = "javax.resource_1.5.0.jar"/>
-		<property name = "javax.transaction.jar.name" value = "javax.transaction_1.1.0.jar"/>
-		<property name = "osgi.cmpn.jar.name" value = "osgi.cmpn_4.1.0.jar"/>
-		<property name = "osgi.core.jar.name" value = "osgi.core.zip"/>
-		<copy file="${maven.repo.local}/${jms-api.mvn.path}" tofile="${plugins.dir}/${javax.jms.jar.name}" />
-		<copy file="${maven.repo.local}/${mail.mvn.path}" 		   tofile="${plugins.dir}/${javax.mail.jar.name}" />
-		<copy file="${maven.repo.local}/${connector-api.mvn.path}" tofile="${plugins.dir}/${javax.resource.jar.name}" />
-		<copy file="${maven.repo.local}/${transaction-api.mvn.path}" tofile="${plugins.dir}/${javax.transaction.jar.name}" />
-		<copy file="${maven.repo.local}/${felix.mvn.path}" tofile="${plugins.dir}/${osgi.core.jar.name}" />
-		<copy file="${maven.repo.local}/${osgi-cmpn.mvn.path}" tofile="${plugins.dir}/${osgi.cmpn.jar.name}" />
+	<!--** Copy binaries built from source build to EclipseLink workspace to compile against **-->
+	<!-- It would have been nice to pass reference to these binaries to EclipseLink. Unfortunately EclipseLink build scripts have the names hard coded
+	     for example see eclipselink/build.properties#eclipselink.core.depend
+        -->
+	<property name = "javax.jms.jar.name" value = "javax.jms_1.1.0.jar"/>
+	<property name = "javax.mail.jar.name" value = "javax.mail_1.4.0.v200804091730.jar"/>
+	<property name = "javax.resource.jar.name" value = "javax.resource_1.5.0.jar"/>
+	<property name = "javax.transaction.jar.name" value = "javax.transaction_1.1.0.jar"/>
+	<property name = "osgi.cmpn.jar.name" value = "osgi.cmpn_4.1.0.jar"/>
+	<property name = "osgi.core.jar.name" value = "osgi.core.zip"/>
+	<copy file="${maven.repo.local}/${jms-api.mvn.path}" tofile="${plugins.dir}/${javax.jms.jar.name}" />
+	<copy file="${maven.repo.local}/${mail.mvn.path}" 		   tofile="${plugins.dir}/${javax.mail.jar.name}" />
+	<copy file="${maven.repo.local}/${connector-api.mvn.path}" tofile="${plugins.dir}/${javax.resource.jar.name}" />
+	<copy file="${maven.repo.local}/${transaction-api.mvn.path}" tofile="${plugins.dir}/${javax.transaction.jar.name}" />
+	<copy file="${maven.repo.local}/${felix.mvn.path}" tofile="${plugins.dir}/${osgi.core.jar.name}" />
+	<copy file="${maven.repo.local}/${osgi-cmpn.mvn.path}" tofile="${plugins.dir}/${osgi.cmpn.jar.name}" />
 		
-		
-				<!--** Call into EclipseLink build scripts to compile and upload to mave **-->
-		<!-- EclipseLink build scripts expect the build to be run with base 
-		     dir set to where eclipselink is checked out. Convert path to 
-			 dependencies to full path before passing them to Eclipseink scripts
-		-->
-		<property name="maven.ant.tasks.jar.fullpath" location="${maven.ant.tasks.jar}"/>
-		<exec executable="ant" failonerror="true" newenvironment="false" >
+	<!--** Call into EclipseLink build scripts to compile and upload to mave **-->
+	<!-- EclipseLink build scripts expect the build to be run with base 
+	     dir set to where eclipselink is checked out. Convert path to 
+		 dependencies to full path before passing them to Eclipseink scripts
+	-->
+	<property name="maven.ant.tasks.jar.fullpath" location="${maven.ant.tasks.jar}"/>
+	<exec executable="ant" failonerror="true" newenvironment="false" >
             <!--<arg line="-verbose" /> -->
             <arg line="-f eclipselink.xml" />
             <!-- parameters required to drive eclipselink build -->     
