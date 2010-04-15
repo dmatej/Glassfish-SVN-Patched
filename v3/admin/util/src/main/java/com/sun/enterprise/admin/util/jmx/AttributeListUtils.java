@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
- * Copyright 1997-2007 Sun Microsystems, Inc. All rights reserved.
+ * Copyright 1997-2010 Sun Microsystems, Inc. All rights reserved.
  * 
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -82,7 +82,7 @@ public class AttributeListUtils {
 	
 	/** Checks whether this list contains a JMX {@link Attribute} with given name. Note that
 	 * this method will return true if there is at least one attribute with given name.
-     * @param an instance of {@link AttributeList}
+     * @param al an instance of {@link AttributeList}
 	 * @param name a String representing the name of the attribute. The name may not be null.
 	 * @return true if there is at least one attribute in the list with given name,
 	 * false otherwise
@@ -106,7 +106,7 @@ public class AttributeListUtils {
 	
 	/** Checks whether an attribute with the name same as that of the given
 	 * attribute exists in this list. The given name may not be null.
-     * @param an instance of {@link AttributeList}
+     * @param al an instance of {@link AttributeList}
 	 * @param a an Attribute with a name and a value
 	 * @return true if there exists at least one attribute with same name, false
 	 * otherwise
@@ -122,7 +122,7 @@ public class AttributeListUtils {
     /** Returns the given list as a map of attributes, keyed on the names of the attribute
      * in the list. The passed argument may not be null. The mappings are between
      * the names of attributes and attributes themselves.
-     * @param the list of attributes that need to be mapped
+     * @param al the list of attributes that need to be mapped
      * @return an instance of {@link Map}
      * @throws IllegalArgumentException if the argument is null
      */
@@ -146,7 +146,7 @@ public class AttributeListUtils {
      * Every character in the string passed that is neither a Character.isJavaIdentifierStart
      * nor a Character.isJavaIdentifierPart is replace with a valid character
      * '_'.
-     * @param a String that represents any non null name
+     * @param name a String that represents any non null name
      * @return a String that represents a name valid for a JMX 1.2 MBean.
      * @throws IllegalArgumentException if the parameter is null or is of zero length
      */
@@ -173,7 +173,7 @@ public class AttributeListUtils {
      *  <li> Each attribute is a name and value separated by a ','. toString() on the value is called. </li>
      *  <li> Each pair is separated by a new line character '\n'. </li>
      * </ul>
-     * @param the list of attributes - may be null, in which case an empty String is returned.
+     * @param al the list of attributes - may be null, in which case an empty String is returned.
      * @return a String representing the parameter passed
      */
     public static final String toString(final AttributeList al) {
