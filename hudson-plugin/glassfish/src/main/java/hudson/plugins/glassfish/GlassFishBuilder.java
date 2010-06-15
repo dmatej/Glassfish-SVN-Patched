@@ -33,18 +33,16 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+
 package hudson.plugins.glassfish;
 
-import hudson.Proc;
 import hudson.model.Computer;
-
 import hudson.Launcher;
 import hudson.Extension;
 import hudson.util.FormValidation;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.AbstractProject;
-import hudson.model.Node;
 import hudson.tasks.Builder;
 import hudson.tasks.BuildStepDescriptor;
 
@@ -53,38 +51,53 @@ import org.kohsuke.stapler.QueryParameter;
 
 import javax.servlet.ServletException;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.File;
+import java.net.URL;
 
 /**
- * Adds a Build Step to Create and Configure GlassFish Cluster.
+ * Adds a Build Step to Setup GlassFish Cluster.
  *
- * When a build is performed, the {@link #perform(Build, Launcher, BuildListener)} 
- * method will be invoked.
+ * @author Harshad Vilekar
  *
  */
-
-@SuppressWarnings("deprecation")
-
 public class GlassFishBuilder extends Builder {
 
-    private final String clusterSize, clusterName, instanceNamePrefix;
-    private final boolean startCluster;
+    private final String zipBundleURL, clusterName, clusterSize, instanceNamePrefix;
+    private final boolean installGlassFish, createCluster, startCluster;
 
     // Fields in config.jelly match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
     public GlassFishBuilder(
+            boolean installGlassFish,
+            String zipBundleURL,
+            boolean createCluster,
             String clusterSize,
             String clusterName,
             String instanceNamePrefix,
             boolean startCluster) {
+        this.installGlassFish = installGlassFish;
+        this.zipBundleURL = zipBundleURL.trim();
+        this.createCluster = createCluster;
         this.clusterSize = clusterSize.trim();
         this.clusterName = clusterName.trim();
         this.instanceNamePrefix = instanceNamePrefix.trim();
         this.startCluster = startCluster;
     }
 
-    /**
-     * We'll use this from the <tt>config.jelly</tt>.
-     */
+    
+    public boolean getInstallGlassFish() {
+        return installGlassFish;
+    }
+
+    public String getZipBundleURL() {
+        return zipBundleURL;
+    }
+
+    public boolean getCreateCluster() {
+        return createCluster;
+    }
+
     public String getClusterSize() {
         return clusterSize;
     }
@@ -101,48 +114,67 @@ public class GlassFishBuilder extends Builder {
         return startCluster;
     }
 
+    public int numInstances() {
+        try {
+            return Integer.parseInt(clusterSize);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
     /**
      * This is where we 'build' the project.
-     * For now, we simply invoke a dummy command here.
-     * TO DO: Do some useful work here.
+     * 1. Install GlassFish (optional)
+     * 2. Run the Command(s) that create GlassFish Cluster
      */
-     
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
 
-        String msg = "GlassFish Cluster, Name=" + clusterName + ", Size=" + clusterSize + ", will be created";
+        PrintStream logger = listener.getLogger();
+        String nodeName = Computer.currentComputer().getNode().getNodeName();
 
-        if (getStartCluster()) {
-            msg = msg + ", and started !\n";
-        } else {
-            msg = msg + ", but won't be started !\n";
-        }
+        logger.println("Build launched on: " + nodeName);
 
-        listener.getLogger().println(msg);
+        String msg = "installGlassFish = " + getInstallGlassFish()
+                + ", startCluster = " + getStartCluster() + "\n";
+        msg = msg + "GlassFish Cluster '" + clusterName + "' will be created with " + clusterSize
+                + " instances: ";
 
-        // launch a dummy command on the current computer
-        Computer c = Computer.currentComputer();
-        Node n = c.getNode();
-        try {            
-            String cmd = "hostname";
-            Proc proc = launcher.launch(cmd, build.getEnvVars(), listener.getLogger(), build.getProject().getWorkspace());
-            int exitCode = proc.join();
-            return exitCode == 0;
-        } catch (IOException e) {
-            e.printStackTrace();
-            listener.getLogger().println("IOException !");
-            return false;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            listener.getLogger().println("InterruptedException!");
+        if (numInstances() < 0) {
+            logger.println("ERROR: Invalid Cluster Size:" + clusterSize + "Build Aborted!");
             return false;
         }
+
+        for (int i = 1; i <= numInstances(); i++) {
+            msg = msg + getInstanceNamePrefix() + i + " ";
+        }
+
+        logger.println(msg);
+
+        if (installGlassFish) {
+            GlassFishInstaller gfi = new GlassFishInstaller(build, logger);
+            if (!gfi.installGlassFishFromZipBundle(zipBundleURL)) {
+                logger.println("ERROR: GlassFish Install Step Failed. Aborting!");
+                return false;
+            }
+        }
+
+        if (createCluster) {
+            GlassFishCluster gfc = new GlassFishCluster(build, launcher, logger, this);
+            if (!gfc.createGFCluster()) {
+                logger.println("ERROR: GlassFish Cluster Creation Failed. Aborting!");
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
      * Descriptor for {@link GlassFishBuilder}. Used as a singleton.
      */
-    @Extension 
+    @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
         /**
@@ -153,7 +185,26 @@ public class GlassFishBuilder extends Builder {
          * @return
          *      Indicates the outcome of the validation. This is sent to the browser.
          */
-        public FormValidation doCheckClusterName(@QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckZipBundleURL(@QueryParameter String value)
+                throws IOException, ServletException {
+
+            value = value.trim();
+            if (value.length() == 0) {
+                return FormValidation.warning("INFO: No URL set");
+            }
+            String fileName = new File(new URL(value).getPath()).getName();
+
+            // The file name is expected to end with ".zip"
+            // Just check the file name lenght. We are not checking for file type here.
+            if ((fileName == null) || (fileName.length() <= 4)) {
+                return FormValidation.warning("WARNING: The URL looks incorrect!");
+            }
+            // todo: add additional checks for Cluster Name validation here
+            return FormValidation.ok();
+        }
+
+        public FormValidation doCheckClusterName(@QueryParameter String value)
+                throws IOException, ServletException {
             value = value.trim();
             if (value.length() == 0) {
                 return FormValidation.error("Please set the Cluster Name");
@@ -165,7 +216,8 @@ public class GlassFishBuilder extends Builder {
             return FormValidation.ok();
         }
 
-        public FormValidation doCheckInstanceNamePrefix(@QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckInstanceNamePrefix(@QueryParameter String value)
+                throws IOException, ServletException {
             value = value.trim();
             if (value.length() == 0) {
                 return FormValidation.error("Please set the Instance Name Prefix");
@@ -177,7 +229,8 @@ public class GlassFishBuilder extends Builder {
             return FormValidation.ok();
         }
 
-        public FormValidation doCheckClusterSize(@QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckClusterSize(@QueryParameter String value)
+                throws IOException, ServletException {
             if (value.length() == 0) {
                 return FormValidation.error("Please set the Cluster Size");
             }
@@ -188,7 +241,7 @@ public class GlassFishBuilder extends Builder {
             } catch (NumberFormatException e) {
             }
 
-            if (size > 999) {
+            if (size > 99) {
                 return FormValidation.warning("Are you sure ?");
             }
 
@@ -209,7 +262,7 @@ public class GlassFishBuilder extends Builder {
          * This human readable name is used in the configuration screen.
          */
         public String getDisplayName() {
-            return "Create GlassFish Cluster";
+            return "GlassFish Cluster";
         }
     }
 }
