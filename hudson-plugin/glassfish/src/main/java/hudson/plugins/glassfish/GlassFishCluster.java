@@ -35,177 +35,235 @@
  */
 package hudson.plugins.glassfish;
 
-import hudson.Proc;
 import hudson.Launcher;
-import hudson.FilePath;
 import hudson.model.AbstractBuild;
-
+import hudson.model.Executor;
+import hudson.model.Computer;
+import  hudson.FilePath;
 import java.io.IOException;
 import java.io.PrintStream;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import java.util.Properties;
+import java.io.StringReader;
+
 /**
- *
+ * Represents GlassFish Application Server Cluster and it's Instances.
  * @author Harshad Vilekar
  */
 @SuppressWarnings("deprecation")
 public class GlassFishCluster {
 
-    private AbstractBuild build;
-    private Launcher launcher;
-    private PrintStream logger;
+    private static AbstractBuild build;
+    private static Launcher launcher;
+    private static PrintStream logger;
     private GlassFishBuilder gfbuilder;
-    private int baseport = 8100;
+    private int basePort;
+    // Number of hosts that run the cluster instances.
+    // Multiple instances may be deployed on the same host.
+    int numHosts ; 
+    static final int dasAdminPort = 4848, dasHttpPort = 8080, dasHostNum = 1;
+    String[] clusterHosts;
+    String clusterName ;
+    Map<String, GlassFishInstance> clusterMap = new HashMap<String, GlassFishInstance>();
+    //GlassFishCluster gfc;
 
     public GlassFishCluster(AbstractBuild build,
             Launcher launcher,
             PrintStream logger,
-            GlassFishBuilder gfbuilder) {
+            GlassFishBuilder gfbuilder,
+            int numHosts,
+            int basePort,
+            String clusterName) {
         this.build = build;
         this.launcher = launcher;
         this.logger = logger;
         this.gfbuilder = gfbuilder;
+        this.numHosts = numHosts;
+        this.basePort = basePort;
+        this.clusterName = clusterName ;
     }
 
-    public boolean createGFCluster() {
-      
-        String adminCmd = GlassFishInstaller.GFV3ASADMIN_CMD;
-        String CMD = adminCmd + " start-domain";
-        if (!execCommand(CMD)) {
-            return false;
+    // Currently, DAS and all instances run on a single host - identified by "localhost"
+    // TODO: Dynamically Allocate Hudson Slaves Here (GF3.1 MS3)
+    public String[] assignClusterHosts() {
+        if (numHosts <= 0) {
+            return null;
         }
+        String[] hosts = new String[numHosts];
+        for (int i = 0; i < numHosts; i++) {
+            hosts[i] = "localhost";
 
-        CMD = adminCmd + " create-cluster " + gfbuilder.getClusterName();
-        if (!execCommand(CMD)) {
-            return false;
         }
+        return hosts;
+    }
 
-        for (int i = 1; i <= gfbuilder.numInstances(); i++) {
-            CMD = adminCmd + " create-local-instance --cluster " + gfbuilder.getClusterName() + getPortNumberString()
-                    + gfbuilder.getInstanceNamePrefix() + i;
+    public int getDasAdminPort() {
+        return dasAdminPort;
+    }
 
-            if (!execCommand(CMD)) {
-                return false;
+    public String getDasHostName() {
+        return getHostName(dasHostNum);
+    }
+
+    public String getHostName(int hostNum) {
+        if ((hostNum > numHosts) || (hostNum <= 0)) {
+            logger.println("ERROR: Invalid Host Number:" + hostNum);
+            return "";
+        } else {
+            return clusterHosts[hostNum - 1];
+        }
+    }
+
+    /**
+      * Gives a hint about availability of the specified "basePort".
+      * Checks if the specified basePort is available on the current computer.
+      * If the port is available - return the port number.
+      * If the port is not available, return randomly selected "available" port.
+      * Note: This simply indicates that the port is available at this moment.
+      * The port is is not actually reserverd - and may be unavailable when the
+      * GlassFish instance tries to bind to it
+      */
+    public static int getAvailablePort(int basePort, String portName) {
+        int localPort;
+        final Computer cur = Executor.currentExecutor().getOwner();
+        org.jvnet.hudson.plugins.port_allocator.PortAllocationManager pam =
+                org.jvnet.hudson.plugins.port_allocator.PortAllocationManager.getManager(cur);
+        try {
+            localPort = pam.allocateRandom(build, basePort);
+            if (localPort != basePort) {
+                logger.println("Updated " + portName + "=" + localPort
+                        + " (" + basePort + " is not available!)");
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.println("IOException !");
+            return -1;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            logger.println("InterruptedException!");
+            return -1;
+        }
+        return localPort;
+    }
 
+    // auto assign default values
+    public void createAutoAssignedClusterMap(String instanceNamePrefix, int numInstances) {
+        int base_port = this.basePort;
+        for (int i = 1; i <= numInstances; i++) {
+            String instanceName = instanceNamePrefix + i;
+            GlassFishInstance gfi = new GlassFishInstance(this, instanceName, base_port);
+            clusterMap.put(instanceName, gfi);
+            logger.println("Added: " + instanceName + ":" + base_port);
+            base_port = base_port + 0x100;
+        }
+    }
+
+    public void listInstances() {
+        for (GlassFishInstance in : clusterMap.values()) {
+            logger.println(in.toStr());
+        }
+    }
+
+    // get values from Custom Instance Textbox,
+    // form key value pairs of instance name and base port
+    // and add those instances to the cluster map.
+    public boolean updateClusterMapPerUserPrefs() {
+
+        boolean retVal = true;
+        // load the instance name and value pairs from customInstanceText field
+        Properties p = new Properties();
+
+        try {
+            p.load(new StringReader(gfbuilder.getCustomInstanceText()));
+        } catch (IOException e) {
+            logger.println("ERROR Loading customInstanceText: "
+                    + gfbuilder.getCustomInstanceText());
+            e.printStackTrace();
+            return false;
         }
 
-        if (gfbuilder.getStartCluster()) {
-            for (int i = 1; i <= gfbuilder.numInstances(); i++) {
-
-                CMD = adminCmd + " start-local-instance " + gfbuilder.getInstanceNamePrefix() + i;
-                if (!execCommand(CMD)) {
-                    return false;
+        for (Entry<Object, Object> entry : p.entrySet()) {
+            String instance_name;
+            int base_port;
+            try {
+                instance_name = entry.getKey().toString();
+                base_port = new Integer(entry.getValue().toString()).intValue();
+                GlassFishInstance gfi = new GlassFishInstance(this, instance_name, base_port);
+                if (clusterMap.containsKey(instance_name)) {
+                    logger.println("Updated: " + instance_name + ":" + base_port);
+                } else {
+                    logger.println("Added: " + instance_name + ":" + base_port);
                 }
+                clusterMap.put(instance_name, gfi);
 
+            } catch (NumberFormatException nfe) {
+                logger.println("ERROR: Invalid Entry: "
+                        + entry.getKey().toString() + " " + entry.getKey().toString());
+                retVal = false;
             }
         }
+        return retVal;
+    }
 
-        CMD = adminCmd + " list-instances ";
-        if (!execCommand(CMD)) {
+    // host1 is reserved for DAS
+    // instance1..instance(numInstances) are deployed on host1..host(numHosts) in
+    // round robbin
+    public void assignHostsToInstances() {
+        int host_num = 0;
+        for (GlassFishInstance in : clusterMap.values()) {
+            in.hostName = getHostName(++host_num);
+            host_num = host_num % numHosts;
+        }
+    }
+
+    public void updateClusterMapPerPortAvailability() {
+        for (GlassFishInstance in : clusterMap.values()) {
+            in.updatePerPortAvailability();
+        }
+    }
+
+    /**
+     *
+     * Create a map of all the instances in the cluster.
+     * Override auto assigned ports with user defined - if any.
+     * Update port values based  upon which ports are actually free on the system
+     */
+    
+    public boolean createClusterMap(String instanceNamePrefix, int numInstances) {
+
+        logger.println("INFO: Cluster " + clusterName);
+
+        clusterHosts = assignClusterHosts();
+
+        createAutoAssignedClusterMap(instanceNamePrefix, numInstances);
+
+        if (!updateClusterMapPerUserPrefs()) {
+            logger.println("ERROR: Couldn't load customInstanceProperties, Build Aborted!");
             return false;
         }
 
-        for (int i = 1; i <= gfbuilder.numInstances(); i++) {
-            CMD = adminCmd + " stop-local-instance " + gfbuilder.getInstanceNamePrefix() + i;
-            if (!execCommand(CMD)) {
-                return false;
-            }
-        }
+        assignHostsToInstances();
 
-        for (int i = 1; i <= gfbuilder.numInstances(); i++) {
-            CMD = adminCmd + " delete-local-instance " + gfbuilder.getInstanceNamePrefix() + i;
-            if (!execCommand(CMD)) {
-                return false;
-            }
-        }
-
-        CMD = adminCmd + " delete-cluster " + gfbuilder.getClusterName();
-        if (!execCommand(CMD)) {
-            return false;
-        }
-
-
-        CMD = adminCmd + " stop-domain";
-        if (!execCommand(CMD)) {
-            return false;
-        }
+        updateClusterMapPerPortAvailability();
 
         return true;
     }
 
-    public boolean execCommand(String cmd) {
-        try {
-            Proc proc = launcher.launch(cmd, build.getEnvVars(), logger, build.getProject().getWorkspace());
-            int exitCode = proc.join();
-            if (exitCode == 0) {
-                logger.println("OK: " + cmd);
-                return true;
-            } else {
-                logger.println("ERROR: " + cmd);
-                return false;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            logger.println("ERROR (IOException): " + cmd);
-            return false;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.println("ERROR (InterruptedException): " + cmd);
-            return false;
-        }
-    }
-
-    // Note: Properties file format is changed. TODO: Implement the new format.
     public boolean createGFClusterPropertiesFile() {
 
         FilePath projectWorkspace = build.getProject().getWorkspace();
-        FilePath propsFile = new FilePath(projectWorkspace, "cluster.properties");
-        String clusterConfig = "";
-
-        String clusterConfigFormat =
-                "#FORMAT=hostname:HTTP_LISTENER_PORT:HTTP_SSL_LISTENER_PORT:"
-                + "IIOP_LISTENER_PORT:IIOP_SSL_LISTENER_PORT:JMX_SYSTEM_CONNECTOR_PORT:"
-                + "IIOP_SSL_MUTUALAUTH_PORT:JMS_PROVIDER_PORT:ASADMIN_LISTENER_PORT:"
-                + "instancename:clustername\n";
+        FilePath propsFile = new FilePath(projectWorkspace, "cluster.properties");        
 
         String properties =
-                "as.admin=" + GlassFishInstaller.GFV3BIN_DIR + "asadmin" + "\n"
-                + "cluster.name=" + gfbuilder.getClusterName() + "\n";
-
-        clusterConfig = clusterConfig + properties;
-        // base values for various ports
-        int http_listener_port = 8080, http_ssl_listener_port = 8181,
-                iiop_ssl_listener_port = 3800, iiop_listener_port = 3700,
-                jmx_system_connector_port = 7676, iiop_ssl_mutualauth_port = 3801,
-                jms_provider_port = 8686, asadmin_listener_port = 4848;
-
-        for (int i = 1; i <= gfbuilder.numInstances(); i++) {
-            if (i == 1) {
-                clusterConfig = clusterConfig + "instancelist=";
-            }
-            String iStr = "localhost:"
-                    + ++http_listener_port + ":"
-                    + ++http_ssl_listener_port + ":"
-                    + ++iiop_ssl_listener_port + ":"
-                    + ++iiop_listener_port + ":"
-                    + ++jmx_system_connector_port + ":"
-                    + ++iiop_ssl_mutualauth_port + ":"
-                    + ++jms_provider_port + ":"
-                    + ++asadmin_listener_port + ":"
-                    + gfbuilder.getInstanceNamePrefix() + i;
-
-            if (i < gfbuilder.numInstances()) {
-                iStr = iStr + ",";
-            } else {
-                iStr = iStr + "\n";
-            }
-            clusterConfig = clusterConfig + iStr;
-        }
-
-        logger.println(clusterConfig);
+                "as.admin=" + GlassFishInstaller.GFADMIN_CMD  + "\n"
+                + "cluster.name=" + clusterName + "\n";       
 
         try {
-            propsFile.write(clusterConfig, null);
+            propsFile.write(properties, null);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -220,18 +278,4 @@ public class GlassFishCluster {
         return true;
     }
 
-    private String getPortNumberString() {
-        return " --systemproperties "
-                + "HTTP_LISTENER_PORT=" + getNextPort() + ":HTTP_SSL_LISTENER_PORT=" + getNextPort()
-                + ":IIOP_SSL_LISTENER_PORT=" + getNextPort() + ":IIOP_LISTENER_PORT=" + getNextPort()
-                + ":JMX_SYSTEM_CONNECTOR_PORT=" + getNextPort() + ":IIOP_SSL_MUTUALAUTH_PORT=" + getNextPort()
-                + ":JMS_PROVIDER_PORT=" + getNextPort() + ":ASADMIN_LISTENER_PORT=" + getNextPort() + " ";
-
-    }
-
-    // Simply return next port number
-    // TODO: Check if the port if avalable.
-    private int getNextPort() {
-        return ++baseport;
-    }
 }

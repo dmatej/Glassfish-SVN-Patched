@@ -33,7 +33,6 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-
 package hudson.plugins.glassfish;
 
 import hudson.model.Computer;
@@ -45,6 +44,7 @@ import hudson.model.BuildListener;
 import hudson.model.AbstractProject;
 import hudson.tasks.Builder;
 import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.Shell;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -63,8 +63,10 @@ import java.net.URL;
  */
 public class GlassFishBuilder extends Builder {
 
-    private final String zipBundleURL, clusterName, clusterSize, instanceNamePrefix;
-    private final boolean installGlassFish, createCluster, startCluster;
+    private final String zipBundleURL, clusterName, clusterSize, instanceNamePrefix, basePortStr;
+    private final boolean installGlassFish, createCluster, startCluster, stopCluster, deleteInstall;
+    private String customInstanceText = "", shellCommand = "";
+    private int numHosts;
 
     // Fields in config.jelly match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
@@ -75,17 +77,39 @@ public class GlassFishBuilder extends Builder {
             String clusterSize,
             String clusterName,
             String instanceNamePrefix,
-            boolean startCluster) {
-        this.installGlassFish = installGlassFish;
-        this.zipBundleURL = zipBundleURL.trim();
+            String basePortStr,
+            boolean startCluster,
+            String customInstanceText,
+            String shellCommand,
+            boolean stopCluster,
+            boolean deleteInstall) {
+
+
+
+        this.zipBundleURL = zipBundleURL == null ? "" : zipBundleURL.trim();
+
         this.createCluster = createCluster;
-        this.clusterSize = clusterSize.trim();
-        this.clusterName = clusterName.trim();
-        this.instanceNamePrefix = instanceNamePrefix.trim();
+
+        this.clusterSize = clusterSize == null ? "" : clusterSize.trim();
+
+        this.clusterName = clusterName == null ? "" : clusterName.trim();
+
+        this.instanceNamePrefix = instanceNamePrefix == null ? "" : instanceNamePrefix.trim();
+
+        this.basePortStr = basePortStr == null ? "" : basePortStr.trim();
+
+        this.customInstanceText = customInstanceText == null ? "" : customInstanceText.trim();
+
+        this.shellCommand = shellCommand == null ? "" : shellCommand.trim();
+
+        this.installGlassFish = installGlassFish;
         this.startCluster = startCluster;
+        this.stopCluster = stopCluster;
+        this.deleteInstall = deleteInstall;
+
+        numHosts = 1;  // only one host is supported for now
     }
 
-    
     public boolean getInstallGlassFish() {
         return installGlassFish;
     }
@@ -106,6 +130,10 @@ public class GlassFishBuilder extends Builder {
         return clusterName;
     }
 
+    public String getBasePortStr() {
+        return basePortStr;
+    }
+
     public String getInstanceNamePrefix() {
         return instanceNamePrefix;
     }
@@ -114,9 +142,34 @@ public class GlassFishBuilder extends Builder {
         return startCluster;
     }
 
-    public int numInstances() {
+    public String getCustomInstanceText() {
+        return customInstanceText;
+    }
+
+    public String getShellCommand() {
+        return shellCommand;
+    }
+
+    public boolean getStopCluster() {
+        return stopCluster;
+    }
+
+    public boolean getDeleteInstall() {
+        return deleteInstall;
+    }
+
+    public int getNumInstances() {
         try {
             return Integer.parseInt(clusterSize);
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
+
+    public int getBasePort() {
+        try {
+            return Integer.parseInt(basePortStr);
         } catch (NumberFormatException e) {
             e.printStackTrace();
             return -1;
@@ -141,29 +194,73 @@ public class GlassFishBuilder extends Builder {
         msg = msg + "GlassFish Cluster '" + clusterName + "' will be created with " + clusterSize
                 + " instances: ";
 
-        if (numInstances() < 0) {
+        if (getNumInstances() < 0) {
             logger.println("ERROR: Invalid Cluster Size:" + clusterSize + "Build Aborted!");
             return false;
         }
 
-        for (int i = 1; i <= numInstances(); i++) {
-            msg = msg + getInstanceNamePrefix() + i + " ";
-        }
 
-        logger.println(msg);
+        GlassFishCluster gfc = new GlassFishCluster(build, launcher, logger, this, numHosts, getBasePort(), getClusterName());
 
-        if (installGlassFish) {
-            GlassFishInstaller gfi = new GlassFishInstaller(build, logger);
-            if (!gfi.installGlassFishFromZipBundle(zipBundleURL)) {
-                logger.println("ERROR: GlassFish Install Step Failed. Aborting!");
+        if (createCluster || startCluster || stopCluster) {
+            if (!gfc.createClusterMap(getInstanceNamePrefix(), getNumInstances())) {
                 return false;
             }
         }
 
+        ////// This completes Cluster Map initialization. /////////////
+
+
+        // Now, install GlassFish bundle
+        GlassFishInstaller gfi = new GlassFishInstaller(build, logger);
+        if (installGlassFish) {
+            if (!gfi.installGlassFishFromZipBundle(zipBundleURL)) {
+                logger.println("ERROR: GlassFish Install Step Failed.");
+                return false;
+            }
+        }
+
+        GlassFishAdminCmd admincmd = new GlassFishAdminCmd(build, launcher, logger, this, gfc, GlassFishInstaller.GFADMIN_CMD);
+
         if (createCluster) {
-            GlassFishCluster gfc = new GlassFishCluster(build, launcher, logger, this);
-            if (!gfc.createGFCluster()) {
-                logger.println("ERROR: GlassFish Cluster Creation Failed. Aborting!");
+            if (!admincmd.createGFCluster()) {
+                logger.println("ERROR: GlassFish Cluster Creation Failed.");
+                return false;
+            }
+        }
+
+        if (startCluster) {
+            if (!admincmd.startGFCluster()) {
+                logger.println("ERROR: Couldn't Start GlassFish Cluster.");
+                return false;
+            }
+        }
+
+        if (shellCommand.length() > 0) {
+            Shell shell = new Shell(getShellCommand());
+            logger.println("executing Shell Command:" + getShellCommand());
+            try {
+                if (!shell.perform(build, launcher, listener)) {
+                    logger.println("ERROR executing Shell Command:" + getShellCommand());
+                    return false;
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+                logger.println("ERROR (InterruptedException): executing Shell Command:" + getShellCommand());
+                return false;
+            }
+        }
+
+        if (stopCluster) {
+            if (!admincmd.stopGFCluster()) {
+                logger.println("ERROR: Couldn't Stop GlassFish Cluster.");
+                return false;
+            }
+        }
+
+        if (deleteInstall) {
+            if (!gfi.deleteInstall()) {
+                logger.println("ERROR: GlassFish Delete Install Failed.");
                 return false;
             }
         }

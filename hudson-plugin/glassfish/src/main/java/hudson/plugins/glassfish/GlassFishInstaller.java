@@ -33,38 +33,78 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-
-
 package hudson.plugins.glassfish;
 
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
+import hudson.model.Executor;
+import hudson.model.Computer;
+import hudson.remoting.Callable;
 
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.File;
 import java.net.URL;
+import java.util.List;
 
 /**
+ * GlassFish Application Server .zip Installer.
  * @author Harshad Vilekar
  */
 @SuppressWarnings("deprecation")
 public final class GlassFishInstaller {
 
     //define PATHs relative to project workspace
-    public static final String GFV3HOME_DIR = "glassfishv3/glassfish/";
-    public static final String GFV3BIN_DIR = GFV3HOME_DIR + "bin/";
-    public static final String GFV3ASADMIN_CMD = GFV3BIN_DIR + "asadmin";
+    static String GFHOME_DIR ;
+    static String GFBIN_DIR ;
+    static String GFPASSWORD_FILE ;
+    static String GFADMIN_CMD ;
+    static String USER_PASSWORD_FLAGS ;
+    static String OS_NAME ;
 
-    private static final String GFV3PASSWORD_FILE = GFV3HOME_DIR + "config/passwordfile";
-    private static final String USER_PASSWORD_FLAGS = " --passwordfile " + GFV3PASSWORD_FILE + " --user admin ";
-
-    private  AbstractBuild build;
-    private  PrintStream logger;
+    private AbstractBuild build;
+    private PrintStream logger;
+    private FilePath projectWorkspace, installDir;
+    private String installDirStr;
 
     public GlassFishInstaller(AbstractBuild build, PrintStream logger) {
         this.build = build;
         this.logger = logger;
+
+        OS_NAME = remoteComputerGetSystemProperty("os.name").toLowerCase();
+        logger.println("os.name=" + OS_NAME);
+        
+        if (OS_NAME.startsWith("windows")) {
+            GFHOME_DIR = "glassfishv3\\glassfish\\" ;
+            GFBIN_DIR = GlassFishInstaller.GFHOME_DIR + "bin\\";
+            GFADMIN_CMD = GlassFishInstaller.GFBIN_DIR + "asadmin.bat";
+            
+            GFPASSWORD_FILE = GFHOME_DIR + "config\\passwordfile";
+            USER_PASSWORD_FLAGS = " --passwordfile " + GFPASSWORD_FILE + " --user admin ";
+        } else {
+            GFHOME_DIR = "glassfishv3/glassfish/";
+            GFBIN_DIR = GlassFishInstaller.GFHOME_DIR + "bin/";
+            GFADMIN_CMD = GlassFishInstaller.GFBIN_DIR + "asadmin";
+
+            GFPASSWORD_FILE = GFHOME_DIR + "config/passwordfile";
+            USER_PASSWORD_FLAGS = " --passwordfile " + GFPASSWORD_FILE + " --user admin ";
+            
+        }
+
+
+
+        projectWorkspace = build.getProject().getWorkspace();
+        installDir = new FilePath(projectWorkspace, "glassfishv3");
+
+        try {
+            installDirStr = installDir.toURI().toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.println("IOException !");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            logger.println("InterruptedException!");
+        }
     }
 
     /**
@@ -74,8 +114,6 @@ public final class GlassFishInstaller {
     public boolean installGlassFishFromZipBundle(String GFZipBundleURLString) {
 
         try {
-            FilePath projectWorkspace = build.getProject().getWorkspace();
-
             // download / copy the build
             URL GFZipBundleURL = new URL(GFZipBundleURLString);
             String fileName = new File(GFZipBundleURL.getPath()).getName();
@@ -83,24 +121,29 @@ public final class GlassFishInstaller {
             FilePath zipFile = new FilePath(projectWorkspace, fileName);
             zipFile.copyFrom(GFZipBundleURL);
 
-            // delete all the traces of earlier installation
-            FilePath installDir = new FilePath(projectWorkspace, GFV3HOME_DIR);
-            if (installDir.exists()) {
-                logger.println("Deleting earlier installation from: " + installDir.toURI().toString());
-                installDir.deleteContents();
-                installDir.delete();
+            if (!deleteInstall()) {
+                return false;
             }
 
-            logger.println("Unzipping " + fileName + " at: " + projectWorkspace.toURI().toString());
+            logger.println("Unzipping " + fileName + " at: " + installDirStr);
 
             zipFile.unzip(projectWorkspace);
 
-            // After the bundle is unzippd, asadmin command files are missing execute permission.
-            // To workaround, explicitly add execute permission to the required GF admin commands
-            FilePath cmdFile = new FilePath(projectWorkspace, GFV3BIN_DIR + "asadmin");
+            // we don't need the .zip file after it's contents are unzipped
+            zipFile.delete();
+
+            // After the bundle is unzippd, files in bin directory are missing execute permission.
+            // To workaround, explicitly set execute permission to the required GF admin commands
+            FilePath binDir = new FilePath(projectWorkspace, GFBIN_DIR );
+            List<FilePath> filePathList = binDir.list();
+
+            //FilePath cmdFile = new FilePath(projectWorkspace, GFV3BIN_DIR + "asadmin");
+            
+            for (FilePath cmdFile : filePathList) {
             // b001001001 represets execute permission to all on Unix
             // Do a "bitwise inclusive OR operation" to assign the exec permission
-            cmdFile.chmod(cmdFile.mode() | Integer.parseInt("001001001", 2));
+                cmdFile.chmod(cmdFile.mode() | Integer.parseInt("001001001", 2));
+            }
 
             // password file may be required for executing asadmin command
             String CMD = "createGFPassWordFile()";
@@ -121,10 +164,35 @@ public final class GlassFishInstaller {
         }
     }
 
+    // delete all the traces of earlier installation
+    public boolean deleteInstall() {
+        
+        try {
+            if (installDir.exists()) {
+                installDir.deleteContents();
+                installDir.delete();
+                //logger.println("OK: Deleted Install Dir: " + installDirStr);
+            } else {
+                //logger.println("OK: Earlier Install Dir not found: " + installDirStr);
+            }
+
+            return true;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.println("IOException !" + "ERROR Removing Install Dir: " + installDirStr);
+            return false;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            logger.println("InterruptedException!" + "ERROR Removing Install Dir: " + installDirStr);
+            return false;
+        }
+    }
+
     private boolean createGFPassWordFile(AbstractBuild build, PrintStream logger) {
 
         FilePath projectWorkspace = build.getProject().getWorkspace();
-        FilePath passwordFile = new FilePath(projectWorkspace, GFV3PASSWORD_FILE);
+        FilePath passwordFile = new FilePath(projectWorkspace, GFPASSWORD_FILE);
         String passwd = "AS_ADMIN_PASSWORD=adminadmin\n"
                 + "AS_ADMIN_MASTERPASSWORD=changeit\n";
 
@@ -142,5 +210,30 @@ public final class GlassFishInstaller {
         }
 
         return true;
+    }
+    public String remoteComputerGetSystemProperty(String propName) {
+        String propValue="" ;
+        try {
+             propValue = Executor.currentExecutor().getOwner().getChannel().call(new getSystemPropertyTask(propName));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return propValue ;
+    }
+
+    private static final class getSystemPropertyTask implements Callable<String, IOException> {
+
+        private final String propName;
+
+        public getSystemPropertyTask(String propName) {
+            this.propName = propName;
+        }
+
+        public String call() throws IOException {
+            return System.getProperty(propName);
+        }
+        private static final long serialVersionUID = 1L;
     }
 }
