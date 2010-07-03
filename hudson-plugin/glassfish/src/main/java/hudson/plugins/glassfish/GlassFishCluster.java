@@ -39,7 +39,7 @@ import hudson.Launcher;
 import hudson.model.AbstractBuild;
 import hudson.model.Executor;
 import hudson.model.Computer;
-import  hudson.FilePath;
+import hudson.FilePath;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -64,10 +64,10 @@ public class GlassFishCluster {
     private int basePort;
     // Number of hosts that run the cluster instances.
     // Multiple instances may be deployed on the same host.
-    int numHosts ; 
+    int numHosts;
     static final int dasAdminPort = 4848, dasHttpPort = 8080, dasHostNum = 1;
     String[] clusterHosts;
-    String clusterName ;
+    String clusterName;
     Map<String, GlassFishInstance> clusterMap = new HashMap<String, GlassFishInstance>();
     //GlassFishCluster gfc;
 
@@ -84,7 +84,7 @@ public class GlassFishCluster {
         this.gfbuilder = gfbuilder;
         this.numHosts = numHosts;
         this.basePort = basePort;
-        this.clusterName = clusterName ;
+        this.clusterName = clusterName;
     }
 
     // Currently, DAS and all instances run on a single host - identified by "localhost"
@@ -119,20 +119,22 @@ public class GlassFishCluster {
     }
 
     /**
-      * Gives a hint about availability of the specified "basePort".
-      * Checks if the specified basePort is available on the current computer.
-      * If the port is available - return the port number.
-      * If the port is not available, return randomly selected "available" port.
-      * Note: This simply indicates that the port is available at this moment.
-      * The port is is not actually reserverd - and may be unavailable when the
-      * GlassFish instance tries to bind to it
-      */
+     * Gives a hint about availability of the specified "basePort".
+     * Checks if the specified basePort is available on the current computer.
+     * If the port is available - return the port number.
+     * If the port is not available, return randomly selected "available" port.
+     * Note: This simply indicates that the port is available at this moment.
+     * The port is is not actually reserved - and may be unavailable when the
+     * GlassFish instance tries to bind to it
+     */
     public static int getAvailablePort(int basePort, String portName) {
         int localPort;
         final Computer cur = Executor.currentExecutor().getOwner();
         org.jvnet.hudson.plugins.port_allocator.PortAllocationManager pam =
                 org.jvnet.hudson.plugins.port_allocator.PortAllocationManager.getManager(cur);
+        
         try {
+            
             localPort = pam.allocateRandom(build, basePort);
             if (localPort != basePort) {
                 logger.println("Updated " + portName + "=" + localPort
@@ -146,7 +148,7 @@ public class GlassFishCluster {
             e.printStackTrace();
             logger.println("InterruptedException!");
             return -1;
-        }
+        } 
         return localPort;
     }
 
@@ -232,7 +234,6 @@ public class GlassFishCluster {
      * Override auto assigned ports with user defined - if any.
      * Update port values based  upon which ports are actually free on the system
      */
-    
     public boolean createClusterMap(String instanceNamePrefix, int numInstances) {
 
         logger.println("INFO: Cluster " + clusterName);
@@ -248,22 +249,73 @@ public class GlassFishCluster {
 
         assignHostsToInstances();
 
-        updateClusterMapPerPortAvailability();
-
         return true;
     }
 
-    public boolean createGFClusterPropertiesFile() {
+    // non standard local contract for some ant scripts
+    // this is a old format - and may be removed in future
+    public boolean createPropsFileForAntS() {
+
+        String clusterStr =
+                "s1as.home=" + GlassFishInstaller.GFHOME_DIR + "\n"
+                + "cluster.name=" + clusterName + "\n";
+
+        String instanceStr = "";
+        for (GlassFishInstance in : clusterMap.values()) {
+            
+            if (instanceStr.length() > 0) {
+                // add a comma, to seperate from earlier instance
+                instanceStr = instanceStr + ",";
+            } else {
+                // this is beginning of the line
+                instanceStr = "instancelist=" ;
+            }
+
+            instanceStr = instanceStr + in.getPropsForAntS();
+        }
+
+        return createFile("cluster.properties", clusterStr + instanceStr);
+    }
+
+    public boolean createClusterPropsFiles() {
+
+        if (!createPropsFileForAntS()) {
+            return false ;
+        }
+
+        String clusterStr =
+                "s1as.home=" + GlassFishInstaller.GFHOME_DIR
+                + "\ncluster.name=" + clusterName
+                + "\ncluster.numHosts=" + numHosts
+                + "\ncluster.numInstances=" + clusterMap.size()  ;
+               
+        int i = 0;
+        for (GlassFishInstance in : clusterMap.values()) {
+            clusterStr = clusterStr + "\ninstance.name." + ++i + "=" + in.instanceName;
+        }
+
+        clusterStr = clusterStr + "\n";
+
+        if (!createFile("cluster.props", clusterStr)) {
+            return false;
+        }
+
+        for (GlassFishInstance in : clusterMap.values()) {
+            String instanceStr = in.getProps();
+            if (!createFile("instance." + in.instanceName + ".props", instanceStr)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean createFile(String fileName, String fileContents) {
 
         FilePath projectWorkspace = build.getProject().getWorkspace();
-        FilePath propsFile = new FilePath(projectWorkspace, "cluster.properties");        
-
-        String properties =
-                "as.admin=" + GlassFishInstaller.GFADMIN_CMD  + "\n"
-                + "cluster.name=" + clusterName + "\n";       
+        FilePath propsFile = new FilePath(projectWorkspace, fileName);
 
         try {
-            propsFile.write(properties, null);
+            propsFile.write(fileContents, null);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -277,5 +329,4 @@ public class GlassFishCluster {
 
         return true;
     }
-
 }

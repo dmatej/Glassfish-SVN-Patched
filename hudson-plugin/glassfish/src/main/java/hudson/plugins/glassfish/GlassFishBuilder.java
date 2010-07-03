@@ -45,6 +45,7 @@ import hudson.model.AbstractProject;
 import hudson.tasks.Builder;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Shell;
+import hudson.tasks.BatchFile;
 
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
@@ -199,20 +200,26 @@ public class GlassFishBuilder extends Builder {
             return false;
         }
 
-
+        GlassFishInstaller gfi = new GlassFishInstaller(build, logger);
         GlassFishCluster gfc = new GlassFishCluster(build, launcher, logger, this, numHosts, getBasePort(), getClusterName());
 
         if (createCluster || startCluster || stopCluster) {
             if (!gfc.createClusterMap(getInstanceNamePrefix(), getNumInstances())) {
                 return false;
             }
-        }
+            if (createCluster) {
+                gfc.updateClusterMapPerPortAvailability();
 
+                if (!gfc.createClusterPropsFiles()) {
+                    return false;
+                }
+            }
+        }
         ////// This completes Cluster Map initialization. /////////////
 
 
         // Now, install GlassFish bundle
-        GlassFishInstaller gfi = new GlassFishInstaller(build, logger);
+
         if (installGlassFish) {
             if (!gfi.installGlassFishFromZipBundle(zipBundleURL)) {
                 logger.println("ERROR: GlassFish Install Step Failed.");
@@ -220,7 +227,7 @@ public class GlassFishBuilder extends Builder {
             }
         }
 
-        GlassFishAdminCmd admincmd = new GlassFishAdminCmd(build, launcher, logger, this, gfc, GlassFishInstaller.GFADMIN_CMD);
+        GlassFishAdminCmd admincmd = new GlassFishAdminCmd(build, launcher, logger, this, gfc, gfi);
 
         if (createCluster) {
             if (!admincmd.createGFCluster()) {
@@ -237,17 +244,8 @@ public class GlassFishBuilder extends Builder {
         }
 
         if (shellCommand.length() > 0) {
-            Shell shell = new Shell(getShellCommand());
-            logger.println("executing Shell Command:" + getShellCommand());
-            try {
-                if (!shell.perform(build, launcher, listener)) {
-                    logger.println("ERROR executing Shell Command:" + getShellCommand());
-                    return false;
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-                logger.println("ERROR (InterruptedException): executing Shell Command:" + getShellCommand());
-                return false;
+            if (!execShellCommand(getShellCommand(), build, launcher, listener, gfi)) {
+                return false ;
             }
         }
 
@@ -263,6 +261,35 @@ public class GlassFishBuilder extends Builder {
                 logger.println("ERROR: GlassFish Delete Install Failed.");
                 return false;
             }
+        }
+
+        return true;
+    }
+
+    boolean execShellCommand(String cmd, AbstractBuild build, Launcher launcher, BuildListener listener, GlassFishInstaller gfi) {
+        PrintStream logger = listener.getLogger();
+
+        try {
+            if (gfi.isWindows()) {
+                BatchFile batch = new BatchFile(cmd);
+                logger.println("executing Windows Batch Command");
+                if (!batch.perform(build, launcher, listener)) {
+                    logger.println("ERROR executing Shell Command:" + cmd);
+                    return false;
+                }
+            } else {
+                Shell shell = new Shell(cmd);
+                logger.println("executing Shell Command");
+
+                if (!shell.perform(build, launcher, listener)) {
+                    logger.println("ERROR executing Shell Command:" + cmd);
+                    return false;
+                }
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            logger.println("ERROR (InterruptedException): executing Shell Command:" + getShellCommand());
+            return false;
         }
 
         return true;
@@ -351,7 +378,7 @@ public class GlassFishBuilder extends Builder {
         }
 
         public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-            // indicates that this builder can be used with all kinds of project types 
+            // indicates that this builder can be used with all kinds of project types
             return true;
         }
 

@@ -43,60 +43,59 @@ package hudson.plugins.glassfish;
  */
 public class GlassFishInstance {
 
-    String instanceName ;
+    String instanceName;
     // host number on which this instance supposed to run.
     // currently, only 1 host is supported
     int hostNum = 1;
-    String hostName = "" ;
+    String hostName = "";
     // allocate the ports starting from this port
     int basePort;
     // preferred port number start
     int http_listener_port, http_ssl_listener_port,
-        iiop_listener_port, iiop_ssl_listener_port, iiop_ssl_mutualauth_port,
-        jmx_system_connector_port, jms_provider_port, asadmin_listener_port;
+            iiop_listener_port, iiop_ssl_listener_port, iiop_ssl_mutualauth_port,
+            jmx_system_connector_port, jms_provider_port, asadmin_listener_port;
 
     // initialize with preferred port numbers
     public GlassFishInstance(GlassFishCluster gfc, String instanceName, int basePort) {
-        this.instanceName = instanceName ;
-        this.basePort = basePort ;
-        http_listener_port = basePort++ ;
-        http_ssl_listener_port = basePort++ ;
-        iiop_listener_port = basePort++ ;
-        iiop_ssl_listener_port = basePort++ ;
-        iiop_ssl_mutualauth_port = basePort++ ;
-        jmx_system_connector_port = basePort++ ;
-        jms_provider_port = basePort++ ;
-        asadmin_listener_port = basePort++ ;
+        this.instanceName = instanceName;
+        this.basePort = basePort;
+        http_listener_port = basePort++;
+        http_ssl_listener_port = basePort++;
+        iiop_listener_port = basePort++;
+        iiop_ssl_listener_port = basePort++;
+        iiop_ssl_mutualauth_port = basePort++;
+        jmx_system_connector_port = basePort++;
+        jms_provider_port = basePort++;
+        asadmin_listener_port = basePort++;
     }
 
     // Try to allocate the port. If the port is not available, update the port
     // value to the available port.
     public void updatePerPortAvailability() {
-        String portName = instanceName + " " + hostName + ":" + "http_listener_port" ;
+        String portName = instanceName + " " + hostName + ":" + "http_listener_port";
         http_listener_port = GlassFishCluster.getAvailablePort(http_listener_port, portName);
 
-        portName = instanceName + " " + hostName + ":" + "http_ssl_listener_port" ;
+        portName = instanceName + " " + hostName + ":" + "http_ssl_listener_port";
         http_ssl_listener_port = GlassFishCluster.getAvailablePort(http_ssl_listener_port, portName);
 
-        portName = instanceName + " " + hostName + ":" + "iiop_listener_port" ;
+        portName = instanceName + " " + hostName + ":" + "iiop_listener_port";
         iiop_listener_port = GlassFishCluster.getAvailablePort(iiop_listener_port, portName);
 
-        portName = instanceName + " " + hostName + ":" + "iiop_ssl_listener_port" ;
+        portName = instanceName + " " + hostName + ":" + "iiop_ssl_listener_port";
         iiop_ssl_listener_port = GlassFishCluster.getAvailablePort(iiop_ssl_listener_port, portName);
 
-        portName = instanceName + " " + hostName + ":" + "iiop_ssl_mutualauth_port" ;
+        portName = instanceName + " " + hostName + ":" + "iiop_ssl_mutualauth_port";
         iiop_ssl_mutualauth_port = GlassFishCluster.getAvailablePort(iiop_ssl_mutualauth_port, portName);
 
-        portName = instanceName + " " + hostName + ":" + "jmx_system_connector_port" ;
+        portName = instanceName + " " + hostName + ":" + "jmx_system_connector_port";
         jmx_system_connector_port = GlassFishCluster.getAvailablePort(jmx_system_connector_port, portName);
 
-        portName = instanceName + " " + hostName + ":" + "jms_provider_port" ;
+        portName = instanceName + " " + hostName + ":" + "jms_provider_port";
         jms_provider_port = GlassFishCluster.getAvailablePort(jms_provider_port, portName);
 
-        portName = instanceName + " " + hostName + ":" + "asadmin_listener_port" ;
+        portName = instanceName + " " + hostName + ":" + "asadmin_listener_port";
         asadmin_listener_port = GlassFishCluster.getAvailablePort(asadmin_listener_port, portName);
     }
-    
 
     public String getPortList() {
 
@@ -112,6 +111,37 @@ public class GlassFishInstance {
 
     }
 
+    // non standard local contract for some ant scripts
+    // this is a old format - and may be removed in future
+    public String getPropsForAntS() {
+        return hostName + ":"
+                + http_listener_port + ":"
+                + http_ssl_listener_port + ":"
+                + iiop_ssl_listener_port + ":"
+                + iiop_listener_port + ":"
+                + jmx_system_connector_port + ":"
+                + iiop_ssl_mutualauth_port + ":"
+                + jms_provider_port + ":"
+                + asadmin_listener_port + ":"
+                + instanceName;
+    }
+
+
+    public String getProps() {
+        return 
+                "instanceName=" + instanceName
+                + "\nhostName=" + hostName
+                + "\nhttp_listener_port=" + http_listener_port
+                + "\nhttp_ssl_listener_port=" + http_ssl_listener_port
+                + "\niiop_ssl_listener_port="+ iiop_ssl_listener_port
+                + "\niiop_listener_port=" + iiop_listener_port
+                + "\njmx_system_connector_port="+ jmx_system_connector_port
+                + "\niiop_ssl_mutualauth_port="+ iiop_ssl_mutualauth_port
+                + "\njms_provider_port="+ jms_provider_port
+                + "\nasadmin_listener_port="+ asadmin_listener_port
+                + "\n" ;
+
+    }
 
     public String toStr() {
         return instanceName + " on " + hostName + ": " + getPortList();

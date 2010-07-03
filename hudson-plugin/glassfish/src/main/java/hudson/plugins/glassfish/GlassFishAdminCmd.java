@@ -38,6 +38,7 @@ package hudson.plugins.glassfish;
 import hudson.Proc;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
+import java.util.Map;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -55,19 +56,21 @@ public class GlassFishAdminCmd {
     private GlassFishBuilder gfbuilder;
     private String adminCmd;
     GlassFishCluster gfc;
+    GlassFishInstaller gfi;
 
     public GlassFishAdminCmd(AbstractBuild build,
             Launcher launcher,
             PrintStream logger,
             GlassFishBuilder gfbuilder,
             GlassFishCluster gfc,
-            String adminCmd) {
+            GlassFishInstaller gfi) {
         this.build = build;
         this.launcher = launcher;
         this.logger = logger;
         this.gfbuilder = gfbuilder;
         this.gfc = gfc;
-        this.adminCmd = adminCmd ;
+        this.gfi = gfi;
+        adminCmd = gfi.GFADMIN_CMD ;
     }
 
     public boolean createGFCluster() {
@@ -162,7 +165,12 @@ public class GlassFishAdminCmd {
 
     public boolean execCommand(String cmd) {
         try {
-            Proc proc = launcher.launch(cmd, build.getEnvVars(), logger, build.getProject().getWorkspace());
+            Map envVars = build.getEnvVars() ;
+            //Tells Hudson to not kill daemon processes (like start instance, start domain).
+            //see http://issues.hudson-ci.org/browse/HUDSON-2729
+            envVars.put("BUILD_ID", "doNotKill");
+            Proc proc = launcher.launch(cmd, envVars, logger, build.getProject().getWorkspace());
+            
             int exitCode = proc.join();
             if (exitCode == 0) {
                 return true;
