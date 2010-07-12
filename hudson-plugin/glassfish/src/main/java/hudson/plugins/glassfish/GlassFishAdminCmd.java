@@ -35,13 +35,10 @@
  */
 package hudson.plugins.glassfish;
 
-import hudson.Proc;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
-import java.util.Map;
-import java.io.IOException;
 import java.io.PrintStream;
-
+import hudson.EnvVars;
 
 /**
  *
@@ -50,33 +47,65 @@ import java.io.PrintStream;
 @SuppressWarnings("deprecation")
 public class GlassFishAdminCmd {
 
-    private static AbstractBuild build;
-    private static Launcher launcher;
-    private static PrintStream logger;
+    private AbstractBuild build;
+    private Launcher launcher;
+    private PrintStream logger;
     private GlassFishBuilder gfbuilder;
-    private String adminCmd;
     GlassFishCluster gfc;
-    GlassFishInstaller gfi;
+    final boolean daemonProcess = true;
 
     public GlassFishAdminCmd(AbstractBuild build,
             Launcher launcher,
             PrintStream logger,
             GlassFishBuilder gfbuilder,
-            GlassFishCluster gfc,
-            GlassFishInstaller gfi) {
+            GlassFishCluster gfc) {
         this.build = build;
         this.launcher = launcher;
         this.logger = logger;
         this.gfbuilder = gfbuilder;
         this.gfc = gfc;
-        this.gfi = gfi;
-        adminCmd = gfi.GFADMIN_CMD ;
+    }
+
+    // make sure the default domain on DAS node can be started
+    // print out the version information
+    // then stop the default domain
+    // return false in case of any asadmin command failures.
+    public boolean verifyGFInstall() {
+
+        // stop any earlier running domain
+        String CMD = " --terse stop-domain";
+        if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
+            return false;
+        }
+
+        CMD = " --terse start-domain";
+        if (!execAdminCommand(gfc.getDasClusterNode(), CMD, daemonProcess)) {
+            return false;
+        }
+
+        CMD = " --terse version";
+        if (!execAdminCommand(gfc.getDasClusterNode(), CMD, daemonProcess)) {
+            return false;
+        }
+
+        CMD = " --terse stop-domain";
+        if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
+            return false;
+        }
+
+        return true;
     }
 
     public boolean createGFCluster() {
 
-        String CMD = adminCmd + " start-domain";
-        if (!execCommand(CMD)) {
+        // stop any earlier running domain
+        String CMD = " --terse stop-domain";
+        if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
+            return false;
+        }
+
+        CMD = " --terse start-domain";
+        if (!execAdminCommand(gfc.getDasClusterNode(), CMD, daemonProcess)) {
             return false;
         }
 
@@ -84,20 +113,20 @@ public class GlassFishAdminCmd {
                 + " with instances: ");
         gfc.listInstances();
 
-        CMD = adminCmd + " create-cluster " + gfbuilder.getClusterName();
-        if (!execCommand(CMD)) {
+        CMD = " --terse create-cluster " + gfbuilder.getClusterName();
+        if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
             return false;
         }
 
         for (String key : gfc.clusterMap.keySet()) {
             GlassFishInstance gfi = gfc.clusterMap.get(key);
-            CMD = adminCmd + " --host " + gfc.getDasHostName() + " --port " + gfc.getDasAdminPort()
+            CMD = " --host " + gfc.getDasNodeName() + " --port " + gfc.getDasAdminPort()
                     + " create-local-instance --cluster "
                     + gfbuilder.getClusterName()
                     + " --systemproperties " + gfi.getPortList()
                     + key;
 
-            if (!execCommand(CMD)) {
+            if (!execAdminCommand(gfi.getClusterNode(), CMD)) {
                 return false;
             }
         }
@@ -108,17 +137,11 @@ public class GlassFishAdminCmd {
         String CMD;
 
         for (String key : gfc.clusterMap.keySet()) {
-
-            CMD = adminCmd + " start-local-instance " + key;
-            if (!execCommand(CMD)) {
+            GlassFishInstance gfi = gfc.clusterMap.get(key);
+            CMD = " --terse start-local-instance " + key;
+            if (!execAdminCommand(gfi.getClusterNode(), CMD, daemonProcess)) {
                 return false;
             }
-        }
-
-
-        CMD = adminCmd + " list-instances ";
-        if (!execCommand(CMD)) {
-            return false;
         }
 
         return true;
@@ -130,62 +153,49 @@ public class GlassFishAdminCmd {
         String CMD;
 
         for (String key : gfc.clusterMap.keySet()) {
-
-            CMD = adminCmd + " stop-local-instance " + key;
-            if (!execCommand(CMD)) {
+            GlassFishInstance gfi = gfc.clusterMap.get(key);
+            CMD = " --terse stop-local-instance " + key;
+            if (!execAdminCommand(gfi.getClusterNode(), CMD)) {
                 return false;
             }
-        }
-
-        CMD = adminCmd + " list-instances ";
-        if (!execCommand(CMD)) {
-            return false;
         }
 
         /****************
         for (int i = 1; i <= gfbuilder.numInstances(); i++) {
         CMD = adminCmd + " delete-local-instance " + gfbuilder.getInstanceNamePrefix() + i;
-        if (!execCommand(CMD)) {
+        if (!execAdminCommand(CMD)) {
         return false;
         }
         }
 
         CMD = adminCmd + " delete-cluster " + gfbuilder.getClusterName();
-        if (!execCommand(CMD)) {
+        if (!execAdminCommand(CMD)) {
         return false;
         }
          *****************/
-        CMD = adminCmd + " stop-domain";
-        if (!execCommand(CMD)) {
+        CMD = " --terse stop-domain";
+        if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
             return false;
         }
 
         return true;
     }
 
-    public boolean execCommand(String cmd) {
-        try {
-            Map envVars = build.getEnvVars() ;
+    public boolean execAdminCommand(GlassFishClusterNode clusterNode, String cmd) {
+        return (execAdminCommand(clusterNode, cmd, false));
+    }
+
+    public boolean execAdminCommand(GlassFishClusterNode clusterNode, String cmd, boolean daemon) {
+
+        EnvVars additionalEnvVars = null;
+
+        if (daemon) {
             //Tells Hudson to not kill daemon processes (like start instance, start domain).
             //see http://issues.hudson-ci.org/browse/HUDSON-2729
-            envVars.put("BUILD_ID", "doNotKill");
-            Proc proc = launcher.launch(cmd, envVars, logger, build.getProject().getWorkspace());
-            
-            int exitCode = proc.join();
-            if (exitCode == 0) {
-                return true;
-            } else {
-                logger.println("ERROR: " + cmd);
-                return false;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            logger.println("ERROR (IOException): " + cmd);
-            return false;
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.println("ERROR (InterruptedException): " + cmd);
-            return false;
+            String key = "BUILD_ID", value = "doNotKill";
+
+            additionalEnvVars = new EnvVars(key, value);
         }
+        return (clusterNode.execCommand(additionalEnvVars, clusterNode.getInstaller().getAdminCmd() + " " + cmd));
     }
 }

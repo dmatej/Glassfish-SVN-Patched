@@ -55,47 +55,55 @@ import java.util.List;
 public final class GlassFishInstaller {
 
     //define PATHs relative to project workspace
-    static String GFHOME_DIR;
-    static String GFBIN_DIR;
-    static String GFPASSWORD_FILE;
-    static String GFADMIN_CMD;
-    static String USER_PASSWORD_FLAGS;
-    static String OS_NAME;
+    String GFHOME_DIR;
+    String GFBIN_DIR;
+    String GFPASSWORD_FILE;
+    String GFADMIN_CMD;
+    String USER_PASSWORD_FLAGS;
+    String OS_NAME;
     private AbstractBuild build;
     private PrintStream logger;
-    private FilePath projectWorkspace, installDir;
+    private FilePath projectWorkSpace, installDir;
     FilePath binDir;
     private String installDirStr;
+    GlassFishClusterNode clusterNode;
+    final boolean Verbose = true;
 
-    public GlassFishInstaller(AbstractBuild build, PrintStream logger) {
+    public GlassFishInstaller(GlassFishClusterNode clusterNode, AbstractBuild build, PrintStream logger) {
         this.build = build;
         this.logger = logger;
+        this.clusterNode = clusterNode;
 
         OS_NAME = remoteComputerGetSystemProperty("os.name").toLowerCase();
-        logger.println("os.name=" + OS_NAME);
+        logger.println(clusterNode.getNodeName() + ", os.name=" + OS_NAME);
 
-
+        //projectWorkSpace = build.getProject().getWorkspace();
+        projectWorkSpace = clusterNode.getWorkDir();
         if (isWindows()) {
-            GFHOME_DIR = build.getProject().getWorkspace().toString() + "\\glassfishv3\\glassfish\\";
-            GFBIN_DIR = GlassFishInstaller.GFHOME_DIR + "bin\\";
-            GFADMIN_CMD = GlassFishInstaller.GFBIN_DIR + "asadmin.bat";
+            GFHOME_DIR = projectWorkSpace.toString() + "\\glassfishv3\\glassfish\\";
+            GFBIN_DIR = GFHOME_DIR + "bin\\";
+            GFADMIN_CMD = GFBIN_DIR + "asadmin.bat";
 
             GFPASSWORD_FILE = GFHOME_DIR + "config\\passwordfile";
             USER_PASSWORD_FLAGS = " --passwordfile " + GFPASSWORD_FILE + " --user admin ";
         } else {
-            GFHOME_DIR = build.getProject().getWorkspace().toString() + "/glassfishv3/glassfish/";
-            GFBIN_DIR = GlassFishInstaller.GFHOME_DIR + "bin/";
-            GFADMIN_CMD = GlassFishInstaller.GFBIN_DIR + "asadmin";
+            GFHOME_DIR = projectWorkSpace.toString() + "/glassfishv3/glassfish/";
+            GFBIN_DIR = GFHOME_DIR + "bin/";
+            GFADMIN_CMD = GFBIN_DIR + "asadmin";
 
             GFPASSWORD_FILE = GFHOME_DIR + "config/passwordfile";
             USER_PASSWORD_FLAGS = " --passwordfile " + GFPASSWORD_FILE + " --user admin ";
         }
 
-        projectWorkspace = build.getProject().getWorkspace();
-        installDir = new FilePath(projectWorkspace, "glassfishv3");
-        binDir = new FilePath(projectWorkspace, GFBIN_DIR);
+
+        installDir = new FilePath(projectWorkSpace, "glassfishv3");
+        binDir = new FilePath(projectWorkSpace, GFBIN_DIR);
         installDirStr = installDir.toString();
 
+    }
+
+    String getAdminCmd() {
+        return GFADMIN_CMD;
     }
 
     boolean isWindows() {
@@ -112,17 +120,16 @@ public final class GlassFishInstaller {
             return false;
         }
 
-        if (!remoteUnzip(GFZipBundleURLString)) {
+        if (!remoteUnzip(false, GFZipBundleURLString)) {
             return false;
         }
         try {
 
             // After the bundle is unzippd, files in bin directory are missing execute permission.
-            // To workaround, explicitly set execute permission to the required GF admin commands
-            FilePath binDir = new FilePath(projectWorkspace, GFBIN_DIR);
+            // To workaround, explicitly set execute permission to the required GF admin commands            
             List<FilePath> filePathList = binDir.list();
 
-            //FilePath cmdFile = new FilePath(projectWorkspace, GFV3BIN_DIR + "asadmin");
+            //FilePath cmdFile = new FilePath(projectWorkSpace, GFV3BIN_DIR + "asadmin");
 
             for (FilePath cmdFile : filePathList) {
                 // b001001001 represets execute permission to all on Unix
@@ -148,26 +155,26 @@ public final class GlassFishInstaller {
         }
 
         //TODO: Remove this. This is a temporary workaround.
-        remoteUnzip("http://icon.red.iplanet.com/export7/gf_hudson_plugin/hudson-ant-script.zip");
+        remoteUnzip(!Verbose, "http://icon.red.iplanet.com/export7/gf_hudson_plugin/hudson-ant-script.zip");
         return true;
     }
 
     /**
      * Get .zip bundle from the specified URL and unzip the file on the slave computer.
      */
-    public boolean remoteUnzip(String ZipBundleURLString) {
+    public boolean remoteUnzip(boolean verbose, String ZipBundleURLString) {
 
         try {
             // download / copy the file
             URL ZipBundleURL = new URL(ZipBundleURLString);
             String fileName = new File(ZipBundleURL.getPath()).getName();
-            logger.println("Copying the file: " + ZipBundleURLString);
-            FilePath zipFile = new FilePath(projectWorkspace, fileName);
+            println(verbose, "Copying the file: " + ZipBundleURLString);
+            FilePath zipFile = new FilePath(projectWorkSpace, fileName);
             zipFile.copyFrom(ZipBundleURL);
 
-            logger.println("Unzipping " + fileName + " at: " + installDirStr);
+            println(verbose, "Unzipping " + fileName + " at: " + installDirStr);
 
-            zipFile.unzip(projectWorkspace);
+            zipFile.unzip(projectWorkSpace);
 
             // we don't need the .zip file after it's contents are unzipped
             zipFile.delete();
@@ -184,7 +191,13 @@ public final class GlassFishInstaller {
         return true;
     }
 
+    void println(boolean verbose, String msg) {
+        if (verbose) {
+            logger.println(msg);
+        }
+    }
     // delete all the traces of earlier installation
+
     public boolean deleteInstall() {
 
         try {
@@ -211,8 +224,7 @@ public final class GlassFishInstaller {
 
     private boolean createGFPassWordFile(AbstractBuild build, PrintStream logger) {
 
-        FilePath projectWorkspace = build.getProject().getWorkspace();
-        FilePath passwordFile = new FilePath(projectWorkspace, GFPASSWORD_FILE);
+        FilePath passwordFile = new FilePath(projectWorkSpace, GFPASSWORD_FILE);
         String passwd = "AS_ADMIN_PASSWORD=adminadmin\n"
                 + "AS_ADMIN_MASTERPASSWORD=changeit\n";
 
@@ -235,7 +247,7 @@ public final class GlassFishInstaller {
     public String remoteComputerGetSystemProperty(String propName) {
         String propValue = "";
         try {
-            propValue = Executor.currentExecutor().getOwner().getChannel().call(new getSystemPropertyTask(propName));
+            propValue = clusterNode.getNode().getChannel().call(new getSystemPropertyTask(propName));
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
