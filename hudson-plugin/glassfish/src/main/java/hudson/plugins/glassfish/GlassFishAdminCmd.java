@@ -73,22 +73,22 @@ public class GlassFishAdminCmd {
     public boolean verifyGFInstall() {
 
         // stop any earlier running domain
-        String CMD = " --terse stop-domain";
+        String CMD = " stop-domain";
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
             return false;
         }
 
-        CMD = " --terse start-domain";
+        CMD = " start-domain";
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD, daemonProcess)) {
             return false;
         }
 
-        CMD = " --terse version";
+        CMD = " version";
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD, daemonProcess)) {
             return false;
         }
 
-        CMD = " --terse stop-domain";
+        CMD = " stop-domain";
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
             return false;
         }
@@ -99,12 +99,12 @@ public class GlassFishAdminCmd {
     public boolean createGFCluster() {
 
         // stop any earlier running domain
-        String CMD = " --terse stop-domain";
+        String CMD = " stop-domain";
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
             return false;
         }
 
-        CMD = " --terse start-domain";
+        CMD = " start-domain";
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD, daemonProcess)) {
             return false;
         }
@@ -113,7 +113,7 @@ public class GlassFishAdminCmd {
                 + " with instances: ");
         gfc.listInstances();
 
-        CMD = " --terse create-cluster " + gfbuilder.getClusterName();
+        CMD = " create-cluster " + gfbuilder.getClusterName();
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
             return false;
         }
@@ -138,7 +138,7 @@ public class GlassFishAdminCmd {
 
         for (String key : gfc.clusterMap.keySet()) {
             GlassFishInstance gfi = gfc.clusterMap.get(key);
-            CMD = " --terse start-local-instance " + key;
+            CMD = " start-local-instance " + key;
             if (!execAdminCommand(gfi.getClusterNode(), CMD, daemonProcess)) {
                 return false;
             }
@@ -154,7 +154,7 @@ public class GlassFishAdminCmd {
 
         for (String key : gfc.clusterMap.keySet()) {
             GlassFishInstance gfi = gfc.clusterMap.get(key);
-            CMD = " --terse stop-local-instance " + key;
+            CMD = " stop-local-instance " + key;
             if (!execAdminCommand(gfi.getClusterNode(), CMD)) {
                 return false;
             }
@@ -173,7 +173,7 @@ public class GlassFishAdminCmd {
         return false;
         }
          *****************/
-        CMD = " --terse stop-domain";
+        CMD = " stop-domain";
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
             return false;
         }
