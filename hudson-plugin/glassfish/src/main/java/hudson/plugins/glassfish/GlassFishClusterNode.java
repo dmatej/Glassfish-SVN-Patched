@@ -11,6 +11,7 @@ import hudson.model.Node;
 import hudson.Proc;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
+import hudson.EnvVars;
 import java.util.Map;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -91,6 +92,13 @@ public class GlassFishClusterNode {
             if (additionaEnvVars != null) {
                 envVars.putAll(additionaEnvVars);
             }
+
+            // as of 3.1-b09, command replication framework is not yet enabled by default
+            // to workaround, explicitly set the environment variable
+            String key = "ENABLE_REPLICATION", value = "true";
+            EnvVars clusterEnv = new EnvVars(key, value);
+            envVars.putAll(clusterEnv);
+
             logger.println(getNodeName() + " executing: ");
 
             Proc proc = launcher.launch(cmd, envVars, logger, workDir);
