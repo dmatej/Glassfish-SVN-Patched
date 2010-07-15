@@ -191,6 +191,7 @@ public class GlassFishBuilder extends Builder {
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
 
+        boolean returnVal = true ;
         PrintStream logger = listener.getLogger();        
        
         if (getNumInstances() < 0) {
@@ -244,7 +245,7 @@ public class GlassFishBuilder extends Builder {
 
         if (shellCommand.length() > 0) {
             if (!gfc.execShellCommand(getShellCommand())) {
-                return false ;
+                returnVal = false ;
             }
         }
 
@@ -263,7 +264,7 @@ public class GlassFishBuilder extends Builder {
             }
         }
 
-        return true;
+        return returnVal;
     }
 
     
