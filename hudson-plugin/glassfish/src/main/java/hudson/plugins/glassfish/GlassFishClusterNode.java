@@ -4,6 +4,8 @@
  */
 package hudson.plugins.glassfish;
 
+import hudson.remoting.Callable;
+
 import hudson.model.BuildListener;
 import hudson.FilePath;
 import hudson.model.Computer;
@@ -26,8 +28,8 @@ public class GlassFishClusterNode {
     Node node;
     Launcher launcher;
     BuildListener listener;
-    PrintStream logger;
-    AbstractBuild build;
+    static PrintStream logger;
+    static AbstractBuild build;
     FilePath workDir;
     GlassFishInstaller gfi;
 
@@ -35,32 +37,52 @@ public class GlassFishClusterNode {
         this.node = node;
         this.build = build;
         this.logger = logger;
-        this.listener = listener;
+        this.listener = listener;       
+
+        setWorkDir();
+
+        launcher = node.createLauncher(listener);
+        gfi = new GlassFishInstaller(this, build, logger);
+
+    }
+
+    boolean setWorkDir() {
         try {
+            // Use Same WS directory - relative to the rootpath - on Slave Computer
+            // as the build computer
             String rootPath = Computer.currentComputer().getNode().getRootPath().toString();
             String wsPath = build.getWorkspace().toString();
             String relativePath = "";
+
+            String nodeRootPath = node.getRootPath().toString() ;
+            String nodeWsPath = "" ;
+
             // this is expected to be always true
             if (wsPath.startsWith(rootPath)) {
-                // remove directory name, plus "/" character - hence length() + 1
+                // remove root path, plus dir separator ("\" on windows, "/" on Unix)
+                // character - hence length() + 1
                 relativePath = wsPath.substring(rootPath.length() + 1);
             }
-
-            //workDir = node.getRootPath().createTempDir("gfcluster", null);
+            
+            if (isWindows()) {
+                relativePath = relativePath.replace('/', '\\');
+            } else {
+                relativePath = relativePath.replace('\\', '/');
+            }
             workDir = new FilePath(node.getRootPath(), relativePath);
+            
             workDir.mkdirs();
 
         } catch (IOException e) {
             e.printStackTrace();
+            return false ;
 
 
         } catch (InterruptedException e) {
             e.printStackTrace();
+            return false ;
         }
-        launcher = node.createLauncher(listener);
-
-        gfi = new GlassFishInstaller(this, build, logger);
-
+        return true ;
     }
 
     FilePath getWorkDir() {
@@ -71,12 +93,46 @@ public class GlassFishClusterNode {
         return node;
     }
 
-    GlassFishInstaller getInstaller() {
+    final GlassFishInstaller getInstaller() {
         return gfi;
     }
 
     String getNodeName() {
         return getNode().getNodeName();
+    }
+
+    boolean isWindows() {
+        return getOS().startsWith("windows");
+    }
+
+    String getOS() {
+        return getSystemProperty("os.name").toLowerCase();
+    }
+    
+     public String getSystemProperty(String propName) {
+        String propValue = "";
+        try {
+            propValue = getNode().getChannel().call(new getSystemPropertyTask(propName));
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return propValue;
+    }
+
+    private static final class getSystemPropertyTask implements Callable<String, IOException> {
+
+        private final String propName;
+
+        public getSystemPropertyTask(String propName) {
+            this.propName = propName;
+        }
+
+        public String call() throws IOException {
+            return System.getProperty(propName);
+        }
+        private static final long serialVersionUID = 1L;
     }
 
     /**
@@ -134,9 +190,9 @@ public class GlassFishClusterNode {
      * The port is is not actually reserved - and may be unavailable when the
      * GlassFish instance tries to bind to it
      */
-    public int getAvailablePort(int basePort, String portName) {
+    static int getAvailablePort(Node node, int basePort, String portName) {
         int localPort;
-        final Computer cur = node.toComputer();
+        Computer cur = node.toComputer();
         org.jvnet.hudson.plugins.port_allocator.PortAllocationManager pam =
                 org.jvnet.hudson.plugins.port_allocator.PortAllocationManager.getManager(cur);
 
@@ -157,5 +213,9 @@ public class GlassFishClusterNode {
             return -1;
         }
         return localPort;
+    }
+
+    int getAvailablePort(int basePort, String portName) {
+        return getAvailablePort(node, basePort, portName);
     }
 }
