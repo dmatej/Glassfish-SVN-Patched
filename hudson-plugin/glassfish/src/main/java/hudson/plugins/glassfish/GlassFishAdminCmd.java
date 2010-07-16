@@ -84,11 +84,25 @@ public class GlassFishAdminCmd {
         }
 
         CMD = " version";
-        if (!execAdminCommand(gfc.getDasClusterNode(), CMD, daemonProcess)) {
+        if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
             return false;
         }
 
         CMD = " stop-domain";
+        if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    // make sure the default domain on DAS node can be started
+    // print out the version information
+    // then stop the default domain
+    // return false in case of any asadmin command failures.
+    public boolean getGFVersion() {
+
+        String CMD = " version";
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
             return false;
         }
@@ -160,19 +174,8 @@ public class GlassFishAdminCmd {
             }
         }
 
-        /****************
-        for (int i = 1; i <= gfbuilder.numInstances(); i++) {
-        CMD = adminCmd + " delete-local-instance " + gfbuilder.getInstanceNamePrefix() + i;
-        if (!execAdminCommand(CMD)) {
-        return false;
-        }
-        }
-
-        CMD = adminCmd + " delete-cluster " + gfbuilder.getClusterName();
-        if (!execAdminCommand(CMD)) {
-        return false;
-        }
-         *****************/
+        // todo: optionally, delete-local-instance and delete-cluster
+        
         CMD = " stop-domain";
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
             return false;

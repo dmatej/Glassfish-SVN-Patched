@@ -37,9 +37,6 @@ package hudson.plugins.glassfish;
 
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
-import hudson.model.Executor;
-import hudson.model.Computer;
-import hudson.remoting.Callable;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -74,7 +71,7 @@ public final class GlassFishInstaller {
         this.logger = logger;
         this.clusterNode = clusterNode;
 
-        OS_NAME = remoteComputerGetSystemProperty("os.name").toLowerCase();
+        OS_NAME = clusterNode.getOS();
         logger.println(clusterNode.getNodeName() + ", os.name=" + OS_NAME);
 
         //projectWorkSpace = build.getProject().getWorkspace();
@@ -244,29 +241,4 @@ public final class GlassFishInstaller {
         return true;
     }
 
-    public String remoteComputerGetSystemProperty(String propName) {
-        String propValue = "";
-        try {
-            propValue = clusterNode.getNode().getChannel().call(new getSystemPropertyTask(propName));
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return propValue;
-    }
-
-    private static final class getSystemPropertyTask implements Callable<String, IOException> {
-
-        private final String propName;
-
-        public getSystemPropertyTask(String propName) {
-            this.propName = propName;
-        }
-
-        public String call() throws IOException {
-            return System.getProperty(propName);
-        }
-        private static final long serialVersionUID = 1L;
-    }
 }
