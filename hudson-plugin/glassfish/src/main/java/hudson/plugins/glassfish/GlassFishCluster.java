@@ -71,7 +71,6 @@ public class GlassFishCluster {
     private int basePort;
     // Number of nodes (hosts) that run the cluster instances.
     int numNodes;
-    boolean multiNodeCluster;
     static final int dasAdminPort = 4848, dasHttpPort = 8080, dasNodetNum = 1;
     ArrayList<GlassFishClusterNode> clusterNodes = new ArrayList();
     String clusterName;
@@ -85,7 +84,7 @@ public class GlassFishCluster {
             PrintStream logger,
             BuildListener listener,
             GlassFishBuilder gfbuilder,
-            boolean multiNodeCluster,
+            String numNodes,
             int basePort,
             String clusterName,
             String nodeSelectionLabel) {
@@ -94,7 +93,7 @@ public class GlassFishCluster {
         this.listener = listener;
         this.logger = logger;
         this.gfbuilder = gfbuilder;
-        this.multiNodeCluster = multiNodeCluster;
+        this.numNodes = Integer.parseInt(numNodes);
         this.basePort = basePort;
         this.clusterName = clusterName;
         this.nodeSelectionLabel = nodeSelectionLabel;
@@ -109,6 +108,21 @@ public class GlassFishCluster {
         return (clusterNodes.get(0).getNodeName());
     }
 
+    boolean verifyDasPortAvailability() {
+
+        if (GlassFishClusterNode.getAvailablePort(Computer.currentComputer().getNode(), dasAdminPort, "DAS_ADMIN_PORT") != dasAdminPort) {
+            logger.println("ERROR: DAS_ADMIN_PORT is not available!");
+            return false ;
+        }
+
+        if (GlassFishClusterNode.getAvailablePort(Computer.currentComputer().getNode(), dasHttpPort, "DAS_HTTP_PORT") != dasHttpPort) {
+            logger.println("ERROR: DAS_HTTP_PORT is not available!");
+            return false ;
+        }
+
+        return true ;
+    }
+    
     public GlassFishClusterNode getDasClusterNode() {
         return clusterNodes.get(0);
     }
@@ -280,11 +294,11 @@ public class GlassFishCluster {
             return false;
         }
 
-        // Currently, we use one node per instance
-        if (multiNodeCluster) {
-            numNodes = clusterMap.size();
-        } else {
-            numNodes = 1;
+        // Max number of nodes we need is limited by number of instances (one instance per node)
+        // limit numNodes to numInstances, no need to reserve more nodes, even if
+        // those are requested by the user.
+        if (numNodes > clusterMap.size()) {
+            numNodes = clusterMap.size() ;
         }
 
         assignClusterNodesToInstances();
@@ -411,17 +425,17 @@ public class GlassFishCluster {
             instanceStr = instanceStr + in.getPropsForAntS();
         }
 
-        return createFile(false, "cluster.properties", clusterStr + instanceStr);
+        return createFile(false, "ant/cluster.properties", clusterStr + instanceStr);
     }
 
     public boolean createClusterPropsFiles() {
 
         String clusterStr =
-                "cluster.name=" + clusterName
-                + "\ncluster.numNodes=" + numNodes
-                + "\ncluster.numInstances=" + clusterMap.size()
-                + "\ndas.node=" + getDasNodeName()
-                + "\ndas.port=" + getDasAdminPort()
+                "cluster_name=" + clusterName
+                + "\ncluster_numNodes=" + numNodes
+                + "\ncluster_numInstances=" + clusterMap.size()
+                + "\ndas_node=" + getDasNodeName()
+                + "\ndas_port=" + getDasAdminPort()
                 + "\n";
 
         int i = 0;

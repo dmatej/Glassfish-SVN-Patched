@@ -63,10 +63,9 @@ import java.net.URL;
  */
 public class GlassFishBuilder extends Builder {
 
-    private final String zipBundleURL, clusterName, clusterSize, instanceNamePrefix, basePortStr;
+    private final String zipBundleURL, clusterName, clusterSize, numNodes, instanceNamePrefix, basePortStr;
     private final boolean installGlassFish, createCluster, startCluster, stopCluster, deleteInstall;
-    private String customInstanceText, shellCommand;    
-    private boolean multiNodeCluster ;
+    private String customInstanceText, shellCommand;       
 
     // Fields in config.jelly match the parameter names in the "DataBoundConstructor"
     @DataBoundConstructor
@@ -78,14 +77,12 @@ public class GlassFishBuilder extends Builder {
             String clusterName,
             String instanceNamePrefix,
             String basePortStr,
-            boolean multiNodeCluster,
+            String numNodes,
             boolean startCluster,
             String customInstanceText,
             String shellCommand,
             boolean stopCluster,
             boolean deleteInstall) {
-
-
 
         this.zipBundleURL = zipBundleURL == null ? "" : zipBundleURL.trim();
 
@@ -99,7 +96,7 @@ public class GlassFishBuilder extends Builder {
 
         this.basePortStr = basePortStr == null ? "" : basePortStr.trim();
 
-        this.multiNodeCluster = multiNodeCluster ;
+        this.numNodes = numNodes == null ? "" : numNodes.trim();
 
         this.customInstanceText = customInstanceText == null ? "" : customInstanceText.trim();
 
@@ -108,9 +105,7 @@ public class GlassFishBuilder extends Builder {
         this.installGlassFish = installGlassFish;
         this.startCluster = startCluster;
         this.stopCluster = stopCluster;
-        this.deleteInstall = deleteInstall;
-
-        //numNodes = 1;  // only one host is supported for now
+        this.deleteInstall = deleteInstall;      
     }
 
     public boolean getInstallGlassFish() {
@@ -141,8 +136,8 @@ public class GlassFishBuilder extends Builder {
         return instanceNamePrefix;
     }
 
-    public boolean getMultiNodeCluster() {
-        return multiNodeCluster;
+    public String getNumNodes() {
+        return numNodes;
     }
 
     public boolean getStartCluster() {
@@ -199,7 +194,7 @@ public class GlassFishBuilder extends Builder {
             return false;
         }
 
-        GlassFishCluster gfc = new GlassFishCluster(build, launcher, logger, listener, this, multiNodeCluster, getBasePort(), getClusterName(), "GFCluster");
+        GlassFishCluster gfc = new GlassFishCluster(build, launcher, logger, listener, this, getNumNodes(), getBasePort(), getClusterName(), "GFCluster");
         GlassFishAdminCmd admincmd = new GlassFishAdminCmd(build, launcher, logger, this, gfc);
 
         if (installGlassFish) {
@@ -209,15 +204,21 @@ public class GlassFishBuilder extends Builder {
             }
 
             // First, install GlassFish on current computer (DAS node) only,
-            // verify installation, and print version number
+            // verify installation - print version number and make sure DAS can be started on this computer
             if (!gfc.installGlassFishOnDasNode(zipBundleURL)) {
                 logger.println("ERROR: GlassFish Install on DAS Node Failed.");
                 return false;
             }
-            if (!admincmd.verifyGFInstall()) {
-                logger.println("ERROR: GlassFish Install Verification Failed.");
+
+            if (!admincmd.getGFVersion()) {
+                logger.println("ERROR: Couldn't get GlassFish Version.");
                 return false;
             }
+
+            if (!gfc.verifyDasPortAvailability()) {
+                logger.println("ERROR: Ports required for DAS are in use by another process or another DAS instance.");
+                return false;
+            }           
 
             // Now, install GlassFish bundle on rest of all the subslave nodes
             if (!gfc.installGlassFishOnNonDasNodes(zipBundleURL)) {
@@ -346,8 +347,30 @@ public class GlassFishBuilder extends Builder {
             if (size < 1) {
                 return FormValidation.error("Invalid Cluster Size!");
             }
+          
+            return FormValidation.ok();
+        }
 
-            // todo: add additional checks for cluster name validation here
+        public FormValidation doCheckNumNodes(@QueryParameter String value)
+                throws IOException, ServletException {
+            if (value.length() == 0) {
+                return FormValidation.error("Please specify Number of Nodes for the cluster.");
+            }
+
+            int size = -1;
+            try {
+                size = Integer.parseInt(value.trim());
+            } catch (NumberFormatException e) {
+            }
+
+            if (size > 99) {
+                return FormValidation.warning("Are you sure ?");
+            }
+
+            if (size < 1) {
+                return FormValidation.error("Invalid Value for Number of Nodes !");
+            }
+            
             return FormValidation.ok();
         }
 
