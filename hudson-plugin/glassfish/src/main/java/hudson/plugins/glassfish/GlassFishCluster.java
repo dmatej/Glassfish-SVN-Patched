@@ -111,18 +111,19 @@ public class GlassFishCluster {
     boolean verifyDasPortAvailability() {
 
         if (GlassFishClusterNode.getAvailablePort(Computer.currentComputer().getNode(), dasAdminPort, "DAS_ADMIN_PORT") != dasAdminPort) {
-            logger.println("ERROR: DAS_ADMIN_PORT is not available!");
-            return false ;
+            logger.println("ERROR: DAS_ADMIN_PORT " + dasAdminPort + " is not available!");
+
+            return false;
         }
 
         if (GlassFishClusterNode.getAvailablePort(Computer.currentComputer().getNode(), dasHttpPort, "DAS_HTTP_PORT") != dasHttpPort) {
             logger.println("ERROR: DAS_HTTP_PORT is not available!");
-            return false ;
+            return false;
         }
 
-        return true ;
+        return true;
     }
-    
+
     public GlassFishClusterNode getDasClusterNode() {
         return clusterNodes.get(0);
     }
@@ -298,7 +299,7 @@ public class GlassFishCluster {
         // limit numNodes to numInstances, no need to reserve more nodes, even if
         // those are requested by the user.
         if (numNodes > clusterMap.size()) {
-            numNodes = clusterMap.size() ;
+            numNodes = clusterMap.size();
         }
 
         assignClusterNodesToInstances();
@@ -426,6 +427,46 @@ public class GlassFishCluster {
         }
 
         return createFile(false, "ant/cluster.properties", clusterStr + instanceStr);
+    }
+
+    /** Copy over server logs for DAS and each instance to the given subdirectory
+     *  of the current workspace on the build machine.
+     * @param dirName
+     * @return
+     */
+    public boolean copyGFServerLogsTo(String dirName) {
+
+        // first get DAS logs
+        FilePath target = new FilePath(build.getProject().getWorkspace(), dirName + "/das");
+        FilePath src = getDasClusterNode().getInstaller().domain1LogsDir ;
+
+        try {           
+            logger.println("Copying DAS server logs " + src.toString() + " to: " + target.toString());
+            target.mkdirs();
+            src.copyRecursiveTo(target);
+            
+            for (GlassFishInstance in : clusterMap.values()) {
+                src = in.getInstanceLogs();
+                target = new FilePath(build.getProject().getWorkspace(), dirName + "/" + in.instanceName);
+                
+                target.mkdirs();
+                if (src == null ) {
+                    //logger.println(in.instanceName + " skipped: No server logs found");
+                } else {
+                    logger.println("Copying Instance (" + in.instanceName + ") server logs " + src.toString() + " to: " + target.toString());
+                    src.copyRecursiveTo(target);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            logger.println("IOException: Failed to Copy " + src.toString() + " to " + target.toString());
+            return false;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            logger.println("InterruptedException: Failed to Copy " + src.toString() + " to " + target.toString());
+            return false;
+        }
+        return true;
     }
 
     public boolean createClusterPropsFiles() {

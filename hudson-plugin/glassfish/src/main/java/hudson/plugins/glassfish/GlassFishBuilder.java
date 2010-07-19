@@ -186,7 +186,7 @@ public class GlassFishBuilder extends Builder {
     @Override
     public boolean perform(AbstractBuild build, Launcher launcher, BuildListener listener) {
 
-        boolean returnVal = true ;
+        boolean returnVal = true, copyLogs = false ;
         PrintStream logger = listener.getLogger();        
        
         if (getNumInstances() < 0) {
@@ -231,6 +231,7 @@ public class GlassFishBuilder extends Builder {
         
 
         if (createCluster) {
+            copyLogs = true ;
             if (!admincmd.createGFCluster()) {
                 logger.println("ERROR: GlassFish Cluster Creation Failed.");
                 return false;
@@ -238,6 +239,7 @@ public class GlassFishBuilder extends Builder {
         }
 
         if (startCluster) {
+            copyLogs = true ;
             if (!admincmd.startGFCluster()) {
                 logger.println("ERROR: Couldn't Start GlassFish Cluster.");
                 return false;
@@ -245,12 +247,14 @@ public class GlassFishBuilder extends Builder {
         }
 
         if (shellCommand.length() > 0) {
+             copyLogs = true ;
             if (!gfc.execShellCommand(getShellCommand())) {
                 returnVal = false ;
             }
         }
 
         if (stopCluster) {
+            copyLogs = true ;
             if (!admincmd.stopGFCluster()) {
                 logger.println("ERROR: Couldn't Stop GlassFish Cluster.");
                 return false;
@@ -259,8 +263,16 @@ public class GlassFishBuilder extends Builder {
 
 
         if (deleteInstall) {
+            copyLogs = true ;
             if (!gfc.deleteInstall()) {
                 logger.println("ERROR: GlassFish Delete Install Failed.");
+                return false;
+            }
+        }
+
+        if (copyLogs) {
+            if (!gfc.copyGFServerLogsTo("logs")) {
+                logger.println("ERROR: Failed To Copy Server Logs.");
                 return false;
             }
         }

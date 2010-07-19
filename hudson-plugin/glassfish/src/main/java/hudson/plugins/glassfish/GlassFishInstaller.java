@@ -52,7 +52,7 @@ import java.util.List;
 public final class GlassFishInstaller {
 
     //define PATHs relative to project workspace
-    String GFHOME_DIR;
+    String GFHOME_DIR, GFDOMAIN1_LOGS_DIR;
     String GFBIN_DIR;
     String GFPASSWORD_FILE;
     String GFADMIN_CMD;
@@ -61,7 +61,7 @@ public final class GlassFishInstaller {
     private AbstractBuild build;
     private PrintStream logger;
     private FilePath projectWorkSpace, installDir;
-    FilePath binDir;
+    FilePath binDir, domain1LogsDir, GFHomeDir ;
     private String installDirStr;
     GlassFishClusterNode clusterNode;
     final boolean Verbose = true;
@@ -76,17 +76,22 @@ public final class GlassFishInstaller {
 
         //projectWorkSpace = build.getProject().getWorkspace();
         projectWorkSpace = clusterNode.getWorkDir();
+        String GFHOME_DIR_REL = "" ;
         if (isWindows()) {
-            GFHOME_DIR = projectWorkSpace.toString() + "\\glassfishv3\\glassfish\\";
+            GFHOME_DIR_REL = "glassfishv3\\glassfish\\" ;
+            GFHOME_DIR = projectWorkSpace.toString() + "\\" + GFHOME_DIR_REL ;
             GFBIN_DIR = GFHOME_DIR + "bin\\";
             GFADMIN_CMD = GFBIN_DIR + "asadmin.bat";
+            GFDOMAIN1_LOGS_DIR = GFHOME_DIR_REL + "domains\\domain1\\logs\\" ;
 
             GFPASSWORD_FILE = GFHOME_DIR + "config\\passwordfile";
             USER_PASSWORD_FLAGS = " --passwordfile " + GFPASSWORD_FILE + " --user admin ";
         } else {
-            GFHOME_DIR = projectWorkSpace.toString() + "/glassfishv3/glassfish/";
+            GFHOME_DIR_REL = "glassfishv3/glassfish/";
+            GFHOME_DIR = projectWorkSpace.toString() + "/" + GFHOME_DIR_REL ;
             GFBIN_DIR = GFHOME_DIR + "bin/";
             GFADMIN_CMD = GFBIN_DIR + "asadmin";
+            GFDOMAIN1_LOGS_DIR =  GFHOME_DIR_REL + "domains/domain1/logs/" ;
 
             GFPASSWORD_FILE = GFHOME_DIR + "config/passwordfile";
             USER_PASSWORD_FLAGS = " --passwordfile " + GFPASSWORD_FILE + " --user admin ";
@@ -94,7 +99,9 @@ public final class GlassFishInstaller {
 
 
         installDir = new FilePath(projectWorkSpace, "glassfishv3");
+        GFHomeDir = new FilePath(projectWorkSpace, GFHOME_DIR_REL);
         binDir = new FilePath(projectWorkSpace, GFBIN_DIR);
+        domain1LogsDir = new FilePath(projectWorkSpace, GFDOMAIN1_LOGS_DIR);
         installDirStr = installDir.toString();
 
     }
