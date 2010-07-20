@@ -55,6 +55,8 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.Set;
 import java.util.ArrayList;
+import hudson.remoting.VirtualChannel;
+
 
 /**
  * Represents GlassFish Application Server Cluster and it's Instances.
@@ -117,7 +119,7 @@ public class GlassFishCluster {
         }
 
         if (GlassFishClusterNode.getAvailablePort(Computer.currentComputer().getNode(), dasHttpPort, "DAS_HTTP_PORT") != dasHttpPort) {
-            logger.println("ERROR: DAS_HTTP_PORT is not available!");
+            logger.println("ERROR: DAS_HTTP_PORT " + dasHttpPort + " is not available!");
             return false;
         }
 
@@ -142,7 +144,7 @@ public class GlassFishCluster {
         int base_port = this.basePort;
         for (int i = 1; i <= numInstances; i++) {
             String instanceName = instanceNamePrefix + i;
-            GlassFishInstance gfi = new GlassFishInstance(this, instanceName, base_port);
+            GlassFishInstance gfi = new GlassFishInstance(this, logger, instanceName, base_port);
             clusterMap.put(instanceName, gfi);
             //logger.println("Added: " + instanceName + ":" + base_port);
             base_port = base_port + 0x100;
@@ -179,7 +181,7 @@ public class GlassFishCluster {
             try {
                 instance_name = entry.getKey().toString();
                 base_port = new Integer(entry.getValue().toString()).intValue();
-                GlassFishInstance gfi = new GlassFishInstance(this, instance_name, base_port);
+                GlassFishInstance gfi = new GlassFishInstance(this, logger, instance_name, base_port);
                 if (verbose) {
                     if (clusterMap.containsKey(instance_name)) {
                         logger.println("Updated: " + instance_name + ":" + base_port);
@@ -436,34 +438,50 @@ public class GlassFishCluster {
      */
     public boolean copyGFServerLogsTo(String dirName) {
 
-        // first get DAS logs
-        FilePath target = new FilePath(build.getProject().getWorkspace(), dirName + "/das");
-        FilePath src = getDasClusterNode().getInstaller().domain1LogsDir ;
+        
+        FilePath target = new FilePath(build.getProject().getWorkspace(), dirName);        
 
-        try {           
+        try {
+            // remove old directory contents
+            target.deleteRecursive();
+            // first get DAS logs
+            target = new FilePath(build.getProject().getWorkspace(), dirName + "/das_" + getDasNodeName());
+            FilePath src = getDasClusterNode().getInstaller().domain1LogsDir;
+            
             logger.println("Copying DAS server logs " + src.toString() + " to: " + target.toString());
             target.mkdirs();
             src.copyRecursiveTo(target);
-            
+
             for (GlassFishInstance in : clusterMap.values()) {
                 src = in.getInstanceLogs();
-                target = new FilePath(build.getProject().getWorkspace(), dirName + "/" + in.instanceName);
-                
-                target.mkdirs();
-                if (src == null ) {
-                    //logger.println(in.instanceName + " skipped: No server logs found");
+                if (src == null) {
+                    logger.println(in.instanceName + " skipped: No server logs found at " + in.getClusterNode().getNodeName());
                 } else {
-                    logger.println("Copying Instance (" + in.instanceName + ") server logs " + src.toString() + " to: " + target.toString());
-                    src.copyRecursiveTo(target);
+                    target = new FilePath(build.getProject().getWorkspace(), dirName + "/" + in.instanceName + "_" + in.getClusterNode().getNodeName());
+                    target.mkdirs();
+                    logger.println("Copying Instance (" + in.instanceName + ") server logs "
+                            + in.getClusterNode().getNodeName() + ":" + src.toString() + " to: " + target.toString());
+                    VirtualChannel channel = in.getClusterNode().getNode().getChannel();
+                    FilePath remoteFile = new FilePath(channel,src.toString() + "/server.log");
+                    FilePath localFile = new FilePath(target, "server.log");
+                    if (remoteFile.exists()) {
+                        remoteFile.copyTo(localFile);
+                    }
+                    remoteFile = new FilePath(channel, src.toString() + "/jvm.log");
+                    localFile = new FilePath(target, "jvm.log");
+                    if (remoteFile.exists()) {
+                        remoteFile.copyTo(localFile);
+                    }
+                    //src.copyRecursiveTo(target);
                 }
             }
         } catch (IOException e) {
             e.printStackTrace();
-            logger.println("IOException: Failed to Copy " + src.toString() + " to " + target.toString());
+            logger.println("IOException: Failed to Copy logs to " + target.toString());
             return false;
         } catch (InterruptedException e) {
             e.printStackTrace();
-            logger.println("InterruptedException: Failed to Copy " + src.toString() + " to " + target.toString());
+            logger.println("InterruptedException: Failed to Copy logs to " + target.toString());
             return false;
         }
         return true;

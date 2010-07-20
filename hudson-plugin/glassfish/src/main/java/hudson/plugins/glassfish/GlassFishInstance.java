@@ -36,7 +36,11 @@
 package hudson.plugins.glassfish;
 
 import hudson.FilePath;
+import hudson.remoting.VirtualChannel;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.util.List;
+
 
 /**
  * GlassFish Application Server Instance Configuration.
@@ -44,6 +48,7 @@ import java.io.IOException;
  * @author Harshad Vilekar
  *
  */
+@SuppressWarnings("deprecation")
 public class GlassFishInstance {
 
     String instanceName;
@@ -59,12 +64,14 @@ public class GlassFishInstance {
             gms_listener_port;
     GlassFishClusterNode clusterNode;
     GlassFishCluster gfc;
+    PrintStream logger;
 
     // initialize with preferred port numbers
-    public GlassFishInstance(GlassFishCluster gfc, String instanceName, int basePort) {
+    public GlassFishInstance(GlassFishCluster gfc, PrintStream logger, String instanceName, int basePort) {
         this.instanceName = instanceName;
         this.basePort = basePort;
         this.gfc = gfc;
+        this.logger = logger ;
         http_listener_port = basePort++;
         http_ssl_listener_port = basePort++;
         iiop_listener_port = basePort++;
@@ -112,17 +119,38 @@ public class GlassFishInstance {
         return clusterNode;
     }
 
+    /** Returns FilePath for the logs directory for current instance. The logs directory is present at:
+     * $GFHOME/nodeagents/<nodeName>/<instanceName/logs/
+     */
     FilePath getInstanceLogs() {
-        
+        VirtualChannel channel = getClusterNode().getNode().getChannel();
         try {
-            FilePath[] filePaths =
-                    getClusterNode().getInstaller().GFHomeDir.list("nodeagents/*/" + instanceName + "/logs");
-            // expected to rerurn one and only one item 
-            if (filePaths.length == 1) {
-                return filePaths[0];
-            } else {
-                return null ;
+            FilePath fp = new FilePath (channel, getClusterNode().getInstaller().GFHomeDir.toString() + "/nodeagents");
+            List<FilePath> fpList = fp.listDirectories();
+
+            // look for the subdirectory of nodeagents, which contains the nodename (only hostname, no domain name)
+            // on which this instance is deployed
+            boolean matchFound = false ;
+            for (FilePath thisfp : fpList) {                  
+                // the nodename subdirectory inside "nodeagents" may have
+                // domain name removed (as in qm2.sfbay changed to "qm2" or may have
+                // fully qualified domain name added (as in qm2.sfbay changed to "qm2.sfbay.sun.com"
+                // Hence, check if one string is substring of another, and vice versa.
+
+                if (getClusterNode().getNodeName().startsWith(thisfp.getName()) ||
+                        thisfp.getName().startsWith(getClusterNode().getNodeName())) {
+                    matchFound = true ;
+                    fp = thisfp ;
+                    break ;
+                }
             }
+            if (!matchFound) {                
+                return null ;
+            } else {
+                // at this point, we found $GFHOME/nodeagents/<nodeName>, append "<instanceName>/logs" to it, and return that value.
+                return new FilePath(channel, fp.toString() + "/" + instanceName + "/logs");
+            }          
+                            
         } catch (IOException e) {
             e.printStackTrace();            
             return null;

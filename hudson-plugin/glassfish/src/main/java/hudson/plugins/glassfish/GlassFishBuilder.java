@@ -196,7 +196,7 @@ public class GlassFishBuilder extends Builder {
 
         GlassFishCluster gfc = new GlassFishCluster(build, launcher, logger, listener, this, getNumNodes(), getBasePort(), getClusterName(), "GFCluster");
         GlassFishAdminCmd admincmd = new GlassFishAdminCmd(build, launcher, logger, this, gfc);
-
+        
         if (installGlassFish) {
             // Initialize Cluster Map and Create Cluster Properties File
             if (!gfc.initClusterProperties(getInstanceNamePrefix(), getNumInstances())) {
