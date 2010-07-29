@@ -55,8 +55,8 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.Set;
 import java.util.ArrayList;
+import java.util.Collections;
 import hudson.remoting.VirtualChannel;
-
 
 /**
  * Represents GlassFish Application Server Cluster and it's Instances.
@@ -211,7 +211,7 @@ public class GlassFishCluster {
         // we can't continue if there are not enough nodes available for instance deployment
         if (slaveNodes.size() < numNodes) {
             logger.println("ERROR: Not enough nodes available for GlassFish Instance deployment. (Required:"
-                    + numNodes + ", Available:" + slaveNodes.size() + ", Label:" + nodeSelectionLabel);
+                    + numNodes + ", Available:" + slaveNodes.size() + ", Label:" + nodeSelectionLabel + ")");
             return false;
         }
 
@@ -304,7 +304,9 @@ public class GlassFishCluster {
             numNodes = clusterMap.size();
         }
 
-        assignClusterNodesToInstances();
+        if (!assignClusterNodesToInstances()) {
+            return false;
+        }
 
         return true;
     }
@@ -325,12 +327,10 @@ public class GlassFishCluster {
     }
 
     /**
-     * Get list of all the Hudson slaves which match the specified label.
+     * Get "random" list of all the Hudson slaves which match the specified label.
      * The label is used to group the nodes for a specific task.
      * For example, label "GFCluster" may indicate GlassFish instances may
      * be deployed on this node.
-     * The current node that is running the build is the first element of the list.
-     * GlassFish DAS is deployed on it. GlassFish instances are deployed on other nodes.
      * @param label
      * @return
      */
@@ -340,22 +340,17 @@ public class GlassFishCluster {
         ArrayList<Node> slaves = new ArrayList<Node>();
         boolean verbose = false;
 
-        // The node that is running on this build.
-        // That is the first element of ArrayList. DAS is started on that node.
-        // GlassFish Instances are started on the rest of the nodes.
-        Node currentNode = Computer.currentComputer().getNode();
-        slaves.add(0, currentNode);
-
         for (Node n : allSlaves) {
             String computerName = n.getNodeName();
-
-            if (n.equals(currentNode)) {
-                // this node is already added to the ArrayList at position 0.
-                println(verbose, "Current Node " + computerName + " is marked for running GlassFish DAS");
-                continue;
+            if (n.toComputer().isOffline()) {
+                println(verbose, "Skipped: " + computerName + " (Node is offline)");
+                continue ;
+            }
+            if (n.toComputer().getNumExecutors() <= 0) {
+                println(verbose, "Skipped: " + computerName + " (No executors)");
+                continue ;
             }
 
-            //String thislabel = n.getLabelString();
             Set<Label> labelSet = n.getAssignedLabels();
             boolean labelMatched = false;
             String thislabel = "";
@@ -376,6 +371,7 @@ public class GlassFishCluster {
             }
 
         }
+        Collections.shuffle(slaves);
         return slaves;
     }
 
@@ -386,22 +382,31 @@ public class GlassFishCluster {
     }
 
     /**
-     * From the list of available nodes, selects "numNodes" nodes for deploying GlassFish instances.
-     * Currently, this simply selects first "numNodes" nodes.
+     * From the list of available nodes, randomly selects "numNodes" nodes for deploying GlassFish instances.
      * First node is always currentComputer that is running the build. So, in case of single node
      * cluster (num_nodes = 1), other slaves are not used
      *
      */
     ArrayList<Node> selectSlaveNodesForInstanceDeployment(int num_nodes, String label) {
-        ArrayList<Node> slaves = getAvailableSlaveNodes(label);
-        int i = 0;
+        ArrayList<Node> randomSlaves = getAvailableSlaveNodes(label);
+
+        // The node that is running on this build is the first element of ArrayList.
+        // DAS and first instance is started on that node.
+        // Rest of the GlassFish Instances are started on the rest of the nodes.
+        Node currentNode = Computer.currentComputer().getNode();
         ArrayList<Node> selected_slaves = new ArrayList<Node>(num_nodes);
-        //TODO: Make the random selection.
-        for (Node n : slaves) {
-            selected_slaves.add(i++, n);
+        int i = 0;
+        selected_slaves.add(i++, currentNode);
+        for (Node n : randomSlaves) {
             if (i >= num_nodes) {
                 break;
             }
+            if (n.equals(currentNode)) {
+                // this node is already added to the ArrayList at position 0.
+                //println(verbose, "Current Node " + computerName + " is marked for running GlassFish DAS and Instance1");
+                continue;
+            }
+            selected_slaves.add(i++, n);
         }
         return selected_slaves;
     }
@@ -438,8 +443,11 @@ public class GlassFishCluster {
      */
     public boolean copyGFServerLogsTo(String dirName) {
 
-        
-        FilePath target = new FilePath(build.getProject().getWorkspace(), dirName);        
+        if (clusterMap == null || clusterMap.isEmpty()) {
+            logger.println("Skipped: No Server logs to Archive!");
+            return true ;
+        }
+        FilePath target = new FilePath(build.getProject().getWorkspace(), dirName);
 
         try {
             // remove old directory contents
@@ -447,7 +455,7 @@ public class GlassFishCluster {
             // first get DAS logs
             target = new FilePath(build.getProject().getWorkspace(), dirName + "/das_" + getDasNodeName());
             FilePath src = getDasClusterNode().getInstaller().domain1LogsDir;
-            
+
             logger.println("Copying DAS server logs " + src.toString() + " to: " + target.toString());
             target.mkdirs();
             src.copyRecursiveTo(target);
@@ -462,7 +470,7 @@ public class GlassFishCluster {
                     logger.println("Copying Instance (" + in.instanceName + ") server logs "
                             + in.getClusterNode().getNodeName() + ":" + src.toString() + " to: " + target.toString());
                     VirtualChannel channel = in.getClusterNode().getNode().getChannel();
-                    FilePath remoteFile = new FilePath(channel,src.toString() + "/server.log");
+                    FilePath remoteFile = new FilePath(channel, src.toString() + "/server.log");
                     FilePath localFile = new FilePath(target, "server.log");
                     if (remoteFile.exists()) {
                         remoteFile.copyTo(localFile);
@@ -544,23 +552,15 @@ public class GlassFishCluster {
     boolean execShellCommand(String cmd) {
         PrintStream logger = listener.getLogger();
 
-        try {
-            if (getDasClusterNode().getInstaller().isWindows()) {
-                BatchFile batch = new BatchFile(cmd);
-                logger.println("executing Windows Batch Command");
-                if (!batch.perform(build, launcher, listener)) {
-                    logger.println("ERROR executing Shell Command:" + cmd);
-                    return false;
-                }
-            } else {
-                Shell shell = new Shell(cmd);
-                logger.println("executing Shell Command");
+        try {            
+            Shell shell = new Shell(cmd);
+            logger.println("executing Shell Command");
 
-                if (!shell.perform(build, launcher, listener)) {
-                    logger.println("ERROR executing Shell Command:" + cmd);
-                    return false;
-                }
+            if (!shell.perform(build, launcher, listener)) {
+                logger.println("ERROR executing Shell Command:" + cmd);
+                return false;
             }
+
         } catch (InterruptedException e) {
             e.printStackTrace();
             logger.println("ERROR (InterruptedException): executing Shell Command:" + cmd);
