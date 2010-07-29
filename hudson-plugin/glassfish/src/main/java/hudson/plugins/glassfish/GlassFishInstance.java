@@ -127,7 +127,9 @@ public class GlassFishInstance {
         try {
             FilePath fp = new FilePath (channel, getClusterNode().getInstaller().GFHomeDir.toString() + "/nodeagents");
             List<FilePath> fpList = fp.listDirectories();
-
+            if (fpList == null || fpList.isEmpty())  {
+                return null ;
+            }
             // look for the subdirectory of nodeagents, which contains the nodename (only hostname, no domain name)
             // on which this instance is deployed
             boolean matchFound = false ;
@@ -138,7 +140,8 @@ public class GlassFishInstance {
                 // Hence, check if one string is substring of another, and vice versa.
 
                 if (getClusterNode().getNodeName().startsWith(thisfp.getName()) ||
-                        thisfp.getName().startsWith(getClusterNode().getNodeName())) {
+                        thisfp.getName().startsWith(getClusterNode().getNodeName()) ||
+                        thisfp.getName().equals("localhost")) {
                     matchFound = true ;
                     fp = thisfp ;
                     break ;
@@ -160,6 +163,7 @@ public class GlassFishInstance {
         }       
     }    
 
+    // the returned string is used by asadmin command
     String getPortList() {
 
         return "HTTP_LISTENER_PORT=" + http_listener_port
@@ -191,6 +195,7 @@ public class GlassFishInstance {
                 + instanceName;
     }
 
+    // the returned string is added to the cluster.props file.
     public String getProps(int instanceId) {
         String idStr = "instance" + instanceId + "_";
         String str = idStr + "name=" + instanceName;
@@ -206,7 +211,7 @@ public class GlassFishInstance {
                 + idStr + "JMX_SYSTEM_CONNECTOR_PORT=" + jmx_system_connector_port
                 + idStr + "JMS_PROVIDER_PORT=" + jms_provider_port
                 + idStr + "ASADMIN_LISTENER_PORT=" + asadmin_listener_port
-                + idStr + "GMS_LISTENER_PORT-" + gfc.clusterName + "=" + gms_listener_port
+                + idStr + "GMS_LISTENER_PORT=" + gms_listener_port
                 + "\n";
         return str;
 
