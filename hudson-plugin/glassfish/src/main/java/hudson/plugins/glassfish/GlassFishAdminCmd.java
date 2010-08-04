@@ -118,7 +118,7 @@ public class GlassFishAdminCmd {
             return false;
         }
 
-        CMD = " start-domain";
+        CMD = " --echo=true start-domain --verbose";
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD, daemonProcess)) {
             return false;
         }

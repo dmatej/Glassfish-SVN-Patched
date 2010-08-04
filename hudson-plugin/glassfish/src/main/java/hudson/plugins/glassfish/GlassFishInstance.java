@@ -155,10 +155,10 @@ public class GlassFishInstance {
             }          
                             
         } catch (IOException e) {
-            e.printStackTrace();            
+            e.printStackTrace(logger);
             return null;
         } catch (InterruptedException e) {
-            e.printStackTrace();            
+            e.printStackTrace(logger);
             return null;
         }       
     }    
@@ -200,9 +200,32 @@ public class GlassFishInstance {
         String idStr = "instance" + instanceId + "_";
         String str = idStr + "name=" + instanceName;
         idStr = "\n" + idStr;
+                
+        String saas_home_str = clusterNode.getInstaller().GFHOME_DIR ;
+
+        if (getClusterNode().isWindows()) {
+            // convert cygwin specific path prefix to the openSSH path
+            // for example, \cygwin\home\hudson is converted to /home/hudson
+
+            // convert all black slash chars to unix style forward slash
+            
+            if (saas_home_str.contains("\\")) {
+            saas_home_str =  saas_home_str.replace('\\','/');
+            }
+
+            // remove cygwin path prefix, keep only openSSH specific path
+            int i = saas_home_str.indexOf("/home/hudson");
+            if (i < 0) {
+                logger.println("WARNING: Invalid directory on Windows node " + getClusterNode().getNodeName()
+                        + " s1as_home is expected to start with /home/hudson, actual path is: " + saas_home_str);
+            } else {
+                saas_home_str = saas_home_str.substring(i);
+            }
+        }
+
         str = str
                 + idStr + "node=" + nodeName
-                + idStr + "s1as_home=" + clusterNode.getInstaller().GFHOME_DIR
+                + idStr + "s1as_home=" + saas_home_str
                 + idStr + "HTTP_LISTENER_PORT=" + http_listener_port
                 + idStr + "HTTP_SSL_LISTENER_PORT=" + http_ssl_listener_port
                 + idStr + "IIOP_LISTENER_PORT=" + iiop_listener_port

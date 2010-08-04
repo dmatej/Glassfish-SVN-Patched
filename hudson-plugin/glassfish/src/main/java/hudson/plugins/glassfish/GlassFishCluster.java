@@ -171,7 +171,7 @@ public class GlassFishCluster {
         } catch (IOException e) {
             logger.println("ERROR Loading customInstanceText: "
                     + gfbuilder.getCustomInstanceText());
-            e.printStackTrace();
+            e.printStackTrace(logger);
             return false;
         }
 
@@ -484,11 +484,11 @@ public class GlassFishCluster {
                 }
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(logger);
             logger.println("IOException: Failed to Copy logs to " + target.toString());
             return false;
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            e.printStackTrace(logger);
             logger.println("InterruptedException: Failed to Copy logs to " + target.toString());
             return false;
         }
@@ -536,12 +536,12 @@ public class GlassFishCluster {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
-            logger.println("IOException !");
+            e.printStackTrace(logger);
+            //logger.println("IOException !");
             return false;
         } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.println("InterruptedException!");
+            e.printStackTrace(logger);
+            //logger.println("InterruptedException!");
             return false;
         }
 
@@ -554,10 +554,10 @@ public class GlassFishCluster {
 
         try {            
             Shell shell = new Shell(cmd);
-            logger.println("executing Shell Command");
+            logger.println("Executing Shell Command");
 
             if (!shell.perform(build, launcher, listener)) {
-                logger.println("ERROR executing Shell Command:" + cmd);
+                logger.println("ERROR executing Shell Command");
                 return false;
             }
 

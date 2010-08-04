@@ -74,12 +74,12 @@ public class GlassFishClusterNode {
             workDir.mkdirs();
 
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(logger);
             return false ;
 
 
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            e.printStackTrace(logger);
             return false ;
         }
         return true ;
@@ -114,9 +114,9 @@ public class GlassFishClusterNode {
         try {
             propValue = getNode().getChannel().call(new getSystemPropertyTask(propName));
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(logger);
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            e.printStackTrace(logger);
         }
         return propValue;
     }
@@ -167,11 +167,11 @@ public class GlassFishClusterNode {
                 return false;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(logger);
             logger.println("ERROR (IOException): " + cmd);
             return false;
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            e.printStackTrace(logger);
             logger.println("ERROR (InterruptedException): " + cmd);
             return false;
         }
@@ -204,12 +204,12 @@ public class GlassFishClusterNode {
                         + " (" + basePort + " is not available!)");
             }
         } catch (IOException e) {
-            e.printStackTrace();
-            logger.println("IOException !");
+            e.printStackTrace(logger);
+            //logger.println("IOException !");
             return -1;
         } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.println("InterruptedException!");
+            e.printStackTrace(logger);
+            //logger.println("InterruptedException!");
             return -1;
         }
         return localPort;

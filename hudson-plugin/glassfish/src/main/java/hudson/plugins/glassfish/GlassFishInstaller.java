@@ -53,7 +53,7 @@ public final class GlassFishInstaller {
 
     //define PATHs relative to project workspace
     String GFHOME_DIR, GFDOMAIN1_LOGS_DIR;
-    String GFBIN_DIR;
+    String GFBIN_DIR, GFV3BIN_DIR;
     String GFPASSWORD_FILE;
     String GFADMIN_CMD;
     String USER_PASSWORD_FLAGS;
@@ -61,7 +61,7 @@ public final class GlassFishInstaller {
     private AbstractBuild build;
     private PrintStream logger;
     private FilePath projectWorkSpace, installDir;
-    FilePath binDir, domain1LogsDir, GFHomeDir ;
+    FilePath binDir, gfv3binDir, domain1LogsDir, GFHomeDir ;
     private String installDirStr;
     GlassFishClusterNode clusterNode;
     final boolean Verbose = true;
@@ -78,22 +78,26 @@ public final class GlassFishInstaller {
         projectWorkSpace = clusterNode.getWorkDir();
         String GFHOME_DIR_REL = "" ;
         if (isWindows()) {
-            GFHOME_DIR_REL = "glassfishv3\\glassfish\\" ;
+            //GFHOME_DIR_REL = "glassfishv3\\glassfish\\" ;
+            GFHOME_DIR_REL = "glassfishv3" ;
             GFHOME_DIR = projectWorkSpace.toString() + "\\" + GFHOME_DIR_REL ;
-            GFBIN_DIR = GFHOME_DIR + "bin\\";
+            GFBIN_DIR = GFHOME_DIR + "\\glassfish\\bin\\";
+            GFV3BIN_DIR = GFHOME_DIR + "\\bin\\";
             GFADMIN_CMD = GFBIN_DIR + "asadmin.bat";
-            GFDOMAIN1_LOGS_DIR = GFHOME_DIR_REL + "domains\\domain1\\logs\\" ;
+            GFDOMAIN1_LOGS_DIR = GFHOME_DIR_REL + "\\glassfish\\domains\\domain1\\logs\\" ;
 
-            GFPASSWORD_FILE = GFHOME_DIR + "config\\passwordfile";
+            GFPASSWORD_FILE = GFHOME_DIR + "\\glassfish\\config\\passwordfile";
             USER_PASSWORD_FLAGS = " --passwordfile " + GFPASSWORD_FILE + " --user admin ";
         } else {
-            GFHOME_DIR_REL = "glassfishv3/glassfish/";
+            //GFHOME_DIR_REL = "glassfishv3/glassfish/";
+            GFHOME_DIR_REL = "glassfishv3";
             GFHOME_DIR = projectWorkSpace.toString() + "/" + GFHOME_DIR_REL ;
-            GFBIN_DIR = GFHOME_DIR + "bin/";
+            GFBIN_DIR = GFHOME_DIR + "/glassfish/bin/";
+            GFV3BIN_DIR = GFHOME_DIR + "/bin/";
             GFADMIN_CMD = GFBIN_DIR + "asadmin";
-            GFDOMAIN1_LOGS_DIR =  GFHOME_DIR_REL + "domains/domain1/logs/" ;
+            GFDOMAIN1_LOGS_DIR =  GFHOME_DIR_REL + "/glassfish/domains/domain1/logs/" ;
 
-            GFPASSWORD_FILE = GFHOME_DIR + "config/passwordfile";
+            GFPASSWORD_FILE = GFHOME_DIR + "/glassfish/config/passwordfile";
             USER_PASSWORD_FLAGS = " --passwordfile " + GFPASSWORD_FILE + " --user admin ";
         }
 
@@ -101,6 +105,7 @@ public final class GlassFishInstaller {
         installDir = new FilePath(projectWorkSpace, "glassfishv3");
         GFHomeDir = new FilePath(projectWorkSpace, GFHOME_DIR_REL);
         binDir = new FilePath(projectWorkSpace, GFBIN_DIR);
+        gfv3binDir = new FilePath(projectWorkSpace, GFV3BIN_DIR);
         domain1LogsDir = new FilePath(projectWorkSpace, GFDOMAIN1_LOGS_DIR);
         installDirStr = installDir.toString();
 
@@ -132,15 +137,17 @@ public final class GlassFishInstaller {
             // After the bundle is unzippd, files in bin directory are missing execute permission.
             // To workaround, explicitly set execute permission to the required GF admin commands            
             List<FilePath> filePathList = binDir.list();
-
-            //FilePath cmdFile = new FilePath(projectWorkSpace, GFV3BIN_DIR + "asadmin");
-
             for (FilePath cmdFile : filePathList) {
                 // b001001001 represets execute permission to all on Unix
                 // Do a "bitwise inclusive OR operation" to assign the exec permission
                 cmdFile.chmod(cmdFile.mode() | Integer.parseInt("001001001", 2));
             }
-
+            filePathList = gfv3binDir.list();
+            for (FilePath cmdFile : filePathList) {
+                // b001001001 represets execute permission to all on Unix
+                // Do a "bitwise inclusive OR operation" to assign the exec permission
+                cmdFile.chmod(cmdFile.mode() | Integer.parseInt("001001001", 2));
+            }
             // password file may be required for executing asadmin command
             String CMD = "createGFPassWordFile()";
             if (!createGFPassWordFile(build, logger)) {
@@ -149,17 +156,15 @@ public final class GlassFishInstaller {
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
-            logger.println("IOException !");
+            e.printStackTrace(logger);            
             return false;
         } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.println("InterruptedException!");
+            e.printStackTrace(logger);            
             return false;
         }
 
         //TODO: Remove this. This is a temporary workaround.
-        remoteUnzip(!Verbose, "http://icon.red.iplanet.com/export7/gf_hudson_plugin/hudson-ant-script.zip");
+        //remoteUnzip(!Verbose, "http://icon.red.iplanet.com/export7/gf_hudson_plugin/hudson-ant-script.zip");
         return true;
     }
 
@@ -184,12 +189,12 @@ public final class GlassFishInstaller {
             zipFile.delete();
 
         } catch (IOException e) {
-            e.printStackTrace();
-            logger.println("IOException !");
+            e.printStackTrace(logger);
+            //logger.println("IOException !");
             return false;
         } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.println("InterruptedException!");
+            e.printStackTrace(logger);
+            //logger.println("InterruptedException!");
             return false;
         }
         return true;
@@ -216,11 +221,11 @@ public final class GlassFishInstaller {
             return true;
 
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace(logger);
             logger.println("IOException !" + "ERROR Removing Install Dir: " + installDirStr);
             return false;
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            e.printStackTrace(logger);
             logger.println("InterruptedException!" + "ERROR Removing Install Dir: " + installDirStr);
             return false;
         }
@@ -236,12 +241,12 @@ public final class GlassFishInstaller {
             passwordFile.write(passwd, null);
 
         } catch (IOException e) {
-            e.printStackTrace();
-            logger.println("IOException !");
+            e.printStackTrace(logger);
+            //logger.println("IOException !");
             return false;
         } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.println("InterruptedException!");
+            e.printStackTrace(logger);
+            //logger.println("InterruptedException!");
             return false;
         }
 
