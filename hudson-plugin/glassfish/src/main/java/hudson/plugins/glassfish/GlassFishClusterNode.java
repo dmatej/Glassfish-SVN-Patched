@@ -155,7 +155,7 @@ public class GlassFishClusterNode {
             EnvVars clusterEnv = new EnvVars(key, value);
             envVars.putAll(clusterEnv);
 
-            logger.println(getNodeName() + " executing: ");
+            logger.println(GlassFishPluginUtils.getLogDate() + getNodeName() + " executing: ");
 
             Proc proc = launcher.launch(cmd, envVars, logger, workDir);
             int exitCode = proc.join();
