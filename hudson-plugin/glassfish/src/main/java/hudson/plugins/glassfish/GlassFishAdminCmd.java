@@ -118,7 +118,7 @@ public class GlassFishAdminCmd {
             return false;
         }
 
-        CMD = " --echo=true start-domain --verbose";
+        CMD = " start-domain";
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD, daemonProcess)) {
             return false;
         }
@@ -138,6 +138,7 @@ public class GlassFishAdminCmd {
                     + " create-local-instance --cluster "
                     + gfbuilder.getClusterName()
                     + " --systemproperties " + gfi.getPortList()
+                    + ":instance_name=" + key + " "
                     + key;
 
             if (!execAdminCommand(gfi.getClusterNode(), CMD)) {
@@ -150,6 +151,15 @@ public class GlassFishAdminCmd {
     public boolean startGFCluster() {
         String CMD;
 
+        // if DAS port is available (indicating DAS is not already running),
+        // then start DAS first
+        if (gfc.verifyDasPortAvailability()) {
+            CMD = " start-domain";
+            if (!execAdminCommand(gfc.getDasClusterNode(), CMD, daemonProcess)) {
+                return false;
+            }
+        }
+        
         for (String key : gfc.clusterMap.keySet()) {
             GlassFishInstance gfi = gfc.clusterMap.get(key);
             CMD = " start-local-instance " + key;
@@ -165,22 +175,31 @@ public class GlassFishAdminCmd {
     public boolean stopGFCluster() {
 
         String CMD;
+        boolean returnValue = true;
 
         for (String key : gfc.clusterMap.keySet()) {
             GlassFishInstance gfi = gfc.clusterMap.get(key);
             CMD = " stop-local-instance " + key;
             if (!execAdminCommand(gfi.getClusterNode(), CMD)) {
-                return false;
+                //continue, and try to stop other instances, even if this attempt failed
+                returnValue = false;
             }
         }
 
         // todo: optionally, delete-local-instance and delete-cluster
-        
-        CMD = " stop-domain";
+
+        if (!stopDomain()) {
+            returnValue = false;
+        }
+
+        return returnValue;
+    }
+
+    public boolean stopDomain() {
+        String CMD = " stop-domain";
         if (!execAdminCommand(gfc.getDasClusterNode(), CMD)) {
             return false;
         }
-
         return true;
     }
 
