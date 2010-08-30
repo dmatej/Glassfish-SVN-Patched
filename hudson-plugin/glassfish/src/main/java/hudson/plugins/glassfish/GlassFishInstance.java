@@ -36,11 +36,9 @@
 package hudson.plugins.glassfish;
 
 import hudson.FilePath;
-import hudson.remoting.VirtualChannel;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
-
 
 /**
  * GlassFish Application Server Instance Configuration.
@@ -52,11 +50,8 @@ import java.util.List;
 public class GlassFishInstance {
 
     String instanceName;
-    // host number on which this instance supposed to run   
-    //int hostNum = 1;  // hardcodes - since currently, only 1 host is supported
     String nodeName = "";
-    // allocate the ports starting from this port
-    int basePort;
+    String s1as_home = "";
     // preferred port number start
     int http_listener_port, http_ssl_listener_port,
             iiop_listener_port, iiop_ssl_listener_port, iiop_ssl_mutualauth_port,
@@ -67,20 +62,58 @@ public class GlassFishInstance {
     PrintStream logger;
 
     // initialize with preferred port numbers
-    public GlassFishInstance(GlassFishCluster gfc, PrintStream logger, String instanceName, int basePort) {
-        this.instanceName = instanceName;
-        this.basePort = basePort;
+    // allocate the ports starting from basePort
+    public GlassFishInstance(GlassFishCluster gfc,
+            PrintStream logger,
+            String instanceName,
+            int basePort) {
+        this(gfc,
+                logger,
+                instanceName,
+                "",
+                "",
+                basePort++,
+                basePort++,
+                basePort++,
+                basePort++,
+                basePort++,
+                basePort++,
+                basePort++,
+                basePort++,
+                basePort++);
+
+    }
+
+    public GlassFishInstance(
+            GlassFishCluster gfc,
+            PrintStream logger,
+            String instanceName,
+            String nodeName,
+            String s1as_home,
+            int http_listener_port,
+            int http_ssl_listener_port,
+            int iiop_listener_port,
+            int iiop_ssl_listener_port,
+            int iiop_ssl_mutualauth_port,
+            int jmx_system_connector_port,
+            int jms_provider_port,
+            int asadmin_listener_port,
+            int gms_listener_port) {
         this.gfc = gfc;
-        this.logger = logger ;
-        http_listener_port = basePort++;
-        http_ssl_listener_port = basePort++;
-        iiop_listener_port = basePort++;
-        iiop_ssl_listener_port = basePort++;
-        iiop_ssl_mutualauth_port = basePort++;
-        jmx_system_connector_port = basePort++;
-        jms_provider_port = basePort++;
-        asadmin_listener_port = basePort++;
-        gms_listener_port = basePort++;
+        this.logger = logger;
+        this.instanceName = instanceName;
+        this.nodeName = nodeName;
+        this.s1as_home = s1as_home;
+        this.http_listener_port = http_listener_port;
+        this.http_ssl_listener_port = http_ssl_listener_port;
+        this.iiop_listener_port = iiop_listener_port;
+        this.iiop_ssl_listener_port = iiop_ssl_listener_port;
+        this.iiop_ssl_mutualauth_port = iiop_ssl_mutualauth_port;
+        this.jmx_system_connector_port = jmx_system_connector_port;
+        this.jms_provider_port = jms_provider_port;
+        this.asadmin_listener_port = asadmin_listener_port;
+        this.gms_listener_port = gms_listener_port;
+
     }
 
     // Try to allocate the port. If the port is not available, update the port
@@ -120,48 +153,48 @@ public class GlassFishInstance {
     }
 
     /** Returns FilePath for the logs directory for current instance. The logs directory is present at:
-     * $GFHOME/nodeagents/<nodeName>/<instanceName/logs/
+     * $GFHOME/nodes/<nodeName>/<instanceName/logs/
      */
     FilePath getInstanceLogs() {
-        VirtualChannel channel = getClusterNode().getNode().getChannel();
         try {
-            FilePath fp = new FilePath (channel, getClusterNode().getInstaller().GFHomeDir.toString() + "/nodeagents");
+            FilePath fp = getClusterNode().getNode().createPath(getClusterNode().getInstaller().GFHomeDir.toString() + "/glassfish/nodes");
             List<FilePath> fpList = fp.listDirectories();
-            if (fpList == null || fpList.isEmpty())  {
-                return null ;
+            if (fpList == null || fpList.isEmpty()) {
+                logger.println("No subdirectories found for " + getClusterNode().getNodeName() + ":" + fp.toString());
+                return null;
             }
-            // look for the subdirectory of nodeagents, which contains the nodename (only hostname, no domain name)
+            // look for the subdirectory of nodes, which contains the nodename (only hostname, no domain name)
             // on which this instance is deployed
-            boolean matchFound = false ;
-            for (FilePath thisfp : fpList) {                  
-                // the nodename subdirectory inside "nodeagents" may have
+            boolean matchFound = false;
+            for (FilePath thisfp : fpList) {
+                // the nodename subdirectory inside "nodes" may have
                 // domain name removed (as in qm2.sfbay changed to "qm2" or may have
                 // fully qualified domain name added (as in qm2.sfbay changed to "qm2.sfbay.sun.com"
                 // Hence, check if one string is substring of another, and vice versa.
 
-                if (getClusterNode().getNodeName().startsWith(thisfp.getName()) ||
-                        thisfp.getName().startsWith(getClusterNode().getNodeName()) ||
-                        thisfp.getName().equals("localhost")) {
-                    matchFound = true ;
-                    fp = thisfp ;
-                    break ;
+                if (getClusterNode().getNodeName().startsWith(thisfp.getName())
+                        || thisfp.getName().startsWith(getClusterNode().getNodeName())
+                        || thisfp.getName().equals("localhost")) {
+                    matchFound = true;
+                    fp = thisfp;
+                    break;
                 }
             }
-            if (!matchFound) {                
-                return null ;
+            if (!matchFound) {
+                return null;
             } else {
                 // at this point, we found $GFHOME/nodeagents/<nodeName>, append "<instanceName>/logs" to it, and return that value.
-                return new FilePath(channel, fp.toString() + "/" + instanceName + "/logs");
-            }          
-                            
+                return getClusterNode().getNode().createPath(fp.toString() + "/" + instanceName + "/logs");
+            }
+
         } catch (IOException e) {
             e.printStackTrace(logger);
             return null;
         } catch (InterruptedException e) {
             e.printStackTrace(logger);
             return null;
-        }       
-    }    
+        }
+    }
 
     // the returned string is used by asadmin command
     String getPortList() {
@@ -174,9 +207,7 @@ public class GlassFishInstance {
                 + ":JMX_SYSTEM_CONNECTOR_PORT=" + jmx_system_connector_port
                 + ":JMS_PROVIDER_PORT=" + jms_provider_port
                 + ":ASADMIN_LISTENER_PORT=" + asadmin_listener_port
-                + ":GMS_LISTENER_PORT-" + gfc.clusterName + "=" + gms_listener_port
-                + " ";
-
+                + ":GMS_LISTENER_PORT-" + gfc.clusterName + "=" + gms_listener_port;
     }
 
     // non standard local contract for some ant scripts
@@ -200,32 +231,12 @@ public class GlassFishInstance {
         String idStr = "instance" + instanceId + "_";
         String str = idStr + "name=" + instanceName;
         idStr = "\n" + idStr;
-                
-        String saas_home_str = clusterNode.getInstaller().GFHOME_DIR ;
 
-        if (getClusterNode().isWindows()) {
-            // convert cygwin specific path prefix to the openSSH path
-            // for example, \cygwin\home\hudson is converted to /home/hudson
-
-            // convert all black slash chars to unix style forward slash
-            
-            if (saas_home_str.contains("\\")) {
-            saas_home_str =  saas_home_str.replace('\\','/');
-            }
-
-            // remove cygwin path prefix, keep only openSSH specific path
-            int i = saas_home_str.indexOf("/home/hudson");
-            if (i < 0) {
-                logger.println("WARNING: Invalid directory on Windows node " + getClusterNode().getNodeName()
-                        + " s1as_home is expected to start with /home/hudson, actual path is: " + saas_home_str);
-            } else {
-                saas_home_str = saas_home_str.substring(i);
-            }
-        }
-
+        // Note: cygwin plugin takes care of converting windows path to Unix path.
+        
         str = str
                 + idStr + "node=" + nodeName
-                + idStr + "s1as_home=" + saas_home_str
+                + idStr + "s1as_home=" + s1as_home
                 + idStr + "HTTP_LISTENER_PORT=" + http_listener_port
                 + idStr + "HTTP_SSL_LISTENER_PORT=" + http_ssl_listener_port
                 + idStr + "IIOP_LISTENER_PORT=" + iiop_listener_port
@@ -242,7 +253,7 @@ public class GlassFishInstance {
 
     public String toStr(boolean verbose) {
         if (verbose) {
-            return instanceName + " on " + nodeName + ": " + getPortList();
+            return instanceName + " on " + nodeName + ": " + getPortList() + " ";
         } else {
             return instanceName + " on " + nodeName;
         }
