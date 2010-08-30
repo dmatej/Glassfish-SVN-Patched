@@ -40,8 +40,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.io.StringReader;
 import hudson.model.BuildListener;
-import hudson.tasks.Shell;
-import hudson.tasks.BatchFile;
 import hudson.FilePath;
 import hudson.model.Computer;
 import hudson.model.Hudson;
@@ -56,6 +54,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Properties;
 import hudson.remoting.VirtualChannel;
 
 /**
@@ -74,12 +73,12 @@ public class GlassFishCluster {
     // Number of nodes (hosts) that run the cluster instances.
     int numNodes;
     static final int dasAdminPort = 4848, dasHttpPort = 8080, dasNodetNum = 1;
+    String dasNodeName;
     ArrayList<GlassFishClusterNode> clusterNodes = new ArrayList();
     String clusterName;
     Map<String, GlassFishInstance> clusterMap = new HashMap<String, GlassFishInstance>();
     ArrayList<Node> selectedSlaves;
     String nodeSelectionLabel;
-    //GlassFishCluster gfc;
 
     public GlassFishCluster(AbstractBuild build,
             Launcher launcher,
@@ -99,6 +98,10 @@ public class GlassFishCluster {
         this.basePort = basePort;
         this.clusterName = clusterName;
         this.nodeSelectionLabel = nodeSelectionLabel;
+        this.dasNodeName = Computer.currentComputer().getNode().getNodeName();
+        // first node is the current computer
+        clusterNodes.add(new GlassFishClusterNode(Computer.currentComputer().getNode(), build, logger, listener));
+
     }
 
     public int getDasAdminPort() {
@@ -106,20 +109,19 @@ public class GlassFishCluster {
     }
 
     public String getDasNodeName() {
-        //return getNodeName(dasNodetNum);
-        return (clusterNodes.get(0).getNodeName());
+        return dasNodeName;
     }
 
     boolean verifyDasPortAvailability() {
 
         if (GlassFishClusterNode.getAvailablePort(Computer.currentComputer().getNode(), dasAdminPort, "DAS_ADMIN_PORT") != dasAdminPort) {
-            logger.println("ERROR: DAS_ADMIN_PORT " + dasAdminPort + " is not available!");
+            logger.println("INFO: DAS_ADMIN_PORT " + dasAdminPort + " is not available!");
 
             return false;
         }
 
         if (GlassFishClusterNode.getAvailablePort(Computer.currentComputer().getNode(), dasHttpPort, "DAS_HTTP_PORT") != dasHttpPort) {
-            logger.println("ERROR: DAS_HTTP_PORT " + dasHttpPort + " is not available!");
+            logger.println("INFO: DAS_HTTP_PORT " + dasHttpPort + " is not available!");
             return false;
         }
 
@@ -127,11 +129,16 @@ public class GlassFishCluster {
     }
 
     public GlassFishClusterNode getDasClusterNode() {
+
+        if (clusterNodes.isEmpty()) {
+            return null;
+        }
         return clusterNodes.get(0);
+
     }
 
     GlassFishClusterNode getClusterNode(int hostNum) {
-        if ((hostNum > numNodes) || (hostNum <= 0)) {
+        if (clusterNodes.isEmpty() || (hostNum > numNodes) || (hostNum <= 0)) {
             logger.println("ERROR: Invalid Host Number:" + hostNum);
             return null;
         } else {
@@ -146,7 +153,6 @@ public class GlassFishCluster {
             String instanceName = instanceNamePrefix + i;
             GlassFishInstance gfi = new GlassFishInstance(this, logger, instanceName, base_port);
             clusterMap.put(instanceName, gfi);
-            //logger.println("Added: " + instanceName + ":" + base_port);
             base_port = base_port + 0x100;
         }
     }
@@ -209,9 +215,9 @@ public class GlassFishCluster {
         // create a list of Nodes
         ArrayList<Node> slaveNodes = selectSlaveNodesForInstanceDeployment(numNodes, nodeSelectionLabel);
         // we can't continue if there are not enough nodes available for instance deployment
-        if (slaveNodes.size() < numNodes) {
+        if (slaveNodes.size() + 1 < numNodes) {
             logger.println("ERROR: Not enough nodes available for GlassFish Instance deployment. (Required:"
-                    + numNodes + ", Available:" + slaveNodes.size() + ", Label:" + nodeSelectionLabel + ")");
+                    + numNodes + ", Available:" + (slaveNodes.size() + 1) + ", Label:" + nodeSelectionLabel + ")");
             return false;
         }
 
@@ -222,6 +228,8 @@ public class GlassFishCluster {
         for (GlassFishInstance in : clusterMap.values()) {
             in.clusterNode = getClusterNode(++node_num);
             in.nodeName = in.clusterNode.getNode().getNodeName();
+            in.s1as_home = in.clusterNode.getInstaller().GFHOME_DIR;
+
             node_num = node_num % numNodes;
         }
 
@@ -232,6 +240,31 @@ public class GlassFishCluster {
     boolean installGlassFishOnDasNode(String zipBundleURL) {
         if (!installGlassFish(getDasClusterNode(), zipBundleURL)) {
             return false;
+        }
+
+        return true;
+    }
+
+    // copy over the files required for user Tasks
+    boolean copyUserTaskFiles(String userTaskFilesURL) {
+        // separate out space separate URL string, and copy over each file separately
+        String[] urls = userTaskFilesURL.split(" ");
+        for (int i = 0; i < urls.length; i++) {
+            String url = urls[i];
+            if (url.length() == 0) {
+                continue;
+            }
+            if (url.toLowerCase().endsWith(".zip")) {
+                //copy and unzip the file
+                if (!getDasClusterNode().getInstaller().remoteUnzip(true, url)) {
+                    return false;
+                }
+            } else {
+                // simply copy the file
+                if (!getDasClusterNode().getInstaller().remoteCopyFile(true, url)) {
+                    return false;
+                }
+            }
         }
 
         return true;
@@ -251,7 +284,7 @@ public class GlassFishCluster {
 
     boolean installGlassFish(GlassFishClusterNode gfcNode, String zipBundleURL) {
 
-        logger.println(gfcNode.getNode().getNodeName() + ":Installing GlassFish Bundle " + zipBundleURL);
+        logger.println(GlassFishPluginUtils.getLogDate() + gfcNode.getNode().getNodeName() + ":Installing GlassFish Bundle " + zipBundleURL);
         if (!gfcNode.getInstaller().installGlassFishFromZipBundle(zipBundleURL)) {
             logger.println(gfcNode.getNode().getNodeName() + ": ERROR: GlassFish Installation Failed. ");
             // if the installer fails on one of the nodes, then we can not continue
@@ -265,6 +298,9 @@ public class GlassFishCluster {
 
     boolean deleteInstall() {
         boolean returnVal = true;
+        if (clusterNodes.isEmpty()) {
+            logger.println("deleteInstall: skipped. No GlassFish Installation was deleted!");
+        }
         for (GlassFishClusterNode gfcNode : clusterNodes) {
             logger.println(gfcNode.getNode().getNodeName() + ":Deleting GlassFish Installation ");
             if (!gfcNode.getInstaller().deleteInstall()) {
@@ -282,12 +318,11 @@ public class GlassFishCluster {
     }
 
     /**
-     *
+     * Cluster Map initialization.
      * Create a map of all the instances in the cluster.
      * Override auto assigned ports with user defined - if any.
-     * Update port values based  upon which ports are actually free on the system
      */
-    boolean createClusterMap(String instanceNamePrefix, int numInstances) {
+    boolean initClusterMap(String instanceNamePrefix, int numInstances) {
 
 
         createAutoAssignedClusterMap(instanceNamePrefix, numInstances);
@@ -304,21 +339,31 @@ public class GlassFishCluster {
             numNodes = clusterMap.size();
         }
 
+        return true;
+    }
+
+    /**
+     * Assign nodes to instances.
+     * Update port values based  upon which ports are actually free on the system
+     */
+    boolean updateClusterMap() {
+
+        // Instance -> node mapping. Instances will be later installed on the assigned nodes.
         if (!assignClusterNodesToInstances()) {
             return false;
         }
 
+        updateClusterMapPerPortAvailability();
+
         return true;
     }
 
-    ////// Cluster Map initialization. /////////////
-    boolean initClusterProperties(String instanceNamePrefix, int numInstances) {
+    ////// Cluster Properties file initialization. /////////////
+    boolean createClusterProperties() {
 
-        if (!createClusterMap(instanceNamePrefix, numInstances)) {
+        if (!updateClusterMap()) {
             return false;
         }
-
-        updateClusterMapPerPortAvailability();
 
         if (!createClusterPropsFiles()) {
             return false;
@@ -344,11 +389,11 @@ public class GlassFishCluster {
             String computerName = n.getNodeName();
             if (n.toComputer().isOffline()) {
                 println(verbose, "Skipped: " + computerName + " (Node is offline)");
-                continue ;
+                continue;
             }
             if (n.toComputer().getNumExecutors() <= 0) {
                 println(verbose, "Skipped: " + computerName + " (No executors)");
-                continue ;
+                continue;
             }
 
             Set<Label> labelSet = n.getAssignedLabels();
@@ -396,7 +441,7 @@ public class GlassFishCluster {
         Node currentNode = Computer.currentComputer().getNode();
         ArrayList<Node> selected_slaves = new ArrayList<Node>(num_nodes);
         int i = 0;
-        selected_slaves.add(i++, currentNode);
+        //selected_slaves.add(i++, currentNode);
         for (Node n : randomSlaves) {
             if (i >= num_nodes) {
                 break;
@@ -443,9 +488,9 @@ public class GlassFishCluster {
      */
     public boolean copyGFServerLogsTo(String dirName) {
 
-        if (clusterMap == null || clusterMap.isEmpty()) {
+        if (clusterMap == null || clusterMap.isEmpty() || getDasClusterNode() == null) {
             logger.println("Skipped: No Server logs to Archive!");
-            return true ;
+            return true;
         }
         FilePath target = new FilePath(build.getProject().getWorkspace(), dirName);
 
@@ -524,6 +569,170 @@ public class GlassFishCluster {
         return true;
     }
 
+    /**
+     * This is used to execute the plugin on the pre-existing installation,
+     * when install glassfish option is not selected.
+     * @param fileName
+     * All the cluster map is rebuild from the specified properties file.
+     * The file cluster.props need to be already present in WORKSPACE.
+     * @return
+     */
+    public boolean loadClusterPropertiesFile(String fileName) {
+        FilePath projectWorkspace = build.getProject().getWorkspace();
+        FilePath propsFile = new FilePath(projectWorkspace, fileName);
+        int numInstances = -1;
+        boolean success = true;
+
+        Properties props = new Properties();
+        try {
+            logger.println("Reading properties file: " + propsFile.toString());
+
+            props.load(propsFile.read());
+
+            if ((clusterName = getStrProperty(props, "cluster_name")) == null) {
+                success = false;
+            }
+
+            if ((numNodes = getIntProperty(props, "cluster_numNodes", 1)) == -1) {
+                success = false;
+            }
+
+            if ((numInstances = getIntProperty(props, "cluster_numInstances", 1)) == -1) {
+                success = false;
+            }
+
+            if (!success) {
+                return false;
+            }
+
+            for (int i = 1; i <= numInstances; i++) {
+                String instanceN_name, instanceN_node, instanceN_s1as_home;
+                String instanceN = "instance" + i;
+                if ((instanceN_name = getStrProperty(props, instanceN + "_name")) == null) {
+                    success = false;
+                }
+
+                if ((instanceN_node = getStrProperty(props, instanceN + "_node")) == null) {
+                    success = false;
+                }
+                if ((instanceN_s1as_home = getStrProperty(props, instanceN + "_s1as_home")) == null) {
+                    success = false;
+                }
+
+                int instanceN_HTTP_LISTENER_PORT,
+                        instanceN_HTTP_SSL_LISTENER_PORT,
+                        instanceN_IIOP_LISTENER_PORT,
+                        instanceN_IIOP_SSL_LISTENER_PORT,
+                        instanceN_IIOP_SSL_MUTUALAUTH_PORT,
+                        instanceN_JMX_SYSTEM_CONNECTOR_PORT,
+                        instanceN_JMS_PROVIDER_PORT,
+                        instanceN_ASADMIN_LISTENER_PORT,
+                        instanceN_GMS_LISTENER_PORT;
+                if ((instanceN_HTTP_LISTENER_PORT = getIntProperty(props, instanceN + "_HTTP_LISTENER_PORT", 1)) == -1) {
+                    success = false;
+                }
+                if ((instanceN_HTTP_SSL_LISTENER_PORT = getIntProperty(props, instanceN + "_HTTP_SSL_LISTENER_PORT", 1)) == -1) {
+                    success = false;
+                }
+                if ((instanceN_IIOP_LISTENER_PORT = getIntProperty(props, instanceN + "_IIOP_LISTENER_PORT", 1)) == -1) {
+                    success = false;
+                }
+                if ((instanceN_IIOP_SSL_LISTENER_PORT = getIntProperty(props, instanceN + "_IIOP_SSL_LISTENER_PORT", 1)) == -1) {
+                    success = false;
+                }
+                if ((instanceN_IIOP_SSL_MUTUALAUTH_PORT = getIntProperty(props, instanceN + "_IIOP_SSL_MUTUALAUTH_PORT", 1)) == -1) {
+                    success = false;
+                }
+                if ((instanceN_JMX_SYSTEM_CONNECTOR_PORT = getIntProperty(props, instanceN + "_JMX_SYSTEM_CONNECTOR_PORT", 1)) == -1) {
+                    success = false;
+                }
+
+                if ((instanceN_JMS_PROVIDER_PORT = getIntProperty(props, instanceN + "_JMS_PROVIDER_PORT", 1)) == -1) {
+                    success = false;
+                }
+                if ((instanceN_ASADMIN_LISTENER_PORT = getIntProperty(props, instanceN + "_ASADMIN_LISTENER_PORT", 1)) == -1) {
+                    success = false;
+                }
+                if ((instanceN_GMS_LISTENER_PORT = getIntProperty(props, instanceN + "_GMS_LISTENER_PORT", 1)) == -1) {
+                    success = false;
+                }
+                if (!success) {
+                    return false;
+                }
+                GlassFishInstance gfi = new GlassFishInstance(
+                        this,
+                        logger,
+                        instanceN_name,
+                        instanceN_node,
+                        instanceN_s1as_home,
+                        instanceN_HTTP_LISTENER_PORT,
+                        instanceN_HTTP_SSL_LISTENER_PORT,
+                        instanceN_IIOP_LISTENER_PORT,
+                        instanceN_IIOP_SSL_LISTENER_PORT,
+                        instanceN_IIOP_SSL_MUTUALAUTH_PORT,
+                        instanceN_JMX_SYSTEM_CONNECTOR_PORT,
+                        instanceN_JMS_PROVIDER_PORT,
+                        instanceN_ASADMIN_LISTENER_PORT,
+                        instanceN_GMS_LISTENER_PORT);
+                clusterMap.put(instanceN_name, gfi);
+            }
+
+        } //catch exception in case properties file does not exist
+        catch (IOException e) {
+            logger.println("ERROR: Couldn't load properties file: "
+                    + propsFile.toString());
+            e.printStackTrace(logger);
+            return false;
+        }
+
+        // Rebuild the data structures from the values in the properties file,
+        // Populate instances and cluster Nodes.
+        // We assume that those nodes are still online and available.
+        // The cluster creation will fail if one of the nodes becomes unavailable.
+
+        for (GlassFishInstance in : clusterMap.values()) {
+            Node node = Hudson.getInstance().getNode(in.nodeName);
+            GlassFishClusterNode clusterNode = new GlassFishClusterNode(node, build, logger, listener);
+            in.clusterNode = clusterNode;
+            clusterNodes.add(clusterNode);
+
+        }
+        return true;
+    }
+
+    // returns null if String value for the property is not found
+    String getStrProperty(Properties props, String propName) {
+        String str = props.getProperty(propName);
+        if (str == null) {
+            logger.println("ERROR: Couldn't load property: " + propName);
+            return null;
+        }
+        return str.trim();
+    }
+
+    // returns -1 if int value for the property is not found
+    int getIntProperty(Properties props, String propName, int minValue) {
+        String str = props.getProperty(propName);
+        int propValue = -1;
+        if (str == null) {
+            logger.println("ERROR: Couldn't load property: " + propName);
+            return -1;
+        } else {
+            try {
+                propValue = Integer.parseInt(str);
+                if (propValue < minValue) {
+                    logger.println("Invalid value: " + propName + "=" + propValue + " (must be >=" + minValue);
+                    return -1;
+                }
+            } catch (NumberFormatException e) {
+                logger.println("Invalid integer value: " + propName + "=" + str);
+                e.printStackTrace(logger);
+                return -1;
+            }
+        }
+        return propValue;
+    }
+
     public boolean createFile(boolean verbose, String fileName, String fileContents) {
 
         FilePath projectWorkspace = build.getProject().getWorkspace();
@@ -537,33 +746,9 @@ public class GlassFishCluster {
 
         } catch (IOException e) {
             e.printStackTrace(logger);
-            //logger.println("IOException !");
             return false;
         } catch (InterruptedException e) {
             e.printStackTrace(logger);
-            //logger.println("InterruptedException!");
-            return false;
-        }
-
-        return true;
-    }
-
-    // Shell command is executed on the current computer, which is same as DAS Cluster Node.
-    boolean execShellCommand(String cmd) {
-        PrintStream logger = listener.getLogger();
-
-        try {            
-            Shell shell = new Shell(cmd);
-            logger.println("Executing Shell Command");
-
-            if (!shell.perform(build, launcher, listener)) {
-                logger.println("ERROR executing Shell Command");
-                return false;
-            }
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-            logger.println("ERROR (InterruptedException): executing Shell Command:" + cmd);
             return false;
         }
 
