@@ -61,7 +61,7 @@ public final class GlassFishInstaller {
     private AbstractBuild build;
     private PrintStream logger;
     private FilePath projectWorkSpace, installDir;
-    FilePath binDir, gfv3binDir, domain1LogsDir, GFHomeDir ;
+    FilePath binDir, gfv3binDir, domain1LogsDir, GFHomeDir;
     private String installDirStr;
     GlassFishClusterNode clusterNode;
     final boolean Verbose = true;
@@ -74,33 +74,29 @@ public final class GlassFishInstaller {
         OS_NAME = clusterNode.getOS();
         logger.println(clusterNode.getNodeName() + ", os.name=" + OS_NAME);
 
-        //projectWorkSpace = build.getProject().getWorkspace();
         projectWorkSpace = clusterNode.getWorkDir();
-        String GFHOME_DIR_REL = "" ;
+        String GFHOME_DIR_REL = "";
         if (isWindows()) {
-            //GFHOME_DIR_REL = "glassfishv3\\glassfish\\" ;
-            GFHOME_DIR_REL = "glassfishv3" ;
-            GFHOME_DIR = projectWorkSpace.toString() + "\\" + GFHOME_DIR_REL ;
+            GFHOME_DIR_REL = "glassfishv3";
+            GFHOME_DIR = projectWorkSpace.toString() + "\\" + GFHOME_DIR_REL;
             GFBIN_DIR = GFHOME_DIR + "\\glassfish\\bin\\";
             GFV3BIN_DIR = GFHOME_DIR + "\\bin\\";
             GFADMIN_CMD = GFBIN_DIR + "asadmin.bat";
-            GFDOMAIN1_LOGS_DIR = GFHOME_DIR_REL + "\\glassfish\\domains\\domain1\\logs\\" ;
+            GFDOMAIN1_LOGS_DIR = GFHOME_DIR_REL + "\\glassfish\\domains\\domain1\\logs\\";
 
             GFPASSWORD_FILE = GFHOME_DIR + "\\glassfish\\config\\passwordfile";
             USER_PASSWORD_FLAGS = " --passwordfile " + GFPASSWORD_FILE + " --user admin ";
         } else {
-            //GFHOME_DIR_REL = "glassfishv3/glassfish/";
             GFHOME_DIR_REL = "glassfishv3";
-            GFHOME_DIR = projectWorkSpace.toString() + "/" + GFHOME_DIR_REL ;
+            GFHOME_DIR = projectWorkSpace.toString() + "/" + GFHOME_DIR_REL;
             GFBIN_DIR = GFHOME_DIR + "/glassfish/bin/";
             GFV3BIN_DIR = GFHOME_DIR + "/bin/";
             GFADMIN_CMD = GFBIN_DIR + "asadmin";
-            GFDOMAIN1_LOGS_DIR =  GFHOME_DIR_REL + "/glassfish/domains/domain1/logs/" ;
+            GFDOMAIN1_LOGS_DIR = GFHOME_DIR_REL + "/glassfish/domains/domain1/logs/";
 
             GFPASSWORD_FILE = GFHOME_DIR + "/glassfish/config/passwordfile";
             USER_PASSWORD_FLAGS = " --passwordfile " + GFPASSWORD_FILE + " --user admin ";
         }
-
 
         installDir = new FilePath(projectWorkSpace, "glassfishv3");
         GFHomeDir = new FilePath(projectWorkSpace, GFHOME_DIR_REL);
@@ -108,7 +104,6 @@ public final class GlassFishInstaller {
         gfv3binDir = new FilePath(projectWorkSpace, GFV3BIN_DIR);
         domain1LogsDir = new FilePath(projectWorkSpace, GFDOMAIN1_LOGS_DIR);
         installDirStr = installDir.toString();
-
     }
 
     String getAdminCmd() {
@@ -132,39 +127,61 @@ public final class GlassFishInstaller {
         if (!remoteUnzip(false, GFZipBundleURLString)) {
             return false;
         }
-        try {
+        // After the bundle is unzippd, files in bin directory are missing execute permission.
+        // To workaround, explicitly set execute permission for all the commands in all the bin directories
+        // found inside current installation. This includes: ./bin, glassfish/bin, mq/bin, javadb/bin etc.
+        boolean result = true;
+        String dir1, dir2, dir3, dir4;
+        if (isWindows()) {
+            dir1 = "bin";
+            dir2 = "glassfish\\bin";
+            dir3 = "mq\\bin";
+            dir4 = "javadb\\bin";
+        } else {
+            dir1 = "bin";
+            dir2 = "glassfish/bin";
+            dir3 = "mq/bin";
+            dir4 = "javadb/bin";
+        }
 
-            // After the bundle is unzippd, files in bin directory are missing execute permission.
-            // To workaround, explicitly set execute permission to the required GF admin commands            
-            List<FilePath> filePathList = binDir.list();
-            for (FilePath cmdFile : filePathList) {
-                // b001001001 represets execute permission to all on Unix
-                // Do a "bitwise inclusive OR operation" to assign the exec permission
-                cmdFile.chmod(cmdFile.mode() | Integer.parseInt("001001001", 2));
-            }
-            filePathList = gfv3binDir.list();
-            for (FilePath cmdFile : filePathList) {
-                // b001001001 represets execute permission to all on Unix
-                // Do a "bitwise inclusive OR operation" to assign the exec permission
-                cmdFile.chmod(cmdFile.mode() | Integer.parseInt("001001001", 2));
-            }
-            // password file may be required for executing asadmin command
-            String CMD = "createGFPassWordFile()";
-            if (!createGFPassWordFile(build, logger)) {
-                logger.println("ERROR: " + CMD);
-                return false;
-            }
+        result &= assignExecPermissions(new FilePath(installDir, dir1));
+        result &= assignExecPermissions(new FilePath(installDir, dir2));
+        result &= assignExecPermissions(new FilePath(installDir, dir3));
+        result &= assignExecPermissions(new FilePath(installDir, dir4));
 
-        } catch (IOException e) {
-            e.printStackTrace(logger);            
+        if (!result) {
             return false;
-        } catch (InterruptedException e) {
-            e.printStackTrace(logger);            
+        }
+        // password file may be required for executing asadmin command
+        String CMD = "createGFPassWordFile()";
+        if (!createGFPassWordFile(build, logger)) {
+            logger.println("ERROR: " + CMD);
             return false;
         }
 
-        //TODO: Remove this. This is a temporary workaround.
-        //remoteUnzip(!Verbose, "http://icon.red.iplanet.com/export7/gf_hudson_plugin/hudson-ant-script.zip");
+        return true;
+    }
+
+    // assigns executable permission flag to all the files in the given directory
+    boolean assignExecPermissions(FilePath thisDir) {
+        try {
+            List<FilePath> fileList = thisDir.list();
+            if (fileList == null || fileList.isEmpty()) {
+                return true;
+            }
+            for (FilePath cmdFile : fileList) {
+                // b001001001 represets execute permission to all on Unix
+                // Do a "bitwise inclusive OR operation" to assign the exec permission
+                cmdFile.chmod(cmdFile.mode() | Integer.parseInt("001001001", 2));
+                //logger.println("assignExecPermissions:" + cmdFile.toString());
+            }
+        } catch (IOException e) {
+            e.printStackTrace(logger);
+            return false;
+        } catch (InterruptedException e) {
+            e.printStackTrace(logger);
+            return false;
+        }
         return true;
     }
 
@@ -195,6 +212,28 @@ public final class GlassFishInstaller {
         } catch (InterruptedException e) {
             e.printStackTrace(logger);
             //logger.println("InterruptedException!");
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Get the file from the specified URL and save on the slave computer.
+     */
+    public boolean remoteCopyFile(boolean verbose, String fileURLString) {
+
+        try {
+            // download / copy the file
+            URL fileURL = new URL(fileURLString);
+            String fileName = new File(fileURL.getPath()).getName();
+            println(verbose, "Copying the file: " + fileURLString);
+            FilePath file = new FilePath(projectWorkSpace, fileName);
+            file.copyFrom(fileURL);
+        } catch (IOException e) {
+            e.printStackTrace(logger);
+            return false;
+        } catch (InterruptedException e) {
+            e.printStackTrace(logger);
             return false;
         }
         return true;
@@ -252,5 +291,4 @@ public final class GlassFishInstaller {
 
         return true;
     }
-
 }
