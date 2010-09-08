@@ -34,34 +34,19 @@
  * holder.
  */
 
-package org.glassfish.ha.store.impl;
-
-import org.glassfish.ha.store.api.*;
-import org.jvnet.hk2.annotations.Service;
-
-import java.io.Serializable;
+package org.glassfish.ha.store.api;
 
 /**
+ * This interface is implemented by objects that are used as Keys in BackingStore operations. The main use
+ *   of this interface is to provide a <i>hint</i> to the BackingStore providers so that all keys that return
+ *   the same object (actually same hashcode) from getHashKey  will be 'grouped' together. For example,
+ *   for a BackingStore that uses memory replication, if two keys k1 and k2 implement this interface and return
+ *   the same Object from getHashKey, then their values will be replicated to the same replication instance.
+ *
  * @author Mahesh Kannan
  */
-@Service(name="noop")
-public class NoOpBackingStoreFactory
-    implements BackingStoreFactory {
+public interface HashableKey {
 
-    private static BackingStoreTransaction _noOpTransaction = new BackingStoreTransaction() {
-        public void commit() {}
-    };
+    public Object getHashKey();
 
-    public <K extends Serializable, V extends Serializable> BackingStore<K, V> createBackingStore(
-            BackingStoreConfiguration<K, V> conf)
-                throws BackingStoreException {
-        NoOpBackingStore<K, V> store =  new NoOpBackingStore<K, V>();
-        store.initialize(conf);
-
-        return store;
-    }
-
-    public BackingStoreTransaction createBackingStoreTransaction() {
-        return _noOpTransaction;
-    }
 }

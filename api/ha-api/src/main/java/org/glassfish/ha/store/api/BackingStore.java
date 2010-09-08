@@ -37,6 +37,7 @@
 package org.glassfish.ha.store.api;
 
 import org.glassfish.ha.store.criteria.Criteria;
+import org.glassfish.ha.store.impl.NoOpBackingStoreFactory;
 import org.glassfish.ha.store.spi.*;
 
 import java.io.*;
@@ -89,7 +90,7 @@ public abstract class BackingStore<K extends Serializable, V extends Serializabl
      * @throws BackingStoreException if the underlying store implementation encounters any
      *                               exception
      */
-    public abstract V load(K key, String version) throws BackingStoreException;
+    public abstract V load(Object key, String version) throws BackingStoreException;
 
     /**
      * Save the value whose key is id. The store is NOT expected to throw an exception if
@@ -160,7 +161,7 @@ public abstract class BackingStore<K extends Serializable, V extends Serializabl
     /**
      * Get the current size of the store
      *
-     * @return the number of entries in the store
+     * @return the (approximate) number of entries in the store
      * @throws BackingStoreException if the underlying store implementation encounters any
      *                               exception
      */
@@ -193,6 +194,10 @@ public abstract class BackingStore<K extends Serializable, V extends Serializabl
     public void close()
         throws BackingStoreException {
         
+    }
+
+    public BackingStoreFactory getBackingStoreFactory() {
+        return new NoOpBackingStoreFactory();
     }
 
 

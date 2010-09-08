@@ -65,7 +65,7 @@ public class NoOpBackingStore<K extends Serializable, V extends Serializable>
     }
 
     @Override
-    public V load(K key, String version) throws BackingStoreException {
+    public V load(Object key, String version) throws BackingStoreException {
         return null;
     }
     public V load(K key, Long version) throws BackingStoreException {
