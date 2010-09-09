@@ -120,11 +120,11 @@ public class BackingStoreFactoryRegistryTest
             bs.remove("k1");
 
 
-            bs.updateTimestamp(null, 6);
-            bs.updateTimestamp("k1", 6);
+            bs.updateTimestamp(null, "6", -1L);
+            bs.updateTimestamp("k1", "6", -1L);
 
 
-            bs.removeExpired(6);
+            bs.removeExpired();
 
             result = true;
         } catch (BackingStoreException bsEx) {
@@ -177,8 +177,8 @@ public class BackingStoreFactoryRegistryTest
             BackingStoreConfiguration<String, NoopData> conf = null;
             BackingStore<String, NoopData> bs = nbsf.createBackingStore(conf);
 
-            bs.updateTimestamp(null, 6);
-            bs.updateTimestamp("k1", 6);
+            bs.updateTimestamp(null, "3", -1L);
+            bs.updateTimestamp("k1", "2", 0L);
 
             result = true;
         } catch (BackingStoreException bsEx) {
@@ -194,7 +194,7 @@ public class BackingStoreFactoryRegistryTest
             BackingStoreConfiguration<String, NoopData> conf = null;
             BackingStore<String, NoopData> bs = nbsf.createBackingStore(conf);
 
-            bs.removeExpired(6);
+            bs.removeExpired();
 
             result = true;
         } catch (BackingStoreException bsEx) {

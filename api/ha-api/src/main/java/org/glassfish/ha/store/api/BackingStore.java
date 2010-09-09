@@ -81,6 +81,9 @@ public abstract class BackingStore<K extends Serializable, V extends Serializabl
         return conf;
     }
 
+
+    public abstract BackingStoreFactory getBackingStoreFactory();
+
     /**
      * Load and return the data for the given id. The store is expected to
      * return the largest ever version that was saved in the stored using the
@@ -94,7 +97,7 @@ public abstract class BackingStore<K extends Serializable, V extends Serializabl
      * @throws BackingStoreException if the underlying store implementation encounters any
      *                               exception
      */
-    public abstract V load(Object key, String version) throws BackingStoreException;
+    public abstract V load(K key, String version) throws BackingStoreException;
 
     /**
      * Save the value whose key is id. The store is NOT expected to throw an exception if
@@ -124,44 +127,28 @@ public abstract class BackingStore<K extends Serializable, V extends Serializabl
      */
     public abstract void remove(K key) throws BackingStoreException;
 
-    //TODO: REMOVE after shoal integration
-    public abstract void updateTimestamp(K key, long time) throws BackingStoreException;
+    /** TODO: BEGIN: REMOVE after shoal integration **/
+    public void updateTimestamp(K key, long time) throws BackingStoreException {}
+    public int removeExpired(long idleForMillis)
+             throws BackingStoreException {return 0;}
+    /** TODO: END: REMOVE AFTER SHOAL INTEGRATION **/
 
     /**
      * Recomended way is to just do a save(k, v)
      * @param key
      * @param version
      * @param accessTime
-     * @param maxIdleTime
      * @throws BackingStoreException
      */
-    public String updateTimestamp(K key, Long version, Long accessTime, Long maxIdleTime)
-            throws BackingStoreException {
-        return "";
-    }
+    public abstract String updateTimestamp(K key, String version, Long accessTime)
+            throws BackingStoreException;
 
     /**
      * Remove expired entries
      */
-    //FIXME: Remove after shoal integration
-    public abstract int removeExpired(long idleForMillis)
+    public abstract int removeExpired()
              throws BackingStoreException;
-    public int removeExpired()
-             throws BackingStoreException {
-        return 0;
-    }
-
-    /**
-     * Remove instances that meet the criteria.
-     *
-     * @throws BackingStoreException if the underlying store implementation encounters any
-     *                               exception
-     */
-    public void removeByCriteria(Criteria<V> criteria,
-              StoreEntryEvaluator<K, V> eval) throws BackingStoreException {
-
-    }
-
+    
     /**
      * Get the current size of the store
      *
@@ -172,56 +159,25 @@ public abstract class BackingStore<K extends Serializable, V extends Serializabl
     public abstract int size() throws BackingStoreException;
 
     /**
+     * Typically called during shutdown of the process. The store must not be used after this call
+     *
+     * @throws BackingStoreException
+     */
+    public void close()
+        throws BackingStoreException {
+
+    }
+
+    /**
      * Called when the store is no longer needed. Must clean up and close any
      * opened resources. The store must not be used after this call.
      */
-    public abstract void destroy() throws BackingStoreException;
-
-    /**
-     * Find entries that satisfy the given Criteria. If criteria is null, then
-     * all entries in this store match the criteria.
-     * The store must do the following:
-     * 1. Execute the criteria and for each value that satisfy the criteria, must call
-     * 2. evaluator._getExtraParamCollectionFromManager(key, value) and if evaluator._getExtraParamCollectionFromManager() return true, then ;
-     * 3. if eagerFetch is true then all attributes of value are populated. Else only
-     * those whose loadLazily is set to false will be returned.
-     *
-     * @param criteria The criteria that must be satisfied. Can be null (in which case
-     *                 every value in this store is assumed to match the criteria)
-     * @param eval     The StoreEntryEvaluator The evaluator whose _getExtraParamCollectionFromManager method must be invoked to further
-     *                 narrow the result.
-     */
-    public Collection findByCriteria(Criteria<V> criteria, StoreEntryEvaluator<K, V> eval) {
-        return (Collection) Collections.EMPTY_LIST;
-    }
-
-    public void close()
-        throws BackingStoreException {
+    public void destroy()
+            throws BackingStoreException {
         
     }
 
-    public BackingStoreFactory getBackingStoreFactory() {
-        return new NoOpBackingStoreFactory();
-    }
 
-
-    /**
-     * Cache the keys for the entries that satisfy the given Criteria. If criteria is null, then
-     * all entries in this store match the criteria.
-     * The store must do the following:
-     * 1. Execute the criteria and for each value that satisfy the criteria, must call
-     * 2. evaluator._getExtraParamCollectionFromManager(key, value) and if evaluator._getExtraParamCollectionFromManager() return true, then ;
-     * 3. if eagerFetch is true then all attributes of value are populated. Else only
-     * those whose loadLazily is set to false will be returned.
-     *
-     * @param criteria The criteria that must be satisfied. Can be null (in which case
-     *                 every value in this store is assumed to match the criteria)
-     * @param eval     The StoreEntryEvaluator The evaluator whose _getExtraParamCollectionFromManager method must be invoked to further
-     *                 narrow the result.
-     */
-    public Collection synchronizeKeys(Criteria<V> criteria, StoreEntryEvaluator<K, V> eval, boolean eagerFetch) {
-        return Collections.EMPTY_LIST;
-    }
 
     protected ObjectOutputStream createObjectOutputStream(OutputStream os)
         throws IOException {

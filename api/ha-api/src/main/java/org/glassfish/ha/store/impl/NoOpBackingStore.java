@@ -40,13 +40,9 @@
 
 package org.glassfish.ha.store.impl;
 
-import org.glassfish.ha.store.api.BackingStore;
-import org.glassfish.ha.store.api.BackingStoreConfiguration;
-import org.glassfish.ha.store.api.BackingStoreException;
-import org.glassfish.ha.store.api.Storeable;
+import org.glassfish.ha.store.api.*;
 
 import java.io.Serializable;
-import java.util.Properties;
 
 /**
  * @author Mahesh Kannan
@@ -69,10 +65,12 @@ public class NoOpBackingStore<K extends Serializable, V extends Serializable>
     }
 
     @Override
-    public V load(Object key, String version) throws BackingStoreException {
-        return null;
+    public BackingStoreFactory getBackingStoreFactory() {
+        return new NoOpBackingStoreFactory();
     }
-    public V load(K key, Long version) throws BackingStoreException {
+
+    @Override
+    public V load(K key, String version) throws BackingStoreException {
         return null;
     }
 
@@ -87,17 +85,12 @@ public class NoOpBackingStore<K extends Serializable, V extends Serializable>
     }
 
     @Override
-    public void updateTimestamp(K key, long time) throws BackingStoreException {
-
-    }
-
-    @Override
-    public String updateTimestamp(K key, Long version, Long accessTime, Long maxIdleTime) throws BackingStoreException {
+    public String updateTimestamp(K key, String version, Long accessTime) throws BackingStoreException {
         return myName;
     }
 
     @Override
-    public int removeExpired(long idleForMillis) throws BackingStoreException {
+    public int removeExpired() throws BackingStoreException {
         return 0;
     }
 
