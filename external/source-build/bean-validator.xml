@@ -5,7 +5,7 @@
     <import file="build.xml"/>
 
    <property name="bean-validator.and.dependencies.dir" 
-             value="${external.dir}/bean-validator-and-dependencies" />
+             value="${external.dir}/bean-validator" />
     <!--
         Checkout bean-validator source and build
         This project needs to be built before HK2 since HK2 has a dependency on bean-validator.
@@ -16,46 +16,100 @@
     <target name="bean-validator.checkout" >
         <echo message="Checking out bean-validator and dependencies" />
 
-        <property name="bean-validator.checkout.dir" 
-                  value="${bean-validator.and.dependencies.dir}/bean-validator" />
-        <property name="jtype.checkout.dir" 
-                  value="${bean-validator.and.dependencies.dir}/jtype" />
+        <property name="hibernate-validator.checkout.dir" 
+                  value="${bean-validator.and.dependencies.dir}/hibernate-validator" />
 
-        <echo message="checkout bean-validator from ${bean-validator.svn.url}."/>
-        <mkdir dir="${bean-validator.checkout.dir}" />
-        <!-- checkout bean-validator source -->
-        <exec executable="svn" dir="${bean-validator.checkout.dir}" 
+        <echo message="checkout validation-api from ${validation-api.svn.url}."/>
+        <mkdir dir="${validation-api.checkout.dir}" />
+        <!-- checkout validation-api source -->
+        <exec executable="svn" dir="${bean-validator.and.dependencies.dir}" 
               failonerror="true" >
 	    <arg line="checkout" />
-            <arg line="${bean-validator.svn.url}" />
-            <arg line="${bean-validator.version}" />
+            <arg line="${validation-api.svn.url}" />
+            <arg line="validation-api" />
+	</exec>
+
+        <echo message="checkout hibernate-validator from ${hibernate-validator.svn.url}."/>
+        <mkdir dir="${hibernate-validator.checkout.dir}" />
+        <!-- checkout hibernate-validator source -->
+        <exec executable="svn" dir="${hibernate-validator.checkout.dir}" 
+              failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${hibernate-validator.svn.url}" />
 	</exec>
 
         <echo message="checkout jtype from ${jtype.svn.url}."/>
         <mkdir dir="${jtype.checkout.dir}" />
         <!-- checkout jtype source -->
-        <exec executable="svn" dir="${jtype.checkout.dir}" 
-              failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${jtype.svn.url}" />
-            <arg line="${jtype.version}" />
-	</exec>
-
-        <echo message="checkout slf4j-all from ${slf4j-all-bv.svn.url}."/>
-        <!-- checkout jtype source -->
         <exec executable="svn" dir="${bean-validator.and.dependencies.dir}" 
               failonerror="true" >
 	    <arg line="checkout" />
-            <arg line="${slf4j-all-bv.svn.url}" />
+            <arg line="${jtype.svn.url}" />
+            <arg line="jtype" />
+	</exec>
+
+        <echo message="checkout slf4j-all from ${slf4j-all-bv.svn.url}."/>
+        <!-- checkout slf4j-api source -->
+        <exec executable="svn" dir="${bean-validator.and.dependencies.dir}" 
+              failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${slf4j-all-bv.svn.url}/slf4j-api/${slf4j-all-bv.version}" />
+            <arg line="slf4j-api" />
+	</exec>
+
+        <echo message="checkout hibernate-jpa-api from ${hibernate-jpa-api.svn.url}."/>
+        <mkdir dir="${hibernate-jpa-api.checkout.dir}" />
+        <!-- checkout hibernate-jpa-api source -->
+        <exec executable="svn" dir="${bean-validator.and.dependencies.dir}" 
+              failonerror="true" >
+	    <arg line="checkout" />
+            <arg line="${hibernate-jpa-api.svn.url}/${hibernate-jpa-api.version}" />
+            <arg line="jpa-api" />
+	</exec>
+    </target>
+
+    <target name="bean-validator.build" depends="bean-validator.checkout" >
+        <!-- build hibernate-jpa-api -->
+        <echo message="cd ${bean-validator.and.dependencies.dir}/jpa-apir/${bean-validator.version} and mvn" />
+        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/jpa-api" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="install" />
+	</exec>
+
+        <!-- build slf4j-api source -->
+        <echo message="cd ${bean-validator.and.dependencies.dir}/slf4j-api and mvn" />
+        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/slf4j-api" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="install" />
+	</exec>
+
+        <!-- build jtype source -->
+        <echo message="cd ${bean-validator.and.dependencies.dir}/jtype and mvn" />
+        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/jtype" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="install" />
+	</exec>
+
+        <!-- build validation-api source -->
+        <echo message="cd ${bean-validator.and.dependencies.dir}/validation-api and mvn" />
+        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/validation-api" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="install" />
+	</exec>
+
+
+	<!-- hibernate-validator must be the last to compile -->
+        <echo message="cd ${hibernate-validator.checkout.dir} and mvn "/>
+        <exec executable="mvn" dir="${hibernate-validator.checkout.dir}/${hibernate-validator.version}/hibernate-validator" failonerror="true" >
+	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="install" />
 	</exec>
 
     </target>
-    <target name="bean-validator.build" depends="bean-validator.checkout" >
-        <!-- build bean-validator -->
-        <echo message="cd ${bean-validator.and.dependencies.dir}/bean-validator/${bean-validator.version} and mvn" />
-        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/bean-validator/${bean-validator.version}" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-X install" />
-	</exec>
+
+    <target name="create.settings.xml" >
+        <echo message="&lt;settings&gt; &#xa;&lt;profiles&gt; &#xa;&lt;profile&gt; &#xa;&lt;id&gt;dev&lt;/id&gt; &#xa;&lt;activation&gt; &#xa;&lt;activeByDefault&gt;true&lt;/activeByDefault&gt; &#xa;&lt;/activation&gt;  &#xa;&lt;repositories&gt; &#xa; &lt;repository&gt; &#xa; &lt;id&gt;java.net2&lt;/id&gt; &#xa; &lt;name&gt;Nexus repository collection for Glassfish&lt;/name&gt; &#xa; &lt;url&gt;http://maven.glassfish.org/content/groups/glassfish&lt;/url&gt; &#xa; &lt;/repository&gt; &#xa;&lt;/repositories&gt; &#xa;&lt;/profile&gt; &#xa;&lt;/profiles&gt; &#xa; &lt;/settings&gt;" file="${external.dir}/tiger-types/tiger-types.settings.xml" />
     </target>
+
+
 </project>
