@@ -49,6 +49,8 @@
         <!-- build javassist -->
         <exec executable="mvn" dir="${external.dir}/javassist" failonerror="true" >
             <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <!-- skip profile so it compiles on MAC -->
+            <arg line="-P !jdk16" />
             <arg line="install" />
         </exec>
     </target>
@@ -232,6 +234,39 @@
 	    <arg line="-DaltDeploymentRepository=rator.sfbay::default::dav:http://glassfish-maven-repository.sfbay/maven/repositories/glassfish/" />
             <arg line="deploy" />
         </exec>
+    </target>
+
+    <!-- Since weld osgi sources do not get generated.  The targets here will generate the sources artifacts and publish to maven repo.  The sources artifact is used to generate JavaEE API doc -->
+    <target name="weld-osgi-bundle-sources">
+        <!-- download sources -->
+        <exec executable="mvn" dir="${external.dir}/weld-core/osgi-bundle" failonerror="true" >
+            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="-DoutputDirectory=src/main/java" />
+            <arg line="-Dclassifier=sources" />
+            <arg line="org.apache.maven.plugins:maven-dependency-plugin:unpack-dependencies" />
+        </exec>
+        <exec executable="mvn" dir="${external.dir}/weld-core/osgi-bundle" failonerror="true" >
+            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="org.apache.maven.plugins:maven-source-plugin:jar" />
+        </exec>
+        <exec executable="mvn" dir="${external.dir}/weld-core/osgi-bundle" failonerror="true" >
+            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="-Dfile=target/weld-osgi-bundle-${weld-api.version}-sources.jar" />
+            <arg line="-DpomFile=pom.xml" />
+            <arg line="-Dclassifier=sources" />
+            <arg line="install:install-file" />
+        </exec>
+        <exec executable="mvn" dir="${external.dir}/weld-core/osgi-bundle" failonerror="true" >
+            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+            <arg line="-Dfile=target/weld-osgi-bundle-${weld-api.version}-sources.jar" />
+            <arg line="-Dclassifier=sources" />
+            <arg line="-DpomFile=pom.xml" />
+            <arg line="-Durl=${project.maven.repo} "/>
+            <arg line="-DrepositoryId=${project.maven.repo.id}" />
+            <arg line="deploy:deploy-file" />
+            <arg line="-X" />
+        </exec>
+
     </target>
 
 
