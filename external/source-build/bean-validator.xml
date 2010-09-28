@@ -6,6 +6,9 @@
 
    <property name="bean-validator.and.dependencies.dir" 
              value="${external.dir}/bean-validator" />
+   <property name="hibernate-validator.checkout.dir" 
+             value="${bean-validator.and.dependencies.dir}/hibernate-validator" />
+
     <!--
         Checkout bean-validator source and build
         This project needs to be built before HK2 since HK2 has a dependency on bean-validator.
@@ -15,12 +18,9 @@
     </target>	 
     <target name="bean-validator.checkout" >
         <echo message="Checking out bean-validator and dependencies" />
-
-        <property name="hibernate-validator.checkout.dir" 
-                  value="${bean-validator.and.dependencies.dir}/hibernate-validator" />
+        <mkdir dir="${bean-validator.and.dependencies.dir}" />
 
         <echo message="checkout validation-api from ${validation-api.svn.url}."/>
-        <mkdir dir="${validation-api.checkout.dir}" />
         <!-- checkout validation-api source -->
         <exec executable="svn" dir="${bean-validator.and.dependencies.dir}" 
               failonerror="true" >
@@ -97,19 +97,49 @@
             <arg line="install" />
 	</exec>
 
+        <!-- create settings.xml and plugin-registry.xml  since compiling hibernate-validator requires jaxb-maven-plugin version 1.2 or else build will fail -->
+        <antcall target="create.settings.xml" />
+        <antcall target="create.plugin-registry.xml" />
 
 	<!-- hibernate-validator must be the last to compile -->
-        <echo message="cd ${hibernate-validator.checkout.dir} and mvn "/>
+        <echo message="cd ${hibernate-validator.checkout.dir}/${hibernate-validator.version}/hibernate-validator and mvn "/>
         <exec executable="mvn" dir="${hibernate-validator.checkout.dir}/${hibernate-validator.version}/hibernate-validator" failonerror="true" >
 	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
+	    <arg line="-s ${hibernate-validator.checkout.dir}/settings-hibernate-validator.xml" />
+            <arg line="clean install" />
 	</exec>
-
+        <delete file="${user.home}/.m2/plugin-registry.xml"/>   
+        <available file="${user.home}/.m2/plugin-registry.xml-tmp" property="plugin-registry-tmp.exists" value="true" />
+        <antcall target="rename-plugin-registry-tmp" />
     </target>
 
     <target name="create.settings.xml" >
-        <echo message="&lt;settings&gt; &#xa;&lt;profiles&gt; &#xa;&lt;profile&gt; &#xa;&lt;id&gt;dev&lt;/id&gt; &#xa;&lt;activation&gt; &#xa;&lt;activeByDefault&gt;true&lt;/activeByDefault&gt; &#xa;&lt;/activation&gt;  &#xa;&lt;repositories&gt; &#xa; &lt;repository&gt; &#xa; &lt;id&gt;java.net2&lt;/id&gt; &#xa; &lt;name&gt;Nexus repository collection for Glassfish&lt;/name&gt; &#xa; &lt;url&gt;http://maven.glassfish.org/content/groups/glassfish&lt;/url&gt; &#xa; &lt;/repository&gt; &#xa;&lt;/repositories&gt; &#xa;&lt;/profile&gt; &#xa;&lt;/profiles&gt; &#xa; &lt;/settings&gt;" file="${external.dir}/tiger-types/tiger-types.settings.xml" />
+        <echo message="&lt;settings&gt;  &#xa; &lt;usePluginRegistry&gt;true&lt;/usePluginRegistry&gt; &#xa;   &lt;mirrors&gt; &#xa;     &lt;mirror&gt; &#xa;   &lt;id&gt;internal-glassfish-nexus&lt;/id&gt; &#xa;   &lt;url&gt;http://gf-maven.us.oracle.com/nexus/content/groups/internal-gf-nexus/&lt;/url&gt; &#xa;   &lt;mirrorOf&gt;*&lt;/mirrorOf&gt; &#xa;  &lt;/mirror&gt; &#xa; &lt;/mirrors&gt;  &#xa;&lt;/settings&gt;" file="${hibernate-validator.checkout.dir}/settings-hibernate-validator.xml" />
+    </target>
+
+    <target name="create.plugin-registry.xml" >
+        <available file="${user.home}/.m2/plugin-registry.xml" property="plugin-registry.exists" value="true" />
+        <antcall target="rename-plugin-registry" />
+        <echo message="&lt;pluginRegistry&gt;  &#xa; &lt;plugins&gt; &#xa;   &lt;plugin&gt; &#xa;     &lt;groupId&gt;org.codehaus.mojo &lt;/groupId&gt; &#xa;     &lt;artifactId&gt;jaxb2-maven-plugin&lt;/artifactId&gt; &#xa;      &lt;useVersion&gt;1.2&lt;/useVersion&gt; &#xa;     &#xa; &lt;rejectedVersions&gt;  &#xa;    &lt;rejectedVersion&gt;1.3&#xa;     &lt;/rejectedVersion&gt;  &#xa;        &lt;/rejectedVersions&gt;      &lt;/plugin&gt; &#xa;  &lt;/plugins&gt; &#xa; &lt;/pluginRegistry&gt; "  file="${user.home}/.m2/plugin-registry.xml" />
+    </target>
+
+    <!--check if there is already a plugin-registry file -->
+    <target name="rename-plugin-registry"  if="plugin-registry.exists">
+         <!--rename to a plugin-registry.xml-tmp -->
+         <move file="${user.home}/.m2/plugin-registry.xml" tofile="${user.home}/.m2/plugin-registry.xml-tmp"/>
+    </target>
+    <!--check if there is already a plugin-registry file -->
+    <target name="rename-plugin-registry-tmp"  if="plugin-registry-tmp.exists">
+         <!--rename to a plugin-registry.xml-tmp -->
+         <move file="${user.home}/.m2/plugin-registry.xml-tmp" tofile="${user.home}/.m2/plugin-registry.xml"/>
     </target>
 
 
 </project>
+
+
+
+
+
+
+
