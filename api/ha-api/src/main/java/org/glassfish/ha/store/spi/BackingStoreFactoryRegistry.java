@@ -47,6 +47,7 @@ import java.util.Properties;
 import java.util.HashMap;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -61,27 +62,30 @@ import java.util.logging.Logger;
  *
  * @author Mahesh.Kannan@Sun.Com
  * @author Larry.White@Sun.Com
- *
  */
 public final class BackingStoreFactoryRegistry {
 
-    private static final HashMap<String, BackingStoreFactory> factories =
-            new HashMap<String, BackingStoreFactory>();
+    private static final ConcurrentHashMap<String, BackingStoreFactory> factories =
+            new ConcurrentHashMap<String, BackingStoreFactory>();
 
     static {
         factories.put("noop", new NoOpBackingStoreFactory());
     }
 
-    public static synchronized void register(String type, BackingStoreFactory factory)
-            throws DuplicateFactoryRegistrationException {
-        if (factories.get(type) != null) {
-            throw new DuplicateFactoryRegistrationException("BackingStoreFactory " +
-                    "for persistene-type " + type + " already exists");
-        }
-        factories.put(type, factory);
+    /**
+     * @param type
+     * @param factory
+     * @return
+     * @throws DuplicateFactoryRegistrationException
+     *
+     */
+    public static synchronized BackingStoreFactory register(String type, BackingStoreFactory factory) {
+        BackingStoreFactory oldFactory = factories.put(type, factory);
         Logger.getLogger(BackingStoreFactoryRegistry.class.getName()).log(Level.INFO, "Registered "
-            + factory.getClass().getName() + " for persistence-type = " + type
-            + " in BackingStoreFactoryRegistry");
+                + factory.getClass().getName() + " for persistence-type = " + type
+                + " in BackingStoreFactoryRegistry");
+
+        return oldFactory;
     }
 
     /**
@@ -95,9 +99,9 @@ public final class BackingStoreFactoryRegistry {
         BackingStoreFactory factory = factories.get(type);
         if (factory == null) {
             throw new BackingStoreException("Backing store for " +
-                        "persistence-type " + type + " is not registered.");
+                    "persistence-type " + type + " is not registered.");
         }
-        
+
         return factory;
     }
 
@@ -108,6 +112,6 @@ public final class BackingStoreFactoryRegistry {
     public static synchronized void unregister(String type) {
         factories.remove(type);
     }
-    
+
 }
 
