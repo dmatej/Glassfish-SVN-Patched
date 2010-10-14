@@ -140,8 +140,8 @@ public abstract class BackingStore<K extends Serializable, V extends Serializabl
      * @param accessTime
      * @throws BackingStoreException
      */
-    public abstract String updateTimestamp(K key, String version, Long accessTime)
-            throws BackingStoreException;
+    public String updateTimestamp(K key, String version, Long accessTime)
+            throws BackingStoreException {return "";}
 
     /**
      * Remove expired entries
