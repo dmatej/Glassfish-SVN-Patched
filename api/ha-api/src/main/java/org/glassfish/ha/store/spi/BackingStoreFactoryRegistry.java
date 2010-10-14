@@ -43,8 +43,7 @@ import org.glassfish.ha.store.api.BackingStoreException;
 import org.glassfish.ha.store.api.BackingStoreFactory;
 import org.glassfish.ha.store.impl.NoOpBackingStoreFactory;
 
-import java.util.Properties;
-import java.util.HashMap;
+import java.util.*;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -113,5 +112,9 @@ public final class BackingStoreFactoryRegistry {
         factories.remove(type);
     }
 
+    public static synchronized Set<String> getRegisteredTypes() {
+        Set<String> result = new HashSet<String>(factories.keySet());
+        return result;
+    }
 }
 

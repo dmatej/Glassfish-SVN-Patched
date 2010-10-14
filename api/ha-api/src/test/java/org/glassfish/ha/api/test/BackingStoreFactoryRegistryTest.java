@@ -44,12 +44,14 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.glassfish.ha.store.api.*;
+import org.glassfish.ha.store.impl.NoOpBackingStoreFactory;
 import org.glassfish.ha.store.spi.BackingStoreFactoryRegistry;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.util.Set;
 
 /**
  * Unit test for simple App.
@@ -202,6 +204,26 @@ public class BackingStoreFactoryRegistryTest
         }
 
         assert(result);
+    }
+
+    public void testBackingStoreFactoryRegistryGetRegistered() {
+        boolean result = false;
+        BackingStoreFactoryRegistry.register("foo", new NoOpBackingStoreFactory());
+        Set<String> types = BackingStoreFactoryRegistry.getRegisteredTypes();
+        if (types.size() != 2) {
+            result = false;
+            return;
+        }
+        for (String type : types) {
+            System.out.println("Registered type:" + type);
+        }
+        BackingStoreFactoryRegistry.unregister("foo");
+        types = BackingStoreFactoryRegistry.getRegisteredTypes();
+        if (types.size() != 1) {
+            result = false;
+            return;
+        }
+        result = true;
     }
 
     private static final class NoopData
