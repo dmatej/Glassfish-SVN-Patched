@@ -146,8 +146,10 @@ public abstract class BackingStore<K extends Serializable, V extends Serializabl
     /**
      * Remove expired entries
      */
-    public abstract int removeExpired()
-             throws BackingStoreException;
+    public int removeExpired()
+             throws BackingStoreException {
+        return 0;
+    }
     
     /**
      * Get the current size of the store
