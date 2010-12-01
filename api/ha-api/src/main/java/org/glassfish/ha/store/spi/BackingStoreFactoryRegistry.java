@@ -71,6 +71,10 @@ public final class BackingStoreFactoryRegistry {
         factories.put("noop", new NoOpBackingStoreFactory());
     }
 
+    // rather than having proxies for these persistence types, just list them as predefined.
+    // they will be added to the registry lazily as they are used.
+    private static final List<String> predefinedPersistenceTypes = Arrays.asList( "memory", "file");
+
     /**
      * @param type
      * @param factory
@@ -114,6 +118,7 @@ public final class BackingStoreFactoryRegistry {
 
     public static synchronized Set<String> getRegisteredTypes() {
         Set<String> result = new HashSet<String>(factories.keySet());
+        result.addAll(predefinedPersistenceTypes);
         return result;
     }
 }
