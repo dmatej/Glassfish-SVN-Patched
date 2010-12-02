@@ -92,6 +92,10 @@ public class BackingStoreConfiguration<K extends Serializable, V extends Seriali
 
     private boolean startGroupService;
 
+    private KeyTransformer<K> keyTransformer;
+
+    private ValueTransformer<V> valueTransformer;
+
     public String getClusterName() {
         return clusterName;
     }
@@ -238,6 +242,22 @@ public class BackingStoreConfiguration<K extends Serializable, V extends Seriali
     public BackingStoreConfiguration<K, V> setStartGroupService(boolean startGroupService) {
         this.startGroupService = startGroupService;
         return this;
+    }
+
+    public KeyTransformer<K> getKeyTransformer() {
+        return keyTransformer;
+    }
+
+    public void setKeyTransformer(KeyTransformer<K> keyTransformer) {
+        this.keyTransformer = keyTransformer;
+    }
+
+    public ValueTransformer<V> getValueTransformer() {
+        return valueTransformer;
+    }
+
+    public void setValueTransformer(ValueTransformer<V> valueTransformer) {
+        this.valueTransformer = valueTransformer;
     }
 
     @Override
