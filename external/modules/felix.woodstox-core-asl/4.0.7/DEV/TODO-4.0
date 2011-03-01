@@ -1,0 +1,91 @@
+------------------------------------
+Planned stuff for 4.0
+------------------------------------
+
+* Remaining Jira entries that must be tackled:
+  * [WSTX-171]: Contributor guidelines
+(invalid bug?) * [WSTX-160]: Problems with multiple Schemas...
+
+* BUGS:
+[Partial: commented out]  * MSV error messages
+
+* 4.0 Docs/test:
+  * Perf test, sample code, for base64-based transfer (file upload?)
+
+* Optimizations/improvements:
+  * Try to move more of async unchecked (runtime) exceptions into
+    deferred synchronous (XMLStreamException) exceptions: similar to
+    how "]]>" check is now deferred in 3.1
+
+* Clean up:
+  * SymbolTable, input factory: Link symbol table child instance to its
+    (per-factory) parent, and remove link from stream reader to factory.
+    Simplifies access patterns
+
+* Bugs / incomplete handling:
+  * More optimal check for "]]>" in content. Now over 99% reliable, but
+    theoretically could miss if combination on input buffer boundary.
+  * XMLTest failures:
+    * UTF-16, checks for 0xFFFE, 0xFFFF (2 failures)
+    * Names, surrogate pairing (4 failures)
+    * xmlns pseudo-attributes, non-CDATA type (1 failure)
+  * SAX compatibility:
+    * Ensure EntityResolver() gets called even if DTD ext. subset is
+      cached. Only use cache, if null is returned?
+      (needed to pass some of SAXTest test cases)
+
+* Validation interface improvements:
+[Partial] * Stax2: add new allowed-content type, CONTENT_ALLOW_WS_NONSTRICT
+    (or such), to cover the case where content _should_ be (ignorable)
+    space (for purposes of distinguishing CHARACTERS and SPACE events),
+    but if not, that's not a validation error. This is needed for
+    DTD-aware (and maybe Schema-aware?) but non-validating mode.
+   [note: this is optimization -- ability to accurately report SPACE
+    has been implemented, but in less clean way]
+
+* Stax2 improvements:
+  * Add getText()-like method that returns java.lang.CharSequence? Could
+    allow zero-copy wrapping of parsed textual content.
+  * XMLStreamReader2.hasPendingException and/or getPendingException
+    (to check for deferred exceptions)?
+  * Char[] attribute accessors for XMLStreamReader?
+  * Char[] attribute write methods for XMLStreamWriter?
+
+* Stax compatibility:
+  * Minimize unchecked (lazy) exceptions, by deferring throwing of some
+    exceptions (at least any problems in CHARACTERS segment which are
+    easy)
+
+* Indentation/Pretty-printing:
+   * Using DTD
+   * Heuristically
+
+* Interoperability:
+   * DOM:
+      * DOMWrappingReader: implement Stax2 validation API
+      * DOMWrappingWriter: implement Stax2 validation API
+
+* XML validation:
+[Partial?] * Finish incomplete support methods that RNG validation uses;
+     InputElementStack's isNotationDeclared, isUnparsedEntityDeclared,
+     getBaseUri().
+   * How about DTD++? Data types should be reasonably easy...?
+     Would also allow partial W3C Schema and RelaxNG implementations
+     natively?
+
+* XML standards:
+  * XInclude
+  * XML Catalog support
+  * Canonicalization?
+    * Writer-side: support automatic linefeeds between PIs/comments
+      in prolog/epilog, and around element tree?
+
+* Documentation:
+   * Impl. details, like: always interns names, preserves attribute value
+     orders.
+   * Requirements for compiling, running:
+      * Ant 1.5? (rootfileset)
+      * Jars: for 1.3/1.2 SAX(2) and DOM API jars?
+   * FAQ:
+      * Output streaming; use of 'writeCharacters("");', flush()
+      * Feature for replacing illegal (control) characters on output

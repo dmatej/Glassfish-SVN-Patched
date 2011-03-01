@@ -1,0 +1,92 @@
+<?xml version="1.0" standalone='yes'?>
+
+<!-- This Ant build file fragment contains targets needed to run
+     code coverage analysis
+  -->
+<project name="Code coverage tasks for Woodstox" basedir=".">
+
+    <!-- And/or support for Cobertura code coverage tool -->
+    <property name="cobertura.coverage.dir" value="${dir.build}/coverage" />
+    <path id="cobertura.lib">
+      <fileset dir="${dir.lib}/cobertura" includes="*.jar" />
+    </path>
+    <taskdef classpathref="cobertura.lib" resource="tasks.properties" />
+
+    <target name="build.coverage" depends="build.coverage.cobertura" />
+
+    <!-- For now we'll use Cobertura for coverage analysis
+        (used to use Emma, but had problems)
+      -->
+
+    <target name="build.coverage.cobertura" depends="compile.test, prepare-staxtest">
+      <!-- First, need to instrument classes -->
+      <property name="cobertura.instr.dir" value="${dir.build}/cobertura-instr" />
+      <mkdir dir="${cobertura.coverage.dir}" />
+      <cobertura-instrument todir="${cobertura.instr.dir}">
+        <fileset dir="${dir.build.classes.stax2}">
+          <include name="**/*.class"/>
+        </fileset>
+        <fileset dir="${dir.build.classes.woodstox}">
+          <include name="com/**/*.class"/>
+        </fileset>
+      </cobertura-instrument>
+
+      <junit fork="once" printsummary="yes" haltonfailure="no" showoutput="yes"
+        maxmemory="500M"
+      >
+        <sysproperty key="net.sourceforge.cobertura.datafile" file="${basedir}/cobertura.ser" />
+            <batchtest fork="no" todir="${dir.test.xmlresults}">
+                <!-- Woodstox-specific tests -->
+                <fileset dir="${dir.classes.test}">
+                    <exclude name="**/*$*.class"/>
+                    <include name="**/Test*.class"/>
+                </fileset>
+                <!-- Generic Stax tests -->
+                <fileset dir="${dir.classes.staxtest}">
+                    <exclude name="**/*$*.class"/>
+                    <include name="org/codehaus/**/Test*.class"/>
+                </fileset>
+            </batchtest>
+            <formatter type="xml" />
+            <!-- Order is important: must first have instrumented classes -->
+            <classpath location="${cobertura.instr.dir}" />
+
+            <!-- Stax API: -->
+            <classpath refid="classpath.compile" />
+            <!-- Actual tests: -->
+            <classpath path="${dir.classes.test}" />
+            <classpath path="${dir.classes.staxtest}" />
+            <!-- Cobertura support: -->
+            <classpath refid="cobertura.lib" />
+            <classpath>
+                <!-- Note: while this may seem superfluous, it is actually
+                     needed because Cobertura does not instrument things
+                     like interfaces. So some of the class files are
+                     needed from non-instrumented location
+                  -->
+                <pathelement path="${dir.build.classes.stax2}" />
+                <pathelement path="${dir.build.classes.woodstox}" />
+                <fileset dir="${dir.build}">
+                  <include name="service-def-*.jar" />
+                </fileset>
+                <path refid="junit-libs"/>
+            </classpath>     
+        </junit>
+        <!-- and then reporting -->
+        <cobertura-report format="html" destdir="${cobertura.coverage.dir}" >
+          <fileset dir="${dir.src.java}">
+            <include name="**/*.java" />
+          </fileset>
+        </cobertura-report>
+
+        <!-- Let's also report junit results? (at least if they fail) -->
+        <junitreport todir="${dir.test.results}">
+            <fileset dir="${dir.test.xmlresults}">
+                <include name="TEST-*.xml" />
+            </fileset>
+            <report todir="${dir.test.results}" />
+        </junitreport>
+    </target>
+
+
+</project>

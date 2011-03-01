@@ -1,0 +1,541 @@
+<?xml version="1.0" standalone='yes'?>
+<project name="Woodstox XML processor" basedir="." default="readme">
+    <!-- Source directories -->
+    <property name="dir.src" location="${basedir}/src" />
+    <property name="dir.src.java" location="${dir.src}/java" />
+    <property name="dir.src.samples" location="${dir.src}/samples" />
+    <property name="dir.src.test" location="${dir.src}/test" />
+    <property name="dir.resource" location="${dir.src}/resources" />
+    <property name="dir.releasenotes" location="${basedir}/release-notes" />
+
+    <!-- Libs -->
+    <property name="dir.lib" location="${basedir}/lib" />
+    <!-- Build-related -->
+    <property name="dir.build" location="${basedir}/build" />
+    <property name="dir.build.classes" location="${dir.build}/classes" />
+    <property name="dir.build.classes.stax2" location="${dir.build.classes}/stax2" />
+    <property name="dir.build.classes.woodstox" location="${dir.build.classes}/woodstox" />
+    <property name="dir.build.classes.samples" location="${dir.build.classes}/samples" />
+
+    <!-- Documentation -->
+    <property name="dir.doc" location="${basedir}/doc" />
+    <property name="dir.javadoc" location="${dir.build}/javadoc" />
+    <!-- Test suite -->
+    <property name="dir.test" location="${basedir}/test" />
+    <property name="dir.classes.test" location="${dir.test}/classes" />
+    <property name="dir.test.results" location="${dir.test}/results" />
+    <property name="dir.test.xmlresults" location="${dir.test.results}/xml" />
+    <property name="dir.classes.staxtest" location="${dir.test}/staxtest-classes" />
+    <!-- Distribution -->
+    <property name="dir.dist" location="${basedir}/dist" />
+
+    <!-- Version information -->
+
+    <!-- Woodstox version info: -->
+    <property name="IMPL_TITLE" value="Woodstox XML-processor" />
+    <property name="IMPL_VERSION" value="4.0.7" />
+    <property name="IMPL_VENDOR" value="http://woodstox.codehaus.org" />
+    <property name="API_TITLE" value="Stax 1.0 API" />
+    <property name="API_VERSION" value="1.0.0" />
+    <property name="API_VENDOR" value="http://jcp.org/en/jsr/detail?id=173" />
+
+    <!-- Extended API, working title "Stax2" (not version 2.0, but 2/squared)
+      -->
+    <property name="STAX2_TITLE" value="Stax2 API" />
+    <property name="STAX2_VERSION" value="3.0.1" />
+    <property name="STAX2_VENDOR" value="http://woodstox.codehaus.org" />
+
+    <!-- And finally version dependency spec between Woodstox core
+         and Stax API package.
+
+         29-Jan-2009, TSa: ranges won't work without additional
+            repository metadata. And that can only be properly
+            supported by a real Maven build, in woodstox 5. So,
+            for now we'll hard-code exact version dep.
+      -->
+    <property name="REQ_STAX2_VERSION" value="${STAX2_VERSION}" />
+
+    <!-- jars needed for compilation -->
+    <path id="classpath.compile">
+        <fileset dir="${dir.lib}" includes="stax-api*.jar" />
+        <fileset dir="${dir.lib}" includes="sax2.jar" />
+        <!-- these are needed for optional MSV-based validators -->
+        <fileset dir="${dir.lib}/msv" includes="*.jar" />
+        <!-- 17-Dec-2008, tatu: adding OSGi bundle activation
+         support, to register providers as services
+        -->
+        <fileset dir="${dir.lib}/osgi" includes="*.jar" />
+    </path>
+    <path id="junit-libs">
+       <fileset dir="${dir.lib}">
+            <include name="test/junit*.jar" />
+       </fileset>
+    </path>
+
+    <!-- Source files to include in source packages (tar, zip) -->
+    <patternset id="woodstox-dist-src-files">
+          <include name="src/java/com/**/*.java" />
+          <include name="src/samples/**/*.java" />
+          <include name="src/resources/*" />
+          <include name="build.xml" />
+          <include name="project.xml" />
+    </patternset>
+    <patternset id="stax2-dist-src-files">
+          <include name="src/java/org/codehaus/**/*.java" />
+    </patternset>
+
+    <patternset id="wstx-dist-misc-files">
+          <include name="src/test/**/*.java" />
+          <include name="src/test/**/*.xml" />
+          <include name="src/test/**/*.dtd" />
+          <include name="src/java/**/*.html" />
+          <include name="src/maven/*.pom" />
+          <include name="release-notes/*" />
+          <include name="release-notes/asl/*" />
+          <include name="release-notes/lgpl/*" />
+          <!-- need jars too; at least the api jar, but let's copy
+               all for now... it's nice to have the unit tests in there
+               too. This way src packages are proper subsets of binary ones
+            -->
+          <include name="lib/*.jar" />
+          <include name="lib/msv/*.jar" />
+    </patternset>
+
+    <import file="build-osgi.xml" />
+    <import file="build-coverage.xml" />
+    <import file="build-maven-deploy.xml" />
+    <import file="repackage-msv.xml" />
+
+    <!--*********************************************************************-->
+    <!-- The readme target shows a brief description of all targets          -->
+    <!-- supported by this ant build file                                    -->
+    <!--*********************************************************************-->
+    <target name="readme">
+        <echo message = "${ant.project.name}'s Available Targets" />
+        <echo message = "---------------------------------------------------" />
+        <echo message = "1)  readme - Displays this information (default target)." />
+        <echo message = "2)  clean - Remove any generated files/directories." />
+        <echo message = "3)  compile - Compile all ${ant.project.name} code (including tests and samples)" />
+        <echo message = "4)  jars - Compile and create all jars for non-test ${ant.project.name} code (see build.xml for specific ones)." />
+        <echo message = "5)  javadoc - Generate ${ant.project.name} code documentation." />
+        <echo message = "       for JUnit tests." />
+        <echo message = "6a)  test - Run Woodstox-specific JUnit tests." />
+        <echo message = "6b)  staxtest - Run generic Stax JUnit tests." />
+        <echo message = "7)  dist - Create distribution directory and copy necessary files there" />
+        <echo message = "8) all - Run the clean, compile, javadoc," />
+        <echo message = "         test and dist targets." />  
+        <echo message = "" />
+        <echo message = "Available command-line arguments:" />
+        <echo message = "---------------------------------" />
+        <echo message = "-Dlicense : allowed values 'asl', 'lgpl' (chooses license to use for jars)" />
+    </target>
+
+    <target name="prepare">
+        <!-- make build directories -->
+        <mkdir dir="${dir.build}" />
+        <mkdir dir="${dir.build.classes}" />
+        <mkdir dir="${dir.build.classes.stax2}" />
+        <mkdir dir="${dir.build.classes.woodstox}" />
+        <mkdir dir="${dir.build.classes.samples}" />
+
+        <!-- make docs directories -->
+        <mkdir dir="${dir.doc}" />
+        <mkdir dir="${dir.javadoc}" />
+
+        <!-- make test output directories -->
+        <mkdir dir="${dir.test}" />
+        <mkdir dir="${dir.classes.test}" />
+        <mkdir dir="${dir.test.results}" />
+        <mkdir dir="${dir.test.xmlresults}" />
+
+        <!-- and finally distribution dir -->
+        <mkdir dir="${dir.dist}" />
+    </target>
+
+    <!-- ***********************************************
+       - supporting dummy tasks
+       - ***********************************************-->
+
+    <!-- This task ensures that license is either set to a
+       - valid value, or can use the default (ASL)
+      -->
+    <target name="check_license">
+      <!-- Let's set license to default ("asl") if not
+           explicitly specified on command-line args
+        -->
+      <property name="license" value="asl" />
+      <!-- And then check that explicitly set one was valid
+         - (default one will always be....)
+        -->
+      <condition property="license_ok">
+        <or>
+          <equals arg1="${license}" arg2="asl" />
+          <equals arg1="${license}" arg2="lgpl" />
+        </or>
+      </condition>
+      <fail unless="license_ok"
+        message="Unrecognized license property value '${license}': excepted either 'asl' (for ASL2.0) or 'lgpl' (for LGPL2.1)"
+      />
+      <echo message="Ok, using license '${license}' for jar(s)." />
+    </target>
+
+    <!-- ***********************************************
+       - clean - Removes all generated files/directories
+       - ***********************************************-->
+
+    <target name="clean">
+        <delete dir="${dir.build}"/>
+        <delete dir="${dir.doc}"/>
+        <delete dir="${dir.test}"/>
+        <delete dir="${dir.dist}"/>
+        <delete file="cobertura.ser" />
+    </target>
+
+    <target name="compile" depends="compile.woodstox, compile.samples, compile.test" />
+
+    <target name="compile.stax2" depends="prepare">
+        <javac srcdir="${dir.src.java}" destdir="${dir.build.classes.stax2}"
+            source="1.4" target="1.4"
+            debug="true"
+        >
+<!-- Uncomment to see warnings: too verbose for default, due to deprecation warns
+            <compilerarg value="-Xlint:deprecation" />
+-->
+            <include name="org/codehaus/stax2/**/*.java" />
+            <classpath refid="classpath.compile" />
+        </javac>
+    </target>
+
+    <target name="compile.woodstox" depends="prepare,copy-resources,compile.stax2">
+        <javac srcdir="${dir.src.java}" destdir="${dir.build.classes.woodstox}"
+            source="1.4" target="1.4"
+            debug="true"
+        >
+<!-- Uncomment to see warnings: too verbose for default, due to deprecation warns
+            <compilerarg value="-Xlint:deprecation" />
+-->
+            <include name="com/ctc/**/*.java" />
+            <include name="test/**/*.java" />
+            <classpath refid="classpath.compile" />
+            <classpath>
+              <pathelement path="${dir.build.classes.stax2}" />
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="compile.samples" depends="compile.woodstox">
+        <!-- 03-Aug-2006, TSa: Let's also compile samples, to ensure they
+               won't get obsolete with impl/api changes
+          -->
+        <javac srcdir="${dir.src.samples}" destdir="${dir.build.classes.samples}"
+            source="1.4" target="1.4">
+            <include name="*.java" />
+            <classpath refid="classpath.compile" />
+            <classpath>
+              <pathelement path="${dir.build.classes.stax2}" />
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="copy-resources" depends="prepare">
+        <mkdir dir="${dir.build.classes.woodstox}/META-INF/services" />
+        <copy toDir="${dir.build.classes.woodstox}/META-INF/services">
+            <fileset dir="${dir.resource}">
+                <include name="javax.xml.stream.*" />
+                <include name="org.codehaus.stax2.*" />
+            </fileset>           	
+        </copy>
+    </target>
+
+    <!-- Dummy target that just includes all individual jars...
+         (OSGi ones from included file)
+      --> 
+    <target name="jars" depends="jars.osgi, jar.stax2test, repackage-msv" />
+
+    <!-- This jar is only needed for testing purposes, to specify 
+       - which Stax implementation to use
+      -->
+    <target name="jar.resources" depends="compile,copy-resources">
+        <jar jarfile="${dir.build}/service-def-${IMPL_VERSION}.jar" filesonly="true" >
+          <fileset dir="${dir.build.classes.woodstox}">
+              <include name="META-INF/services/*" />
+          </fileset>
+        </jar>
+    </target> 
+
+    <!-- 15-Mar-2008, TSa: Let's also package up Stax2 compatibility
+         test suite, for other stax2 impls to use
+      -->
+    <target name="jar.stax2test" depends="compile.test">
+        <jar jarfile="${dir.build}/stax2test-${STAX2_VERSION}.jar" filesonly="true" compress="true">
+          <manifest>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Specification-Title"   value="${STAX2_TITLE}"/>
+            <attribute name="Specification-Version" value="${STAX2_VERSION}"/>
+            <attribute name="Specification-Vendor"  value="${STAX2_VENDOR}"/>
+            <attribute name="Implementation-Title"   value="${STAX2_TITLE}"/>
+            <attribute name="Implementation-Version" value="${STAX2_VERSION}"/>
+            <attribute name="Implementation-Vendor"  value="${STAX2_VENDOR}"/>
+          </manifest>
+          <fileset dir="${dir.classes.test}">
+             <include name="stax2/**/*.class" />
+          </fileset>
+        </jar>
+    </target> 
+
+    <target name="javadoc" depends="prepare">
+        <!-- Build a dirpath that contains just the "source" tree -->
+        <javadoc windowtitle="${ant.project.name}"
+            destdir="${dir.javadoc}" 
+            author="true" 
+            version="true">
+            <packageset dir="${dir.src.java}" defaultexcludes="yes">
+                <include name="org/codehaus/stax2/**" />
+                <include name="com/ctc/**" />
+            </packageset>
+            <classpath refid="classpath.compile" />
+
+            <!-- Need to link Stax API and regular JDK 5 classes  -->
+            <link href="http://java.sun.com/j2se/1.5.0/docs/api/" />
+            <link href="http://woodstox.codehaus.org/javadoc/stax-api/1.0" />
+            <group title="Woodstox" packages="com.ctc.wstx*" />
+            <group title="Stax2"
+               packages="org.codehaus.stax2*"
+            />
+
+        </javadoc>
+    </target> 
+ 
+    <target name="dist" depends="compile,jars,javadoc">
+       <!-- First, let's copy the binary jars to dist -->
+       <copy todir="${dir.dist}">
+          <fileset dir="${dir.build}" includes="woodstox*.jar" />
+          <fileset dir="${dir.build}" includes="stax2*.jar" />
+       </copy>
+       <!-- Including MSV jars (note: ones we have repackaged)
+         -->
+       <copy todir="${dir.dist}">
+          <fileset dir="${dir.build}" includes="woodstox-msv-*.jar" />
+       </copy>
+
+       <!-- Then let's create the source distribution tar packages
+          -->
+       <property name="SRC_CORE" value="woodstox-core-src-${IMPL_VERSION}" />
+       <property name="SRC_STAX2" value="stax2-api-src-${STAX2_VERSION}" />
+
+       <!-- Need to first copy to a tmp dir, to get the additional
+          directory (so tar/zip contents won't explode directly
+          in current dir)
+        -->
+       <property name="DIR_CORE" value="woodstox-${IMPL_VERSION}" />
+       <property name="DIR_STAX2" value="stax2-${STAX2_VERSION}" />
+       <delete dir="${dir.build}/${DIR_CORE}" />
+       <mkdir dir="${dir.build}/${DIR_CORE}" />
+       <delete dir="${dir.build}/${DIR_STAX2}" />
+       <mkdir dir="${dir.build}/${DIR_STAX2}" />
+
+       <copy todir="${dir.build}/${DIR_CORE}">
+          <fileset dir="${basedir}">
+            <patternset refid="woodstox-dist-src-files" />
+            <patternset refid="wstx-dist-misc-files" />
+          </fileset>
+       </copy>
+       <copy todir="${dir.build}/${DIR_STAX2}">
+          <fileset dir="${basedir}">
+            <patternset refid="stax2-dist-src-files" />
+          </fileset>
+       </copy>
+
+       <delete file="${dir.dist}/${SRC_CORE}.tar.gz" />
+       <tar basedir="${dir.build}"
+        includes="${DIR_CORE}/**"
+        destfile="${dir.dist}/${SRC_CORE}.tar.gz"
+        compression="gzip"
+      />
+       <delete file="${dir.dist}/${SRC_STAX2}.tar.gz" />
+       <tar basedir="${dir.build}"
+        includes="${DIR_STAX2}/**"
+        destfile="${dir.dist}/${SRC_STAX2}.tar.gz"
+        compression="gzip"
+      />
+
+       <!-- as well as zip -->
+       <zip basedir="${dir.build}"
+        includes="${DIR_CORE}/**"
+        destfile="${dir.dist}/${SRC_CORE}.zip"
+      />
+       <zip basedir="${dir.build}"
+        includes="${DIR_STAX2}/**"
+        destfile="${dir.dist}/${SRC_STAX2}.zip"
+      />
+
+       <!-- And create source jars for IDE support -->
+       <!-- Can't really use patternset, as that'd include "src/java" -->
+       <jar basedir="${dir.src.java}" filesonly="true" compress="true"
+         destfile="${dir.dist}/woodstox-core-asl-${IMPL_VERSION}-sources.jar"
+         includes="com/**/*.java"
+      />
+       <jar basedir="${dir.src.java}" filesonly="true" compress="true"
+         destfile="${dir.dist}/woodstox-core-lgpl-${IMPL_VERSION}-sources.jar"
+         includes="com/ctc/wstx/**/*.java"
+      />
+       <jar basedir="${dir.src.java}" filesonly="true" compress="true"
+         destfile="${dir.dist}/stax2-api-${STAX2_VERSION}-sources.jar"
+         includes="org/codehaus/stax2/**/*.java"
+      />
+
+       <!-- Then copy javadocs -->
+       <copy todir="${dir.dist}">
+         <fileset dir="${dir.javadoc}/.." includes="javadoc/**/*" />
+       </copy>
+       <!-- Plus, let's also just copy README and compatibility files, in
+            addition to being included in source package
+         -->
+       <copy todir="${dir.dist}" >
+            <fileset dir="." includes="release-notes/*" />
+            <fileset dir="." includes="release-notes/asl/*" />
+            <fileset dir="." includes="release-notes/lgpl/*" />
+       </copy>
+       <!-- And also additional Maven stuff -->
+       <copy todir="${dir.dist}">
+            <fileset dir="${dir.src}/maven" includes="w*.pom" />
+            <globmapper from="*.pom" to="*-${IMPL_VERSION}.pom" />
+            <filterset>
+              <filter token="VERSION" value="${IMPL_VERSION}" />
+              <filter token="REQ_STAX2_VERSION" value="${REQ_STAX2_VERSION}" />
+            </filterset>
+       </copy>
+       <copy todir="${dir.dist}">
+            <fileset dir="${dir.src}/maven" includes="stax2*.pom" />
+            <globmapper from="*.pom" to="*-${STAX2_VERSION}.pom" />
+            <filterset>
+              <filter token="VERSION" value="${STAX2_VERSION}" />
+              <filter token="REQ_STAX2_VERSION" value="${REQ_STAX2_VERSION}" />
+            </filterset>
+       </copy>
+    </target>
+
+    <target name="all" depends="clean,javadoc,test,dist">
+        <!-- This target simply depends on others to do its job -->
+    </target>
+
+    <!--*********************************************************************-->
+    <!-- Tasks from here down are in support of junit tests.                 -->
+    <!--*********************************************************************-->
+    <target name="all-tests" depends="test,staxtest" />
+
+    <!-- Running generic Stax tests -->
+    <target name="staxtest" depends="prepare-staxtest">
+       <!-- showoutput 'yes' to allow outputting debug msgs... -->
+        <junit fork="yes" forkmode="once" maxmemory="128M"
+          printsummary="yes" haltonfailure="no" showoutput="yes">
+            <batchtest fork="yes" todir="${dir.test.xmlresults}">
+                <fileset dir="${dir.classes.staxtest}">
+                    <!-- Need to exclude inner classes... -->
+                    <exclude name="**/*$*.class"/>
+                    <include name="org/codehaus/**/Test*.class"/>
+                </fileset>
+            </batchtest>
+            <formatter type="xml" />
+            <classpath refid="classpath.compile" />
+            <classpath path="${dir.classes.staxtest}" />
+            <classpath>
+              <pathelement path="${dir.build.classes.stax2}" />
+              <pathelement path="${dir.build.classes.woodstox}" />
+             <!-- Note: need to add the dummy wstx.jar, since it has properties
+                -  to point Stax to use correct implementation classes!
+               -->
+              <fileset dir="${dir.build}">
+                <include name="service-def-*.jar" />
+              </fileset> 
+              <path refid="junit-libs"/>
+           </classpath>  
+        </junit>
+
+        <junitreport todir="${dir.test.results}">
+            <fileset dir="${dir.test.xmlresults}">
+                <include name="TEST-*.xml" />
+            </fileset>
+            <report todir="${dir.test.results}" />
+        </junitreport>
+    </target>
+
+    <target name="prepare-staxtest" depends="jar.resources">
+        <mkdir dir="${dir.classes.staxtest}" />
+        <!-- and unpack test classes... unfortunately needed so JUnit
+             can find classes (maybe there's a way to refer to a jar too,
+             have not found one so far)
+          -->
+        <unzip dest="${dir.classes.staxtest}" overwrite="false">
+           <fileset dir="${dir.lib}/test">
+              <include name="staxtest_*.jar" />
+           </fileset>
+        </unzip>
+    </target>
+
+    <!-- Running a single Unit Test -->
+    <target name="test.single" depends="compile.test">
+         <fail unless="test" message="Must define -Dtest" />
+       <!-- showoutput 'yes' to allow outputting debug msgs... -->
+        <junit fork="no" maxmemory="128M" showoutput="yes" printsummary="yes">
+          <formatter type="plain" usefile="no" />
+          <test name="${test}" />
+          <classpath refid="classpath.compile" />
+          <classpath>
+                <pathelement path="${dir.build.classes.stax2}" />
+                <pathelement path="${dir.build.classes.woodstox}" />
+                <pathelement path="${dir.build.classes.stax2}" />
+                <pathelement location="${dir.classes.test}" /> 
+                <path refid="junit-libs"/>
+          </classpath>     
+        </junit>
+    </target>
+
+    <!-- Compiling and running Woodstox-specific tests
+       - (including, for now, Stax2 tests)
+      -->
+
+    <target name="compile.test" depends="compile.woodstox">
+        <javac srcdir="${dir.src.test}" destdir="${dir.classes.test}"
+            source="1.4" target="1.4"
+            debug="true"
+        >
+            <include name="**/*.java" />
+            <classpath refid="classpath.compile" />
+            <classpath>
+                <pathelement path="${dir.build.classes.stax2}"/>  
+                <pathelement path="${dir.build.classes.woodstox}"/>  
+                <path refid="junit-libs"/>
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="test" depends="compile.test">
+       <!-- showoutput 'yes' to allow outputting debug msgs... -->
+        <junit fork="yes" forkmode="once" maxmemory="128M"
+         printsummary="yes" haltonfailure="no" showoutput="yes">
+            <batchtest fork="yes" todir="${dir.test.xmlresults}">
+                <fileset dir="${dir.classes.test}">
+                    <!-- Need to exclude inner classes... -->
+                    <exclude name="**/*$*.class"/>
+                    <include name="**/Test*.class"/>
+                </fileset>
+            </batchtest>
+            <formatter type="xml" />
+            <classpath refid="classpath.compile" />
+            <classpath>
+                <pathelement path="${dir.build.classes.stax2}" />
+                <pathelement path="${dir.build.classes.woodstox}" />
+                <pathelement location="${dir.classes.test}" /> 
+                <path refid="junit-libs"/>
+            </classpath>     
+        </junit>
+
+        <junitreport todir="${dir.test.results}">
+            <fileset dir="${dir.test.xmlresults}">
+                <include name="TEST-*.xml" />
+            </fileset>
+            <report todir="${dir.test.results}" />
+        </junitreport>
+    </target>
+</project>

@@ -1,0 +1,114 @@
+== Using Woodstox XML parser via StAX ==
+
+Woodstox is designed to be used as pluggable StAX implementation (see
+<http://www.jcp.org/en/jsr/detail?id=173> for explanation about
+StAX specification). As such, reader and writer instances are usually
+created using STaX factory methods; this is the recommended method.
+
+StAX specification defines couple of methods for specifying which StAX
+implementation to use (properties file, service entries in jar file,
+System properties); in each case you have to basically define 3 classes:
+one that implements XMLInputFactory, one that implements XMLOutputFactory,
+and third one that implements XMLEventFactory (to potentially be used by
+XMLInputFactory implementation).
+[sidenote: current version of Woodstox really only needs first two for
+ correct operation; internally it does not make use of the event factory].
+
+For Woodstox classes are, respectively:
+
+com.ctc.wstx.stax.WstxInputFactory
+com.ctc.wstx.stax.WstxOutputFactory
+com.ctc.wstx.stax.WstxEventFactory
+
+Woodstox jar files include service entries that will effectively also
+specify Stax implementation classes, instead of system properties
+(although note that system properties have preference over service
+entries). This works well if you only include a single Stax implementation
+jar in the classpath.
+
+However, if you have multiple StAX implementations, you may have to
+specifically set/override system properties to point to the implementation
+you want: from Java code it can be done by calling:
+
+System.setProperty("javax.xml.stream.XMLInputFactory",
+  "com.ctc.wstx.stax.WstxInputFactory");
+System.setProperty("javax.xml.stream.XMLOutputFactory",
+  "com.ctc.wstx.stax.WstxOutputFactory");
+System.setProperty("javax.xml.stream.XMLEventFactory",
+  "com.ctc.wstx.stax.WstxEventFactory");
+
+when your application starts (or the class that access factories is
+initialised). Alternatively, you can also set system properties via command
+line switches when starting your application
+(-Djavax.xml.stream.XMLInputFactory=javax.xml.stream.XMLInputFactory
+ and so on).
+
+And of course the simplest possible way is to just refer to the Woodstox
+implementations of the input factories directly:
+
+ XMLInputFactory ifact = new WstxInputFactory();
+
+
+== Using Woodstox XML parser without StAX ==
+
+It is also possible to directly instantiate objects (specifically,
+Woodstox implementations of Stax factories), but the API (class
+names, constructors, factory methods) is not guaranteed to remain
+static between major releases.
+It is possible that in future some public factory methods will be added,
+to allow creating more specialized instances, to overcome some of
+StAX API limitations.
+
+It is NOT possible to use Woodstox without having StAX classes
+available, since many Woodstox classes implement or extend
+StAX interfaces/abstract classes.
+
+
+== Dependencies ==
+
+Due to implementing StAX API, Woodstox has dependency to StAX API JAR
+file. For up to JDK 1.5.0, StAX is not (yet?) part of J2SE or J2EE, so you
+have to download StAX jar separately.
+
+Woodstox version up to 3.0 can be run on JDKs 1.2 and up.
+Some of features of later JDKs are optionally used if available;
+these generally are "nice-to-have"
+features, such as chained Exceptions (1.4+), order-retaining definitions
+for entities and notations (1.4+) and so on.
+The only caveat is that compiling Woodstox has to be done using javac
+with 1.4 libs, or alternatively, by modifying Ant build.xml to ignore
+the few class files that refer to 1.3/1.4 features (found in
+com.ctc.wstx.compat package).
+
+Woodstox version after 3.0.x will require JDK 1.4 or higher as the
+baseline. There are no plans to require JDK 1.5 currently.
+
+
+== Performance ==
+
+Full discussion on best practices for good performance needs to be done
+outside scope of a simple document, but here are some basic things regarding
+ performance:
+
+* For optimal performance, factory instances should be reused whenever
+  possible.
+  Since factory objects (XMLInputFactory, XMLOutputFactory) are thread-safe
+  after being initialized and configured, there is no risk sharing
+  them (but only after proper initialization!). It is thus often possible
+  to share a single input and single output factory instances for the
+  whole application. The reasons why factory reusing is very important
+  for performance are:
+   o There is significant overhead in constructing new factories when
+     using Stax interface (but note: no significant overhead when just
+     instantiating Woodstox factories themselves)
+   o Most caching is done on per-factory basis: specifically, symbol
+     tables are cached this way. Similarly DTD caches are per-factory.
+* It is important to CLOSE XMLStreamReader and XMLStreamWriter instances
+  after they are no longer needed. This allows readers/writers to
+  release internal buffers they use -- this is especially important when
+  processing small documents, since relative overhead of buffer allocation
+  is most significant for these use cases.
+* Many input factory configuration settings do have effect on performance.
+  For obtaining highest performance, there is a specific profile that can
+  be set when 100% XML specs compatibility is not needed (default settings
+  support 100% XML compatibility).

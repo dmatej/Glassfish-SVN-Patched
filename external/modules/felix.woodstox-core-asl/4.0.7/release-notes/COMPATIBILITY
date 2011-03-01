@@ -1,0 +1,87 @@
+== Changes from 3.0.x to 4.0.x ==
+
+=== Stream reader ===
+
+* Defaulting reporting of "no prefix" and "no namespace [URI]"
+  have been changed from null value to empty Strig (""), to be
+  in accordance with the latest consensus regarding Stax API.
+* Fix for [WSTX-140] changes default for IS_COALESCING to be
+  Boolean.FALSE as per Stax specs. 3.0 and earlier were defaulting
+  to Boolean.TRUE.
+* XMLStreamReader.getProperty() will no longer throw IllegalArgumentException,
+  if fed an unknown property name. Rather, null is returned.
+  This is thought to be Stax 1.0 compliant, and both more convenient
+  and performant for cases where application needs to offer interoperability
+  with multiple Stax implementations.
+
+=== Stream writer ===
+
+* Default setting of WstxOutputProperties.P_OUTPUT_FIX_CONTENT was
+  true in 3.x. While this seemed like a good idea for maximum xml
+  conformance, it also causes incompatibility issue with the JDK 6
+  included Sun Stax implementation, which does not implement either
+  well-formedness checks or fixing algorithm. As a result, something
+  that works well with Woodstox would not necessarily work well with
+  JDK6 default Stax implementation.
+  As a result, *WstxOutputProperties.P_OUTPUT_FIX_CONTENT* was
+  default settings was *changed to false*.
+
+=== Validation ===
+
+* Validation methods now consistently allow throwing of XMLStreamException
+  instead of limiting it to just XMLValidationException.
+  The reason is that due to call chaining, XMLReporter (which allows throwing
+  of generic stream exception) may be called from within validation
+  problem reporting methods, and resulting exceptions must
+  be let pass through call stack (see [WSTX-154] for details).
+
+== Changes from 2.0.x to 3.0.x ==
+
+=== XML compatibility ===
+
+* 3.0 now supports xml 1.1 cleanly (is aware of differences between 1.0,
+  uses separate well-formedness checks where necessary)
+* XML conformance significantly improved, to pass XMLTest test suite
+  (with 99%+ pass rate).
+
+=== Packaging ===
+
+* EscapingWriterFactory moved from main org.codehaus.stax2 package
+  to the new org.codehaus.stax.io sub-package.
+
+=== Stream reader ===
+
+* Default setting for P_REPORT_PROLOG_WHITESPACE is
+  now Boolean.TRUE (instead of Boolean.FALSE), to emulate behaviour
+  of the StAX reference implementation, and to keep output in pass-through
+  configurations more similar to input.
+* Handling of undeclared entities changed so that no exception is thrown
+  in non-expanding mode; this is similar to the way ref. impl. works.
+* isCharacters() now only returns true if current event is CHARACTERS,
+  instead of CHARACTERS, CDATA and SPACE (as in 1.0 and 2.0). Change was
+  done for interoperatibility -- the StAX reference implementation
+  behaves like 3.0.
+* Removed property P_TEXT_BUFFER_LENGTH, since there is no real benefit
+  from changing this setting -- text buffer is resized dynamically as
+  needed, and initial value is largely irrelevant.
+
+=== Stream writer ===
+
+* In 2.0.x most well-formedness checks (P_CHECK_xxx) resulted in
+  unchecked IllegalStateException. Due to requests by developers, who
+  found this unintuitive, these were replaced by checked XMLStreamExceptions.
+* In 2.0.x, WstxOutputProperties.P_OUTPUT_VALIDATE_CONTENT was false
+  by default: in 3.0 it is true. Change was due to more efficient checking
+  of the content, made possible by integrated transcoding. As such, it seems
+  useful to have more rigorous checks enabled by default. Also, since
+  WstxOutputProperties.P_OUTPUT_FIX_CONTENT was and is true by default,
+  CDATA and COMMENT sections will be automatically "fixed" now.
+
+=== Event reader ===
+
+* Event readers are now constructed so that P_LAZY_PARSING is always
+  disabled (to get accurate XMLStreamExceptions instead of possible
+  runtime exceptions, with no performance difference).
+  Also, P_MIN_TEXT_SEGMENT will be set to maximum value, to avoid
+  ever splitting a CHARACTERS or CDATA segment (to minimize number
+  of event objects created).

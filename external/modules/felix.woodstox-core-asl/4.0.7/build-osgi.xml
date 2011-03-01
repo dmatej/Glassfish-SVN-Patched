@@ -1,0 +1,161 @@
+<?xml version="1.0" standalone='yes'?>
+
+<!-- This Ant build file fragment contains targets needed to build
+     distributable OSGi-aware artifacts
+  -->
+
+<project name="OSGi export tasks for Woodstox" basedir=".">
+  <!-- Need BND task for OSGi bundle/metadata creation -->
+  <taskdef name="osgify" classname="net.luminis.build.plugin.bnd.BuildTask">
+    <classpath>
+     <fileset dir="${dir.lib}/ant" includes="bndtask*.jar" />
+    </classpath>
+  </taskdef>
+    <!-- 18-Nov-2008, TSa: although recommended naming would
+      use reversed domain name (essentially, Maven groupId + artifactId),
+      let's for now only use artifactId to keep shorter and more
+      Maven-like
+     -->
+    <!--
+    <property name="OSGI_STAX2_BASENAME" value="org.codehaus.woodstox.stax2-api" />
+    <property name="OSGI_WSTX_BASENAME" value="org.codehaus.woodstox.woodstox-core" />
+    -->
+
+    <property name="OSGI_STAX2_BASENAME" value="stax2-api" />
+    <property name="OSGI_WSTX_BASENAME" value="woodstox-core" />
+    <!-- As of Woodstox 4.x, Stax2-api 3.x, we need JDK 1.4
+        (and for next major version at least 1.5, possibly 1.6)
+     -->
+    <property name="REQ_JDK_VERSION" value="J2SE-1.4" />
+
+    <target name="jars.osgi" depends="osgi-stax2, osgi-woodstox-lgpl, osgi-woodstox-asl" />
+
+    <target name="osgi-stax2" depends="compile.stax2">
+      <!-- Open questions:
+           * is there any problem from using "non-standard" filename for bundle?
+           * for core (woodstox): OSGi-activate to set system props?
+        -->
+      <osgify
+         outputdir="${dir.build}"
+         bundleName="${STAX2_TITLE}"
+         bundleVendor="${STAX2_VENDOR}"
+         bundleSymbolicName="${OSGI_STAX2_BASENAME}"
+         bundleVersion="${STAX2_VERSION}"
+         bundleLicense="http://www.opensource.org/licenses/bsd-license.php"
+         bundleRequiredExecutionEnvironment="${REQ_JDK_VERSION}"
+         filename="${OSGI_STAX2_BASENAME}-${STAX2_VERSION}"
+         exportpackage="org.codehaus.stax2*;version=${STAX2_VERSION}"
+      >
+        <classpath>
+              <pathelement path="${dir.build.classes.stax2}" />
+        </classpath>
+        <manifest>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Implementation-Title"   value="${STAX2_TITLE}"/>
+            <attribute name="Implementation-Version" value="${STAX2_VERSION}"/>
+            <attribute name="Implementation-Vendor"  value="${STAX2_VENDOR}"/>
+            <attribute name="Specification-Title"   value="${STAX2_TITLE}"/>
+            <attribute name="Specification-Version" value="${STAX2_VERSION}"/>
+            <attribute name="Specification-Vendor"  value="${STAX2_VENDOR}"/>
+        </manifest>
+      </osgify>
+    </target>
+
+    <target name="osgi-woodstox-asl" depends="compile.woodstox,copy-resources">
+      <osgify outputDir="${dir.build}"
+         bundleName="${IMPL_TITLE}"
+         bundleVendor="${IMPL_VENDOR}"
+         bundleSymbolicName="${OSGI_WSTX_BASENAME}-asl"
+         bundleVersion="${IMPL_VERSION}"
+         bundleLicense="http://www.apache.org/licenses/LICENSE-2.0.txt"
+         bundleRequiredExecutionEnvironment="${REQ_JDK_VERSION}"
+         filename="${OSGI_WSTX_BASENAME}-asl-${IMPL_VERSION}"
+         importPackage="
+javax.xml*,
+org.xml.sax*,
+org.w3c.dom,
+org.osgi.framework,
+org.codehaus.stax2*;version='${REQ_STAX2_VERSION}'"
+         dynamicImportPackage="
+com.sun.msv.*,
+org.relaxng.datatype"
+         exportPackage="
+com.ctc.wstx.api;version=${IMPL_VERSION},
+com.ctc.wstx.msv;version=${IMPL_VERSION},
+com.ctc.wstx.osgi;version=${IMPL_VERSION},
+com.ctc.wstx.sax;version=${IMPL_VERSION},
+com.ctc.wstx.stax;version=${IMPL_VERSION}
+"
+         privatePackage="
+!com.ctc.wstx.api,
+!com.ctc.wstx.msv,
+!com.ctc.wstx.osgi,
+!com.ctc.wstx.sax,
+!com.ctc.wstx.stax,
+!test,*"
+         includeResource="META-INF/services=src/resources, META-INF=release-notes/asl"
+         includeIncludeResourceHeader="false"
+         bundleActivator="com.ctc.wstx.osgi.WstxBundleActivator"
+      >
+        <classpath>
+              <pathelement path="${dir.build.classes.woodstox}" />
+        </classpath>
+        <manifest>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Implementation-Title"   value="${IMPL_TITLE}"/>
+            <attribute name="Implementation-Version" value="${IMPL_VERSION}"/>
+            <attribute name="Implementation-Vendor"  value="${IMPL_VENDOR}"/>
+            <attribute name="Specification-Title"   value="${API_TITLE}"/>
+            <attribute name="Specification-Version" value="${API_VERSION}"/>
+            <attribute name="Specification-Vendor"  value="${API_VENDOR}"/>
+        </manifest>
+      </osgify>
+    </target>
+
+    <target name="osgi-woodstox-lgpl" depends="compile.woodstox,copy-resources">
+      <osgify outputDir="${dir.build}"
+         bundleName="${IMPL_TITLE}"
+         bundleVendor="${IMPL_VENDOR}"
+         bundleSymbolicName="${OSGI_WSTX_BASENAME}-lgpl"
+         bundleVersion="${IMPL_VERSION}"
+         bundleLicense="http://www.gnu.org/licenses/lgpl-2.1.html"
+         bundleRequiredExecutionEnvironment="${REQ_JDK_VERSION}"
+         filename="${OSGI_WSTX_BASENAME}-lgpl-${IMPL_VERSION}"
+         importPackage="
+javax.xml*,
+org.xml.sax*,
+org.w3c.dom,
+org.osgi.framework,
+org.codehaus.stax2*;version='${REQ_STAX2_VERSION}'"
+         dynamicImportPackage="
+com.sun.msv.*,
+org.relaxng.datatype"
+         exportPackage="
+com.ctc.wstx.api;version=${IMPL_VERSION},
+com.ctc.wstx.msv;version=${IMPL_VERSION},
+com.ctc.wstx.sax;version=${IMPL_VERSION},
+com.ctc.wstx.stax;version=${IMPL_VERSION}
+"
+         privatePackage="!com.ctc.wstx.api, !com.ctc.wstx.msv, !com.ctc.wstx.sax
+,!com.ctc.wstx.stax, !test,*"
+         includeResource="META-INF/services=src/resources, META-INF=release-notes/lgpl"
+         includeIncludeResourceHeader="false"
+         bundleActivator="com.ctc.wstx.osgi.WstxBundleActivator"
+      >
+        <classpath>
+              <pathelement path="${dir.build.classes.woodstox}" />
+        </classpath>
+        <manifest>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Implementation-Title"   value="${IMPL_TITLE}"/>
+            <attribute name="Implementation-Version" value="${IMPL_VERSION}"/>
+            <attribute name="Implementation-Vendor"  value="${IMPL_VENDOR}"/>
+            <attribute name="Specification-Title"   value="${API_TITLE}"/>
+            <attribute name="Specification-Version" value="${API_VERSION}"/>
+            <attribute name="Specification-Vendor"  value="${API_VENDOR}"/>
+        </manifest>
+      </osgify>
+    </target>
+
+
+</project>

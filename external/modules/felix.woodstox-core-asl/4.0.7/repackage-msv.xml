@@ -1,0 +1,142 @@
+<?xml version="1.0" standalone='yes'?>
+
+<!-- This Ant build file fragment contains targets needed to augment
+     MSV jars to have OSGi headers needed.
+  -->
+
+<project name="OSGi augment tasks for MSV as used by Woodstox" basedir=".">
+
+  <target name="repackage-msv" depends="repackage-rng-datatype, repackage-xsdlib, repackage-msv-core" />
+
+  <target name="repackage-rng-datatype">
+      <property name="DT_TITLE" value="RNG Datatype Library" />
+      <property name="DT_VERSION" value="1.0.0" />
+      <property name="DT_VENDOR" value="http://sourceforge.net/projects/relaxng" />
+      <osgify
+         outputdir="build"
+         bundleSymbolicName="woodstox-msv-rng-datatype"
+         bundleName="${DT_TITLE}" bundleVendor="${DT_VENDOR}" bundleVersion="${DT_VERSION}"
+         bundleLicense="http://www.opensource.org/licenses/bsd-license.php"
+         bundleRequiredExecutionEnvironment="J2SE-1.4"
+         exportPackage="*;version=${DT_VERSION}"
+         importPackage=""
+      >
+        <classpath>
+          <fileset dir="${dir.lib}/msv" includes="woodstox-msv-rng-datatype*.jar" />
+        </classpath>
+        <manifest>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Implementation-Title"   value="${DT_TITLE}"/>
+            <attribute name="Implementation-Version" value="${DT_VERSION}"/>
+            <attribute name="Implementation-Vendor"  value="${DT_VENDOR}"/>
+        </manifest>
+      </osgify>
+  </target>
+
+  <target name="repackage-xsdlib">
+      <property name="XSD_TITLE" value="XML Schema datatypes library" />
+      <property name="XSD_VERSION" value="2.0.0" />
+      <property name="XSD_VENDOR" value="http://msv.dev.java.net" />
+      <!-- Note on packages: Xerces classes are fully optional; could
+           even decline linking...
+        -->
+      <osgify
+         outputdir="build"
+         bundleSymbolicName="woodstox-msv-xsdlib"
+         bundleName="${XSD_TITLE}" bundleVendor="${XSD_VENDOR}" bundleVersion="${XSD_VERSION}"
+         bundleLicense="http://www.opensource.org/licenses/bsd-license.php"
+         bundleRequiredExecutionEnvironment="J2SE-1.4"
+         exportPackage='
+com.sun.msv.datatype;version=${XSD_VERSION},
+com.sun.msv.datatype.xsd;version=${XSD_VERSION},
+com.sun.msv.datatype.xsd.*;version=${XSD_VERSION},
+'
+         importPackage='
+org.relaxng.datatype;version="[1.0,1.1)",
+org.relaxng.datatype.helpers;version="[1.0,1.1)"
+'
+         privatePackage="!com.sun.msv.datatype*, *"
+         dynamicImportPackage="org.apache.xerces.impl.xpath.regex"
+      >
+        <classpath>
+          <fileset dir="${dir.lib}/msv" includes="woodstox-msv-xsdlib*.jar" />
+        </classpath>
+        <manifest>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Implementation-Title"   value="${XSD_TITLE}"/>
+            <attribute name="Implementation-Version" value="${XSD_VERSION}"/>
+            <attribute name="Implementation-Vendor"  value="${XSD_VENDOR}"/>
+        </manifest>
+      </osgify>
+  </target>
+
+  <target name="repackage-msv-core">
+      <property name="MSV_TITLE" value="Sun Multi-Schema Validator core" />
+      <property name="MSV_VERSION" value="2.0.0" />
+      <property name="MSV_VENDOR" value="http://msv.dev.java.net" />
+      <!-- Note on packages: Xerces classes are fully optional; could
+           even decline linking.
+           "org.iso_relax" would be provided by "isorelax.jar", but
+           doesn't seem to be needed for our use cases.
+        -->
+      <osgify
+         outputdir="build"
+         bundleSymbolicName="woodstox-msv-core"
+         bundleName="${MSV_TITLE}" bundleVendor="${MSV_VENDOR}" bundleVersion="${MSV_VERSION}"
+         bundleLicense="http://www.opensource.org/licenses/bsd-license.php"
+         bundleRequiredExecutionEnvironment="J2SE-1.4"
+         exportPackage='com.sun.msv.grammar;version="${MSV_VERSION}",
+com.sun.msv.grammar.relax;version="${MSV_VERSION}",
+com.sun.msv.grammar.trex;version="${MSV_VERSION}",
+com.sun.msv.grammar.xmlschema;version="${MSV_VERSION}",
+com.sun.msv.reader;version="${MSV_VERSION}",
+com.sun.msv.reader.trex*;version="${MSV_VERSION}",
+com.sun.msv.reader.xmlschema;version="${MSV_VERSION}",
+com.sun.msv.reader.util;version="${MSV_VERSION}",
+com.sun.msv.util;version="${MSV_VERSION}",
+com.sun.msv.verifier;version="${MSV_VERSION}",
+com.sun.msv.verifier.regexp;version="${MSV_VERSION}",
+com.sun.msv.verifier.regexp.xmlschema;version="${MSV_VERSION}"
+'
+         importPackage='
+javax.xml.parsers, org.w3c.dom, org.xml.sax, org.xml.sax.helpers,
+org.relaxng.datatype;version="[1.0,2.0)",
+org.relaxng.datatype.helpers;version="[1.0,2.0)",
+com.sun.msv.datatype;version="[2.0,3.0)",
+com.sun.msv.datatype.xsd;version="[2.0,3.0)",
+com.sun.msv.datatype.xsd.ngimpl;version="[2.0,3.0)",
+'
+         privatePackage='
+com.sun.msv.driver*,
+com.sun.msv.grammar.dtd,
+com.sun.msv.grammar.relaxng*,
+com.sun.msv.grammar.trex.typed,
+com.sun.msv.grammar.util,
+com.sun.msv.reader.datatype*,
+com.sun.msv.reader.dtd*,
+com.sun.msv.reader.relax*,
+com.sun.msv.relaxns*,
+com.sun.msv.scanner*,
+com.sun.msv.verifier.identity,
+com.sun.msv.verifier.jarv,
+com.sun.msv.verifier.jaxp,
+com.sun.msv.verifier.util,
+'
+         dynamicImportPackage='
+org.apache.xml.resolver, org.apache.xml.resolver.tools,
+org.iso_relax, org.iso_relax.*
+'
+      >
+        <classpath>
+          <fileset dir="${dir.lib}/msv" includes="woodstox-msv-core*.jar" />
+        </classpath>
+        <manifest>
+            <attribute name="Built-By" value="${user.name}"/>
+            <attribute name="Implementation-Title"   value="${MSV_TITLE}"/>
+            <attribute name="Implementation-Version" value="${MSV_VERSION}"/>
+            <attribute name="Implementation-Vendor"  value="${MSV_VENDOR}"/>
+        </manifest>
+      </osgify>
+  </target>
+
+</project>
