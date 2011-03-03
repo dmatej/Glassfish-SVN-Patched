@@ -16,6 +16,7 @@
     <target name="build" depends="init">
         <antcall target="bean-validator.build" />
     </target>	 
+
     <target name="bean-validator.checkout" >
         <echo message="Checking out bean-validator and dependencies" />
         <mkdir dir="${bean-validator.and.dependencies.dir}" />
@@ -36,6 +37,7 @@
               failonerror="true" >
 	    <arg line="checkout" />
             <arg line="${hibernate-validator.svn.url}" />
+            <arg line="hibernate-validator" />
 	</exec>
 
         <echo message="checkout jtype from ${jtype.svn.url}."/>
@@ -47,36 +49,27 @@
             <arg line="jtype" />
 	</exec>
 
-        <echo message="checkout slf4j-all from ${slf4j-all-bv.svn.url}."/>
-        <!-- checkout slf4j-api source -->
+        <echo message="checkout slf4j from ${slf4j.svn.url}."/>
+        <!-- checkout slf4j source -->
         <exec executable="svn" dir="${bean-validator.and.dependencies.dir}" 
               failonerror="true" >
 	    <arg line="checkout" />
-            <arg line="${slf4j-all-bv.svn.url}/slf4j-api/${slf4j-all-bv.version}" />
-            <arg line="slf4j-api" />
+            <arg line="${slf4j.svn.url}" />
+            <arg line="slf4j" />
 	</exec>
-
-        <echo message="checkout hibernate-jpa-api from ${hibernate-jpa-api.svn.url}."/>
-        <!-- checkout hibernate-jpa-api source -->
-        <exec executable="svn" dir="${bean-validator.and.dependencies.dir}" 
-              failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${hibernate-jpa-api.svn.url}/${hibernate-jpa-api.version}" />
-            <arg line="jpa-api" />
-	</exec>
-    </target>
+    </target>	 
 
     <target name="bean-validator.build" depends="bean-validator.checkout" >
-        <!-- build hibernate-jpa-api -->
-        <echo message="cd ${bean-validator.and.dependencies.dir}/jpa-apir/${bean-validator.version} and mvn" />
-        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/jpa-api" failonerror="true" >
+        <!-- build slf4j-api source -->
+        <echo message="cd ${bean-validator.and.dependencies.dir}/slf4j/slf4j-api and mvn" />
+        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/slf4j/slf4j-api" failonerror="true" >
 	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
             <arg line="install" />
 	</exec>
 
-        <!-- build slf4j-api source -->
-        <echo message="cd ${bean-validator.and.dependencies.dir}/slf4j-api and mvn" />
-        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/slf4j-api" failonerror="true" >
+        <!-- build slf4j-jdk14 source -->
+        <echo message="cd ${bean-validator.and.dependencies.dir}/slf4j/slf4j-jdk14 and mvn" />
+        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/slf4j/slf4j-jdk14" failonerror="true" >
 	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
             <arg line="install" />
 	</exec>
@@ -95,43 +88,7 @@
             <arg line="install" />
 	</exec>
 
-        <!-- create settings.xml and plugin-registry.xml  since compiling hibernate-validator requires jaxb-maven-plugin version 1.2 or else build will fail -->
-        <antcall target="create.settings.xml" />
-        <antcall target="create.plugin-registry.xml" />
-
-	<!-- hibernate-validator must be the last to compile -->
-        <echo message="cd ${hibernate-validator.checkout.dir}/${hibernate-validator.version}/hibernate-validator and mvn "/>
-        <exec executable="mvn" dir="${hibernate-validator.checkout.dir}/${hibernate-validator.version}/hibernate-validator" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	    <arg line="-s ${hibernate-validator.checkout.dir}/settings-hibernate-validator.xml" />
-            <arg line="clean install" />
-	</exec>
-        <delete file="${user.home}/.m2/plugin-registry.xml"/>   
-        <available file="${user.home}/.m2/plugin-registry.xml-tmp" property="plugin-registry-tmp.exists" value="true" />
-        <antcall target="rename-plugin-registry-tmp" />
     </target>
-
-    <target name="create.settings.xml" >
-        <echo message="&lt;settings&gt;  &#xa; &lt;usePluginRegistry&gt;true&lt;/usePluginRegistry&gt; &#xa;   &lt;mirrors&gt; &#xa;     &lt;mirror&gt; &#xa;   &lt;id&gt;internal-glassfish-nexus&lt;/id&gt; &#xa;   &lt;url&gt;http://gf-maven.us.oracle.com/nexus/content/groups/internal-gf-nexus/&lt;/url&gt; &#xa;   &lt;mirrorOf&gt;*&lt;/mirrorOf&gt; &#xa;  &lt;/mirror&gt; &#xa; &lt;/mirrors&gt;  &#xa;&lt;/settings&gt;" file="${hibernate-validator.checkout.dir}/settings-hibernate-validator.xml" />
-    </target>
-
-    <target name="create.plugin-registry.xml" >
-        <available file="${user.home}/.m2/plugin-registry.xml" property="plugin-registry.exists" value="true" />
-        <antcall target="rename-plugin-registry" />
-        <echo message="&lt;pluginRegistry&gt;  &#xa; &lt;plugins&gt; &#xa;   &lt;plugin&gt; &#xa;     &lt;groupId&gt;org.codehaus.mojo &lt;/groupId&gt; &#xa;     &lt;artifactId&gt;jaxb2-maven-plugin&lt;/artifactId&gt; &#xa;      &lt;useVersion&gt;1.2&lt;/useVersion&gt; &#xa;     &#xa; &lt;rejectedVersions&gt;  &#xa;    &lt;rejectedVersion&gt;1.3&#xa;     &lt;/rejectedVersion&gt;  &#xa;        &lt;/rejectedVersions&gt;      &lt;/plugin&gt; &#xa;  &lt;/plugins&gt; &#xa; &lt;/pluginRegistry&gt; "  file="${user.home}/.m2/plugin-registry.xml" />
-    </target>
-
-    <!--check if there is already a plugin-registry file -->
-    <target name="rename-plugin-registry"  if="plugin-registry.exists">
-         <!--rename to a plugin-registry.xml-tmp -->
-         <move file="${user.home}/.m2/plugin-registry.xml" tofile="${user.home}/.m2/plugin-registry.xml-tmp"/>
-    </target>
-    <!--check if there is already a plugin-registry file -->
-    <target name="rename-plugin-registry-tmp"  if="plugin-registry-tmp.exists">
-         <!--rename to a plugin-registry.xml-tmp -->
-         <move file="${user.home}/.m2/plugin-registry.xml-tmp" tofile="${user.home}/.m2/plugin-registry.xml"/>
-    </target>
-
 
 </project>
 
