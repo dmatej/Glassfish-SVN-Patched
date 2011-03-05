@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings xmlns="http://java.sun.com/xml/ns/persistence/orm"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence/orm http://java.sun.com/xml/ns/persistence/orm_1_0.xsd"
+	version="1.0">
+	<persistence-unit-metadata>
+		<persistence-unit-defaults>
+			<access>FIELD</access>
+		</persistence-unit-defaults>
+	</persistence-unit-metadata>
+
+	<table-generator name="WHERE_GROUP_SEQ" table="WHERE_SEQUENCES"
+		pk-column-name="SEQ_NAME" value-column-name="SEQ_VALUE" initial-value="1"
+		allocation-size="13" pk-column-value="GROUP" />
+	<table-generator name="WHERE_LOC_SEQ" table="WHERE_SEQUENCES"
+		pk-column-name="SEQ_NAME" value-column-name="SEQ_VALUE" initial-value="1"
+		allocation-size="13" pk-column-value="LOCATION" />
+
+	<entity class="example.where.model.User">
+		<table name="WHERE_USER" />
+		<named-query name="User.countForGroup">
+			<query>SELECT COUNT(u) FROM User u WHERE :GROUP MEMBER OF u.groups</query>
+		</named-query>
+		<attributes>
+			<id name="id" />
+			<basic name="firstName">
+				<column name="F_NAME" />
+			</basic>
+			<basic name="lastName">
+				<column name="L_NAME" />
+			</basic>
+			<version name="version" />
+			<many-to-one name="currentLocation">
+				<join-column name="CURRENT_LOC" />
+			</many-to-one>
+			<many-to-many name="groups">
+				<join-table name="WHERE_USER_GROUPS">
+					<join-column name="GROUP_ID" />
+					<inverse-join-column name="USER_ID" />
+				</join-table>
+			</many-to-many>
+		</attributes>
+	</entity>
+
+	<entity class="example.where.model.Location">
+		<table name="WHERE_LOCATION" />
+		<attributes>
+			<id name="id">
+				<generated-value generator="WHERE_LOC_SEQ" />
+			</id>
+			<basic name="start">
+				<column name="START_TIME" />
+				<temporal>TIMESTAMP</temporal>
+			</basic>
+			<basic name="end">
+				<column name="END_TIME" />
+				<temporal>TIMESTAMP</temporal>
+			</basic>
+			<many-to-one name="user">
+				<join-column name="USER_ID" />
+			</many-to-one>
+		</attributes>
+	</entity>
+
+	<entity class="example.where.model.Group">
+		<table name="WHERE_GROUP" />
+		<attributes>
+			<id name="id">
+				<generated-value generator="WHERE_GROUP_SEQ" />
+			</id>
+			<basic name="name">
+				<column name="G_NAME" />
+			</basic>
+		</attributes>
+	</entity>
+
+
+	<entity class="example.where.model.geonames.AdminDivision">
+		<table name="WHERE_GEO_ADMINDIV" />
+		<id-class class="example.where.model.geonames.AdminDivision$ID" />
+		<named-query name="AdminDivision.findInCache">
+			<query>SELECT ad FROM AdminDivision ad WHERE ad.countryCode = :CC AND ad.id = :ID</query>
+			<hint name="eclipselink.cache-usage" value="CheckCacheOnly" />
+		</named-query>
+		<attributes>
+			<id name="countryCode">
+				<column name="CC" insertable="false" updatable="false" />
+			</id>
+			<id name="id" />
+			<basic name="asciiName">
+				<column name="ASCII_NAME" />
+			</basic>
+			<basic name="geoNameId">
+				<column name="GEO_NAME_ID" />
+			</basic>
+			<many-to-one name="country" fetch="LAZY">
+				<join-column name="CC" />
+			</many-to-one>
+		</attributes>
+	</entity>
+
+	<entity class="example.where.model.geonames.Continent">
+		<table name="WHERE_GEO_CONTINENT" />
+		<attributes>
+			<id name="code" />
+		</attributes>
+	</entity>
+
+	<entity class="example.where.model.geonames.Country">
+		<table name="WHERE_GEO_COUNTRY" />
+		<named-query name="Country.findByCC">
+			<query>SELECT c FROM Country c WHERE c.code = :CC</query>
+		</named-query>
+		<attributes>
+			<id name="code">
+				<column name="CC" />
+			</id>
+			<many-to-one name="continent" fetch="LAZY">
+				<join-column name="CONTINENT_CODE" />
+			</many-to-one>
+			<one-to-many name="languages" mapped-by="country">
+				<cascade>
+					<cascade-all />
+				</cascade>
+			</one-to-many>
+			<one-to-many name="adminDivisions" mapped-by="country">
+				<cascade>
+					<cascade-all />
+				</cascade>
+			</one-to-many>
+		</attributes>
+	</entity>
+
+	<entity class="example.where.model.geonames.CountryLanguage">
+		<table name="WHERE_GEO_COUNTRYLANG" />
+		<id-class class="example.where.model.geonames.CountryLanguage$ID" />
+		<attributes>
+			<id name="countryCode">
+				<column name="CC" insertable="false" updatable="false" />
+			</id>
+			<id name="code" />
+			<basic name="index">
+				<column name="ORDER_INDEX" />
+			</basic>
+			<many-to-one name="country" fetch="LAZY">
+				<join-column name="CC" />
+			</many-to-one>
+			<many-to-one name="language" fetch="LAZY">
+				<join-column name="ISO639_3" />
+			</many-to-one>
+			<transient name="locale" />
+		</attributes>
+	</entity>
+
+	<entity class="example.where.model.geonames.Feature">
+		<table name="WHERE_GEO_FEATURE" />
+		<id-class class="example.where.model.geonames.Feature$ID" />
+		<named-query name="Feature.findById">
+			<query>SELECT f FROM Feature f WHERE f.classification = :CLASS AND f.code = :CODE</query>
+		</named-query>
+		<attributes>
+			<id name="classification">
+				<column name="FEATURE_CLASS" />
+			</id>
+			<id name="code" />
+			<basic name="description">
+				<column name="DESCRIP" />
+			</basic>
+
+		</attributes>
+	</entity>
+
+	<entity class="example.where.model.geonames.Language">
+		<table name="WHERE_GEO_LANGUAGE" />
+		<named-query name="Language.findByLocale">
+			<query>SELECT l FROM Language l WHERE l.code1 = :LOCALE</query>
+		</named-query>
+		<attributes>
+			<id name="code3">
+				<column name="ISO639_3" />
+			</id>
+			<basic name="code2">
+				<column name="ISO639_2" />
+			</basic>
+			<basic name="code1">
+				<column name="ISO639_1" />
+			</basic>
+		</attributes>
+	</entity>
+
+	<entity class="example.where.model.geonames.Point">
+		<table name="WHERE_GEO_POINT" />
+		<attributes>
+			<id name="id" />
+			<basic name="alternateNames">
+			</basic>
+			<basic name="alternateCountryCodes">
+			</basic>
+			<basic name="modificationDate">
+				<column name="MOD_DATE" />
+				<temporal>DATE</temporal>
+			</basic>
+			<many-to-one name="country">
+				<join-column name="CC" referenced-column-name="CC" />
+			</many-to-one>
+			<many-to-one name="feature">
+				<join-column name="FEATURE_CLASS" referenced-column-name="FEATURE_CLASS" />
+				<join-column name="CODE" referenced-column-name="CODE" />
+			</many-to-one>
+			<many-to-one name="adminDivision">
+				<join-column name="CC" referenced-column-name="CC" insertable="false"
+					updatable="false" />
+				<join-column name="ADMINDIV" referenced-column-name="ID" />
+			</many-to-one>
+			<many-to-one name="timeZone" fetch="LAZY">
+				<join-column name="TZ" />
+			</many-to-one>
+		</attributes>
+	</entity>
+	<entity class="example.where.model.geonames.TimeZone">
+		<table name="WHERE_GEO_TIMEZONE" />
+		<attributes>
+			<id name="name" />
+		</attributes>
+	</entity>
+</entity-mappings>
