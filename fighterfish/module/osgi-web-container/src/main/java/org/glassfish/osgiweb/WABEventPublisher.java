@@ -109,7 +109,7 @@ class WABEventPublisher {
         props.put(EVENT_PROPERTY_BUNDLE_VERSION, appBundle.getHeaders().get(BUNDLE_VERSION));
         props.put(EVENT_PROPERTY_CONTEXT_PATH, appBundle.getHeaders().get(WEB_CONTEXT_PATH));
         props.put(EVENT_PROPERTY_TIMESTAMP, System.currentTimeMillis());
-        props.put(EVENT_PROPERTY_BUNDLE_ID, appBundle);
+        props.put(EVENT_PROPERTY_BUNDLE, appBundle);
 
         props.put(EVENT_PROPERTY_EXTENDER_BUNDLE, extenderBundle);
         props.put(EVENT_PROPERTY_EXTENDER_BUNDLE_ID, extenderBundle.getBundleId());
@@ -121,7 +121,7 @@ class WABEventPublisher {
                 topic = EVENT_TOPIC_DEPLOYING;
                 break;
             case DEPLOYED:
-                topic = EVENT_TOPIC_DEPLOYING;
+                topic = EVENT_TOPIC_DEPLOYED;
                 break;
             case FAILED:
                 topic = EVENT_TOPIC_FAILED;
