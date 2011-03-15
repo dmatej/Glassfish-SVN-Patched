@@ -78,7 +78,7 @@ public class ReportServlet extends HttpServlet {
 	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	       response.setContentType("text/html");
 	       PrintWriter out = response.getWriter();
-	       out.println("<HTML> <HEAD> <TITLE> Login "
+	       out.println("<HTML> <HEAD> <TITLE> Report "
 		            + "</TITLE> </HEAD> <BODY BGCOLOR=white>");
 
 	        try {

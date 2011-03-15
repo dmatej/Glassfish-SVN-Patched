@@ -102,4 +102,13 @@ public class LoginAttempt implements Serializable {
 	public Date getTimeStamp() {
 		return timeStamp;
 	}
+
+    @Override
+    public String toString() {
+        return "LoginAttempt: (" +
+                "serialNumber = " + serialNumber +
+                "user = "  + getUserCredential().getName() +
+                "isSucecssful = " + isSuccessful() +
+                ")";
+    }
 }

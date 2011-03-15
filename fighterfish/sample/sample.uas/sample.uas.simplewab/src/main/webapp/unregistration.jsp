@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
+<%--
 
     DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
@@ -39,17 +38,24 @@
     only if the new code is made subject to such option by the copyright
     holder.
 
--->
+--%>
 
-<persistence version="2.0" xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
-	<persistence-unit name="sample.uas.entities" transaction-type="JTA">
-		<jta-data-source>jdbc/__default</jta-data-source>
-		<class>org.glassfish.fighterfish.sample.uas.entities.LoginAttempt</class>
-		<class>org.glassfish.fighterfish.sample.uas.entities.UserCredential</class>
-		<properties>
-			<property name="eclipselink.ddl-generation" value="drop-and-create-tables"/>
-			<property name="eclipselink.logging.level" value="FINEST"/>
-			<property name="eclipselink.target-server" value="org.eclipse.persistence.platform.server.sunas.SunAS9ServerPlatform"/>
-		</properties>
-	</persistence-unit>
-</persistence>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+    <head>
+        <title>Unregistration Page</title>
+    </head>
+
+    <body>
+        <hr>
+        <form method="post" action="UnregisterServlet">
+            <p>User Name: <input type="text" name="name" size="10"> </p>
+            <br>
+            <p>
+                <input type="submit" value="unregister"/>
+                <A href="registration.jsp"> New User? </A>
+        </form>
+    </body>
+</html>

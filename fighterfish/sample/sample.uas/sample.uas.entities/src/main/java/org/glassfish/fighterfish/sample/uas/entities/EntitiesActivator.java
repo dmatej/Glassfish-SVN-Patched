@@ -73,6 +73,12 @@ public class EntitiesActivator implements BundleActivator {
 		try {
 			Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
 			EntityManagerFactory emf = Persistence.createEntityManagerFactory(puName);
+
+            // createEMF does not cause java2db to happen - at least that's the behavior in EclipseLink.
+            // so, calling createEM will force java2db to happen.
+            // If we don't java2db here, it will happen the first time someone uses our EMF and that could
+            // be part of a transaction and we can get into deadlocks based on RDBMS trype.
+            emf.createEntityManager().close();
 			return emf;
 		} finally {
 			Thread.currentThread().setContextClassLoader(old);

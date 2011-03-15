@@ -75,7 +75,12 @@ class UserAuthServiceImpl implements UserAuthService {
 		return result;
 	}
 
-	@Override
+    @Override
+    public boolean unregister(String name) {
+        return (name != null && users.remove(name) != null);
+    }
+
+    @Override
 	public String getReport() {
 		return report.toString();
 	}

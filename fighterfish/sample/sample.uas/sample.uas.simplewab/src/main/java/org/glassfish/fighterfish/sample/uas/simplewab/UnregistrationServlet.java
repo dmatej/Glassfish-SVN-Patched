@@ -39,57 +39,58 @@
  */
 
 
-package org.glassfish.fighterfish.sample.uas.entities;
+package org.glassfish.fighterfish.sample.uas.simplewab;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+import org.glassfish.fighterfish.sample.uas.api.UserAuthService;
+import org.glassfish.osgicdi.OSGiService;
+import org.osgi.framework.ServiceException;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
+import javax.inject.Inject;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
- * Entity implementation class for Entity: UserCredential
- * 
+ * Servlet implementation class RegistrationServlet
  */
-@Entity
-public class UserCredential implements Serializable {
-
-	@Id
-	private String name;
-	private String password;
-	@OneToMany(mappedBy = "userCredential", cascade = CascadeType.REMOVE)
-	private List<LoginAttempt> loginAttempts = new ArrayList<LoginAttempt>();
+@WebServlet("/UnregistrationServlet")
+public class UnregistrationServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	public UserCredential() {
-		super();
-	}
+	@Inject @OSGiService(dynamic=true)
+	private UserAuthService uas;
 
-	public String getName() {
-		return this.name;
-	}
+	/**
+     * @see HttpServlet#HttpServlet()
+     */
+    public UnregistrationServlet() {
+        super();
+        // TODO Auto-generated constructor stub
+    }
 
-	public void setName(String name) {
-		this.name = name;
-	}
+	/**
+	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
+	 */
+	protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	       PrintWriter out = response.getWriter();
+	       out.println("<HTML> <HEAD> <TITLE> Login "
+		            + "</TITLE> </HEAD> <BODY BGCOLOR=white>");
 
-	public String getPassword() {
-		return this.password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-	public void setLoginAttempts(List<LoginAttempt> loginAttempts) {
-		this.loginAttempts = loginAttempts;
-	}
-
-	public List<LoginAttempt> getLoginAttempts() {
-		return loginAttempts;
+	       String name = request.getParameter("name");
+	        try {
+	            if (uas.unregister(name)) {
+	                out.println("Unregistered " + name);
+	            } else {
+	                out.println("Failed to unregister " + name);
+	            }
+	        } catch (ServiceException e) {
+	            out.println("Service is not yet available");
+	        }
+	        out.println("</BODY> </HTML> ");
 	}
 
 }
