@@ -1,0 +1,57 @@
+#!/bin/sh
+
+# XXX awaiting Forest support:
+if [ -d contrib/.hg ] ; then
+    hg -R contrib up -C .
+    hg -R contrib --config extensions.purge= clean --all || exit
+    hg -R contrib pull -u
+else
+    hg clone http://hg.netbeans.org/main/contrib contrib
+fi
+
+keystore=$SECRET/NBstore
+storepass=`cat $SECRET/storepass`
+ant verify-libs-and-licenses || exit
+ant -f autoupdate.services/build.xml # build first to ensure DTD validation works
+ant -Dcluster.config=experimental \
+    -Dkeystore=$keystore -Dstorepass=$storepass -Djavadoc.fail.on.error=false -Dnbms.fail.on.error=false \
+    build-nbms create-license-summary create-netbeans-import finish-build || exit
+
+rm -rv nbbuild/netbeans/ergonomics nbbuild/nbms/ergonomics # not going to have been built reasonably anyway
+ant -Dcluster.config=minimal -Dzip.dir=`pwd`/nbbuild/dist zip-cluster-config || exit
+ant -Dcluster.config=full -Dzip.dir=`pwd`/nbbuild/dist zip-cluster-config || exit
+(cd nbbuild/netbeans; for cluster in *; do if [ -d $cluster/update_tracking ]; then zip -rq ../dist/$BUILD_TAG-$cluster.zip $cluster; fi; done)
+
+ant -Dtest.fail.on.error=false build-test-dist
+
+ant -Dtest.config=commit -Dcontinue.after.failing.tests=true -f o.n.core/build.xml test
+ant -Dold.updates=${JOB_URL}lastStableBuild/artifact/nbbuild/nbms/updates.xml generate-uc-catalog verify-update-descriptor || exit
+
+ant clean-untracked-files
+
+sh -x nbbuild/hudson/sigtests || exit 1
+
+for r in . contrib
+do
+    output="`hg -R $r st`"
+    if [ -n "$output" ]
+    then
+        echo "Local modifications found in $r:"
+        echo "$output"
+        exit 1
+    fi
+done
+
+ant generate-golden-files generate-files-layout index-layer-paths summarize-hgmail || exit
+generated=nbbuild/build/generated
+cp -v nbbuild/netbeans/THIRDPARTYLICENSE-generated.txt $generated/external-libraries.txt || exit
+if wget -O nbbuild/build/old-generated.zip "${JOB_URL}lastSuccessfulBuild/artifact/nbbuild/build/generated/*zip*/generated.zip"; then
+    mkdir nbbuild/build/old-generated
+    (cd nbbuild/build/old-generated; unzip ../old-generated.zip)
+    prev_generated=nbbuild/build/old-generated/generated
+    # kits.txt is too verbose and changes too frequently to include in diff
+    diff -r -u --minimal --show-function-line='^[A-Z][A-Z]' --ignore-matching-lines=' [(]merged[)]$' -x kits.txt $prev_generated $generated > $generated.diff
+    if [ -s $generated.diff ]; then
+        (echo "${BUILD_URL}changes"; echo "${BUILD_URL}artifact/$generated/"; echo; cat $generated.diff) | mail -s "Golden file changes in $JOB_NAME build #$BUILD_NUMBER" api-changes@netbeans.org
+    fi
+fi
