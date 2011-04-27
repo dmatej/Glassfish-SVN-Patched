@@ -182,6 +182,10 @@ public class OSGiBundleArchive extends AbstractReadableArchive implements URIabl
         if (subPaths != null) {
             while (subPaths.hasMoreElements()) {
                 String next = subPaths.nextElement();
+                if ("META-INF/".equals(next) && entries.contains(next)) {
+                    // Work around for FELIX-2935 (GLASSFISH-16477)
+                    continue;
+                }
                 entries.add(next);
                 getEntryPaths(entries, next);
             }
