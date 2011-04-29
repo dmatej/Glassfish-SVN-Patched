@@ -101,7 +101,15 @@ public class CommonConfiguration {
     private Option[] frameworkConfiguration() throws IOException {
         List<Option> options = new ArrayList<Option>();
         Properties properties = readAndCustomizeFrameworkConfiguration();
+
+        // parse boot delegation property and set it as a bootdelegation option as pax-exam's native test container implementation
+        // does not use bootdelegation system property.
+        for (String p : properties.getProperty(Constants.FRAMEWORK_BOOTDELEGATION, "").split(",")) {
+            System.out.println("Boot delegation pkg = " + p);
+            options.add(bootDelegationPackage(p.trim()));
+        }
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
+            if (entry.getKey().equals(Constants.FRAMEWORK_BOOTDELEGATION)) continue; // already handled above
             options.add(systemProperty((String) entry.getKey()).value((String) entry.getValue()));
         }
         return options.toArray(new Option[options.size()]);
