@@ -160,6 +160,18 @@ public class CommonConfiguration {
 
         // Because some of our tests use JPA in Java SE mode, we have to set this property to enable the same.
         properties.put("org.glassfish.osgjpa.extension.useHybridPersistenceProviderResolver", "true");
+
+        // GlassFish is ocnfigured to get bootstrap APIs from system bundle so that the main program can control GlassFish's life cycle.
+        // But the bootstrap bundle's activator, GlassFishMainActivator, does not shutdown GlassFishRuntime in its stop(). As a result,
+        // when the bootstrap bundle is again started in the same VM, it gets an exception sayng "Already bootstrapped."
+        // To avoid this, we don't configure system bundle to export bootstrap APIs. They are then obtained from bootstrap bundle
+        // itself and test bundles also import from that bundle.
+        String oldValue = (String) properties.get("extra-system-packages");
+        final String newValue = "${jre-${java.specification.version}} ${internal-jdk-pkgs-for-gf}";
+        System.out.println("Replacing extra-system-properties from [" + oldValue + "] to [" + newValue + "]" );
+        properties.put("extra-system-packages", newValue);
+
+        // Now substitute properties
         PropertiesUtil.substVars(properties);
         return properties;
     }
