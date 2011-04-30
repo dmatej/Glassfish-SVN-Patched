@@ -94,7 +94,8 @@ public class CommonConfiguration {
                 bundle(new File(gfHome, "modules/autostart/osgi-cdi.jar").toURI().toString()),
                 junitBundles(),
                 mavenBundle().groupId("org.glassfish.fighterfish").artifactId("test.util").version("1.0.0-SNAPSHOT"),
-                mavenBundle().groupId("org.ops4j.pax.url").artifactId("pax-url-mvn").version("1.2.5")
+                mavenBundle().groupId("org.ops4j.pax.url").artifactId("pax-url-mvn").version("1.2.5"),
+                systemProperty("pax-exam.framework.shutdown.timeout").value(System.getProperty("pax-exam.framework.shutdown.timeout"))
         );
     }
 
