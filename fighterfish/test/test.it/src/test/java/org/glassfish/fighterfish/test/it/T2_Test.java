@@ -45,6 +45,7 @@ import org.glassfish.embeddable.GlassFish;
 import org.glassfish.embeddable.GlassFishException;
 import org.glassfish.fighterfish.test.util.EjbBundle;
 import org.glassfish.fighterfish.test.util.GlassFishTracker;
+import org.glassfish.fighterfish.test.util.OSGiUtil;
 import org.glassfish.fighterfish.test.util.WebAppBundle;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -511,7 +512,7 @@ public class T2_Test extends AbstractTestObject {
 
     @Test
     public void testapp13(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
-        logger.entering("T2_Test", "testapp12", new Object[]{ctx});
+        logger.entering("T2_Test", "testapp13", new Object[]{ctx});
         GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
         try {
 
@@ -525,6 +526,48 @@ public class T2_Test extends AbstractTestObject {
                 // if deployment has been successful, then the test has passed
             }
         }finally {
+            uninstallAllTestBundles();
+        }
+    }
+
+    @Test
+    public void testapp14(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+        logger.entering("T2_Test", "testapp14", new Object[]{ctx});
+        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "testapp14", new File(derbyRootDir, "testapp14"));
+        try {
+
+            String location = "mvn:org.glassfish.fighterfish/test.app14/1.0.0-SNAPSHOT";
+            {
+                Bundle bundle = installTestBundle(ctx, location);
+                bundle.start();
+                Object service = OSGiUtil.waitForService(ctx, bundle,
+                        "org.glassfish.fighterfish.test.app14.ConnectionFactory", TIMEOUT);
+                Assert.assertNotNull(service);
+            }
+        }finally {
+            rdc.restore();
+            uninstallAllTestBundles();
+        }
+    }
+    
+    @Test
+    public void testapp15(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+        logger.entering("T2_Test", "testapp15", new Object[]{ctx});
+        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "testapp15", new File(derbyRootDir, "testapp15"));
+        try {
+
+            String location = "mvn:org.glassfish.fighterfish/test.app15/1.0.0-SNAPSHOT";
+            {
+                Bundle bundle = installTestBundle(ctx, location);
+                bundle.start();
+                Object service = OSGiUtil.waitForService(ctx, bundle,
+                        "org.glassfish.fighterfish.test.app15.ConnectionFactory", TIMEOUT);
+                Assert.assertNotNull(service);
+            }
+        }finally {
+            rdc.restore();
             uninstallAllTestBundles();
         }
     }
