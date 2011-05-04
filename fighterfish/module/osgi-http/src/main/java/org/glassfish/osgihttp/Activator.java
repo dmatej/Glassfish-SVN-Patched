@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2011 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -43,7 +43,6 @@ package org.glassfish.osgihttp;
 import com.sun.enterprise.web.WebContainer;
 import com.sun.enterprise.web.WebModule;
 import com.sun.enterprise.web.WebModuleConfig;
-import com.sun.enterprise.module.bootstrap.ModuleStartup;
 import com.sun.enterprise.config.serverbeans.Domain;
 import com.sun.enterprise.config.serverbeans.Server;
 import com.sun.enterprise.config.serverbeans.Config;
@@ -66,8 +65,9 @@ import org.osgi.service.http.HttpService;
 import org.osgi.util.tracker.ServiceTracker;
 import org.jvnet.hk2.component.Habitat;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
-import java.util.logging.Level;
 
 /**
  * This is the entry point to our implementation of OSGi/HTTP service.
@@ -296,8 +296,35 @@ public class Activator implements BundleActivator {
      * @return the dafault virtual server
      */
     private String getDefaultVirtualServer() {
-        com.sun.grizzly.config.dom.NetworkListener nl = Globals.get(com.sun.grizzly.config.dom.NetworkListener.class);
-        return nl.findHttpProtocol().getHttp().getDefaultVirtualServer();
+        // Grizzly renamed its package name from com.sun.grizzly to org.glassfish.grizzly in Grizzly 2.1. Since Grizzly 2.1 is only
+        // integrated into GF3.2 only and we expect our module to work with GF 3.1.1 as well, we are not relying on Grizzly classes statically.
+        // So, the code below does what the following line would have done.
+        // return Globals.get(com.sun.grizzly.config.dom.NetworkListener.class).findHttpProtocol().getHttp().getDefaultVirtualServer();
+        Class netWorkListenerClass;
+        try {
+            netWorkListenerClass = Class.forName("com.sun.grizzly.config.dom.NetworkListener");
+        } catch (ClassNotFoundException cnfe) {
+            try {
+                netWorkListenerClass = Class.forName("org.glassfish.grizzly.config.dom.NetworkListener");
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        Object networkListenerObj = Globals.get(netWorkListenerClass);
+        try {
+            Method findHttpProtocolMethod = netWorkListenerClass.getMethod("findHttpProtocol");
+            Object httpProtocolObj = findHttpProtocolMethod.invoke(networkListenerObj);
+            final Object httpObj = httpProtocolObj.getClass().getMethod("getHttp").invoke(httpProtocolObj);
+            final String defaultVirtualServer = (String) httpObj.getClass().getMethod("getDefaultVirtualServer").invoke(httpObj);
+            System.out.println("Activator.getDefaultVirtualServer: " + defaultVirtualServer);
+            return defaultVirtualServer;
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }
