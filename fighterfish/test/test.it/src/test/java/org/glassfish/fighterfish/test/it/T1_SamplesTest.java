@@ -46,7 +46,9 @@ import org.glassfish.embeddable.GlassFishException;
 import org.glassfish.fighterfish.test.util.*;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.junit.ExamReactorStrategy;
 import org.ops4j.pax.exam.junit.JUnit4TestRunner;
+import org.ops4j.pax.exam.spi.reactors.EagerSingleStagedReactorFactory;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -63,6 +65,7 @@ import static org.osgi.framework.Bundle.START_TRANSIENT;
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 @RunWith(JUnit4TestRunner.class)
+@ExamReactorStrategy( EagerSingleStagedReactorFactory.class )
 public class T1_SamplesTest extends AbstractTestObject {
 
     /*
