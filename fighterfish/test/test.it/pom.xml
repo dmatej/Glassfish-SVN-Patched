@@ -67,12 +67,6 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <!-- Is this needed? -->
-            <groupId>commons-logging</groupId>
-            <artifactId>commons-logging</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
@@ -83,20 +77,17 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.apache.felix</groupId>
-            <artifactId>org.apache.felix.framework</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.glassfish.fighterfish</groupId>
             <artifactId>test.util</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
+        <!-- pax-exam uses slf4j. We need to provide a binding for the same here. -->
         <dependency>
-            <groupId>org.ops4j.pax.logging</groupId>
-            <artifactId>pax-logging-api</artifactId>
-            <version>1.5.0</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>1.6.1</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     <build>
@@ -107,15 +98,15 @@
                     <systemProperties>
                         <property>
                             <name>com.sun.aas.installRoot</name>
-                            <value>${env.g}</value>
+                            <value>${glassfish.home}</value>
                         </property>
                         <property>
                             <name>com.sun.aas.instanceRoot</name>
-                            <value>${env.g}/domains/domain1</value>
+                            <value>${glassfish.home}/domains/domain1</value>
                         </property>
                         <property>
                             <name>GlassFish_Platform</name>
-                            <value>Felix</value>
+                            <value>${GlassFish_Platform}</value>
                         </property>
                         <property>
                             <!-- This disables UC PingService -->
@@ -134,17 +125,73 @@
                         </property>
                         <property>
                             <name>org.osgi.framework.storage</name>
-                            <value>${project.build.directory}/osgi-cache</value>
+                            <value>${project.build.directory}/osgi-cache/${GlassFish_Platform}</value>
                         </property>
                         <property>
                             <!-- How long should we wait for framework to shutdown? -->
                             <name>pax-exam.framework.shutdown.timeout</name>
-                            <value>0</value>
+                            <value>100000</value>
                         </property>
                     </systemProperties>
                 </configuration>
             </plugin>
-
         </plugins>
     </build>
+    <profiles>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <argLine>-XX:MaxPermSize=128m</argLine>
+            </properties>
+        </profile>
+        <profile>
+            <id>debug</id>
+            <properties>
+                <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=9009</maven.surefire.debug>
+            </properties>
+        </profile>
+        <profile>
+            <id>Felix</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>org.apache.felix.framework</artifactId>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <properties>
+                <GlassFish_Platform>Felix</GlassFish_Platform>
+            </properties>
+        </profile>
+        <profile>
+            <id>Equinox</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <!--<dependency>-->
+                <!--<groupId>org.eclipse.equinox</groupId>-->
+                <!--<artifactId>org.eclipse.osgi</artifactId>-->
+                <!--<version>3.6.1</version>-->
+                    <!--<scope>system</scope>-->
+                    <!--<systemPath>${glassfish.home}/osgi/equinox/org.eclipse.osgi_3.6.1.R36x_v20100806.jar</systemPath>-->
+                <!--</dependency>-->
+                <dependency>
+                    <groupId>org.sonatype.tycho</groupId>
+                    <artifactId>org.eclipse.osgi</artifactId>
+                    <version>3.6.2.R36x_v20110210</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <properties>
+                <GlassFish_Platform>Equinox</GlassFish_Platform>
+            </properties>
+        </profile>
+    </profiles>
 </project>
