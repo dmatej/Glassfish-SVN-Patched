@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -41,49 +41,26 @@
 
 package org.glassfish.osgiweb;
 
-import org.glassfish.osgijavaeebase.DeploymentException;
+import org.osgi.framework.Bundle;
 
-import java.util.Arrays;
+import static org.glassfish.osgiweb.Constants.WEB_CONTEXT_PATH;
 
 /**
- * This exception is thrown when multiple WABs have same Web-ContextPath.
- *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-class ContextPathCollisionException extends DeploymentException {
-    private final String contextPath;
-    private final Long[] collidingWabIds;
-
+public class Util {
     /**
-     * @param contextPath Context-Path for which collision is detected
-     * @param collidingWabIds bundle id of the WABs that have same context path. The last entry denotes the
-     * current bundle being deployed
+     *  This method attached slash when context path header does not start with /. This is done keeping the following observations in mind:
+     * a) GlassFish web container automatically attaches a '/'.
+     * b) The r42 CT installs some WABs which contains such context path. Unless we attach a '/', they fail.
+     * @param bundle
+     * @return
      */
-    public ContextPathCollisionException(String contextPath, Long[] collidingWabIds) {
-        if (collidingWabIds.length < 2) throw new IllegalArgumentException("At least two WAB ids are needed");
-        this.contextPath = contextPath;
-        this.collidingWabIds = Arrays.copyOf(collidingWabIds, collidingWabIds.length);
-        Arrays.sort(this.collidingWabIds);
-    }
-
-    public String getContextPath() {
-        return contextPath;
-    }
-
-    public Long[] getCollidingWabIds() {
-        return Arrays.copyOfRange(collidingWabIds, 0, collidingWabIds.length); // return a new copy
-    }
-
-    @Override
-    public String getMessage() {
-        StringBuilder sb = new StringBuilder("context path [" + contextPath + "] is same for following bundles: [");
-        for(int i = 0; i < collidingWabIds.length; i++) {
-            sb.append(collidingWabIds[i]);
-            if (i != collidingWabIds.length-1) {
-                sb.append(", ");
-            }
+    static String getContextPath(Bundle bundle) {
+        String cp = (String) bundle.getHeaders().get(WEB_CONTEXT_PATH);
+        if (cp != null && !cp.startsWith("/")) {
+            cp = "/".concat(cp);
         }
-        sb.append("]");
-        return sb.toString();
+        return cp;
     }
 }

@@ -48,12 +48,11 @@ import org.osgi.framework.ServiceReference;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.glassfish.osgiweb.Constants.*;
-import static org.osgi.framework.Constants.BUNDLE_SYMBOLICNAME;
-import static org.osgi.framework.Constants.BUNDLE_VERSION;
 
 /**
  * This class is responsible for publishing events using EventAdmin service for a WAB deployment lifecycle.
@@ -104,17 +103,17 @@ class WABEventPublisher {
     private Event prepareEvent(AbstractOSGiDeployer.State state, Bundle appBundle, Bundle extenderBundle, Throwable e) {
         String topic;
         Map<Object, Object> props = new HashMap<Object, Object>();
-        props.put(EVENT_PROPERTY_BUNDLE_SYMBOLICNAME, appBundle.getHeaders().get(BUNDLE_SYMBOLICNAME));
+        props.put(EVENT_PROPERTY_BUNDLE_SYMBOLICNAME, appBundle.getSymbolicName());
         props.put(EVENT_PROPERTY_BUNDLE_ID, appBundle.getBundleId());
-        props.put(EVENT_PROPERTY_BUNDLE_VERSION, appBundle.getHeaders().get(BUNDLE_VERSION));
-        props.put(EVENT_PROPERTY_CONTEXT_PATH, appBundle.getHeaders().get(WEB_CONTEXT_PATH));
+        props.put(EVENT_PROPERTY_BUNDLE_VERSION, appBundle.getVersion());
+        props.put(EVENT_PROPERTY_CONTEXT_PATH, Util.getContextPath(appBundle));
         props.put(EVENT_PROPERTY_TIMESTAMP, System.currentTimeMillis());
         props.put(EVENT_PROPERTY_BUNDLE, appBundle);
 
         props.put(EVENT_PROPERTY_EXTENDER_BUNDLE, extenderBundle);
         props.put(EVENT_PROPERTY_EXTENDER_BUNDLE_ID, extenderBundle.getBundleId());
-        props.put(EVENT_PROPERTY_EXTENDER_BUNDLE_NAME, extenderBundle.getHeaders().get(BUNDLE_SYMBOLICNAME));
-        props.put(EVENT_PROPERTY_EXTENDER_BUNDLE_VERSION, extenderBundle.getHeaders().get(BUNDLE_VERSION));
+        props.put(EVENT_PROPERTY_EXTENDER_BUNDLE_NAME, extenderBundle.getSymbolicName());
+        props.put(EVENT_PROPERTY_EXTENDER_BUNDLE_VERSION, extenderBundle.getVersion());
 
         switch (state) {
             case DEPLOYING:
@@ -128,8 +127,9 @@ class WABEventPublisher {
                 props.put(EVENT_PROPERTY_EXCEPTION, e);
                 if (e instanceof ContextPathCollisionException) {
                     final ContextPathCollisionException ce = ContextPathCollisionException.class.cast(e);
-                    Long ids[] = ce.getExistingWabIds();
-                    props.put(EVENT_PROPERTY_COLLISION_BUNDLES, ids);
+                    Long ids[] = ce.getCollidingWabIds();
+                    props.put(EVENT_PROPERTY_COLLISION_BUNDLES, Arrays.asList(ids)); // The spec requires it to be a collection
+                    props.put(EVENT_PROPERTY_COLLISION, ce.getContextPath());
                 }
                 break;
             case UNDEPLOYING:

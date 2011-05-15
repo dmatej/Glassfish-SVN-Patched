@@ -128,6 +128,10 @@ public class OSGiWebDeploymentRequest extends OSGiDeploymentRequest {
             throw new Exception(WEB_CONTEXT_PATH +
                     " manifest header is mandatory");
         }
+        if (!parameters.contextroot.startsWith("/")) {
+            // We prefix '/' for reasons mentioned in Uitil.getContextRoot(). 
+            parameters.contextroot = "/".concat(parameters.contextroot);
+        }
         parameters.virtualservers = getVirtualServers();
         return parameters;
     }
@@ -276,7 +280,7 @@ public class OSGiWebDeploymentRequest extends OSGiDeploymentRequest {
     {
         Properties props = new Properties();
         props.setProperty(OSGI_WEB_SYMBOLIC_NAME, b.getSymbolicName());
-        String cpath = (String) b.getHeaders().get(WEB_CONTEXT_PATH);
+        String cpath = Util.getContextPath(b);
         props.setProperty(OSGI_WEB_CONTEXTPATH, cpath);
         String version = (String) b.getHeaders().get(BUNDLE_VERSION);
         if (version != null)
