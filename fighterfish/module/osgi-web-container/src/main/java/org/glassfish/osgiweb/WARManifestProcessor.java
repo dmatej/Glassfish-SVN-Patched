@@ -108,7 +108,7 @@ public class WARManifestProcessor
         Map<String, String> queryParams = new HashMap<String, String>();
         if (query != null)
         {
-            logger.logp(Level.INFO, "WARManifestProcessor", "readQueryParams",
+            logger.logp(Level.FINE, "WARManifestProcessor", "readQueryParams",
                     "Input query params = {0}", new Object[]{query});
             // "&" separates query paremeters
             StringTokenizer st = new StringTokenizer(query, "&");
@@ -133,7 +133,7 @@ public class WARManifestProcessor
                 }
                 queryParams.put(name, value);
             }
-            logger.logp(Level.INFO, "WARManifestProcessor", "readQueryParams",
+            logger.logp(Level.FINE, "WARManifestProcessor", "readQueryParams",
                     "Canonicalized query params = {0}", new Object[]{queryParams});
         }
         return queryParams;
@@ -180,7 +180,7 @@ public class WARManifestProcessor
                 // remove all signatures as per section 128.4.6 of the r42 spec.
                 processSignatures(newManifest);
             }
-            logger.logp(Level.INFO, "WARManifestProcessor", "processManifest", "New Attributes of the bundle = {0}", new Object[]{attrs});
+            logger.logp(Level.FINE, "WARManifestProcessor", "processManifest", "New Attributes of the bundle = {0}", new Object[]{attrs});
             newManifest.write(System.err); // for debugging purpose, write this out
             return newManifest;
         } finally {
@@ -189,7 +189,7 @@ public class WARManifestProcessor
     }
 
     private static String decode(String encodedQuery) {
-        logger.logp(Level.INFO, "WARManifestProcessor", "decode", "encodedQuery = {0}", new Object[]{encodedQuery});
+        logger.logp(Level.FINE, "WARManifestProcessor", "decode", "encodedQuery = {0}", new Object[]{encodedQuery});
         String decodedQuery;
         try {
             decodedQuery = new URI("http://localhost/index.html?" + encodedQuery).getQuery();
@@ -198,7 +198,7 @@ public class WARManifestProcessor
             logger.logp(Level.INFO, "WARManifestProcessor", "decode", "Assuming this is already decoded because of {0} ", new Object[]{e});
             decodedQuery = encodedQuery;
         }
-        logger.logp(Level.INFO, "WARManifestProcessor", "decode", "decodedQuery = {0}", new Object[]{decodedQuery});
+        logger.logp(Level.FINE, "WARManifestProcessor", "decode", "decodedQuery = {0}", new Object[]{decodedQuery});
         return decodedQuery;
     }
 
@@ -258,7 +258,7 @@ public class WARManifestProcessor
                                     String classPath =
                                             libJarIs.getManifest().getMainAttributes().getValue(Name.CLASS_PATH);
                                     if (classPath != null && !classPath.isEmpty()) {
-                                        logger.logp(Level.INFO, "WARManifestProcessor", "visit",
+                                        logger.logp(Level.FINE, "WARManifestProcessor", "visit",
                                                 "jar {0} has a Class-Path entry of {1}", new Object[]{name, classPath});
                                         try {
                                             String referencedJarName = null;
@@ -287,7 +287,7 @@ public class WARManifestProcessor
         String cp = convertToCP(libs, jarNames);
         cp = cp.length() > 0 ?
                 DEFAULT_BUNDLE_CP.concat(",").concat(cp) : DEFAULT_BUNDLE_CP;
-        logger.logp(Level.INFO, "WARManifestProcessor", "processBCP", "cp = {0}", new Object[]{cp});
+        logger.logp(Level.FINE, "WARManifestProcessor", "processBCP", "cp = {0}", new Object[]{cp});
         process(queryParams, attrs, BUNDLE_CLASSPATH, cp);
     }
 

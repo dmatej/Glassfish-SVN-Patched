@@ -213,7 +213,7 @@ public class OSGiWebDeploymentRequest extends OSGiDeploymentRequest {
             Object httpProtocolObj = findHttpProtocolMethod.invoke(networkListenerObj);
             final Object httpObj = httpProtocolObj.getClass().getMethod("getHttp").invoke(httpProtocolObj);
             final String defaultVirtualServer = (String) httpObj.getClass().getMethod("getDefaultVirtualServer").invoke(httpObj);
-            logger.logp(Level.INFO, "OSGiWebDeploymentRequest", "getDefaultVirtualServer", "defaultVirtualServer = {0}", new Object[]{defaultVirtualServer});
+            logger.logp(Level.FINE, "OSGiWebDeploymentRequest", "getDefaultVirtualServer", "defaultVirtualServer = {0}", new Object[]{defaultVirtualServer});
             return defaultVirtualServer;
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);
