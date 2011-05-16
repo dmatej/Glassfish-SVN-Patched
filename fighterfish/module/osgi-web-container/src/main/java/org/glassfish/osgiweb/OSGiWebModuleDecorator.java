@@ -40,9 +40,9 @@
 
 package org.glassfish.osgiweb;
 
-import com.sun.enterprise.web.WebModuleDecorator;
-import com.sun.enterprise.web.WebModule;
+import com.sun.enterprise.web.*;
 import com.sun.faces.spi.ConfigurationResourceProvider;
+import org.apache.naming.resources.FileDirContext;
 import org.glassfish.api.deployment.DeploymentContext;
 import org.glassfish.hk2.classmodel.reflect.Types;
 import org.glassfish.web.loader.WebappClassLoader;
@@ -52,6 +52,7 @@ import org.glassfish.osgijavaeebase.OSGiBundleArchive;
 import org.glassfish.osgijavaeebase.BundleResource;
 
 import javax.servlet.ServletContext;
+import java.io.File;
 import java.lang.annotation.Annotation;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -60,18 +61,30 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.sun.enterprise.web.Constants.DEFAULT_WEB_MODULE_PREFIX;
+
 /**
- * This class is responsible for setting
+ * This is where we cuistomize the StandardContext (or WebModule as you call it) object created for a WAB.
+ *
+ * This class is responsible for the following customizations:
+ *
  * a) an attribute called {@link Constants#BUNDLE_CONTEXT_ATTR} in ServletContext of the web app
  * associated with the current OSGi bundle.
- * b) discovering JSF faces config resources and setting them in an attribute called
+ *
+ * b) set a specialized FileDirContext object that restricts access to OSGI-INF and OSGI-OPT resources of a WAB
+ * as required by the OSGi WAB spec.
+ *
+ * c) discovering JSF faces config resources and setting them in an attribute called
  * {@link Constants#FACES_CONFIG_ATTR}.
- * c) discovering JSF facelet config resources and setting them in an attribute called
+ *
+ * d) discovering JSF facelet config resources and setting them in an attribute called
  * {@link Constants#FACELET_CONFIG_ATTR}.
- * d) discovering faces annotations in a WAB and setting them in an attribute called
+ *
+ * e) discovering faces annotations in a WAB and setting them in an attribute called
  * {@@link Constants#FACES_ANNOTATED_CLASSES}
  *
- * This class is looked up by mojarra using JDK SPI mechanism.
+ * The faces related attributes are used by various OSGiFacesXXXProviders that we install for a WAB. Mojarra
+ * discovers and calls those providers as part of its initialization.
  *
  * @see org.glassfish.osgiweb.OSGiFacesConfigResourceProvider
  * @see org.glassfish.osgiweb.OSGiFaceletConfigResourceProvider
@@ -89,14 +102,47 @@ public class OSGiWebModuleDecorator implements WebModuleDecorator
     {
         if (isActive()) {
             BundleContext bctx = OSGiWebDeploymentRequest.getCurrentBundleContext();
-            if (bctx != null) {
+            // We can be here when there are no web apps deployed and the first webapp that gets deployed
+            // is a WAB. In that case, the default_web_app gets loaded in the same thread that's trying to load
+            // the WAB and we end up getting here, because our thread local object contains the WAB's bundle context
+            // at this point of time. That's one of the many ugly side effects of using thread locals.
+            //  So, we need to make sure that we are not customizing the default web modules.
+            // Hence we are calling isDefaultWebModule()
+            if (bctx != null && !isDefaultWebModule(module)) {
                 final ServletContext sc = module.getServletContext();
                 sc.setAttribute(Constants.BUNDLE_CONTEXT_ATTR, bctx);
                 if (isMojarraPresent()) {
                     populateFacesInformation(module, bctx, sc);
                 }
+
+                // Let's install a customized dir context that does not allow static contents from
+                // OSGI-OPT and OSGI-INF directories as required by the OSGi WAB spec.
+                module.setResources(new FileDirContext(){
+                    @Override
+                    protected File file(String name) {
+                        final String s = name.toUpperCase();
+                        if (s.startsWith("/OSGI-INF/") || s.startsWith("/OSGI-OPT/")) {
+                            logger.logp(Level.FINE, "OSGiWebModuleDecorator", "file",
+                                    "Forbidding access to resource called {0}", new Object[]{name});
+                            return null;
+                        } else {
+                            return super.file(name);
+                        }
+                    }
+                });
             }
         }
+    }
+
+    /**
+     *  Is this a default web web module that's configured in the virtual server to handle '/' context path?
+     * @param module
+     * @return
+     */
+    private boolean isDefaultWebModule(WebModule module) {
+        // Although default web module has a fixed name called {@link com.sun.enterprise.web.Constants#DEFAULT_WEB_MODULE_NAME}
+        // that name is not used when user configures a different web app as the default web module. So, we check for the prefix.
+        return module.getWebModuleConfig().getName().startsWith(DEFAULT_WEB_MODULE_PREFIX);
     }
 
     private boolean isMojarraPresent() {
@@ -171,10 +217,8 @@ public class OSGiWebModuleDecorator implements WebModuleDecorator
     private Map<Class<? extends Annotation>, Set<Class<? extends Object>>> scanFacesAnnotations(WebModule wm) {
         final DeploymentContext dc = wm.getWebModuleConfig().getDeploymentContext();
         if (dc == null) {
-            // We are likely to be here when there are no web apps deployed and the first webapp that gets deployed
-            // is a WAB. In that case, the default_web_app gets loaded in the same thread that's trying to load
-            // the WAB and we end up getting here, because our thread local object contains the WAB's bundle context
-            // at this point of time. That's one of the many ugly side effects of using thread locals.
+            // Now that we check for default web module in decorate(), it is not clear why we will ever be called with null deployment context.
+            // Just log a message and move on.
             logger.fine("Can't process annotations as deployment context is not set.");
             return Collections.emptyMap();
         }
