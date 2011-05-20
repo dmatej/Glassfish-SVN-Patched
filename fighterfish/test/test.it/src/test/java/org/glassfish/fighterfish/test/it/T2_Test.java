@@ -329,7 +329,7 @@ public class T2_Test extends AbstractTestObject {
         RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "testapp9", new File(derbyRootDir, "testapp9"));
         try {
 
-            String location = "mvn:org.glassfish.fighterfish/test.app9/1.0.0-SNAPSHOT/war";
+            String location = "mvn:org.glassfish.fighterfish/test.app9/1.0.0-SNAPSHOT";
             Bundle bundle = installTestBundle(ctx, location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
             wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
