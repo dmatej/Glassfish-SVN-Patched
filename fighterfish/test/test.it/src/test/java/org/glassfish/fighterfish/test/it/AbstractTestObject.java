@@ -159,10 +159,17 @@ public class AbstractTestObject extends CommonConfiguration {
     }
 
     private void createDerbyPool(GlassFish gf, String poolName, File db) throws GlassFishException {
+        String dbDir = db.getAbsolutePath();
+        if (System.getProperty("os.name", "generic").toLowerCase().startsWith("windows")) {
+            // We need to escape : as well as backslashes.
+            // So, it should something like like C\:\\temp\\foo
+            dbDir = dbDir.replace("\\", "\\\\").replace(":", "\\:");
+	      System.out.println("derby dir name = " + dbDir);
+        }
         CommandResult result = gf.getCommandRunner().run("create-jdbc-connection-pool",
                 "--datasourceclassname=org.apache.derby.jdbc.EmbeddedXADataSource",
                 "--restype=javax.sql.XADataSource",
-                "--property", "databaseName=" + db.getAbsolutePath()+ ":" + "connectionAttributes=" + ";create\\=true",
+                "--property", "databaseName=" + dbDir+ ":" + "connectionAttributes=" + ";create\\=true",
                 poolName);
         if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
             Assert.fail(result.getOutput());
