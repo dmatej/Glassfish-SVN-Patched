@@ -632,6 +632,27 @@ public class T2_Test extends AbstractTestObject {
         }
     }
 
+    @Test
+    public void testapp17(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+        logger.entering("T2_Test", "testapp17", new Object[]{ctx});
+        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        try {
+            String location_wab = "mvn:org.glassfish.fighterfish/test.app17/1.0.0-SNAPSHOT/war";
+            Bundle bundle_wab = installTestBundle(ctx, location_wab);
+            WebAppBundle wab = new WebAppBundle(ctx, bundle_wab);
+            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS); // deployment is sufficient to test this bundle
+            String request = "/HelloWebServiceService?wsdl";
+            String response = wab.getResponse(request);
+            logger.logp(Level.INFO, "T2_Test", "testapp17", "response = {0}", new Object[]{response});
+            assertThat(response, new StringPatternMatcher("HelloWebServicePort"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.toString());
+        } finally {
+            uninstallAllTestBundles();
+        }
+    }
+
     //////////////////////////////////////////////////////////////////
     // Various utility methods used from test methods are found below.
     //////////////////////////////////////////////////////////////////
