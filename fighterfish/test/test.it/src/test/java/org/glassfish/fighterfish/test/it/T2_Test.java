@@ -57,11 +57,14 @@ import org.ops4j.pax.exam.spi.reactors.EagerSingleStagedReactorFactory;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -571,6 +574,60 @@ public class T2_Test extends AbstractTestObject {
             }
         }finally {
             rdc.restore();
+            uninstallAllTestBundles();
+        }
+    }
+
+    @Test
+    public void testapp16(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+        logger.entering("T2_Test", "testapp16", new Object[]{ctx});
+        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        final String cfName = "jms/fighterfish.TestApp16ConnectionFactory";
+        final String topicName = "jms/fighterfish.TestApp16Topic";
+        configureEmbeddedDerby(gf, "testapp16", new File(derbyRootDir, "testapp16"));
+        createJmsCF(gf, cfName);
+        createJmsTopic(gf, topicName);
+        try {
+            String location_entities = "mvn:org.glassfish.fighterfish/test.app16.entities/1.0.0-SNAPSHOT";
+            String location_msgproducer = "mvn:org.glassfish.fighterfish/test.app16.msgproducer/1.0.0-SNAPSHOT";
+            String location_mdb = "mvn:org.glassfish.fighterfish/test.app16.mdb/1.0.0-SNAPSHOT";
+            String location_wab = "mvn:org.glassfish.fighterfish/test.app16/1.0.0-SNAPSHOT/war";
+            String request = "/MessageReaderServlet";
+            Bundle bundle_entities = installTestBundle(ctx, location_entities);
+            bundle_entities.start();
+            Object service = OSGiUtil.waitForService(ctx, bundle_entities,
+                    "javax.persistence.EntityManagerFactory", TIMEOUT);
+            Assert.assertNotNull("Checking for EMF svc registered by entities bundle", service);
+            Bundle bundle_mdb = installTestBundle(ctx, location_mdb);
+            bundle_mdb.start();
+            Bundle bundle_msgproducer = installTestBundle(ctx, location_msgproducer);
+            bundle_msgproducer.start();
+            Bundle bundle_wab = installTestBundle(ctx, location_wab);
+            WebAppBundle wab = new WebAppBundle(ctx, bundle_wab);
+            // Note, bundle deployment happens in the same order as they are started
+            // Since we are not waiting for mdb deployment, let's wait double time for this to deploy.
+            wab.deploy(TIMEOUT*2, TimeUnit.MILLISECONDS);
+            String response = wab.getResponse(request);
+            assertThat(response, new StringPatternMatcher("Total number of messages: 0"));
+            ConfigurationAdmin ca = OSGiUtil.getService(ctx, ConfigurationAdmin.class, TIMEOUT);
+            final String pkgName = "org.glassfish.fighterfish.test.app16.msgproducer";
+            Configuration config = ca.getConfiguration(pkgName, null);
+            Properties props = new Properties();
+            props.setProperty(pkgName + ".ConnectionFactory", cfName);
+            props.setProperty(pkgName + ".Destination", topicName);
+            final Integer noOfMsgs = 2;
+            props.setProperty(pkgName + ".NoOfMsgs", noOfMsgs.toString());
+            config.update(props);
+            Thread.sleep(TIMEOUT); // Allow the config changes to be propagated and msg to reach destination
+            response = wab.getResponse(request);
+            // Because of bug GLASSFISH-16730, our MDB is not able to persist anything.
+            // Until then, use 0.
+            assertThat(response, new StringPatternMatcher("Total number of messages: " + 0));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.toString());
+        } finally {
+            restoreDomainConfiguration();
             uninstallAllTestBundles();
         }
     }

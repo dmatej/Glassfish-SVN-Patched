@@ -88,9 +88,6 @@ public class T1_SamplesTest extends AbstractTestObject {
             throws GlassFishException, InterruptedException, BundleException {
         logger.entering("T1_SamplesTest", "uas_sample_test", new Object[]{ctx});
         GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
-        // Allow autostart bundles to start otherwise some tests rely on JPA enhancement occasionally fail on
-        // multi core environment. This is not a good fix. GF should use start level instead.
-        Thread.sleep(10000); 
         RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "uas_sample_test", new File(derbyRootDir, "uas_sample_test"));
         try {
             Bundle uas_api_b = installTestBundle(ctx, uas_api);

@@ -68,6 +68,11 @@ public class AbstractTestObject extends CommonConfiguration {
      * List of bundles installed by a test method
      */
     protected List<Bundle> testBundles = new ArrayList<Bundle>();
+
+    /**
+     * List of config changes made by a test method
+     */
+    protected List<RestorableDomainConfiguration> rdcs = new ArrayList<RestorableDomainConfiguration>();
     private static final String DEFAULT_DS = "jdbc/__default";
     private static final String DEFAULT_POOL = "DerbyPool";
     protected static final File derbyRootDir = getDerbyDBRootDir();
@@ -117,6 +122,16 @@ public class AbstractTestObject extends CommonConfiguration {
         }
     }
 
+    protected void restoreDomainConfiguration() throws GlassFishException {
+        for (RestorableDomainConfiguration rdc : rdcs) {
+            try {
+                rdc.restore();
+            } catch (GlassFishException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     /**
      * Configures jdbc/__default datasource to use a custom pool that uses embedded derby.
      */
@@ -138,7 +153,7 @@ public class AbstractTestObject extends CommonConfiguration {
         if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
             Assert.fail(result.getOutput());
         }
-        return new RestorableDomainConfiguration() {
+        final RestorableDomainConfiguration rdc = new RestorableDomainConfiguration() {
             @Override
             public void restore() throws GlassFishException {
                 CommandResult result = gf.getCommandRunner().run("delete-jdbc-resource", DEFAULT_DS);
@@ -156,6 +171,8 @@ public class AbstractTestObject extends CommonConfiguration {
 
             }
         };
+        rdcs.add(rdc);
+        return rdc;
     }
 
     private void createDerbyPool(GlassFish gf, String poolName, File db) throws GlassFishException {
@@ -174,6 +191,38 @@ public class AbstractTestObject extends CommonConfiguration {
         if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
             Assert.fail(result.getOutput());
         }
+    }
+
+    protected RestorableDomainConfiguration createJmsCF(final GlassFish gf, final String cfName) throws GlassFishException {
+        final RestorableDomainConfiguration rdc = createJmsResource(gf, cfName, "javax.jms.ConnectionFactory");
+        rdcs.add(rdc);
+        return rdc;
+    }
+
+    protected RestorableDomainConfiguration createJmsTopic(final GlassFish gf, final String topicName) throws GlassFishException {
+        final RestorableDomainConfiguration rdc = createJmsResource(gf, topicName, "javax.jms.Topic");
+        rdcs.add(rdc);
+        return rdc;
+    }
+
+    protected RestorableDomainConfiguration createJmsQueue(final GlassFish gf, final String topicName) throws GlassFishException {
+        final RestorableDomainConfiguration rdc = createJmsResource(gf, topicName, "javax.jms.Queue");
+        rdcs.add(rdc);
+        return rdc;
+    }
+
+    private RestorableDomainConfiguration createJmsResource(final GlassFish gf, final String resName, final String resType) throws GlassFishException {
+        CommandResult result = gf.getCommandRunner().run("create-jms-resource", "--restype",
+                resType, resName);
+        if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
+            Assert.fail(result.getOutput());
+        }
+        return new RestorableDomainConfiguration() {
+            @Override
+            public void restore() throws GlassFishException {
+                gf.getCommandRunner().run("delete-jms-resource", resName);
+            }
+        };
     }
 
     protected static String getResponse(WebAppBundle wab, String loginRequest) {

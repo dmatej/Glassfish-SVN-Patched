@@ -56,7 +56,7 @@ public class OSGiUtil {
         try {
             return type.cast(st.getService());
         } finally {
-            st.close();
+//            st.close();
         }
     }
 
@@ -66,7 +66,7 @@ public class OSGiUtil {
         try {
             return type.cast(st.waitForService(timeout));
         } finally {
-            st.close();
+//            st.close();
         }
     }
 
@@ -101,7 +101,7 @@ public class OSGiUtil {
         try {
             s = st.waitForService(timeout);
         } finally {
-            st.close();
+//            st.close();
         }
         return s;
     }
