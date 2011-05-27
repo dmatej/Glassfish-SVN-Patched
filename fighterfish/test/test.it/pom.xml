@@ -161,29 +161,14 @@
     </build>
     <profiles>
         <profile>
-            <id>default</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <properties>
-                <argLine>-XX:MaxPermSize=256m</argLine>
-            </properties>
-        </profile>
-        <profile>
-            <id>debug</id>
-            <properties>
-                <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=9009</maven.surefire.debug>
-            </properties>
-        </profile>
-        <profile>
-            <!-- Add tools.jar to classpath as required by GlassFish. See ASMainHelper#createOSGiFrameworkLauncherCL -->
-            <id>tools-jar</id>
+            <id>ToolsJar</id>
             <activation>
                 <os>
                     <family>!mac</family>
                 </os>
             </activation>
             <dependencies>
+                <!-- Add tools.jar to classpath as required by GlassFish. See ASMainHelper#createOSGiFrameworkLauncherCL -->
                 <dependency>
                     <groupId>com.sun</groupId>
                     <artifactId>tools</artifactId>
@@ -195,22 +180,15 @@
         </profile>
 
         <profile>
-            <id>IBM-J9-VM</id>
-            <activation>
-                <property>
-                   <name>java.vm.name</name>
-                   <value>IBM J9 VM</value>
-                </property>
-            </activation>
-            <properties>
-                <argLine>-XX:MaxPermSize=256m -Xverify:none</argLine>
-            </properties>
-        </profile>
-
-        <profile>
             <id>Felix</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <!-- We can't use activeByDefault, as such a profile is not selected when any other profile is selected
+                     because of explicit user request or because of activation rule.
+                     We don't want everyone to pass -PFelix either. So, we activate it using a rule
+                     which will always match. If you want this profile to be inactive (e.g. when running 
+                     using Equinox), then you have to pass -P-Felix.
+                -->
+                <jdk>[1.6,1000)</jdk>
             </activation>
             <dependencies>
                 <dependency>
@@ -223,6 +201,7 @@
                 <GlassFish_Platform>Felix</GlassFish_Platform>
             </properties>
         </profile>
+
         <profile>
             <id>Equinox</id>
             <activation>
@@ -247,5 +226,43 @@
                 <GlassFish_Platform>Equinox</GlassFish_Platform>
             </properties>
         </profile>
+
+        <profile>
+            <id>SunJVM</id>
+            <activation>
+                <property>
+                   <name>java.vm.vendor</name>
+                   <value>Sun Microsystems Inc.</value>
+                </property>
+            </activation>
+            <properties>
+                <argLine>-XX:MaxPermSize=256m</argLine>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>IBM-J9-VM</id>
+            <activation>
+                <property>
+                   <name>java.vm.name</name>
+                   <value>IBM J9 VM</value>
+                </property>
+            </activation>
+            <properties>
+                <argLine>-XX:MaxPermSize=256m -Xverify:none</argLine>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>Debug</id>
+            <properties>
+                <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=9009</maven.surefire.debug>
+            </properties>
+        </profile>
+
     </profiles>
+    
+    <properties>
+        <glassfish.home>/space/ss141213/WS/gf/v3/publish/glassfish3/glassfish</glassfish.home>
+    </properties>
 </project>
