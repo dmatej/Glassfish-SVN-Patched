@@ -120,7 +120,14 @@ public class JPAExtender implements Extender, SynchronousBundleListener {
                     final Runnable runnable = new Runnable() {
                         public void run() {
                             if (tryResolve(bundle)) {
-                                enhance(bi, true);
+                                // don't refreshPackages. See GLASSFISH-16754 for kind of ripple effect that
+                                // can occur because of refreshPackages even when there are no other dependencies
+                                // for a bundle. More over, since we are enhacing at installation time,
+                                // I don't see how any other bundle would have used our packages unless user installs
+                                // bundles using multiple threads.
+                                // In such a case, they can always call refreshPackages themselves after installing
+                                // a jpa bundle.
+                                enhance(bi, false);
                             } else {
                                 logger.log(Level.INFO, "Bundle having id {0} can't be resolved now, " +
                                         "so adding to a list so that we can enhance it when it gets resolved in future",
