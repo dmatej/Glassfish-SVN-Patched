@@ -95,8 +95,9 @@ public class AbstractTestObject extends CommonConfiguration {
      */
     protected Bundle installTestBundle(BundleContext ctx, String location) throws BundleException {
         final Bundle bundle = ctx.installBundle(location);
+        logger.logp(Level.INFO, "AbstractTestObject", "installTestBundle", "Installing bundle = {0}", new Object[]{bundle});
         testBundles.add(bundle);
-        logger.logp(Level.INFO, "AbstractTestObject", "installTestBundle", "bundle = {0}", new Object[]{bundle});
+        logger.logp(Level.INFO, "AbstractTestObject", "installTestBundle", "Installed bundle = {0}", new Object[]{bundle});
         return bundle;
     }
 
@@ -108,8 +109,9 @@ public class AbstractTestObject extends CommonConfiguration {
      */
     protected void uninstallTestBundle(Bundle bundle) throws BundleException {
         if (testBundles.remove(bundle)) {
+            logger.logp(Level.INFO, "AbstractTestObject", "uninstallTestBundle", "Uninstalling bundle = {0}", new Object[]{bundle});
             bundle.uninstall();
-            logger.logp(Level.INFO, "AbstractTestObject", "uninstallTestBundle", "bundle = {0}", new Object[]{bundle});
+            logger.logp(Level.INFO, "AbstractTestObject", "uninstallTestBundle", "Uninstalled bundle = {0}", new Object[]{bundle});
         } else {
             throw new RuntimeException(bundle + " is not a test bundle");
         }
