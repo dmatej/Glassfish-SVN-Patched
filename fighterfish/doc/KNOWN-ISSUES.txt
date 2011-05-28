@@ -1,0 +1,27 @@
+1. org.eclipse.persistence.exceptions.DescriptorException during WAB or EJB bundle deployment as shown below:
+[#|2011-05-26T18:01:37.559+0530|FINEST|glassfish3.2|org.eclipse.persistence.default|_ThreadID=72;_ThreadName=Thread-118;ClassName=null;MethodName=null;|An expected weaving method [_persistence_get_userCredential_vh] was not found on the accessor [org.eclipse.persistence.internal.descriptors.MethodAttributeAccessor@14aa236] on the mapping [null] - verify that the processing order of your modules places the one containing a persistence unit ahead of modules that use it in your deployment descriptor, or disable weaving for the persistence context or the mapping using FetchType.EAGER.|#]
+
+[#|2011-05-26T18:01:37.601+0530|SEVERE|glassfish3.2|org.eclipse.persistence.session.file:/tmp/osgiapp1862661567566016854/_sample.uas.entities|_ThreadID=72;_ThreadName=Thread-118;|Local Exception Stack:
+Exception [EclipseLink-0] (Eclipse Persistence Services - 2.2.0.v20110202-r8913): org.eclipse.persistence.exceptions.IntegrityException
+Descriptor Exceptions:
+---------------------------------------------------------
+
+Exception [EclipseLink-60] (Eclipse Persistence Services - 2.2.0.v20110202-r8913): org.eclipse.persistence.exceptions.DescriptorException
+Exception Description: The method [_persistence_set_userCredential_vh] or [_persistence_get_userCredential_vh] is not defined in the object [org.glassfish.fighterfish.sample.uas.entities.LoginAttempt].
+Internal Exception: java.lang.NoSuchMethodException: org.glassfish.fighterfish.sample.uas.entities.LoginAttempt._persistence_get_userCredential_vh()
+Mapping: org.eclipse.persistence.mappings.ManyToOneMapping[userCredential]
+Descriptor: RelationalDescriptor(org.glassfish.fighterfish.sample.uas.entities.LoginAttempt --> [DatabaseTable(LOGINATTEMPT)])
+
+Exception [EclipseLink-218] (Eclipse Persistence Services - 2.2.0.v20110202-r8913): org.eclipse.persistence.exceptions.DescriptorException
+Exception Description: A NullPointerException would have occurred accessing a non-existent weaved _vh_ method [_persistence_get_userCredential_vh].  The class was not weaved properly - for EE deployments, check the module order in the application.xml deployment descriptor and verify that the module containing the persistence unit is ahead of any other module that uses it.
+
+Cause: This happens if a bundle could not be enhanced before it is used. 
+There are two conditions under which a bundle fails to get enhanced:
+a) If a bundle depends on other bundles which are not available at bundle installation time,
+such a bundle can't be enhanced at installation time.
+
+b) If osgi-jpa.jar is not active for whatever reason.
+
+Solution:
+If such a bundle uses JPA in Java EE mode, then it should configure its persistence.xml to disable weaving to avoid seeing this exception.
+Weaving can be disabled using eclipselink.weaving=false in persistence.xml.
