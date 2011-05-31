@@ -39,54 +39,62 @@
  */
 package org.glassfish.fighterfish.sample.osgihttp.helloworld;
 
-import javax.servlet.ServletException;
-
-import org.osgi.service.component.ComponentContext;
-import org.osgi.service.http.HttpContext;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
+import org.osgi.util.tracker.ServiceTracker;
 
 /**
- * This class is an SCR component. It registers servlets and resources in activate() method
- * and unregisters them in deactivate() method. It consumes a service of type HttpService. The 
- * service reference is bound and unbound in setHttp() and unsetHttp() method respectively as
- * specified in scr.xml file.
+ * This activator demonstrates how to use HttpService using a ServiceTracker
  * 
- * @author sanjeeb.sahoo@oracle.com
+ * The secondary reason for having this activator is that it causes HttpService class to be loaded
+ * which in turn activates osgi-http bundle of GlassFish, which uses lazy activation policy.
+ *  
+ * @author Sanjeeb.Sahoo@Oracle.com
  *
  */
-public class Main {
-	private HttpService http; // Set and unset by setHttp() and unsetHttp() methods that are called by SCR. See scr.xml
+public class HelloWorldHttpActivator implements BundleActivator {
 
-	protected void activate(ComponentContext ctx) throws ServletException, NamespaceException {
-		// Create an HttpContext and use it for all web resource registration so that they all
-		// share the same ServletContext. Note: one HttpContext maps o one ServletContext.
-		HttpContext httpCtx = http.createDefaultHttpContext();
-		http.registerServlet("/hello", new HelloWorldServlet(), null, httpCtx);
-		// add another instance of the servlet as /hello2 to demonstrate that ServletContext is indeed
-		// shared by all the servlet instances.
-		http.registerServlet("/hello2", new HelloWorldServlet(), null, httpCtx);
-		// Map index.jsp to foo.jsp
-		http.registerResources("/index.jsp", "/foo.jsp", httpCtx);
+	volatile ServiceTracker tracker;
+	
+	@Override
+	public void start(BundleContext context) throws Exception {
+		tracker = new ServiceTracker(context, HttpService.class.getName(), null) {
+
+			@Override
+			public Object addingService(ServiceReference reference) {
+				// TODO Auto-generated method stub
+				HttpService http = HttpService.class.cast(context.getService(reference));
+				try {
+					http.registerResources("/hello.html", "helloworld.html", null);
+				} catch (NamespaceException e) {
+					e.printStackTrace();
+				}
+				return super.addingService(reference);
+			}
+
+			@Override
+			public void removedService(ServiceReference reference,
+					Object service) {
+				HttpService http = HttpService.class.cast(context.getService(reference));
+				try {
+					http.unregister("/hello.html");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				super.removedService(reference, service);
+			}
+		};
+		tracker.open();
+
 	}
 
-	protected void deactivate(ComponentContext ctx) {
-		try {
-			http.unregister("/hello");
-			http.unregister("/hello2");
-			http.unregister("/index.jsp");
-		} catch (Exception e) {
-			// This can happen if the HttpService has been undpeloyed in which case as part of its undepoyment,
-			// it would have unregistered all aliases. So, we should protect against such a case.
-			System.out.println(e);
-		}
+	@Override
+	public void stop(BundleContext context) throws Exception {
+		tracker.close();
+		tracker = null;
 	}
-	
-	protected void setHttp(HttpService http) {
-		this.http = http;
-	}
-	
-	protected void unsetHttp(HttpService http) {
-		this.http = null;
-	}
+
 }
