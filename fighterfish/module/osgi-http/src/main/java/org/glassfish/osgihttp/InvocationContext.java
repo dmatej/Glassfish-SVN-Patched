@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -38,54 +38,18 @@
  * holder.
  */
 
+
 package org.glassfish.osgihttp;
 
-import javax.servlet.ServletConfig;
+import com.sun.enterprise.web.WebModule;
+
 import javax.servlet.ServletContext;
-import java.util.Collections;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
+ *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-public class OSGiServletConfig implements ServletConfig {
-
-    private String servletName;
-    private ServletContext servletContext;
-    private Map<String, String> initParams = new HashMap<String, String>();
-
-    public OSGiServletConfig(String servletName,
-                             ServletContext servletContext,
-                             Dictionary initParams) {
-        this.servletName = servletName;
-        this.servletContext = servletContext;
-        if (initParams != null) {
-            Enumeration e = initParams.keys();
-            while (e.hasMoreElements()) {
-                final Object key = e.nextElement();
-                this.initParams.put((String) key,
-                        (String) initParams.get(key));
-            }
-        }
-    }
-
-    public String getServletName() {
-        return servletName;
-    }
-
-    public ServletContext getServletContext() {
-        return servletContext;
-    }
-
-    public String getInitParameter(String name) {
-        return initParams.get(name);
-    }
-
-    public Enumeration getInitParameterNames() {
-        return Collections.enumeration(initParams.keySet());
-    }
-
+public interface InvocationContext {
+    WebModule getWebModule();
+    void setWebModule(WebModule webModule);
 }

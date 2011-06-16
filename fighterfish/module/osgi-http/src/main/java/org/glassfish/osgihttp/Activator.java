@@ -40,34 +40,48 @@
 
 package org.glassfish.osgihttp;
 
+import com.sun.enterprise.config.serverbeans.Config;
+import com.sun.enterprise.config.serverbeans.Domain;
+import com.sun.enterprise.config.serverbeans.Server;
+import com.sun.enterprise.config.serverbeans.VirtualServer;
 import com.sun.enterprise.web.WebContainer;
 import com.sun.enterprise.web.WebModule;
 import com.sun.enterprise.web.WebModuleConfig;
-import com.sun.enterprise.config.serverbeans.Domain;
-import com.sun.enterprise.config.serverbeans.Server;
-import com.sun.enterprise.config.serverbeans.Config;
-import com.sun.enterprise.config.serverbeans.VirtualServer;
+import org.apache.catalina.Container;
 import org.apache.catalina.Engine;
 import org.apache.catalina.Host;
-import org.apache.catalina.Realm;
-import org.apache.catalina.Container;
 import org.apache.catalina.Manager;
+import org.apache.catalina.Realm;
+import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.ContextConfig;
-import org.apache.catalina.core.StandardContext;
 import org.glassfish.api.admin.ServerEnvironment;
-import org.glassfish.api.event.*;
 import org.glassfish.api.event.EventListener;
-import org.glassfish.internal.api.Globals;
+import org.glassfish.api.event.EventTypes;
+import org.glassfish.api.event.Events;
 import org.glassfish.internal.api.ClassLoaderHierarchy;
-import org.osgi.framework.*;
+import org.glassfish.internal.api.Globals;
+import org.glassfish.web.valve.GlassFishValve;
+import org.jvnet.hk2.component.Habitat;
+import org.osgi.framework.BundleActivator;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
+import org.osgi.framework.ServiceReference;
+import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.http.HttpService;
 import org.osgi.util.tracker.ServiceTracker;
-import org.jvnet.hk2.component.Habitat;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.StringTokenizer;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
 
 /**
  * This is the entry point to our implementation of OSGi/HTTP service.
@@ -83,7 +97,7 @@ import java.util.*;
 public class Activator implements BundleActivator {
 
     // TODO(Sahoo): Use config admin to configure context path, virtual server, etc.
-    
+
     private BundleContext bctx;
     private Map<String, Host> vss = new HashMap<String, Host>();
     private String contextPath;
@@ -94,6 +108,9 @@ public class Activator implements BundleActivator {
     private static final String CONTEXT_PATH_PROP =
             Activator.class.getPackage().getName() + ".ContextPath";
     private ServiceTracker serverTracker;
+    private WebModule standardContext;
+
+    private Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
     public void start(BundleContext context) throws Exception {
         bctx = context;
@@ -108,6 +125,7 @@ public class Activator implements BundleActivator {
      * While registering the service for the default virtual server, it sets the service.ranking
      * to the maximum value so that any client just looking for an HTTPService gets to see the
      * HTTPService bound to default virtual server.
+     *
      * @param webContainer
      */
     private void doActualWork(WebContainer webContainer) {
@@ -116,8 +134,13 @@ public class Activator implements BundleActivator {
         while (vsIds.hasMoreTokens()) {
             String vsId = vsIds.nextToken().trim();
             try {
-                StandardContext standardContext = getStandardContext(webContainer, vsId);
-                if (standardContext == null) continue;
+                createRootWebModule(webContainer, vsId);
+                if (standardContext == null) {
+                    logger.logp(Level.WARNING, "Activator", "doActualWork",
+                            "GlassFishHttpService will not be available for for virtual server = {0}, " +
+                                    "because we are not able to create root web app.", new Object[]{vsId});
+                    continue;
+                }
                 GlassFishHttpService httpService = new GlassFishHttpService(standardContext);
                 Properties props = new Properties();
                 props.put("VirtualServer", vsId);
@@ -134,10 +157,10 @@ public class Activator implements BundleActivator {
         }
     }
 
-    private StandardContext getStandardContext(WebContainer webContainer, String vsId) throws Exception {
+    private void createRootWebModule(WebContainer webContainer, String vsId) throws Exception {
         Engine engine = webContainer.getEngine();
         Host vs = (Host) engine.findChild(vsId);
-        if (vs == null) return null; // this can happen if some one deleted a virtual server after we read domain.xml
+        if (vs == null) return; // this can happen if some one deleted a virtual server after we read domain.xml
         vss.put(vsId, vs);
         contextPath = bctx.getProperty(CONTEXT_PATH_PROP);
         if (contextPath == null) {
@@ -145,7 +168,7 @@ public class Activator implements BundleActivator {
         }
         // create a new context under which all OSGi HTTP wrappers
         // will be registered.
-        WebModule standardContext = new WebModule();
+        standardContext = new WebModule();
         standardContext.setWebContainer(webContainer);
         standardContext.setName(contextPath);
         standardContext.setPath(contextPath);
@@ -166,18 +189,18 @@ public class Activator implements BundleActivator {
         standardContext.setParentClassLoader(getCommonClassLoader());
         standardContext.setWebModuleConfig(wmConfig);
 
+        // See  See GLASSFISH-16764 for more details about this valve
+        standardContext.addValve((GlassFishValve) new OSGiHttpContextValve());
         // Since there is issue about locating user classes that are part
         // of some OSGi bundle while deserializing, we switch off session
         // persistence.
         switchOffSessionPersistence(standardContext);
         vs.addChild(standardContext);
-//        StandardContext standardContext =
-//                StandardContext.class.cast(vs.findChild(contextPath));
-        return standardContext;
+        logger.logp(Level.INFO, "Activator", "createRootWebModule", "standardContext = {0}",
+                new Object[]{standardContext});
     }
 
-    private ClassLoader getCommonClassLoader()
-    {
+    private ClassLoader getCommonClassLoader() {
         ClassLoaderHierarchy clh =
                 Globals.getDefaultHabitat().getComponent(ClassLoaderHierarchy.class);
         return clh.getAPIClassLoader();
@@ -211,8 +234,9 @@ public class Activator implements BundleActivator {
             try {
                 StandardManager.class.cast(mgr).setPathname(null);
             } catch (ClassCastException cce) {
-                System.out.println(mgr +
-                        " does not allow path name of session store to be configured.");
+                logger.logp(Level.INFO, "Activator", "switchOffSessionPersistence",
+                        "SessionManager {0} does not allow path name of session store to be configured.",
+                        new Object[]{mgr});
             }
         }
     }
@@ -222,20 +246,17 @@ public class Activator implements BundleActivator {
      * that takes care of doing the actual work.
      */
     private class GlassFishServerTracker extends ServiceTracker {
-        public GlassFishServerTracker(BundleContext context)
-        {
+        public GlassFishServerTracker(BundleContext context) {
             super(context, Habitat.class.getName(), null);
         }
 
         @Override
-        public Object addingService(ServiceReference reference)
-        {
+        public Object addingService(ServiceReference reference) {
             ServiceReference habitatServiceRef = context.getServiceReference(Habitat.class.getName());
             final Habitat habitat = Habitat.class.cast(context.getService(habitatServiceRef));
             Events events = habitat.getComponent(Events.class);
             EventListener listener = new org.glassfish.api.event.EventListener() {
-                public void event(Event event)
-                {
+                public void event(Event event) {
                     if (EventTypes.SERVER_READY.equals(event.type())) {
                         WebContainer wc = habitat.getComponent(WebContainer.class);
                         doActualWork(wc);
@@ -316,7 +337,8 @@ public class Activator implements BundleActivator {
             Object httpProtocolObj = findHttpProtocolMethod.invoke(networkListenerObj);
             final Object httpObj = httpProtocolObj.getClass().getMethod("getHttp").invoke(httpProtocolObj);
             final String defaultVirtualServer = (String) httpObj.getClass().getMethod("getDefaultVirtualServer").invoke(httpObj);
-            System.out.println("Activator.getDefaultVirtualServer: " + defaultVirtualServer);
+            logger.logp(Level.INFO, "Activator", "getDefaultVirtualServer", "defaultVirtualServer = {0}",
+                    new Object[]{defaultVirtualServer});
             return defaultVirtualServer;
         } catch (NoSuchMethodException e) {
             throw new RuntimeException(e);

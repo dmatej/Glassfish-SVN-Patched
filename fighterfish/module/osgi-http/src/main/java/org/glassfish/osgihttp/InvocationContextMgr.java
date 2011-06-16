@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -38,54 +38,47 @@
  * holder.
  */
 
+
 package org.glassfish.osgihttp;
 
-import javax.servlet.ServletConfig;
+import com.sun.enterprise.web.WebModule;
+
 import javax.servlet.ServletContext;
-import java.util.Collections;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.lang.ref.WeakReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-public class OSGiServletConfig implements ServletConfig {
+public class InvocationContextMgr {
 
-    private String servletName;
-    private ServletContext servletContext;
-    private Map<String, String> initParams = new HashMap<String, String>();
+    private static final InvocationContext invCtx = new InvocationContext() {
+        private final Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
-    public OSGiServletConfig(String servletName,
-                             ServletContext servletContext,
-                             Dictionary initParams) {
-        this.servletName = servletName;
-        this.servletContext = servletContext;
-        if (initParams != null) {
-            Enumeration e = initParams.keys();
-            while (e.hasMoreElements()) {
-                final Object key = e.nextElement();
-                this.initParams.put((String) key,
-                        (String) initParams.get(key));
-            }
+        private ThreadLocal<WeakReference<ServletContext>> currentSC =
+                new InheritableThreadLocal<WeakReference<ServletContext>>();
+
+        private ThreadLocal<WeakReference<WebModule>> currentWM =
+                new InheritableThreadLocal<WeakReference<WebModule>>();
+
+        @Override
+        public WebModule getWebModule() {
+            WeakReference<WebModule> current = currentWM.get();
+            WebModule result = current != null ? current.get() : null;
+            logger.logp(Level.FINE, "InvocationContextMgr", "getWebModule", "result = {0}", new Object[]{result});
+            return result;
         }
-    }
 
-    public String getServletName() {
-        return servletName;
-    }
+        @Override
+        public void setWebModule(WebModule webModule) {
+            logger.logp(Level.FINE, "InvocationContextMgr", "setWebModule", "webModule = {0}", new Object[]{webModule});
+            currentWM.set(webModule != null ? new WeakReference<WebModule>(webModule) : null);
+        }
+        
+    };
 
-    public ServletContext getServletContext() {
-        return servletContext;
+    public static InvocationContext getInvocationContext() {
+        return invCtx;
     }
-
-    public String getInitParameter(String name) {
-        return initParams.get(name);
-    }
-
-    public Enumeration getInitParameterNames() {
-        return Collections.enumeration(initParams.keySet());
-    }
-
 }

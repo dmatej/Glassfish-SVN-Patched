@@ -40,10 +40,15 @@
 
 package org.glassfish.osgihttp;
 
+import com.sun.enterprise.web.ContextFacade;
+import com.sun.enterprise.web.WebModule;
+import org.apache.catalina.LifecycleException;
+import org.apache.catalina.session.StandardManager;
 import org.osgi.service.http.HttpContext;
 
 import javax.servlet.*;
 import javax.servlet.descriptor.JspConfigDescriptor;
+import java.io.File;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -64,15 +69,28 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-public class OSGiServletContext implements ServletContext {
+public class OSGiServletContext extends ContextFacade {
 
-    // server wide context
-    private final ServletContext delegate;
     private final HttpContext httpContext;
+
     private final Map<String, Object> attributes = new ConcurrentHashMap<String, Object>();
 
-    public OSGiServletContext(ServletContext delegate, HttpContext httpContext) {
-        this.delegate = delegate;
+    public OSGiServletContext(WebModule delegate, HttpContext httpContext) {
+        super(new File(delegate.getDocBase()), delegate.getContextPath(), delegate.getClassLoader());
+        setUnwrappedContext(delegate);
+        setName(delegate.getName());
+        setPath(delegate.getPath());
+        setWebContainer(delegate.getWebContainer());
+        setJ2EEServer(delegate.getJ2EEServer());
+        setWebModuleConfig(delegate.getWebModuleConfig());
+        setParentClassLoader(delegate.getParentClassLoader());
+        setRealm(delegate.getRealm());
+        setParent(delegate.getParent());
+        // Set a new manager to have a different HttpSession for this context
+        StandardManager mgr = new StandardManager();
+        mgr.setPathname(null); // we switch off Session Persistence due to issues in deserialization
+        setManager(mgr);
+//        mgr.setMaxActiveSessions(100);
         this.httpContext = httpContext;
     }
 
@@ -80,58 +98,21 @@ public class OSGiServletContext implements ServletContext {
         return attributes.get(name);
     }
 
+    public void setAttribute(String name, Object value) {
+        attributes.put(name, value);
+    }
+
     public Enumeration getAttributeNames() {
         return Collections.enumeration(attributes.keySet());
     }
 
-    public String getContextPath() {
-        return delegate.getContextPath();
-    }
-
-    public ServletContext getContext(String uri) {
-        // TODO(Sahoo): This needs to be looked at
-        return delegate.getContext(uri);
-    }
-
-    public String getInitParameter(final String name) {
-        return delegate.getInitParameter(name);
-    }
-
-    public Enumeration getInitParameterNames() {
-        return delegate.getInitParameterNames();
-    }
-
-    public int getMajorVersion() {
-        return delegate.getMajorVersion();
-    }
-
-    public int getMinorVersion() {
-        return delegate.getMinorVersion();
-    }
-
-    public int getEffectiveMajorVersion() {
-        return delegate.getEffectiveMajorVersion();
-    }
-
-    public int getEffectiveMinorVersion() {
-        return delegate.getEffectiveMinorVersion();
+    public void removeAttribute(String name) {
+        attributes.remove(name);
     }
 
     public String getMimeType(String file) {
         String mimeType = httpContext.getMimeType(file);
-        return mimeType != null ? mimeType : delegate.getMimeType(file);
-    }
-
-    public RequestDispatcher getNamedDispatcher(String name) {
-        return delegate.getNamedDispatcher(name);
-    }
-
-    public String getRealPath(String path) {
-        return delegate.getRealPath(path);
-    }
-
-    public RequestDispatcher getRequestDispatcher(String path) {
-        return delegate.getRequestDispatcher(path);
+        return mimeType != null ? mimeType : super.getMimeType(file);
     }
 
     public URL getResource(String path) throws MalformedURLException {
@@ -147,206 +128,4 @@ public class OSGiServletContext implements ServletContext {
         return null;
     }
 
-    public Set getResourcePaths(String path) {
-        throw new UnsupportedOperationException("Not yet implemented"); // TODO(Sahoo):
-    }
-
-    public String getServerInfo() {
-        return delegate.getServerInfo();
-    }
-
-    public Servlet getServlet(String name) throws ServletException {
-        return delegate.getServlet(name);
-    }
-
-    public String getServletContextName() {
-        return delegate.getServletContextName();
-    }
-
-    public Enumeration getServletNames() {
-        return delegate.getServletNames();
-    }
-
-    public Enumeration getServlets() {
-        return delegate.getServlets();
-    }
-
-    public void log(String message) {
-        delegate.log(message);
-    }
-
-    public void log(Exception exception, String message) {
-        delegate.log(exception, message);
-    }
-
-    public void log(String message, Throwable throwable) {
-        delegate.log(message, throwable);
-    }
-
-    public void removeAttribute(String name) {
-        attributes.remove(name);
-    }
-
-    public void setAttribute(String name, Object value) {
-        attributes.put(name, value);
-    }
-
-    public ServletRegistration.Dynamic addServlet(
-            String servletName, String className) {
-        throw new UnsupportedOperationException(); // TODO(Sahoo):
-    }
-
-    public void addServletMapping(String servletName, String[] urlPatterns) {
-        throw new UnsupportedOperationException(); // TODO(Sahoo):
-    }
-
-    public FilterRegistration.Dynamic addFilter(
-            String filterName, String className) {
-        throw new UnsupportedOperationException(); // TODO(Sahoo):
-    }
-
-    public void addFilterMappingForServletNames(String filterName, EnumSet<DispatcherType> dispatcherTypes, boolean isMatchAfter, String... servletNames) {
-        throw new UnsupportedOperationException(); // TODO(Sahoo):
-    }
-
-    public void addFilterMappingForUrlPatterns(String filterName, EnumSet<DispatcherType> dispatcherTypes, boolean isMatchAfter, String... urlPatterns) {
-        throw new UnsupportedOperationException(); // TODO(Sahoo):
-    }
-
-    public void setSessionCookieConfig(SessionCookieConfig sessionCookieConfig) {
-        throw new UnsupportedOperationException(); // TODO(Sahoo):
-    }
-
-    public SessionCookieConfig getSessionCookieConfig() {
-        throw new UnsupportedOperationException(); // TODO(Sahoo):
-    }
-
-    public void setSessionTrackingModes(EnumSet<SessionTrackingMode> sessionTrackingModes) {
-        throw new UnsupportedOperationException(); // TODO(Sahoo):
-    }
-
-    public EnumSet<SessionTrackingMode> getDefaultSessionTrackingModes() {
-        throw new UnsupportedOperationException(); // TODO(Sahoo):
-    }
-
-    public EnumSet<SessionTrackingMode> getEffectiveSessionTrackingModes() {
-        throw new UnsupportedOperationException(); // TODO(Sahoo):
-    }
-
-    public boolean setInitParameter(String name, String value) {
-        return delegate.setInitParameter(name, value);
-    }
-
-    /*
-    * Adds the servlet with the given name and class type to this servlet
-    * context.
-    *
-    * <p>The registered servlet may be further configured via the returned
-    * {@link ServletRegistration} object.
-    *
-    * @param servletName the name of the servlet
-    * @param servletClass the class object from which the servlet will be
-    * instantiated
-    *
-    * @return a ServletRegistration object that may be used to further
-    * configure the registered servlet, or <tt>null</tt> if this
-    * ServletContext already contains a servlet with a matching name
-    * @throws IllegalStateException if this ServletContext has already
-    * been initialized
-    *
-    * @since 3.0
-    */
-    public ServletRegistration.Dynamic addServlet(
-            String servletName, Class<? extends Servlet> servletClass)
-    {
-        return null;  //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public ServletRegistration getServletRegistration(String servletName)
-    {
-        return null;  //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public Map<String, ServletRegistration> getServletRegistrations()
-    {
-        return null;  //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public FilterRegistration.Dynamic addFilter(
-            String filterName, Class<? extends Filter> filterClass)
-    {
-        return null;  //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public FilterRegistration getFilterRegistration(String filterName)
-    {
-        return null;  //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public Map<String, FilterRegistration> getFilterRegistrations()
-    {
-        return null;  //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public ServletRegistration.Dynamic addServlet(
-            String servletName, Servlet servlet)
-    {
-        return null;  //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public FilterRegistration.Dynamic addFilter(
-            String filterName, Filter filter)
-    {
-        return null;  //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public void setSessionTrackingModes(Set<SessionTrackingMode> sessionTrackingModes)
-    {
-        //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public <T extends Servlet> T createServlet(Class<T> c)
-        throws ServletException
-    {
-        return null; //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public <T extends Filter> T createFilter(Class<T> c)
-        throws ServletException
-    {
-        return null; //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public void addListener(String className)
-    {
-        //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public <T extends EventListener> void addListener(T t) 
-    {
-        //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public void addListener(Class <? extends EventListener> listenerClass)
-    {
-        //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public <T extends EventListener> T createListener(Class<T> c)
-            throws ServletException {
-        return null; //TODO(Sahoo): Not Yet Implemented
-    }
-
-    public JspConfigDescriptor getJspConfigDescriptor()
-    {
-        return delegate.getJspConfigDescriptor();
-    }
-
-    public ClassLoader getClassLoader() {
-        return delegate.getClassLoader();
-    }
-
-    public void declareRoles(String... roleNames) {
-        delegate.declareRoles(roleNames);
-    }
 }

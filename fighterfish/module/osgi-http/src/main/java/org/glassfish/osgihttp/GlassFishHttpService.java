@@ -40,8 +40,8 @@
 
 package org.glassfish.osgihttp;
 
+import com.sun.enterprise.web.WebModule;
 import org.apache.catalina.Container;
-import org.apache.catalina.Context;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.NamespaceException;
 import org.glassfish.web.valve.GlassFishValve;
@@ -64,13 +64,12 @@ public class GlassFishHttpService {
     /**
      * Root context with which all wrappers are registered.
      */
-    private Context context;
+    private WebModule context;
 
     private Map<HttpContext, OSGiServletContext> servletContextMap =
             new HashMap<HttpContext, OSGiServletContext>();
 
-
-    public GlassFishHttpService(Context context) {
+    public GlassFishHttpService(WebModule context) {
         this.context = context;
     }
 
@@ -86,7 +85,7 @@ public class GlassFishHttpService {
         OSGiServletContext servletContext =
                 servletContextMap.get(httpContext);
         if (servletContext == null) {
-            servletContext = new OSGiServletContext(context.getServletContext(),
+            servletContext = new OSGiServletContext(context,
                     httpContext);
             servletContextMap.put(httpContext, servletContext);
         }
@@ -95,9 +94,9 @@ public class GlassFishHttpService {
         // so we use the alias as the servlet name. It is unique, so no issues.
         String wrapperName = alias;
         OSGiServletConfig servletConfig =
-                new OSGiServletConfig(wrapperName, servletContext, initParams);
+                new OSGiServletConfig(wrapperName, servletContext.getServletContext(), initParams);
         OSGiServletWrapper wrapper = new OSGiServletWrapper(
-                wrapperName, servlet, servletConfig, convert(alias));
+                wrapperName, servlet, servletConfig, convert(alias), servletContext);
         wrapper.addValve((GlassFishValve)new OSGiSecurityValve(httpContext));
         context.addChild(wrapper);
         try {
@@ -114,7 +113,7 @@ public class GlassFishHttpService {
         OSGiServletContext servletContext =
                 servletContextMap.get(httpContext);
         if (servletContext == null) {
-            servletContext = new OSGiServletContext(context.getServletContext(),
+            servletContext = new OSGiServletContext(context,
                     httpContext);
             servletContextMap.put(httpContext, servletContext);
         }
@@ -123,9 +122,9 @@ public class GlassFishHttpService {
         // so we use the alias as the servlet name. It is unique, so no issues.
         String wrapperName = alias;
         OSGiServletConfig servletConfig =
-                new OSGiServletConfig(wrapperName, servletContext, null);
+                new OSGiServletConfig(wrapperName, servletContext.getServletContext(), null);
         OSGiServletWrapper wrapper = new OSGiServletWrapper(
-                wrapperName, servlet, servletConfig, convert(alias));
+                wrapperName, servlet, servletConfig, convert(alias), servletContext);
         wrapper.addValve((GlassFishValve)new OSGiSecurityValve(httpContext));
         context.addChild(wrapper);
         try {

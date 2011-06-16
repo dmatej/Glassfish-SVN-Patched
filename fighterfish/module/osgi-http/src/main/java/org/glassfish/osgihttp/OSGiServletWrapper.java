@@ -40,11 +40,13 @@
 
 package org.glassfish.osgihttp;
 
+import com.sun.enterprise.web.WebModule;
 import org.apache.catalina.Wrapper;
 import org.apache.catalina.core.StandardWrapper;
 import org.glassfish.web.valve.GlassFishValve;
 
 import javax.servlet.Servlet;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import java.util.Enumeration;
 
@@ -67,10 +69,12 @@ public class OSGiServletWrapper extends StandardWrapper implements Wrapper {
 
     private Servlet servlet;
     private OSGiServletConfig config;
+    private WebModule webModule;
 
-    public OSGiServletWrapper(String name, Servlet servlet, OSGiServletConfig config, String urlMapping) {
+    public OSGiServletWrapper(String name, Servlet servlet, OSGiServletConfig config, String urlMapping, WebModule webModule) {
         this.servlet = servlet;
         this.config = config;
+        this.webModule = webModule;
         setOSGi(true);
         setServlet(servlet);
         setName(name);
@@ -97,7 +101,7 @@ public class OSGiServletWrapper extends StandardWrapper implements Wrapper {
     }
 
     @Override
-    public OSGiServletContext getServletContext() {
+    public ServletContext getServletContext() {
         // We can't use super.getServletContext, as that would get us the
         // ServletContext that's common for all OSGi/HTTP servlets, where as
         // we need the servlet context registered for each HttpContext.
@@ -141,5 +145,9 @@ public class OSGiServletWrapper extends StandardWrapper implements Wrapper {
     @Override
     public synchronized void addValve(GlassFishValve valve) {
         getPipeline().addValve(valve);
+    }
+
+    public WebModule getWebModule() {
+        return webModule;
     }
 }
