@@ -108,7 +108,6 @@ public class Activator implements BundleActivator {
     private static final String CONTEXT_PATH_PROP =
             Activator.class.getPackage().getName() + ".ContextPath";
     private ServiceTracker serverTracker;
-    private WebModule standardContext;
 
     private Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
@@ -134,7 +133,7 @@ public class Activator implements BundleActivator {
         while (vsIds.hasMoreTokens()) {
             String vsId = vsIds.nextToken().trim();
             try {
-                createRootWebModule(webContainer, vsId);
+                WebModule standardContext = createRootWebModule(webContainer, vsId);
                 if (standardContext == null) {
                     logger.logp(Level.WARNING, "Activator", "doActualWork",
                             "GlassFishHttpService will not be available for for virtual server = {0}, " +
@@ -157,10 +156,10 @@ public class Activator implements BundleActivator {
         }
     }
 
-    private void createRootWebModule(WebContainer webContainer, String vsId) throws Exception {
+    private WebModule createRootWebModule(WebContainer webContainer, String vsId) throws Exception {
         Engine engine = webContainer.getEngine();
         Host vs = (Host) engine.findChild(vsId);
-        if (vs == null) return; // this can happen if some one deleted a virtual server after we read domain.xml
+        if (vs == null) return null; // this can happen if some one deleted a virtual server after we read domain.xml
         vss.put(vsId, vs);
         contextPath = bctx.getProperty(CONTEXT_PATH_PROP);
         if (contextPath == null) {
@@ -168,7 +167,7 @@ public class Activator implements BundleActivator {
         }
         // create a new context under which all OSGi HTTP wrappers
         // will be registered.
-        standardContext = new WebModule();
+        final WebModule standardContext = new WebModule();
         standardContext.setWebContainer(webContainer);
         standardContext.setName(contextPath);
         standardContext.setPath(contextPath);
@@ -198,6 +197,7 @@ public class Activator implements BundleActivator {
         vs.addChild(standardContext);
         logger.logp(Level.INFO, "Activator", "createRootWebModule", "standardContext = {0}",
                 new Object[]{standardContext});
+        return standardContext;
     }
 
     private ClassLoader getCommonClassLoader() {
@@ -212,6 +212,9 @@ public class Activator implements BundleActivator {
         for (Host vs : vss.values()) {
             StandardContext standardContext =
                     StandardContext.class.cast(vs.findChild(contextPath));
+            if (standardContext == null) {
+                continue;
+            }
             for (Container child : standardContext.findChildren()) {
                 standardContext.removeChild(child);
             }
