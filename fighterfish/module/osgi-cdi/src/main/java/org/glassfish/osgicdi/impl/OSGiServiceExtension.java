@@ -67,6 +67,8 @@ import javax.enterprise.inject.spi.ProcessBean;
 import javax.enterprise.inject.spi.ProcessInjectionTarget;
 import javax.enterprise.util.AnnotationLiteral;
 
+import org.osgi.framework.ServiceException;
+
 import org.glassfish.osgicdi.OSGiService;
 import org.glassfish.osgicdi.ServiceUnavailableException;
 
@@ -206,6 +208,25 @@ public class OSGiServiceExtension implements Extension{
             if (!registeredBeans.contains(svcInjectionPoint.getAnnotated().getAnnotation(OSGiService.class))) {
                 debug(" --- Adding an OSGi service BEAN " 
                         + type + " for " + svcInjectionPoint);
+                OSGiService os = svcInjectionPoint.getAnnotated().getAnnotation(OSGiService.class);
+                if (!os.dynamic()) {
+                    //If Static, check for existence of Service before going 
+                    //ahead and adding a Bean.
+                    //If a service that matches the requirements specified
+                    //is unavailable, fail deployment by throwing
+                    //a <code>ServiceUnavailableException</code>
+                    try {
+                        OSGiServiceFactory.checkServiceAvailability(svcInjectionPoint);
+                    } catch (ServiceUnavailableException sue) {
+                        sue.printStackTrace();
+                        throw new ServiceUnavailableException("A static OSGi service " +
+                        		"reference was requested in " + 
+                        		svcInjectionPoint + ". However no "  + 
+                        		svcInjectionPoint.getType() 
+                        		+ " service available", 
+                                ServiceException.SUBCLASSED, sue);
+                    }
+                }
                 abd.addBean(new OSGiServiceBean(svcInjectionPoint));
                 registeredBeans.add(svcInjectionPoint.getAnnotated().getAnnotation(OSGiService.class));
             } else {

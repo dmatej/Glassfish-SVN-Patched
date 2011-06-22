@@ -82,6 +82,17 @@ class OSGiServiceFactory {
         Object instance = createServiceProxy(svcInjectionPoint); 
         return instance;
     }
+    
+    public static boolean checkServiceAvailability(final InjectionPoint svcInjectionPoint)
+                                        throws ServiceUnavailableException {
+        final OSGiService os = 
+            svcInjectionPoint.getAnnotated().getAnnotation(OSGiService.class);
+        //attempt to resolve a service. Attempt to create a static invocation
+        //handler while there is no active service, throws a 
+        //<code>ServiceUnavailableException</code>
+        new StaticInvocationHandler(os, svcInjectionPoint);
+        return true;
+    }
 
     private static Object createServiceProxy(
                                     final InjectionPoint svcInjectionPoint) 
@@ -110,9 +121,7 @@ class OSGiServiceFactory {
         //Get the bundle context from the classloader that loaded the annotation
         //element
         Class annotatedElt = svcInjectionPoint.getMember().getDeclaringClass();
-        BundleContext bc = BundleReference.class
-                            .cast(annotatedElt.getClassLoader())
-                            .getBundle().getBundleContext();
+        BundleContext bc = getBundleContext(svcInjectionPoint);
         
         //Create the service tracker for this type.
         debug("creating service tracker for " + ((Class)(serviceType)).getName() 
@@ -167,11 +176,32 @@ class OSGiServiceFactory {
                                     InjectionPoint svcInjectionPoint){
         //XXX: not implemented
     }
-    
-    private static void debug(String string) {
-        if(DEBUG_ENABLED)
-            System.out.println("OSGiServiceFactory:: " + string);
+
+    private static void error(String errString) {
+        System.out.println("ERROR: OSGiServiceFactory:: " + errString);
     }
+    
+    private static void debug(String debugString) {
+        if(DEBUG_ENABLED)
+            System.out.println("DEBUG: OSGiServiceFactory:: " + debugString);
+    }
+    
+    private static BundleContext getBundleContext(InjectionPoint svcInjectionPoint) {
+        Class annotatedElt = svcInjectionPoint.getMember().getDeclaringClass();
+        BundleContext bc = null;
+        try {
+            bc = BundleReference.class
+                            .cast(annotatedElt.getClassLoader())
+                            .getBundle().getBundleContext();
+        } catch (ClassCastException cce) {
+            error("Expected annotated element " + annotatedElt + "to be within" +
+                    " an OSGi Bundle. ");
+            throw cce;
+        }
+        
+        return bc;
+    }
+    
 
     /**
      * If the service is marked as dynamic, when a method is invoked on a
@@ -228,13 +258,6 @@ class OSGiServiceFactory {
             getServiceReference(svcInjectionPoint);
         }
         
-        private BundleContext getBundleContext(InjectionPoint svcInjectionPoint) {
-            Class annotatedElt = svcInjectionPoint.getMember().getDeclaringClass();
-            BundleContext bc = BundleReference.class
-                                .cast(annotatedElt.getClassLoader())
-                                .getBundle().getBundleContext();
-            return bc;
-        }
         
         private void getServiceReference(InjectionPoint svcInjectionPoint){
             Type serviceType = svcInjectionPoint.getType();
