@@ -205,28 +205,27 @@ public class T1_SamplesTest extends AbstractTestObject {
 
             {
                 // WAB fragment test
-                // Commented out because of bug in Weld-GF integration layer. Siva has been informed.
-//                try {
-//                    uas_simple_webapp.getResponse(reportJspRequest);
-//                    fail("Expected fragment to be not available");
-//                } catch (IOException e) {
-//                    Assert.assertTrue("Expected FileNotFoundException", e instanceof FileNotFoundException);
-//                }
-//
-//                // now install the fragment and refresh the host
-//                installTestBundle(ctx, uas_simplewabfragment);
-//                uas_simplewab_b.stop(); // This is needed so that the web app does not get deployed upon update().
-//                uas_simplewab_b.update();
-//                uas_simple_webapp = new WebAppBundle(ctx, uas_simplewab_b);// TODO(Sahoo): because of some bug, we can't reuse earlier wab
-//                uas_simple_webapp.deploy(TIMEOUT, TimeUnit.MILLISECONDS); // deploy again
-//                response = getResponse(uas_simple_webapp, reportJspRequest);
-//                logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
-//                assertThat(response, new StringPatternMatcher("to see the report."));
-//
-//                // now let's see if the servlet from the fragment can be used or not.
-//                response = getResponse(uas_simple_webapp, reportServletRequest);
-//                logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
-//                assertThat(response, new StringPatternMatcher("Login Attempt Report:"));
+                try {
+                    uas_simple_webapp.getResponse(reportJspRequest);
+                    fail("Expected fragment to be not available");
+                } catch (IOException e) {
+                    Assert.assertTrue("Expected FileNotFoundException", e instanceof FileNotFoundException);
+                }
+
+                // now install the fragment and refresh the host
+                installTestBundle(ctx, uas_simplewabfragment);
+                uas_simplewab_b.stop(); // This is needed so that the web app does not get deployed upon update().
+                uas_simplewab_b.update();
+                uas_simple_webapp = new WebAppBundle(ctx, uas_simplewab_b);// TODO(Sahoo): because of some bug, we can't reuse earlier wab
+                uas_simple_webapp.deploy(TIMEOUT, TimeUnit.MILLISECONDS); // deploy again
+                response = getResponse(uas_simple_webapp, reportJspRequest);
+                logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
+                assertThat(response, new StringPatternMatcher("to see the report."));
+
+                // now let's see if the servlet from the fragment can be used or not.
+                response = getResponse(uas_simple_webapp, reportServletRequest);
+                logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
+                assertThat(response, new StringPatternMatcher("Login Attempt Report:"));
             }
         } finally {
             uninstallAllTestBundles();

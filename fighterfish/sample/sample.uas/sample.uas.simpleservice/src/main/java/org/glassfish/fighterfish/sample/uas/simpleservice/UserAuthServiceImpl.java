@@ -54,7 +54,7 @@ class UserAuthServiceImpl implements UserAuthService {
 
 	Map<String, String> users = new HashMap<String, String>();
 	
-	StringBuilder report = new StringBuilder();
+	StringBuilder report = new StringBuilder("Login Attempt Report:\n");
 	
 	@Override
 	public boolean login(String name, String password) {

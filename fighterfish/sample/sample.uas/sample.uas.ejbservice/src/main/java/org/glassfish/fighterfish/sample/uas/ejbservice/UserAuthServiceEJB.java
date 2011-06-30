@@ -111,7 +111,7 @@ public class UserAuthServiceEJB implements UserAuthService {
     public String getReport() {
         List<LoginAttempt> attempts = em.createNamedQuery("LoginAttempt.findAll").getResultList();
         log("Number of entries found: " + attempts.size());
-        StringBuilder report = new StringBuilder("Login Attempt Report:");
+        StringBuilder report = new StringBuilder("Login Attempt Report:\n");
         for (LoginAttempt attempt : attempts) {
             report.append(attempt).append("\n");
         }
