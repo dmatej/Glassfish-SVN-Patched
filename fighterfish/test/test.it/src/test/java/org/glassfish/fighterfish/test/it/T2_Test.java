@@ -620,9 +620,9 @@ public class T2_Test extends AbstractTestObject {
             config.update(props);
             Thread.sleep(TIMEOUT); // Allow the config changes to be propagated and msg to reach destination
             response = wab.getResponse(request);
-            // Because of bug GLASSFISH-16730, our MDB is not able to persist anything.
-            // Until then, use 0.
-            assertThat(response, new StringPatternMatcher("Total number of messages: " + 0));
+            final int expectedNoOfMsgs = (noOfMsgs) * 2; // we have 2 MDBs
+            logger.logp(Level.INFO, "T2_Test", "testapp16", "response = {0}", new Object[]{response});
+            assertThat(response, new StringPatternMatcher("Total number of messages: " + expectedNoOfMsgs));
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.toString());

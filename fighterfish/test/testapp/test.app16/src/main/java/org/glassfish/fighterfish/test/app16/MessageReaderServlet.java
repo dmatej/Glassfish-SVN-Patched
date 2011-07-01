@@ -41,7 +41,7 @@ public class MessageReaderServlet extends HttpServlet {
         PrintWriter out = arg1.getWriter();
         out.print("<HTML> <HEAD> <TITLE> MessageReaderServlet" +
                 "</TITLE> </HEAD> <BODY BGCOLOR=white>");
-        out.print("\n");
+        out.print("<p/>");
         EntityManager em = emf.createEntityManager();
         try {
             CriteriaBuilder cb = em.getCriteriaBuilder();
@@ -50,10 +50,10 @@ public class MessageReaderServlet extends HttpServlet {
             cq.select(root);
             TypedQuery<Message> q = em.createQuery(cq);
             List<Message> resultList = q.getResultList();
-            out.print("Total number of messages: " + resultList.size() + "\n");
+            out.print("Total number of messages: " + resultList.size() + "<p/>");
             for (Message msg : resultList) {
                 System.out.println(getClass().getSimpleName() + ": " + msg.getValue() + "\n");
-                out.print(msg.getValue());
+                out.print(msg.getValue() + "<p/>");
             }
         } finally {
             em.close();
