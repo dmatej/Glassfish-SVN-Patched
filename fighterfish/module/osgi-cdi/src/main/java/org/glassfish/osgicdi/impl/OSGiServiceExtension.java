@@ -50,6 +50,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.enterprise.context.Dependent;
 import javax.enterprise.context.spi.CreationalContext;
@@ -88,8 +90,7 @@ public class OSGiServiceExtension implements Extension{
      */
     private HashMap<Type, Set<InjectionPoint>> servicesToBeInjected
                                 = new HashMap<Type, Set<InjectionPoint>>();
-    private static final boolean DEBUG_ENABLED = false;
-
+    private static Logger logger = Logger.getLogger(OSGiServiceExtension.class.getPackage().getName());
 
     //Observers for container lifecycle events
     void beforeBeanDiscovery(@Observes BeforeBeanDiscovery bdd){
@@ -139,7 +140,7 @@ public class OSGiServiceExtension implements Extension{
                 Annotation annotation = qualifIter.next();
                 if (annotation.annotationType().equals(OSGiService.class)){
                     printDebugForInjectionPoint(injectionPoint);
-                    System.out.println("---- Injection requested for " +
+                    String s = "---- Injection requested for " +
                             "framework service type " + injectionPoint.getType()
                             + " and annotated with dynamic="
                             + injectionPoint.getAnnotated()
@@ -148,7 +149,8 @@ public class OSGiServiceExtension implements Extension{
                             + ", serviceCriteria="
                             + injectionPoint.getAnnotated()
                                     .getAnnotation(OSGiService.class)
-                                    .serviceCriteria());
+                                    .serviceCriteria();
+                    logger.logp(Level.INFO, "OSGiServiceExtension", "discoverServiceInjectionPoints", s);
                     //Keep track of service-type and its injection point
                     //Add to list of framework services to be injected
                     addServiceInjectionInfo(injectionPoint);
@@ -183,7 +185,8 @@ public class OSGiServiceExtension implements Extension{
             //don't know how to handle this. 
             if (!(type instanceof Class)) {
                 //XXX: need to handle Instance<Class>. This fails currently
-                System.out.println("Unknown type:" + type);
+                logger.logp(Level.WARNING, "OSGiServiceExtension", "afterBeanDiscovery",
+                        "Unknown type: {0}", new Object[]{type});
                 abd.addDefinitionError(new UnsupportedOperationException(
                         "Injection target type " + type + "not supported"));
                 break; //abort deployment
@@ -371,22 +374,22 @@ public class OSGiServiceExtension implements Extension{
     }
     
     private void debug(String string) {
-        if(DEBUG_ENABLED)
-            System.out.println("MyExtension:: " + string);
-        
+        logger.logp(Level.FINE, "OSGiServiceExtension", "debug", getClass().getSimpleName() + ":: {0}", new Object[]{string});
     }
 
     private void printDebugForInjectionPoint(InjectionPoint injectionPoint) {
-        if (DEBUG_ENABLED) {
-            System.out.println("@@@@@@@ INJECTION-POINT: Annotation:"
+        if (logger.isLoggable(Level.FINE)) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("@@@@@@@ INJECTION-POINT: Annotation:"
                     + injectionPoint.getAnnotated()); // annotatedfield
-            System.out.print(" ,Bean:" + injectionPoint.getBean());// bean
-            System.out.print(" ,Class:" + injectionPoint.getClass()); // r untime
+            sb.append(" ,Bean:" + injectionPoint.getBean());// bean
+            sb.append(" ,Class:" + injectionPoint.getClass()); // r untime
                                                            // class?
-            System.out.print(" ,Member:" + injectionPoint.getMember());// Field
-            System.out.print(" ,Qualifiers:" + injectionPoint.getQualifiers());// qualifiers
-            System.out.print(" ,Type:" + injectionPoint.getType());
-            // type of injection point
+            sb.append(" ,Member:" + injectionPoint.getMember());// Field
+            sb.append(" ,Qualifiers:" + injectionPoint.getQualifiers());// qualifiers
+            sb.append(" ,Type:" + injectionPoint.getType()); // type of injection point
+            logger.logp(Level.FINE, "OSGiServiceExtension", "printDebugForInjectionPoint",
+                    getClass().getSimpleName() + ":: {0}", new Object[]{sb});
         }
     }
     

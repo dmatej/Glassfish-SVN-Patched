@@ -44,6 +44,8 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.enterprise.inject.spi.InjectionPoint;
 
@@ -68,7 +70,8 @@ import org.osgi.util.tracker.ServiceTrackerCustomizer;
  * @author Sivakumar Thyagarajan
  */
 class OSGiServiceFactory {
-    private static final boolean DEBUG_ENABLED = true;
+
+    private static Logger logger = Logger.getLogger(OSGiServiceFactory.class.getPackage().getName());
 
     /**
      * Get a reference to the service of the provided <code>Type</code>
@@ -177,13 +180,8 @@ class OSGiServiceFactory {
         //XXX: not implemented
     }
 
-    private static void error(String errString) {
-        System.out.println("ERROR: OSGiServiceFactory:: " + errString);
-    }
-    
     private static void debug(String debugString) {
-        if(DEBUG_ENABLED)
-            System.out.println("DEBUG: OSGiServiceFactory:: " + debugString);
+        logger.logp(Level.FINE, "OSGiServiceFactory", "debug", "OSGiServiceFactory:: {0}", new Object[]{debugString});
     }
     
     private static BundleContext getBundleContext(InjectionPoint svcInjectionPoint) {
@@ -194,8 +192,8 @@ class OSGiServiceFactory {
                             .cast(annotatedElt.getClassLoader())
                             .getBundle().getBundleContext();
         } catch (ClassCastException cce) {
-            error("Expected annotated element " + annotatedElt + "to be within" +
-                    " an OSGi Bundle. ");
+            logger.logp(Level.SEVERE, "OSGiServiceFactory", "getBundleContext",
+                    "Expected annotated element {0} to be within an OSGi Bundle.", new Object[]{cce});
             throw cce;
         }
         
