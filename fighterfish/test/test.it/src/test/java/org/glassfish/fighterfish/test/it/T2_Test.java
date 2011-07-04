@@ -59,12 +59,22 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventAdmin;
+import org.osgi.service.event.EventConstants;
+import org.osgi.service.event.EventHandler;
+import org.osgi.service.log.LogEntry;
+import org.osgi.service.log.LogListener;
+import org.osgi.service.log.LogReaderService;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
@@ -652,6 +662,40 @@ public class T2_Test extends AbstractTestObject {
             uninstallAllTestBundles();
         }
     }
+
+    @Test
+    public void testapp18(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+        logger.entering("T2_Test", "testapp18", new Object[]{ctx});
+        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        try {
+            String location_wab = "mvn:org.glassfish.fighterfish/test.app18/1.0.0-SNAPSHOT/war";
+            final Bundle bundle_wab = installTestBundle(ctx, location_wab);
+            WebAppBundle wab = new WebAppBundle(ctx, bundle_wab);
+
+            final Semaphore eventRaised = new Semaphore(0);
+            EventAdmin eventAdmin = OSGiUtil.getService(ctx, EventAdmin.class, TIMEOUT);
+            Assert.assertNotNull("Event Admin Service not available", eventAdmin);
+            Properties props = new Properties();
+            String[] topics = {"org/glassfish/fighterfist/test/app18"};
+            props.put(EventConstants.EVENT_TOPIC, topics);
+            ctx.registerService(EventHandler.class.getName(), new EventHandler(){
+                @Override
+                public void handleEvent(Event event) {
+                    logger.logp(Level.INFO, "T2_Test", "testapp18", "log message = {0}", new Object[]{event});
+                    eventRaised.release();
+                }
+            }, props);
+
+            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS); // deployment is sufficient to test this bundle
+            assertTrue("Incorrect no. of events", eventRaised.tryAcquire(1, TIMEOUT, TimeUnit.MILLISECONDS));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.toString());
+        } finally {
+            uninstallAllTestBundles();
+        }
+    }
+
 
     //////////////////////////////////////////////////////////////////
     // Various utility methods used from test methods are found below.
