@@ -96,36 +96,8 @@ public class CommonConfiguration {
                 mavenBundle().groupId("org.glassfish.fighterfish").artifactId("test.util").version("1.0.0-SNAPSHOT"),
                 mavenBundle().groupId("org.ops4j.pax.url").artifactId("pax-url-mvn").version("1.2.5"),
                 systemProperty("pax-exam.framework.shutdown.timeout").value(System.getProperty("pax-exam.framework.shutdown.timeout"))
-                ), autostartBundles()
+                )
         );
-    }
-
-    /**
-     * For various timing issues that come in when we rely on fileinstall to provision autostart bundles,
-     * we disable fileinstall for autostart dir. We provision them diretcly. Following are a few of the timing
-     * issues observed so far:
-     * 1. By the time fileinstall installs autostart modules, pax exam is sometimes finished running the test.
-     * If we deploy test bundles which depend on osgi-cdi api or any api from autostart dir, then those tests fail to resolve,
-     * 2. If osgi-jpa bundle is not installed before running JPA tests, JPA test bundles don't get enhanced.
-     * Keeping all these in mind, we are provisioning all autostart bundles ahead of time.
-     * We also have to configure fileinstall to monitor autodeploy/bundles only, else it tries to update
-     * all bundles in autostart and that interferes with the tests.
-     * @return
-     */
-    private Option[] autostartBundles() {
-        List<Option> options = new ArrayList<Option>();
-        for (File f : new File(gfHome, "modules/autostart").listFiles()) {
-            if (f.isFile() && f.getName().endsWith(".jar")) {
-                options.add(bundle(f.toURI().toString()));
-            }
-        }
-
-        // Because we provision autostart bundles this way, we also have to disable fileinstall monitoring autostart bundles.
-        options.add(systemProperty("felix.fileinstall.dir").value(System.getProperty("com.sun.aas.instanceRoot") + "/autodeploy/bundles/"));
-        options.add(systemProperty("felix.fileinstall.log.level").value("3"));
-        // rest all are read from domain.xml
-        
-        return options.toArray(new Option[options.size()]);
     }
 
     private Option[] frameworkConfiguration() throws IOException {
