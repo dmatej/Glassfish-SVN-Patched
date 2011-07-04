@@ -59,7 +59,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.ops4j.pax.exam.CoreOptions.*;
-import static org.ops4j.pax.exam.LibraryOptions.junitBundles;
 import static org.ops4j.pax.exam.OptionUtils.*;
 
 /**
