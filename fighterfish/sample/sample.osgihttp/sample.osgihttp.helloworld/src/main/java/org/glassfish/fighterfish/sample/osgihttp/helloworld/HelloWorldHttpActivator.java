@@ -89,7 +89,7 @@ public class HelloWorldHttpActivator implements BundleActivator {
 			}
 		};
 		tracker.open();
-
+		System.out.println("HelloWorldHttpActivator.start()");
 	}
 
 	@Override

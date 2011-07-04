@@ -39,10 +39,15 @@
  */
 package org.glassfish.fighterfish.sample.osgihttp.helloworld;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventAdmin;
 import org.osgi.service.http.HttpContext;
 import org.osgi.service.http.HttpService;
 import org.osgi.service.http.NamespaceException;
@@ -59,6 +64,7 @@ import org.osgi.service.http.NamespaceException;
 public class HelloWorldHttpMain {
 	
 	private HttpService http; // Set and unset by setHttp() and unsetHttp()
+	private EventAdmin eventAdmin;
 								// methods that are called by SCR. See scr.xml
 
 	protected void activate(ComponentContext ctx) throws ServletException,
@@ -89,6 +95,12 @@ public class HelloWorldHttpMain {
 		http.registerServlet("/hello3", servlet3, null, httpCtx2);
 		System.out.println(servlet3.getServletContext());
 		assert(servlet3.getServletContext() != servlet1.getServletContext());
+		if (eventAdmin != null) { // raise an event so that our test framework can catch it to proceed to test
+			Map props = new HashMap();
+			Event event = new Event(getClass().getPackage().getName().replace(".", "/"), props);
+			eventAdmin.postEvent(event);
+			System.out.println("raised event " + event);
+		}
 	}
 
 	protected void deactivate(ComponentContext ctx) {
@@ -111,5 +123,14 @@ public class HelloWorldHttpMain {
 
 	protected void unsetHttp(HttpService http) {
 		this.http = null;
+	}
+	
+	protected void setEventAdmin(EventAdmin eventAdmin) {
+		this.eventAdmin = eventAdmin;
+	}
+	
+	protected void unsetEventAdmin(EventAdmin eventAdmin) {
+		this.eventAdmin = null;
+		
 	}
 }

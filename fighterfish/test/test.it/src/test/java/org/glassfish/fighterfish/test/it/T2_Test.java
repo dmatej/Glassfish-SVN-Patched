@@ -701,22 +701,6 @@ public class T2_Test extends AbstractTestObject {
     // Various utility methods used from test methods are found below.
     //////////////////////////////////////////////////////////////////
 
-    
-    private String getResponse(URL request) throws IOException {
-        URLConnection yc = request.openConnection();
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(
-                        yc.getInputStream()));
-
-        StringBuilder sb = new StringBuilder();
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            sb.append(inputLine);
-        }
-        in.close();
-        return sb.toString();
-    }
-
     private void empDeptCrud(BundleContext ctx, String location, String testMethodName) throws BundleException, InterruptedException {
         Bundle bundle = installTestBundle(ctx, location);
         WebAppBundle wab = new WebAppBundle(ctx, bundle);

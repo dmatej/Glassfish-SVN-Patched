@@ -58,15 +58,26 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventAdmin;
+import org.osgi.service.event.EventConstants;
+import org.osgi.service.event.EventHandler;
+import org.osgi.service.http.HttpService;
+import org.osgi.service.log.LogEntry;
+import org.osgi.service.log.LogReaderService;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
@@ -78,6 +89,7 @@ public class SingleTest extends AbstractTestObject {
     @Test
     public void test(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("SingleTest", "test", new Object[]{ctx});
+        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
     }
 
 }
