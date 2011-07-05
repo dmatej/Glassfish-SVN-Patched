@@ -83,19 +83,13 @@ public class CommonConfiguration {
 
     @Configuration
     public Option[] configure() throws IOException {
-        return combine(frameworkConfiguration(), provisioningBundles());
+        return combine(combine(frameworkConfiguration(), provisioningBundles()), paxConfiguration());
     }
 
     private Option[] provisioningBundles() {
-        // For various timing issues that come in when we rely on fileinstall to provision autostart bundles,
-        // we disable fileinstall for autostart dir. We provision them diretcly.
-        // see autostartBundles() for more details.
-        return combine(options(bundle(new File(gfHome, "modules/glassfish.jar").toURI().toString()),
+        return options(bundle(new File(gfHome, "modules/glassfish.jar").toURI().toString()),
                 mavenBundle().groupId("org.junit").artifactId("com.springsource.org.junit").version("4.8.1"),
-                mavenBundle().groupId("org.glassfish.fighterfish").artifactId("test.util").version("1.0.0-SNAPSHOT"),
-                mavenBundle().groupId("org.ops4j.pax.url").artifactId("pax-url-mvn").version("1.2.5"),
-                systemProperty("pax-exam.framework.shutdown.timeout").value(System.getProperty("pax-exam.framework.shutdown.timeout"))
-                )
+                mavenBundle().groupId("org.glassfish.fighterfish").artifactId("test.util").version("1.0.0-SNAPSHOT")
         );
     }
 
@@ -111,11 +105,21 @@ public class CommonConfiguration {
         }
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
             if (entry.getKey().equals(Constants.FRAMEWORK_BOOTDELEGATION)) continue; // already handled above
+            if (entry.getKey().equals(Constants.FRAMEWORK_STORAGE)) {
+                // Starting with pax-exam 2.1.0, we need to specify framework storage using workingDirectory option
+                options.add(workingDirectory((String) entry.getValue()));
+                continue;
+            }
             options.add(systemProperty((String) entry.getKey()).value((String) entry.getValue()));
         }
         return options.toArray(new Option[options.size()]);
     }
 
+    private Option[] paxConfiguration() {
+        return options(systemProperty("pax-exam.framework.shutdown.timeout").value(
+                System.getProperty("pax-exam.framework.shutdown.timeout"))
+        );
+    }
     private void checkAndSetDefaultProperties() {
         if (System.getProperty("com.sun.aas.installRootURI") == null) {
             System.setProperty("com.sun.aas.installRootURI", gfHome.toURI().toString());
