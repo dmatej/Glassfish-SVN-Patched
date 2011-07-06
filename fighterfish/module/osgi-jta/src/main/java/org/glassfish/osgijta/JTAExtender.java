@@ -65,7 +65,7 @@ public class JTAExtender implements Extender {
 
     public void start() {
         Class[] classes = {UserTransaction.class, TransactionManager.class, TransactionSynchronizationRegistry.class};
-        String[] jndiNames = {"UserTransaction", "java:appserver/TransactionManager", "java:appserver/TransactionSynchronizationRegistry"};
+        String[] jndiNames = {"java:comp/UserTransaction", "java:appserver/TransactionManager", "java:appserver/TransactionSynchronizationRegistry"};
         for (int i = 0; i < 3; ++i) {
             registerProxy(classes[i], jndiNames[i]);
         }
