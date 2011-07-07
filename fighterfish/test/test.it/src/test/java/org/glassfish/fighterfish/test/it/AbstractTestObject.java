@@ -98,10 +98,10 @@ public class AbstractTestObject extends CommonConfiguration {
      * @throws BundleException
      */
     protected Bundle installTestBundle(BundleContext ctx, String location) throws BundleException {
+        logger.logp(Level.INFO, "AbstractTestObject", "installTestBundle", "Installing bundle = {0}", new Object[]{location});
         final Bundle bundle = ctx.installBundle(location);
-        logger.logp(Level.INFO, "AbstractTestObject", "installTestBundle", "Installing bundle = {0}", new Object[]{bundle});
         testBundles.add(bundle);
-        logger.logp(Level.INFO, "AbstractTestObject", "installTestBundle", "Installed bundle = {0}", new Object[]{bundle});
+        logger.logp(Level.INFO, "AbstractTestObject", "installTestBundle", "Installed bundle = {0} from {1} ", new Object[]{bundle, location});
         return bundle;
     }
 

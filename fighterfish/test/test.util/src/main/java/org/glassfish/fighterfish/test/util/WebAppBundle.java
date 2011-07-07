@@ -85,7 +85,7 @@ public class WebAppBundle implements WABDeploymentEventHandler.Callback {
         if (State.DEPLOYED.equals(state)) {
             return (ServletContext) context.getService(context.getServiceReference(ServletContext.class.getName()));
         }
-        throw new RuntimeException("Deployment failure. Check server.log for details");
+        throw new RuntimeException("Deployment timedout. Check log to see what exactly went wrong.");
     }
 
     public void undeploy() throws BundleException {
