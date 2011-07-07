@@ -49,7 +49,6 @@ import javax.servlet.ServletContext;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.CountDownLatch;
@@ -85,7 +84,7 @@ public class WebAppBundle implements WABDeploymentEventHandler.Callback {
         if (State.DEPLOYED.equals(state)) {
             return (ServletContext) context.getService(context.getServiceReference(ServletContext.class.getName()));
         }
-        throw new RuntimeException("Deployment timedout. Check log to see what exactly went wrong.");
+        throw new TimeoutException("Deployment timedout. Check log to see what exactly went wrong.");
     }
 
     public void undeploy() throws BundleException {

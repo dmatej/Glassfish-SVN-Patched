@@ -64,7 +64,7 @@ public class EntityBundle {
         b.start(Bundle.START_TRANSIENT);
         for (String service : services) {
             if (OSGiUtil.waitForService(ctx, b, service, timeUnit.toMillis(timeout)) == null) {
-                throw new RuntimeException("Deployment timed out. No service of type " + service + " found.");
+                throw new TimeoutException("Deployment timed out. No service of type " + service + " found.");
             }
         }
     }

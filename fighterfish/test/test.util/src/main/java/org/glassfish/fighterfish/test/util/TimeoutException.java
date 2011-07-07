@@ -41,37 +41,30 @@
 
 package org.glassfish.fighterfish.test.util;
 
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleException;
-
-import java.util.concurrent.TimeUnit;
-
 /**
+ * This exception has the additional role of printing equivalent of JStack
+ * so that we can analyse any locking issues easily.
+ *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-public class EjbBundle {
-    private BundleContext ctx;
-    private Bundle b;
-    private String[] services;
-
-    public EjbBundle(BundleContext ctx, Bundle b, String[] services) {
-        this.ctx = ctx;
-        this.b = b;
-        this.services = services;
+public class TimeoutException extends RuntimeException {
+    public TimeoutException() {
     }
 
-    public void deploy(long timeout, TimeUnit timeUnit) throws BundleException, InterruptedException {
-        b.start(Bundle.START_TRANSIENT);
-        for (String service : services) {
-            if (OSGiUtil.waitForService(ctx, b, service, timeUnit.toMillis(timeout)) == null) {
-                throw new TimeoutException("Deployment timed out. No service of type " + service + " found.");
-            }
-        }
+    public TimeoutException(String message) {
+        super(message);
     }
 
-    public void undeploy() throws BundleException {
-        b.stop();
+    public TimeoutException(String message, Throwable cause) {
+        super(message, cause);
     }
 
+    public TimeoutException(Throwable cause) {
+        super(cause);
+    }
+
+    @Override
+    public String getMessage() {
+        return super.toString() + "\nStack traces of all threads is given below:\n" + new JStack();
+    }
 }

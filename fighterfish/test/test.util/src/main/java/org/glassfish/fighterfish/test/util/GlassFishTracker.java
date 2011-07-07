@@ -64,14 +64,14 @@ public class GlassFishTracker {
             st.close();
         }
         if (gf == null) {
-            throw new RuntimeException("GlassFish service is still not available after " + timeout + " ms.");
+            throw new TimeoutException("GlassFish service is still not available after " + timeout + " ms.");
         }
         long endTime = currentTime + timeout;
         while (gf.getStatus() != GlassFish.Status.STARTED && System.currentTimeMillis() < endTime) {
             Thread.sleep(100);
         }
         if (gf.getStatus() != GlassFish.Status.STARTED) {
-            throw new RuntimeException("GlassFish has not started after " + timeout + " ms.");
+            throw new TimeoutException("GlassFish has not started after " + timeout + " ms.");
         }
         return gf;
     }
