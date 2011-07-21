@@ -48,23 +48,35 @@ package org.glassfish.fighterfish.test.util;
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class TimeoutException extends RuntimeException {
+    String msg;
     public TimeoutException() {
+        collectStackTrace();
+    }
+
+    private void collectStackTrace() {
+        msg = "Stack traces of all threads are given below:\n" +
+                "[StackTraceBegin]\n" +
+                new JStack() +
+                "\n[StackTraceEnd]";
     }
 
     public TimeoutException(String message) {
         super(message);
+        collectStackTrace();
     }
 
     public TimeoutException(String message, Throwable cause) {
         super(message, cause);
+        collectStackTrace();
     }
 
     public TimeoutException(Throwable cause) {
         super(cause);
+        collectStackTrace();
     }
 
     @Override
     public String getMessage() {
-        return super.toString() + "\nStack traces of all threads is given below:\n" + new JStack();
+        return super.getMessage() + "\n" + msg;
     }
 }
