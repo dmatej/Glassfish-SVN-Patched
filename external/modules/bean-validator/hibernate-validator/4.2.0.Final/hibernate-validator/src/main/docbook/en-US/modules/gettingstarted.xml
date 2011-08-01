@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	~ JBoss, Home of Professional Open Source
+	~ Copyright 2009, Red Hat, Inc. and/or its affiliates, and individual contributors
+	~ by the @authors tag. See the copyright.txt in the distribution for a
+	~ full listing of individual contributors.
+	~
+	~ Licensed under the Apache License, Version 2.0 (the "License");
+	~ you may not use this file except in compliance with the License.
+	~ You may obtain a copy of the License at
+	~ http://www.apache.org/licenses/LICENSE-2.0
+	~ Unless required by applicable law or agreed to in writing, software
+	~ distributed under the License is distributed on an "AS IS" BASIS,
+	~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	~ See the License for the specific language governing permissions and
+	~ limitations under the License.
+-->
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
+<!ENTITY % BOOK_ENTITIES SYSTEM "../hv.ent">
+%BOOK_ENTITIES;
+]>
+<chapter id="validator-gettingstarted">
+  <title id="getting-started">Getting started</title>
+
+  <para>This chapter will show you how to get started with Hibernate
+  Validator, the reference implementation (RI) of Bean Validation. For the
+  following quickstart you need:</para>
+
+  <itemizedlist>
+    <listitem>
+      <para>A JDK &gt;= 5</para>
+    </listitem>
+
+    <listitem>
+      <para><ulink url="http://maven.apache.org/">Apache Maven</ulink></para>
+    </listitem>
+
+    <listitem>
+      <para>An Internet connection (Maven has to download all required
+      libraries)</para>
+    </listitem>
+
+    <listitem>
+      <para>A properly configured remote repository. Add the following to your
+      <filename>settings.xml</filename>: <example id="example-jboss-maven-url">
+          <title>Configuring the JBoss Maven repository</title>
+
+          <programlisting>&lt;repositories&gt;
+    &lt;repository&gt;
+        &lt;id&gt;jboss-public-repository-group&lt;/id&gt;
+        &lt;url&gt;https://repository.jboss.org/nexus/content/groups/public-jboss&lt;/url&gt;
+        &lt;releases&gt;
+          &lt;enabled&gt;true&lt;/enabled&gt;
+        &lt;/releases&gt;
+        &lt;snapshots&gt;
+          &lt;enabled&gt;true&lt;/enabled&gt;
+        &lt;/snapshots&gt;
+     &lt;/repository&gt;
+&lt;/repositories&gt;        </programlisting>
+        </example>More information about <filename>settings.xml</filename> can
+      be found in the <ulink
+      url="http://maven.apache.org/ref/2.0.8/maven-settings/settings.html">Maven
+      Local Settings Model</ulink>.</para>
+    </listitem>
+  </itemizedlist>
+
+  <note>
+    <para>Hibernate Validator uses JAXB for XML parsing. JAXB is part of the
+    Java Class Library since Java 6 which means that if you run Hibernate
+    Validator with Java 5 you will have to add additional JAXB dependencies.
+    Using Maven you have to add the following dependencies:<programlisting>&lt;dependency&gt;
+    &lt;groupId&gt;javax.xml.bind&lt;/groupId&gt;
+    &lt;artifactId&gt;jaxb-api&lt;/artifactId&gt;
+    &lt;version&gt;2.2&lt;/version&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;com.sun.xml.bind&lt;/groupId&gt;
+    &lt;artifactId&gt;jaxb-impl&lt;/artifactId&gt;
+    &lt;version&gt;2.1.12&lt;/version&gt;
+&lt;/dependency&gt;
+</programlisting> if you are using the SourceForge package you find the
+    necessary libraries in the <filename>lib/jdk5</filename> directory. In
+    case you are not using the XML configuration you can also disable it
+    explicitly by calling
+    <methodname>Configuration.ignoreXmlConfiguration()</methodname> during
+    <classname>ValidationFactory</classname> creation. In this case the JAXB
+    dependencies are not needed.</para>
+  </note>
+
+  <section id="validator-gettingstarted-createproject">
+    <title>Setting up a new Maven project</title>
+
+    <para>Start by creating new Maven project using the Maven archetype plugin
+    as follows:</para>
+
+    <para><example>
+        <title>Using Maven's archetype plugin to create a sample project using
+        Hibernate Validator</title>
+
+        <programlisting>mvn archetype:generate -DarchetypeGroupId=org.hibernate \
+                       -DarchetypeArtifactId=hibernate-validator-quickstart-archetype \
+                       -DarchetypeVersion=&version; \
+                       -DarchetypeRepository=http://repository.jboss.org/nexus/content/groups/public-jboss/ \
+                       -DgroupId=com.mycompany \
+                       -DartifactId=hv-quickstart</programlisting>
+      </example></para>
+
+    <para>Maven will create your project in the directory hv-quickstart.
+    Change into this directory and run:</para>
+
+    <para><programlisting>mvn test</programlisting> Maven will compile the
+    example code and run the implemented unit tests. Let's have a look at the
+    actual code.</para>
+
+    <note>
+      <para>From version 4.2.0.Beta2, the maven command <command>mvn
+      archetype:create</command> will be no longer supported and will fail.
+      You should use the command described in the above listing. If you want
+      more details, look at <ulink
+      url="http://maven.apache.org/archetype/maven-archetype-plugin/"> Maven
+      Archetype plugin</ulink> page.</para>
+    </note>
+  </section>
+
+  <section id="validator-gettingstarted-createmodel">
+    <title>Applying constraints</title>
+
+    <para>Open the project in the IDE of your choice and have a look at the
+    class <classname>Car</classname>:</para>
+
+    <example id="example-class-car">
+      <title>Class Car annotated with constraints</title>
+
+      <programlisting language="JAVA" role="JAVA">package com.mycompany;
+
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
+
+public class Car {
+
+    @NotNull
+    private String manufacturer;
+
+    @NotNull
+    @Size(min = 2, max = 14)
+    private String licensePlate;
+
+    @Min(2)
+    private int seatCount;
+    
+    public Car(String manufacturer, String licencePlate, int seatCount) {
+        this.manufacturer = manufacturer;
+        this.licensePlate = licencePlate;
+        this.seatCount = seatCount;
+    }
+
+    //getters and setters ...
+}</programlisting>
+    </example>
+
+    <para><classname>@NotNull</classname>, <classname>@Size</classname> and
+    <classname>@Min</classname> are so-called constraint annotations, that we
+    use to declare constraints, which shall be applied to the fields of a
+    <classname>Car</classname> instance:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para><property>manufacturer</property> shall never be null</para>
+      </listitem>
+
+      <listitem>
+        <para><property>licensePlate</property> shall never be null and must
+        be between 2 and 14 characters long</para>
+      </listitem>
+
+      <listitem>
+        <para><property>seatCount</property> shall be at least 2.</para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section>
+    <title>Validating constraints</title>
+
+    <para>To perform a validation of these constraints, we use a
+    <classname>Validator</classname> instance. Let's have a look at the
+    <classname>CarTest</classname> class:</para>
+
+    <example>
+      <title>Class CarTest showing validation examples</title>
+
+      <programlisting language="JAVA" role="JAVA">package com.mycompany;
+
+import static org.junit.Assert.*;
+
+import java.util.Set;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
+
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+public class CarTest {
+
+    private static Validator validator;
+
+    @BeforeClass
+    public static void setUp() {
+        ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
+        validator = factory.getValidator();
+    }
+
+    @Test
+    public void manufacturerIsNull() {
+        Car car = new Car(null, "DD-AB-123", 4);
+
+        Set&lt;ConstraintViolation&lt;Car&gt;&gt; constraintViolations =
+            validator.validate(car);
+
+        assertEquals(1, constraintViolations.size());
+        assertEquals("may not be null", constraintViolations.iterator().next().getMessage());
+    }
+
+    @Test
+    public void licensePlateTooShort() {
+        Car car = new Car("Morris", "D", 4);
+
+        Set&lt;ConstraintViolation&lt;Car&gt;&gt; constraintViolations = 
+            validator.validate(car);
+
+        assertEquals(1, constraintViolations.size());
+        assertEquals("size must be between 2 and 14", constraintViolations.iterator().next().getMessage());
+    }
+    
+    @Test
+    public void seatCountTooLow() {
+        Car car = new Car("Morris", "DD-AB-123", 1);
+
+        Set&lt;ConstraintViolation&lt;Car&gt;&gt; constraintViolations =
+            validator.validate(car);
+
+        assertEquals(1, constraintViolations.size());
+        assertEquals("must be greater than or equal to 2", constraintViolations.iterator().next().getMessage());
+    }
+
+    @Test
+    public void carIsValid() {
+        Car car = new Car("Morris", "DD-AB-123", 2);
+
+        Set&lt;ConstraintViolation&lt;Car&gt;&gt; constraintViolations =
+            validator.validate(car);
+
+        assertEquals(0, constraintViolations.size());
+    }
+}</programlisting>
+    </example>
+
+    <para>In the <methodname>setUp()</methodname> method we get a
+    <classname>Validator</classname> instance from the
+    <classname>ValidatorFactory</classname>. A
+    <classname>Validator</classname> instance is thread-safe and may be reused
+    multiple times. For this reason we store it as field of our test class. We
+    can use the <classname>Validator</classname> now to validate the different
+    car instances in the test methods.</para>
+
+    <para>The <methodname>validate()</methodname> method returns a set of
+    <classname>ConstraintViolation</classname> instances, which we can iterate
+    in order to see which validation errors occurred. The first three test
+    methods show some expected constraint violations:</para>
+
+    <itemizedlist>
+      <listitem>
+        <para>The <classname>@NotNull</classname> constraint on manufacturer
+        is violated in <methodname>manufacturerIsNull()</methodname></para>
+      </listitem>
+
+      <listitem>
+        <para>The <classname>@Size</classname> constraint on licensePlate is
+        violated in <methodname>licensePlateTooShort()</methodname></para>
+      </listitem>
+
+      <listitem>
+        <para>The <classname>@Min</classname> constraint on seatCount is
+        violated in <methodname>seatCountTooLow()</methodname></para>
+      </listitem>
+    </itemizedlist>
+
+    <para>If the object validates successfully,
+    <methodname>validate()</methodname> returns an empty set.</para>
+
+    <para>Note that we only use classes from the package
+    <package>javax.validation</package> from the Bean Validation API. As we
+    don't reference any classes of the RI directly, it would be no problem to
+    switch to another implementation of the API, should that need
+    arise.</para>
+  </section>
+
+  <section id="validator-gettingstarted-whatsnext">
+    <title>Where to go next?</title>
+
+    <para>That concludes our 5 minute tour through the world of Hibernate
+    Validator. Continue exploring the code examples or look at further
+    examples referenced in <xref linkend="validator-further-reading" />. To
+    deepen your understanding of Hibernate Validator just continue reading
+    <xref linkend="validator-usingvalidator" />. In case your application has
+    specific validation requirements have a look at <xref
+    linkend="validator-customconstraints" />.</para>
+  </section>
+</chapter>
