@@ -39,14 +39,30 @@
  */
 
 
-package org.glassfish.fighterfish.test.it;
+package org.glassfish.fighterfish.test.util;
 
-import org.glassfish.embeddable.GlassFishException;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 
 /**
- * Represents a domain configuration change that can be restored to its original value when {@link #restore()} is called.
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-public interface RestorableDomainConfiguration {
-    void restore() throws GlassFishException;
+public class URLHelper {
+    public static String getResponse(URL request) throws IOException {
+        URLConnection yc = request.openConnection();
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(
+                        yc.getInputStream()));
+
+        StringBuilder sb = new StringBuilder();
+        String inputLine;
+        while ((inputLine = in.readLine()) != null) {
+            sb.append(inputLine);
+        }
+        in.close();
+        return sb.toString();
+    }
 }

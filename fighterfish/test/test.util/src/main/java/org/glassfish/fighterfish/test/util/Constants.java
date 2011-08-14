@@ -39,47 +39,16 @@
  */
 
 
-package org.glassfish.fighterfish.test.it;
-
-import org.glassfish.fighterfish.test.util.TestsConfiguration;
-import org.junit.runner.RunWith;
-import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.junit.Configuration;
-import org.ops4j.pax.exam.junit.ExamReactorStrategy;
-import org.ops4j.pax.exam.junit.JUnit4TestRunner;
-import org.ops4j.pax.exam.spi.reactors.EagerSingleStagedReactorFactory;
-
-import java.io.IOException;
+package org.glassfish.fighterfish.test.util;
 
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
- *
- * Base class for all our tests. This class does not belong to test.util bundle as we don't want to depend on
- * pax-exam-junit packages from test.util bundle. There are some issues when we do so. This is mainly because
- * pax-exam-junit4 is not an OSGi bundle, so we can't provision it. We have to either wrap it or configure system
- * packages appropriately. Either of them suck. So, we just leave this base class in the test bundle itself.
- *
  */
-@RunWith(JUnit4TestRunner.class)
-@ExamReactorStrategy( EagerSingleStagedReactorFactory.class )
-public abstract class AbstractTestObject {
-
-    /**
-     * PaxExamJunit driver treats methods in Junit Test class annotated with @Configuration specially.
-     * For each such method, it creates a separate test container configuring it with the options as returned
-     * by the method.
-     *
-     * @return Options used to configure a test container
-     * @throws IOException
-     */
-    @Configuration
-    public Option[] getPaxExamConfiguration() throws IOException {
-        return TestsConfiguration.getInstance().getPaxExamConfiguration();
-    }
-
-    // helper method
-    protected Long getTimeout() {
-        return TestsConfiguration.getInstance().getTimeout();
-    }
-
+public final class Constants {
+    static final String FW_CONFIG_FILE_NAME = "OSGiFramework.properties";
+    static final String EXAM_TIMEOUT_PROP = "pax-exam.framework.shutdown.timeout";
+    static final String GLASSFISH_PLATFORM_PROP = "GlassFish_Platform";
+    static final String GLASSFISH_INSTALL_ROOT_PROP = "com.sun.aas.installRoot";
+    static final String TEST_TIMEOUT_PROP = "fighterfish.test.timeout";
+    static final String TEST_TIMEOUT_DEFAULT_VALUE = "30000";
 }

@@ -41,19 +41,11 @@
 
 package org.glassfish.fighterfish.test.it;
 
-import org.glassfish.embeddable.GlassFish;
 import org.glassfish.embeddable.GlassFishException;
-import org.glassfish.fighterfish.test.util.EjbBundle;
-import org.glassfish.fighterfish.test.util.GlassFishTracker;
-import org.glassfish.fighterfish.test.util.OSGiUtil;
-import org.glassfish.fighterfish.test.util.WebAppBundle;
+import org.glassfish.fighterfish.test.util.*;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.ops4j.pax.exam.junit.ExamReactorStrategy;
-import org.ops4j.pax.exam.junit.JUnit4TestRunner;
-import org.ops4j.pax.exam.spi.reactors.EagerSingleStagedReactorFactory;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -63,205 +55,202 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
-import org.osgi.service.log.LogEntry;
-import org.osgi.service.log.LogListener;
-import org.osgi.service.log.LogReaderService;
 
-import java.io.*;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.net.URLConnection;
-import java.util.Collections;
-import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.glassfish.fighterfish.test.util.URLHelper.getResponse;
+import static org.junit.Assert.*;
 
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-@RunWith(JUnit4TestRunner.class)
-@ExamReactorStrategy( EagerSingleStagedReactorFactory.class )
 public class T2_Test extends AbstractTestObject {
+
+    private Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
     /**
      * Tests test.app0
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp0(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp0(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp0", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
         try {
             final String location = "mvn:org.glassfish.fighterfish/test.app0/1.0.0-SNAPSHOT/war";
-            Bundle bundle = installTestBundle(ctx, location);
+            Bundle bundle = tc.installTestBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = ""; // homepage
             final String expectedResponse = "Hello World";
-            String response = getResponse(wab, request);
+            String response = wab.getResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp0", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
-            uninstallAllTestBundles();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app1
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp1(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp1(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp1", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
-        RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "testapp1", new File(derbyRootDir, "testapp1"));
+        TestContext tc = TestContext.create(ctx);
         try {
-
             final String location = "mvn:org.glassfish.fighterfish/test.app1/1.0.0-SNAPSHOT/war";
-            Bundle bundle = installTestBundle(ctx, location);
+            Bundle bundle = tc.installTestBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String registrationRequest = "/RegistrationServlet?name=foo&password=bar";
             final String loginRequest = "/LoginServlet?name=foo&password=bar";
             final String registrationSuccessful = "Registered foo";
             final String loginSuccessful = "Welcome foo";
-            String response = getResponse(wab, registrationRequest);
+            String response = wab.getResponse(registrationRequest);
             logger.logp(Level.INFO, "T2_Test", "testapp1", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(registrationSuccessful));
-            response = getResponse(wab, loginRequest);
+            response = wab.getResponse(loginRequest);
             logger.logp(Level.INFO, "T2_Test", "testapp1", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(loginSuccessful));
         } finally {
-            uninstallAllTestBundles();
-            rdc.restore();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app2
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp2(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp2(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp2", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
-        RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "testapp2", new File(derbyRootDir, "testapp2"));
+        TestContext tc = TestContext.create(ctx);
         try {
             String location = "mvn:org.glassfish.fighterfish/test.app2/1.0.0-SNAPSHOT/war";
-            Bundle bundle = installTestBundle(ctx, location);
+            Bundle bundle = tc.installTestBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String registrationRequest = "/RegistrationServlet?name=foo&password=bar";
             final String loginRequest = "/LoginServlet?name=foo&password=bar";
             final String registrationSuccessful = "Registered foo";
             final String loginSuccessful = "Welcome foo";
-            String response = getResponse(wab, registrationRequest);
+            String response = wab.getResponse(registrationRequest);
             logger.logp(Level.INFO, "T2_Test", "testapp1", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(registrationSuccessful));
-            response = getResponse(wab, loginRequest);
+            response = wab.getResponse(loginRequest);
             logger.logp(Level.INFO, "T2_Test", "testapp1", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(loginSuccessful));
         } finally {
-            uninstallAllTestBundles();
-            rdc.restore();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app3
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp3(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp3(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp3", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
         try {
             String location = "mvn:org.glassfish.fighterfish/test.app3/1.0.0-SNAPSHOT/war";
-            Bundle bundle = installTestBundle(ctx, location);
+            Bundle bundle = tc.installTestBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = "/";
             final String expectedResponse = "Hello from POJO!";
-            String response = getResponse(wab, request);
+            String response = wab.getResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp3", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
-            uninstallAllTestBundles();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app4
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp4(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp4(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp4", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
         try {
             String location = "mvn:org.glassfish.fighterfish/test.app4/1.0.0-SNAPSHOT/war";
-            Bundle bundle = installTestBundle(ctx, location);
+            Bundle bundle = tc.installTestBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = "/?username=superman";
             final String expectedResponse = "Hello, superman";
-            String response = getResponse(wab, request);
+            String response = wab.getResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp4", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
-            uninstallAllTestBundles();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app5
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp5(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp5(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp5", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
         try {
             String location = "mvn:org.glassfish.fighterfish/test.app5/1.0.0-SNAPSHOT/war";
-            Bundle bundle = installTestBundle(ctx, location);
+            Bundle bundle = tc.installTestBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = "/";
             final String expectedResponse = "My name is Duke.";
-            String response = getResponse(wab, request);
+            String response = wab.getResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp5", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
-            uninstallAllTestBundles();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app6
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
@@ -269,22 +258,21 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     @Ignore // This is currently failing for EclipseLink's inability to handle URL with bundle scheme.
-    public void testapp6(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp6(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp6", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
-        RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "testapp6", new File(derbyRootDir, "testapp6"));
+        TestContext tc = TestContext.create(ctx);
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app6/1.0.0-SNAPSHOT"; // this is a .jar file, so no classifier needed
-            empDeptCrud(ctx, location, "testapp6");
+            empDeptCrud(tc, location, "testapp6");
         } finally {
-            uninstallAllTestBundles();
-            rdc.restore();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app7
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
@@ -292,102 +280,98 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     @Ignore // This is currently failing for EclipseLink's inability to handle URL with bundle scheme.
-    public void testapp7(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp7(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp7", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
-        RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "testapp7", new File(derbyRootDir, "testapp7"));
+        TestContext tc = TestContext.create(ctx);
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app7/1.0.0-SNAPSHOT/war";
-            empDeptCrud(ctx, location, "testapp7");
+            empDeptCrud(tc, location, "testapp7");
         } finally {
-            uninstallAllTestBundles();
-            rdc.restore();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app8
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp8(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp8(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp8", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
-        RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "testapp8", new File(derbyRootDir, "testapp8"));
+        TestContext tc = TestContext.create(ctx);
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app8/1.0.0-SNAPSHOT"; // this is a jar
-            empDeptCrud(ctx, location, "testapp8");
+            empDeptCrud(tc, location, "testapp8");
         } finally {
-            uninstallAllTestBundles();
-            rdc.restore();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app9
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp9(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp9(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp9", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
-        RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "testapp9", new File(derbyRootDir, "testapp9"));
+        TestContext tc = TestContext.create(ctx);
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app9/1.0.0-SNAPSHOT";
-            Bundle bundle = installTestBundle(ctx, location);
+            Bundle bundle = tc.installTestBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = "/";
             final String expectedResponse = "Success";
-            String response = getResponse(wab, request);
+            String response = wab.getResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp9", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
-            uninstallAllTestBundles();
-            rdc.restore();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app10
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp10(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp10(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp10", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
-        RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "testapp10", new File(derbyRootDir, "testapp10"));
+        TestContext tc = TestContext.create(ctx);
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app10/1.0.0-SNAPSHOT"; // this has .jar extn
-            Bundle bundle = installTestBundle(ctx, location);
+            Bundle bundle = tc.installTestBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = "/";
             final String expectedResponse = "bean: bar";
-            String response = getResponse(wab, request);
+            String response = wab.getResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp10", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
-            uninstallAllTestBundles();
-            rdc.restore();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app11.ejb
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
@@ -396,77 +380,81 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp11_ejb(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp11_ejb", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
         try {
 
             // Tests only deploying an ejb bundle with remote and local ejb in it to make sure the bug reported in #11855 is fixed.
             String location_ejb = "mvn:org.glassfish.fighterfish/test.app11.ejb/1.0.0-SNAPSHOT";
-            Bundle bundle_ejb = installTestBundle(ctx, location_ejb);
+            Bundle bundle_ejb = tc.installTestBundle(location_ejb);
             EjbBundle ejbBundle = new EjbBundle(ctx, bundle_ejb, new String[]{"org.glassfish.fighterfish.test.app11.ejb.TestLocal"});
-            ejbBundle.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            ejbBundle.deploy(getTimeout(), TimeUnit.MILLISECONDS);
 
         } finally {
-            uninstallAllTestBundles();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app11 as a WAB
+     *
      * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    @Ignore // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
+    @Ignore
+    // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
     public void testapp11_wab(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp11_wab", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
         try {
 
             String location_ejb = "mvn:org.glassfish.fighterfish/test.app11.ejb/1.0.0-SNAPSHOT";
             String location_war = "mvn:org.glassfish.fighterfish/test.app11/1.0.0-SNAPSHOT/war";
-            Bundle bundle_ejb = installTestBundle(ctx, location_ejb);
+            Bundle bundle_ejb = tc.installTestBundle(location_ejb);
             EjbBundle ejbBundle = new EjbBundle(ctx, bundle_ejb, new String[]{"org.glassfish.fighterfish.test.app11.ejb.TestLocal"});
-            ejbBundle.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            ejbBundle.deploy(getTimeout(), TimeUnit.MILLISECONDS);
 
             // now let's deploy the war as a WAB
-            Bundle bundle_web = installTestBundle(ctx, location_war);
+            Bundle bundle_web = tc.installTestBundle(location_war);
             WebAppBundle wab = new WebAppBundle(ctx, bundle_web);
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             String request = "/TestServlet";
             String expectedResponse = "HELLO WORLD";
             String response = wab.getResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp11_wab", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
-            uninstallAllTestBundles();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app11 as a plain war
-     * @param ctx        .
+     *
+     * @param ctx .
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    @Ignore // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
+    @Ignore
+    // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
     public void testapp11_war(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp11_war", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
         String appName = null;
         try {
 
             String location_ejb = "mvn:org.glassfish.fighterfish/test.app11.ejb/1.0.0-SNAPSHOT";
             String location_war = "mvn:org.glassfish.fighterfish/test.app11/1.0.0-SNAPSHOT/war";
-            Bundle bundle_ejb = installTestBundle(ctx, location_ejb);
+            Bundle bundle_ejb = tc.installTestBundle(location_ejb);
             EjbBundle ejbBundle = new EjbBundle(ctx, bundle_ejb, new String[]{"org.glassfish.fighterfish.test.app11.ejb.TestLocal"});
-            ejbBundle.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            ejbBundle.deploy(getTimeout(), TimeUnit.MILLISECONDS);
 
             // let's deploy a regular web app
-            appName =gf.getDeployer().deploy(URI.create(location_war), "--contextroot", "test.app11");
+            appName = tc.getGlassFish().getDeployer().deploy(URI.create(location_war), "--contextroot", "test.app11");
             final String request = "http://localhost:8080/test.app11/TestServlet";
             final String expectedResponse = "HELLO WORLD";
             String response = getResponse(new URL(request));
@@ -474,27 +462,28 @@ public class T2_Test extends AbstractTestObject {
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
             if (appName != null) {
-                gf.getDeployer().undeploy(appName);
+                tc.getGlassFish().getDeployer().undeploy(appName);
             }
-            uninstallAllTestBundles();
+            tc.destroy();
         }
     }
 
     /**
      * Tests test.app12
+     *
      * @param ctx
      */
     @Test
     public void testapp12(BundleContext ctx) throws BundleException, GlassFishException, InterruptedException, IOException {
         logger.entering("T2_Test", "testapp12", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
         try {
             String location_host = "mvn:org.glassfish.fighterfish/test.app12/1.0.0-SNAPSHOT/war";
             String location_fragment = "mvn:org.glassfish.fighterfish/test.app12.fragment/1.0.0-SNAPSHOT";
 
-            Bundle bundle_host = installTestBundle(ctx, location_host);
+            Bundle bundle_host = tc.installTestBundle(location_host);
             WebAppBundle wab = new WebAppBundle(ctx, bundle_host);
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
 
             String requestHost = "/";
             String requestFragment = "/fragment.html";
@@ -512,16 +501,16 @@ public class T2_Test extends AbstractTestObject {
             }
 
             // now install the fragment and refresh the host
-            installTestBundle(ctx, location_fragment);
+            tc.installTestBundle(location_fragment);
             bundle_host.stop(); // This is needed so that the web app does not get deployed upon update().
             bundle_host.update();
             wab = new WebAppBundle(ctx, bundle_host);// TODO(Sahoo): because of some bug, we can't reuse earlier wab
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS); // deploy again
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS); // deploy again
             response = wab.getResponse(requestFragment);
             assertThat(response, new StringPatternMatcher(expectedResponseFragment));
-            
-        }finally {
-            uninstallAllTestBundles();
+
+        } finally {
+            tc.destroy();
         }
     }
 
@@ -529,97 +518,92 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp13(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
         logger.entering("T2_Test", "testapp13", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app13/1.0.0-SNAPSHOT";
 
             {
-                Bundle bundle = installTestBundle(ctx, location);
+                Bundle bundle = tc.installTestBundle(location);
                 EjbBundle ejbBundle = new EjbBundle(ctx, bundle,
                         new String[]{"org.glassfish.fighterfish.test.app13.DummySessionBeanLocal"});
-                ejbBundle.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+                ejbBundle.deploy(getTimeout(), TimeUnit.MILLISECONDS);
                 // if deployment has been successful, then the test has passed
             }
-        }finally {
-            uninstallAllTestBundles();
+        } finally {
+            tc.destroy();
         }
     }
 
     @Test
     public void testapp14(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
         logger.entering("T2_Test", "testapp14", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
-        RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "testapp14", new File(derbyRootDir, "testapp14"));
+        TestContext tc = TestContext.create(ctx);
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app14/1.0.0-SNAPSHOT";
             {
-                Bundle bundle = installTestBundle(ctx, location);
+                Bundle bundle = tc.installTestBundle(location);
                 bundle.start();
                 Object service = OSGiUtil.waitForService(ctx, bundle,
-                        "org.glassfish.fighterfish.test.app14.ConnectionFactory", TIMEOUT);
+                        "org.glassfish.fighterfish.test.app14.ConnectionFactory", getTimeout());
                 Assert.assertNotNull(service);
             }
-        }finally {
-            rdc.restore();
-            uninstallAllTestBundles();
+        } finally {
+            tc.destroy();
         }
     }
-    
+
     @Test
     public void testapp15(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
         logger.entering("T2_Test", "testapp15", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
-        RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "testapp15", new File(derbyRootDir, "testapp15"));
+        TestContext tc = TestContext.create(ctx);
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app15/1.0.0-SNAPSHOT";
             {
-                Bundle bundle = installTestBundle(ctx, location);
+                Bundle bundle = tc.installTestBundle(location);
                 bundle.start();
                 Object service = OSGiUtil.waitForService(ctx, bundle,
-                        "org.glassfish.fighterfish.test.app15.ConnectionFactory", TIMEOUT);
+                        "org.glassfish.fighterfish.test.app15.ConnectionFactory", getTimeout());
                 Assert.assertNotNull(service);
             }
-        }finally {
-            rdc.restore();
-            uninstallAllTestBundles();
+        } finally {
+            tc.destroy();
         }
     }
 
     @Test
     public void testapp16(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp16", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
         final String cfName = "jms/fighterfish.TestApp16ConnectionFactory";
         final String topicName = "jms/fighterfish.TestApp16Topic";
-        configureEmbeddedDerby(gf, "testapp16", new File(derbyRootDir, "testapp16"));
-        createJmsCF(gf, cfName);
-        createJmsTopic(gf, topicName);
+        tc.createJmsCF(cfName);
+        tc.createJmsTopic(topicName);
         try {
             String location_entities = "mvn:org.glassfish.fighterfish/test.app16.entities/1.0.0-SNAPSHOT";
             String location_msgproducer = "mvn:org.glassfish.fighterfish/test.app16.msgproducer/1.0.0-SNAPSHOT";
             String location_mdb = "mvn:org.glassfish.fighterfish/test.app16.mdb/1.0.0-SNAPSHOT";
             String location_wab = "mvn:org.glassfish.fighterfish/test.app16/1.0.0-SNAPSHOT/war";
             String request = "/MessageReaderServlet";
-            Bundle bundle_entities = installTestBundle(ctx, location_entities);
+            Bundle bundle_entities = tc.installTestBundle(location_entities);
             bundle_entities.start();
             Object service = OSGiUtil.waitForService(ctx, bundle_entities,
-                    "javax.persistence.EntityManagerFactory", TIMEOUT);
+                    "javax.persistence.EntityManagerFactory", getTimeout());
             Assert.assertNotNull("Checking for EMF svc registered by entities bundle", service);
-            Bundle bundle_mdb = installTestBundle(ctx, location_mdb);
+            Bundle bundle_mdb = tc.installTestBundle(location_mdb);
             bundle_mdb.start();
-            Bundle bundle_msgproducer = installTestBundle(ctx, location_msgproducer);
+            Bundle bundle_msgproducer = tc.installTestBundle(location_msgproducer);
             bundle_msgproducer.start();
-            Bundle bundle_wab = installTestBundle(ctx, location_wab);
+            Bundle bundle_wab = tc.installTestBundle(location_wab);
             WebAppBundle wab = new WebAppBundle(ctx, bundle_wab);
             // Note, bundle deployment happens in the same order as they are started
             // Since we are not waiting for mdb deployment, let's wait double time for this to deploy.
-            wab.deploy(TIMEOUT*2, TimeUnit.MILLISECONDS);
+            wab.deploy(getTimeout() * 2, TimeUnit.MILLISECONDS);
             String response = wab.getResponse(request);
             assertThat(response, new StringPatternMatcher("Total number of messages: 0"));
-            ConfigurationAdmin ca = OSGiUtil.getService(ctx, ConfigurationAdmin.class, TIMEOUT);
+            ConfigurationAdmin ca = OSGiUtil.getService(ctx, ConfigurationAdmin.class, getTimeout());
             final String pkgName = "org.glassfish.fighterfish.test.app16.msgproducer";
             Configuration config = ca.getConfiguration(pkgName, null);
             Properties props = new Properties();
@@ -628,7 +612,7 @@ public class T2_Test extends AbstractTestObject {
             final Integer noOfMsgs = 2;
             props.setProperty(pkgName + ".NoOfMsgs", noOfMsgs.toString());
             config.update(props);
-            Thread.sleep(TIMEOUT); // Allow the config changes to be propagated and msg to reach destination
+            Thread.sleep(getTimeout()); // Allow the config changes to be propagated and msg to reach destination
             response = wab.getResponse(request);
             final int expectedNoOfMsgs = (noOfMsgs) * 2; // we have 2 MDBs
             logger.logp(Level.INFO, "T2_Test", "testapp16", "response = {0}", new Object[]{response});
@@ -637,20 +621,19 @@ public class T2_Test extends AbstractTestObject {
             e.printStackTrace();
             fail(e.toString());
         } finally {
-            restoreDomainConfiguration();
-            uninstallAllTestBundles();
+            tc.destroy();
         }
     }
 
     @Test
     public void testapp17(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp17", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
         try {
             String location_wab = "mvn:org.glassfish.fighterfish/test.app17/1.0.0-SNAPSHOT/war";
-            Bundle bundle_wab = installTestBundle(ctx, location_wab);
+            Bundle bundle_wab = tc.installTestBundle(location_wab);
             WebAppBundle wab = new WebAppBundle(ctx, bundle_wab);
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS); // deployment is sufficient to test this bundle
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS); // deployment is sufficient to test this bundle
             String request = "/HelloWebServiceService?wsdl";
             String response = wab.getResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp17", "response = {0}", new Object[]{response});
@@ -659,26 +642,26 @@ public class T2_Test extends AbstractTestObject {
             e.printStackTrace();
             fail(e.toString());
         } finally {
-            uninstallAllTestBundles();
+            tc.destroy();
         }
     }
 
     @Test
     public void testapp18(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp18", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
         try {
             String location_wab = "mvn:org.glassfish.fighterfish/test.app18/1.0.0-SNAPSHOT/war";
-            final Bundle bundle_wab = installTestBundle(ctx, location_wab);
+            final Bundle bundle_wab = tc.installTestBundle(location_wab);
             WebAppBundle wab = new WebAppBundle(ctx, bundle_wab);
 
             final Semaphore eventRaised = new Semaphore(0);
-            EventAdmin eventAdmin = OSGiUtil.getService(ctx, EventAdmin.class, TIMEOUT);
+            EventAdmin eventAdmin = OSGiUtil.getService(ctx, EventAdmin.class, getTimeout());
             Assert.assertNotNull("Event Admin Service not available", eventAdmin);
             Properties props = new Properties();
             String[] topics = {"org/glassfish/fighterfist/test/app18"};
             props.put(EventConstants.EVENT_TOPIC, topics);
-            ctx.registerService(EventHandler.class.getName(), new EventHandler(){
+            ctx.registerService(EventHandler.class.getName(), new EventHandler() {
                 @Override
                 public void handleEvent(Event event) {
                     logger.logp(Level.INFO, "T2_Test", "testapp18", "log message = {0}", new Object[]{event});
@@ -686,13 +669,13 @@ public class T2_Test extends AbstractTestObject {
                 }
             }, props);
 
-            wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS); // deployment is sufficient to test this bundle
-            assertTrue("Incorrect no. of events", eventRaised.tryAcquire(1, TIMEOUT, TimeUnit.MILLISECONDS));
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS); // deployment is sufficient to test this bundle
+            assertTrue("Incorrect no. of events", eventRaised.tryAcquire(1, getTimeout(), TimeUnit.MILLISECONDS));
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.toString());
         } finally {
-            uninstallAllTestBundles();
+            tc.destroy();
         }
     }
 
@@ -701,10 +684,11 @@ public class T2_Test extends AbstractTestObject {
     // Various utility methods used from test methods are found below.
     //////////////////////////////////////////////////////////////////
 
-    private void empDeptCrud(BundleContext ctx, String location, String testMethodName) throws BundleException, InterruptedException {
-        Bundle bundle = installTestBundle(ctx, location);
+    private void empDeptCrud(TestContext tc, String location, String testMethodName) throws BundleException, InterruptedException, IOException {
+        BundleContext ctx = tc.getBundleContext();
+        Bundle bundle = tc.installTestBundle(location);
         WebAppBundle wab = new WebAppBundle(ctx, bundle);
-        wab.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+        wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
         final String request1 = "/crud?action=createDepartment&departmentName=hr";
         final String request2 = "/crud?action=createDepartment&departmentName=finance";
         final String request3 = "/crud?action=createEmployee&departmentName=finance";
@@ -718,47 +702,47 @@ public class T2_Test extends AbstractTestObject {
         final String createdResponse = "Created ";
         final String readResponse = "Found ";
         final String deletedResponse = "Deleted ";
-        String response = getResponse(wab, request1);
+        String response = wab.getResponse(request1);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(createdResponse));
 
-        response = getResponse(wab, request2);
+        response = wab.getResponse(request2);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(createdResponse));
 
-        response = getResponse(wab, request3);
+        response = wab.getResponse(request3);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(createdResponse));
 
-        response = getResponse(wab, request4);
+        response = wab.getResponse(request4);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(createdResponse));
 
-        response = getResponse(wab, request5);
+        response = wab.getResponse(request5);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(readResponse));
 
-        response = getResponse(wab, request6);
+        response = wab.getResponse(request6);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(readResponse));
 
-        response = getResponse(wab, request6);
+        response = wab.getResponse(request6);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(readResponse));
 
-        response = getResponse(wab, request7);
+        response = wab.getResponse(request7);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(deletedResponse));
 
-        response = getResponse(wab, request8);
+        response = wab.getResponse(request8);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(deletedResponse));
 
-        response = getResponse(wab, request9);
+        response = wab.getResponse(request9);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(deletedResponse));
 
-        response = getResponse(wab, request10);
+        response = wab.getResponse(request10);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(deletedResponse));
     }

@@ -41,15 +41,10 @@
 
 package org.glassfish.fighterfish.test.it;
 
-import org.glassfish.embeddable.GlassFish;
 import org.glassfish.embeddable.GlassFishException;
 import org.glassfish.fighterfish.test.util.*;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.ops4j.pax.exam.junit.ExamReactorStrategy;
-import org.ops4j.pax.exam.junit.JUnit4TestRunner;
-import org.ops4j.pax.exam.spi.reactors.EagerSingleStagedReactorFactory;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
@@ -59,7 +54,6 @@ import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.osgi.service.http.HttpService;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
@@ -67,25 +61,23 @@ import java.util.Properties;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import static org.glassfish.fighterfish.test.util.URLHelper.getResponse;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertTrue;
 import static org.osgi.framework.Bundle.START_TRANSIENT;
 
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-@RunWith(JUnit4TestRunner.class)
-@ExamReactorStrategy( EagerSingleStagedReactorFactory.class )
 public class T1_SamplesTest extends AbstractTestObject {
-
+    Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
     @Test
     public void uas_sample_test(BundleContext ctx)
-            throws GlassFishException, InterruptedException, BundleException {
+            throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T1_SamplesTest", "uas_sample_test", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
-        RestorableDomainConfiguration rdc = configureEmbeddedDerby(gf, "uas_sample_test", new File(derbyRootDir, "uas_sample_test"));
+        TestContext tc = TestContext.create(ctx);
         try {
             /*
              * URIs of various sample.uas bundles that we are going to use.
@@ -99,11 +91,11 @@ public class T1_SamplesTest extends AbstractTestObject {
             String uas_ejbservice2 = "mvn:org.glassfish.fighterfish/sample.uas.ejbservice2/1.0.0-SNAPSHOT";
             String uas_advservice = "mvn:org.glassfish.fighterfish/sample.uas.advservice/1.0.0-SNAPSHOT";
 
-            Bundle uas_api_b = installTestBundle(ctx, uas_api);
-            Bundle uas_simpleservice_b = installTestBundle(ctx, uas_simpleservice);
-            Bundle uas_simplewab_b = installTestBundle(ctx, uas_simplewab);
+            Bundle uas_api_b = tc.installTestBundle(uas_api);
+            Bundle uas_simpleservice_b = tc.installTestBundle(uas_simpleservice);
+            Bundle uas_simplewab_b = tc.installTestBundle(uas_simplewab);
             WebAppBundle uas_simple_webapp = new WebAppBundle(ctx, uas_simplewab_b);
-            uas_simple_webapp.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
+            uas_simple_webapp.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             String response = null;
 
             // Service type of the EJB registered by uas ejb service bundle 
@@ -128,27 +120,27 @@ public class T1_SamplesTest extends AbstractTestObject {
 
             {
                 // Scenario 1: no service
-                response = getResponse(uas_simple_webapp, loginRequest);
+                response = uas_simple_webapp.getResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(serviceUnavailable));
             }
             {
                 // Scenario 2: dynamically adding a service bundle and retrying...
                 uas_simpleservice_b.start(START_TRANSIENT);
-                response = getResponse(uas_simple_webapp, loginRequest);
+                response = uas_simple_webapp.getResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(loginFailed));
 
                 // now let's register a user and retry
-                response = getResponse(uas_simple_webapp, registrationRequest);
+                response = uas_simple_webapp.getResponse(registrationRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulRegistration));
-                response = getResponse(uas_simple_webapp, loginRequest);
+                response = uas_simple_webapp.getResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulLogin));
 
                 // unregister
-                response = getResponse(uas_simple_webapp, unregistrationRequest);
+                response = uas_simple_webapp.getResponse(unregistrationRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulUnregistration));
             }
@@ -156,58 +148,58 @@ public class T1_SamplesTest extends AbstractTestObject {
             {
                 // Scenario #3: Dynamically switching the service by ejbservice
                 uas_simpleservice_b.stop();
-                response = getResponse(uas_simple_webapp, loginRequest);
+                response = uas_simple_webapp.getResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(serviceUnavailable));
 
                 // let's install ejbservice bundle and retry
-                Bundle uas_ejbservice_b = installTestBundle(ctx, uas_ejbservice);
-                EjbBundle uas_ejbapp = new EjbBundle(ctx, uas_ejbservice_b, new String[] {uas_service_type});
-                uas_ejbapp.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
-                getResponse(uas_simple_webapp, unregistrationRequest); // unregister just in case there was a user by this name
-                response = getResponse(uas_simple_webapp, loginRequest);
+                Bundle uas_ejbservice_b = tc.installTestBundle(uas_ejbservice);
+                EjbBundle uas_ejbapp = new EjbBundle(ctx, uas_ejbservice_b, new String[]{uas_service_type});
+                uas_ejbapp.deploy(getTimeout(), TimeUnit.MILLISECONDS);
+                uas_simple_webapp.getResponse(unregistrationRequest); // unregister just in case there was a user by this name
+                response = uas_simple_webapp.getResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(loginFailed));
 
                 // now let's register a user and retry
-                response = getResponse(uas_simple_webapp, registrationRequest);
+                response = uas_simple_webapp.getResponse(registrationRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulRegistration));
 
-                response = getResponse(uas_simple_webapp, loginRequest);
+                response = uas_simple_webapp.getResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulLogin));
 
                 // unregister
-                response = getResponse(uas_simple_webapp, unregistrationRequest);
+                response = uas_simple_webapp.getResponse(unregistrationRequest);
 
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulUnregistration));
 
                 // stop the service bundle and retry to make sure we are failing to get the service
                 uas_ejbapp.undeploy();
-                response = getResponse(uas_simple_webapp, unregistrationRequest);
+                response = uas_simple_webapp.getResponse(unregistrationRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(serviceUnavailable));
             }
 
             {
                 // Scenario #4: Let's replace the ejbservice by ejbservice2 which uses standalone entities jar.
-                Bundle uas_entity_b = installTestBundle(ctx, uas_entities);
+                Bundle uas_entity_b = tc.installTestBundle(uas_entities);
                 EntityBundle uas_entityapp = new EntityBundle(ctx, uas_entity_b);
-                uas_entityapp.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
-                Bundle uas_ejbservice2_b = installTestBundle(ctx, uas_ejbservice2);
-                EjbBundle uas_ejbapp2 = new EjbBundle(ctx, uas_ejbservice2_b, new String[] {uas_service_type});
-                uas_ejbapp2.deploy(TIMEOUT, TimeUnit.MILLISECONDS);
-                response = getResponse(uas_simple_webapp, registrationRequest);
+                uas_entityapp.deploy(getTimeout(), TimeUnit.MILLISECONDS);
+                Bundle uas_ejbservice2_b = tc.installTestBundle(uas_ejbservice2);
+                EjbBundle uas_ejbapp2 = new EjbBundle(ctx, uas_ejbservice2_b, new String[]{uas_service_type});
+                uas_ejbapp2.deploy(getTimeout(), TimeUnit.MILLISECONDS);
+                response = uas_simple_webapp.getResponse(registrationRequest);
                 assertThat(response, new StringPatternMatcher(successfulRegistration));
 
                 // login
-                response = getResponse(uas_simple_webapp, loginRequest);
+                response = uas_simple_webapp.getResponse(loginRequest);
                 assertThat(response, new StringPatternMatcher(successfulLogin));
 
                 // unregister
-                response = getResponse(uas_simple_webapp, unregistrationRequest);
+                response = uas_simple_webapp.getResponse(unregistrationRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulUnregistration));
             }
@@ -222,49 +214,49 @@ public class T1_SamplesTest extends AbstractTestObject {
                 }
 
                 // now install the fragment and refresh the host
-                installTestBundle(ctx, uas_simplewabfragment);
+                tc.installTestBundle(uas_simplewabfragment);
                 uas_simplewab_b.stop(); // This is needed so that the web app does not get deployed upon update().
                 uas_simplewab_b.update();
                 uas_simple_webapp = new WebAppBundle(ctx, uas_simplewab_b);// TODO(Sahoo): because of some bug, we can't reuse earlier wab
-                uas_simple_webapp.deploy(TIMEOUT, TimeUnit.MILLISECONDS); // deploy again
-                response = getResponse(uas_simple_webapp, reportJspRequest);
+                uas_simple_webapp.deploy(getTimeout(), TimeUnit.MILLISECONDS); // deploy again
+                response = uas_simple_webapp.getResponse(reportJspRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher("to see the report."));
 
                 // now let's see if the servlet from the fragment can be used or not.
-                response = getResponse(uas_simple_webapp, reportServletRequest);
+                response = uas_simple_webapp.getResponse(reportServletRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher("Login Attempt Report:"));
             }
         } finally {
-            uninstallAllTestBundles();
-            rdc.restore();
+            tc.destroy();
         }
     }
 
     @Test
     public void osgihttp_helloworld_sample_test(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T1_SamplesTest", "osgihttp_helloworld_sample_test", new Object[]{ctx});
+        TestContext tc = TestContext.create(ctx);
         try {
             HttpService httpService = OSGiUtil.getService(ctx, HttpService.class);
             assertNull(httpService);
-            for(Bundle b : ctx.getBundles()) {
+            for (Bundle b : ctx.getBundles()) {
                 if ("org.glassfish.fighterfish.osgi-http".equals(b.getSymbolicName())) {
                     b.stop(Bundle.START_TRANSIENT);
                     b.start(Bundle.START_TRANSIENT);
                 }
             }
-            httpService = OSGiUtil.getService(ctx, HttpService.class, TIMEOUT);
+            httpService = OSGiUtil.getService(ctx, HttpService.class, getTimeout());
             assertNotNull(httpService);
             final String location = "mvn:org.glassfish.fighterfish/sample.osgihttp.helloworld/1.0.0-SNAPSHOT";
-            Bundle bundle = installTestBundle(ctx, location);
+            Bundle bundle = tc.installTestBundle(location);
             final Semaphore eventRaised = new Semaphore(0);
-            EventAdmin eventAdmin = OSGiUtil.getService(ctx, EventAdmin.class, TIMEOUT);
+            EventAdmin eventAdmin = OSGiUtil.getService(ctx, EventAdmin.class, getTimeout());
             Assert.assertNotNull("Event Admin Service not available", eventAdmin);
             Properties props = new Properties();
             String[] topics = {"org/glassfish/fighterfish/sample/osgihttp/helloworld"};
             props.put(EventConstants.EVENT_TOPIC, topics);
-            ctx.registerService(EventHandler.class.getName(), new EventHandler(){
+            ctx.registerService(EventHandler.class.getName(), new EventHandler() {
                 @Override
                 public void handleEvent(Event event) {
                     logger.logp(Level.INFO, "SingleTest", "handleEvent", "event = {0}", new Object[]{event});
@@ -273,7 +265,7 @@ public class T1_SamplesTest extends AbstractTestObject {
             }, props);
 
             bundle.start(Bundle.START_TRANSIENT);
-            assertTrue("Timedout waiting for event", eventRaised.tryAcquire(1, TIMEOUT, TimeUnit.MILLISECONDS));
+            assertTrue("Timedout waiting for event", eventRaised.tryAcquire(1, getTimeout(), TimeUnit.MILLISECONDS));
             URL request1 = new URL("http://localhost:8080/osgi/hello1");
             URL request2 = new URL("http://localhost:8080/osgi/hello2");
             URL request3 = new URL("http://localhost:8080/osgi/hello3");
@@ -293,7 +285,7 @@ public class T1_SamplesTest extends AbstractTestObject {
             logger.logp(Level.INFO, "T1_SamplesTest", "osgihttp_helloworld_sample_test", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher("servlet context counter = null"));
         } finally {
-            uninstallAllTestBundles();
+            tc.destroy();
         }
     }
 }

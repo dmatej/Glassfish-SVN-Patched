@@ -39,47 +39,26 @@
  */
 
 
-package org.glassfish.fighterfish.test.it;
+package org.glassfish.fighterfish.test.util;
 
-import org.glassfish.fighterfish.test.util.TestsConfiguration;
-import org.junit.runner.RunWith;
-import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.junit.Configuration;
-import org.ops4j.pax.exam.junit.ExamReactorStrategy;
-import org.ops4j.pax.exam.junit.JUnit4TestRunner;
-import org.ops4j.pax.exam.spi.reactors.EagerSingleStagedReactorFactory;
-
-import java.io.IOException;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 
 /**
- * @author Sanjeeb.Sahoo@Sun.COM
- *
- * Base class for all our tests. This class does not belong to test.util bundle as we don't want to depend on
- * pax-exam-junit packages from test.util bundle. There are some issues when we do so. This is mainly because
- * pax-exam-junit4 is not an OSGi bundle, so we can't provision it. We have to either wrap it or configure system
- * packages appropriately. Either of them suck. So, we just leave this base class in the test bundle itself.
- *
- */
-@RunWith(JUnit4TestRunner.class)
-@ExamReactorStrategy( EagerSingleStagedReactorFactory.class )
-public abstract class AbstractTestObject {
+* @author Sanjeeb.Sahoo@Sun.COM
+*/
+public class StringPatternMatcher extends BaseMatcher<String> {
+private final String expectedOutputPattern;
 
-    /**
-     * PaxExamJunit driver treats methods in Junit Test class annotated with @Configuration specially.
-     * For each such method, it creates a separate test container configuring it with the options as returned
-     * by the method.
-     *
-     * @return Options used to configure a test container
-     * @throws IOException
-     */
-    @Configuration
-    public Option[] getPaxExamConfiguration() throws IOException {
-        return TestsConfiguration.getInstance().getPaxExamConfiguration();
-    }
+public StringPatternMatcher(String expectedOutputPattern) {this.expectedOutputPattern = expectedOutputPattern;}
 
-    // helper method
-    protected Long getTimeout() {
-        return TestsConfiguration.getInstance().getTimeout();
-    }
+@Override
+public boolean matches(Object o) {
+    return String.class.cast(o).contains(expectedOutputPattern);
+}
 
+@Override
+public void describeTo(Description description) {
+    description.appendText("Expected output to contain [" + expectedOutputPattern + "]");
+}
 }

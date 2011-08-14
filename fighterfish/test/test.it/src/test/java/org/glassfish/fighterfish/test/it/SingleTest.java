@@ -43,53 +43,33 @@ package org.glassfish.fighterfish.test.it;
 
 import org.glassfish.embeddable.GlassFish;
 import org.glassfish.embeddable.GlassFishException;
-import org.glassfish.fighterfish.test.util.GlassFishTracker;
-import org.glassfish.fighterfish.test.util.OSGiUtil;
-import org.glassfish.fighterfish.test.util.WebAppBundle;
-import org.junit.Assert;
-import org.junit.Ignore;
+import org.glassfish.fighterfish.test.util.TestContext;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.ops4j.pax.exam.junit.ExamReactorStrategy;
-import org.ops4j.pax.exam.junit.JUnit4TestRunner;
-import org.ops4j.pax.exam.spi.reactors.EagerSingleStagedReactorFactory;
-import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
-import org.osgi.service.cm.Configuration;
-import org.osgi.service.cm.ConfigurationAdmin;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
-import org.osgi.service.event.EventConstants;
-import org.osgi.service.event.EventHandler;
-import org.osgi.service.http.HttpService;
-import org.osgi.service.log.LogEntry;
-import org.osgi.service.log.LogReaderService;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-@RunWith(JUnit4TestRunner.class)
-@ExamReactorStrategy( EagerSingleStagedReactorFactory.class )
 public class SingleTest extends AbstractTestObject {
+
+    private Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
     @Test
     public void test(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("SingleTest", "test", new Object[]{ctx});
-        GlassFish gf = GlassFishTracker.waitForService(ctx, TIMEOUT);
+        TestContext tc = TestContext.create(ctx);
+        try {
+            GlassFish gf = tc.getGlassFish();
+            assertNotNull(gf);
+        } finally {
+            tc.destroy();
+        }
     }
 
 }

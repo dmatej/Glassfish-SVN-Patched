@@ -44,8 +44,6 @@ package org.glassfish.fighterfish.test.util;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
-import org.osgi.framework.ServiceReference;
-import org.osgi.util.tracker.ServiceTracker;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,60 +53,55 @@ import java.util.logging.Logger;
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-public class OSGiUtil {
-    public static <T> T getService(BundleContext ctx, Class<T> type) {
-        ServiceTracker st = new ServiceTracker(ctx, type.getName(), null);
-        st.open();
-        try {
-            return type.cast(st.getService());
-        } finally {
-//            st.close();
-        }
-    }
+public class BundleProvisioner {
+    /**
+     * List of bundles installed by a test method
+     */
+    private List<Bundle> testBundles = new ArrayList<Bundle>();
 
-    public static <T> T getService(BundleContext ctx, Class<T> type, long timeout) throws InterruptedException {
-        ServiceTracker st = new ServiceTracker(ctx, type.getName(), null);
-        st.open();
-        try {
-            return type.cast(st.waitForService(timeout));
-        } finally {
-//            st.close();
-        }
+    private BundleContext ctx;
+
+    private Logger logger = Logger.getLogger(getClass().getPackage().getName());
+
+    public BundleProvisioner(BundleContext ctx) {
+        this.ctx = ctx;
     }
 
     /**
-     * Wait for a specified amount of time for a service of a given type to be made available by a given bundle.
+     * Install a bundle and add it to the list of bundles.
      *
-     * @param ctx BundleContext that should be used to track the service
-     * @param b Bundle registering the service
-     * @param service FQN of the service type
-     * @param timeout no of milliseconds to wait for the service to be available before returning null
-     * @return a reference to the service being tracked
-     * @throws InterruptedException
+     * @param location
+     * @throws BundleException
      */
-    public static Object waitForService(BundleContext ctx, final Bundle b, String service, long timeout) throws InterruptedException {
-        ServiceTracker st = new ServiceTracker(ctx, service, null){
-            @Override
-            public Object addingService(ServiceReference reference) {
-                if (reference.getBundle() == b) {
-                    return reference;
-                } else {
-                    return null;
-                }
-            }
-
-            @Override
-            public void removedService(ServiceReference reference, Object service) {
-                // no need to unget, as we don't get the service in addingService
-            }
-        };
-        st.open(false);
-        Object s;
-        try {
-            s = st.waitForService(timeout);
-        } finally {
-//            st.close();
-        }
-        return s;
+    protected Bundle installTestBundle(String location) throws BundleException {
+        logger.logp(Level.INFO, "AbstractTestObject", "installTestBundle", "Installing bundle = {0}", new Object[]{location});
+        final Bundle bundle = ctx.installBundle(location);
+        testBundles.add(bundle);
+        logger.logp(Level.INFO, "AbstractTestObject", "installTestBundle", "Installed bundle = {0} from {1} ", new Object[]{bundle, location});
+        return bundle;
     }
+
+    /**
+     * Uninstall a bundle if it has been installed by
+     *
+     * @param bundle
+     * @throws BundleException
+     */
+    protected void uninstallTestBundle(Bundle bundle) throws BundleException {
+        if (testBundles.remove(bundle)) {
+            logger.logp(Level.INFO, "AbstractTestObject", "uninstallTestBundle", "Uninstalling bundle = {0}", new Object[]{bundle});
+            bundle.uninstall();
+            logger.logp(Level.INFO, "AbstractTestObject", "uninstallTestBundle", "Uninstalled bundle = {0}", new Object[]{bundle});
+        } else {
+            throw new RuntimeException(bundle + " is not a test bundle");
+        }
+    }
+
+    protected void uninstallAllTestBundles() throws BundleException {
+        // take a copy because uninstallTstBundle removes from this list
+        for (Bundle b : testBundles.toArray(new Bundle[0])) {
+            uninstallTestBundle(b);
+        }
+    }
+
 }

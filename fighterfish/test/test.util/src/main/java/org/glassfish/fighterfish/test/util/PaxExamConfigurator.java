@@ -39,12 +39,10 @@
  */
 
 
-package org.glassfish.fighterfish.test.it;
+package org.glassfish.fighterfish.test.util;
 
-import org.glassfish.fighterfish.test.util.PropertiesUtil;
+import org.ops4j.pax.exam.Info;
 import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.junit.Configuration;
-import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.osgi.framework.Constants;
 
 import java.io.File;
@@ -58,30 +56,34 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static org.glassfish.fighterfish.test.util.Constants.*;
 import static org.ops4j.pax.exam.CoreOptions.*;
-import static org.ops4j.pax.exam.OptionUtils.*;
+import static org.ops4j.pax.exam.OptionUtils.combine;
 
 /**
  * Provides common PAX configuration for all tests.
  *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-public class CommonConfiguration {
+public class PaxExamConfigurator {
+//    Not needed, as this is set by NativeTestContainer automatically.
 //    static {
 //        System.setProperty( "java.protocol.handler.pkgs", "org.ops4j.pax.url" );
 //    }
-    private File gfHome = new File(System.getProperty("com.sun.aas.installRoot"));
-    private String platform = System.getProperty("GlassFish_Platform");
 
-    protected long TIMEOUT = Long.getLong("fighterfish.test.timeout", 30000); // in ms
-    
+    // TODO(Sahoo): Use mavenConfiguration to avoid having to encode version numbers while using maven urls.
+
     protected Logger logger = Logger.getLogger(getClass().getPackage().getName());
+    private File gfHome;
+    private String platform;
+    private final long timeout;
 
-    public CommonConfiguration() {
-        checkAndSetDefaultProperties();
+    public PaxExamConfigurator(File gfHome, String platform, long timeout) {
+        this.gfHome = gfHome;
+        this.platform = platform;
+        this.timeout = timeout;
     }
 
-    @Configuration
     public Option[] configure() throws IOException {
         return combine(combine(frameworkConfiguration(), provisioningBundles()), paxConfiguration());
     }
@@ -90,16 +92,39 @@ public class CommonConfiguration {
         return options(bundle(new File(gfHome, "modules/glassfish.jar").toURI().toString()),
                 mavenBundle().groupId("org.junit").artifactId("com.springsource.org.junit").version("4.8.1"),
                 mavenBundle().groupId("org.glassfish.fighterfish").artifactId("test.util").version("1.0.0-SNAPSHOT")
+//                mavenBundle().groupId("org.ops4j.pax.exam").artifactId("pax-exam").version("2.1.0")
         );
     }
 
     private Option[] frameworkConfiguration() throws IOException {
-        List<Option> options = new ArrayList<Option>();
-        Properties properties = readAndCustomizeFrameworkConfiguration();
+        // We currently read framework options from a separate file, but we could
+        // as well inline them here in code.
+        List<Option> options = convertToOptions(readFrameworkConfiguration());
 
-        // parse boot delegation property and set it as a bootdelegation option as pax-exam's native test container implementation
+        // See: http://team.ops4j.org/browse/PAXEXAM-267
+        // NativeTestContainer does not export the following package, but our test.util needs it
+        options.add(systemPackages("org.ops4j.pax.exam.options.extra; version=" + Info.getPaxExamVersion()));
+        return options.toArray(new Option[options.size()]);
+    }
+
+    private Option[] paxConfiguration() {
+        // Switch to pax-exam API to set timeout when migrating to 2.2.0
+        return options(systemProperty(EXAM_TIMEOUT_PROP).value(String.valueOf(timeout)));
+    }
+
+    /**
+     * Adapts priperties to pax-exam options.
+     *
+     * @param properties
+     * @return
+     */
+    private List<Option> convertToOptions(Properties properties) {
+        List<Option> options = new ArrayList<Option>();
+        // parse boot delegation property and set it as a bootdelegation option
+        // as pax-exam's native test container implementation
         // does not use bootdelegation system property.
         for (String p : properties.getProperty(Constants.FRAMEWORK_BOOTDELEGATION, "").split(",")) {
+            if (p.trim().isEmpty()) continue;
             System.out.println("Boot delegation pkg = " + p);
             options.add(bootDelegationPackage(p.trim()));
         }
@@ -110,44 +135,44 @@ public class CommonConfiguration {
                 options.add(workingDirectory((String) entry.getValue()));
                 continue;
             }
+            // use frameworkProperty after migrating to new pax-exam (see http://team.ops4j.org/browse/PAXEXAM-261)
             options.add(systemProperty((String) entry.getKey()).value((String) entry.getValue()));
         }
-        return options.toArray(new Option[options.size()]);
+        return options;
     }
 
-    private Option[] paxConfiguration() {
-        return options(systemProperty("pax-exam.framework.shutdown.timeout").value(
-                System.getProperty("pax-exam.framework.shutdown.timeout"))
-        );
-    }
-    private void checkAndSetDefaultProperties() {
-        if (System.getProperty("com.sun.aas.installRootURI") == null) {
-            System.setProperty("com.sun.aas.installRootURI", gfHome.toURI().toString());
+    private Properties readFrameworkConfiguration() throws IOException {
+        Properties properties = new Properties();
+        logger.logp(Level.INFO, "DefaultPaxExamConfiguration", "readFrameworkConfiguration",
+                "fwConfigFileName = {0}", new Object[]{FW_CONFIG_FILE_NAME});
+        InputStream stream = getClass().getResourceAsStream(FW_CONFIG_FILE_NAME);
+        if (stream != null) {
+            try {
+                properties.load(stream);
+            } finally {
+                stream.close();
+            }
+            PropertiesUtil.substVars(properties);
+        } else {
+            logger.logp(Level.WARNING, "DefaultPaxExamConfiguration", "readFrameworkConfiguration",
+                    "{0} not found. Using default values", new Object[]{FW_CONFIG_FILE_NAME});
         }
-        if (System.getProperty("com.sun.aas.instanceRoot") == null) {
-            System.setProperty("com.sun.aas.instanceRoot",
-                    new File(gfHome, "domains/domain1").getAbsolutePath());
-        }
-        if (System.getProperty("com.sun.aas.instanceRootURI") == null) {
-            System.setProperty("com.sun.aas.instanceRootURI",
-                    new File(System.getProperty("com.sun.aas.instanceRoot")).toURI().toString());
-        }
+        return properties;
     }
 
     private Properties readAndCustomizeFrameworkConfiguration() throws IOException {
         Properties properties = new Properties();
         URI uri;
-        if (System.getProperty("glassfish.osgi-configuration")!= null) {
+        if (System.getProperty("glassfish.osgi-configuration") != null) {
             uri = URI.create(System.getProperty("glassfish.osgi-configuration"));
-        }
-        if ("Felix".equals(platform)) {
+        } else if ("Felix".equals(platform)) {
             uri = new File(gfHome, "osgi/felix/conf/config.properties").toURI();
         } else if ("Equinox".equals(platform)) {
             uri = new File(gfHome, "osgi/equinox/configuration/config.ini").toURI();
         } else {
             throw new RuntimeException("GlassFish_Platform can only be Felix or Equinox");
         }
-        logger.logp(Level.INFO, "CommonConfiguration", "readAndCustomizeFrameworkConfiguration", "uri = {0}", new Object[]{uri});
+        logger.logp(Level.INFO, "TestConfiguration", "readAndCustomizeFrameworkConfiguration", "uri = {0}", new Object[]{uri});
         InputStream is = uri.toURL().openStream();
         try {
             properties.load(is);
@@ -172,11 +197,12 @@ public class CommonConfiguration {
         // itself and test bundles also import from that bundle.
         String oldValue = (String) properties.get("extra-system-packages");
         final String newValue = "${jre-${java.specification.version}} ${internal-jdk-pkgs-for-gf}";
-        System.out.println("Replacing extra-system-properties from [" + oldValue + "] to [" + newValue + "]" );
+        System.out.println("Replacing extra-system-properties from [" + oldValue + "] to [" + newValue + "]");
         properties.put("extra-system-packages", newValue);
 
         // Now substitute properties
         PropertiesUtil.substVars(properties);
         return properties;
     }
+
 }
