@@ -64,6 +64,7 @@ public class TestsConfiguration {
     protected Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
     private static TestsConfiguration instance;
+    private File fwStorage;
 
     public synchronized static TestsConfiguration getInstance() {
         if (instance == null) {
@@ -79,15 +80,13 @@ public class TestsConfiguration {
                 properties.getProperty(Constants.TEST_TIMEOUT_PROP, Constants.TEST_TIMEOUT_DEFAULT_VALUE));
         examTimeout = Long.parseLong(
                 properties.getProperty(Constants.EXAM_TIMEOUT_PROP, Constants.TEST_TIMEOUT_DEFAULT_VALUE));
-        checkAndSetDefaultProperties();
+        final String s = properties.getProperty(org.osgi.framework.Constants.FRAMEWORK_STORAGE);
+        if (s != null) fwStorage = new File(s);
+//        checkAndSetDefaultProperties();
     }
 
     public long getTimeout() {
         return testTimeout;
-    }
-
-    public void setTimeout(long timeout) {
-        this.testTimeout = timeout;
     }
 
     private void checkAndSetDefaultProperties() {
@@ -113,6 +112,6 @@ public class TestsConfiguration {
     }
 
     public Option[] getPaxExamConfiguration() throws IOException {
-        return new PaxExamConfigurator(getGfHome(), getPlatform(), examTimeout).configure();
+        return new PaxExamConfigurator(getGfHome(), getPlatform(), examTimeout, fwStorage).configure();
     }
 }

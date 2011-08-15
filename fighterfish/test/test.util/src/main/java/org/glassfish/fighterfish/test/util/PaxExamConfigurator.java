@@ -48,7 +48,6 @@ import org.osgi.framework.Constants;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +55,8 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.glassfish.fighterfish.test.util.Constants.*;
+import static org.glassfish.fighterfish.test.util.Constants.EXAM_TIMEOUT_PROP;
+import static org.glassfish.fighterfish.test.util.Constants.FW_CONFIG_FILE_NAME;
 import static org.ops4j.pax.exam.CoreOptions.*;
 import static org.ops4j.pax.exam.OptionUtils.combine;
 
@@ -77,11 +77,13 @@ public class PaxExamConfigurator {
     private File gfHome;
     private String platform;
     private final long timeout;
+    private final File fwStorage;
 
-    public PaxExamConfigurator(File gfHome, String platform, long timeout) {
+    public PaxExamConfigurator(File gfHome, String platform, long timeout, File fwStorage) {
         this.gfHome = gfHome;
         this.platform = platform;
         this.timeout = timeout;
+        this.fwStorage = fwStorage;
     }
 
     public Option[] configure() throws IOException {
@@ -104,6 +106,10 @@ public class PaxExamConfigurator {
         // See: http://team.ops4j.org/browse/PAXEXAM-267
         // NativeTestContainer does not export the following package, but our test.util needs it
         options.add(systemPackages("org.ops4j.pax.exam.options.extra; version=" + Info.getPaxExamVersion()));
+        if (fwStorage != null) {
+            // add this ahead of others so that it will override any value read from OSGiFramework.properties,
+            options.add(0, workingDirectory(fwStorage.getAbsolutePath()));
+        }
         return options.toArray(new Option[options.size()]);
     }
 
@@ -157,51 +163,6 @@ public class PaxExamConfigurator {
             logger.logp(Level.WARNING, "DefaultPaxExamConfiguration", "readFrameworkConfiguration",
                     "{0} not found. Using default values", new Object[]{FW_CONFIG_FILE_NAME});
         }
-        return properties;
-    }
-
-    private Properties readAndCustomizeFrameworkConfiguration() throws IOException {
-        Properties properties = new Properties();
-        URI uri;
-        if (System.getProperty("glassfish.osgi-configuration") != null) {
-            uri = URI.create(System.getProperty("glassfish.osgi-configuration"));
-        } else if ("Felix".equals(platform)) {
-            uri = new File(gfHome, "osgi/felix/conf/config.properties").toURI();
-        } else if ("Equinox".equals(platform)) {
-            uri = new File(gfHome, "osgi/equinox/configuration/config.ini").toURI();
-        } else {
-            throw new RuntimeException("GlassFish_Platform can only be Felix or Equinox");
-        }
-        logger.logp(Level.INFO, "TestConfiguration", "readAndCustomizeFrameworkConfiguration", "uri = {0}", new Object[]{uri});
-        InputStream is = uri.toURL().openStream();
-        try {
-            properties.load(is);
-        } finally {
-            is.close();
-        }
-
-        // Because the provisioning bundles are not uninstalled and because they are marked persistently started,
-        // we use a different cache location.
-        final String defaultLocation = properties.getProperty(Constants.FRAMEWORK_STORAGE) + "/pax-exam/";
-        final String cacheLocation = System.getProperty(Constants.FRAMEWORK_STORAGE, defaultLocation);
-        System.out.println("OSGi persistence store location = " + cacheLocation);
-        properties.put(Constants.FRAMEWORK_STORAGE, cacheLocation);
-
-        // Because some of our tests use JPA in Java SE mode, we have to set this property to enable the same.
-        properties.put("org.glassfish.osgjpa.extension.useHybridPersistenceProviderResolver", "true");
-
-        // GlassFish is ocnfigured to get bootstrap APIs from system bundle so that the main program can control GlassFish's life cycle.
-        // But the bootstrap bundle's activator, GlassFishMainActivator, does not shutdown GlassFishRuntime in its stop(). As a result,
-        // when the bootstrap bundle is again started in the same VM, it gets an exception sayng "Already bootstrapped."
-        // To avoid this, we don't configure system bundle to export bootstrap APIs. They are then obtained from bootstrap bundle
-        // itself and test bundles also import from that bundle.
-        String oldValue = (String) properties.get("extra-system-packages");
-        final String newValue = "${jre-${java.specification.version}} ${internal-jdk-pkgs-for-gf}";
-        System.out.println("Replacing extra-system-properties from [" + oldValue + "] to [" + newValue + "]");
-        properties.put("extra-system-packages", newValue);
-
-        // Now substitute properties
-        PropertiesUtil.substVars(properties);
         return properties;
     }
 
