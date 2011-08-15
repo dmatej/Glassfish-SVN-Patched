@@ -48,6 +48,9 @@ import org.osgi.framework.BundleException;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * A class that helps tests in the deployment of entity bundles. An entity bundle is a bundle containing
+ * JPA entities which upon successful deployment registers a service of type EntityManagerFactory.
+ *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class EntityBundle {
@@ -55,11 +58,24 @@ public class EntityBundle {
     private BundleContext ctx;
     private String[] services = {"javax.persistence.EntityManagerFactory"};
 
+    /**
+     * Create a new EntityBundle
+     * @param ctx BundleContext of the test - this is not the bundle context of the entity bundle being deployed.
+     * @param b EntityBundle being deployed.
+     */
     public EntityBundle(BundleContext ctx, Bundle b) {
         this.b = b;
         this.ctx = ctx;
     }
 
+    /**
+     * Deploy this entity bundle. If a service of type EntityManagerFactory does not get registered in
+     * the specified time, assume the deployment has failed and throw a TimeoutException.
+     * @param timeout
+     * @param timeUnit
+     * @throws BundleException
+     * @throws InterruptedException
+     */
     public void deploy(long timeout, TimeUnit timeUnit) throws BundleException, InterruptedException {
         b.start(Bundle.START_TRANSIENT);
         for (String service : services) {

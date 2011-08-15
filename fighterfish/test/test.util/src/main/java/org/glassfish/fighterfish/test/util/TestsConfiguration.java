@@ -77,9 +77,9 @@ public class TestsConfiguration {
         gfHome =  new File(properties.getProperty(Constants.GLASSFISH_INSTALL_ROOT_PROP));
         platform  = properties.getProperty(Constants.GLASSFISH_PLATFORM_PROP);
         testTimeout = Long.parseLong(
-                properties.getProperty(Constants.TEST_TIMEOUT_PROP, Constants.TEST_TIMEOUT_DEFAULT_VALUE));
+                properties.getProperty(Constants.FIGHTERFISH_TEST_TIMEOUT_PROP, Constants.FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE));
         examTimeout = Long.parseLong(
-                properties.getProperty(Constants.EXAM_TIMEOUT_PROP, Constants.TEST_TIMEOUT_DEFAULT_VALUE));
+                properties.getProperty(Constants.EXAM_TIMEOUT_PROP, Constants.FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE));
         final String s = properties.getProperty(org.osgi.framework.Constants.FRAMEWORK_STORAGE);
         if (s != null) fwStorage = new File(s);
 //        checkAndSetDefaultProperties();

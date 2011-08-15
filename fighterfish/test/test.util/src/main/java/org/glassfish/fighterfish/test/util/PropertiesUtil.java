@@ -47,7 +47,10 @@ import java.util.Map;
 import java.util.Properties;
 
 /**
- * @author Sanjeeb.Sahoo@Sun.COM
+ * Helper class that knows how to do variable substitution recurssively in a properties object.
+ * This class is copied from Felix project.
+ *
+ * @author Felix Developers
  */
 public class PropertiesUtil {
     private static final String DELIM_START = "${";

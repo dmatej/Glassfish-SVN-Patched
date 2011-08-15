@@ -44,22 +44,18 @@ package org.glassfish.fighterfish.test.it;
 import org.glassfish.embeddable.CommandResult;
 import org.glassfish.embeddable.CommandRunner;
 import org.glassfish.embeddable.GlassFish;
-import org.glassfish.embeddable.GlassFishException;
 import org.glassfish.fighterfish.test.util.GlassFishTracker;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.ops4j.pax.exam.CoreOptions;
 import org.ops4j.pax.exam.Option;
 import org.ops4j.pax.exam.junit.Configuration;
 import org.ops4j.pax.exam.junit.ExamReactorStrategy;
 import org.ops4j.pax.exam.junit.JUnit4TestRunner;
-import org.ops4j.pax.exam.options.TimeoutOption;
 import org.ops4j.pax.exam.spi.reactors.EagerSingleStagedReactorFactory;
 import org.osgi.framework.BundleContext;
 
-import java.io.File;
 import java.io.IOException;
 
 import static org.ops4j.pax.exam.CoreOptions.*;
@@ -98,7 +94,7 @@ public class T3_SampleGFProvisionerTest {
 
     @Test
     public void testSampleProvisioner(BundleContext context) throws Exception {
-        GlassFish gf = GlassFishTracker.waitForService(context, TIMEOUT);
+        GlassFish gf = GlassFishTracker.waitForGfToStart(context, TIMEOUT);
         CommandRunner cr = gf.getCommandRunner();
         cr.setTerse(true);
         CommandResult result = cr.run("version");

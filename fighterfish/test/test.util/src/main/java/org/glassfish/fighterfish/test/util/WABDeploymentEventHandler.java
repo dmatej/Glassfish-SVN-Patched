@@ -51,7 +51,7 @@ import org.osgi.service.event.EventHandler;
 import java.util.Hashtable;
 
 /**
- * Listens to OSGi Event Admin Service generated events and calls back a registered handler
+ * Listens to OSGi Event Admin Service generated events generated for a WAB and calls back a registered handler
  */
 public class WABDeploymentEventHandler implements EventHandler {
     public interface Callback {

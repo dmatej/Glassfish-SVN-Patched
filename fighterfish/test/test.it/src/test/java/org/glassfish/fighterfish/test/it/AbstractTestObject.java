@@ -54,7 +54,22 @@ import java.io.IOException;
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
  *
- * Base class for all our tests. This class does not belong to test.util bundle as we don't want to depend on
+ * PAX-EXAM requires each test class to be annotated with {@link RunWith} annotation with a value of
+ * {@link JUnit4TestRunner}. We have also set {@link ExamReactorStrategy} as {@link EagerSingleStagedReactorFactory}
+ * which means for every test method invocation, a new test container instance won't be created. Pax-Exam will create a
+ * new test container instance for each TestClass and reuse it for every test method found in that class. Each test
+ * can optionally configure the test container by having one or more configuration methods. Each such method must be
+ * annotated with {@link Configuration} and return an array of {@link Option}. The options returned by such a method
+ * is used to configure the OSGi framework that's going to be launched by PAX-EXAM. If a test has more than one such
+ * methods, then pax-exam will create multiple test container and run the test in each such container.
+ *
+ * Most of our tests require the OSGi platform to be configured similarly, so we provide this base class as
+ * a convenience for our tests. In a lot of way, this shields individual tests from pax-exam details.
+ * In addition to providing pax-exam contracts, it also provides some helper methods
+ * which are needed in every test.
+ * It is not mandatory for tests to extend this class.
+ *
+ * This class does not currently belong to test.util bundle as we don't want to depend on
  * pax-exam-junit packages from test.util bundle. There are some issues when we do so. This is mainly because
  * pax-exam-junit4 is not an OSGi bundle, so we can't provision it. We have to either wrap it or configure system
  * packages appropriately. Either of them suck. So, we just leave this base class in the test bundle itself.

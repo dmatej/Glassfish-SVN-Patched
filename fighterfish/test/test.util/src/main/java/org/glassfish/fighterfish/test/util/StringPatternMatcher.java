@@ -45,20 +45,23 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
 /**
-* @author Sanjeeb.Sahoo@Sun.COM
-*/
+ * A simple {@link BaseMatcher} that matches if a string contains a specific character sequence. No regular expression
+ * support as yet.
+ *
+ * @author Sanjeeb.Sahoo@Sun.COM
+ */
 public class StringPatternMatcher extends BaseMatcher<String> {
-private final String expectedOutputPattern;
+    private final String expectedOutputPattern;
 
-public StringPatternMatcher(String expectedOutputPattern) {this.expectedOutputPattern = expectedOutputPattern;}
+    public StringPatternMatcher(String expectedOutputPattern) {this.expectedOutputPattern = expectedOutputPattern;}
 
-@Override
-public boolean matches(Object o) {
-    return String.class.cast(o).contains(expectedOutputPattern);
-}
+    @Override
+    public boolean matches(Object o) {
+        return String.class.cast(o).contains(expectedOutputPattern);
+    }
 
-@Override
-public void describeTo(Description description) {
-    description.appendText("Expected output to contain [" + expectedOutputPattern + "]");
-}
+    @Override
+    public void describeTo(Description description) {
+        description.appendText("Expected output to contain [" + expectedOutputPattern + "]");
+    }
 }

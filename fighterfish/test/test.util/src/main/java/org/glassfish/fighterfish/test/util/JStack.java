@@ -47,6 +47,10 @@ import java.lang.management.ThreadMXBean;
 import java.util.Arrays;
 
 /**
+ * This object represents the current stack traces of all threads in the system - very much similar to
+ * the output of jstack command line tool. Its {@link #toString()} returns the stack traces of all the threads
+ * by calling underlying {@link ThreadMXBean}.
+ *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class JStack {

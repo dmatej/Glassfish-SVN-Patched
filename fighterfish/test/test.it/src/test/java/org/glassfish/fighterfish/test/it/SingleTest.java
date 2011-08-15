@@ -54,12 +54,25 @@ import java.util.logging.Logger;
 import static org.junit.Assert.assertNotNull;
 
 /**
+ * This class demonstrates how simple it is to write a test scenario using pax-exam and the simple abstractions
+ * provided by our test.util bundle.
+ *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class SingleTest extends AbstractTestObject {
 
     private Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
+    /**
+     * Most simple test case. This test method waits a preconfigured amount of time for GlassFish to be started.
+     * If GlassFish does not start within that time, it fails.
+     *
+     * @param ctx
+     * @throws GlassFishException
+     * @throws InterruptedException
+     * @throws BundleException
+     * @throws IOException
+     */
     @Test
     public void test(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("SingleTest", "test", new Object[]{ctx});

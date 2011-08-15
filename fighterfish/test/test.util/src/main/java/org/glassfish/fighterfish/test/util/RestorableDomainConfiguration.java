@@ -41,13 +41,18 @@
 
 package org.glassfish.fighterfish.test.util;
 
+import org.glassfish.embeddable.GlassFish;
 import org.glassfish.embeddable.GlassFishException;
+
+import java.io.File;
 
 /**
  * Represents a domain configuration change that can be restored to its original value.
  * To restore the original value, call {@link #restore()}.
  *
  * @author Sanjeeb.Sahoo@Sun.COM
+ * @see EnterpriseResourceProvisioner#configureEmbeddedDerby(GlassFish, String, File)
+ * @see EnterpriseResourceProvisioner#createJmsResource(GlassFish, String, String)
  */
 public interface RestorableDomainConfiguration {
     void restore() throws GlassFishException;

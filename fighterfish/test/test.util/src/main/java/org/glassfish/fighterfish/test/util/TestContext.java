@@ -51,10 +51,13 @@ import java.io.File;
 import java.util.logging.Logger;
 
 /**
- * Each test method is accompanied by a single TestContext object. A TestContext object's life cycle is scoped to
- * a test for this reason. When a TestContext object is destroyed by calling its {@link #destroy}, all changes
+ * A TestContext is a facade through which a test interacts with underlying OSGi or Java EE platform.
+ * It provides functionality like installing/uninstalling bundles, configuring Java EE resources like
+ * JDBC data sources, JMS destinations, etc. Each test method is accompanied by a single TestContext object.
+ * A TestContext object's life cycle is scoped to a test method for this reason. Each test method must create a
+ * TestContext by calling the factory method {@link #create(BundleContext)} at the beginning of the test method and
+ * destroy it by calling {@link #destroy} at the end of the test method. When a test context is destroyed, all changes
  * done so far will be rolled back. This includes any bundles deployed. any domain configuration made, etc.
- * A TestContext is a facade for underlying test environment.
  *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
@@ -63,6 +66,7 @@ public class TestContext {
     // TODO(Sahoo): Group related methods into separate interfaces.
     // TODO(Sahoo): Add methods from OSGiUtil here.
     // TODO(Sahoo): Use fluent API
+    // TODO(Sahoo): Explore possibility of automatically controlling life cycle of a TestContext
 
     private final String testClassName;
     private final String testMethodName;
@@ -108,7 +112,7 @@ public class TestContext {
     }
 
     public GlassFish getGlassFish() throws GlassFishException, InterruptedException {
-        return GlassFishTracker.waitForService(ctx, TestsConfiguration.getInstance().getTimeout());
+        return GlassFishTracker.waitForGfToStart(ctx, TestsConfiguration.getInstance().getTimeout());
     }
 
     public void configureEmbeddedDerby() throws GlassFishException, InterruptedException {

@@ -42,13 +42,42 @@
 package org.glassfish.fighterfish.test.util;
 
 /**
+ * Constants used in various places.
+ *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public final class Constants {
+    /**
+     * Name of the properties file containing OSGi framework configuration
+     */
     static final String FW_CONFIG_FILE_NAME = "OSGiFramework.properties";
+
+    /**
+     * Property name used to configure pax-exam timeout behavior. The value of this property indicates how long will
+     * pax-exam wait before timing out in operations that can possibly never return. When this happens,
+     * pax-exam fails the test as opposed to hanging for ever. One example is when a provisioned bundle never returns
+     * from its activator.
+     */
     static final String EXAM_TIMEOUT_PROP = "pax-exam.framework.shutdown.timeout";
+
+    /**
+     * Name of property used to indicate which platform is being used to run GlassFish. Values are Felix or Equinox
+     */
     static final String GLASSFISH_PLATFORM_PROP = "GlassFish_Platform";
+
+    /**
+     * Property name to specify installation root of GlassFish.
+     */
     static final String GLASSFISH_INSTALL_ROOT_PROP = "com.sun.aas.installRoot";
-    static final String TEST_TIMEOUT_PROP = "fighterfish.test.timeout";
-    static final String TEST_TIMEOUT_DEFAULT_VALUE = "30000";
+
+    /**
+     * Property name used to configure timeout values of tests. This depends on tests, but we have a global timeout
+     * value for all tests. So, the value must be maximum of each test's timeout value.
+     */
+    static final String FIGHTERFISH_TEST_TIMEOUT_PROP = "fighterfish.test.timeout";
+
+    /**
+     * Default timeout value in ms. If no timeout is set using {@link #FIGHTERFISH_TEST_TIMEOUT_PROP}, this value is used.
+     */
+    static final String FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE = "30000"; // in ms
 }

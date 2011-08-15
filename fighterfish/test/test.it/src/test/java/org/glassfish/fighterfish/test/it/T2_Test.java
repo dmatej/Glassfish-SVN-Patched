@@ -70,6 +70,9 @@ import static org.glassfish.fighterfish.test.util.URLHelper.getResponse;
 import static org.junit.Assert.*;
 
 /**
+ * Test scenarios for various integration tests applications of FighterFish project.
+ * The test applications can be found in test/testapp directory in FighterFish svn root.
+ *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class T2_Test extends AbstractTestObject {

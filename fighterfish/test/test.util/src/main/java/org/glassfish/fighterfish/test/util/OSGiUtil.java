@@ -56,6 +56,7 @@ import java.util.logging.Logger;
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class OSGiUtil {
+    // TODO(Sahoo): Move the functionality to TestContext so that the service references can be closed upon end of test
     public static <T> T getService(BundleContext ctx, Class<T> type) {
         ServiceTracker st = new ServiceTracker(ctx, type.getName(), null);
         st.open();

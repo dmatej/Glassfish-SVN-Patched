@@ -68,6 +68,8 @@ import static org.junit.Assert.*;
 import static org.osgi.framework.Bundle.START_TRANSIENT;
 
 /**
+ * Test scenarios for various FighterFish samples.
+ *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class T1_SamplesTest extends AbstractTestObject {

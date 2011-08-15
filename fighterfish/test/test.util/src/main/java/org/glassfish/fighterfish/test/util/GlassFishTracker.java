@@ -47,13 +47,15 @@ import org.osgi.framework.BundleContext;
 import org.osgi.util.tracker.ServiceTracker;
 
 /**
- * Tracks availability of GlassFish as a service.
+ * When GlassFish bundles are deployed, the server does a lot of background operation, so this class help test cases
+ * track availability of GlassFish. It provides a convenient mechanism for tests to wait for GlassFish server
+ * to start.
  *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class GlassFishTracker {
 
-    public static GlassFish waitForService(BundleContext context, long timeout) throws InterruptedException, GlassFishException, GlassFishException {
+    public static GlassFish waitForGfToStart(BundleContext context, long timeout) throws InterruptedException, GlassFishException {
         ServiceTracker st = new ServiceTracker(context, GlassFish.class.getName(), null);
         st.open();
         GlassFish gf;

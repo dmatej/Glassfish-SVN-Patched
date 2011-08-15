@@ -55,30 +55,82 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * This class is used by tests to deploy WABs. Since a WAB deployment happens asynchronously when a WAB is activated,
+ * for a test case to know whether the deployment is successful or not is not as simple as checking if
+ * wab.start() returns succesfully or not. This is where this class is helpful. It listens to events raised by the
+ * OSGi Web Container as required by the OSGi Web Application spec and depending on the events, returns success or
+ * failure when a WAB is deployed. It also uses a timeout mechanism if the deployment does not happen in a
+ * specified amount of time.
+ *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-public class WebAppBundle implements WABDeploymentEventHandler.Callback {
+public class WebAppBundle {
     enum State {
         DEPLOYING, DEPLOYED, UNDEPLOYING, UNDEPLOYED, FAILED
     }
 
-    BundleContext context;
+    private BundleContext context;
 
-    Bundle b;
+    private Bundle b;
 
-    String contextPath;
+    private String contextPath;
 
-    State state;
+    private State state;
 
-    CountDownLatch deploymentSignal = new CountDownLatch(1);
+    private CountDownLatch deploymentSignal = new CountDownLatch(1);
 
+    /**
+     * A handle to the web application bundle being deployed.
+     * @param context BundleContext of test used for various OSGi operation. This is not the context of the WAB.
+     * @param b Web App Bundle
+     */
     public WebAppBundle(BundleContext context, Bundle b) {
         this.context = context;
         this.b = b;
     }
 
-    public ServletContext deploy(long timeout, TimeUnit timeUnit) throws InterruptedException, BundleException {
-        WABDeploymentEventHandler eventHandler = new WABDeploymentEventHandler(context, b, this);
+    /**
+     * Deploy the given OSGi Web Application Bundle.
+     * @param timeout Amount of time it will wait for the deployment to happen before failing
+     * @param timeUnit
+     * @return ServletContext associated with the deployed web application
+     * @throws InterruptedException
+     * @throws BundleException
+     * @throws TimeoutException if deployment takes longer than the specified timeout value.
+     */
+    public ServletContext deploy(long timeout, TimeUnit timeUnit) throws InterruptedException, BundleException, TimeoutException {
+        WABDeploymentEventHandler eventHandler =
+                new WABDeploymentEventHandler(context, b, new WABDeploymentEventHandler.Callback() {
+
+                    @Override
+                    public void deploying() {
+                        state = State.DEPLOYING;
+                    }
+
+                    @Override
+                    public void deployed(String contextPath) {
+                        state = State.DEPLOYED;
+                        WebAppBundle.this.contextPath = contextPath;
+                        deploymentSignal.countDown();
+                    }
+
+                    @Override
+                    public void undeploying() {
+                        state = State.UNDEPLOYING;
+                    }
+
+                    @Override
+                    public void undeployed() {
+                        state = State.UNDEPLOYED;
+                    }
+
+                    @Override
+                    public void failed(Throwable throwable, String collision, Long[] collisionBundleIds) {
+                        state = State.FAILED;
+                        deploymentSignal.countDown();
+                    }
+
+                });
         b.start(Bundle.START_TRANSIENT);
         deploymentSignal.await(timeout, timeUnit);
         if (State.DEPLOYED.equals(state)) {
@@ -87,12 +139,24 @@ public class WebAppBundle implements WABDeploymentEventHandler.Callback {
         throw new TimeoutException("Deployment timedout. Check log to see what exactly went wrong.");
     }
 
+    /**
+     * Undeploy the OSGi Web Application Bundle.
+     * There is no timeout needed here, because the OSGi Web Application Spec requires undeployment to be
+     * synchrinously handled when a WAB is stopped.
+     * @throws BundleException
+     */
     public void undeploy() throws BundleException {
         b.stop(Bundle.STOP_TRANSIENT);
     }
 
-    public String getResponse(String path) throws IOException {
-        URL servlet = new URL("http", getHost(), getPort(), contextPath + path);
+    /**
+     * Make a request to the resource available at the path relative to this web app.
+     * @param relativePath
+     * @return
+     * @throws IOException
+     */
+    public String getResponse(String relativePath) throws IOException {
+        URL servlet = new URL("http", getHost(), getPort(), contextPath + relativePath);
         URLConnection yc = servlet.openConnection();
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(
@@ -115,31 +179,4 @@ public class WebAppBundle implements WABDeploymentEventHandler.Callback {
         return 8080;
     }
 
-    @Override
-    public void deploying() {
-        state = State.DEPLOYING;
-    }
-
-    @Override
-    public void deployed(String contextPath) {
-        state = State.DEPLOYED;
-        this.contextPath = contextPath;
-        deploymentSignal.countDown();
-    }
-
-    @Override
-    public void undeploying() {
-        state = State.UNDEPLOYING;
-    }
-
-    @Override
-    public void undeployed() {
-        state = State.UNDEPLOYED;
-    }
-
-    @Override
-    public void failed(Throwable throwable, String collision, Long[] collisionBundleIds) {
-        state = State.FAILED;
-        deploymentSignal.countDown();
-    }
 }
