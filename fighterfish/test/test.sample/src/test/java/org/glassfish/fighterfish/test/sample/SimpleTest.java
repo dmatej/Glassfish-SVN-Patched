@@ -63,7 +63,6 @@ public class SimpleTest {
             Bundle uas_api_b = tc.installTestBundle("mvn:org.glassfish.fighterfish/sample.uas.api/1.0.0-SNAPSHOT");
             Bundle uas_simplewab_b = tc.installTestBundle("mvn:org.glassfish.fighterfish/sample.uas.simplewab/1.0.0-SNAPSHOT/war");
             WebAppBundle uas_simple_webapp = tc.deployWebAppBundle(uas_simplewab_b);
-            uas_simple_webapp.deploy(TestsConfiguration.getInstance().getTimeout(), TimeUnit.MILLISECONDS);
             String response = uas_simple_webapp.getResponse("/LoginServlet?name=foo&password=bar");
             System.out.println(response);
             assertThat(response, new StringPatternMatcher("Service is not yet available"));
