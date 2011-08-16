@@ -48,6 +48,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 
 import java.io.File;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 /**
@@ -97,18 +98,58 @@ public class TestContext {
         return tc;
     }
 
-    private static String getCallingMethodName() {
-        return new Exception().getStackTrace()[2].getMethodName();
-    }
-
-    private static String getCallingClassName() {
-        return new Exception().getStackTrace()[2].getClassName();
-    }
-
     public void destroy() throws BundleException, GlassFishException {
         bundleProvisioner.uninstallAllTestBundles();
         resourceProvisioner.restoreDomainConfiguration();
         logger.info("End of test " + testClassName + "." + testMethodName);
+    }
+
+    /**
+     * Deploy the given OSGi Web Application Bundle.
+     * WAB deployment happens asynchronously when a WAB is activated. It waits for a configured amount time
+     * for deployment to take place successfully. If deployment fails or does not happen within the configured
+     * times, it throws TimeoutException.
+     * @param bundle
+     * @return ServletContext associated with the deployed web application
+     * @throws BundleException
+     * @throws InterruptedException
+     */
+    public WebAppBundle deployWebAppBundle(Bundle bundle) throws BundleException, InterruptedException {
+        WebAppBundle webAppBundle = new WebAppBundle(getBundleContext(), bundle);
+        webAppBundle.deploy(TestsConfiguration.getInstance().getTimeout(), TimeUnit.MILLISECONDS);
+        return webAppBundle;
+    }
+
+    /**
+     * Deploy the given JPA Entities bundle. If a service of type EntityManagerFactory does not get registered in
+     * the specified time, assume the deployment has failed and throw a TimeoutException.
+     * @param bundle Entity bundle to be deployed
+     * @return a handle to the deployed application
+     * @throws BundleException
+     * @throws InterruptedException
+     * @throws TimeoutException
+     */
+    public EntityBundle deployEntityBundle(Bundle bundle) throws BundleException, InterruptedException {
+        EntityBundle entityBundle = new EntityBundle(getBundleContext(), bundle);
+        entityBundle.deploy(TestsConfiguration.getInstance().getTimeout(), TimeUnit.MILLISECONDS);
+        return entityBundle;
+    }
+
+    /**
+     * Deploy the given EJB OSGi bundle. Deployment is triggered asynchronously by starting the bundle. If none of the
+     * user specified services show up in service registry in the specified amount of time, it assumes the operation
+     * has failed and throws TimeoutOperation.
+     * @param bundle EJB Bundle to be deployed
+     * @param services Services that are expected to be made available by this EJB bundle if deployment is successful.
+     * @return a handle to the deployed application
+     * @throws BundleException
+     * @throws InterruptedException
+     * @throws TimeoutException
+     */
+    public EjbBundle deployEjbBundle(Bundle bundle, String[] services) throws BundleException, InterruptedException {
+        EjbBundle ejbBundle = new EjbBundle(getBundleContext(), bundle, services);
+        ejbBundle.deploy(TestsConfiguration.getInstance().getTimeout(), TimeUnit.MILLISECONDS);
+        return ejbBundle;
     }
 
     public GlassFish getGlassFish() throws GlassFishException, InterruptedException {
@@ -121,12 +162,12 @@ public class TestContext {
                 new File(EnterpriseResourceProvisioner.getDerbyDBRootDir(), testMethodName));
     }
 
-    public Bundle installTestBundle(String location) throws BundleException {
-        return bundleProvisioner.installTestBundle(location);
-    }
-
     public BundleContext getBundleContext() {
         return ctx;
+    }
+
+    public Bundle installTestBundle(String location) throws BundleException {
+        return bundleProvisioner.installTestBundle(location);
     }
 
     public void createJmsCF(String cfName) throws GlassFishException, InterruptedException {
@@ -136,4 +177,13 @@ public class TestContext {
     public void createJmsTopic(String topicName) throws GlassFishException, InterruptedException {
         resourceProvisioner.createJmsTopic(getGlassFish(), topicName);
     }
+
+    private static String getCallingMethodName() {
+        return new Exception().getStackTrace()[2].getMethodName();
+    }
+
+    private static String getCallingClassName() {
+        return new Exception().getStackTrace()[2].getClassName();
+    }
+
 }

@@ -1,0 +1,159 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.glassfish.fighterfish</groupId>
+	<artifactId>test.sample</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+	<description>Sample to show use of PAX-EXAM/Maven/JUnit in GlassFish to
+		test enterprise OSGi applications</description>
+	<dependencies>
+		<dependency>
+			<!-- This dependency is needed to use pax-exam core apis like Options classes-->
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam</artifactId>
+			<version>${pax-exam.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<!-- This dependency is needed to use pax-exam/Junit integration related APIs-->
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam-junit4</artifactId>
+			<version>${pax-exam.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<!--  Having this dependency instructs pax-exam to use in-process OSGi runtime -->
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam-container-native</artifactId>
+			<version>${pax-exam.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Starting with pax-exam 2.1.0, native container requires pax-exam-link-assembly 
+			and pax-url-aether to be provisioned as well while using mvn protocol. -->
+		<dependency>
+			<groupId>org.ops4j.pax.exam</groupId>
+			<artifactId>pax-exam-link-assembly</artifactId>
+			<version>${pax-exam.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.ops4j.pax.url</groupId>
+			<artifactId>pax-url-aether</artifactId>
+			<version>1.3.3</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- pax-exam uses slf4j. We need to provide a binding for the same here. -->
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-jdk14</artifactId>
+			<version>1.6.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<!-- pax-exam requires 4.8.1, so we have to add this dependency as well -->
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.8.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.core</artifactId>
+			<version>4.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.osgi</groupId>
+			<artifactId>org.osgi.compendium</artifactId>
+			<version>4.2.0</version>
+		</dependency>
+		<dependency>
+			<!-- Add this dependency if test cases use javax APIs -->
+			<groupId>javax</groupId>
+			<artifactId>javaee-web-api</artifactId>
+			<version>6.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<!-- Add this dependency if test cases leverage a small utility bundle developed
+			     in GlassFish FighterFish project to help users write test cases using pax-exam with
+			     even more less effort. -->
+			<groupId>org.glassfish.fighterfish</groupId>
+			<artifactId>test.util</artifactId>
+			<version>1.0.0-SNAPSHOT</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<!-- Add this dependency if test cases want to use GlassFish Embeddable API to interact with
+			GlassFish runtime. -->
+			<groupId>org.glassfish</groupId>
+			<artifactId>simple-glassfish-api</artifactId>
+			<version>3.1.1</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<!-- Finally, we must specify the test framework that must be used when we use pax-exam native test container.
+			Here we are using Felix. To use Equinox, replace by a suitable dependency here. -->
+			<groupId>org.apache.felix</groupId>
+			<artifactId>org.apache.felix.framework</artifactId>
+			<version>3.0.8</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.8</version>
+				<configuration>
+					<systemProperties>
+						<property>
+							<name>com.sun.aas.installRoot</name>
+							<value>/tmp/glassfish3/glassfish/</value>
+						</property>
+						<property>
+							<name>GlassFish_Platform</name>
+							<value>Felix</value>
+						</property>
+						<property>
+							<!-- How long should we wait for framework to shutdown? -->
+							<name>pax-exam.framework.shutdown.timeout</name>
+							<value>100000</value>
+						</property>
+					</systemProperties>
+					<!-- Maven chooses to make provided dependencies part of test classpath. 
+						 The javaee-api and javaee-web-api jars can't be used in runtime, 
+						 for they don't contain proper classes, so we exclude them from test classpath. -->
+					<classpathDependencyExcludes>
+						<classpathDependencyExcludes>javax:javaee-web-api
+						</classpathDependencyExcludes>
+					</classpathDependencyExcludes>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	<profiles>
+		<profile>
+			<id>ToolsJar</id>
+			<activation>
+				<os>
+					<family>!mac</family>
+				</os>
+			</activation>
+			<dependencies>
+				<!-- Add tools.jar to classpath as required by GlassFish's monitoring code.-->
+				<dependency>
+					<groupId>com.sun</groupId>
+					<artifactId>tools</artifactId>
+					<version>1.6.0</version>
+					<scope>system</scope>
+					<systemPath>${java.home}/../lib/tools.jar</systemPath>
+				</dependency>
+			</dependencies>
+		</profile>
+	</profiles>
+	<properties>
+		<!-- The version of pax-exam being used. I have not tested test.util bundle with 2.2.0 yet, 
+		so, let's stick to 2.1.0 for now. -->
+		<pax-exam.version>2.1.0</pax-exam.version>
+	</properties>
+</project>
