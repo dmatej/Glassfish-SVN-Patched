@@ -66,6 +66,11 @@ public final class Constants {
     static final String GLASSFISH_PLATFORM_PROP = "GlassFish_Platform";
 
     /**
+     * Default value for {@link #GLASSFISH_PLATFORM_PROP}
+     */
+    static final String DEFAULT_GLASSFISH_PLATFORM = "Felix";
+
+    /**
      * Property name to specify installation root of GlassFish.
      */
     static final String GLASSFISH_INSTALL_ROOT_PROP = "com.sun.aas.installRoot";
@@ -80,4 +85,5 @@ public final class Constants {
      * Default timeout value in ms. If no timeout is set using {@link #FIGHTERFISH_TEST_TIMEOUT_PROP}, this value is used.
      */
     static final String FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE = "30000"; // in ms
+
 }

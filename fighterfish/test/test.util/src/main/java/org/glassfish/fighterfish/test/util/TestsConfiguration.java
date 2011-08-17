@@ -75,32 +75,17 @@ public class TestsConfiguration {
 
     private TestsConfiguration(Properties properties) {
         gfHome =  new File(properties.getProperty(Constants.GLASSFISH_INSTALL_ROOT_PROP));
-        platform  = properties.getProperty(Constants.GLASSFISH_PLATFORM_PROP);
+        platform  = properties.getProperty(Constants.GLASSFISH_PLATFORM_PROP, Constants.DEFAULT_GLASSFISH_PLATFORM);
         testTimeout = Long.parseLong(
                 properties.getProperty(Constants.FIGHTERFISH_TEST_TIMEOUT_PROP, Constants.FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE));
         examTimeout = Long.parseLong(
                 properties.getProperty(Constants.EXAM_TIMEOUT_PROP, Constants.FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE));
         final String s = properties.getProperty(org.osgi.framework.Constants.FRAMEWORK_STORAGE);
         if (s != null) fwStorage = new File(s);
-//        checkAndSetDefaultProperties();
     }
 
     public long getTimeout() {
         return testTimeout;
-    }
-
-    private void checkAndSetDefaultProperties() {
-        if (System.getProperty("com.sun.aas.installRootURI") == null) {
-            System.setProperty("com.sun.aas.installRootURI", gfHome.toURI().toString());
-        }
-        if (System.getProperty("com.sun.aas.instanceRoot") == null) {
-            System.setProperty("com.sun.aas.instanceRoot",
-                    new File(gfHome, "domains/domain1").getAbsolutePath());
-        }
-        if (System.getProperty("com.sun.aas.instanceRootURI") == null) {
-            System.setProperty("com.sun.aas.instanceRootURI",
-                    new File(System.getProperty("com.sun.aas.instanceRoot")).toURI().toString());
-        }
     }
 
     public File getGfHome() {
