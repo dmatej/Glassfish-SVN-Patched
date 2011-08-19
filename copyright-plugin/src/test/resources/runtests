@@ -1,0 +1,71 @@
+#!/bin/ksh
+#
+# run tests for the Copyright tool
+#
+# Usage:	runtests.sh [-g] [test files]
+#		-g	generate test input
+#
+COPYRIGHT="java -cp ../../../target/glassfish-copyright-maven-plugin-*.jar \
+		org.glassfish.copyright.Copyright"
+TMP=/tmp/cr.$$
+THISYEAR=`date +%Y`
+
+trap "rm /tmp/cr.$$" 0 1 15
+
+GEN=false
+VERBOSE=false
+while getopts "gv" opt
+do
+	case $opt in
+	g)	GEN=true;;
+	v)	VERBOSE=true;;
+#	?)	usage;;
+	esac
+done
+shift $(($OPTIND - 1))
+
+if [ $# -gt 0 ]
+then
+	files="$@"
+else
+	files=`echo *.java *.xml *.properties *.jsp`
+fi
+
+for i in $files
+do
+	$VERBOSE && echo $i:
+	$COPYRIGHT -y -r -n -w $i > $TMP
+	if $GEN
+	then
+		if [ -n "`cat $TMP`" ]
+		then
+			$COPYRIGHT -y -r -n -w $i > $i.expect
+			mv $i.new $i.new.expect
+		fi
+	elif [ -f $i.expect ]
+	then
+		if cmp -s $i.expect $TMP
+		then
+			if [ -f $i.new ]
+			then
+				sed -e s/THISYEAR/$THISYEAR/ < $i.new.expect > $i.new.expectyear
+				if cmp -s $i.new.expectyear $i.new
+				then
+					:
+				else
+					echo "$i: REPAIR INCORRECT"
+					diff $i.new.expectyear $i.new
+				fi
+			fi
+		else
+			echo "$i: FAILED"
+			echo "  EXPECTED: "`cat $i.expect`
+			echo "  GOT:      "`cat $TMP`
+		fi
+	elif [ -n "`cat $TMP`" ]
+	then
+		echo "$i: FAILED"
+		echo "  EXPECTED: <nothing>"
+		echo "  GOT:      "`cat $TMP`
+	fi
+done
