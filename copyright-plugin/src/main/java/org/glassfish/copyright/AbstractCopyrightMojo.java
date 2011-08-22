@@ -75,7 +75,16 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
     protected String[] exclude;
 
     /**
+     * Base directory for project.
+     * Should not need to be set.
+     *
+     * @parameter default-value="${project.basedir}"
+     */
+    protected File baseDirectory;
+
+    /**
      * Source directory.
+     * Ignored.  Do not set this.
      *
      * @parameter default-value="${project.build.sourceDirectory}"
      */
@@ -83,6 +92,7 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
 
     /**
      * Resources.
+     * Ignored.  Do not set this.
      *
      * @parameter default-value="${project.resources}"
      */
@@ -191,6 +201,13 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
      */
     protected void check(Copyright c) throws MojoExecutionException {
 	try {
+	    if (false) {
+
+	    /*
+	     * This seems like the right way, but it misses many files
+	     * in the project directory, such as the pom.xml file and
+	     * anything that's not a "source" or "resource" file.
+	     */
 	    log.debug("copyright: source directory: " + sourceDirectory);
 	    if (sourceDirectory.exists())
 		c.check(sourceDirectory);
@@ -224,6 +241,17 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
 			    c.check(f);
 		    }
 		}
+	    }
+
+	    } else {
+
+	    /*
+	     * The simple way - just check every file in the project.
+	     */
+	    log.debug("copyright: base directory: " + baseDirectory);
+	    if (baseDirectory.exists())
+		c.check(baseDirectory);
+
 	    }
 	} catch (IOException ioex) {
 	    log.error("IOException: " + ioex);
