@@ -84,7 +84,6 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
 
     /**
      * Source directory.
-     * Ignored.  Do not set this.
      *
      * @parameter default-value="${project.build.sourceDirectory}"
      */
@@ -92,11 +91,18 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
 
     /**
      * Resources.
-     * Ignored.  Do not set this.
      *
      * @parameter default-value="${project.resources}"
      */
     protected ArrayList<Resource> resources;
+
+    /**
+     * Check all files in project or just the source and resource
+     * files maven knows about?
+     *
+     * @parameter expression="${copyright.mavenonly}"
+     */
+    protected boolean mavenOnly;
 
     /**
      * Select SCM system - svn (default), mercurial, git.
@@ -197,67 +203,81 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
 
     /**
      * Run the copyright checker using the specified options
-     * on the source files and resource files in this project.
+     * on the specified files in this project.
      */
     protected void check(Copyright c) throws MojoExecutionException {
 	try {
-	    if (false) {
-
-	    /*
-	     * This seems like the right way, but it misses many files
-	     * in the project directory, such as the pom.xml file and
-	     * anything that's not a "source" or "resource" file.
-	     */
-	    log.debug("copyright: source directory: " + sourceDirectory);
-	    if (sourceDirectory.exists())
-		c.check(sourceDirectory);
-
-	    if (resources != null) {
-		/*
-		 * Iterate over all the resources, and all the files in each
-		 * resource, taking into account any includes and excludes.
-		 */
-		for (Resource r : resources) {
-		    File dir = new File(r.getDirectory());
-		    List<String> incl = r.getIncludes();
-		    List<String> excl = r.getExcludes();
-		    if (log.isDebugEnabled()) {
-			log.debug("copyright: resource directory: " + dir);
-			log.debug("copyright:   includes: " + incl);
-			log.debug("copyright:   excludes: " + excl);
-		    }
-		    // XXX - need to add the ignored directories to the exclude
-		    // list, otherwise FileUtils.getFiles will return files in
-		    // those directories
-		    for (String ig : Copyright.ignoredDirs)
-			excl.add("**/" + ig + "/**");
-		    if (dir.exists()) {
-			List<File> files = FileUtils.getFiles(dir,
-						    commaSeparated(incl),
-						    commaSeparated(excl), true);
-			if (log.isDebugEnabled())
-			    log.debug("copyright:   files: " + files);
-			for (File f : files)
-			    c.check(f);
-		    }
-		}
-	    }
-
-	    } else {
-
-	    /*
-	     * The simple way - just check every file in the project.
-	     */
-	    log.debug("copyright: base directory: " + baseDirectory);
-	    if (baseDirectory.exists())
-		c.check(baseDirectory);
-
-	    }
+	    if (mavenOnly)
+		checkMaven(c);
+	    else
+		checkAll(c);
 	} catch (IOException ioex) {
 	    log.error("IOException: " + ioex);
 	    throw new MojoExecutionException(
 			    "IOException while checking copyrights", ioex);
 	}
+    }
+
+    /**
+     * Only check the source files and resource files, and the pom.xml.
+     */
+    private void checkMaven(Copyright c) throws IOException {
+	/*
+	 * This seems like the right way, but it misses many files
+	 * in the project directory.
+	 */
+	log.debug("copyright: base directory: " + baseDirectory);
+	if (baseDirectory.exists()) {
+	    File pom = new File(baseDirectory, "pom.xml");
+	    c.check(pom);
+	}
+	log.debug("copyright: source directory: " + sourceDirectory);
+	if (sourceDirectory.exists())
+	    c.check(sourceDirectory);
+
+	if (resources != null) {
+	    /*
+	     * Iterate over all the resources, and all the files in each
+	     * resource, taking into account any includes and excludes.
+	     */
+	    for (Resource r : resources) {
+		File dir = new File(r.getDirectory());
+		List<String> incl = r.getIncludes();
+		List<String> excl = r.getExcludes();
+		if (log.isDebugEnabled()) {
+		    log.debug("copyright: resource directory: " + dir);
+		    log.debug("copyright:   includes: " + incl);
+		    log.debug("copyright:   excludes: " + excl);
+		}
+		// XXX - need to add the ignored directories to the exclude
+		// list, otherwise FileUtils.getFiles will return files in
+		// those directories
+		for (String ig : Copyright.ignoredDirs)
+		    excl.add("**/" + ig + "/**");
+		if (dir.exists()) {
+		    List<File> files = FileUtils.getFiles(dir,
+						commaSeparated(incl),
+						commaSeparated(excl), true);
+		    if (log.isDebugEnabled())
+			log.debug("copyright:   files: " + files);
+		    for (File f : files)
+			c.check(f);
+		}
+	    }
+	}
+    }
+
+    /**
+     * Check all the files in the project, skipping files in
+     * subdirectories that are also maven projects.
+     */
+    private void checkAll(Copyright c) throws IOException {
+	/*
+	 * The simple way - just check every file in the project.
+	 */
+	log.debug("copyright: base directory: " + baseDirectory);
+	if (baseDirectory.exists())
+	    c.checkMaven(baseDirectory);
     }
 
     /**

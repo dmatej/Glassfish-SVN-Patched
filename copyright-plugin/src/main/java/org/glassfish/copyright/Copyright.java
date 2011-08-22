@@ -114,7 +114,7 @@ public class Copyright {
 
     public static final List<String> ignoredDirs =
 		    Collections.unmodifiableList(
-			Arrays.asList(".svn", ".hg", ".git", "target"));
+			Arrays.asList(".m2", ".svn", ".hg", ".git", "target"));
 
     private void init() {
 	if (javaCopyright == null) {
@@ -136,6 +136,15 @@ public class Copyright {
      */
     public void check(File file) throws IOException {
 	init();
+	check(file, false);
+    }
+
+    /**
+     * Check a Maven project directory.
+     * Skip subdirectories that contain a pom.xml file.
+     */
+    public void checkMaven(File file) throws IOException {
+	init();
 	if (!file.exists()) {
 	    System.out.println(file + ": doesn't exist");
 	    return;
@@ -148,6 +157,36 @@ public class Copyright {
 	    String name = file.getName();
 	    if (ignoredDirs.contains(name))
 		return;
+	    File[] files = file.listFiles();
+	    for (File f : files)
+		check(f, true);
+	} else
+	    checkFile(file);
+    }
+
+    /**
+     * Check the file.  If the file is a directory, recurse.
+     * If skipMavenDir is true, skip directories that contain
+     * a pom.xml file.
+     */
+    private void check(File file, boolean skipMavenDir) throws IOException {
+	if (!file.exists()) {
+	    System.out.println(file + ": doesn't exist");
+	    return;
+	}
+	if (!file.canRead()) {
+	    System.out.println(file + ": can't read");
+	    return;
+	}
+	if (file.isDirectory()) {
+	    String name = file.getName();
+	    if (ignoredDirs.contains(name))
+		return;
+	    if (skipMavenDir) {
+		File pom = new File(file, "pom.xml");
+		if (pom.exists())
+		    return;
+	    }
 	    File[] files = file.listFiles();
 	    for (File f : files)
 		check(f);
