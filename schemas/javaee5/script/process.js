@@ -578,9 +578,20 @@ function validate(filename, testInfo) {
         }
     }
     HandlerImpl.prototype.error = function(spe) {
-        var i = spe.message.indexOf(":");
+        var message = spe.message;
+        var i = message.indexOf(":");
+        if (i == -1) {
+	    // kludge around JAXP bug 7082570 that doesn't include message key
+	    if (message.startsWith("Duplicate unique value"))
+		message = "cvc-identity-constraint.4.1: " + message;
+	    else if (message.startsWith("Duplicate key value"))
+		message = "cvc-identity-constraint.4.2.2: " + message;
+	    else if (message.startsWith("Key '"))
+		message = "cvc-identity-constraint.4.3: " + message;
+	    i = message.indexOf(":");
+	}
         if (i == -1) { throw new Error("*** ERROR *** " + spe.message); }
-        var errorId = spe.message.substring(0, i);
+        var errorId = message.substring(0, i);
         var error = spe.getLineNumber() + ":" + errorId;
         if (this.remainingErrors.length > 0) {
             var expectedError = this.remainingErrors.shift();
