@@ -91,9 +91,12 @@ public class PaxExamConfigurator {
     }
 
     private Option[] provisioningBundles() {
+        final String version = Version.getVersion();
+        logger.logp(Level.INFO, "PaxExamConfigurator", "provisioningBundles", "FighterFish Test Util Version = {0}",
+                new Object[]{version});
         return options(bundle(new File(gfHome, "modules/glassfish.jar").toURI().toString()),
                 mavenBundle().groupId("org.junit").artifactId("com.springsource.org.junit").version("4.8.1"),
-                mavenBundle().groupId("org.glassfish.fighterfish").artifactId("test.util").version("1.0.0-SNAPSHOT")
+                mavenBundle().groupId("org.glassfish.fighterfish").artifactId("test.util").version(version)
 //                mavenBundle().groupId("org.ops4j.pax.exam").artifactId("pax-exam").version("2.1.0")
         );
     }
