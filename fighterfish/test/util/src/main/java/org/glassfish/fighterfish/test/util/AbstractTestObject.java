@@ -39,7 +39,7 @@
  */
 
 
-package org.glassfish.fighterfish.test.it;
+package org.glassfish.fighterfish.test.util;
 
 import org.glassfish.fighterfish.test.util.TestsConfiguration;
 import org.junit.runner.RunWith;
@@ -68,11 +68,6 @@ import java.io.IOException;
  * In addition to providing pax-exam contracts, it also provides some helper methods
  * which are needed in every test.
  * It is not mandatory for tests to extend this class.
- *
- * This class does not currently belong to test.util bundle as we don't want to depend on
- * pax-exam-junit packages from test.util bundle. There are some issues when we do so. This is mainly because
- * pax-exam-junit4 is not an OSGi bundle, so we can't provision it. We have to either wrap it or configure system
- * packages appropriately. Either of them suck. So, we just leave this base class in the test bundle itself.
  *
  */
 @RunWith(JUnit4TestRunner.class)

@@ -93,9 +93,9 @@ public class T1_SamplesTest extends AbstractTestObject {
             String uas_ejbservice2 = "mvn:org.glassfish.fighterfish/sample.uas.ejbservice2/1.0.0-SNAPSHOT";
             String uas_advservice = "mvn:org.glassfish.fighterfish/sample.uas.advservice/1.0.0-SNAPSHOT";
 
-            Bundle uas_api_b = tc.installTestBundle(uas_api);
-            Bundle uas_simpleservice_b = tc.installTestBundle(uas_simpleservice);
-            Bundle uas_simplewab_b = tc.installTestBundle(uas_simplewab);
+            Bundle uas_api_b = tc.installBundle(uas_api);
+            Bundle uas_simpleservice_b = tc.installBundle(uas_simpleservice);
+            Bundle uas_simplewab_b = tc.installBundle(uas_simplewab);
             WebAppBundle uas_simple_webapp = new WebAppBundle(ctx, uas_simplewab_b);
             uas_simple_webapp.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             String response = null;
@@ -155,7 +155,7 @@ public class T1_SamplesTest extends AbstractTestObject {
                 assertThat(response, new StringPatternMatcher(serviceUnavailable));
 
                 // let's install ejbservice bundle and retry
-                Bundle uas_ejbservice_b = tc.installTestBundle(uas_ejbservice);
+                Bundle uas_ejbservice_b = tc.installBundle(uas_ejbservice);
                 EjbBundle uas_ejbapp = new EjbBundle(ctx, uas_ejbservice_b, new String[]{uas_service_type});
                 uas_ejbapp.deploy(getTimeout(), TimeUnit.MILLISECONDS);
                 uas_simple_webapp.getResponse(unregistrationRequest); // unregister just in case there was a user by this name
@@ -187,10 +187,10 @@ public class T1_SamplesTest extends AbstractTestObject {
 
             {
                 // Scenario #4: Let's replace the ejbservice by ejbservice2 which uses standalone entities jar.
-                Bundle uas_entity_b = tc.installTestBundle(uas_entities);
+                Bundle uas_entity_b = tc.installBundle(uas_entities);
                 EntityBundle uas_entityapp = new EntityBundle(ctx, uas_entity_b);
                 uas_entityapp.deploy(getTimeout(), TimeUnit.MILLISECONDS);
-                Bundle uas_ejbservice2_b = tc.installTestBundle(uas_ejbservice2);
+                Bundle uas_ejbservice2_b = tc.installBundle(uas_ejbservice2);
                 EjbBundle uas_ejbapp2 = new EjbBundle(ctx, uas_ejbservice2_b, new String[]{uas_service_type});
                 uas_ejbapp2.deploy(getTimeout(), TimeUnit.MILLISECONDS);
                 response = uas_simple_webapp.getResponse(registrationRequest);
@@ -216,7 +216,7 @@ public class T1_SamplesTest extends AbstractTestObject {
                 }
 
                 // now install the fragment and refresh the host
-                tc.installTestBundle(uas_simplewabfragment);
+                tc.installBundle(uas_simplewabfragment);
                 uas_simplewab_b.stop(); // This is needed so that the web app does not get deployed upon update().
                 uas_simplewab_b.update();
                 uas_simple_webapp = new WebAppBundle(ctx, uas_simplewab_b);// TODO(Sahoo): because of some bug, we can't reuse earlier wab
@@ -251,7 +251,7 @@ public class T1_SamplesTest extends AbstractTestObject {
             httpService = OSGiUtil.getService(ctx, HttpService.class, getTimeout());
             assertNotNull(httpService);
             final String location = "mvn:org.glassfish.fighterfish/sample.osgihttp.helloworld/1.0.0-SNAPSHOT";
-            Bundle bundle = tc.installTestBundle(location);
+            Bundle bundle = tc.installBundle(location);
             final Semaphore eventRaised = new Semaphore(0);
             EventAdmin eventAdmin = OSGiUtil.getService(ctx, EventAdmin.class, getTimeout());
             Assert.assertNotNull("Event Admin Service not available", eventAdmin);

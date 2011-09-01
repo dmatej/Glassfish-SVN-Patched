@@ -166,7 +166,7 @@ public class TestContext {
         return ctx;
     }
 
-    public Bundle installTestBundle(String location) throws BundleException {
+    public Bundle installBundle(String location) throws BundleException {
         return bundleProvisioner.installTestBundle(location);
     }
 

@@ -108,17 +108,19 @@ public class PaxExamConfigurator {
 
         // See: http://team.ops4j.org/browse/PAXEXAM-267
         // NativeTestContainer does not export the following package, but our test.util needs it
-        options.add(systemPackages("org.ops4j.pax.exam.options.extra; version=" + Info.getPaxExamVersion()));
+//        options.add(systemPackages("org.ops4j.pax.exam.options.extra; version=" + Info.getPaxExamVersion()));
         if (fwStorage != null) {
-            // add this ahead of others so that it will override any value read from OSGiFramework.properties,
-            options.add(0, workingDirectory(fwStorage.getAbsolutePath()));
+            // add this at the end so that it will override any value read from OSGiFramework.properties,
+            // There seems to be a behavior difference between exam 2.1.0 and 2.2.0.
+            // Prior to 2.2.0, a single option at the beginning was having precedence over others.
+            // Now it is the reverse.
+            options.add(workingDirectory(fwStorage.getAbsolutePath()));
         }
         return options.toArray(new Option[options.size()]);
     }
 
     private Option[] paxConfiguration() {
-        // Switch to pax-exam API to set timeout when migrating to 2.2.0
-        return options(systemProperty(EXAM_TIMEOUT_PROP).value(String.valueOf(timeout)));
+        return options(systemTimeout(timeout));
     }
 
     /**

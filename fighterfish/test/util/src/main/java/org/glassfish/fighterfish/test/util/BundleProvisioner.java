@@ -74,10 +74,10 @@ public class BundleProvisioner {
      * @throws BundleException
      */
     protected Bundle installTestBundle(String location) throws BundleException {
-        logger.logp(Level.INFO, "AbstractTestObject", "installTestBundle", "Installing bundle = {0}", new Object[]{location});
+        logger.logp(Level.INFO, "AbstractTestObject", "installBundle", "Installing bundle = {0}", new Object[]{location});
         final Bundle bundle = ctx.installBundle(location);
         testBundles.add(bundle);
-        logger.logp(Level.INFO, "AbstractTestObject", "installTestBundle", "Installed bundle = {0} from {1} ", new Object[]{bundle, location});
+        logger.logp(Level.INFO, "AbstractTestObject", "installBundle", "Installed bundle = {0} from {1} ", new Object[]{bundle, location});
         return bundle;
     }
 

@@ -58,7 +58,7 @@ public final class Constants {
      * pax-exam fails the test as opposed to hanging for ever. One example is when a provisioned bundle never returns
      * from its activator.
      */
-    static final String EXAM_TIMEOUT_PROP = "pax-exam.framework.shutdown.timeout";
+    static final String EXAM_TIMEOUT_PROP = "pax-exam.timeout";
 
     /**
      * Name of property used to indicate which platform is being used to run GlassFish. Values are Felix or Equinox
