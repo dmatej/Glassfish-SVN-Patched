@@ -171,6 +171,10 @@ public class WebAppBundle {
         return sb.toString();
     }
 
+    public ServletContext getServletContext() {
+        return (ServletContext) context.getService(context.getServiceReference(ServletContext.class.getName()));
+    }
+
     private String getHost() {
         return "localhost";
     }
@@ -179,4 +183,7 @@ public class WebAppBundle {
         return 8080;
     }
 
+    public Bundle getBundle() {
+        return b;
+    }
 }

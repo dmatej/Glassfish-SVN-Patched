@@ -77,7 +77,7 @@ public class SingleTest extends AbstractTestObject {
     @Test
     public void test(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("SingleTest", "test", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
             GlassFish gf = tc.getGlassFish();
             assertNotNull(gf);

@@ -46,9 +46,11 @@ import org.glassfish.embeddable.GlassFishException;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
+import org.osgi.framework.FrameworkUtil;
 
 import java.io.File;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 /**
@@ -56,7 +58,7 @@ import java.util.logging.Logger;
  * It provides functionality like installing/uninstalling bundles, configuring Java EE resources like
  * JDBC data sources, JMS destinations, etc. Each test method is accompanied by a single TestContext object.
  * A TestContext object's life cycle is scoped to a test method for this reason. Each test method must create a
- * TestContext by calling the factory method {@link #create(BundleContext)} at the beginning of the test method and
+ * TestContext by calling the factory method {@link #create(Class)} at the beginning of the test method and
  * destroy it by calling {@link #destroy} at the end of the test method. When a test context is destroyed, all changes
  * done so far will be rolled back. This includes any bundles deployed. any domain configuration made, etc.
  *
@@ -69,8 +71,8 @@ public class TestContext {
     // TODO(Sahoo): Use fluent API
     // TODO(Sahoo): Explore possibility of automatically controlling life cycle of a TestContext
 
-    private final String testClassName;
-    private final String testMethodName;
+    private final String testID;
+    private static final AtomicInteger testIdGen = new AtomicInteger(0);
 
     /**
      * BundleContext associated with the test
@@ -82,26 +84,31 @@ public class TestContext {
 
     private Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
-    private TestContext(String testClassName, String testMethodName, BundleContext ctx) {
-        logger.info("Beginning of test " + testClassName + "." + testMethodName);
+    private TestContext(String testID, BundleContext ctx) {
+        logger.info("Creating test context for test id: " + testID);
         this.ctx = ctx;
-        this.testClassName = testClassName;
-        this.testMethodName = testMethodName;
+        this.testID = testID;
         bundleProvisioner = new BundleProvisioner(ctx);
         resourceProvisioner = new EnterpriseResourceProvisioner();
     }
 
-    public static TestContext create(final BundleContext ctx) throws GlassFishException, InterruptedException {
-        TestContext tc = new TestContext(getCallingClassName(), getCallingMethodName(), ctx);
+    public static TestContext create(Class testClass) throws GlassFishException, InterruptedException {
+        BundleContext ctx = FrameworkUtil.getBundle(testClass).getBundleContext();
+        TestContext tc = new TestContext(getNextTestId(testClass), ctx);
         tc.getGlassFish();
         tc.configureEmbeddedDerby();
         return tc;
     }
 
+    private static String getNextTestId(Class testClass) {
+        // Don't use something : as that interefers with asadmin command syntax
+        return testClass.getName() + "-" + String.valueOf(testIdGen.incrementAndGet());
+    }
+
     public void destroy() throws BundleException, GlassFishException {
         bundleProvisioner.uninstallAllTestBundles();
         resourceProvisioner.restoreDomainConfiguration();
-        logger.info("End of test " + testClassName + "." + testMethodName);
+        logger.info("Destroying test context for test id: " + testID);
     }
 
     /**
@@ -120,6 +127,10 @@ public class TestContext {
         return webAppBundle;
     }
 
+    public WebAppBundle deployWebAppBundle(String location) throws BundleException, InterruptedException {
+        return deployWebAppBundle(installBundle(location));
+    }
+
     /**
      * Deploy the given JPA Entities bundle. If a service of type EntityManagerFactory does not get registered in
      * the specified time, assume the deployment has failed and throw a TimeoutException.
@@ -133,6 +144,10 @@ public class TestContext {
         EntityBundle entityBundle = new EntityBundle(getBundleContext(), bundle);
         entityBundle.deploy(TestsConfiguration.getInstance().getTimeout(), TimeUnit.MILLISECONDS);
         return entityBundle;
+    }
+
+    public EntityBundle deployEntityBundle(String location) throws BundleException, InterruptedException {
+        return deployEntityBundle(installBundle(location));
     }
 
     /**
@@ -152,20 +167,32 @@ public class TestContext {
         return ejbBundle;
     }
 
+    public EjbBundle deployEjbBundle(String location, String[] services) throws BundleException, InterruptedException {
+        return deployEjbBundle(installBundle(location), services);
+    }
+
     public GlassFish getGlassFish() throws GlassFishException, InterruptedException {
         return GlassFishTracker.waitForGfToStart(ctx, TestsConfiguration.getInstance().getTimeout());
     }
 
     public void configureEmbeddedDerby() throws GlassFishException, InterruptedException {
         resourceProvisioner.configureEmbeddedDerby(getGlassFish(),
-                testMethodName,
-                new File(EnterpriseResourceProvisioner.getDerbyDBRootDir(), testMethodName));
+                testID,
+                new File(EnterpriseResourceProvisioner.getDerbyDBRootDir(), testID));
     }
 
     public BundleContext getBundleContext() {
         return ctx;
     }
 
+    /**
+     * Install an OSGi bundle by reading its content from a given location URI.
+     * This method does not activate the bundle; it just installs it.
+     *
+     * @param location a URI string from which the bundle content will be read
+     * @return installed bundle object
+     * @throws BundleException
+     */
     public Bundle installBundle(String location) throws BundleException {
         return bundleProvisioner.installTestBundle(location);
     }
@@ -186,4 +213,17 @@ public class TestContext {
         return new Exception().getStackTrace()[2].getClassName();
     }
 
+    private static BundleContext getCallingBundleContext() {
+        return FrameworkUtil.getBundle(getCallingClass()).getBundleContext();
+    }
+
+    private static Class getCallingClass() {
+        return new SecurityManager1().getCallingClass();
+    }
+
+    static class SecurityManager1 extends SecurityManager {
+        private Class getCallingClass() {
+            return getClassContext()[6]; // At depth 6 (starting index is 0), we find user's test class.
+        }
+    }
 }

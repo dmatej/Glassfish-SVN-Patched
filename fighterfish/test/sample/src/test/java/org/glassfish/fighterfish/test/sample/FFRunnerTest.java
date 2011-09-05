@@ -11,11 +11,23 @@ public class FFRunnerTest {
 	@Test
 	public void test(BundleContext ctx) throws Exception {
 		System.out.println("GFRunnerTest.test()");
-		TestContext tc = TestContext.create(ctx);
+		TestContext tc = TestContext.create(getClass());
 		try {
+            System.out.println("tc.getBundleContext() = " + tc.getBundleContext());
 			System.out.println(tc.getGlassFish());
 		} finally {
 			tc.destroy();
 		}
 	}
+    @Test
+    public void test2() throws Exception {
+        System.out.println("GFRunnerTest.test2()");
+        TestContext tc = TestContext.create(getClass());
+        try {
+            System.out.println("tc.getBundleContext() = " + tc.getBundleContext());
+            System.out.println(tc.getGlassFish());
+        } finally {
+            tc.destroy();
+        }
+    }
 }

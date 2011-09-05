@@ -79,7 +79,7 @@ public class T1_SamplesTest extends AbstractTestObject {
     public void uas_sample_test(BundleContext ctx)
             throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T1_SamplesTest", "uas_sample_test", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
             /*
              * URIs of various sample.uas bundles that we are going to use.
@@ -188,11 +188,9 @@ public class T1_SamplesTest extends AbstractTestObject {
             {
                 // Scenario #4: Let's replace the ejbservice by ejbservice2 which uses standalone entities jar.
                 Bundle uas_entity_b = tc.installBundle(uas_entities);
-                EntityBundle uas_entityapp = new EntityBundle(ctx, uas_entity_b);
-                uas_entityapp.deploy(getTimeout(), TimeUnit.MILLISECONDS);
+                EntityBundle uas_entityapp = tc.deployEntityBundle(uas_entity_b);
                 Bundle uas_ejbservice2_b = tc.installBundle(uas_ejbservice2);
-                EjbBundle uas_ejbapp2 = new EjbBundle(ctx, uas_ejbservice2_b, new String[]{uas_service_type});
-                uas_ejbapp2.deploy(getTimeout(), TimeUnit.MILLISECONDS);
+                EjbBundle uas_ejbapp2 = tc.deployEjbBundle(uas_ejbservice2_b, new String[]{uas_service_type});
                 response = uas_simple_webapp.getResponse(registrationRequest);
                 assertThat(response, new StringPatternMatcher(successfulRegistration));
 
@@ -238,7 +236,7 @@ public class T1_SamplesTest extends AbstractTestObject {
     @Test
     public void osgihttp_helloworld_sample_test(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T1_SamplesTest", "osgihttp_helloworld_sample_test", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
             HttpService httpService = OSGiUtil.getService(ctx, HttpService.class);
             assertNull(httpService);

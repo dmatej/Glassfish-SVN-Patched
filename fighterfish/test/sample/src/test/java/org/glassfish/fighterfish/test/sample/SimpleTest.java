@@ -56,7 +56,7 @@ public class SimpleTest {
      */
     @Test
     public void test(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
         	// Let's install a couple of bundles one of which is an API bundle 
         	// which is consumed by the second one which is a WAB. 

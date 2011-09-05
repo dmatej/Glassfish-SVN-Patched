@@ -90,7 +90,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp0(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp0", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
             final String location = "mvn:org.glassfish.fighterfish/test.app0/1.0.0-SNAPSHOT/war";
             Bundle bundle = tc.installBundle(location);
@@ -117,7 +117,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp1(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp1", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
             final String location = "mvn:org.glassfish.fighterfish/test.app1/1.0.0-SNAPSHOT/war";
             Bundle bundle = tc.installBundle(location);
@@ -149,7 +149,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp2(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp2", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
             String location = "mvn:org.glassfish.fighterfish/test.app2/1.0.0-SNAPSHOT/war";
             Bundle bundle = tc.installBundle(location);
@@ -181,7 +181,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp3(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp3", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
             String location = "mvn:org.glassfish.fighterfish/test.app3/1.0.0-SNAPSHOT/war";
             Bundle bundle = tc.installBundle(location);
@@ -208,7 +208,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp4(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp4", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
             String location = "mvn:org.glassfish.fighterfish/test.app4/1.0.0-SNAPSHOT/war";
             Bundle bundle = tc.installBundle(location);
@@ -235,7 +235,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp5(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp5", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
             String location = "mvn:org.glassfish.fighterfish/test.app5/1.0.0-SNAPSHOT/war";
             Bundle bundle = tc.installBundle(location);
@@ -263,7 +263,7 @@ public class T2_Test extends AbstractTestObject {
     @Ignore // This is currently failing for EclipseLink's inability to handle URL with bundle scheme.
     public void testapp6(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp6", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app6/1.0.0-SNAPSHOT"; // this is a .jar file, so no classifier needed
@@ -285,7 +285,7 @@ public class T2_Test extends AbstractTestObject {
     @Ignore // This is currently failing for EclipseLink's inability to handle URL with bundle scheme.
     public void testapp7(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp7", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app7/1.0.0-SNAPSHOT/war";
@@ -306,7 +306,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp8(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp8", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app8/1.0.0-SNAPSHOT"; // this is a jar
@@ -327,7 +327,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp9(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp9", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app9/1.0.0-SNAPSHOT";
@@ -355,7 +355,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp10(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp10", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app10/1.0.0-SNAPSHOT"; // this has .jar extn
@@ -383,7 +383,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp11_ejb(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp11_ejb", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
 
             // Tests only deploying an ejb bundle with remote and local ejb in it to make sure the bug reported in #11855 is fixed.
@@ -410,7 +410,7 @@ public class T2_Test extends AbstractTestObject {
     // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
     public void testapp11_wab(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp11_wab", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
 
             String location_ejb = "mvn:org.glassfish.fighterfish/test.app11.ejb/1.0.0-SNAPSHOT";
@@ -446,7 +446,7 @@ public class T2_Test extends AbstractTestObject {
     // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
     public void testapp11_war(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp11_war", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         String appName = null;
         try {
 
@@ -479,7 +479,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp12(BundleContext ctx) throws BundleException, GlassFishException, InterruptedException, IOException {
         logger.entering("T2_Test", "testapp12", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
             String location_host = "mvn:org.glassfish.fighterfish/test.app12/1.0.0-SNAPSHOT/war";
             String location_fragment = "mvn:org.glassfish.fighterfish/test.app12.fragment/1.0.0-SNAPSHOT";
@@ -521,7 +521,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp13(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
         logger.entering("T2_Test", "testapp13", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app13/1.0.0-SNAPSHOT";
@@ -541,7 +541,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp14(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
         logger.entering("T2_Test", "testapp14", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app14/1.0.0-SNAPSHOT";
@@ -560,7 +560,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp15(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
         logger.entering("T2_Test", "testapp15", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
 
             String location = "mvn:org.glassfish.fighterfish/test.app15/1.0.0-SNAPSHOT";
@@ -579,7 +579,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp16(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp16", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         final String cfName = "jms/fighterfish.TestApp16ConnectionFactory";
         final String topicName = "jms/fighterfish.TestApp16Topic";
         tc.createJmsCF(cfName);
@@ -631,7 +631,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp17(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp17", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
             String location_wab = "mvn:org.glassfish.fighterfish/test.app17/1.0.0-SNAPSHOT/war";
             Bundle bundle_wab = tc.installBundle(location_wab);
@@ -652,7 +652,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     public void testapp18(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp18", new Object[]{ctx});
-        TestContext tc = TestContext.create(ctx);
+        TestContext tc = TestContext.create(getClass());
         try {
             String location_wab = "mvn:org.glassfish.fighterfish/test.app18/1.0.0-SNAPSHOT/war";
             final Bundle bundle_wab = tc.installBundle(location_wab);

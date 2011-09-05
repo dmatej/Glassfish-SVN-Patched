@@ -89,4 +89,7 @@ public class EntityBundle {
         b.stop();
     }
 
+    public Bundle getBundle() {
+        return b;
+    }
 }

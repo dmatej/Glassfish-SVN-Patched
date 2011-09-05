@@ -104,4 +104,7 @@ public class EjbBundle {
         b.stop();
     }
 
+    public Bundle getBundle() {
+        return b;
+    }
 }
