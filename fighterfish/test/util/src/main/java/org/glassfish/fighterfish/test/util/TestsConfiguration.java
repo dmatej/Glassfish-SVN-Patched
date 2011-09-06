@@ -57,6 +57,7 @@ import java.util.logging.Logger;
 public class TestsConfiguration {
 
     private File gfHome;
+    private String provisioningUrl;
     private String platform;
     private long testTimeout;
     private long examTimeout;
@@ -74,12 +75,19 @@ public class TestsConfiguration {
     }
 
     private TestsConfiguration(Properties properties) {
-        gfHome =  new File(properties.getProperty(Constants.GLASSFISH_INSTALL_ROOT_PROP));
+        final String property = properties.getProperty(Constants.GLASSFISH_INSTALL_ROOT_PROP);
+        if (property != null) {
+            gfHome =  new File(property);
+        }
+        provisioningUrl = properties.getProperty(Constants.FIGHTERFISH_PROVISIONER_URL_PROP);
+        if (gfHome == null && provisioningUrl == null) {
+            provisioningUrl = Constants.FIGHTERFISH_PROVISIONER_URL_DEFAULT_VALUE;
+        }
         platform  = properties.getProperty(Constants.GLASSFISH_PLATFORM_PROP, Constants.DEFAULT_GLASSFISH_PLATFORM);
         testTimeout = Long.parseLong(
                 properties.getProperty(Constants.FIGHTERFISH_TEST_TIMEOUT_PROP, Constants.FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE));
         examTimeout = Long.parseLong(
-                properties.getProperty(Constants.EXAM_TIMEOUT_PROP, Constants.FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE));
+                properties.getProperty(Constants.EXAM_TIMEOUT_PROP, Constants.EXAM_TIMEOUT_DEFAULT_VALUE));
         final String s = properties.getProperty(org.osgi.framework.Constants.FRAMEWORK_STORAGE);
         if (s != null) fwStorage = new File(s);
     }
@@ -97,6 +105,12 @@ public class TestsConfiguration {
     }
 
     public Option[] getPaxExamConfiguration() throws IOException {
-        return new PaxExamConfigurator(getGfHome(), getPlatform(), examTimeout, fwStorage).configure();
+        PaxExamConfigurator paxExamConfigurator;
+        if(gfHome != null) {
+            paxExamConfigurator = new PaxExamConfigurator(getGfHome(), getPlatform(), examTimeout, fwStorage);
+        } else {
+            paxExamConfigurator = new PaxExamConfigurator(provisioningUrl, examTimeout, fwStorage);
+        }
+        return paxExamConfigurator.configure();
     }
 }

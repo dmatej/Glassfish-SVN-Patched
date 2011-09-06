@@ -43,6 +43,7 @@ package org.glassfish.fighterfish.test.util;
 
 import org.ops4j.pax.exam.Info;
 import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.osgi.framework.Constants;
 
 import java.io.File;
@@ -55,7 +56,6 @@ import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static org.glassfish.fighterfish.test.util.Constants.EXAM_TIMEOUT_PROP;
 import static org.glassfish.fighterfish.test.util.Constants.FW_CONFIG_FILE_NAME;
 import static org.ops4j.pax.exam.CoreOptions.*;
 import static org.ops4j.pax.exam.OptionUtils.combine;
@@ -75,6 +75,7 @@ public class PaxExamConfigurator {
 
     protected Logger logger = Logger.getLogger(getClass().getPackage().getName());
     private File gfHome;
+    private String provisioningUrl;
     private String platform;
     private final long timeout;
     private final File fwStorage;
@@ -82,6 +83,13 @@ public class PaxExamConfigurator {
     public PaxExamConfigurator(File gfHome, String platform, long timeout, File fwStorage) {
         this.gfHome = gfHome;
         this.platform = platform;
+        this.timeout = timeout;
+        this.fwStorage = fwStorage;
+    }
+
+    public PaxExamConfigurator(String provisioningUrl, long timeout, File fwStorage) {
+        this.provisioningUrl = provisioningUrl;
+        this.platform = org.glassfish.fighterfish.test.util.Constants.DEFAULT_GLASSFISH_PLATFORM;
         this.timeout = timeout;
         this.fwStorage = fwStorage;
     }
@@ -94,10 +102,13 @@ public class PaxExamConfigurator {
         final String version = Version.getVersion();
         logger.logp(Level.INFO, "PaxExamConfigurator", "provisioningBundles", "FighterFish Test Util Version = {0}",
                 new Object[]{version});
-        return options(bundle(new File(gfHome, "modules/glassfish.jar").toURI().toString()),
+        final Option gfBundle =
+                gfHome != null ? bundle(new File(gfHome, "modules/glassfish.jar").toURI().toString()) :
+                        mavenBundle().groupId("org.glassfish.fighterfish").artifactId("sample.embeddedgf.provisioner").
+                                version("1.0.0-SNAPSHOT");
+        return options(gfBundle,
                 mavenBundle().groupId("org.junit").artifactId("com.springsource.org.junit").version("4.8.1"),
                 mavenBundle().groupId("org.glassfish.fighterfish").artifactId("test.util").version(version)
-//                mavenBundle().groupId("org.ops4j.pax.exam").artifactId("pax-exam").version("2.1.0")
         );
     }
 
@@ -115,6 +126,7 @@ public class PaxExamConfigurator {
             // Prior to 2.2.0, a single option at the beginning was having precedence over others.
             // Now it is the reverse.
             options.add(workingDirectory(fwStorage.getAbsolutePath()));
+            options.add(cleanCaches(false)); // default is to remove the cache
         }
         return options.toArray(new Option[options.size()]);
     }

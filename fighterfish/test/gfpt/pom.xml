@@ -52,8 +52,8 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>test.it</artifactId>
-    <name>FighterFish integration test suite</name>
+    <artifactId>test.gfpt</artifactId>
+    <name>FighterFish GlassFish Provisioning Test</name>
     <dependencies>
         <dependency>
             <groupId>org.glassfish.fighterfish</groupId>
@@ -73,23 +73,6 @@
                 <configuration>
                     <systemProperties>
                         <property>
-                            <name>com.sun.aas.installRoot</name>
-                            <value>${glassfish.home}</value>
-                        </property>
-                        <property>
-                            <name>com.sun.aas.instanceRoot</name>
-                            <value>${glassfish.home}/domains/domain1</value>
-                        </property>
-                        <property>
-                            <name>GlassFish_Platform</name>
-                            <value>${GlassFish_Platform}</value>
-                        </property>
-                        <property>
-                            <!-- This disables UC PingService -->
-                            <name>com.sun.enterprise.registration.PING_TIMER_INTERVAL</name>
-                            <value>-1</value>
-                        </property>
-                        <property>
                             <!-- Configure Derby dir to be in target/ -->
                             <name>fighterfish.test.DerbyDBRootDir</name>
                             <value>${project.build.directory}/derby-databases</value>
@@ -102,11 +85,6 @@
                         <property>
                             <name>org.osgi.framework.storage</name>
                             <value>${project.build.directory}/osgi-cache/${GlassFish_Platform}</value>
-                        </property>
-                        <property>
-                            <!-- How long should we wait for asynchronous operations to finish -->
-                            <name>fighterfish.test.setup.timeout</name>
-                            <value>100000</value>
                         </property>
                         <property>
                             <!-- This is needed for pax-url-mvn to read custom settings.xml.
@@ -227,10 +205,45 @@
                 <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=9009</maven.surefire.debug>
             </properties>
         </profile>
+       
+        <profile>
+            <id>WithoutInstallation</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <systemProperties>
+                                <property>
+                                    <!-- Configure GlassFish Provision URL -->
+                                    <name>fighterfish.provisioner.url</name>
+                                    <value>mvn:org.glassfish.distributions/glassfish/3.1.1-SNAPSHOT/zip</value>
+                                </property>
+                            </systemProperties>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
 
+        <profile>
+            <id>WithInstallation</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <systemProperties>
+                                <property>
+                                    <!-- Configure GlassFish Installation Root-->
+                                    <name>com.sun.aas.installRoot</name>
+                                    <value>/space/ss141213/WS/gf/v3/publish/glassfish3/glassfish</value>
+                                </property>
+                            </systemProperties>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
-    
-    <properties>
-        <glassfish.home>/space/ss141213/WS/gf/v3/publish/glassfish3/glassfish</glassfish.home>
-    </properties>
 </project>

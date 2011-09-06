@@ -53,14 +53,6 @@ public final class Constants {
     static final String FW_CONFIG_FILE_NAME = "OSGiFramework.properties";
 
     /**
-     * Property name used to configure pax-exam timeout behavior. The value of this property indicates how long will
-     * pax-exam wait before timing out in operations that can possibly never return. When this happens,
-     * pax-exam fails the test as opposed to hanging for ever. One example is when a provisioned bundle never returns
-     * from its activator.
-     */
-    static final String EXAM_TIMEOUT_PROP = "pax-exam.timeout";
-
-    /**
      * Name of property used to indicate which platform is being used to run GlassFish. Values are Felix or Equinox
      */
     static final String GLASSFISH_PLATFORM_PROP = "GlassFish_Platform";
@@ -76,6 +68,14 @@ public final class Constants {
     static final String GLASSFISH_INSTALL_ROOT_PROP = "com.sun.aas.installRoot";
 
     /**
+     * Property name used to configure test framework timeout behavior. The value of this property indicates how long will
+     * test framework wait before timing out in operations that can possibly never return. When this happens,
+     * test framework fails the tests as opposed to hanging for ever or running tests in an incorrect state.
+     * One example is when a provisioned bundle never returns from its activator.
+     */
+    static final String EXAM_TIMEOUT_PROP = "fighterfish.test.setup.timeout";
+
+    /**
      * Property name used to configure timeout values of tests. This depends on tests, but we have a global timeout
      * value for all tests. So, the value must be maximum of each test's timeout value.
      */
@@ -86,4 +86,18 @@ public final class Constants {
      */
     static final String FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE = "30000"; // in ms
 
+    /**
+     * Default timeout value in ms. If no timeout is set using {@link #EXAM_TIMEOUT_PROP}, this value is used.
+     */
+    static final String EXAM_TIMEOUT_DEFAULT_VALUE = "60000"; // in ms
+
+    /**
+     * URL string used to download glassfish distribution. e.g.:
+     * mvn:org.glassfish.distributions/glassfish/3.1.1/zip
+     * file:/tmp/web.zip
+     * http://maven.glassfish.org/content/groups/glassfish/org/glassfish/distributions/nucleus/3.1.1/nucleus-3.1.1.zip
+     *
+     */
+    public static final String FIGHTERFISH_PROVISIONER_URL_PROP = "fighterfish.provisioner.url";
+    public static final String FIGHTERFISH_PROVISIONER_URL_DEFAULT_VALUE = "mvn:org.glassfish.distributions/glassfish/3.1.1/zip";
 }
