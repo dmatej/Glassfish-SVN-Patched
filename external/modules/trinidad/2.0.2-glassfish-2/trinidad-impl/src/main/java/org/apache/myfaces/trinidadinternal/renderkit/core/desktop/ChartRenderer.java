@@ -216,8 +216,9 @@ public class ChartRenderer extends XhtmlRenderer
     FacesBean    bean
     ) throws IOException
   {
-    sw.append("ApacheChart.createSVG(\"");
     String clientId = component.getClientId(context);
+    sw.append("if (!document.getElementById('svgChart" + clientId + "')) {");
+    sw.append("ApacheChart.createSVG(\"");
     sw.append(clientId);
     sw.append("\",\"svgChart");
     sw.append(clientId);
@@ -227,6 +228,7 @@ public class ChartRenderer extends XhtmlRenderer
     sw.append(templateURL);
     sw.append("\",\"width:100%; height:100%;\"");
     sw.append(",null);\n");
+    sw.append("}");
   }
 
   protected void _outputJSChartModel(
