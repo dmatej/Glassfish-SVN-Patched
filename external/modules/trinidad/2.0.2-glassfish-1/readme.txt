@@ -1,4 +1,5 @@
 The source for 2.0.2-glassfish-2 is from  https://svn.apache.org/repos/asf/myfaces/trinidad/trunk@1174527.
+Only trinidad-api, trinidad-impl and trinidad parent pom files are uploaded to maven.java.net.
 
 The following patch is applied:
 ===================================================================
