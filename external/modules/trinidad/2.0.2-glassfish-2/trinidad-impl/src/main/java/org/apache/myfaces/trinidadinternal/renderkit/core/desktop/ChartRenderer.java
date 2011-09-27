@@ -380,6 +380,8 @@ public class ChartRenderer extends XhtmlRenderer
 
     // finally draw the chart
     sw.append("apacheChart.draw();\n");
+
+    sw.append("if (typeof jQuery != 'undefined') { jQuery('body').data('" + clientId + "', apacheChart)}\n");
   }
 
   @SuppressWarnings("unchecked")
