@@ -52,12 +52,6 @@
         <available file="${maven.repo.local}/${auto-depends.mvn.path}" property="is-hk2-avail"/>
         <fail unless="is-hk2-avail" message="${maven.repo.local}/${auto-depends.mvn.path} missing! It is a required dependency for wsit build."/>
 
-        <available file="${maven.repo.local}/${gmbal.mvn.path}" property="is-gmbal-avail"/>
-        <fail unless="is-gmbal-avail" message="${maven.repo.local}/${gmbal.mvn.path} missing! It is a required dependency for wsit build."/>
-
-        <available file="${maven.repo.local}/${gmbal-api.mvn.path}" property="is-gmbalapi-avail"/>
-        <fail unless="is-gmbalapi-avail" message="${maven.repo.local}/${gmbal-api.mvn.path} missing! It is a required dependency for wsit build."/>
-
         <available file="${maven.repo.local}/${javax.servlet.mvn.path}" property="is-javaxsrevlet-avail"/>
         <fail unless="is-javaxsrevlet-avail" message="${maven.repo.local}/${javax.servlet.mvn.path} missing! It is a required dependency for wsit build."/>
 
@@ -164,6 +158,7 @@
                 <exclude name="**/*grizzly*.jar*"/>
                 <exclude name="**/findbugs/**/*.jar"/>
                 <exclude name="lib/junit.jar"/>
+                <exclude name="lib/woodstox.jar"/>
                 <exclude name="tools/lib/*.jar"/>
             </fileset>
         </delete>
@@ -217,7 +212,7 @@
         <build.jar.from.srczip srcdir="src" jar="${external.dir}/jaxws/lib/sjsxp.jar" unzipdir="${external.dir}/sjsxp" srczip="${external.dir}/jaxws/lib/sjsxp-src.zip"/>
         <mvn.publish.local jar="${external.dir}/jaxws/lib/sjsxp.jar" mvngroup="com.sun.xml.stream" mvnartid="sjsxp" mvnversion="${sjsxp.version}"/>
 
-        <build.jar.from.srczip srcdir="src" jar="${external.dir}/jaxws/rt-ha/lib/ha-api.jar" unzipdir="${external.dir}/ha-api" srczip="${external.dir}/jaxws/rt-ha/lib/ha-api.src.zip" cp="${maven.repo.local}/${auto-depends.mvn.path}"/>
+        <build.jar.from.srczip srcdir="src/main/java" jar="${external.dir}/jaxws/rt-ha/lib/ha-api.jar" unzipdir="${external.dir}/ha-api" srczip="${external.dir}/jaxws/rt-ha/lib/ha-api.src.zip" cp="${maven.repo.local}/${auto-depends.mvn.path}"/>
         <mvn.publish.local jar="${external.dir}/jaxws/rt-ha/lib/ha-api.jar" mvngroup="org.glassfish.ha" mvnartid="ha-api" mvnversion="3.1.8"/>
 
         <!-- I see these are already published by JavaEE api v3 build -->
@@ -225,20 +220,16 @@
         <copy file="${maven.repo.local}/${javax.servlet.mvn.path}" tofile="${external.dir}/jaxws/httpspi-servlet/lib/servlet.jar"/>
         <mvn.publish.local jar="${maven.repo.local}/${servlet.mvn.path}" mvngroup="org.apache.tomcat" mvnartid="servlet-api" mvnversion="6.0.16"/>
 
-        <!-- build woodstox -->
-        <property name="unzipdir" value="${external.dir}/woodstox"/>
-        <mkdir dir="${unzipdir}"/>
-        <unzip src="${external.dir}/jaxws/lib/woodstox-src.zip" dest="${unzipdir}"/>
-        <mkdir dir="${unzipdir}/src/samples"/>
-        
-        <exec executable="ant" dir="${external.dir}/woodstox" failonerror="true" newenvironment="false" >
-            <arg line="jar.wstx.asl" />
-    	    <arg line="-Dmaven.repo.local=${maven.repo.local} -Djavac.target=1.5 -Djavac.source=1.5" />
-            <arg line="-Dlib.junit=${maven.repo.local}/${junit.mvn.path}"/>
-            <env key="JAVA_HOME" value="${JDK_1.5}" />
-        </exec>
-        <mvn.publish.local jar="${external.dir}/woodstox/build/wstx-asl-${woodstox.version}.jar" mvngroup="org.codehaus.woodstox" mvnartid="wstx-asl" mvnversion="${woodstox.version}"/>
-        <copy file="${maven.repo.local}/${woodstox.mvn.path}" tofile="${external.dir}/jaxws/lib/woodstox.jar"/>
+        <!-- TODO - build woodstox -->
+        <!--build.jar.from.srczip srcdir="." jar="${external.dir}/jaxws/lib/woodstox.jar" unzipdir="${external.dir}/woodstox" srczip="${external.dir}/jaxws/lib/woodstox-src.zip" cp="${maven.repo.local}/${auto-depends.mvn.path}"/>
+        <mvn.publish.local jar="${external.dir}/woodstox/build/wstx-asl-${woodstox.version}.jar" mvngroup="org.codehaus.woodstox" mvnartid="wstx-asl" mvnversion="${woodstox.version}"/-->
+
+        <delete>
+            <fileset dir="${external.dir}/jaxws/tools/wscompile/test" includes="**/*">
+            </fileset>
+        </delete>
+
+        <build.jar.from.srczip srcdir="src" jar="${external.dir}/jaxws/lib/management-api.jar" unzipdir="${external.dir}/management-api" srczip="${external.dir}/jaxws/lib/management-api-src.zip"/>
 
         <exec executable="ant" dir="${external.dir}/jaxws" failonerror="true" newenvironment="false" >
             <arg line="clean tools-build runtime-build" />
@@ -426,8 +417,6 @@
         <mvn.publish.local jar="${maven.repo.local}/${txw2.mvn.path}" mvngroup="com.sun.xml.txw2" mvnartid="txw2" mvnversion="20090102"/>
         <mvn.publish.local jar="${maven.repo.local}/${jmac-api.mvn.path}" mvngroup="javax.security.auth.message" mvnartid="jmac" mvnversion="1.0-rev-1"/>
         <mvn.publish.local jar="${maven.repo.local}/${connector-api.mvn.path}" mvngroup="javax.resource" mvnartid="connector-api" mvnversion="1.5"/>
-        <mvn.publish.local jar="${maven.repo.local}/${gmbal.mvn.path}" mvngroup="org.glassfish.gmbal" mvnartid="gmbal" mvnversion="3.0.0-b023"/>
-        <mvn.publish.local jar="${maven.repo.local}/${gmbal-api.mvn.path}" mvngroup="org.glassfish.gmbal" mvnartid="gmbal-api-only" mvnversion="3.0.0-b023"/>
         <mvn.publish.local jar="${maven.repo.local}/${management-api.mvn.path}" mvngroup="org.glassfish.external" mvnartid="management-api" mvnversion="3.0.0-b012"/>
 
         <get dest="${external.dir}/jaxb10-saml-src.zip" src="http://java.net/projects/wsit/sources/svn/content/trunk/_security-extras/saml-jaxb10-bindings/jaxb10-saml-src.zip?rev=6740"/>
