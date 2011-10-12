@@ -1,0 +1,231 @@
+<?xml version="1.0"?>
+
+<!--
+  - Copyright 2002-2004 The Apache Software Foundation.
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  -
+  - CVS $Id: build.xml 233096 2005-08-17 01:10:34Z vgritsenko $
+  -->
+
+<!-- ======================================================================= -->
+<!-- Jakarta Regexp Build file                                               -->
+<!-- ======================================================================= -->
+<project name="Jakarta-Regexp" default="jar" basedir=".">
+
+    <!-- Allow the user to have multiple configuration files and
+         specify them using -Dconfiguration.file=filename -->
+    <property name="configuration.file" value="build.properties"/> 
+
+    <!-- Give user a chance to override without editing this file
+         (and without using -D arguments each time they build) -->
+    <property file="${user.home}/jakarta-regexp.build.properties" /> 
+    <property file="${user.home}/build.properties" />
+    <property file="${basedir}/${configuration.file}" />
+    <property file="${basedir}/default.properties" />
+
+    <!-- =================================================================== -->
+    <!-- Initializes some variables                                          -->
+    <!-- =================================================================== -->
+    <property name="ant.home" value="."/>
+    <property name="Name" value="Jakarta-Regexp"/>
+    <property name="year" value="2001-2003"/>
+    <property name="version" value="1.4"/>
+    <property name="project" value="jakarta-regexp"/>
+
+    <property name="build.dir" value="build"/>
+    <property name="build.src" value="${build.dir}/src"/>
+    <property name="build.dest" value="${build.dir}/classes"/>
+    <property name="src.java.dir" value="src/java"/>
+    <property name="javadoc.destdir" value="docs/api/"/>
+    <property name="final.name" value="${project}-${version}"/>
+    <property name="final.dir" value="${final.name}/"/>
+    <property name="debug" value="off"/>
+    <property name="optimize" value="on"/>
+    <property name="deprecation" value="off"/>
+    <property name="RETest.txt" value="docs/RETest.txt"/>
+    <property name="jakarta-site.dir" value="../jakarta-site/"/>
+
+    <!-- Anakia -->
+    <property name="docs.src" value="xdocs"/>
+    <property name="docs.dest" value="docs"/>
+
+    <!-- =================================================================== -->
+    <!-- Copies the source code to the build directory and does filtering    -->
+    <!-- =================================================================== -->
+    <target name="prepare">
+        <tstamp/>
+        <filter token="year" value="${year}"/>
+        <filter token="version" value="${version}"/>
+        <filter token="date" value="${TODAY}"/>
+
+        <mkdir dir="${build.dir}"/>
+        <mkdir dir="${build.dest}"/>
+        <mkdir dir="${build.src}"/>
+        <chmod dir="${build.dir}" perm="774"/>
+
+        <copy todir="${build.src}" filtering="yes">
+            <fileset dir="${src.java.dir}">
+                <include name="**/*.java"/>
+                <include name="**/*.properties"/>
+                <include name="**/package.html"/>
+            </fileset>
+        </copy>
+    </target>
+
+    <!-- =================================================================== -->
+    <!-- Compiles the source directory                                       -->
+    <!-- =================================================================== -->
+    <target name="compile" depends="prepare">
+        <echo message="Compiling with Java ${ant.java.version}, debug ${debug}, optimize ${optimize}, deprecation ${deprecation}"/>
+        <javac srcdir="${build.src}"
+               destdir="${build.dest}"
+               excludes="**/package.html"
+               debug="${debug}"
+               deprecation="${deprecation}"
+               optimize="${optimize}"/>
+    </target>
+
+    <!-- =================================================================== -->
+    <!-- Compiles the source directory and creates a .jar file               -->
+    <!-- =================================================================== -->
+    <target name="jar" depends="compile">
+        <jar jarfile="${build.dir}/${final.name}.jar"
+             basedir="${build.dest}"
+             excludes="**/package.html"/>
+    </target>
+
+    <!-- =================================================================== -->
+    <!-- Creates the API documentation                                       -->
+    <!-- =================================================================== -->
+    <target name="javadocs" depends="prepare">
+        <mkdir dir="${javadoc.destdir}"/>
+        <javadoc
+            sourcepath="${build.src}"
+            packagenames="org.apache.regexp.*"
+            destdir="${javadoc.destdir}"
+            author="true"
+            private="true"
+            version="true"
+            use="true"
+            windowtitle="${Name} ${version} API"
+            doctitle="${Name} ${version} API"
+            bottom="Copyright &amp;copy; ${year} Apache Software Foundation. All Rights Reserved."
+            >
+      </javadoc>
+    </target>
+
+    <!-- =================================================================== -->
+    <!-- Package                                                             -->
+    <!-- =================================================================== -->
+    <target name="package" depends="jar, docs, javadocs">
+        <mkdir dir="${final.dir}"/>
+
+        <copy todir="${final.dir}/src/java">
+            <fileset dir="${src.java.dir}"/>
+        </copy>
+        <copy todir="${final.dir}/docs">
+            <fileset dir="${docs.dest}">
+                <exclude name="**/dist/**"/>
+            </fileset>
+        </copy>
+        <copy todir="${final.dir}/xdocs">
+            <fileset dir="${docs.src}"/>
+        </copy>
+        <copy file="build.xml" tofile="${final.dir}/build.xml"/>
+        <copy file="LICENSE" tofile="${final.dir}/LICENSE"/>
+        <copy file="README" tofile="${final.dir}/README"/>
+        <copy file="${build.dir}/${final.name}.jar" tofile="${final.dir}/${final.name}.jar"/>
+    </target>
+
+    <!-- =================================================================== -->
+    <!-- Packages the distribution with ZIP                                  -->
+    <!-- =================================================================== -->
+    <target name="package-zip" depends="package">
+        <delete file="${final.name}.zip" verbose="false"/>
+        <zip zipfile="${final.name}.zip" basedir="./" includes="${final.name}/**"/>
+    </target>
+
+    <!-- =================================================================== -->
+    <!-- Packages the distribution with TAR-GZIP                             -->
+    <!-- =================================================================== -->
+    <target name="package-tgz" depends="package">
+        <delete file="${final.name}.tar" verbose="false"/>
+        <delete file="${final.name}.tar.gz" verbose="false"/>
+        <tar tarfile="${final.name}.tar" basedir="./" includes="**/${final.name}/**"/>
+        <gzip zipfile="${final.name}.tar.gz" src="${final.name}.tar"/>
+    </target>
+
+    <!-- =================================================================== -->
+    <!-- Packages the distribution with ZIP and TAG-GZIP                     -->
+    <!-- =================================================================== -->
+    <target name="package-all" depends="package-zip, package-tgz">
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- I N S T A L L  J A R                                               -->
+    <!-- ================================================================== -->
+    <target name="install-jar" depends="jar" 
+            description="--> Installs .jar file in ${lib.repo}">
+      <copy todir="${lib.repo}" filtering="no">
+        <fileset dir="${build.dir}">
+          <include name="${final.name}.jar"/>
+        </fileset>
+      </copy>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Run RE Test Suite                                                  -->
+    <!-- ================================================================== -->
+    <target name="test" depends="jar">
+      <java classname="org.apache.regexp.RETest" fork="yes"
+            failonerror="yes">
+        <arg value="${RETest.txt}"/>
+        <classpath>
+          <fileset dir="${build.dir}">
+            <include name="${final.name}.jar"/>
+          </fileset>
+        </classpath>
+      </java>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- Cleans up the build directory                                      -->
+    <!-- ================================================================== -->
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+    </target>
+
+    <!-- ================================================================== -->
+    <!-- XSLT   Documentation Builder                                       -->
+    <!-- ================================================================== -->
+    <target name="docs" depends="jar">
+        <copy file="${jakarta-site.dir}/xdocs/stylesheets/site.xsl"
+              toDir="${docs.src}/stylesheets/"/>
+
+        <xslt   basedir="${docs.src}"
+                destdir="${docs.dest}"
+                style="${docs.src}/stylesheets/site.xsl"
+                includes="**/*.xml"
+                excludes="**/stylesheets/** empty.xml">
+        </xslt>
+
+        <copy todir="${docs.dest}" filtering="no">
+            <fileset dir="${docs.src}">
+                <include name="RETest.txt"/>
+            </fileset>
+        </copy>
+        <copy tofile="${docs.dest}/jakarta-regexp.jar"
+              file="${build.dir}/${final.name}.jar"/>
+    </target>
+</project>
