@@ -65,6 +65,11 @@ else if (toplevel["project"] != undefined) {
 else {
     throw new Error("script was not invoked correctly")
 }
+
+if (java.lang.System.getProperty("os.name").indexOf("Windows") >= 0)
+     {var windows = true}
+ else {var windows = false}
+
 var debug = false;
 
 //////////////// generating
@@ -103,6 +108,15 @@ function passOne(inputFilename) {
         return builder.toString();
     }
 }
+
+
+/* Needed to convert %20 to space in file names */
+function cleanUpFileName(fileName) {
+    return new java.lang.String(decodeURI(fileName));
+}
+
+
+
 
 function stripComments(aFilename) {
     printDebug("STRIPPING COMMENTS FROM: " + aFilename);
@@ -271,8 +285,20 @@ function passTwo(outputFilename, reader) {
             }
         }
         HandlerImpl.prototype.resolveEntity = function(publicId, systemId) {
-            // printDebug("RESOLVING RESOURCE (" + publicId + "," + systemId + ")");
-            var prefix = "file://" + baseDir;
+
+		    printDebug("RESOLVING RESOURCE (" + publicId + "," + systemId + ")");
+		    printDebug("PUBLICID = " + publicId);
+		    printDebug("SYSTEMID = " + systemId);
+		    printDebug("BASEDIR= " + baseDir);
+		    printDebug("SOURCEDIR= " + sourceDir);
+	    
+		    if (windows) {
+			prefix = "file:///" + baseDir.replace(/\\/g, "/" );
+		    }
+		    else {prefix = "file://" + baseDir;}
+		    systemId = cleanUpFileName(systemId);
+		    
+
             if (systemId.startsWith(prefix)) {
                 var mapsTo = new java.lang.String(sourceDir + systemId.substring(prefix.length));
                 if (mapsTo.endsWith(".inc")) {
@@ -364,7 +390,9 @@ function passThree(schemaFilename) {
     function ResolverImpl() {}
         
     ResolverImpl.prototype.resolveResource = function(type, namespaceURI, publicId, systemId, baseURI)  {
-        // printDebug("RESOLVING RESOURCE (" + publicId + "," + systemId + ")");
+        printDebug("RESOLVING RESOURCE (" + publicId + "," + systemId + ")");
+	systemId = cleanUpFileName(systemId);
+
         var lsInput = new JavaAdapter(Packages.org.w3c.dom.ls.LSInput, new LSInputImpl());
         var resolvedFilename;
         if (systemId == "http://www.w3.org/2001/xml.xsd") {
@@ -381,14 +409,15 @@ function passThree(schemaFilename) {
         }
         else {
             resolvedFilename = buildDir + systemId;            
+	    printDebug("RESOLVEDFILENAME = " + resolvedFilename);
         }
         var file = new java.io.File(resolvedFilename);
         if (!file.exists) {
-            // printDebug("FILE DOES NOT EXIST !!! ("+ resolvedFilename + ")");            
+            printDebug("FILE DOES NOT EXIST !!! ("+ resolvedFilename + ")");            
         }
         try {
             lsInput.setCharacterStream(new java.io.FileReader(resolvedFilename));
-            // printDebug("CREATED FILE READER FOR ("+ resolvedFilename + ")");
+            printDebug("CREATED FILE READER FOR ("+ resolvedFilename + ")");
             return lsInput;
         }
         catch(e) {
@@ -462,7 +491,14 @@ function escapeAttributeValue(s) {
 function printDebug(s) {
     if (debug) {
         java.lang.System.err.println(s);
+	java.lang.System.err.println();
     }
+}
+
+function printOut(s) {
+    java.lang.System.out.println("*****");
+        java.lang.System.out.println(s);
+    java.lang.System.out.println("*****");
 }
 
 function printWarning(s) {
@@ -470,38 +506,55 @@ function printWarning(s) {
 }
 
 function resolveEntityUsingBuildDirectory(publicId, systemId, fallbackDir) {
-    // printDebug("RESOLVING RESOURCE (" + publicId + "," + systemId + ")");
+    printDebug("RESOLVING RESOURCE (" + publicId + "," + systemId + ")");
+    systemId = cleanUpFileName(systemId);
     var resolvedUrl = systemId;
     var prefix_javaee = "http://java.sun.com/xml/ns/javaee/";
     var prefix_j2ee = "http://java.sun.com/xml/ns/j2ee/";
     var prefix_ibm = "http://www.ibm.com/webservices/xsd/";
     
+    if (windows)
+	{var filePrefix = "file:///";}
+    else {var filePrefix = "file://";};
+
     if (systemId.startsWith("file://") && (fallbackDir != undefined)) {
-        // no-op
-        var name = systemId.substring(7);
+	if (windows)
+	    {var name = systemId.substring(8);}
+        else {var name = systemId.substring(7);}
+
         var file = new java.io.File(name);
         if (!file.exists()) {
+	    printDebug("FILE NOT EXISTS CASE");
             name = fallbackDir + name.substring(name.lastIndexOf("/") + 1);
             file = new java.io.File(name);
             if (file.exists()) {
-                resolvedUrl = "file://" + name;
+		resolvedUrl = filePrefix + name;
             }
         }
     }
     else if (systemId == "http://www.w3.org/2001/xml.xsd") {
-        resolvedUrl = "file://" + baseDir + "lib/external/xml.xsd";
+	if (windows) {
+	    resolvedUrl = "file:///" + baseDir.replace(/\\/g, "/" ) + "lib/external/xml.xsd"
+		}
+	else {
+        resolvedUrl = filePrefix + baseDir + "lib/external/xml.xsd";
+	}
+	printDebug("XML.XSD = " + resolvedUrl);
     }
     else if (systemId.startsWith(prefix_javaee)) {
-        resolvedUrl = "file://" + buildDir + systemId.substring(prefix_javaee.length);
+        resolvedUrl = filePrefix + buildDir + systemId.substring(prefix_javaee.length);
+	printDebug("JAVAEE = " + resolvedUrl);
     }
     else if (systemId.startsWith(prefix_j2ee)) {
-        resolvedUrl = "file://" + buildDir + systemId.substring(prefix_j2ee.length);
+        resolvedUrl = filePrefix + buildDir + systemId.substring(prefix_j2ee.length);
+	printDebug("J2EE = " + resolvedUrl);
     }
     else if (systemId.startsWith(prefix_ibm)) {
-        resolvedUrl = "file://" + buildDir + systemId.substring(prefix_ibm.length);
+        resolvedUrl = filePrefix + buildDir + systemId.substring(prefix_ibm.length);
+	printDebug("IBM = " + resolvedUrl);
     }
     if (resolvedUrl != systemId) {
-        //printDebug("RESOLVED TO " + resolvedUrl);
+        printDebug("RESOLVED TO " + resolvedUrl);
     }
     if (resolvedUrl.substring(0, 5) != "file:") {
         throw new Error("failed to resolve entity to file: " + systemId);
@@ -536,15 +589,23 @@ function extractTestInfo(filename) {
 
     function HandlerImpl() {}
     HandlerImpl.prototype.processingInstruction = function(target, data) {
-        // printDebug("PI " + target + " " + data);
+        printDebug("PI " + target + " " + data);
         if (target == "validateAgainst") {
             if (testInfo.schema) {
                 throw new Error("found more than one validateAgainst processing instruction");
             }
             data = data.trim();
-            var schemaFilename = buildDir + data;
+
+	    if (windows)
+		{
+		    buildDir = buildDir.replace(/\//g, "\\" );
+		}
+
+	    var schemaFilename = buildDir + data;
+
             if ((new java.io.File(schemaFilename)).isFile()) {
                 testInfo.schema = schemaFilename;
+		printDebug("TESTINFOSCHEMA = " + testInfo.schema);
             }
             else {
                 throw new Error("validateAgainst processing instruction points to nonexistent schema: " + data);
@@ -641,7 +702,9 @@ function validate(filename, testInfo) {
 
 function testOne(filename) {
     print("testing " + filename);
+    printDebug("FILENAME = " + filename);
     var testInfo = extractTestInfo(filename);
+    printDebug("TESTINFO = " + testInfo);
     validate(filename, testInfo);
     printDebug("----");
 }
