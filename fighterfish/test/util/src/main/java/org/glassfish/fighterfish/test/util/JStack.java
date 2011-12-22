@@ -42,8 +42,7 @@
 package org.glassfish.fighterfish.test.util;
 
 import java.io.PrintStream;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
+import java.lang.management.*;
 import java.util.Arrays;
 
 /**
@@ -57,6 +56,92 @@ public class JStack {
     @Override
     public String toString() {
         ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
-        return Arrays.toString(threadMXBean.dumpAllThreads(true, true));        
+        return getAllStack(threadMXBean.dumpAllThreads(true, true));
+    }
+
+    private static String getAllStack(ThreadInfo[] tis) {
+        if (tis == null)
+            return "null";
+	    int iMax = tis.length - 1;
+        if (iMax == -1)
+            return "[]";
+        StringBuilder b = new StringBuilder("[");
+	    b.append('[');
+        for (int i = 0; ; i++) {
+            b.append(getStack(tis[i]));
+            if (i == iMax) {
+	        	return b.append(']').toString();
+            }
+	        b.append(", ");
+        }
+    }
+
+    private static String getStack(ThreadInfo ti) {
+        /*
+         * This method has been copied from ThreadInfo.java as toString() of ThreadInfo
+         * stops printing stack traces after 8th frame.
+         */
+        StringBuilder sb = new StringBuilder("\"" + ti.getThreadName() + "\"" +
+                                             " Id=" + ti.getThreadId() + " " +
+                                             ti.getThreadState());
+        if (ti.getLockName() != null) {
+            sb.append(" on " + ti.getLockName());
+        }
+        if (ti.getLockOwnerName() != null) {
+            sb.append(" owned by \"" + ti.getLockOwnerName() +
+                      "\" Id=" + ti.getLockOwnerId());
+        }
+        if (ti.isSuspended()) {
+            sb.append(" (suspended)");
+        }
+        if (ti.isInNative()) {
+            sb.append(" (in native)");
+        }
+        sb.append('\n');
+        int i = 0;
+        StackTraceElement[] stackTrace = ti.getStackTrace();
+        for (; i < stackTrace.length; i++) {
+            StackTraceElement ste = stackTrace[i];
+            sb.append("\tat " + ste.toString());
+            sb.append('\n');
+            if (i == 0 && ti.getLockInfo() != null) {
+                Thread.State ts = ti.getThreadState();
+                switch (ts) {
+                    case BLOCKED:
+                        sb.append("\t-  blocked on " + ti.getLockInfo());
+                        sb.append('\n');
+                        break;
+                    case WAITING:
+                        sb.append("\t-  waiting on " + ti.getLockInfo());
+                        sb.append('\n');
+                        break;
+                    case TIMED_WAITING:
+                        sb.append("\t-  waiting on " + ti.getLockInfo());
+                        sb.append('\n');
+                        break;
+                    default:
+                }
+            }
+
+            for (MonitorInfo mi : ti.getLockedMonitors()) {
+                if (mi.getLockedStackDepth() == i) {
+                    sb.append("\t-  locked " + mi);
+                    sb.append('\n');
+                }
+            }
+       }
+
+       LockInfo[] locks = ti.getLockedSynchronizers();
+       if (locks.length > 0) {
+           sb.append("\n\tNumber of locked synchronizers = " + locks.length);
+           sb.append('\n');
+           for (LockInfo li : locks) {
+               sb.append("\t- " + li);
+               sb.append('\n');
+           }
+       }
+       sb.append('\n');
+       return sb.toString();
+
     }
 }
