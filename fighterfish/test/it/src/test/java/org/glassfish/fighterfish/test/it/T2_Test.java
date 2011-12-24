@@ -615,7 +615,12 @@ public class T2_Test extends AbstractTestObject {
             final Integer noOfMsgs = 2;
             props.setProperty(pkgName + ".NoOfMsgs", noOfMsgs.toString());
             config.update(props);
+            logger.logp(Level.INFO, "T2_Test", "testapp16",
+                    "Sleeping for {0} ms for config changes to be propagated and msgs to be delivered",
+                    new Object[]{getTimeout()});
             Thread.sleep(getTimeout()); // Allow the config changes to be propagated and msg to reach destination
+            logger.logp(Level.INFO, "T2_Test", "testapp16",
+                    "Waking up from sleep");
             response = wab.getResponse(request);
             final int expectedNoOfMsgs = (noOfMsgs) * 2; // we have 2 MDBs
             logger.logp(Level.INFO, "T2_Test", "testapp16", "response = {0}", new Object[]{response});
