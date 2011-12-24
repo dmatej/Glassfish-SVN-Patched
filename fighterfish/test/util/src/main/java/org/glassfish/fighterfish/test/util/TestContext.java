@@ -89,7 +89,7 @@ public class TestContext {
         this.ctx = ctx;
         this.testID = testID;
         bundleProvisioner = new BundleProvisioner(ctx);
-        resourceProvisioner = new EnterpriseResourceProvisioner();
+        resourceProvisioner = new EnterpriseResourceProvisioner(ctx);
     }
 
     public static TestContext create(Class testClass) throws GlassFishException, InterruptedException {
@@ -178,7 +178,7 @@ public class TestContext {
     public void configureEmbeddedDerby() throws GlassFishException, InterruptedException {
         resourceProvisioner.configureEmbeddedDerby(getGlassFish(),
                 testID,
-                new File(EnterpriseResourceProvisioner.getDerbyDBRootDir(), testID));
+                testID);
     }
 
     public BundleContext getBundleContext() {

@@ -100,4 +100,20 @@ public final class Constants {
      */
     public static final String FIGHTERFISH_PROVISIONER_URL_PROP = "fighterfish.provisioner.url";
     public static final String FIGHTERFISH_PROVISIONER_URL_DEFAULT_VALUE = "mvn:org.glassfish.distributions/glassfish/3.1.1/zip";
+
+    /**
+     * This property is used to specify the directory where derby database will be created.
+     * If this property is not specified, then in-mempry Derby database will be used during testing.
+     */
+    public static final String FIGHTERFISH_TEST_DERBY_DB_ROOT_DIR = "fighterfish.test.DerbyDBRootDir";
+
+    /**
+     * The JNDI name of the default datasource configured in the server.
+     */
+    public static final String DEFAULT_DS = "jdbc/__default";
+
+    /**
+     * The JNDI name of the JDBC connection pool used by the default datasource
+     */
+    public static final String DEFAULT_POOL = "DerbyPool";
 }

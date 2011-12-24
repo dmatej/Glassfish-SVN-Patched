@@ -45,31 +45,47 @@ import junit.framework.Assert;
 import org.glassfish.embeddable.CommandResult;
 import org.glassfish.embeddable.GlassFish;
 import org.glassfish.embeddable.GlassFishException;
+import org.osgi.framework.BundleContext;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class EnterpriseResourceProvisioner {
-    public static final String DEFAULT_DS = "jdbc/__default";
-    public static final String DEFAULT_POOL = "DerbyPool";
-    public static final File derbyRootDir = getDerbyDBRootDir();
 
     /**
      * List of config changes made by a test method
      */
     protected List<RestorableDomainConfiguration> rdcs = new ArrayList<RestorableDomainConfiguration>();
+    private boolean inMemoryDerbyDb;
+    private File derbyDbRootDir;
 
-    public static File getDerbyDBRootDir() {
-        String s = System.getProperty("fighterfish.test.DerbyDBRootDir", System.getProperty("java.io.tmpdir"));
-        File d = new File(s);
-        if (!d.isDirectory() && !d.mkdirs()) {
-            throw new RuntimeException("Can't create a directory called " + d.getAbsolutePath());
+    private Logger logger = Logger.getLogger(getClass().getPackage().getName());
+
+    public EnterpriseResourceProvisioner(BundleContext ctx) {
+        String derbyDbRootDir = ctx.getProperty(Constants.FIGHTERFISH_TEST_DERBY_DB_ROOT_DIR);
+        if (derbyDbRootDir == null || derbyDbRootDir.isEmpty()) {
+            inMemoryDerbyDb = true;
+        } else {
+            this.derbyDbRootDir = new File(derbyDbRootDir);
+            if (!this.derbyDbRootDir.isDirectory() && !this.derbyDbRootDir.mkdirs()) {
+                throw new RuntimeException("Can't create a directory called " + this.derbyDbRootDir.getAbsolutePath());
+            }
         }
-        return d;
+    }
+
+    private File getDerbyDBRootDir() {
+        return derbyDbRootDir;
+    }
+
+    private boolean isInmemoryDerbyDb() {
+        return inMemoryDerbyDb;
     }
 
     protected void restoreDomainConfiguration() throws GlassFishException {
@@ -85,7 +101,7 @@ public class EnterpriseResourceProvisioner {
     /**
      * Configures jdbc/__default datasource to use a custom pool that uses embedded derby.
      */
-    protected RestorableDomainConfiguration configureEmbeddedDerby(final GlassFish gf, final String poolName, File db) throws GlassFishException {
+    protected RestorableDomainConfiguration configureEmbeddedDerby(final GlassFish gf, final String poolName, String db) throws GlassFishException {
 //        CommandResult result = gf.getCommandRunner().run("set",
 //                "resources.jdbc-connection-pool.DerbyPool.datasource-classname=" +
 //                        "org.apache.derby.jdbc.EmbeddedXADataSource");
@@ -94,19 +110,17 @@ public class EnterpriseResourceProvisioner {
 //        if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
 //            Assert.fail(result.getOutput());
 //        }
-        createDerbyPool(gf, poolName, db);
-        CommandResult result = gf.getCommandRunner().run("delete-jdbc-resource", EnterpriseResourceProvisioner.DEFAULT_DS);
-        if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
-            Assert.fail(result.getOutput());
+        if (isInmemoryDerbyDb()) {
+            createPoolForInmemoryDerbyDb(gf, poolName, db);
+        } else {
+            createPoolForEmbeddedDerbyDb(gf, poolName, db);
         }
-        result = gf.getCommandRunner().run("create-jdbc-resource", "--connectionpoolid", poolName, EnterpriseResourceProvisioner.DEFAULT_DS);
-        if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
-            Assert.fail(result.getOutput());
-        }
+        execute(gf, "delete-jdbc-resource", Constants.DEFAULT_DS);
+        execute(gf, "create-jdbc-resource", "--connectionpoolid", poolName, Constants.DEFAULT_DS);
         final RestorableDomainConfiguration rdc = new RestorableDomainConfiguration() {
             @Override
             public void restore() throws GlassFishException {
-                CommandResult result = gf.getCommandRunner().run("delete-jdbc-resource", EnterpriseResourceProvisioner.DEFAULT_DS);
+                CommandResult result = gf.getCommandRunner().run("delete-jdbc-resource", Constants.DEFAULT_DS);
                 if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
                     Assert.fail(result.getOutput());
                 }
@@ -114,33 +128,62 @@ public class EnterpriseResourceProvisioner {
                 if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
                     Assert.fail(result.getOutput());
                 }
-                result = gf.getCommandRunner().run("create-jdbc-resource", "--connectionpoolid", EnterpriseResourceProvisioner.DEFAULT_POOL, EnterpriseResourceProvisioner.DEFAULT_DS);
+                result = gf.getCommandRunner().run("create-jdbc-resource", "--connectionpoolid", Constants.DEFAULT_POOL, Constants.DEFAULT_DS);
                 if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
                     Assert.fail(result.getOutput());
                 }
-
             }
         };
         rdcs.add(rdc);
         return rdc;
     }
 
-    private void createDerbyPool(GlassFish gf, String poolName, File db) throws GlassFishException {
-        String dbDir = db.getAbsolutePath();
+    /**
+     * This method creates a connection pool that uses embedded Derby driver to talk to a directiry based Derby database
+     * @param gf GlassFish object
+     * @param poolName name of connection pool
+     * @param db database name
+     * @throws GlassFishException
+     */
+    private void createPoolForEmbeddedDerbyDb(GlassFish gf, String poolName, String db) throws GlassFishException {
+        String dbDir = new File(getDerbyDBRootDir(), db).getAbsolutePath();
         if (System.getProperty("os.name", "generic").toLowerCase().startsWith("windows")) {
             // We need to escape : as well as backslashes.
             // So, it should something like like C\:\\temp\\foo
             dbDir = dbDir.replace("\\", "\\\\").replace(":", "\\:");
-	      System.out.println("derby dir name = " + dbDir);
         }
-        CommandResult result = gf.getCommandRunner().run("create-jdbc-connection-pool",
-                "--datasourceclassname=org.apache.derby.jdbc.EmbeddedXADataSource",
+        final String poolProps = "databaseName=" + dbDir + ":" + "connectionAttributes=" + ";create\\=true";
+        execute(gf,
+                "create-jdbc-connection-pool",
+                "--ping",
                 "--restype=javax.sql.XADataSource",
-                "--property", "databaseName=" + dbDir+ ":" + "connectionAttributes=" + ";create\\=true",
+                "--datasourceclassname=org.apache.derby.jdbc.EmbeddedXADataSource",
+                "--property",
+                poolProps,
                 poolName);
-        if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
-            Assert.fail(result.getOutput());
-        }
+    }
+
+    /**
+     * This method creates a connection pool that uses embedded Derby driver to talk to an in-memory Derby database
+     * @param gf GlassFish object
+     * @param poolName name of connection pool
+     * @param db name of the database
+     * @throws GlassFishException
+     */
+    private void createPoolForInmemoryDerbyDb(GlassFish gf, String poolName, String db) throws GlassFishException {
+        // According to Derby guide available at
+        // http://db.apache.org/derby/docs/10.7/devguide/cdevdvlpinmemdb.html#cdevdvlpinmemdb ,
+        // an in-memory databae url is of the form: jdbc:derby:memory:db;create=true
+        // The above syntax works if we create a java.sql.Driver type resource, but not with DataSource type.
+        String poolProps = "url=jdbc\\:derby\\:memory\\:" + db + ";create\\=true";
+        execute(gf,
+                "create-jdbc-connection-pool",
+                "--ping",
+                "--restype=java.sql.Driver",
+                "--driverclassname=org.apache.derby.jdbc.EmbeddedDriver",
+                "--property",
+                poolProps,
+                poolName);
     }
 
     protected RestorableDomainConfiguration createJmsCF(final GlassFish gf, final String cfName) throws GlassFishException {
@@ -162,17 +205,22 @@ public class EnterpriseResourceProvisioner {
     }
 
     private RestorableDomainConfiguration createJmsResource(final GlassFish gf, final String resName, final String resType) throws GlassFishException {
-        CommandResult result = gf.getCommandRunner().run("create-jms-resource", "--restype",
-                resType, resName);
-        if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
-            Assert.fail(result.getOutput());
-        }
+        execute(gf, "create-jms-resource", "--restype", resType, resName);
         return new RestorableDomainConfiguration() {
             @Override
             public void restore() throws GlassFishException {
                 gf.getCommandRunner().run("delete-jms-resource", resName);
             }
         };
+    }
+
+    private CommandResult execute(GlassFish gf, String cmd, String... args) throws GlassFishException {
+        logger.logp(Level.INFO, "EnterpriseResourceProvisioner", "execute", "cmd = {0}, args = {1}", new Object[]{cmd, Arrays.toString(args)});
+        CommandResult result = gf.getCommandRunner().run(cmd, args);
+        if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
+            Assert.fail(result.getOutput());
+        }
+        return result;
     }
 
 }
