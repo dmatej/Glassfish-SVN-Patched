@@ -1,51 +1,49 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="OpenDMK source integration" default="build" basedir=".">
+<project name="OpenDMK source integration" default="build" basedir="..">
+
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-    <import file="build-taskdefs.xml"/>
+    <import file="${basedir}/build.xml"/>
+    
+    <property name="opendmk.dir" value="${glassfish.external.dir}/opendmk"/>
 
-    <target name="build" depends="init">
-        <antcall target="opendmk.build" />
-    </target>
-
-    <!-- checkout opendmk source and build -->
-    <target name="opendmk.checkout" depends="init">
+    <target name="checkout" depends="init,check.proxy" unless="skipCheckout">
         <echo message="checkout opendmk from ${opendmk.src.zip.url}."/>
-        <get src="${opendmk.src.zip.url}" dest="${external.dir}/${opendmk.src.zip}" />
+        <mkdir dir="${opendmk.dir}" />
+        <get src="${opendmk.src.zip.url}" dest="${opendmk.dir}/${opendmk.src.zip}" />
         <echo message="expand opendmk zip"/>
-        <unzip src="${external.dir}/${opendmk.src.zip}" dest="${external.dir}"/>
+        <unzip src="${opendmk.dir}/${opendmk.src.zip}" dest="${opendmk.dir}"/>
     </target>
 
-    <target name="opendmk.build" depends="opendmk.checkout" >
+    <target name="build" depends="checkout" >
         <!-- build opendmk -->
         <echo message="building opendmk"/>
         <subant target="buildall">
-            <fileset dir="${external.dir}/OpenDMK-src" includes="build.xml"/>
+            <fileset dir="${opendmk.dir}/OpenDMK-src" includes="build.xml"/>
         </subant>
         <mvn.publish.local
-            jar="${external.dir}/OpenDMK-src/dist/lib/jdmkrt.jar" 
-            mvngroup="org.glassfish.external"
-            mvnartid="opendmk_jdmkrt_jar"
-            mvnversion="${opendmk.version}"/>
+            file="${opendmk.dir}/OpenDMK-src/dist/lib/jdmkrt.jar"
+            groupId="org.glassfish.external"
+            artifactId="opendmk_jdmkrt_jar"
+            version="${opendmk.version}"/>
         <mvn.publish.local 
-            jar="${external.dir}/OpenDMK-src/dist/lib/jmxremote_optional.jar"
-            mvngroup="org.glassfish.external"
-            mvnartid="opendmk_jmxremote_optional_jar"
-            mvnversion="${opendmk.version}"/>
+            file="${opendmk.dir}/OpenDMK-src/dist/lib/jmxremote_optional.jar"
+            groupId="org.glassfish.external"
+            artifactId="opendmk_jmxremote_optional_jar"
+            version="${opendmk.version}"/>
     </target>
 
-    <target name="opendmk.publish" depends="opendmk.build" >
+    <target name="publish" depends="build" >
         <mvn.publish.remote
-            jar="${external.dir}/OpenDMK-src/dist/lib/jdmkrt.jar" 
-            mvngroup="org.glassfish.external"
-            mvnartid="opendmk_jdmkrt_jar"
-            mvnversion="${opendmk.version}"/>
+            file="${opendmk.dir}/OpenDMK-src/dist/lib/jdmkrt.jar"
+            groupId="org.glassfish.external"
+            artifactId="opendmk_jdmkrt_jar"
+            version="${opendmk.version}"/>
         <mvn.publish.remote
-            jar="${external.dir}/OpenDMK-src/dist/lib/jmxremote_optional.jar"
-            mvngroup="org.glassfish.external"
-            mvnartid="opendmk_jmxremote_optional_jar"
-            mvnversion="${opendmk.version}"/>
+            file="${opendmk.dir}/OpenDMK-src/dist/lib/jmxremote_optional.jar"
+            groupId="org.glassfish.external"
+            artifactId="opendmk_jmxremote_optional_jar"
+            version="${opendmk.version}"/>
     </target>
 
 </project>

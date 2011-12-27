@@ -1,46 +1,29 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="BTrace source integration" default="build" basedir=".">
+<project name="BTrace source integration" default="build" basedir="..">
+    
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-    <import file="build-taskdefs.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="checkout" depends="init">
-        <echo message="checkout btrace from ${btrace.hg.url}"/>
-        <hg.clone tag="${btrace.hg.tag}" repo="${btrace.hg.url}" dest="${btrace.dir}"/>
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <hg.clone tag="${btrace.hg.tag}"
+            repo="${btrace.hg.url}" dest="${btrace.dir}"/>
     </target>
-
+    
     <target name="build" depends="checkout">
-        <property name="local.maven.ant.tasks.jar" value="../../${maven.ant.tasks.jar}"/>
 
         <echo message="build btrace"/>
-        <ant antfile="build.xml" dir="external/btrace/make">
-            <target name="all"/>
-        </ant>
+        <ant dir="${glassfish.external.dir}/btrace/make" target="all"/>
 
-        <echo message="publish btrace to local repository"/>
         <mvn.publish.local
-            jar="${external.dir}/btrace/build/btrace-agent.jar" 
-            mvngroup="org.glassfish.external"
-            mvnartid="btrace-agent"
-            mvnversion="${btrace.version}"/>
+            file="${glassfish.external.dir}/btrace/build/btrace-agent.jar"
+            groupId="org.glassfish.external"
+            artifactId="btrace-agent"
+            version="${btrace.version}"/>
         <mvn.publish.local
-            jar="${external.dir}/btrace/build/btrace-boot.jar" 
-            mvngroup="org.glassfish.external"
-            mvnartid="btrace-boot"
-            mvnversion="${btrace.version}"/>
-    </target>
-
-    <target name="btrace.publish" depends="build" >
-        <mvn.publish.remote
-            jar="${external.dir}/btrace/build/btrace-agent.jar" 
-            mvngroup="org.glassfish.external"
-            mvnartid="btrace-agent"
-            mvnversion="${btrace.version}"/>
-        <mvn.publish.remote
-            jar="${external.dir}/btrace/build/btrace-boot.jar" 
-            mvngroup="org.glassfish.external"
-            mvnartid="btrace-boot"
-            mvnversion="${btrace.version}"/>
+            file="${glassfish.external.dir}/btrace/build/btrace-boot.jar"
+            groupId="org.glassfish.external"
+            artifactId="btrace-boot"
+            version="${btrace.version}"/>
     </target>
 </project>

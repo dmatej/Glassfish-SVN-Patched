@@ -1,21 +1,24 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="gmbal source integration" default="build" basedir=".">
-    <property file="${basedir}/build.properties"/>
-    <echo message="gmbal.version=${gmbal.version}"/>
-    <import file="build.xml"/>
-    <import file="build-taskdefs.xml"/>
+<project name="gmbal source integration" default="build" basedir="..">
 
-    <target name="checkout" >
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="${basedir}/build.xml"/>
+
+    <target name="checkout" depends="init,check.hg" unless="skipCheckout">
         <hg.clone tag="VERSION-${gmbal.version}" repo="${gmbal.hg.url}" dest="${gmbal.dir}"/>
     </target>
 
     <target name="build" depends="checkout">
-        <property name="local.maven.ant.tasks.jar" value="../../${maven.ant.tasks.jar}"/>
-        <ant antfile="build.xml" dir="${external.dir}/${gmbal.dir}">
-            <property name="maven.local.repository" value="file://${maven.repo.local}" />
-            <target name="all"/>
-            <target name="release-local"/>
+        <ant dir="${glassfish.external.dir}/${gmbal.dir}" target="all"/>
+        <antcall target="publish"/>
+        <delete dir="${basedir}/build" />
+    </target>
+
+    <target name="publish">
+        <ant dir="${glassfish.external.dir}/${gmbal.dir}" target="release-local">
+            <property name="maven.local.repository"
+                value="file://${maven.repo.local}" />
         </ant>
     </target>
 

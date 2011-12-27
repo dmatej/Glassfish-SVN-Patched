@@ -1,33 +1,19 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="Jstl source integration" default="build" basedir=".">
+<project name="Jstl source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-
-    <target name="build" depends="init">
-        <antcall target="jstl.build" />
-    </target>
+    <import file="${basedir}/build.xml"/>
 
     <!--
-        Checkout jstl source and build
         Need to build after jsp and uel
     -->
-    <target name="jstl.checkout" >
-        <echo message="checkout jstl from ${jstl.svn.url}."/>
-
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${jstl.svn.url}" />
-            <arg line="jstl" />
-	</exec>
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${jstl.svn.url}" dest="jstl"/>
     </target>
-    <target name="jstl.build" depends="jstl.checkout" >
-        <!-- build jstl -->
-        <exec executable="mvn" dir="${external.dir}/jstl" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+
+    <target name="build" depends="checkout" >
+        <mvn.install dir="${glassfish.external.dir}/jstl"/>
     </target>
 
 </project>

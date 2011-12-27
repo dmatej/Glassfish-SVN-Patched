@@ -1,92 +1,60 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="slf4j source integration" default="build" basedir=".">
+<project name="slf4j source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-    <import file="build-taskdefs.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="build" depends="init">
+    <property name="slf4j.dir" value="${glassfish.external.dir}/slf4j"/>
+
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <antcall target="slf4j-api.checkout"/>
+        <antcall target="slf4j-ext.checkout"/>
+        <antcall target="slf4j-jdk14.checkout"/>
+        <antcall target="cal10n-api.checkout"/>
+    </target>
+
+    <target name="build" depends="checkout">
         <antcall target="slf4j-api.build" />
         <antcall target="slf4j-jdk14.build" />
         <antcall target="slf4j-ext.build" />
         <antcall target="cal10n-api.build" />
     </target>
 
-    <!--
-        Checkout slf4j-api source and build
+    <!-- 
+        checkout targets
     -->
-    <target name="slf4j-api.checkout" >
-        <echo message="checkout slf4j-api from ${slf4j-api.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${slf4j-api.svn.url}" />
-            <arg line="slf4j-api" />
-	</exec>
+    <target name="slf4j-api.checkout" unless="skipCheckout">
+        <svn.checkout repo="${slf4j-api.svn.url}" dest="slf4j/slf4j-api"/>
     </target>
-    <target name="slf4j-api.build" depends="slf4j-api.checkout" >
-        <!-- build slf4j-api-->
-        <exec executable="mvn" dir="${external.dir}/slf4j-api" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+    <target name="slf4j-ext.checkout" unless="skipCheckout">
+        <svn.checkout repo="${slf4j-ext.svn.url}" dest="slf4j/slf4j-ext"/>
+    </target>
+    <target name="slf4j-jdk14.checkout" unless="skipCheckout">
+        <svn.checkout repo="${slf4j-jdk14.svn.url}" dest="slf4j/slf4j-jdk14"/>
+    </target>
+    <target name="cal10n-api.checkout" unless="skipCheckout">
+        <svn.checkout repo="${cal10n-api.svn.url}" dest="slf4j/cal10n-api"/>
     </target>
 
-    <!--
-        Checkout slf4j-jdk14 source and build
+    <!-- 
+        build targets
     -->
-    <target name="slf4j-jdk14.checkout" >
-        <echo message="checkout slf4j-jdk14 from ${slf4j-jdk14.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${slf4j-jdk14.svn.url}" />
-            <arg line="slf4j-jdk14" />
-        </exec>
+    <target name="slf4j-api.build" depends="slf4j-api.checkout" >
+        <!--
+            We skip the tests here because there is performance testing.
+            If the build is too slow, it will fail...
+        -->
+        <mvn.install dir="${slf4j.dir}/slf4j-api" skip-test="true"/>
     </target>
     <target name="slf4j-jdk14.build" depends="slf4j-jdk14.checkout" >
-        <!-- build slf4j-jdk14-->
-        <exec executable="mvn" dir="${external.dir}/slf4j-jdk14" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-        </exec>
-    </target>
-
-    <!--
-        Checkout slf4j-ext source and build
-    -->
-    <target name="slf4j-ext.checkout" >
-        <echo message="checkout slf4j-ext from ${slf4j-ext.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${slf4j-ext.svn.url}" />
-            <arg line="slf4j-ext" />
-        </exec>
+        <mvn.install dir="${slf4j.dir}/slf4j-jdk14"/>
     </target>
     <target name="slf4j-ext.build" depends="slf4j-ext.checkout" >
-        <!-- build slf4j-ext-->
-        <exec executable="mvn" dir="${external.dir}/slf4j-ext" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-        </exec>
-    </target>
-
-    <!--
-        Checkout cal10n-api source and build
-    -->
-    <target name="cal10n-api.checkout" >
-        <echo message="checkout cal10n-api from ${cal10n-api.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${cal10n-api.svn.url}" />
-            <arg line="cal10n-api" />
-        </exec>
+        <mvn.install dir="${slf4j.dir}/slf4j-ext"/>
     </target>
     <target name="cal10n-api.build" depends="cal10n-api.checkout" >
-        <!-- build cal10n-api-->
-        <exec executable="mvn" dir="${external.dir}/cal10n-api" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-        </exec>
+        <mvn.install dir="${slf4j.dir}/cal10n-api"/>
     </target>
 
     <target name="slf4j.publish" depends="build" >
@@ -94,32 +62,32 @@
              all the testing and compile-only dependencies to be uploaded to GlassFish repository. -->
 
         <!-- slf4j-api -->
-        <mvn.publish.remote
-            jar="${external.dir}/slf4j-api/target/slf4j-api-${slf4j.version}.jar"
-            mvngroup="org.slf4j"
-            mvnartid="slf4j-api"
-            mvnversion="${slf4j.version}"/>
+        <mvn.publish.local
+            file="${slf4j.dir}/slf4j-api/target/slf4j-api-${slf4j.version}.jar"
+            groupId="org.slf4j"
+            artifactId="slf4j-api"
+            version="${slf4j.version}"/>
 
         <!-- slf4j-jdk14 -->
-        <mvn.publish.remote
-            jar="${external.dir}/slf4j-jdk14/target/slf4j-jdk14-${slf4j.version}.jar"
-            mvngroup="org.slf4j"
-            mvnartid="slf4j-jdk14"
-            mvnversion="${slf4j.version}"/>
+        <mvn.publish.local
+            file="${slf4j.dir}/slf4j-jdk14/target/slf4j-jdk14-${slf4j.version}.jar"
+            groupId="org.slf4j"
+            artifactId="slf4j-jdk14"
+            version="${slf4j.version}"/>
 
         <!-- slf4j-ext -->
-        <mvn.publish.remote
-            jar="${external.dir}/slf4j-ext/target/slf4j-ext-${slf4j.version}.jar"
-            mvngroup="org.slf4j"
-            mvnartid="slf4j-ext"
-            mvnversion="${slf4j.version}"/>
+        <mvn.publish.local
+            file="${slf4j.dir}/slf4j-ext/target/slf4j-ext-${slf4j.version}.jar"
+            groupId="org.slf4j"
+            artifactId="slf4j-ext"
+            version="${slf4j.version}"/>
 
         <!-- cal10n-api -->
-        <mvn.publish.remote
-            jar="${external.dir}/cal10n-api/target/cal10n-api-${cal10n-api.version}.jar"
-            mvngroup="ch.qos.cal10n"
-            mvnartid="cal10n-api"
-            mvnversion="${cal10n-api.version}"/>
+        <mvn.publish.local
+            file="${slf4j.dir}/cal10n-api/target/cal10n-api-${cal10n-api.version}.jar"
+            groupId="ch.qos.cal10n"
+            artifactId="cal10n-api"
+            version="${cal10n-api.version}"/>
     </target>
 
 </project>

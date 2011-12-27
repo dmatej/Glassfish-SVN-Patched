@@ -1,18 +1,20 @@
-<project name="servlet-2.5" default="make_jar" basedir=".">
+<project name="servlet-2.5" default="build" basedir="..">
 
   <!-- import build.xml for init target and inherited properties -->
-  <import file="build.xml"/>
-  <import file="build-taskdefs.xml"/>
+  <import file="${basedir}/build.xml"/>
  
-  <target name="init">
+  <target name="init.servlet-2.5">
      <property name="project_name"   value="servlet-2.5"/>
      <property name="release.version"   value="2.5"/>
-     <property name="work.dir"  value="${external.dir}/${project_name}"/>
+     <property name="work.dir"  value="${glassfish.external.dir}/${project_name}"/>
      <property name="src.dir" value="${work.dir}"/>
-     <property name="servlet-jarfile"            value="${work.dir}/dist/${project_name}.jar"/>
+     <property name="servlet-jarfile" value="${work.dir}/dist/${project_name}.jar"/>
      <mkdir dir="${work.dir}"/>
      <mkdir dir="${work.dir}/classes"/>
      <mkdir dir="${work.dir}/dist"/>
+    <condition property="isServlet2" value="true">
+        <contains string="${javax.servlet-api.version}" stubstring="2."/>
+    </condition>
   </target>
 
   <!-- CLEAN TARGET -->
@@ -23,16 +25,16 @@
   </target>
 
   <!-- CHECKOUT TARGET -->
-  <target name="checkout" depends="init">
-      <exec executable="svn" dir="${external.dir}" failonerror="true" >
-          <arg line="checkout" />
-          <arg line="${servlet.svn.url}" />
-          <arg line="${project_name}" />
-      </exec>
+  <target name="checkout" depends="init,check.svn" if="isServlet2" unless="skipCheckout">
+      <svn.checkout repo="${servlet.svn.url}" dest="servlet-2.5"/>
+  </target>
+
+  <target name="build" depends="checkout" if="isServlet2">
+        <antcall target="make_jar"/>
   </target>
 
   <!-- COMPILE TARGET -->
-  <target name="compile" depends="init, checkout">
+  <target name="compile" depends="init.servlet-2.5, checkout">
     <javac destdir="${work.dir}/classes" source="1.4" target="1.4">
         <src path="${src.dir}/src/share"/>
       <include name="**/*.java"/>
@@ -68,6 +70,14 @@
 
   <!-- MAKE JAR TARGET -->
   <target name="make_jar" depends="compile, cook-manifest">
+      <!-- Prepare manifest files for jars -->
+      <copy todir="${work.dir}/manifest">
+          <fileset dir="${src.dir}" includes="*.mf" />
+          <filterset>
+              <filter token="VERSION" value="${release.version}"/>
+          </filterset>
+      </copy>
+
     <jar basedir="${work.dir}/classes" 
          jarfile="${servlet-jarfile}" 
          manifest="${work.dir}/manifest/servlet-api.mf"
@@ -79,7 +89,7 @@
   <target name="servlet-2.5.publish" >
       <echo message="Publishing servlet-2.5"/>
       <mvn.publish.local
-             jar="${servlet-jarfile}"
+             file="${servlet-jarfile}"
              mvngroup="javax.servlet"
              mvnartid="servlet-api"
              mvnversion="${servlet-api.version}"/>

@@ -1,51 +1,50 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="JSFTemplating source integration" default="build" basedir=".">
+<project name="JSFTemplating source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-    <property name="jsftemplating.tag" value="JSFTEMPLATING_1_2_11"/> <!-- Update the next line when this changes -->
+    <import file="${basedir}/build.xml"/>
+
+    <!-- Update the next line when this changes -->
+    <property name="jsftemplating.tag" value="JSFTEMPLATING_1_2_11"/> 
     <property name="version" value="1.2.11"/>
+    <property name="groupId" value="com.sun.jsftemplating"/>
+    <property name="jsftemplating.dir" value="${glassfish.external.dir}/jsftemplating"/>
 
-    <macrodef name="mvn.install">
-        <attribute name="artifact"/>
-        <sequential>
-            <exec executable="mvn" dir="${external.dir}/jsftemplating" failonerror="true" >
-                <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-                <arg line="-Dfile=dist/@{artifact}.jar" />
-                <arg line="-DgroupId=com.sun.jsftemplating" />
-                <arg line="-DartifactId=@{artifact}" />
-                <arg line="-Dversion=${version}" />
-                <arg line="-Dpackaging=jar" />
-                <arg line="-DlocalRepositoryPath=${maven.repo.local}" />
-                <arg line="install:install-file" />
-            </exec>
-        </sequential>
-    </macrodef>
-
-    <target name="build" depends="init">
-        <antcall target="jsftemplating.build" />
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+       <svn.checkout 
+            repo="${jsftemplating.svn.url}" dest="jsftemplating" />
     </target>
 
-    <target name="jsftemplating.checkout" >
-        <echo message="Checking out JSFTemplating tag ${jsftemplating.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${jsftemplating.svn.url}" />
-            <arg line="jsftemplating" />
-    	</exec>
-    </target>
-
-    <target name="jsftemplating.build"  depends="jsftemplating.checkout">
-        <get src="http://maven.glassfish.org/content/groups/glassfish/javaee/jars/javaee-api-5.jar" dest="${external.dir}/jsftemplating/lib/javaee.jar" usetimestamp="true"/>
-        <exec executable="ant" dir="${external.dir}/jsftemplating" failonerror="true" >
-            <arg line="-Dglassfish-home=${external.dir}/jsftemplating" />
-            <arg line="jar" />
-        </exec>
+    <target name="build" depends="checkout">
+        <mvn.get artifact="javaee:javaee-api:5"/>
+        <copy failonerror="true" file="${maven.repo.local}/javaee/javaee-api/5/javaee-api-5.jar"
+            tofile="${jsftemplating.dir}/lib/javaee.jar"/>
+        <copy overwrite="true" file="${jsftemplating.dir}/build.properties.example"
+            tofile="${jsftemplating.dir}/build.properties"/>
+            
+        <ant dir="${jsftemplating.dir}">
+            <property name="glassfish-home" value="${jsftemplating.dir}"/>
+            <target name="jar"/>
+        </ant>
         
-        <mvn.install artifact="jsftemplating"/>
-        <mvn.install artifact="jsftemplating-dt"/>
-        <mvn.install artifact="jsftemplating-dynafaces"/>
-        <mvn.install artifact="jsftemplating-base"/>
+        <mvn.publish.local file="${jsftemplating.dir}/dist/jsftemplating.jar"
+            artifactId="jsftemplating"
+            groupId="${groupId}"
+            version="${version}"/>
+        <mvn.publish.local file="${jsftemplating.dir}/dist/jsftemplating-dt.jar"
+            artifactId="jsftemplating-dt"
+            groupId="${groupId}"
+            version="${version}"/>
+        <mvn.publish.local file="${jsftemplating.dir}/dist/jsftemplating-dynafaces-0.1.jar"
+            artifactId="jsftemplating-dynafaces-0.1"
+            groupId="${groupId}"
+            version="${version}"/>
+<!--
+        <mvn.publish.local file="${jsftemplating.dir}/dist/jsftemplating-base.jar"
+            groupId="${groupId}"
+            artifactId="jsftemplating-base"
+            version="${version}"/>
+-->
     </target>
 </project>

@@ -1,40 +1,21 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="Build Commons Codec source" default="build" basedir=".">
+<project name="Build Commons Codec source" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-
-    <target name="build" depends="init">
-        <antcall target="commons-codec.checkout" />
-        <ant antfile="build.xml" dir="${external.dir}/commons-codec" target="install-jar" />
-        <antcall target="commons-codec.local.promote" />
-    </target>
-    <!--
-        Checkout Commons Codec source and build
-    -->
-    <target name="commons-codec.checkout" >
-        <echo message="checkout commons-codec from ${commons-codec.svn.url}."/>
-        <!-- checkout commons-codec source -->
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${commons-codec.svn.url}" />
-            <arg line="commons-codec" />
-	</exec>
+    <import file="${basedir}/build.xml"/>
+    
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${commons-codec.svn.url}" dest="commons-codec"/>
     </target>
 
-    <target name="commons-codec.local.promote"  >
-        <exec executable="mvn" dir="${external.dir}/commons-codec" failonerror="true" >
-          <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-          <arg line="install:install-file" />
-          <arg line="-DgroupId=commons-codec" />
-          <arg line="-DartifactId=commons-codec" />
-          <arg line="-Dversion=${commons-codec.version}" />
-          <arg line=" -Dpackaging=jar" />
-          <arg line="-Dfile=${external.dir}/commons-codec/dist/commons-codec-${commons-codec.version}.jar" />
-          <arg line="-DlocalRepositoryPath=${maven.repo.local}" />
-        </exec>
+    <target name="build" depends="checkout">
+        <ant dir="${glassfish.external.dir}/commons-codec" target="install-jar" />
+        <mvn.publish.local
+            file="${glassfish.external.dir}/commons-codec/dist/commons-codec-${commons-codec.version}.jar"
+            groupId="commons-codec"
+            artifactId="commons-codec"
+            version="${commons-codec.version}" />
     </target>
-
 
 </project>

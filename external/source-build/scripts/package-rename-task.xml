@@ -1,33 +1,22 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="package-rename-task  source integration" default="build" basedir=".">
+<project name="package-rename-task  source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-
-    <target name="build" depends="init">
-        <antcall target="package-rename-task.build" />
-    </target>
+    <import file="${basedir}/build.xml"/>
 
     <!--
         Checkout package-rename-task source and build
         Need to be built before jps since jps has a dependency on this project.
     -->
-    <target name="package-rename-task.checkout" >
-        <echo message="checkout package-rename-task from ${package-rename-task.svn.url}."/>
-
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${package-rename-task.svn.url}" />
-            <arg line="package-rename-task" />
-	</exec>
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout" >
+        <svn.checkout repo="${package-rename-task.svn.url}"
+            dest="package-rename-task"/>
     </target>
-    <target name="package-rename-task.build" depends="package-rename-task.checkout" >
+
+    <target name="build" depends="checkout">
         <!-- build package-rename-task -->
-        <exec executable="mvn" dir="${external.dir}/package-rename-task" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+        <mvn.install dir="${glassfish.external.dir}/package-rename-task"/>
     </target>
 
 </project>

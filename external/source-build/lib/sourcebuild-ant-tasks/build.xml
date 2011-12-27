@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project name="sourcebuild-ant-tasks" default="all" basedir=".">
+    <path id="tasks-jar"
+          location="${basedir}/target/sourcebuild-ant-tasks-1.0.jar"/>
+
+    <taskdef name="stringReplaceRegexp"
+         classname="org.glassfish.sourcebuild.ant.tasks.StringReplaceRegexpTask"
+         classpathref="tasks-jar"/>
+
+    <taskdef name="selectiveTask"
+         classname="org.glassfish.sourcebuild.ant.tasks.SelectiveTask"
+         classpathref="tasks-jar"/>
+
+     <macrodef name="create.prop">
+        <attribute name="name"/>
+        <sequential>
+            <property name="@{name}" value="true"/>
+        </sequential>
+     </macrodef>
+
+     <target name="test.selectiveTask">
+        <property name="aProp" value="true"/>
+        <selectiveTask if="aProp">
+            <echo message="selectiveTask test1 PASSED"/>
+        </selectiveTask>
+        <selectiveTask unless="aProp">
+            <echo message="selectiveTask test2 FAILED"/>
+            <property name="test2Failed"/>
+        </selectiveTask>
+        <selectiveTask unless="test2Failed">
+            <echo message="selectiveTask test2 PASSED"/>
+        </selectiveTask>
+        <selectiveTask>
+            <echo message="selectiveTask test3 PASSED"/>
+        </selectiveTask>
+        <property name="bProp" value="true"/>
+        <selectiveTask if="aProp" unless="bProp">
+            <echo message="selectiveTask test4 FAILED"/>
+            <property name="test4Failed"/>
+        </selectiveTask>
+        <selectiveTask unless="test4Failed">
+            <echo message="selectiveTask test4 PASSED"/>
+        </selectiveTask>
+        <selectiveTask>
+            <property name="test5Succeed" value="true"/>
+            <echo message="testttt: ${test5Succeed}"/>
+            <selectiveTask if="test5Succeed">
+                <echo message="selectiveTask test5 PASSED"/>
+            </selectiveTask>
+            <selectiveTask unless="test5Succeed">
+                <echo message="selectiveTask test5 FAILED"/>
+            </selectiveTask>
+        </selectiveTask>
+        <selectiveTask>
+            <property name="prop" value="true"/>
+            <propertyfile file="/tmp/test.properties">
+                <entry key="test6Succeed" value="${prop}"/>
+            </propertyfile>
+            <property file="/tmp/test.properties"/>
+            <selectiveTask if="test6Succeed">
+                <echo message="selectiveTask test6 PASSED"/>
+            </selectiveTask>
+            <selectiveTask unless="test6Succeed">
+                <echo message="selectiveTask test6 FAILED"/>
+            </selectiveTask>
+            <replaceregexp file="/tmp/test.properties"
+                   match="test6Succeed=(.*)"
+                   replace="test7Succeed=\1"
+                   byline="true"
+            />
+            <property file="/tmp/test.properties"/>
+            <selectiveTask if="test7Succeed">
+                <echo message="selectiveTask test7 PASSED"/>
+            </selectiveTask>
+            <selectiveTask unless="test7Succeed">
+                <echo message="selectiveTask test7 FAILED"/>
+            </selectiveTask>
+        </selectiveTask>
+    </target>
+
+    <target name="test.stringReplaceRegexp">
+        <stringReplaceRegexp result="test1Result"
+            str="javax.persistence_455454545.v654684664.jar"
+            match="javax.persistence_(.*).v(.*).jar"
+            replace="javax.persistence.source_\1.v\2.jar"/>
+        <condition property="test1ResultMessage"
+            value="stringReplaceRegexp test1 FAILED"
+            else="stringReplaceRegexp test1 PASSED">
+            <not>
+                <equals arg1="${test1Result}"
+                    arg2="javax.persistence.source_455454545.v654684664.jar"/>
+            </not>
+        </condition>
+        <echo message="${test1ResultMessage}"/>
+
+        <stringReplaceRegexp result="test2Result"
+            str="dir/dir2"
+            match="(.*)/(.*)"
+            replace="\2"/>
+        <condition property="test2ResultMessage"
+            value="stringReplaceRegexp test2 FAILED"
+            else="stringReplaceRegexp test2 PASSED">
+            <not>
+                <equals arg1="${test2Result}"
+                arg2="dir2"/>
+            </not>
+        </condition>
+        <echo message="${test2ResultMessage}"/>
+
+        <stringReplaceRegexp result="test3Result"
+            str="dir"
+            match="(.*)/(.*)"
+            replace="\2"/>
+        <condition property="test3ResultMessage"
+            value="stringReplaceRegexp test3 FAILED"
+            else="stringReplaceRegexp test3 PASSED">
+            <isset property="test3Result"/>
+        </condition>
+        <echo message="${test3ResultMessage}"/>
+    </target>
+
+    <target name="all">
+        <antcall target="test.stringReplaceRegexp"/>
+        <antcall target="test.selectiveTask"/>
+    </target>
+
+</project>

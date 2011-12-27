@@ -1,60 +1,80 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="JavaHelp source integration" default="build" basedir=".">
+<project name="JavaHelp source integration" default="build" basedir="..">
+    
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="${basedir}/build.xml"/>
+    
+    <property name="javahelp.dir" value="${glassfish.external.dir}/javahelp"/>
+    <property name="javahelp.project.dir" value="${javahelp.dir}/javahelp/javahelp_nbproject/"/>
 
-  <import file="build.xml"/>
-  <import file="build-taskdefs.xml"/>
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <antcall target="jdic.checkout"/>
+        <antcall target="javahelp.checkout"/>
+    </target>
 
-  <target name="build" depends="jdic.checkout, javahelp.build" />
-
-  <target name="javahelp.build" depends="copy.javahelp.dependencies">
-    <echo message="Building javahelp." />
-    <ant antfile="${external.dir}/javahelp/javahelp_nbproject/build.xml"
-        inheritall="false" />
-    <copy file="${external.dir}/javahelp/javahelp_nbproject/dist/lib/jhall.jar"
-        tofile="${external.dir}/javahelp/javahelp_nbproject/dist/lib/javahelp.jar" />
-    <mvn.publish.local
-        jar="${external.dir}/javahelp/javahelp_nbproject/dist/lib/javahelp.jar"
-        mvngroup="javax.help"
-        mvnartid="javahelp"
-        mvnversion="2.0.02" />
-  </target>
-
-  <target name="copy.javahelp.dependencies" depends="javahelp.checkout">
-    <!-- grab from local repo -->
-    <mkdir dir="${external.dir}/javahelp/javahelp_nbproject/lib" />
-    <copy file="${maven.repo.local}/javax/servlet/jsp/jsp-api/2.2/jsp-api-2.2.jar"
-        tofile="${external.dir}/javahelp/javahelp_nbproject/lib/jsp-api.jar" />
-    <copy file="${maven.repo.local}/${servlet.mvn.path}"
-        tofile="${external.dir}/javahelp/javahelp_nbproject/lib/servlet-api.jar"/>
+    <target name="build" depends="checkout">
+        <property name="skipCheckout" value="true"/>
+        <antcall target="javahelp.build"/>
+    </target>
 
     <!--
-      Workaround for bugs in javahelp's build.xml. Even though the
-      servlet and jsp jars are present, it will still try to download
-      tomcat.zip if it's not there. (It would then ignore the zip
-      file since the jars are present.)
+        Checkout targets
     -->
-    <echo message="Touching file ${java.io.tmpdir}/apache-tomcat-5.5.20.zip to avoid javahelp downloading it." />
-    <touch file="${java.io.tmpdir}/apache-tomcat-5.5.20.zip" />
-  </target>
+    <target name="javahelp.checkout" depends="init" unless="skipCheckout">
+        <svn.checkout repo="${javahelp.svn.url}" dest="javahelp/javahelp"/>
+    </target>
 
-  <target name="javahelp.checkout" depends="init">
-    <echo message="Checkout javahelp from ${javahelp.svn.url}."/>
-    <exec executable="svn" dir="${external.dir}" failonerror="true" >
-      <arg line="checkout" />
-      <arg line="${javahelp.svn.url}" />
-      <arg line="javahelp" />
-    </exec>
-  </target>
+    <target name="jdic.checkout" depends="init" unless="skipCheckout">
+        <svn.checkout repo="${jdic.svn.url}" dest="javahelp/jdic"/>
+    </target>
 
-  <target name="jdic.checkout" depends="init">
-    <echo message="Checking out jdic." />
-    <exec executable="svn" dir="${external.dir}" failonerror="true" >
-      <arg line="checkout" />
-      <arg line="${jdic.svn.url}" />
-      <arg line="jdic" />
-    </exec>
+    <!--
+        Build targets
+    -->
+    <target name="jdic.build" depends="jdic.checkout">
+        <!-- building only jdic API needed to compile javahelp -->
+        <ant antfile="${javahelp.dir}/jdic/src/jdic/build.xml">
+            <property name="basedir" value="${javahelp.dir}/jdic/src/jdic/"/>
+            <target name="buildunixjar" />
+        </ant>
+    </target>
+    
+    <target name="copy.javahelp.dependencies" depends="jdic.build,javahelp.checkout">
+        <!-- grab from local repo -->
+        <mkdir dir="${javahelp.project.dir}/lib" />
+        <copy tofile="${javahelp.project.dir}/lib/jdic.jar">
+            <fileset dir="${javahelp.dir}/jdic/src/jdic/dist/" includes="**/jdic.jar"/>
+        </copy>
+        <copy file="${maven.repo.local}/${jsp-api.mvn.path}"
+            tofile="${javahelp.project.dir}/lib/jsp-api.jar" />
+        <copy file="${maven.repo.local}/${servlet.mvn.path}"
+            tofile="${javahelp.project.dir}/lib/servlet-api.jar"/>
 
-  </target>
+        <!--
+          Workaround for bugs in javahelp's build.xml. Even though the
+          servlet and jsp jars are present, it will still try to download
+          tomcat.zip if it's not there. (It would then ignore the zip
+          file since the jars are present.)
+        -->
+        <echo message="Touching file ${java.io.tmpdir}/apache-tomcat-5.5.20.zip to avoid javahelp downloading it." />
+        <touch file="${java.io.tmpdir}/apache-tomcat-5.5.20.zip" />
+    
+        <echo message="Touching file ${java.io.tmpdir}/jdic-0.8.4.1-bin-windows.zip to avoid javahelp downloading it." />
+        <touch file="${java.io.tmpdir}/jdic-0.8.4.1-bin-windows.zip"/>
+    </target>
 
+    <target name="javahelp.build" depends="copy.javahelp.dependencies">
+        <echo message="Building javahelp." />
+        <ant antfile="${javahelp.dir}/javahelp/javahelp_nbproject/build.xml"
+            inheritall="false" />
+        <copy file="${javahelp.project.dir}/dist/lib/jhall.jar"
+            tofile="${javahelp.project.dir}/dist/lib/javahelp.jar" />
+        <mvn.publish.local
+            file="${javahelp.project.dir}/dist/lib/javahelp.jar"
+            groupId="javax.help"
+            artifactId="javahelp"
+            version="2.0.02" />
+    </target>
+    
 </project>

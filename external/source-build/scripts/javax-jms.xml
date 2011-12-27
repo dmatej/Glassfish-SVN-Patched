@@ -1,33 +1,33 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<project name="JMS-API source integration" default="build" basedir=".">
+<project name="JMS-API source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-    <import file="build-taskdefs.xml"/>
-    <target name="build" depends="init">
-        <antcall target="jms.api.build" />
-    </target>
+    <import file="${basedir}/build.xml"/>
+
+    <property name="javax-jms.dir" value="${glassfish.external.dir}/jms-api"/>
     
-    <!-- checkout jms-api source and build -->
-    <target name="jms.api.checkout" depends="init">
+    <target name="checkout" depends="init,check.proxy" unless="skipCheckout">
        <echo message="checkout JMS-API from ${jms-api.src.zip.url}."/>
-       <get src="${jms-api.src.zip.url}" dest="${external.dir}/${jms-api.src.zip}"/>
+       <mkdir dir="${javax-jms.dir}" />
+       <get src="${jms-api.src.zip.url}" 
+            dest="${javax-jms.dir}/${jms-api.src.zip}"/>
        <echo message="expand JMS-API zip"/>
-       <mkdir dir="${external.dir}/jms-api" /> 
-       <unzip src="${external.dir}/${jms-api.src.zip}" dest="${external.dir}/jms-api"/>
+       <unzip src="${javax-jms.dir}/${jms-api.src.zip}"
+            dest="${javax-jms.dir}"/>
     </target>
        
-    <target name="jms.api.build" depends="jms.api.checkout">
+    <target name="build" depends="checkout">
        <echo message="building JMS API"/>
-       <echo message="Creating ${external.dir}/jms-api/target"/>
-       <mkdir dir="${external.dir}/jms-api/target"/>
-       <javac srcdir="${external.dir}/jms-api" 
-              destdir="${external.dir}/jms-api/target"/>
-       <jar destfile="${external.dir}/jms-api/${jms-api.zip.artifact}.jar" basedir="${external.dir}/jms-api/target"/>
+       <echo message="Creating ${javax-jms.dir}/target"/>
+       <mkdir dir="${javax-jms.dir}/target"/>
+       <javac srcdir="${javax-jms.dir}"
+              destdir="${javax-jms.dir}/target"/>
+       <jar destfile="${javax-jms.dir}/${jms-api.zip.artifact}.jar"
+            basedir="${javax-jms.dir}/target"/>
        <mvn.publish.local
-             jar="${external.dir}/jms-api/${jms-api.zip.artifact}.jar" 
-             mvngroup="javax.jms"
-             mvnartid="jms-api"
-             mvnversion="${jms-api.version}"/>
+             file="${javax-jms.dir}/${jms-api.zip.artifact}.jar"
+             groupId="javax.jms"
+             artifactId="jms-api"
+             version="${jms-api.version}"/>
     </target>
 </project>

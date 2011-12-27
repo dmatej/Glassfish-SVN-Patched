@@ -1,47 +1,35 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="Apache BCEL Library source integration" default="build" basedir=".">
+<project name="Apache BCEL Library source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-    <import file="build-taskdefs.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="build" depends="init">
-        <antcall target="bcel.publish.local" />
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${bcel.svn.url}" dest="bcel"/>
     </target>
 
-    <!--
-        Checkout Apache BCEL source, build and publish in local maven repo
-    -->
-    <target name="bcel.checkout" >
-        <echo message="checkout bcel from ${bcel.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${bcel.svn.url}" />
-            <arg line="bcel" />
-	</exec>
-    </target>
-
-    <target name="bcel.build" depends="bcel.checkout">
+    <target name="build" depends="checkout">
         <!-- build Apache BCEL -->
-        <exec executable="maven" dir="${external.dir}/bcel" failonerror="true" />
-   </target>
-
-   <target name="bcel.publish.local" depends="bcel.build" >
-        <mvn.publish.local 
-	    jar="${external.dir}/bcel/target/bcel-${bcel.version}.jar" 
-            mvngroup="org.apache.bcel" 
-            mvnartid="bcel" 
-            mvnversion="${bcel.version}"/>
+        <mvn2 dir="${glassfish.external.dir}/bcel" 
+            goal="org.apache.maven.plugins:maven-one-plugin:1.2:convert"/>
+        <mvn.install dir="${glassfish.external.dir}/bcel"/>
     </target>
 
-   <target name="bcel.publish.remote" depends="bcel.build" >
+    <target name="bcel.publish.local" depends="build" >
+        <mvn.publish.local
+	    file="${glassfish.external.dir}/bcel/target/bcel-${bcel.version}.jar"
+            groupId="org.apache.bcel"
+            artifactId="bcel"
+            version="${bcel.version}"/>
+    </target>
+
+    <target name="bcel.publish.remote" depends="build" >
         <mvn.publish.remote
-            jar="${external.dir}/bcel/target/bcel-${bcel.version}.jar"
-            mvngroup="org.apache.bcel"
-            mvnartid="bcel"
-            mvnversion="${bcel.version}"/>
+            file="${glassfish.external.dir}/bcel/target/bcel-${bcel.version}.jar"
+            groupId="org.apache.bcel"
+            artifactId="bcel"
+            version="${bcel.version}"/>
     </target>
-
 
 </project>

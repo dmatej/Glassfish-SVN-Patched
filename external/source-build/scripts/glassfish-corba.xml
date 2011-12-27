@@ -1,77 +1,84 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="corba source integration" default="build" basedir=".">
-    <property file="${basedir}/build.properties"/>
-    <echo message="glassfish-corba.version=${glassfish-corba.version}"/>
-    <import file="build-taskdefs.xml"/>
+<project name="corba source integration" default="build" basedir="..">
 
-    <target name="checkout" >
-       <hg.clone tag="VERSION-${glassfish-corba.version}" repo="${glassfish-corba.hg.url}" dest="${glassfish-corba.dir}"/>
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="${basedir}/build.xml"/>
+
+    <property name="glassfish.corba.dir" value="${glassfish.external.dir}/glassfish-corba" />
+    <property name="glassfish.corba.dir.rename" value="${glassfish.corba.dir}/build/rename/ee" />
+
+    <target name="checkout" depends="init,check.hg" unless="skipCheckout">
+       <hg.clone tag="VERSION-${glassfish-corba.version}"
+            repo="${glassfish-corba.hg.url}" dest="${glassfish-corba.dir}"/>
     </target>
 
     <target name="build" depends="checkout">
-       <property name="local.maven.ant.tasks.jar" value="../../${maven.ant.tasks.jar}"/>
-
-        <ant antfile="make/src-build.xml" dir="external/glassfish-corba">
+        <ant antfile="make/src-build.xml" dir="${glassfish.corba.dir}">
             <target name="orb-library"/>
 	    <target name="rename"/>
 	</ant>
-	<ant antfile="make/build.xml" dir="external/glassfish-corba/build/rename/ee">
+	<ant antfile="make/build.xml" dir="${glassfish.corba.dir.rename}">
 	    <target name="build"/>
 	    <target name="make-bundles"/>
 	    <target name="release-local"/>
 	</ant>
-        <antcall target="glassfish-corba.publish.local"/>
      </target>
 
-     <target name="glassfish-corba.publish.local">
-<!--   <mvn.publish.local jar="${external.dir}/glassfish-corba/build/lib/jaxr-impl.jar" mvngroup="com.sun.xml.registry" mvnartid="jaxr-impl" mvnversion="${glassfish-corba.version}"/>
-        <mvn.publish.local jar="${external.dir}/glassfish-corba/build/lib/jaxr-impl-src.jar" mvngroup="com.sun.xml.registry" mvnartid="jaxr-impl" mvnclassifier="sources" mvnversion="${jaxr-ri.version}"/>-->
-        <mvn.publish.local
-        mvnversion="${glassfish-corba.version}"
-        generatepom="false"
-        jar="${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-asm.jar"
-        mvngroup="com.sun.corba" mvnartid="glassfish-corba-asm"
-        extra-args="-DpomFile=${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-asm.xml"/>
-      <mvn.publish.local
-        mvnversion="${glassfish-corba.version}"
-        generatepom="false"
-        jar="${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-codegen.jar"
-        mvngroup="com.sun.corba" mvnartid="glassfish-corba-codegen"
-        extra-args="-DpomFile=${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-codegen.xml"/>
-      <mvn.publish.local
-        mvnversion="${glassfish-corba.version}"
-        generatepom="false"
-        jar="${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-csiv2-idl.jar"
-        mvngroup="com.sun.corba" mvnartid="glassfish-corba-csiv2-idl"
-        extra-args="-DpomFile=${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-csiv2-idl.xml"/>
-     <mvn.publish.local
-        mvnversion="${glassfish-corba.version}"
-        generatepom="false"
-        jar="${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-newtimer.jar"
-        mvngroup="com.sun.corba" mvnartid="glassfish-corba-newtimer"
-        extra-args="-DpomFile=${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-newtimer.xml"/>
-    <mvn.publish.local
-        mvnversion="${glassfish-corba.version}"
-        generatepom="false"
-        jar="${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-omgapi.jar"
-        mvngroup="com.sun.corba" mvnartid="glassfish-corba-omgapi"
-        extra-args="-DpomFile=${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-omgapi.xml"/>
-    <mvn.publish.local
-        mvnversion="${glassfish-corba.version}"
-        generatepom="false"
-        jar="${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-orb.jar"
-        mvngroup="com.sun.corba" mvnartid="glassfish-corba-orb"
-        extra-args="-DpomFile=${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-orb.xml"/>
-    <mvn.publish.local
-        mvnversion="${glassfish-corba.version}"
-        generatepom="false"
-        jar="${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-orbgeneric.jar"
-        mvngroup="com.sun.corba" mvnartid="glassfish-corba-orbgeneric"
-        extra-args="-DpomFile=${external.dir}/glassfish-corba/build/rename/ee/build/release/lib/bundles/glassfish-corba-orbgeneric.xml"/>
+    <!--
+        the following is not used as artifact are already published by the ant
+        script with the "release-local" target.
+    -->
+     <macrodef name="glassfish-corba.publish">
+        <attribute name="module"/>
+        <attribute name="description"/>
+        <attribute name="bundles.path" default="${glassfish.corba.dir.rename}/build/release/lib/bundles/"/>
+        <attribute name="pomFile" default="@{bundles.path}/glassfish-corba-@{module}.xml"/>
+        <sequential>
+            <!-- creates header property for the pom file -->
+            <loadfile property="HEADER-@{module}"  srcFile="${glassfish.corba.dir.rename}/make/pom/header.xml">
+                <filterchain>
+                    <replacetokens>
+                        <token key="artifactId" value="glassfish-corba-@{module}"/>
+                        <token key="version" value="${orb.version}"/>
+                        <token key="jarDescription" value="@{description}"/>
+                        <token key="groupId" value="${orb.groupId}"/>
+                        <token key="repositoryUrl" value="${repo.url}"/>
+                    </replacetokens>
+                </filterchain>
+            </loadfile>
+            <!-- creates the pom file -->
+             <copy overwrite="true"
+                   file="${glassfish.corba.dir.rename}/make/pom/@{module}.template.xml"
+                   tofile="@{pomFile}" >
+                <filterset>
+                  <filter token="HEADER" value="${HEADER-@{module}}"/>
+                  <filter token="version" value="${orb.version}"/>
+                  <filter token="groupId" value="${orb.groupId}"/>
+                </filterset>
+            </copy>
+            <!-- publishs the artifact into the local repository -->
+            <mvn.publish.local.pom
+                file="@{bundles.path}/glassfish-corba-@{module}.jar"
+                pom="@{pomFile}"/>
+            <!-- deletes the created pom file -->
+            <delete file="@{pomFile}" />
+        </sequential>
+     </macrodef>
+     
+     <target name="publish">
+        <property file="${glassfish.corba.dir.rename}/make/build.properties"/>
+        <property name="orb.version" value="${release.version}-${build.version}"/>
+        <property name="orb.groupId" value="com.sun.corba"/>
 
-
-
+        <glassfish-corba.publish module="asm" description="ASM version used in the ORB" />
+        <glassfish-corba.publish module="codegen"  description="Dynamic code generation library" />
+        <glassfish-corba.publish module="csiv2-idl"  description="IDL generated definitions for CSIv2" />
+        <glassfish-corba.publish module="newtimer"  description="ORB timer library" />
+        <glassfish-corba.publish module="omgapi"  description="OMG standard APIs" />
+        <glassfish-corba.publish module="orb"  description="The ORB implementation" />
+        <glassfish-corba.publish module="orbgeneric"  description="Generic librarie" />
+        <glassfish-corba.publish module="source"  description="ORB source code" />
     </target>
 
 </project>

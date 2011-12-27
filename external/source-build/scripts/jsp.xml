@@ -1,58 +1,31 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="JSP source integration" default="build" basedir=".">
+<project name="JSP source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="build" depends="init">
-        <antcall target="jsp.build" />
-    </target>
-
-    <!--
-        Checkout jsp source and build
-    -->
-    <target name="jsp.checkout" >
-        <echo message="checkout jsp from ${jsp-pom.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${jsp-pom.svn.url}" />
-            <arg line="jsp/pom" />
-	</exec>
+    <property name="jsp.dir" value="${glassfish.external.dir}/jsp"/>
+    
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${jsp-pom.svn.url}" dest="jsp/pom"/>
         <!-- since the jsp-pom tag contains all the files/directories, -->
         <!-- we want to move those files before checkout out rest of -->
         <!-- api and impl directories. -->
-        <delete dir="${external.dir}/jsp/pom/api"/>
-        <delete dir="${external.dir}/jsp/pom/impl"/>
-        <delete dir="${external.dir}/jsp/pom/repo"/>
-        <delete dir="${external.dir}/jsp/pom/www"/>
+        <delete dir="${jsp.dir}/pom/api"/>
+        <delete dir="${jsp.dir}/pom/impl"/>
+        <delete dir="${jsp.dir}/pom/repo"/>
+        <delete dir="${jsp.dir}/pom/www"/>
 
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${jsp-api.svn.url}" />
-            <arg line="jsp/api" />
-	</exec>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${jsp-impl.svn.url}" />
-            <arg line="jsp/impl" />
-	</exec>
+        <svn.checkout repo="${jsp-api.svn.url}" dest="jsp/api"/>
+        <svn.checkout repo="${jsp-impl.svn.url}" dest="jsp/impl"/>
     </target>
 
-    <target name="jsp.build" depends="jsp.checkout" >
+    <target name="build" depends="checkout" >
         <!-- build jsp -->
-        <exec executable="mvn" dir="${external.dir}/jsp/pom" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-        <exec executable="mvn" dir="${external.dir}/jsp/api" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-        <exec executable="mvn" dir="${external.dir}/jsp/impl" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+        <mvn.install dir="${jsp.dir}/pom"/>
+        <mvn.install dir="${jsp.dir}/api"/>
+        <mvn.install dir="${jsp.dir}/impl"/>
     </target>
 
 </project>

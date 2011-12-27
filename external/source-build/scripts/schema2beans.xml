@@ -1,41 +1,24 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="schema2beans source integration" default="schema2beans.deploy.to.local" basedir=".">
+<project name="schema2beans source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="build" depends="init">
-        <antcall target="schema2beans.build" />
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${schema2beans.svn.url}" dest="schema2beans"/>
     </target>
 
-    <!--
-        Checkout schema2beans source and build
-    -->
-    <target name="schema2beans.checkout" >
-        <echo message="checkout schema2beans from ${schema2beans.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${schema2beans.svn.url}" />
-            <arg line="schema2beans" />
-	</exec>
-    </target>
-    <target name="schema2beans.build" depends="schema2beans.checkout" >
+    <target name="build" depends="checkout" >
         <!-- build schema2beans -->
-	<ant antfile="build.xml" dir="${external.dir}/schema2beans/nbbuild" target="bootstrap" />
-	<ant antfile="build.xml" dir="${external.dir}/schema2beans/schema2beans" target="jar" />
-    </target>
-    <target name="schema2beans.deploy.to.local" depends="schema2beans.build" >
-        <exec executable="mvn" dir="${external.dir}/schema2beans" failonerror="true" >
-            <arg line="deploy:deploy-file" />
-            <arg line="-Durl=file://${maven.repo.local}" />
-            <arg line="-Dfile=${external.dir}/schema2beans/nbbuild/netbeans/ide/modules/org-netbeans-modules-schema2beans.jar" />
-            <arg line="-DgeneratePom=true" />
-            <arg line="-DgroupId=org.netbeans.api" />
-            <arg line="-DartifactId=org-netbeans-modules-schema2beans" />
-            <arg line="-Dversion=RELEASE55" />
-            <arg line="-Dpackaging=jar" />
-        </exec>
+	<ant dir="${glassfish.external.dir}/schema2beans/nbbuild" target="bootstrap" />
+	<ant dir="${glassfish.external.dir}/schema2beans/schema2beans" target="jar" />
+
+        <mvn.publish.local
+            file="${glassfish.external.dir}/schema2beans/nbbuild/netbeans/ide/modules/org-netbeans-modules-schema2beans.jar"
+            groupId="org.netbeans.api"
+            artifactId="org-netbeans-modules-schema2beans"
+            version="RELEASE55" />
     </target>
 
 </project>

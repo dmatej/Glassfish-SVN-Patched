@@ -1,34 +1,16 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
-<!-- hk2 depends on tiger-types artifact -->
 
-<project name="tiger-types source integration" default="build" basedir=".">
+<project name="tiger-types source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="build" depends="init">
-        <antcall target="tiger-types.build" />
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${tiger-types.svn.url}" dest="tiger-types"/>
     </target>
 
-    <!--
-        Checkout tiger-types source and build
-    -->
-    <target name="tiger-types.checkout" >
-        <echo message="checkout tiger-types from ${tiger-types.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${tiger-types.svn.url}" />
-            <arg line="--username" />
-            <arg line="guest" />
-            <arg line="tiger-types" />
-	</exec>
-    </target>
-    <target name="tiger-types.build" depends="tiger-types.checkout" >
-        <!-- build tiger-types -->
-        <exec executable="mvn" dir="${external.dir}/tiger-types" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+    <target name="build" depends="checkout" >
+        <mvn.install dir="${glassfish.external.dir}/tiger-types" />
     </target>
 
 </project>

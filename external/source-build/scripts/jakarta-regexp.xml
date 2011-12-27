@@ -1,44 +1,21 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="Apache Jakarta Regexp Library source integration" default="build" basedir=".">
+<project name="Apache Jakarta Regexp Library source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-    <import file="build-taskdefs.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="build" depends="init">
-        <antcall target="jakarta-regexp-1.4.publish" />
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${jakarta-regexp.svn.url}" dest="jakarta-regexp"/>
     </target>
 
-    <!--
-        Checkout Jakarta Regexp 1.4 source, build and publish
-    -->
-    <target name="jakarta-regexp-1.4.checkout" >
-        <echo message="checkout jakarta-regexp-1.4 from ${jakarta-regexp-1.4.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${jakarta-regexp-1.4.svn.url}" />
-            <arg line="jakarta-regexp-1.4" />
-	</exec>
-    </target>
-
-    <target name="jakarta-regexp-1.4.build" depends="jakarta-regexp-1.4.checkout">
-        <!-- build Jakarta Regexp 1.4 -->
-        <exec executable="ant" dir="${external.dir}/jakarta-regexp-1.4" failonerror="true" >
-	</exec>
+    <target name="build" depends="checkout">
+        <ant dir="${glassfish.external.dir}/jakarta-regexp" />
+        <mvn.publish.local
+	    file="${glassfish.external.dir}/jakarta-regexp/build/jakarta-regexp-${jakarta-regexp.version}.jar"
+            groupId="org.apache.jakarta-regexp"
+            artifactId="jakarta-regexp"
+            version="${jakarta-regexp.version}"/>
    </target>
-
-   <target name="jakarta-regexp-1.4.publish" depends="jakarta-regexp-1.4.build" >
-        <mvn.publish.local 
-	    jar="${external.dir}/jakarta-regexp-1.4/build/jakarta-regexp-1.4.jar" 
-            mvngroup="org.apache.jakarta-regexp" 
-            mvnartid="jakarta-regexp" 
-            mvnversion="1.4"/>
-        <!--<mvn.publish.remote
-            jar="${external.dir}/jakarta-regexp-1.4/target/jakarta-regexp-1.4.jar"
-            mvngroup="org.apache.jakarta-regexp"
-            mvnartid="jakarta-regexp"
-            mvnversion="1.4"/>-->
-    </target>
 
 </project>

@@ -1,0 +1,489 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project name="Source build common tasks" basedir=".">
+    <import file="${basedir}/includes/build-taskdefs.xml"/>
+
+    <!-- print the configuration required to run the script -->
+    <target name="print.requirements">
+        <echo message="Requirements:"/>
+        <echo message=" * ant 1.7.1"/>
+        <echo message=" * hg (mercurial) available in PATH"/>
+        <echo message=" * git available in PATH"/>
+        <echo message="     --&gt; you need a valid java.net account with a ssh public key configured"/>
+        <echo message="     --&gt; see http://java.net/projects/help/pages/GeneratingAnSSHKey"/>
+        <echo message=" * JAVA_HOME set to JDK1.6"/>
+        <echo message=""/>
+    </target>
+
+    <!-- print the properties needed to run the script -->
+    <target name="print.usage">
+        <echo message="Usage: ant &lt;options&gt; -DJDK_1.5=[PATH] -Dglassfish.dir=[PATH] -Dmvn2.home=[PATH] -Dmvn3.home=[PATH] -Dproject.version=[VERSION] -Djava.net.user=[USERNAME]"/>
+        <echo message="where possible options include:"/>
+        <echo message=" -Dmaven.repo.local=[PATH]"/>
+        <echo message=" (see config/user.properties for other properties to override)"/>
+    </target>
+
+    <!-- print how to setup the proxy -->
+    <target name="print.proxy-configuration">
+        <property name="antOpsArgsSample"
+            value='"-Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080"'/>
+        <echo message="There is four ways to configure proxy:"/>
+        <echo message=""/>
+        <echo message="1) provide userProxyHost and userProxyPort options"/>
+        <echo message="     -example: 'ant -DproxyHost=proxy -DproxyPort=port [..]'"/>
+        <echo message=""/>
+        <echo message="2) set the http_proxy environment variable:"/>
+        <echo message="     -For bash: export http_proxy=proxy:port"/>
+        <echo message=""/>
+        <echo message="3) set the ANT_OPS environment variable:"/>
+        <echo message="     -For bash: export ANT_OPTS=${antOpsArgsSample}"/>
+        <echo message="     -For csh/tcsh: setenv ANT_OPTS ${antOpsArgsSample}"/>
+        <echo message=""/>
+        <echo message="4) use autoproxy "/>
+        <echo message="     -provide '-antproxy' option:"/>
+        <echo message="         a) at command line i.e. 'ant -autoproxy [..]'"/>
+        <echo message="         b) add -autoproxy to ANT_ARGS environment variable"/>
+        <echo message="     -setup host and port in gconf"/>
+        <echo message="         gconftool-2 -s /system/http_proxy/host -t string proxy'"/>
+        <echo message="         gconftool-2 -s /system/http_proxy/port -t int port'"/>
+    </target>
+
+    <!-- print variable value used for the script -->
+    <target name="print.configuration">
+        <echo message="external directory: ${glassfish.external.dir}"/>
+        <echo message="maven.repo.local: ${maven.repo.local}"/>
+        <echo message="mvn2.home: ${mvn2.home}"/>
+        <echo message="mvn3.home: ${mvn3.home}"/>
+        <echo message="glassfish.dir: ${glassfish.dir}"/>
+        <echo message="JDK_1.5: ${JDK_1.5}"/>
+        <echo message="project.version: ${project.version}"/>
+        <echo message="java.net.user: ${java.net.user}"/>
+    </target>
+
+    <target name="test.proxy">
+        <get src="${proxy.test.url}"
+            ignoreerrors="true" dest="testProxy"/>
+        <condition property="proxy.error">
+            <not><available file="testProxy"/></not>
+        </condition>
+        <delete file="testProxy"/>
+        <selectiveTask if="proxy.error">
+            <antcall target="print.proxy-configuration"/>
+            <fail message="Proxy error"/>
+        </selectiveTask>
+    </target>
+
+    <!--
+        Check if a proxy is needed, then if behind a proxy retrieve appropriate
+        configuration and generate xml settings for maven.
+    -->
+    <target name="check.proxy">
+        <!-- get user proxy -->
+        <condition property="user.proxy">
+            <and>
+                <isset property="proxyHost"/>
+                <isset property="proxyPort"/>
+            </and>
+        </condition>
+        <selectiveTask if="user.proxy">
+            <setproxy proxyhost="${proxyHost}" proxyport="${proxyPort}" />
+        </selectiveTask>
+        <!-- get system proxy -->
+        <selectiveTask unless="user.proxy">
+            <property environment="env"/>
+            <stringReplaceRegexp result="proxyHost"
+                str="${env.http_proxy}" match="(.*):(.*)" replace="\1" />
+            <stringReplaceRegexp result="proxyPort"
+                str="${env.http_proxy}" match="(.*):(.*)" replace="\2" />
+            <setproxy proxyhost="${proxyHost}" proxyport="${proxyPort}" />
+        </selectiveTask>
+        <!-- get ant proxy conf -->
+        <selectiveTask unless="proxyHost">
+            <condition property="proxyHost" value="${http.proxyHost}">
+                <and>
+                    <isset property="http.proxyHost"/>
+                    <isset property="http.proxyPort"/>
+                </and>
+            </condition>
+            <condition property="proxyPort" value="${http.proxyPort}">
+                <isset property="proxyHost"/>
+            </condition>
+        </selectiveTask>
+        <!-- get autoproxy conf -->
+        <selectiveTask unless="proxyHost">
+            <exec-nofail exe="gconftool-2" arg="--help" res="gconf"/>
+            <selectiveTask if="gconf">
+                <exec executable="gconftool-2" outputproperty="proxyHost">
+                    <arg line="-g /system/http_proxy/host"/>
+                </exec>
+                <exec executable="gconftool-2" outputproperty="proxyPort">
+                    <arg line="-g /system/http_proxy/port"/>
+                </exec>
+            </selectiveTask>
+        </selectiveTask>
+        <!-- test configured proxy -->
+        <selectiveTask if="proxyHost">
+            <echo message="Proxy: host=${proxyHost} port=${proxyPort}"/>
+            <echo message="Checking proxy..."/>
+            <antcall target="test.proxy"/>
+            <echo message="Proxy is working"/>
+        </selectiveTask>
+        <selectiveTask unless="proxyHost">
+            <antcall target="test.proxy"/>
+        </selectiveTask>
+        <!-- generate proxy settings xml -->
+        <selectiveTask if="proxyHost">
+            <xml.elt name="active" prop="activeElt" value="true"/>
+            <xml.elt name="protocol" prop="protocolElt" value="http"/>
+            <xml.elt name="host" prop="hostElt" value="${proxyHost}"/>
+            <xml.elt name="port" prop="portElt" value="${proxyPort}"/>
+            <xml.elt name="proxy" prop="proxyElt"
+                value="${activeElt}${protocolElt}${hostElt}${portElt}"/>
+            <xml.elt name="proxies" prop="proxiesElt" value="${proxyElt}"/>
+            <propertyfile file="${scriptProgress}">
+                <entry key="proxies.xml" value="${proxiesElt}"/>
+            </propertyfile>
+        </selectiveTask>
+    </target>
+
+    <!-- check if the configuration is correct and fail accordingly -->
+    <target name="check.configuration" depends="check.hg,check.svn,check.git">
+        <condition property="configuration.error">
+            <not>
+                <and>
+                    <contains string="${java.version}" substring="1.6"/>
+                    <contains string="${ant.version}" substring="1.7"/>
+                </and>
+            </not>
+        </condition>
+        <selectiveTask if="configuration.error">
+            <antcall target="print.requirements"/>
+            <fail message="Error: missing some configuration requirements"/>
+        </selectiveTask>
+    </target>
+
+    <target name="check.hg">
+        <exec-nofail exe="hg" res="mercurial" arg="--version" verbose="false"/>
+        <fail unless="mercurial"
+            message="hg (mercurial) is not available in the PATH"/>
+    </target>
+    <target name="check.svn">
+        <exec-nofail exe="svn" res="svn" arg="--version" verbose="false"/>
+        <fail unless="svn"
+            message="svn (subversion) is not available in the PATH"/>
+    </target>
+    <target name="check.git">
+        <exec-nofail exe="git" res="git" arg="--version" verbose="false"/>
+        <fail unless="git"
+            message="git is not available in the PATH"/>
+    </target>
+
+    <!--
+        check if the provided properties are correct and fail accordingly
+    -->
+    <target name="check.arguments">
+        <condition property="arguments.error">
+            <not>
+                <and>
+                    <isset property="glassfish.dir"/>
+                    <available file="${glassfish.dir}" type="dir"/>
+                    <isset property="JDK_1.5"/>
+                    <isset property="project.version"/>
+                    <isset property="java.net.user"/>
+                    <isset property="mvn3.home"/>
+                    <available file="${mvn3.home}/bin/mvn"/>
+                    <isset property="mvn2.home"/>
+                    <available file="${mvn2.home}/bin/mvn"/>
+                </and>
+            </not>
+        </condition>
+        <selectiveTask if="arguments.error">
+            <antcall target="print.usage"/>
+            <fail message="Error: wrong parameters provided"/>
+        </selectiveTask>
+    </target>
+
+    <!--
+        Check everything required for running the script:
+            - environment (PATH related)
+            - arguments (provided properties).
+    -->
+    <target name="check.list" unless="target">
+        <antcall target="check.configuration"/>
+        <antcall target="check.arguments"/>
+        <antcall target="print.configuration"/>
+    </target>
+
+    <!--
+        @Public macro - directly usable in a script
+
+        set ${@result} only if ${property} exists and is not empty
+    -->
+    <macrodef name="set-if-not-empty">
+        <attribute name="property"/>
+        <attribute name="result"/>
+        <sequential>
+            <condition property="@{result}" value="true">
+                <and>
+                    <isset property="@{property}"/>
+                    <not><equals arg1="${@{property}}" arg2=""/></not>
+                </and>
+            </condition>
+        </sequential>
+    </macrodef>
+
+    <!--
+        @Public macro - directly usable in a script
+
+        set ${@result} only if ${arg1} exists and equals to ${arg2}
+    -->
+    <macrodef name="set-if-equals">
+        <attribute name="result"/>
+        <attribute name="arg1"/>
+        <attribute name="arg2"/>
+        <sequential>
+            <condition property="@{result}" value="true">
+                <and>
+                    <isset property="@{arg1}"/>
+                    <equals arg1="${@{arg1}}" arg2="@{arg2}"/>
+                </and>
+            </condition>
+        </sequential>
+    </macrodef>
+
+    <!--
+        The following macros / targets are used internally to save the status of
+        a build and skip all the modules already built. The status of the build
+        is written in a file named "${scriptProgress}".
+        
+        1) Because modules already built are skipped, we can define dependencies
+        to other modules with the "depends" attribute. If a dependency was built
+        before during the build, it will be skipped.
+
+            - example of a simple module with no dependency:
+                <build-module antfile="projectX.xml" />
+
+            - example of a module with one dependency:
+                <target name="projectX">
+                    <build-module antfile="projectX.xml" />
+                </target>
+                <target name="projectY" depends="projectX">
+                    <build-module antfile="projectY.xml"/>
+                </target>
+
+                Note1: if you define a dependency, you need to create a target
+                for the dependency so it can be defined in the "depends" attribute.
+
+                Note2: the name of ant file has to match the name of the module
+                target as following: [module-target].xml, in order to have
+                the same properties in the status file when using a target or
+                a file.
+
+        2) An internal target named "-list.modules" is used to define all the
+        modules to iterate for. When using the macro "call-modules" the script
+        will iterate over all the declared modules and call a specific target.
+        This target is called "phase". You can then perform for instance
+        "checkout" / "clean" / "build" separately over all the modules.
+
+            - example of a simple list:
+                <target name="-list.modules">
+                    <build-module target="projectY"/>
+                    <build-module antfile="projectZ.xml"/>
+                </target>
+
+                <target name="build">
+                    <call-modules phase="build"/>
+                </target>
+
+                Note: projectX is a dependency of projectY. No need to
+                define it here.
+
+       3) A macro call clean.script.progress allows to remove some properties
+       from the ${scriptProgress} file.
+            - example of removing all the build markers to build again:
+                <clean.script.progress phase="build"/>
+    -->
+
+    <property name="scriptProgress" value="status-progress.properties"/>
+
+    <!--
+        @Private macro - not directly usable in a script
+        
+        simple macro to display a tag for begin/end of phase/module/file
+    -->
+    <macrodef name="display-tag">
+        <attribute name="msg" />
+        <attribute name="offset" />
+        <attribute name="char"/>
+        <attribute name="c"
+            default="@{char}@{char}@{char}@{char}@{char}@{char}" />
+        <sequential>
+            <echo message="@{offset}@{c}@{c}@{c}@{c}@{c}@{c}@{c}@{c}@{c}@{c}"/>
+            <echo message="@{offset}@{offset}@{msg}"/>
+            <echo message="@{offset}@{c}@{c}@{c}@{c}@{c}@{c}@{c}@{c}@{c}@{c}"/>
+        </sequential>
+    </macrodef>
+
+    <!--
+        @Private macro - not directly usable in a script
+
+        call-tag macro is used to call a module's target or file
+        and display at the same time the begin and end tags.
+    -->
+    <macrodef name="call-tag">
+        <attribute name="char"/>
+        <attribute name="offset"/>
+        <attribute name="msg"/>
+        <attribute name="target"/>
+        <attribute name="phase" default="${target}"/>
+        <sequential>
+            <display-tag offset="@{offset}" char="@{char}" msg="BEGIN @{msg}"/>
+            <set-if-not-empty property="moduleFile" result="isFile"/>
+            <!-- call file -->
+            <selectiveTask if="isFile">
+                <ant antfile="${scripts.dir}/${moduleFile}"
+                    target="@{phase}"
+                    output="${logs.dir}/@{phase}/${moduleFile}.log">
+                    <property name="target" value="@{phase}"/>
+                </ant>
+            </selectiveTask>
+            <!-- call target -->
+            <selectiveTask unless="isFile">
+                <antcall target="@{target}">
+                    <param name="target" value="@{phase}"/>
+                </antcall>
+            </selectiveTask>
+            <display-tag offset="@{offset}" char="@{char}" msg="END @{msg}"/>
+        </sequential>
+    </macrodef>
+
+    <!--
+        @Private macro - not directly usable in a script
+
+        Write a phase status in the ${scriptProgress} file.
+        ${target} is the current phase.
+    -->
+    <macrodef name="update.script-progress">
+        <attribute name="moduleName"/>
+        <sequential>
+            <propertyfile file="${scriptProgress}">
+              <entry  key="@{moduleName}_${target}" value="true"/>
+            </propertyfile>
+        </sequential>
+    </macrodef>
+
+    <!--
+        @Public macro - directly usable in a script
+
+        clean.script.progress macro remove a phase status from the
+        ${scriptProgress} file.
+    -->
+    <macrodef name="clean.script.progress">
+        <attribute name="target" default="(.*)"/>
+        <attribute name="phase" default="(.*)"/>
+        <sequential>
+        <replaceregexp file="${scriptProgress}"
+                       match="@{target}_@{phase}=true"
+                       replace=""
+                       byline="true"
+                />
+        </sequential>
+    </macrodef>
+
+    <!--
+        @Public macro - directly usable in a script
+
+        build-module macro is used to call a target or a file with either
+        target or antfile attribute.
+        This macro is used in either target (to declare some dependency)
+        or in the "-list.modules" target.
+
+        Target's attribute must point to a target that's encapsulate
+        a build-call element that uses a "antfile" attribute.
+    -->
+    <macrodef name="build-module">
+        <attribute name="target" default=""/>
+        <attribute name="antfile" default=""/>
+        <sequential>
+            <antcall target="-build.module">
+                <param name="moduleTarget" value="@{target}"/>
+                <param name="moduleFile" value="@{antfile}"/>
+            </antcall>
+        </sequential>
+    </macrodef>
+    <target name="-build.module">
+        <set-if-not-empty property="moduleFile" result="antFileModule"/>
+        <set-if-not-empty property="moduleTarget" result="antTargetModule"/>
+
+        <!-- fail if no ${moduleFile} and ${moduleTarget} are empty -->
+        <condition property="fileOrTargetProvided" value="true">
+            <or>
+                <isset property="antFileModule"/>
+                <isset property="antTargetModule"/>
+            </or>
+        </condition>
+        <fail unless="fileOrTargetProvided"
+            message="build-module ERROR - provide target or antfile param!"/>
+        <loadproperties srcFile="${scriptProgress}"/>
+
+        <!-- process file -->
+        <selectiveTask if="antFileModule">
+            <set-if-not-empty property="${moduleFile}_${target}" result="skipModule"/>
+            <selectiveTask unless="skipModule">
+                <call-tag msg="FILE-MODULE [${moduleFile}] - phase=[${target}]" char="#"
+                    offset="         " target="${target}" />
+                <update.script-progress moduleName="${moduleFile}"/>
+            </selectiveTask>
+            <!-- display a skipped message if already built -->
+            <selectiveTask if="skipModule">
+                <display-tag offset="         " char="*"
+                    msg="SKIPPING module [${moduleFile}] - phase=[${target}]" />
+            </selectiveTask>
+        </selectiveTask>
+
+        <!-- process target -->
+        <selectiveTask if="antTargetModule" unless="antFileModule">
+            <set-if-not-empty property="${moduleTarget}.xml_${target}" result="skipModule"/>
+            <selectiveTask unless="skipModule">
+                <call-tag offset="         " char="@" target="${moduleTarget}"
+                    msg="MODULE [${moduleTarget}] - phase=[${target}]"/>
+            </selectiveTask>
+            <!-- display a skipped message if already built -->
+            <set-if-not-empty property="moduleFile" result="isModuleFile"/>
+            <condition property="moduleName" value="${moduleFile}" else="${moduleTarget}">
+                <isset property="isModuleFile"/>
+            </condition>
+            <selectiveTask if="skipModule">
+                <display-tag offset="         " char="*"
+                    msg="SKIPPING module [${moduleName}] - phase=[${target}]" />
+            </selectiveTask>
+        </selectiveTask>
+    </target>
+
+    <!--
+        @Public macro - directly usable in a script
+
+        call-modules macro starts a phase.
+        Requires a target named "-list.modules"
+    -->
+    <macrodef name="call-modules">
+        <attribute name="phase"/>
+        <sequential>
+            <!--                
+                The property "@{phase}" is defined to prevent infinite call.if ${@{phase}}
+                is already defined, it means that call.modules is called by himself.
+            -->
+            <selectiveTask if="@{phase}">
+                <display-tag offset="       " char="!"
+                    msg="[WARNING] file [${moduleFile}] does not implement phase target [@{phase}]"/>
+            </selectiveTask>
+            <selectiveTask unless="@{phase}">
+                <property name="@{phase}" value="true"/>
+                <mkdir dir="${logs.dir}/@{phase}"/>
+                <call-tag offset="   " char="=" target="-list.modules"
+                        phase="@{phase}" msg="PHASE [@{phase}]"/>
+            </selectiveTask>
+        </sequential>
+    </macrodef>
+
+</project>

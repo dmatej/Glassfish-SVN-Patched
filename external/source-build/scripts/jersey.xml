@@ -1,174 +1,188 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="Jersey source integration" default="build" basedir=".">
+<project name="Jersey source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
+    <import file="${basedir}/build.xml"/>
+    
+    <property name="jersey.dir" value="${glassfish.external.dir}/jersey"/>
+    
+    <condition property="isJersey1.8" value="true">
+        <equals arg1="${jersey.version}" arg2="1.8" />
+    </condition>
 
-    <target name="build" depends="init">
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <antcall target="jettison.checkout"/>
+        <antcall target="jackson.checkout"/>
+        <antcall target="jersey.checkout"/>
+    </target>
+    
+    <target name="build" depends="checkout">
+        <property name="skipCheckout" value="true"/>
         <antcall target="jersey.build" />
     </target>
 
     <!--
-        Checkout jersey source and build
+        Checkout targets
     -->
-    <target name="jersey.checkout" >
-        <echo message="checkout jersey from ${jersey.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	        <arg line="checkout" />
-          <arg line="${jersey.svn.url}" />
-          <arg line="jersey" />
-	      </exec>
+    <target name="jettison.checkout" unless="skipCheckout">
+        <svn.checkout repo="${jettison.svn.url}" dest="jersey/jettison"/>
+    </target>
+
+    <target name="jersey.checkout" unless="skipCheckout">
+        <svn.checkout repo="${jersey.svn.url}" dest="jersey/jersey"/>
+    </target>
+
+    <target name="jackson.checkout" unless="skipCheckout">
+        <svn.checkout repo="${jackson.svn.url}" dest="jersey/jackson"/>
+    </target>
+
+    <!--
+        Build targets
+    -->
+    <target name="install.grizzly-lzma-4.65" if="isJersey1.8">
+        <mvn.get repourl="http://download.java.net/maven/2"
+            artifact="com.sun.grizzly:grizzly-lzma:4.65-SNAPSHOT"/>
+        <mvn.publish.local
+            file="${maven.repo.local}/com/sun/grizzly/grizzly-lzma/4.65-SNAPSHOT/grizzly-lzma-4.65-SNAPSHOT.jar"
+            groupId="com.sun.grizzly"
+            artifactId="grizzly-lzma"
+            version="4.65" />
+    </target>
+
+    <target name="jersey-samples" depends="install.grizzly-lzma-4.65">
+        <xml.repository prop="additionalrepo" id="gfeclipselink"
+            url="http://maven.glassfish.org/content/repositories/eclipselink/" />
+        <generate-settings-xml
+            file="${jersey.dir}/jersey/custom-sample-settings.xml"
+            profileid="jersey"
+            additionalElts="${additionalelts}"
+            additionalRepository="${additionalrepo}"/>
+
+        <!--
+            Jersey 1.8/sample/osgi-http-service/functional-test depends on
+            com.sun.grizzly.osgi:grizzly-httpservice-bundle:jar:1.9.19-beta1.
+
+            grizzly-utils-1.9.19-beta1.pom published on maven central repository
+            has a dependency to grizzly-lzma-4.65, but this artifact does not
+            exists in any repositories...
+
+            grizzly-utils-1.9.19-beta1.pom published on http://download.java.net/maven/2
+            IS DIFFERENT than the one published on maven central repository. It
+            declares a dependency to grizzly-lzma-4.65-SNAPSHOT which exists.
+        -->
+
+        <mvn.install dir="${jersey.dir}/jersey/samples" skip-test="true"
+             settings-xml="${jersey.dir}/jersey/custom-sample-settings.xml">
+            <extra-args>
+                <arg line="-Pjersey"/>
+                <arg line="-P-xsltproc"/>
+            </extra-args>
+        </mvn.install>
+    </target>
+
+    <target name="plugin-registry-maven-bundle-plugin" if="isJersey1.8">
+        <!--
+            overriding version of maven-bundle-plugin, v3-packages as version
+            of the plugin is not specified in jersey 1.8.
+        -->
+        <generate-plugin-registry-xml file="${maven.user.home}/plugin-registry.xml"
+            groupId="org.apache.felix"
+            artifactId="maven-bundle-plugin"
+            useVersion="2.0.1" />
+    </target>
+
+    <target name="jersey-v3-packages" depends="plugin-registry-maven-bundle-plugin">
+        <xml.elt prop="additionalElts" name="usePluginRegistry" value="true"/>
+        <generate-settings-xml
+            file="${jersey.dir}/jersey/custom-v3-packages-settings.xml"
+            additionalElts="${additionalElts}"/>
+
+        <!-- add project.scm.developerConnection and project.scm.connection properties -->
+        <!-- since it's causing the build failure with the message:                    -->
+        <!-- "java.lang.NullPointerException: The scm url cannot be null."             -->
+        <!-- This is a maven bug.  See:  MOJO-1463 http://jira.codehaus.org/browse/MOJO-1463. -->
+        <property name="jersey-scm"
+            value="scm:svn:https://jersey.dev.java.net/svn/jersey/trunk/jersey/"/>
+
+        <mvn.install dir="${jersey.dir}/jersey/glassfish/v3-packages" skip-test="true"
+             settings-xml="${jersey.dir}/jersey/custom-v3-packages-settings.xml">
+            <extra-args>
+                <arg line="-npu"/>
+                <arg line="-Dproject.scm.developerConnection=${jersey-scm}"/>
+                <arg line="-Dproject.scm.connection=${jersey-scm}"/>
+            </extra-args>
+        </mvn.install>
     </target>
 
     <target name="jersey.build" depends="jettison.build,jackson.build,jersey.checkout" >
-        <!-- backup plugin-registry.xml file if it exists -->
-        <delete failonerror="false" file="${external.dir}/jersey/plugin-registry.xml"/> 
-        <copy failonerror="false" file="${maven.repo.local}/../plugin-registry.xml" todir="${external.dir}/jersey"/>
-        <!-- and install a new one to make the jsr311-api build work -->
-        <copy overwrite="true" file="${basedir}/jersey-extras/plugin-registry.xml" todir="${maven.repo.local}/.."/>
          <!-- build jersey -->
-        <exec executable="mvn" dir="${external.dir}/jersey" failonerror="true" >
-	        <arg line="-N" />
-	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	        <arg line="-Dmaven.test.skip=true" />
-          <arg line="install" />
-          <arg line="-P-xsltproc" />
-          <env key="JAVA_HOME" value="${JDK_1.5}" />
-	      </exec>
-        <exec executable="mvn" dir="${external.dir}/jersey/jersey-core" failonerror="true" >
-	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	        <arg line="-Dmaven.test.skip=true" />
-          <arg line="install" />
-          <arg line="-P-xsltproc" />
-	  <!--
-          <env key="JAVA_HOME" value="${JDK_1.5}" />
-	  --> 
-	      </exec>
-        <exec executable="mvn" dir="${external.dir}/jersey/jersey-server" failonerror="true" >
-	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	        <arg line="-Dmaven.test.skip=true" />
-          <arg line="install" />
-          <arg line="-P-xsltproc" />
-	  <!--
-          <env key="JAVA_HOME" value="${JDK_1.5}" />
-	  -->
-	      </exec>
-        <exec executable="mvn" dir="${external.dir}/jersey/jersey-client" failonerror="true" >
-	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	        <arg line="-Dmaven.test.skip=true" />
-          <arg line="install" />
-          <arg line="-P-xsltproc" />
-	  <!--
-          <env key="JAVA_HOME" value="${JDK_1.5}" />
-	  -->
-	      </exec>
-        <exec executable="mvn" dir="${external.dir}/jersey/jersey-json" failonerror="true" >
-	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	        <arg line="-Dmaven.test.skip=true" />
-          <arg line="install" />
-          <arg line="-P-xsltproc" />
-	  <!--
-          <env key="JAVA_HOME" value="${JDK_1.5}" />
-	  -->
-	      </exec>
-        <exec executable="mvn" dir="${external.dir}/jersey/jersey-atom" failonerror="true" >
-	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	        <arg line="-Dmaven.test.skip=true" />
-          <arg line="install" />
-          <arg line="-P-xsltproc" />
-	  <!--
-          <env key="JAVA_HOME" value="${JDK_1.5}" />
-	  -->
-	      </exec>
-        <exec executable="mvn" dir="${external.dir}/jersey/jersey-fastinfoset" failonerror="true" >
-	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	        <arg line="-Dmaven.test.skip=true" />
-          <arg line="install" />
-          <arg line="-P-xsltproc" />
-	  <!--
-          <env key="JAVA_HOME" value="${JDK_1.5}" />
-	  -->
-	      </exec>
-            <exec executable="mvn" dir="${external.dir}/jersey/jersey-bundle" failonerror="true" >
-	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	        <arg line="-Dmaven.test.skip=true" />
-          <arg line="install" />
-          <arg line="-P-xsltproc" />
-	  <!--
-          <env key="JAVA_HOME" value="${JDK_1.5}" />
-	  -->
-	      </exec>
-           <exec executable="mvn" dir="${external.dir}/jersey/samples" failonerror="true" >
-	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	        <arg line="-Dmaven.test.skip=true" />
-          <arg line="install" />
-          <arg line="-P-xsltproc" />
-	  <!--
-          <env key="JAVA_HOME" value="${JDK_1.5}" />
-	  -->
-	      </exec>
-          <exec executable="mvn" dir="${external.dir}/jersey/glassfish/v3-packages" failonerror="true" >
-	        <arg line="-s ${basedir}/jersey-extras/jsr311-settings.xml" />
-	        <arg line="-npu" />
-	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-                <!-- add project.scm.developerConnection and project.scm.connection properties -->
-                <!-- since it's causing the build failure with the message:                    -->
-                <!-- "java.lang.NullPointerException: The scm url cannot be null."             -->
-                <!-- This is a maven bug.  See:  MOJO-1463 http://jira.codehaus.org/browse/MOJO-1463. -->
-                <arg line="-Dproject.scm.developerConnection='scm:svn:https://jersey.dev.java.net/svn/jersey/trunk/jersey/'" /> 
-                <arg line="-Dproject.scm.connection='scm:svn:https://jersey.dev.java.net/svn/jersey/trunk/jersey/'" />
-	        <arg line="-Dmaven.test.skip=true" />
-          <arg line="install" />
-          <env key="JAVA_HOME" value="${JDK_1.6}" />
-        </exec>
-	      <!-- restore original plugin-registry file -->
-        <delete file="${maven.repo.local}/../plugin-registry.xml"/>
-        <copy failonerror="false" file="${external.dir}/jsr311-api/plugin-registry.xml" todir="${maven.repo.local}/.."/>
-    </target>
+        <mvn.install dir="${jersey.dir}/jersey" skip-test="true">
+            <extra-args>
+                <arg line="-N"/>
+                <arg line="-P-xsltproc"/>
+            </extra-args>
+        </mvn.install>
+        <mvn.install dir="${jersey.dir}/jersey/jersey-core" skip-test="true">
+            <extra-args>
+                <arg line="-P-xsltproc"/>
+            </extra-args>
+        </mvn.install>
+        <mvn.install dir="${jersey.dir}/jersey/jersey-server" skip-test="true">
+            <extra-args>
+                <arg line="-P-xsltproc"/>
+            </extra-args>
+        </mvn.install>
+        <mvn.install dir="${jersey.dir}/jersey/jersey-client" skip-test="true">
+            <extra-args>
+                <arg line="-P-xsltproc"/>
+            </extra-args>
+        </mvn.install>
+        <mvn.install dir="${jersey.dir}/jersey/jersey-json" skip-test="true">
+            <extra-args>
+                <arg line="-P-xsltproc"/>
+            </extra-args>
+        </mvn.install>
+        <mvn.install dir="${jersey.dir}/jersey/jersey-atom" skip-test="true">
+            <extra-args>
+                <arg line="-P-xsltproc"/>
+            </extra-args>
+        </mvn.install>
+        <mvn.install dir="${jersey.dir}/jersey/jersey-fastinfoset" skip-test="true">
+            <extra-args>
+                <arg line="-P-xsltproc"/>
+            </extra-args>
+        </mvn.install>
+        <mvn.install dir="${jersey.dir}/jersey/jersey-bundle" skip-test="true" >
+            <extra-args>
+                <arg line="-P-xsltproc"/>
+            </extra-args>
+        </mvn.install>
 
-    <target name="jettison.checkout" >
-        <echo message="checkout jettison from ${jettison.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	        <arg line="checkout" />
-          <arg line="${jettison.svn.url}" />
-          <arg line="jettison" />
-	      </exec>
+        <antcall target="jersey-samples"/>
+        <antcall target="jersey-v3-packages"/>
     </target>
 
     <target name="jettison.build" depends="jettison.checkout" >
         <!-- build jettison -->
-        <exec executable="mvn" dir="${external.dir}/jettison" failonerror="true" >
-	        <arg line="-U" />
-	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	        <arg line="-Dmaven.test.skip=true" />
-          <arg line="install" />
-	      </exec>
-    </target>
-
-    <target name="jackson.checkout" >
-        <echo message="checkout jackson from ${jackson.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	        <arg line="checkout" />
-          <arg line="${jackson.svn.url}" />
-          <arg line="jackson" />
-	      </exec>
+        <mvn.install dir="${jersey.dir}/jettison" skip-test="true">
+            <extra-args>
+                <arg line="-U"/>
+            </extra-args>
+        </mvn.install>
     </target>
 
     <target name="jackson.build" depends="jackson.checkout" >
-        <!-- build jackson -->
-        <exec executable="ant" dir="${external.dir}/jackson" failonerror="true" >
-          <arg line="jars.asl" />
-	      </exec>
-        <exec executable="mvn" dir="${external.dir}/jackson" failonerror="true" >
-	        <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-          <arg line="install:install-file" />
-          <arg line="-Dfile=${external.dir}/jackson/build/jackson-core-asl-${jackson.version}.jar" />
-          <arg line="-DpomFile=src/maven/jackson-core-asl.pom" />
-          <arg line="-DlocalRepositoryPath=${maven.repo.local}" />
-        </exec>
+        <!-- build jackson -->        
+        <ant dir="${jersey.dir}/jackson" inheritall="false"
+            target="jars.asl"/>
+        
+        <replace file="${jersey.dir}/jackson/src/maven/jackson-core-asl.pom"
+                 token="@VERSION@"
+                 value="${jackson.version}"/>
+
+        <mvn.publish.local.pom
+            file="${jersey.dir}/jackson/build/jackson-core-asl-${jackson.version}.jar"
+            pom="${jersey.dir}/jackson/src/maven/jackson-core-asl.pom" />
     </target>
-
-
 </project>
-

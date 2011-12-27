@@ -1,10 +1,194 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="Source build shared task definitions" basedir="." xmlns:artifact="urn:maven-artifact-ant" >
+<project name="Source build shared task definitions" basedir="." >
 
-    <property file="${basedir}/build.properties"/>
-    <import file="build.xml"/>
+    <!--
+        Maven macros
+    -->
+    <macrodef name="mvn.publish.local.pom">
+        <attribute name="file"/>
+        <attribute name="pom"/>
+        <attribute name="classifier" default="" />
+        <element name="extra-args" optional="true" />
+        <sequential>
+           <echo message="[mvn.publish.local.pom] pom=@{pom} file=@{file}"/>
+            <mvn3 goal="install:install-file">
+                <args>
+                    <arg line="-Dclassifier=@{classifier}" />
+                    <arg line="-Dfile=@{file}" />
+                    <arg line="-DpomFile=@{pom}" />
+                    <extra-args/>
+                </args>
+            </mvn3>
+        </sequential>
+    </macrodef>
 
+    <macrodef name="mvn.publish.local">
+        <attribute name="file"/>
+        <attribute name="groupId"/>
+        <attribute name="artifactId"/>
+        <attribute name="version"/>
+        <attribute name="packaging" default="jar"/>
+        <attribute name="classifier" default="" />
+        <attribute name="generatepom" default="true" />
+        <element name="extra-args" optional="true" />
+        <sequential>
+           <echo message="[mvn.publish.local] [@{groupId} @{artifactId} @{version}] file=@{file}"/>
+            <mvn3 goal="install:install-file">
+                <args>
+                    <arg line="-Dfile=@{file}" />
+                    <arg line="-DgroupId=@{groupId}" />
+                    <arg line="-DartifactId=@{artifactId}" />
+                    <arg line="-Dpackaging=@{packaging}" />
+                    <arg line="-Dversion=@{version}" />
+                    <arg line="-Dclassifier=@{classifier}" />
+                    <arg line="-DgeneratePom=@{generatepom}" />
+                    <arg line="-DlocalRepositoryPath=${maven.repo.local}" />
+                    <extra-args/>
+                </args>
+            </mvn3>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="mvn.publish.remote.pom">
+        <attribute name="file"/>
+        <attribute name="pom"/>
+        <attribute name="classifier" default="" />
+        <element name="extra-args" optional="true" />
+        <sequential>
+           <echo message="[mvn.publish.remote.pom] pom=@{pom} file=@{file}"/>
+            <mvn3 goal="deploy:deploy-file">
+                <args>
+                    <arg line="-Dclassifier=@{classifier}" />
+                    <arg line="-Durl=${project.maven.repo} "/>
+                    <arg line="-DrepositoryId=${project.maven.repo.id}" />
+                    <arg line="-Dfile=@{file}" />
+                    <arg line="-DpomFile=@{pom}" />
+                    <extra-args/>
+                </args>
+            </mvn3>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="mvn.publish.remote">
+       <attribute name="file"/>
+       <attribute name="groupId"/>
+       <attribute name="artifactId"/>
+       <attribute name="version"/>
+       <attribute name="packaging" default="jar"/>
+       <attribute name="classifier" default="" />
+       <element name="extra-args" optional="true" />
+       <sequential>
+           <echo message="[mvn.publish.remote] [@{groupId} @{artifactId} @{version}] file=@{file}"/>
+           <mvn3 goal="deploy:deploy-file">
+            <args>
+                <arg line="-Dfile=@{file}" />
+                <arg line="-Durl=${project.maven.repo} "/>
+                <arg line="-DrepositoryId=${project.maven.repo.id}" />
+                <arg line="-DgroupId=@{groupId}" />
+                <arg line="-DartifactId=@{artifactId}" />
+                <arg line="-Dversion=@{version}" />
+                <arg line="-Dclassifier=@{classifier}" />
+                <arg line="-Dpackaging=@{packaging}" />
+                <extra-args/>
+            </args>
+           </mvn3>
+       </sequential>
+    </macrodef>
+
+    <macrodef name="mvn.get">
+        <attribute name="repourl" default="repo1.maven.org"/>
+        <attribute name="artifact" />
+        <sequential>
+            <echo message="[mvn.get] @{artifact} from @{repourl}"/>
+            <mvn2 goal="org.apache.maven.plugins:maven-dependency-plugin:2.3:get">
+                <args>
+                    <arg line="-DrepoUrl=@{repourl}"/>
+                    <arg line="-Dartifact=@{artifact}"/>
+                </args>
+            </mvn2>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="mvn.install">
+        <attribute name="dir"/>
+        <attribute name="skip-test" default="false"/>
+        <attribute name="settings-xml" default="${maven.settings.xml}" />
+        <element name="extra-args" optional="true" />
+        <sequential>
+            <echo message="[mvn2.install] dir=@{dir} skip-test=@{skip-test}"/>
+            <mvn2 goal="install" dir="@{dir}" settings-xml="@{settings-xml}">
+                <args>
+                    <arg line="-Dmaven.test.skip=@{skip-test}" />
+                    <extra-args/>
+                </args>
+            </mvn2>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="mvn3.install">
+        <attribute name="dir"/>
+        <attribute name="skip-test" default="false"/>
+        <attribute name="settings-xml" default="${maven.settings.xml}" />
+        <element name="extra-args" optional="true" />
+        <sequential>
+            <echo message="[mvn3.install] dir=@{dir} skip-test=@{skip-test}"/>
+            <mvn3 goal="install" dir="@{dir}" settings-xml="@{settings-xml}">
+                <args>
+                    <arg line="-Dmaven.test.skip=@{skip-test}" />
+                    <extra-args/>
+                </args>
+            </mvn3>
+        </sequential>
+    </macrodef>
+    
+    <macrodef name="mvn2">
+        <attribute name="dir" default="${basedir}"/>
+        <attribute name="settings-xml" default="${maven.settings.xml}"/>
+        <attribute name="home" default="${basedir}"/>
+        <attribute name="goal" />
+        <element name="args" optional="true"/>
+        <sequential>
+            <exec executable="${mvn2.home}/bin/mvn" dir="@{dir}" failonerror="true">
+                <arg line="-s @{settings-xml}"/>
+                <arg line="-Duser.home=@{home}"/>
+                <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+                <args/>
+                <arg line="@{goal}" />
+		<env key="M2_HOME" value="${mvn2.home}"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="mvn3">
+        <attribute name="dir" default="${basedir}"/>
+        <attribute name="settings-xml" default="${maven.settings.xml}"/>
+        <attribute name="home" default="${basedir}"/>
+        <attribute name="goal" />
+        <element name="args" optional="true"/>
+        <sequential>
+            <exec executable="${mvn3.home}/bin/mvn" dir="@{dir}" failonerror="true">
+                <arg line="-s @{settings-xml}"/>
+                <arg line="-Duser.home=@{home}"/>
+                <arg line="-Dmaven.repo.local=${maven.repo.local}" />
+                <args/>
+                <arg line="@{goal}" />
+		<env key="M2_HOME" value="${mvn3.home}"/>
+            </exec>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="check.mvn.dependencies">
+        <attribute name="mvnpath"/>
+        <attribute name="msg"/>
+        <sequential>
+            <available property="@{mvnpath}-avail"
+                file="${maven.repo.local}/@{mvnpath}"/>
+             <fail unless="@{mvnpath}-avail"
+                message="${maven.repo.local}/@{mvnpath} @{msg}"/>
+        </sequential>
+    </macrodef>
+    
     <macrodef name="build.jar.from.srczip">
        <attribute name="jar"/>
        <attribute name="srczip"/>
@@ -17,9 +201,14 @@
 
             <property name="build.dir" value="@{unzipdir}/build"/>
             <mkdir dir="${build.dir}" />
-
             <mkdir dir="@{unzipdir}/@{srcdir}" />
-            <javac srcdir="@{unzipdir}/@{srcdir}" debug="true" destdir="${build.dir}" source="1.5" target="1.5" classpath="@{cp}"/>
+
+            <javac srcdir="@{unzipdir}/@{srcdir}"
+                debug="true"
+                destdir="${build.dir}"
+                source="1.5"
+                target="1.5"
+                classpath="@{cp}"/>
 
             <jar jarfile="@{jar}" compress="false">
                 <fileset dir="${build.dir}" />
@@ -30,6 +219,7 @@
                         <include name="**/*.dtd"/>
                         <include name="**/*.rng"/>
                         <include name="**/*.mod"/>
+                        <include name="**/*.xsd"/>
                     </patternset>
                 </fileset>
             </jar>
@@ -37,63 +227,17 @@
        </sequential>
     </macrodef>
 
-    <macrodef name="mvn.publish.local">
-       <attribute name="jar"/>
-       <attribute name="mvngroup"/>
-       <attribute name="mvnartid"/>
-       <attribute name="mvnversion"/>
-       <attribute name="mvnclassifier" default="" />
-       <attribute name="extra-args" default="" />
-       <attribute name="generatepom" default="true" />
-       <sequential>
-            <exec executable="mvn" failonerror="true" >
-                <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-                <arg line="install:install-file" />
-                <arg line="-Dfile=@{jar}" />
-                <arg line="-DgroupId=@{mvngroup}" />
-                <arg line="-DartifactId=@{mvnartid}" />
-                <arg line="-Dpackaging=jar" />
-                <arg line="-Dversion=@{mvnversion}" />
-                <arg line="-Dclassifier=@{mvnclassifier}" />
-                <arg line="-DgeneratePom=@{generatepom}" />
-                <arg line="-DlocalRepositoryPath=${maven.repo.local}" />
-                <arg line="@{extra-args}" />
-            </exec>
-       </sequential>
-    </macrodef>
-
-    <macrodef name="mvn.publish.remote">
-       <attribute name="jar"/>
-       <attribute name="mvngroup"/>
-       <attribute name="mvnartid"/>
-       <attribute name="mvnversion"/>
-       <attribute name="mvnclassifier" default="" />
-       <attribute name="extra-args" default="" />
-       <sequential>
-            <exec executable="mvn" failonerror="true" >
-                <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-                <arg line="deploy:deploy-file" />
-                <arg line="-Dfile=@{jar}" />
-                <arg line="-Durl=${project.maven.repo} "/>
-                <arg line="-DrepositoryId=${project.maven.repo.id}" />
-                <arg line="-DgroupId=@{mvngroup}" />
-                <arg line="-DartifactId=@{mvnartid}" />
-                <arg line="-Dversion=@{mvnversion}" />
-                <arg line="-Dclassifier=@{mvnclassifier}" />
-                <arg line="-Dpackaging=jar" />
-                <arg line="@{extra-args}" />
-            </exec>
-       </sequential>
-    </macrodef>
-
+    <!--
+        SCM macros
+    -->
     <macrodef name="cvs.checkout">
        <attribute name="tag" default="HEAD"/>
        <attribute name="repo"/>
        <attribute name="dest"/>
        <attribute name="module"/>
        <sequential>
-            <echo message="checkout @{module} from @{repo}"/>
-            <exec executable="cvs" dir="${external.dir}" failonerror="true" >
+            <echo message="cvs checkout @{module} from @{repo}"/>
+            <exec executable="cvs" dir="${glassfish.external.dir}" >
                 <arg line="-q -d @{repo}" />
                 <arg line="checkout" />
                 <arg line="-r @{tag}" />
@@ -104,17 +248,14 @@
     </macrodef>
 
     <macrodef name="svn.checkout">
-       <attribute name="tag"/>
+       <attribute name="tag" default="HEAD"/>
        <attribute name="repo"/>
        <attribute name="dest"/>
        <sequential>
             <echo message="svn checkout from @{repo}"/>
-            <exec executable="svn" dir="${external.dir}" failonerror="true" >
-                <arg line="checkout" />
-                <arg line="-r @{tag}" />
-                <arg line="@{repo}" />
-                <arg line="@{dest}" />
-            </exec>
+            <exec-3-trials
+                exe="svn"
+                arg="-r @{tag} checkout @{repo} ${glassfish.external.dir}/@{dest}"/>
        </sequential>
     </macrodef>
 
@@ -123,30 +264,288 @@
        <attribute name="repo"/>
        <attribute name="dest"/>
        <sequential>
+            <!--
+                try to delete dest directory to prevent failure
+                as hg fails if it already exists
+            -->
+            <delete dir="${glassfish.external.dir}/@{dest}" failonerror="false"/>
             <echo message="hg clone from @{repo} with tag @{tag}"/>
-            <exec executable="hg" dir="${external.dir}" failonerror="false" >
-                <arg line="clone" />
-                <arg line="@{repo}" />
-                <arg line="@{dest}" />
-            </exec>
-            <exec executable="hg" dir="${external.dir}/@{dest}" failonerror="true" >
-                <arg line="pull"/>
-            </exec>
-            <exec executable="hg" dir="${external.dir}/@{dest}" failonerror="true" >
-                <arg line="update" />
-                <arg line="-r @{tag}" />
-            </exec>
+            <exec-3-trials
+                exe="hg"
+                arg="clone --insecure @{repo} ${glassfish.external.dir}/@{dest}" />
+            <exec-3-trials
+                exe="hg"
+                arg="-R ${glassfish.external.dir}/@{dest} pull --insecure" />
+            <exec-3-trials
+                exe="hg"
+                arg="-R ${glassfish.external.dir}/@{dest} update -r @{tag}" />
        </sequential>
     </macrodef>
+    
+    <macrodef name="git.clone">
+        <attribute name="repo"/>
+        <attribute name="dest"/>
+        <attribute name="tag" default="master"/>
+        <sequential>
+            <!--
+                try to delete dest directory to prevent failure
+                as git fails if it already exists
+            -->
+            <delete dir="${glassfish.external.dir}/@{dest}" failonerror="false"/>
+            <echo message="git clone @{repo} - @{tag}"/>
+	    <!-- prevent git failure if permissions of the private key are wrong -->
+	    <chmod file="${ssh.user.home}/id_rsa" perm="600"/>
+            <exec executable="git" dir="${glassfish.external.dir}">
+                <arg line="clone"/>
+                <arg line="@{repo}"/>
+                <arg line="@{dest}"/>
+                <env key="HOME" value="${ssh.user.home}/.."/>
+                <env key="GIT_SSH" value="${ssh.user.home}/config"/>
+            </exec>
+            <exec executable="git" dir="${glassfish.external.dir}/@{dest}">
+                <arg line="checkout"/>
+                <arg line="@{tag}"/>
+            </exec>
+        </sequential>
+    </macrodef>
 
-    <target name="bnd.download" >
-	<path id="maven-ant-tasks.classpath" path="${maven.ant.tasks.jar}" />
-	<typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="urn:maven-artifact-ant" classpathref="maven-ant-tasks.classpath" />
-	<artifact:dependencies pathId="bnd.classpath">
-	   <remoteRepository  id="bnd.repo" url="${bnd.repository}"/>
-	   <localRepository  path="${maven.repo.local}" />
-	   <dependency groupId="${bnd.groupid}" artifactId="${bnd.artifactid}" version="${bnd.version}" scope="compile"/>
-	</artifact:dependencies>
+    <!--
+        Other macros
+    -->
+    <macrodef name="exec-nofail">
+        <attribute name="exe" />
+        <attribute name="arg" />
+        <attribute name="res" default="result" />
+        <attribute name="verbose" default="true"/>
+        <attribute name="output" default="/tmp/avoidOuput" />
+        <attribute name="dir" default="${basedir}" />
+        <sequential>
+            <condition property="@{exe}@{arg}-isVerbose">
+                <equals arg1="@{verbose}" arg2="true" />
+            </condition>
+            <selectiveTask if="@{exe}@{arg}-isVerbose">
+                <exec
+                    dir="@{dir}"
+                    executable="@{exe}"
+                    searchpath="true"
+                    failonerror="false"
+                    failifexecutionfails="false"
+                    resultproperty="@{res}" >
+                    <arg line="@{arg}"/>
+                </exec>
+            </selectiveTask>
+            <selectiveTask unless="@{exe}@{arg}-isVerbose">
+                <exec
+                    dir="@{dir}"
+                    executable="@{exe}"
+                    searchpath="true"
+                    failonerror="false"
+                    failifexecutionfails="false"
+                    output="@{output}"
+                    resultproperty="@{res}" >
+                    <arg line="@{arg}"/>
+                </exec>
+            </selectiveTask>
+        </sequential>
+    </macrodef>
+    
+    <!--
+        Workaround for proxy errors with scm... (mostly for svn proxy issues)
+        Try 3 times to perform the command...
+    -->
+    <macrodef name="exec-3-trials">
+        <attribute name="exe"/>
+        <attribute name="arg"/>
+        <sequential>
+            <!-- 1st try -->
+            <exec-nofail exe="@{exe}" res="@{arg}-res.1" arg="@{arg}"/>
+            <condition property="@{arg}-try1.succeed">
+                <equals arg1="${@{arg}-res.1}" arg2="0"/>
+            </condition>
+            <selectiveTask unless="@{arg}-try1.succeed">
+                <!-- 2nd try -->
+                <echo message="exec try1 failed, 2nd try..."/>
+                <exec-nofail exe="@{exe}" res="@{arg}-res.2" arg="@{arg}"/>
+                <condition property="@{arg}-try2.succeed">
+                    <equals arg1="${@{arg}-res.2}" arg2="0"/>
+                </condition>
+                <selectiveTask unless="@{arg}-try2.succeed">
+                    <!-- 3rd try -->
+                    <echo message="exec try2 failed, 3rd try..."/>
+                    <exec-nofail exe="@{exe}" res="@{arg}-res.3" arg="@{arg}"/>
+                    <condition property="@{arg}-try3.succeed">
+                        <equals arg1="${@{arg}-res.3}" arg2="0"/>
+                    </condition>
+                    <fail unless="@{arg}-try3.succeed"
+                        message="exec failed after 3 trials ..." />
+                </selectiveTask>
+            </selectiveTask>
+        </sequential>
+    </macrodef>
+
+    <!--
+        XML macros...
+    -->
+    <macrodef name="xml.elt">
+        <attribute name="name"/>
+        <attribute name="value"/>
+        <attribute name="prop"/>
+        <sequential>
+            <property name="@{prop}"
+                value="&lt;@{name}&gt;@{value}&lt;/@{name}&gt;"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="xml.repository">
+        <attribute name="id"/>
+        <attribute name="url"/>
+        <attribute name="prop"/>
+        <sequential>
+            <xml.elt name="id" prop="@{prop}-id" value="@{id}"/>
+            <xml.elt name="url" prop="@{prop}-url" value="@{url}"/>
+            <xml.elt name="repository" prop="@{prop}" value="${@{prop}-id}${@{prop}-url}"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="xml.plugin.repository">
+        <attribute name="id"/>
+        <attribute name="url"/>
+        <attribute name="prop"/>
+        <sequential>
+            <xml.elt name="id" prop="@{prop}-id" value="@{id}"/>
+            <xml.elt name="url" prop="@{prop}-url" value="@{url}"/>
+            <xml.elt name="pluginRepository" prop="@{prop}" value="${@{prop}-id}${@{prop}-url}"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="generate-plugin-registry-xml">
+        <attribute name="file" />
+        <attribute name="groupId"/>
+        <attribute name="artifactId"/>
+        <attribute name="useVersion"/>
+        <sequential>
+            <xml.elt prop="@{artifactId}useVElt" name="useVersion"
+                value="@{useVersion}"/>
+            <xml.elt prop="@{artifactId}artIdElt" name="artifactId"
+                value="@{artifactId}"/>
+            <xml.elt prop="@{artifactId}gIdElt" name="groupId"
+                value="@{groupId}"/>
+            <xml.elt prop="@{artifactId}pluginElt" name="plugin"
+                value="${@{artifactId}gIdElt}${@{artifactId}artIdElt}${@{artifactId}useVElt}"/>
+            <xml.elt prop="@{artifactId}pluginsElt" name="plugins"
+                value="${@{artifactId}pluginElt}"/>
+            <xml.elt prop="@{artifactId}pluginRegistryElt" name="pluginRegistry"
+                value="${@{artifactId}pluginsElt}"/>
+            <echo file="@{file}" message="${@{artifactId}pluginRegistryElt}"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="generate-settings-xml">
+        <attribute name="file" />
+        <attribute name="repoid" default="repoid" />
+        <attribute name="profileid" default="profileid"/>
+        <attribute name="profileactive" default="true"/>
+        <attribute name="additionalElts" default=""/>
+        <attribute name="additionalRepository" default=""/>
+        <attribute name="additionalPluginRepository" default=""/>
+        <attribute name="additionalProfile" default=""/>
+        <sequential>
+            <loadproperties srcFile="${basedir}/status-progress.properties">
+                <filterchain>
+                    <tokenfilter>
+                        <containsstring contains="proxies.xml="/>
+                    </tokenfilter>
+                </filterchain>
+            </loadproperties>
+            <xml.repository id="jvnet-gf" prop="repo1-@{file}"
+                url="http://download.java.net/maven/glassfish" />
+            <xml.repository id="jvnet-m2" prop="repo2-@{file}"
+                url="http://download.java.net/maven/2" />
+            <xml.elt name="repositories" prop="repos-@{file}"
+                value="${repo1-@{file}}${repo2-@{file}}@{additionalRepository}"/>
+            <xml.plugin.repository id="jvnet-gf" prop="pluginrepo1-@{file}"
+                url="http://download.java.net/maven/glassfish" />
+            <xml.plugin.repository id="jvnet-m2" prop="pluginrepo2-@{file}"
+                url="http://download.java.net/maven/2" />
+            <xml.elt name="pluginRepositories" prop="pluginrepos-@{file}"
+                value="${pluginrepo1-@{file}}${pluginrepo2-@{file}}@{additionalPluginRepository}"/>
+            <xml.elt name="id" prop="pid-@{file}"
+                value="@{profileid}"/>
+            <xml.elt name="activeByDefault" prop="activeByDefault-@{file}"
+                value="@{profileactive}"/>
+            <xml.elt name="activation" prop="activation-@{file}"
+                value="${activeByDefault-@{file}}"/>
+            <xml.elt name="profile" prop="profile-@{file}"
+                value="${pid-@{file}}${activation-@{file}}${repos-@{file}}${pluginrepos-@{file}}"/>
+            <xml.elt name="profiles" prop="profiles-@{file}"
+                value="${profile-@{file}}@{additionalProfile}"/>
+            <xml.elt name="settings" prop="settings-@{file}"
+                value="${proxies.xml}${profiles-@{file}}@{additionalElts}"/>
+            <echo file="@{file}" message="${settings-@{file}}"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="xml.dependency">
+        <attribute name="groupId"/>
+        <attribute name="artifactId"/>
+        <attribute name="version"/>
+        <attribute name="type" default="jar"/>
+        <attribute name="scope" default="compile"/>
+        <attribute name="optional" default="false"/>
+        <attribute name="prop"/>
+        <sequential>
+            <xml.elt name="artifactId" value="@{artifactId}" prop="@{prop}-a"/>
+            <xml.elt name="groupId" value="@{groupId}" prop="@{prop}-g"/>
+            <xml.elt name="optional" value="@{optional}" prop="@{prop}-o"/>
+            <xml.elt name="scope" value="@{scope}" prop="@{prop}-s"/>
+            <xml.elt name="type" value="@{type}" prop="@{prop}-t"/>
+            <xml.elt name="version" value="@{version}" prop="@{prop}-v"/>
+            <xml.elt name="dependency" prop="@{prop}"
+                 value="${@{prop}-a}${@{prop}-g}${@{prop}-o}${@{prop}-s}${@{prop}-t}${@{prop}-v}"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="create.pom">
+        <attribute name="template.file"/>
+        <attribute name="output.file"/>
+        <attribute name="version"/>
+        <attribute name="groupId"/>
+        <sequential>
+            <echo>creating pom: @{output.file} - groupId: ${groupId} - version: @{version}</echo>
+            <copy file="@{template.file}" tofile="@{output.file}"/>
+            <replace file="@{output.file}"
+                     token="@version@"
+                     value="@{version}"/>
+            <replace file="@{output.file}"
+                     token="@groupId@"
+                     value="@{groupId}"/>
+        </sequential>
+    </macrodef>
+
+    <!--
+        sourcebuild-ant-tasks...
+    -->
+    <property name="sourcebuild-ant-tasks.dir" value="${basedir}/lib/sourcebuild-ant-tasks"/>
+    <property name="sourcebuild-ant-tasks.jar" value="${sourcebuild-ant-tasks.dir}/target/sourcebuild-ant-tasks-1.0.jar"/>
+
+    <target name="sourcebuild-ant-tasks.build" unless="sourcebuild-ant-tasks.built">
+        <mvn.install dir="${sourcebuild-ant-tasks.dir}"/>
+    </target>
+
+    <target name="sourcebuild-ant-tasks.init">
+        <!-- build sourcebuild-ant-tasks-->
+        <condition property="sourcebuild-ant-tasks.built">
+            <available file="${sourcebuild-ant-tasks.jar}"/>
+        </condition>
+        <antcall target="sourcebuild-ant-tasks.build"/>
+        
+        <!-- define sourcebuild-ant-tasks-->
+        <taskdef name="stringReplaceRegexp"
+             classname="org.glassfish.sourcebuild.ant.tasks.StringReplaceRegexpTask"
+             classpath="${sourcebuild-ant-tasks.jar}"/>
+        <taskdef name="selectiveTask"
+             classname="org.glassfish.sourcebuild.ant.tasks.SelectiveTask"
+             classpath="${sourcebuild-ant-tasks.jar}"/>
     </target>
 
 </project>

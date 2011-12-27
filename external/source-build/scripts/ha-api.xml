@@ -1,31 +1,16 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="ha-api source integration" default="build" basedir=".">
+<project name="ha-api source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-
-    <target name="build" depends="init">
-        <antcall target="ha-api.build" />
+    <import file="${basedir}/build.xml"/>
+    
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${ha-api.svn.url}" dest="ha-api"/>
     </target>
 
-    <!--
-        Checkout ha-api source and build
-    -->
-    <target name="ha-api.checkout" >
-        <echo message="checkout shoal from ${ha-api.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${ha-api.svn.url}" />
-            <arg line="ha-api" />
-	</exec>
-    </target>
-    <target name="ha-api.build" depends="ha-api.checkout" >
-        <!-- build shoal -->
-        <exec executable="mvn" dir="${external.dir}/ha-api" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+    <target name="build" depends="checkout" >
+        <mvn.install dir="${glassfish.external.dir}/ha-api" />
     </target>
 
 </project>

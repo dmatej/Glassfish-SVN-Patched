@@ -1,52 +1,25 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="UEL source integration" default="build" basedir=".">
+<project name="UEL source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-
-    <target name="build" depends="init">
-        <antcall target="uel.build" />
-    </target>
+    <import file="${basedir}/build.xml"/>
 
     <!--
         Checkout uel source and build
         Need to be built before jps since jps has a dependency on this project.
     -->
-    <target name="uel.checkout" >
-        <echo message="checkout uel from ${uel-pom.svn.url}, ${uel-api.svn.url} and ${uel-impl.svn.url}."/>
-	<mkdir dir="${external.dir}/uel"/>
-        <exec executable="svn" dir="${external.dir}/uel" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${uel-pom.svn.url}" />
-            <arg line="parent-pom" />
-	</exec>
-        <exec executable="svn" dir="${external.dir}/uel" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${uel-api.svn.url}" />
-            <arg line="api" />
-	</exec>
-        <exec executable="svn" dir="${external.dir}/uel" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${uel-impl.svn.url}" />
-            <arg line="impl" />
-	</exec>
-
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${uel-pom.svn.url}" dest="uel/parent-pom"/>
+        <svn.checkout repo="${uel-api.svn.url}" dest="uel/api"/>
+        <svn.checkout repo="${uel-impl.svn.url}" dest="uel/impl"/>
     </target>
-    <target name="uel.build" depends="uel.checkout" >
+    
+    <target name="build" depends="checkout" >
         <!-- build uel -->
-        <exec executable="mvn" dir="${external.dir}/uel/parent-pom" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-        <exec executable="mvn" dir="${external.dir}/uel/api" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-        <exec executable="mvn" dir="${external.dir}/uel/impl" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+        <mvn.install dir="${glassfish.external.dir}/uel/parent-pom"/>
+        <mvn.install dir="${glassfish.external.dir}/uel/api"/>
+        <mvn.install dir="${glassfish.external.dir}/uel/impl"/>
     </target>
 
 </project>

@@ -1,36 +1,36 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="JavaMail source integration" default="build" basedir=".">
+<project name="JavaMail source integration" default="build" basedir="..">
 
-    <import file="build.xml"/>
-    <import file="build-taskdefs.xml"/>
-    
-    <target name="build" depends="init">
-        <antcall target="mail.build" />
-    </target>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="mail.checkout" unless="nocheckout">
-        <delete dir="${external.dir}/mail"/>
+    <target name="checkout" depends="init,check.hg" unless="skipCheckout">
         <hg.clone repo="${mail.hg.url}" tag="${mail.hg.tag}" dest="mail"/>
     </target>
     
-    <target name="mail.build" depends="mail.checkout" >
+    <target name="build" depends="checkout" >
         <delete>
-            <fileset dir="${external.dir}/mail" includes="**/*.jar"/>
+            <fileset dir="${glassfish.external.dir}/mail" includes="**/*.jar"/>
         </delete>
         
-        <exec executable="mvn" failonerror="true" >
-            <arg line="-f ${external.dir}/mail/pom.xml -Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="clean install" />
-            <arg line="-DskipTests"/>
-	</exec>
+        <!-- 
+            Skip the javadoc submodule
+        -->
+        <mvn.install dir="${glassfish.external.dir}/mail" skip-test="true">
+            <extra-args>
+                <arg line="-am"/>
+                <arg line="-pl mail,mailapi,mailapijar,smtp,imap,pop3,dsn,oldmail"/>
+            </extra-args>
+        </mvn.install>
     </target>
 
     <target name="mail.publish" >
-        <exec executable="mvn" dir="${external.dir}/mail" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	    <arg line="-DaltDeploymentRepository=rator.sfbay::default::dav:http://glassfish-maven-repository.sfbay/maven/repositories/glassfish/" />
-            <arg line="deploy" />
-	</exec>
+        <mvn.publish.remote.pom
+            file="${glassfish.external.dir}/mail/target/mail-${mail.version}.jar"
+            pom="${glassfish.external.dir}/mail/pom.xml">
+            <extra-args>
+                <arg line="-DaltDeploymentRepository=${altDeploymentRepository}"/>
+            </extra-args>
+        </mvn.publish.remote.pom>
     </target>
 </project>

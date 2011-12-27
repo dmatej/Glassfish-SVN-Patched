@@ -1,276 +1,223 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="Weld source integration" default="build" basedir=".">
+<project name="Weld source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-    <import file="build-taskdefs.xml"/>
+    <import file="${basedir}/build.xml"/>
+
+    <property name="weld.dir" value="${glassfish.external.dir}/weld"/>
+
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <antcall target="javassist.checkout"/>
+        <antcall target="guava-libraries.checkout"/>
+        <antcall target="jboss-interceptor-api.checkout"/>
+        <antcall target="jboss-interceptor.checkout"/>
+        <antcall target="javax-inject.checkout"/>
+        <antcall target="weld-api.checkout"/>
+        <antcall target="weld-core.checkout"/>
+    </target>
 
     <target name="build" depends="init">
         <antcall target="javassist.build" />
-
         <antcall target="guava-libraries.build" />
-
         <antcall target="jboss-interceptor-api.build" />
-
         <antcall target="jboss-interceptor.build" />
-
         <antcall target="javax-inject.build" />
-
-        <ant antfile="slf4j.xml" target="build" />
-
         <antcall target="weld.build" />
     </target>
 
     <target name="publish" >
         <antcall target="javassist.build"  />
         <antcall target="guava-libraries.publish.remote" />
-
         <antcall target="jboss-interceptor-api.publish.remote" />
         <antcall target="jboss-interceptor.publish.remote" />
         <antcall target="javax-inject.publish.remote" />
-        <ant antfile="slf4j.xml" target="build" />
-        <ant antfile="slf4j.xml" target="slf4j.publish" />
         <antcall target="weld-api.publish.remote" />
         <antcall target="weld-core.publish.remote" />
     </target>
 
-
-    <!-- javassist -->
-
-    <target name="javassist.checkout" >
-        <echo message="checkout javassist from ${javassist.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${javassist.svn.url}" />
-            <arg line="javassist" />
-        </exec>
+    <!--
+        Checkout targets
+    -->
+    <target name="javassist.checkout" unless="skipCheckout">
+        <svn.checkout repo="${javassist.svn.url}"
+            dest="weld/javassist"/>
     </target>
+    <target name="guava-libraries.checkout" unless="skipCheckout">
+        <svn.checkout repo="${guava-libraries.svn.url}"
+            dest="weld/guava-libraries"/>
+    </target>
+    <target name="jboss-interceptor-api.checkout" unless="skipCheckout">
+        <svn.checkout repo="${jboss-interceptor-api.svn.url}"
+            dest="weld/jboss-interceptor-api"/>
+    </target>
+    <target name="jboss-interceptor.checkout" unless="skipCheckout">
+        <svn.checkout repo="${jboss-interceptor.svn.url}"
+            dest="weld/jboss-interceptor-parent"/>
+    </target>
+    <target name="javax-inject.checkout" unless="skipCheckout">
+        <svn.checkout repo="${javax-inject.svn.url}"
+            dest="weld/javax-inject"/>
+    </target>
+    <target name="weld-api.checkout" unless="skipCheckout">
+        <svn.checkout repo="${weld-api.svn.url}"
+            dest="weld/weld-api"/>
+    </target>
+    <target name="weld-core.checkout" unless="skipCheckout">
+        <svn.checkout repo="${weld-core.svn.url}"
+            dest="weld/weld-core"/>
+    </target>
+
+
+    <!--
+        Build targets
+    -->
     <target name="javassist.build" depends="javassist.checkout" >
         <!-- build javassist -->
-        <exec executable="mvn" dir="${external.dir}/javassist" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <!-- skip profile so it compiles on MAC -->
-            <arg line="-P !jdk16" />
-            <arg line="install" />
-        </exec>
+        <!-- skip profile so it compiles on MAC -->
+        <mvn.install dir="${weld.dir}/javassist">
+            <extra-args>
+                <arg line="-P !jdk16"/>
+            </extra-args>
+        </mvn.install>
     </target>
 
-    <!-- guava libraries -->
-
-    <target name="guava-libraries.checkout" >
-        <echo message="checkout guava libraries from ${guava-libraries.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${guava-libraries.svn.url}" />
-            <arg line="guava-libraries" />
-        </exec>
-    </target>
     <target name="guava-libraries.build" depends="guava-libraries.checkout" >
         <!-- build guava libraries-->
-        <exec executable="mvn" dir="${external.dir}/guava-libraries" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-        </exec>
+        <mvn.install dir="${weld.dir}/guava-libraries"/>
     </target>
 
-    <!-- jboss interceptor api -->
-
-    <target name="jboss-interceptor-api.checkout" >
-        <echo message="checkout jboss-interceptor-api from ${jboss-interceptor-api.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${jboss-interceptor-api.svn.url}" />
-            <arg line="jboss-interceptor-api_1.1_spec" />
-        </exec>
-    </target>
     <target name="jboss-interceptor-api.build" depends="jboss-interceptor-api.checkout" >
         <!-- build jboss-interceptor-api -->
-        <exec executable="mvn" dir="${external.dir}/jboss-interceptor-api_1.1_spec" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-        </exec>
+        <mvn.install dir="${weld.dir}/jboss-interceptor-api">
+            <extra-args>
+                <arg line="-Pgf-jboss"/>
+            </extra-args>
+        </mvn.install>
     </target>
 
-    <!-- jboss interceptor -->
-
-    <target name="jboss-interceptor.checkout" >
-        <echo message="checkout jboss-interceptor from ${jboss-interceptor.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${jboss-interceptor.svn.url}" />
-            <arg line="jboss-interceptor-parent" />
-        </exec>
-    </target>
     <target name="jboss-interceptor.build" depends="jboss-interceptor.checkout" >
         <!-- build jboss-interceptor -->
-        <exec executable="mvn" dir="${external.dir}/jboss-interceptor-parent" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-        </exec>
+        <mvn.install dir="${weld.dir}/jboss-interceptor-parent"/>
     </target>
 
-    <!-- javax inject -->
     <!-- NOTE: This build executes a build.sh script because the maven environment -->
     <!--       was not suitable for maven 2 source build -->
-
-    <target name="javax-inject.checkout" >
-        <echo message="checkout javax-inject from ${javax-inject.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${javax-inject.svn.url}" />
-            <arg line="javax-inject" />
-        </exec>
-    </target>
     <target name="javax-inject.build" depends="javax-inject.checkout" >
         <!-- build javax-inject -->
-        <exec executable="sh" dir="${external.dir}/javax-inject" failonerror="true" >
+        <exec executable="sh" dir="${weld.dir}/javax-inject" failonerror="true" >
               <arg line="build.sh"/>
         </exec>
-        <mvn.publish.local jar="${external.dir}/javax-inject/build/dist/javax.inject.jar"
-            mvngroup="javax.inject" mvnartid="javax.inject"
-            mvnversion="${javax-inject.version}"/>
+        <mvn.publish.local file="${weld.dir}/javax-inject/build/dist/javax.inject.jar"
+            groupId="javax.inject"
+            artifactId="javax.inject"
+            version="${javax-inject.version}"/>
     </target>
 
     <!-- weld build -->
-
     <target name="weld.build" depends="weld-api.build, weld-core.build" />
-
-    <!-- weld api -->
 
     <target name="weld-api.build" depends="weld-api.checkout" >
         <!-- build weld-api -->
-        <exec executable="mvn" dir="${external.dir}/weld-api" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+        <mvn3.install dir="${weld.dir}/weld-api"/>
     </target>
-    <target name="weld-api.checkout" >
-        <echo message="checkout weld-api from ${weld-api.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${weld-api.svn.url}" />
-            <arg line="weld-api" />
-        </exec>
-    </target>
-
-    <!-- weld core -->
 
     <target name="weld-core.build" depends="weld-core.checkout" >
         <!-- build weld-core -->
-        <exec executable="mvn" dir="${external.dir}/weld-core" failonerror="true" >
-	    <arg line="-s ${basedir}/weld-extra/weld-core-settings.xml" />
-            <arg line="-Dmaven.repo.local=${maven.repo.local} " />
-            <arg line="install" />
-        </exec>
+        <mvn3.install dir="${weld.dir}/weld-core">
+            <extra-args>
+                <arg line="-Djboss-public-repository=true"/>
+                <arg line="-Dweld.default.build=false"/>
+            </extra-args>
+        </mvn3.install>
         <!-- build weld-osgi-bundle -->
-        <exec executable="mvn" dir="${external.dir}/weld-core/bundles/osgi" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local} " />
-            <arg line="install" />
-        </exec>
-    </target>
-    <target name="weld-core.checkout" >
-        <echo message="checkout weld-core from ${weld-core.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${weld-core.svn.url}" />
-            <arg line="weld-core" />
-        </exec>
+        <mvn.install dir="${weld.dir}/weld-core/bundles/osgi" />
     </target>
 
-
-    <!-- publish -->
+    <!--
+        Publish targets
+    -->
     <target name="javassist.publish.remote"  >
         <!-- publish javassist -->
-        <exec executable="mvn" dir="${external.dir}/javassist" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="deploy" />
-        </exec>
+        <mvn2 dir="${weld.dir}/javassist" goal="deploy"/>
     </target>
 
     <target name="guava-libraries.publish.remote" >
         <!-- publish guava libraries -->
-        <exec executable="mvn" dir="${external.dir}/guava-libraries" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	    <arg line="-DaltDeploymentRepository=rator.sfbay::default::dav:http://glassfish-maven-repository.sfbay/maven/repositories/glassfish/" />
-            <arg line="deploy" />
-        </exec>
+        <mvn2 dir="${weld.dir}/guava-libraries" goal="deploy">
+            <args>
+                <arg line="-DaltDeploymentRepository=${altDeploymentRepository}" />
+            </args>
+        </mvn2>
     </target>
 
     <target name="jboss-interceptor-api.publish.remote">
         <!-- publish jboss-interceptor-api -->
-        <exec executable="mvn" dir="${external.dir}/jboss-interceptor-api" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	    <arg line="-DaltDeploymentRepository=rator.sfbay::default::dav:http://glassfish-maven-repository.sfbay/maven/repositories/glassfish/" />
-            <arg line="deploy" />
-        </exec>
+        <mvn2 dir="${weld.dir}/jboss-interceptor-api" goal="deploy">
+            <args>
+                <arg line="-DaltDeploymentRepository=${altDeploymentRepository}" />
+            </args>
+        </mvn2>
     </target>
 
     <target name="jboss-interceptor.publish.remote">
         <!-- publish jboss-interceptor -->
-        <exec executable="mvn" dir="${external.dir}/jboss-interceptor-parent" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	    <arg line="-DaltDeploymentRepository=rator.sfbay::default::dav:http://glassfish-maven-repository.sfbay/maven/repositories/glassfish/" />
-            <arg line="deploy" />
-        </exec>
+        <mvn2 dir="${weld.dir}/jboss-interceptor-parent" goal="deploy">
+            <args>
+                <arg line="-DaltDeploymentRepository=${altDeploymentRepository}" />
+            </args>
+        </mvn2>
     </target>
 
     <target name="javax-inject.publish.remote">
         <!-- publish javax-inject -->
-        <mvn.publish.remote jar="${external.dir}/javax-inject/build/dist/javax.inject.jar"
-            mvngroup="javax.inject" mvnartid="javax.inject"
-            mvnversion="${javax-inject.version}"/>
+        <mvn.publish.remote file="${weld.dir}/javax-inject/build/dist/javax.inject.jar"
+            groupId="javax.inject"
+            artifactId="javax.inject"
+            version="${javax-inject.version}"/>
     </target>
     <target name="weld-api.publish.remote">
         <!-- publish weld-api -->
-        <exec executable="mvn" dir="${external.dir}/weld-api" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	    <arg line="-DaltDeploymentRepository=rator.sfbay::default::dav:http://glassfish-maven-repository.sfbay/maven/repositories/glassfish/" />
-            <arg line="deploy" />
-	</exec>
+        <mvn2 dir="${weld.dir}/weld-api" goal="deploy">
+            <args>
+                <arg line="-DaltDeploymentRepository=${altDeploymentRepository}" />
+            </args>
+        </mvn2>
     </target>
 
     <target name="weld-core.publish.remote">
         <!-- publish weld-core -->
-        <exec executable="mvn" dir="${external.dir}/weld-core" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local} " />
-	    <arg line="-DaltDeploymentRepository=rator.sfbay::default::dav:http://glassfish-maven-repository.sfbay/maven/repositories/glassfish/" />
-            <arg line="deploy" />
-        </exec>
+        <mvn2 dir="${weld.dir}/weld-core" goal="deploy">
+            <args>
+                <arg line="-DaltDeploymentRepository=${altDeploymentRepository}" />
+            </args>
+        </mvn2>
     </target>
 
-    <!-- Since weld osgi sources do not get generated.  The targets here will generate the sources artifacts and publish to maven repo.  The sources artifact is used to generate JavaEE API doc -->
+    <!--
+        Since weld osgi sources do not get generated.
+        The targets here will generate the sources artifacts and publish to maven repo.
+        The sources artifact is used to generate JavaEE API doc
+    -->
     <target name="weld-osgi-bundle-sources">
         <!-- download sources -->
-        <exec executable="mvn" dir="${external.dir}/weld-core/bundles/osgi" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-DoutputDirectory=src/main/java" />
-            <arg line="-Dclassifier=sources" />
-            <arg line="org.apache.maven.plugins:maven-dependency-plugin:unpack-dependencies" />
-        </exec>
-        <exec executable="mvn" dir="${external.dir}/weld-core/bundles/osgi" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="org.apache.maven.plugins:maven-source-plugin:jar" />
-        </exec>
-        <exec executable="mvn" dir="${external.dir}/weld-core/bundles/osgi" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-Dfile=target/weld-osgi-bundle-${weld-api.version}-sources.jar" />
-            <arg line="-DpomFile=pom.xml" />
-            <arg line="-Dclassifier=sources" />
-            <arg line="install:install-file" />
-        </exec>
-        <exec executable="mvn" dir="${external.dir}/weld-core/bundles/osgi" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-Dfile=target/weld-osgi-bundle-${weld-api.version}-sources.jar" />
-            <arg line="-Dclassifier=sources" />
-            <arg line="-DpomFile=pom.xml" />
-            <arg line="-Durl=${project.maven.repo} "/>
-            <arg line="-DrepositoryId=${project.maven.repo.id}" />
-            <arg line="deploy:deploy-file" />
-            <arg line="-X" />
-        </exec>
-
+        <mvn2 dir="${weld.dir}/weld-core/bundles/osgi"
+            goal="org.apache.maven.plugins:maven-dependency-plugin:unpack-dependencies">
+            <args>
+                <arg line="-DoutputDirectory=src/main/java" />
+                <arg line="-Dclassifier=sources" />
+            </args>
+        </mvn2>
+        <mvn2 dir="${weld.dir}/weld-core/bundles/osgi"
+            goal="org.apache.maven.plugins:maven-source-plugin:jar"/>
+        <mvn.publish.local.pom
+            file="${weld.dir}/weld-core/target/weld-osgi-bundle-${weld-api.version}-sources.jar"
+            classifier="sources"
+            pom="${weld.dir}/weld-core/pom.xml" />
+        <mvn.publish.remote.pom
+            file="${weld.dir}/weld-core/target/weld-osgi-bundle-${weld-api.version}-sources.jar"
+            classifier="sources"
+            pom="${weld.dir}/weld-core/pom.xml" />
     </target>
-
-
+    
 </project>

@@ -1,137 +1,48 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="Bean-validator source integration" default="build" basedir=".">
+<project name="Bean-validator source integration" default="build" basedir="..">
+    
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-   <property name="bean-validator.and.dependencies.dir" 
-             value="${external.dir}/bean-validator" />
-   <property name="hibernate-validator.checkout.dir" 
-             value="${bean-validator.and.dependencies.dir}/hibernate-validator" />
+    <property name="bean-validator.dir" value="${glassfish.external.dir}/bean-validator" />
 
-    <!--
-        Checkout bean-validator source and build
-        This project needs to be built before HK2 since HK2 has a dependency on bean-validator.
-    -->
-    <target name="build" depends="init">
-        <antcall target="bean-validator.build" />
-    </target>	 
-
-    <target name="bean-validator.checkout" >
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
         <echo message="Checking out bean-validator and dependencies" />
-        <mkdir dir="${bean-validator.and.dependencies.dir}" />
+        <mkdir dir="${bean-validator.dir}" />
+        <svn.checkout repo="${validation-api.svn.url}"
+            dest="bean-validator/validation-api"/>
+        <svn.checkout repo="${hibernate-validator.svn.url}"
+            dest="bean-validator/hibernate-validator"/>
+        <svn.checkout repo="${jtype.svn.url}"
+            dest="bean-validator/jtype"/>
+        <svn.checkout repo="${joda-time.svn.url}"
+            dest="bean-validator/joda-time"/>
+        <svn.checkout repo="${jsoup.svn.url}"
+            dest="bean-validator/jsoup"/>
+        <svn.checkout repo="${slf4j.svn.url}"
+            dest="bean-validator/slf4j"/>
+    </target>
 
-        <echo message="checkout validation-api from ${validation-api.svn.url}."/>
-        <!-- checkout validation-api source -->
-        <exec executable="svn" dir="${bean-validator.and.dependencies.dir}" 
-              failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${validation-api.svn.url}" />
-            <arg line="validation-api" />
-	</exec>
-
-        <echo message="checkout hibernate-validator from ${hibernate-validator.svn.url}."/>
-        <mkdir dir="${hibernate-validator.checkout.dir}" />
-        <!-- checkout hibernate-validator source -->
-        <exec executable="svn" dir="${hibernate-validator.checkout.dir}" 
-              failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${hibernate-validator.svn.url}" />
-            <arg line="hibernate-validator" />
-	</exec>
-
-        <echo message="checkout jtype from ${jtype.svn.url}."/>
-        <!-- checkout jtype source -->
-        <exec executable="svn" dir="${bean-validator.and.dependencies.dir}" 
-              failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${jtype.svn.url}" />
-            <arg line="jtype" />
-	</exec>
-
-        <echo message="checkout joda-time from ${joda.svn.url}."/>
-        <!-- checkout jtype source -->
-        <exec executable="svn" dir="${bean-validator.and.dependencies.dir}" 
-              failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${joda-time.svn.url}" />
-            <arg line="joda-time" />
-	</exec>
-
-        <echo message="checkout jsoup from ${jsoup.svn.url}."/>
-        <!-- checkout jsoup source -->
-        <exec executable="svn" dir="${bean-validator.and.dependencies.dir}" 
-              failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${jsoup.svn.url}" />
-            <arg line="jsoup" />
-	</exec>
-
-
-        <echo message="checkout slf4j from ${slf4j.svn.url}."/>
-        <!-- checkout slf4j source -->
-        <exec executable="svn" dir="${bean-validator.and.dependencies.dir}" 
-              failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${slf4j.svn.url}" />
-            <arg line="slf4j" />
-	</exec>
-    </target>	 
-
-    <target name="bean-validator.build" depends="bean-validator.checkout" >
-        <!-- build slf4j-api source -->
-        <echo message="cd ${bean-validator.and.dependencies.dir}/slf4j/slf4j-api and mvn" />
-        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/slf4j/slf4j-api" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-
-        <!-- build slf4j-jdk14 source -->
-        <echo message="cd ${bean-validator.and.dependencies.dir}/slf4j/slf4j-jdk14 and mvn" />
-        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/slf4j/slf4j-jdk14" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-
-        <!-- build jtype source -->
-        <echo message="cd ${bean-validator.and.dependencies.dir}/jtype and mvn" />
-        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/jtype" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-
+    <target name="build" depends="checkout">
+        <echo message="Building bean-validator and dependencies" />
+        <mvn.install dir="${bean-validator.dir}/slf4j/slf4j-api"/>
+        <mvn.install dir="${bean-validator.dir}/slf4j/slf4j-jdk14"/>
+        <mvn.install dir="${bean-validator.dir}/jtype"/>
+        
         <!-- build joda-time source -->
-        <echo message="cd ${bean-validator.and.dependencies.dir}/joda-time and ant" />
-        <exec executable="ant" dir="${bean-validator.and.dependencies.dir}/joda-time" failonerror="true" >
-	    <arg line="-f build.xml" />
-            <arg line="jar" />
-	</exec>
+        <echo message="cd ${bean-validator.dir}/joda-time and ant" />
+        <ant dir="${bean-validator.dir}/joda-time" target="jar">
+            <!-- this property skips junit check -->
+            <property name="junit.ant" value="true"/>
+        </ant>
 
-        <!-- build jsoup source -->
-        <echo message="cd ${bean-validator.and.dependencies.dir}/jsoup" />
-        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/jsoup" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-
-        <!-- build hibernate-validator source -->
-        <echo message="cd ${bean-validator.and.dependencies.dir}/hibernator-validator/hibernate-validator" />
-        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/hibernate-validator/hibernate-validator" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-
-        <!-- build validation-api source -->
-        <echo message="cd ${bean-validator.and.dependencies.dir}/validation-api and mvn" />
-        <exec executable="mvn" dir="${bean-validator.and.dependencies.dir}/validation-api" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-
+        <mvn.install dir="${bean-validator.dir}/jsoup"/>
+        <mvn.install dir="${bean-validator.dir}/hibernate-validator"/>
+        <mvn.install dir="${bean-validator.dir}/validation-api"/>
     </target>
 
 </project>
-
 
 
 

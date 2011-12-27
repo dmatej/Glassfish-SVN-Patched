@@ -1,30 +1,489 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="JAXB source integration" default="build" basedir=".">
+<project name="JAXB source integration" default="build" basedir="..">
 
-    <import file="build.xml"/>
-    <import file="build-taskdefs.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="build" depends="init, jaxb.checkout, jaxb.build"/>    
+    <property name="jaxb.dir"  value="${glassfish.external.dir}/jaxb"/>
+    <property name="jaxb.root" value="${jaxb.dir}/jaxb"/>
+    <property name="jaxb.dist" value="${jaxb.root}/dist"/>
+    <property name="tools.root" value="${jaxb.root}/tools"/>
+    <property name="jaxb.libs.compiler10" value="${tools.root}/compiler10"/>
 
-    <target name="jaxb.checkout" unless="nocheckout">
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	   <arg line="checkout" />
-           <arg line="${jaxb.svn.url}" />
-           <arg line="jaxb" />
-        </exec>
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${jaxb.svn.url}" dest="jaxb/jaxb"/>
     </target>
 
-    <target name="jaxb.build">
-	<echo message="JDK_1.5 = ${JDK_1.5}" />
-        <exec executable="ant" dir="${external.dir}/jaxb" failonerror="true" newenvironment="false" >
-            <arg line="clean depsfromsource" />
-            <arg line="-Djaxb.version=${jaxb.version}"/>
-    	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-    	    <arg line="-Dexternal.dir=${external.dir}" />
-    	    <arg line="-DJDK_1.5=${JDK_1.5}" />
-            <env key="JAVA_HOME" value="${JDK_1.5}" />
-        </exec>
+    <target name="build" depends="checkout">
+        <antcall target="jaxb.build-dependencies"/>
+        <antcall target="jaxb-api.build"/>
+        <antcall target="jaxb-impl.build"/>
+        <antcall target="jaxb-osgi.build"/>
     </target>
-  
+
+    <target name="jaxb.build-dependencies">
+        <antcall target="dtd-parser.build"/>
+        <antcall target="activation.build"/>
+        <antcall target="jsr173-api.build"/>
+        <antcall target="stax-ex.build"/>
+        <antcall target="sjsxp.build"/>
+        <antcall target="relaxng-datatype.build"/>
+        <antcall target="resolver.build"/>
+        <antcall target="javacc.build"/>
+        <antcall target="isorelax.build"/>
+        <antcall target="xsdlib.build"/>
+        <antcall target="msv.build"/>
+        <antcall target="istack-commons-runtime.build"/>
+        <antcall target="istack-commons-tools.build"/>
+        <antcall target="codemodel.build"/>
+        <antcall target="args4j.build"/>
+        <antcall target="relaxngcc.build"/>
+        <antcall target="rngom.build"/>
+        <antcall target="xsom.build"/>
+        <antcall target="txw2.build"/>
+        <antcall target="txwc2.build"/>
+        <antcall target="fi.build"/>
+        <antcall target="resolver-comsun.build"/>
+    </target>
+
+    <target name="init.jaxb">
+        <!--
+            Rename some properties of the jaxb's properties file as some of the
+            properties are already defined in the main build.properties
+        -->
+        <delete file="${jaxb.dir}/sourcebuild.properties" failonerror="false"/>
+        <copy file="${jaxb.dir}/jaxb/build.properties"
+              tofile="${jaxb.dir}/sourcebuild.properties"/>
+        <replaceregexp file="${jaxb.dir}/sourcebuild.properties"
+               match="(.*).version=(.*)"
+               replace="jaxb-\1.version=\2"
+               byline="true"
+        />
+        <replaceregexp file="${jaxb.dir}/sourcebuild.properties"
+               match="(.*).mvn.path=(.*)\{(.*).version\}(.*)\{(.*).version\}(.*)"
+               replace="jaxb-\1.mvn.path=\2\{jaxb-\3.version\}\4\{jaxb-\5.version\}\6"
+               byline="true"
+        />
+        <loadproperties srcFile="${jaxb.dir}/sourcebuild.properties"/>
+        <delete file="${jaxb.dir}/sourcebuild.properties" />
+
+        <path id="jaxb.classpath">
+            <pathelement location="${maven.repo.local}/com/sun/codemodel/codemodel-annotation-compiler/2.1-SNAPSHOT/codemodel-annotation-compiler-2.1-SNAPSHOT.jar"/>
+            <pathelement location="${maven.repo.local}/${jaxb-relaxngcc.mvn.path}"/>
+            <pathelement location="${maven.repo.local}/${jaxb-fi.mvn.path}"/>
+            <pathelement location="${maven.repo.local}/${jaxb-jsr173api.mvn.path}"/>
+            <pathelement location="${maven.repo.local}/${jaxb-activation.mvn.path}"/>
+            <pathelement location="${maven.repo.local}/${jaxb-stax-ex.mvn.path}"/>
+            <pathelement location="${maven.repo.local}/${jaxb-resolver.mvn.path}"/>
+        </path>
+    </target>
+
+    <macrodef name="publish.simplejar.from.srczip">
+        <attribute name="srczip"/>
+        <attribute name="classpath" default=""/>
+        <attribute name="srcdir" />
+        <attribute name="artifactId"/>
+        <attribute name="groupId"/>
+        <attribute name="version"/>
+        <sequential>
+            <echo message="building @{artifactId}"/>
+            <build.jar.from.srczip jar="${jaxb.dir}/@{srcdir}/@{artifactId}.jar"
+                srczip="${jaxb.root}/tools/lib/@{srczip}"
+                cp="@{classpath}"
+                unzipdir="${jaxb.dir}"
+                srcdir="@{srcdir}" />
+            <mvn.publish.local file="${jaxb.dir}/@{srcdir}/@{artifactId}.jar"
+                groupId="@{groupId}"
+                artifactId="@{artifactId}"
+                version="@{version}"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="mvn.install.from.srczip">
+        <attribute name="srczip"/>
+        <attribute name="srcdir" default=""/>
+        <attribute name="destdir" default=""/>
+        <sequential>
+            <echo message="building @{srcdir}"/>
+            <unzip src="${jaxb.root}/tools/lib/@{srczip}" dest="${jaxb.dir}/@{destdir}"/>
+            <delete>
+                <fileset dir="${jaxb.dir}/@{destdir}/@{srcdir}" includes="**/*.jar"/>
+            </delete>
+            <mvn.install dir="${jaxb.dir}/@{destdir}/@{srcdir}"/>
+        </sequential>
+    </macrodef>
+
+    <macrodef name="publish-ant.from.srczip">
+        <attribute name="srczip"/>
+        <attribute name="srcdir" default=""/>
+        <attribute name="destdir" default=""/>
+        <attribute name="target" default="dist"/>
+        <attribute name="javac.target" default="1.5"/>
+        <attribute name="javac.source" default="1.5"/>
+        <attribute name="artifactId"/>
+        <attribute name="groupId"/>
+        <attribute name="version"/>
+        <attribute name="file" default="@{srcdir}.jar"/>
+        <element name="extra-actions" optional="true" />
+        <sequential>
+            <echo message="building @{srcdir}"/>
+            <unzip src="${jaxb.root}/tools/lib/@{srczip}" dest="${jaxb.dir}/@{destdir}"/>
+            <delete>
+                <fileset dir="${jaxb.dir}/@{destdir}/@{srcdir}" includes="**/*.jar"/>
+            </delete>
+            <extra-actions/>
+            <ant dir="${jaxb.dir}/@{destdir}/@{srcdir}" target="@{target}">
+                <property name="javac.target" value="@{javac.target}"/>
+                <property name="javac.source" value="@{javac.source}"/>
+            </ant>
+            <mvn.publish.local file="${jaxb.dir}/@{destdir}/@{srcdir}/@{file}"
+                groupId="@{groupId}"
+                artifactId="@{artifactId}"
+                version="@{version}"/>
+        </sequential>
+    </macrodef>
+
+    <!--
+        Build targets
+    -->
+    <target name="dtd-parser.build" depends="init.jaxb">
+        <publish.simplejar.from.srczip
+            srczip="src/dtd-parser-sources.jar"
+            srcdir="dtd-parser"
+            groupId="com.sun.xml.dtd-parser"
+            artifactId="dtd-parser"
+            version="${jaxb-dtd-parser.version}"/>
+    </target>
+
+    <target name="activation.build" depends="init.jaxb">
+        <publish-ant.from.srczip
+            srczip="src/activation-src.zip"
+            srcdir="activation"
+            groupId="javax.activation"
+            artifactId="activation"
+            version="${jaxb-activation.version}"  />
+    </target>
+
+    <target name="jsr173-api.build" depends="init.jaxb">
+        <publish-ant.from.srczip
+            srczip="src/jsr173api-src.zip"
+            srcdir="jsr173api"
+            file="jsr173_1.0_api.jar"
+            groupId="javax.xml"
+            artifactId="jsr173"
+            version="${jaxb-jsr173api.version}" />
+    </target>
+
+    <target name="stax-ex.build" depends="init.jaxb">
+        <mvn.install.from.srczip destdir="stax-ex"
+            srczip="util/stax-ex-src.zip" />
+    </target>
+
+    <target name="sjsxp.build" depends="init.jaxb">
+        <publish.simplejar.from.srczip
+            srczip="src/sjsxp-src.zip"
+            srcdir="sjsxp/${jaxb-sjsxp.version}"
+            classpath="${maven.repo.local}/${jaxb-jsr173api.mvn.path}"
+            groupId="com.sun.xml.stream"
+            artifactId="sjsxp"
+            version="${jaxb-sjsxp.version}"/>
+    </target>
+
+    <target name="relaxng-datatype.build" depends="init.jaxb">
+        <publish.simplejar.from.srczip
+            srczip="src/relaxngDatatype-src.zip"
+            srcdir="rng-datatype"
+            groupId="com.sun.xml"
+            artifactId="relaxngDatatype"
+            version="${jaxb-relaxng-datatype.version}"/>
+    </target>
+
+    <target name="resolver.build" depends="init.jaxb">
+        <publish.simplejar.from.srczip
+            srczip="util/resolver-src.zip"
+            srcdir="resolver"
+            groupId="xml-resolver"
+            artifactId="xml-resolver"
+            version="${jaxb-resolver.version}"/>
+    </target>
+
+    <target name="javacc.build" depends="init.jaxb">
+        <publish-ant.from.srczip
+            srczip="util/javacc-src.zip"
+            srcdir="javacc"
+            file="bin/lib/javacc.jar"
+            target="jar"
+            groupId="javacc"
+            artifactId="javacc"
+            version="${jaxb-javacc.version}" />
+    </target>
+
+    <target name="isorelax.build" depends="init.jaxb">
+        <publish-ant.from.srczip
+            srczip="src/iso-relax-src.zip"
+            srcdir="isorelax"
+            target="release"
+            groupId="isorelax"
+            artifactId="isorelax"
+            version="${jaxb-isorelax.version}"/>
+    </target>
+
+    <target name="xsdlib.build" depends="init.jaxb">
+        <property name="relaxngDatatype.jar" value="relaxng-datatype.jar"/>
+        <publish-ant.from.srczip
+            srczip="src/xsdlib-src.zip"
+            srcdir="xsdlib"
+            file="dist/xsdlib.jar"
+            groupId="com.sun.msv.datatype.xsd"
+            artifactId="xsdlib"
+            version="${jaxb-xsdlib.version}">
+            <extra-actions>
+                <copy file="${maven.repo.local}/${jaxb-relaxng-datatype.mvn.path}"
+                      tofile="${jaxb.dir}/xsdlib/relaxng-datatype.jar"/>
+            </extra-actions>
+        </publish-ant.from.srczip>
+    </target>
+
+    <target name="msv.build" depends="init.jaxb">
+        <property name="cpath.fromsource" value="relaxng-datatype.jar:xsdlib.jar:isorelax.jar:resolver.jar"/>
+        <property name="from.source" value="true"/>
+        <publish-ant.from.srczip
+            srczip="src/msv-src.zip"
+            srcdir="msv/msv"
+            file="dist/msv.jar"
+            groupId="com.sun.msv"
+            artifactId="msv"
+            version="${jaxb-msv.version}">
+            <extra-actions>
+                <copy file="${maven.repo.local}/${jaxb-relaxng-datatype.mvn.path}"
+                      tofile="${jaxb.dir}/msv/msv/relaxng-datatype.jar"/>
+                <copy file="${maven.repo.local}/${jaxb-xsdlib.mvn.path}"
+                      tofile="${jaxb.dir}/msv/msv/xsdlib.jar"/>
+                <copy file="${maven.repo.local}/${jaxb-isorelax.mvn.path}"
+                      tofile="${jaxb.dir}/msv/msv/isorelax.jar"/>
+                <copy file="${maven.repo.local}/${jaxb-resolver.mvn.path}"
+                      tofile="${jaxb.dir}/msv/msv/resolver.jar"/>
+            </extra-actions>
+        </publish-ant.from.srczip>
+    </target>
+
+    <target name="istack-commons-runtime.build" depends="init.jaxb">
+        <publish.simplejar.from.srczip
+            srczip="src/istack-commons-runtime-sources.jar"
+            srcdir="istack-commons-runtime"
+            groupId="com.sun.istack"
+            artifactId="istack-commons-runtime"
+            version="${jaxb-istack-commons.version}"/>
+    </target>
+
+    <target name="istack-commons-tools.build" depends="init.jaxb">
+        <publish.simplejar.from.srczip
+            srczip="src/istack-commons-tools-sources.jar"
+            srcdir="istack-commons-tools"
+            groupId="com.sun.istack"
+            artifactId="istack-commons-tools"
+            version="${jaxb-istack-commons.version}"/>
+    </target>
+
+    <target name="codemodel.build" depends="init.jaxb">
+        <publish.simplejar.from.srczip
+            srczip="src/codemodel-sources.jar"
+            srcdir="codemodel"
+            groupId="com.sun.codemodel"
+            artifactId="codemodel"
+            version="${jaxb-codemodel.version}"/>
+    </target>
+
+    <target name="args4j.build" depends="init.jaxb">
+        <mvn.install.from.srczip srcdir="args4j"
+            srczip="src/args4j-src.zip" />
+    </target>
+
+    <target name="relaxngcc.build" depends="init.jaxb">
+        <publish-ant.from.srczip
+            srczip="util/relaxngcc-src.zip"
+            srcdir="relaxngcc"
+            target="jar"
+            groupId="com.sun.xml"
+            artifactId="relaxngcc"
+            version="${jaxb-relaxngcc.version}">
+            <extra-actions>
+                <copy file="${maven.repo.local}/${jaxb-javacc.mvn.path}"
+                      tofile="${jaxb.dir}/relaxngcc/lib/javacc.jar"/>
+                <copy file="${maven.repo.local}/${jaxb-relaxng-datatype.mvn.path}"
+                      tofile="${jaxb.dir}/relaxngcc/lib/relaxng-datatype.jar"/>
+                <copy file="${maven.repo.local}/${jaxb-xsdlib.mvn.path}"
+                      tofile="${jaxb.dir}/relaxngcc/lib/xsdlib.jar"/>
+                <copy file="${maven.repo.local}/${jaxb-isorelax.mvn.path}"
+                      tofile="${jaxb.dir}/relaxngcc/lib/isorelax.jar"/>
+                <copy file="${maven.repo.local}/${jaxb-msv.mvn.path}"
+                      tofile="${jaxb.dir}/relaxngcc/lib/msv.jar"/>
+            </extra-actions>
+        </publish-ant.from.srczip>
+    </target>
+
+    <target name="rngom.build" depends="init.jaxb">
+        <path id="rngom.path">
+            <pathelement location="${maven.repo.local}/${jaxb-relaxng-datatype.mvn.path}"/>
+            <pathelement location="${maven.repo.local}/${jaxb-jsr173api.mvn.path}"/>
+        </path>
+        <property name="rngom.path" refid="rngom.path"/>
+        <publish.simplejar.from.srczip
+            srczip="src/rngom-sources.jar"
+            srcdir="rngom"
+            classpath="${rngom.path}"
+            groupId="org.kohsuke.rngom"
+            artifactId="rngom"
+            version="${jaxb-rngom.version}"/>
+    </target>
+
+    <target name="xsom.build" depends="init.jaxb">
+        <publish.simplejar.from.srczip
+            srczip="src/xsom-sources.jar"
+            srcdir="xsom"
+            classpath="${maven.repo.local}/${jaxb-relaxng-datatype.mvn.path}"
+            groupId="com.sun.xsom"
+            artifactId="xsom"
+            version="${jaxb-xsom.version}"/>
+    </target>
+
+    <target name="txw2.build" depends="init.jaxb">
+        <publish.simplejar.from.srczip
+            srczip="src/txw2-sources.jar"
+            srcdir="txw2"
+            groupId="com.sun.xml.txw2"
+            artifactId="txw2"
+            version="${jaxb-txw2.version}"/>
+    </target>
+
+    <target name="txwc2.build" depends="init.jaxb">
+        <path id="txwc2.path">
+            <pathelement location="${maven.repo.local}/${jaxb-relaxng-datatype.mvn.path}"/>
+            <pathelement location="${maven.repo.local}/${jaxb-rngom.mvn.path}"/>
+            <pathelement location="${maven.repo.local}/${jaxb-codemodel.mvn.path}"/>
+            <pathelement location="${maven.repo.local}/${jaxb-xsom.mvn.path}"/>
+            <pathelement location="${maven.repo.local}/${jaxb-txw2.mvn.path}"/>
+            <pathelement location="${maven.repo.local}/${jaxb-args4j.mvn.path}"/>
+        </path>
+        <property name="txwc2.path" refid="txwc2.path"/>
+        <publish.simplejar.from.srczip
+            srczip="util/txwc2-sources.jar"
+            srcdir="txwc2"
+            classpath="${txwc2.path}"
+            groupId="com.sun.xml.txw2"
+            artifactId="txwc2"
+            version="${jaxb-txw2.version}"/>
+    </target>
+
+    <target name="fi.build" depends="init.jaxb">
+        <publish.simplejar.from.srczip
+            srczip="src/fi-sources.jar"
+            srcdir="fi/${jaxb-fi.version}"
+            classpath="${maven.repo.local}/${jaxb-jsr173api.mvn.path}"
+            groupId="com.sun.xml.fastinfoset"
+            artifactId="FastInfoset"
+            version="${jaxb-fi.version}"/>
+    </target>
+
+    <target name="resolver-comsun.build" depends="init.jaxb">
+        <publish.simplejar.from.srczip
+            srczip="src/resolver-comsun-src.zip"
+            srcdir="resolver-comsun"
+            groupId="xml-resolver"
+            artifactId="xml-resolver-comsun"
+            version="${jaxb-resolver-comsun.version}"/>
+    </target>
+
+    <target name="jaxb-api.build" depends="init.jaxb">
+        <publish.simplejar.from.srczip
+            srczip="redist/jaxb-api-src.zip"
+            srcdir="jaxb-api"
+            classpath="${maven.repo.local}/${jaxb-activation.mvn.path}:${maven.repo.local}/${jaxb-jsr173api.mvn.path}"
+            groupId="javax.xml.bind"
+            artifactId="jaxb-api"
+            version="${jaxb-jaxb-api.version}"/>
+    </target>
+
+    <target name="jaxb-impl.build" depends="init.jaxb">
+        <copy file="${maven.repo.local}/${jaxb-codemodel.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/rebundle/compiler/codemodel.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-rngom.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/rebundle/compiler/rngom.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-xsom.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/rebundle/compiler/xsom.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-istack-commons.tools.mvn.path}.jar"
+              tofile="${jaxb.root}/tools/lib/rebundle/compiler/istack-commons-tools.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-resolver-comsun.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/rebundle/compiler/resolver.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-dtd-parser.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/rebundle/compiler/dtd-parser.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-relaxng-datatype.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/rebundle/compiler/relaxngDatatype.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-args4j.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/util/args4j.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-relaxngcc.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/util/relaxngcc.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-txwc2.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/util/txwc2.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-fi.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/util/FastInfoset.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-stax-ex.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/util/stax-ex.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-sjsxp.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/util/sjsxp.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-activation.mvn.path}"
+              tofile="${jaxb.dir}/tools/lib/redist/activation.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-jsr173api.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/redist/jsr173_1.0_api.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-jaxb-api.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/redist/jaxb-api.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-txw2.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/rebundle/runtime2/txw2.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-istack-commons.runtime.mvn.path}.jar"
+              tofile="${jaxb.root}/tools/lib/rebundle/runtime2/istack-commons-runtime.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-isorelax.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/rebundle/runtime/isorelax.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-xsdlib.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/rebundle/runtime/xsdlib.jar"/>
+        <copy file="${maven.repo.local}/${jaxb-msv.mvn.path}"
+              tofile="${jaxb.root}/tools/lib/rebundle/runtime/msv.jar"/>
+
+        <ant dir="${jaxb.root}" target="dist">
+            <property name="from.source" value="true"/>
+            <property name="javac.target" value="1.5"/>
+            <property name="javac.source" value="1.5"/>
+            <property name="cpath.fromsource" refid="jaxb.classpath"/>
+            <property name="external.dir" value="${jaxb.dir}"/>
+        </ant>
+
+        <mvn.publish.local file="${jaxb.root}/dist/lib/jaxb-impl.jar"
+            groupId="com.sun.xml.bind"
+            artifactId="jaxb-impl"
+            version="${jaxb-release.impl.version}"/>
+        <mvn.publish.local file="${jaxb.root}/dist/lib/jaxb-xjc.jar"
+            groupId="com.sun.xml.bind"
+            artifactId="jaxb-xjc"
+            version="${jaxb-release.impl.version}"/>
+        <mvn.publish.local file="${jaxb.root}/dist/lib/jaxb1-impl.jar"
+            groupId="com.sun.xml.bind"
+            artifactId="jaxb1-impl"
+            version="${jaxb-release.impl.version}"/>
+    </target>
+
+    <target name="jaxb-osgi.build" depends="init.jaxb">
+        <ant dir="${jaxb.dir}/jaxb/osgi" target="bundle">
+            <property name="cpath.fromsource" refid="jaxb.classpath"/>
+            <property name="release.impl.version" value="${jaxb-release.impl.version}"/>
+            <property name="release.spec.version" value="${jaxb-release.spec.version}"/>
+        </ant>
+        <mvn.publish.local file="${jaxb.dir}/jaxb/osgi/build/jaxb-api-osgi.jar"
+            groupId="javax.xml.bind"
+            artifactId="jaxb-api-osgi"
+            version="${jaxb-release.spec.version}"/>
+        <mvn.publish.local file="${jaxb.dir}/jaxb/osgi/build/jaxb-osgi.jar"
+            groupId="com.sun.xml.bind"
+            artifactId="jaxb-osgi"
+            version="${jaxb-release.impl.version}"/>
+    </target>
+
 </project>

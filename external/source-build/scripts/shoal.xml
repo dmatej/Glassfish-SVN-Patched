@@ -1,31 +1,17 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="Shoal source integration" default="build" basedir=".">
+<project name="Shoal source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="build" depends="init">
-        <antcall target="shoal.build" />
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${shoal.svn.url}" dest="shoal"/>
     </target>
-
-    <!--
-        Checkout shoal source and build
-    -->
-    <target name="shoal.checkout" >
-        <echo message="checkout shoal from ${shoal.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${shoal.svn.url}" />
-            <arg line="shoal" />
-	</exec>
-    </target>
-    <target name="shoal.build" depends="shoal.checkout" >
+    
+    <target name="build" depends="checkout" >
         <!-- build shoal -->
-        <exec executable="mvn" dir="${external.dir}/shoal" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+        <mvn.install dir="${glassfish.external.dir}/shoal"/>
     </target>
 
 </project>

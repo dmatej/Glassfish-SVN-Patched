@@ -1,78 +1,55 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="These v3 modules are built before external since external has dependencies on them" default="build" basedir=".">
-    <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
+<project name="These v3 modules are built before external since external has dependencies on them" default="build" basedir="..">
 
-    <target name="build">
+    <!-- import build.xml for init target and inherited properties -->
+    <import file="${basedir}/build.xml"/>
+
+    <target name="build" depends="checkout">
         <antcall target="javax.transaction.build" />
         <antcall target="javax.resource.build" />
         <antcall target="javax.security.auth.message" />
-        <antcall target="javax.servlet" />
+        <antcall target="servlet-api.build"/>
+        <antcall target="javax.ejb.build" />
     </target>
 
+    <!--
+        Build targets..
+    -->
     <!-- wsit.xml has a dependency on javax.transaction -->
     <target name="javax.transaction.build" >
-        <exec executable="mvn" dir="${v3.dir}" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-pl transaction/javax.transaction" />
-            <arg line="install" />
-	</exec>
+        <mvn.install dir="${glassfish.dir}/transaction/javax.transaction"/>
     </target>
 
-    <target name="javax.servlet" >
-        <exec executable="mvn" dir="${v3.dir}" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-pl web/javax.servlet" />
-            <arg line="install" />
-	</exec>
+    <target name="servlet-api.build">
+	<ant antfile="${scripts.dir}/servlet-2.5-build.xml"/>
+	<ant antfile="${scripts.dir}/javax-servlet.xml"/>
     </target>
 
     <!-- ejb/javax.ejb has a dependency on javax.annotation -->
     <target name="javax.annotation.build" >
-        <exec executable="mvn" dir="${v3.dir}" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-pl javaee-api/javax.annotation" />
-            <arg line="install" />
-	</exec>
+        <mvn.install dir="${glassfish.dir}/javaee-api/javax.annotation"/>
     </target>
 
     <!-- ejb/javax.ejb has a dependency on javax.xml.rpc -->
     <target name="javax.xml.rpc.build" >
-        <exec executable="mvn" dir="${v3.dir}" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-pl javaee-api/javax.xml.rpc" />
-            <arg line="install" />
-	</exec>
+        <mvn.install dir="${glassfish.dir}/javaee-api/javax.xml.rpc"/>
     </target>
-
 
     <!-- wsit.xml has a dependency on javax.ejb -->
     <target name="javax.ejb.build" >
         <antcall target="javax.annotation.build" />
         <antcall target="javax.xml.rpc.build" />
-        <exec executable="mvn" dir="${v3.dir}" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-pl ejb/javax.ejb" />
-            <arg line="install" />
-	</exec>
+        <mvn.install dir="${glassfish.dir}/ejb/javax.ejb" />
     </target>
 
     <!-- wsit.xml has a dependency on javax.transaction -->
     <target name="javax.resource.build" >
-        <exec executable="mvn" dir="${v3.dir}" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-pl connectors/javax.resource" />
-            <arg line="install" />
-	</exec>
+        <mvn.install dir="${glassfish.dir}/connectors/javax.resource"/>
     </target>
 
     <!-- wsit.xml has a dependency on javax.security.auth.message -->
     <target name="javax.security.auth.message" >
-        <exec executable="mvn" dir="${v3.dir}" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-pl security/javax.security.auth.message" />
-            <arg line="install" />
-	</exec>
+        <mvn.install dir="${glassfish.dir}/security/javax.security.auth.message"/>
     </target>
 </project>

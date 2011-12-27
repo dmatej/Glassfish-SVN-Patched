@@ -1,32 +1,17 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="V3-docs source integration" default="build" basedir=".">
+<project name="V3-docs source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="build" depends="init">
-        <antcall target="v3-docs.build" />
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${v3-docs.svn.url}" dest="v3-docs"/>
     </target>
 
-    <!--
-        Checkout v3-docs source and build
-    -->
-    <target name="v3-docs.checkout" >
-        <echo message="checkout v3-docs from ${v3-docs.svn.url}."/>
-	<mkdir dir="${external.dir}/v3-docs"/>
-        <exec executable="svn" dir="${external.dir}/v3-docs" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${v3-docs.svn.url}" />
-            <arg line="." />
-	</exec>
-    </target>
-    <target name="v3-docs.build" depends="v3-docs.checkout" >
+    <target name="v3-docs.build" depends="checkout" >
         <!-- build v3-docs -->
-        <exec executable="mvn" dir="${external.dir}/v3-docs" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-        </exec>
+        <mvn.install dir="${glassfish.external.dir}/v3-docs"/>
     </target>
 
 </project>

@@ -1,38 +1,20 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="Grizzly source integration" default="build" basedir=".">
+<project name="Grizzly source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="build">
-        <antcall target="grizzly.build" />
+    <target name="checkout" depends="init,check.git" unless="skipCheckout">
+        <!-- ensure that the property java.net.user is provided -->
+        <fail message="no java.net.user property provided" unless="java.net.user"/>
+        
+        <git.clone repo="ssh://${java.net.user}@${grizzly.git.url}"
+            dest="grizzly" tag="${grizzly.git.version}"/>
     </target>
 
-    <!--
-        Checkout grizzly source and build
-    -->
-    <target name="grizzly.checkout" depends="init" >
-        <echo message="checkout Grizzly from ${grizzly.git.url}."/>
-        <exec executable="git" >
-            <arg line="--version"/>
-        </exec>
-        <exec executable="git" dir="${external.dir}" failonerror="true">
-            <arg line="clone"/>
-            <arg line="${grizzly.git.url}"/>
-            <arg line="grizzly"/>
-        </exec>
-        <exec executable="git" dir="${external.dir}/grizzly" failonerror="true">
-            <arg line="checkout"/>
-            <arg line="${grizzly.git.version}"/>
-        </exec>
-    </target>
-    <target name="grizzly.build" depends="grizzly.checkout" >
-        <!-- build grizzly -->
-        <exec executable="mvn" dir="${external.dir}/grizzly/modules" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+    <target name="build" depends="checkout" >
+        <mvn.install dir="${glassfish.external.dir}/grizzly/modules"/>
     </target>
 
 </project>

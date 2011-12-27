@@ -1,26 +1,19 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="Woodstock source integration" default="build" basedir=".">
+<project name="Woodstock source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="build" depends="init">
-        <antcall target="woodstock.build" />
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <svn.checkout repo="${woodstock.svn.url}" dest="woodstock"/>
     </target>
 
-    <target name="woodstock.checkout" >
-        <echo message="Checking out Woodstock from ${woodstock.svn.url}."/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${woodstock.svn.url}" />
-            <arg line="woodstock" />
-    	</exec>
-    </target>
-    <target name="woodstock.build" depends="woodstock.checkout" >
-        <exec executable="ant" dir="${external.dir}/woodstock/master" failonerror="true">
-            <arg line="-Djavac.target=1.5 -Djavac.source=1.5"/>
-        </exec>
-        <exec executable="ant" dir="${external.dir}/woodstock/maven" failonerror="true"/>
+    <target name="build" depends="checkout" >
+        <ant dir="${glassfish.external.dir}/woodstock/master">
+            <property name="javac.target" value="1.5"/>
+            <property name="javac.source" value="1.5"/>
+        </ant>
+        <ant dir="${glassfish.external.dir}/woodstock/maven"/>
     </target>
 </project>

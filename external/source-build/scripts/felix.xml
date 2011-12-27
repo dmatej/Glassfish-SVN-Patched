@@ -1,17 +1,80 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="Felix source integration" default="build" basedir=".">
+<project name="Felix source integration" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
-    <import file="build-taskdefs.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <!-- The individual target tasks do not list their actual dependencies
-         since that results in lots of repeated executions of the same checkouts
-         and builds. The following "build" target explicitly builds everything
-         in the correct order to resolve dependencies, which is more efficient.
+    <property name="custom-settings-xml" 
+        value="${glassfish.external.dir}/felix/felix-settings.xml"/>
+
+    <!--
+        The individual target tasks do not list their actual dependencies
+        since that results in lots of repeated executions of the same checkouts
+        and builds. The following "build" target explicitly builds everything
+        in the correct order to resolve dependencies, which is more efficient.
     -->
-    <target name="build" depends="init">
+
+    <target name="checkout" depends="init,check.svn" unless="skipCheckout">
+        <antcall target="felix.concurrent-1.3.4.checkout" />
+        <antcall target="felix-parent-1.2.0.checkout" />
+        <antcall target="felix-parent-1.2.1.checkout" />
+        <antcall target="org.osgi.core-4.1.0.checkout" />
+        <antcall target="felix-pom-1.0.0.checkout" />
+        <antcall target="felix.javax.servlet-1.0.0.checkout" />
+        <antcall target="felix-pom-1.0.1.checkout" />
+        <antcall target="felix.org.osgi.foundation-1.0.0.checkout" />
+        <antcall target="org.osgi.compendium-4.0.0.checkout" />
+        <antcall target="felix.shell-1.4.1.checkout" />
+        <antcall target="felix-pom-1.0.2.checkout" />
+        <antcall target="felix.org.osgi.core-1.0.1.checkout" />
+        <antcall target="felix.org.osgi.service.obr-1.0.2.checkout" />
+        <antcall target="felix.kxml2-2.2.2.checkout" />
+        <antcall target="felix.kxml2-2.3.0.checkout" />
+        <antcall target="felix.bundlerepository-1.4.2.checkout" />
+        <antcall target="felix.utils-1.0.0.checkout" />
+        <antcall target="felix.utils-1.1.0.checkout" />
+        <antcall target="felix.woodstox-core-asl-4.0.7.checkout" />
+        <antcall target="felix.bundlerepository-1.6.0.checkout" />
+        <antcall target="felix.bundlerepository-1.6.2.checkout" />
+        <antcall target="felix.org.osgi.core-1.0.0.checkout" />
+        <antcall target="felix.org.osgi.compendium-1.0.0.checkout" />
+        <antcall target="felix.configadmin-1.2.4.checkout" />
+        <antcall target="felix.configadmin-1.2.8.checkout" />
+        <antcall target="felix.eventadmin-1.2.8.checkout" />
+        <antcall target="felix.fileinstall-3.1.10.checkout" />
+        <antcall target="felix.fileinstall-2.0.4.checkout" />
+        <antcall target="org.osgi.core-4.2.0.checkout" />
+        <antcall target="org.osgi.compendium-4.1.0.checkout" />
+        <antcall target="org.osgi.compendium-4.2.0.checkout" />
+        <antcall target="org.osgi.enterprise-4.2.0.checkout" />
+        <antcall target="felix.framework-3.0.8.checkout" />
+        <antcall target="felix.framework-2.0.2.checkout" />
+        <antcall target="org.osgi.core-4.0.0.checkout" />
+        <antcall target="felix.main-3.0.8.checkout" />
+        <antcall target="felix.org.osgi.compendium-1.0.1.checkout" />
+        <antcall target="felix.shell-1.0.0.checkout" />
+        <antcall target="felix.shell.remote-1.0.4.checkout" />
+        <antcall target="felix.shell.remote-1.1.2.checkout" />
+        <antcall target="felix.scr-1.0.8.checkout" />
+        <antcall target="felix.scr-1.6.0.checkout" />
+        <antcall target="felix.org.osgi.core-1.2.0.checkout" />
+        <antcall target="felix.org.osgi.foundation-1.2.0.checkout" />
+        <antcall target="felix.org.osgi.compendium-1.2.0.checkout" />
+        <antcall target="felix.gogo-parent-0.6.0.checkout" />
+        <antcall target="felix.gogo.runtime-0.6.1.checkout" />
+        <antcall target="felix.gogo.runtime-0.8.0.checkout" />
+        <antcall target="felix.gogo.shell-0.8.0.checkout" />
+        <antcall target="felix.gogo.command-0.8.0.checkout" />
+    </target>
+
+    <target name="build" depends="checkout">
+        <!-- generate a custom settings file for org.eclipse.persistence:javax.persistence -->
+        <xml.repository id="eclipselinkrepo" prop="eclipselinkrepo"
+            url="http://maven.glassfish.org/content/repositories/eclipselink/" />
+        <generate-settings-xml profileid="eclipselink" file="${custom-settings-xml}"
+            additionalRepository="${eclipselinkrepo}" />
+
         <antcall target="felix.concurrent-1.3.4" />
         <antcall target="felix.woodstox-core-asl-4.0.7" />
         <antcall target="felix-pom-1.0.0" />
@@ -59,818 +122,453 @@
         <antcall target="felix.scr-1.6.0" />
     </target>
 
-    <target name="felix.concurrent-1.3.4.checkout">
-        <echo message="checkout felix.concurrent from ${gf.ext.svn.url}/felix.concurrent/1.3.4"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.concurrent/1.3.4" />
-            <arg line="felix.concurrent-1.3.4" />
-	</exec>
+    <!--
+        Checkout targets
+    -->
+    <macrodef name="felix.checkout">
+        <attribute name="project"/>
+        <attribute name="version"/>
+        <sequential>
+            <svn.checkout dest="felix/@{project}-@{version}"
+                repo="${gf.ext.svn.url}/@{project}/@{version}"/>
+        </sequential>
+    </macrodef>
+
+    <target name="felix.concurrent-1.3.4.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.concurrent" version="1.3.4"/>
     </target>
+
+    <target name="felix-parent-1.2.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix-parent" version="1.2.0"/>
+    </target>
+
+    <target name="felix-parent-1.2.1.checkout" unless="skipCheckout">
+        <felix.checkout project="felix-parent" version="1.2.1"/>
+    </target>
+
+    <target name="org.osgi.core-4.1.0.checkout" unless="skipCheckout">
+        <felix.checkout project="org.osgi.core" version="4.1.0"/>
+    </target>
+
+    <target name="felix-pom-1.0.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix-pom" version="1.0.0"/>
+    </target>
+
+    <target name="felix.javax.servlet-1.0.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.javax.servlet" version="1.0.0"/>
+    </target>
+    
+    <target name="felix-pom-1.0.1.checkout" unless="skipCheckout">
+        <felix.checkout project="felix-pom" version="1.0.1"/>
+    </target>
+    
+    <target name="felix.org.osgi.foundation-1.0.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.org.osgi.foundation" version="1.0.0"/>
+    </target>
+    
+    <target name="org.osgi.compendium-4.0.0.checkout" unless="skipCheckout">
+        <felix.checkout project="org.osgi.compendium" version="4.0.0"/>
+    </target>
+    
+    <target name="felix.shell-1.4.1.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.shell" version="1.4.1"/>
+    </target>
+    
+    <target name="felix-pom-1.0.2.checkout" unless="skipCheckout">
+        <felix.checkout project="felix-pom" version="1.0.2"/>
+    </target>
+
+    <target name="felix.org.osgi.core-1.0.1.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.org.osgi.core" version="1.0.1"/>
+    </target>
+
+    <target name="felix.org.osgi.service.obr-1.0.2.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.org.osgi.service.obr" version="1.0.2"/>
+    </target>
+
+    <target name="felix.kxml2-2.2.2.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.kxml2" version="2.2.2"/>
+    </target>
+
+    <target name="felix.kxml2-2.3.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.kxml2" version="2.3.0"/>
+    </target>
+
+    <target name="felix.bundlerepository-1.4.2.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.bundlerepository" version="1.4.2"/>
+    </target>
+
+    <target name="felix.utils-1.0.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.utils" version="1.0.0"/>
+    </target>
+
+    <target name="felix.utils-1.1.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.utils" version="1.1.0"/>
+    </target>
+
+    <target name="felix.woodstox-core-asl-4.0.7.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.woodstox-core-asl" version="4.0.7"/>
+    </target>
+
+    <target name="felix.bundlerepository-1.6.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.bundlerepository" version="1.6.0"/>
+    </target>
+
+    <target name="felix.bundlerepository-1.6.2.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.bundlerepository" version="1.6.2"/>
+    </target>
+
+    <target name="felix.org.osgi.core-1.0.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.org.osgi.core" version="1.0.0"/>
+    </target>
+
+    <target name="felix.org.osgi.compendium-1.0.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.org.osgi.compendium" version="1.0.0"/>
+    </target>
+
+    <target name="felix.configadmin-1.2.4.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.configadmin" version="1.2.4"/>
+    </target>
+
+    <target name="felix.configadmin-1.2.8.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.configadmin" version="1.2.8"/>
+    </target>
+
+    <target name="felix.eventadmin-1.2.8.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.eventadmin" version="1.2.8"/>
+    </target>
+
+    <target name="felix.fileinstall-3.1.10.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.fileinstall" version="3.1.10"/>
+    </target>
+
+    <target name="felix.fileinstall-2.0.4.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.fileinstall" version="2.0.4"/>
+    </target>
+
+    <target name="org.osgi.core-4.2.0.checkout" unless="skipCheckout">
+        <felix.checkout project="org.osgi.core" version="4.2.0"/>
+    </target>
+
+    <target name="org.osgi.compendium-4.1.0.checkout" unless="skipCheckout">
+        <felix.checkout project="org.osgi.compendium" version="4.1.0"/>
+    </target>
+
+    <target name="org.osgi.compendium-4.2.0.checkout" unless="skipCheckout">
+        <felix.checkout project="org.osgi.compendium" version="4.2.0"/>
+    </target>
+
+    <target name="org.osgi.enterprise-4.2.0.checkout" unless="skipCheckout">
+        <felix.checkout project="org.osgi.enterprise" version="4.2.0"/>
+    </target>
+
+    <target name="felix.framework-3.0.8.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.framework" version="3.0.8"/>
+    </target>
+
+    <target name="felix.framework-2.0.2.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.framework" version="2.0.2"/>
+    </target>
+
+    <target name="org.osgi.core-4.0.0.checkout" unless="skipCheckout">
+        <felix.checkout project="org.osgi.core" version="4.0.0"/>
+    </target>
+
+    <target name="felix.main-3.0.8.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.main" version="3.0.8"/>
+    </target>
+
+    <target name="felix.org.osgi.compendium-1.0.1.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.org.osgi.compendium" version="1.0.1"/>
+    </target>
+
+    <target name="felix.shell-1.0.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.shell" version="1.0.0"/>
+    </target>
+
+    <target name="felix.shell.remote-1.0.4.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.shell.remote" version="1.0.4"/>
+    </target>
+
+    <target name="felix.shell.remote-1.1.2.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.shell.remote" version="1.1.2"/>
+    </target>
+
+    <target name="felix.scr-1.0.8.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.scr" version="1.0.8"/>
+    </target>
+
+    <target name="felix.scr-1.6.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.scr" version="1.6.0"/>
+    </target>
+
+    <target name="felix.gogo-parent-0.6.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.gogo-parent" version="0.6.0"/>
+    </target>
+
+    <target name="felix.gogo.runtime-0.6.1.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.gogo.runtime" version="0.6.1"/>
+    </target>
+
+    <target name="felix.gogo.runtime-0.8.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.gogo.runtime" version="0.8.0"/>
+    </target>
+
+    <target name="felix.gogo.shell-0.8.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.gogo.shell" version="0.8.0"/>
+    </target>
+
+    <target name="felix.gogo.command-0.8.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.gogo.command" version="0.8.0"/>
+    </target>
+
+    <target name="felix.org.osgi.core-1.2.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.org.osgi.core" version="1.2.0"/>
+    </target>
+
+    <target name="felix.org.osgi.foundation-1.2.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.org.osgi.foundation" version="1.2.0"/>
+    </target>
+
+    <target name="felix.org.osgi.compendium-1.2.0.checkout" unless="skipCheckout">
+        <felix.checkout project="felix.org.osgi.compendium" version="1.2.0"/>
+    </target>
+
+    <!--
+         Build targets
+    -->
+    <macrodef name="felix.build">
+        <attribute name="dir"/>
+        <attribute name="skip-test" default="false"/>
+        <sequential>
+            <mvn.install settings-xml="${custom-settings-xml}" 
+                dir="${glassfish.external.dir}/felix/@{dir}"
+                skip-test="@{skip-test}"/>
+        </sequential>
+    </macrodef>
 
     <target name="felix.concurrent-1.3.4" depends="felix.concurrent-1.3.4.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.concurrent-1.3.4" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix-parent-1.2.0.checkout">
-        <echo message="checkout felix-parent from ${gf.ext.svn.url}/felix-parent/1.2.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix-parent/1.2.0" />
-            <arg line="felix-parent-1.2.0" />
-	</exec>
+        <felix.build dir="felix.concurrent-1.3.4"/>
     </target>
 
     <target name="felix-parent-1.2.0" depends="felix-parent-1.2.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix-parent-1.2.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix-parent-1.2.1.checkout">
-        <echo message="checkout felix-parent from ${gf.ext.svn.url}/felix-parent/1.2.1"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix-parent/1.2.1" />
-            <arg line="felix-parent-1.2.1" />
-	</exec>
+        <felix.build dir="felix-parent-1.2.0"/>
     </target>
 
     <target name="felix-parent-1.2.1" depends="felix-parent-1.2.1.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix-parent-1.2.1" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="org.osgi.core-4.1.0.checkout">
-        <echo message="checkout org.osgi.core from ${gf.ext.svn.url}/org.osgi.core/4.1.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/org.osgi.core/4.1.0" />
-            <arg line="org.osgi.core-4.1.0" />
-	</exec>
+        <felix.build dir="felix-parent-1.2.1"/>
     </target>
 
     <target name="org.osgi.core-4.1.0" depends="org.osgi.core-4.1.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/org.osgi.core-4.1.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix-pom-1.0.0.checkout">
-        <echo message="checkout felix-pom from ${gf.ext.svn.url}/felix-pom/1.0.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix-pom/1.0.0" />
-            <arg line="felix-pom-1.0.0" />
-	</exec>
+        <felix.build dir="org.osgi.core-4.1.0"/>
     </target>
 
     <target name="felix-pom-1.0.0" depends="felix-pom-1.0.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix-pom-1.0.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.javax.servlet-1.0.0.checkout">
-        <echo message="checkout felix.javax.servlet from ${gf.ext.svn.url}/felix.javax.servlet/1.0.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.javax.servlet/1.0.0" />
-            <arg line="felix.javax.servlet-1.0.0" />
-	</exec>
+        <felix.build dir="felix-pom-1.0.0"/>
     </target>
 
     <target name="felix.javax.servlet-1.0.0" depends="felix.javax.servlet-1.0.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.javax.servlet-1.0.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix-pom-1.0.1.checkout">
-        <echo message="checkout felix-pom from ${gf.ext.svn.url}/felix-pom/1.0.1"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix-pom/1.0.1" />
-            <arg line="felix-pom-1.0.1" />
-	</exec>
+        <felix.build dir="felix.javax.servlet-1.0.0"/>
     </target>
 
     <target name="felix-pom-1.0.1" depends="felix-pom-1.0.1.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix-pom-1.0.1" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.org.osgi.foundation-1.0.0.checkout">
-        <echo message="checkout felix.org.osgi.foundation from ${gf.ext.svn.url}/felix.org.osgi.foundation/1.0.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.org.osgi.foundation/1.0.0" />
-            <arg line="felix.org.osgi.foundation-1.0.0" />
-	</exec>
+        <felix.build dir="felix-pom-1.0.1"/>
     </target>
 
     <target name="felix.org.osgi.foundation-1.0.0" depends="felix.org.osgi.foundation-1.0.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.org.osgi.foundation-1.0.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="org.osgi.compendium-4.0.0.checkout">
-        <echo message="checkout org.osgi.compendium from ${gf.ext.svn.url}/org.osgi.compendium/4.0.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/org.osgi.compendium/4.0.0" />
-            <arg line="org.osgi.compendium-4.0.0" />
-	</exec>
+        <felix.build dir="felix.org.osgi.foundation-1.0.0"/>
     </target>
 
     <target name="org.osgi.compendium-4.0.0" depends="org.osgi.compendium-4.0.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/org.osgi.compendium-4.0.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.shell-1.4.1.checkout">
-        <echo message="checkout felix.shell from ${gf.ext.svn.url}/felix.shell/1.4.1"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.shell/1.4.1" />
-            <arg line="felix.shell-1.4.1" />
-	</exec>
+        <felix.build dir="org.osgi.compendium-4.0.0"/>
     </target>
 
     <target name="felix.shell-1.4.1" depends="felix.shell-1.4.1.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.shell-1.4.1" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix-pom-1.0.2.checkout">
-        <echo message="checkout felix-pom from ${gf.ext.svn.url}/felix-pom/1.0.2"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix-pom/1.0.2" />
-            <arg line="felix-pom-1.0.2" />
-	</exec>
+        <felix.build dir="felix.shell-1.4.1"/>
     </target>
 
     <target name="felix-pom-1.0.2" depends="felix-pom-1.0.2.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix-pom-1.0.2" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.org.osgi.core-1.0.1.checkout">
-        <echo message="checkout felix.org.osgi.core from ${gf.ext.svn.url}/felix.org.osgi.core/1.0.1"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.org.osgi.core/1.0.1" />
-            <arg line="felix.org.osgi.core-1.0.1" />
-	</exec>
+        <felix.build dir="felix-pom-1.0.2"/>
     </target>
 
     <target name="felix.org.osgi.core-1.0.1" depends="felix.org.osgi.core-1.0.1.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.org.osgi.core-1.0.1" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.org.osgi.service.obr-1.0.2.checkout">
-        <echo message="checkout felix.org.osgi.service.obr from ${gf.ext.svn.url}/felix.org.osgi.service.obr/1.0.2"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.org.osgi.service.obr/1.0.2" />
-            <arg line="felix.org.osgi.service.obr-1.0.2" />
-	</exec>
+        <felix.build dir="felix.org.osgi.core-1.0.1"/>
     </target>
 
     <target name="felix.org.osgi.service.obr-1.0.2" depends="felix.org.osgi.service.obr-1.0.2.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.org.osgi.service.obr-1.0.2" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.kxml2-2.2.2.checkout">
-        <echo message="checkout felix.kxml2 from ${gf.ext.svn.url}/felix.kxml2/2.2.2"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.kxml2/2.2.2" />
-            <arg line="felix.kxml2-2.2.2" />
-	</exec>
+        <felix.build dir="felix.org.osgi.service.obr-1.0.2"/>
     </target>
 
     <target name="felix.kxml2-2.2.2" depends="felix.kxml2-2.2.2.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.kxml2-2.2.2" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.kxml2-2.3.0.checkout">
-        <echo message="checkout felix.kxml2 from ${gf.ext.svn.url}/felix.kxml2/2.3.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.kxml2/2.3.0" />
-            <arg line="felix.kxml2-2.3.0" />
-	</exec>
+        <felix.build dir="felix.kxml2-2.2.2"/>
     </target>
 
     <target name="felix.kxml2-2.3.0" depends="felix.kxml2-2.3.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.kxml2-2.3.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.bundlerepository-1.4.2.checkout">
-        <echo message="checkout felix.bundlerepository from ${gf.ext.svn.url}/felix.bundlerepository/1.4.2"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.bundlerepository/1.4.2" />
-            <arg line="felix.bundlerepository-1.4.2" />
-	</exec>
+        <felix.build dir="felix.kxml2-2.3.0"/>
     </target>
 
     <target name="felix.bundlerepository-1.4.2" depends="felix.bundlerepository-1.4.2.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.bundlerepository-1.4.2" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.utils-1.0.0.checkout">
-        <echo message="checkout felix.utils from ${gf.ext.svn.url}/felix.utils/1.0.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.utils/1.0.0" />
-            <arg line="felix.utils-1.0.0" />
-	</exec>
+        <felix.build dir="felix.bundlerepository-1.4.2"/>
     </target>
 
     <target name="felix.utils-1.0.0" depends="felix.utils-1.0.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.utils-1.0.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.utils-1.1.0.checkout">
-        <echo message="checkout felix.utils from ${gf.ext.svn.url}/felix.utils/1.1.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.utils/1.1.0" />
-            <arg line="felix.utils-1.1.0" />
-	</exec>
+        <felix.build dir="felix.utils-1.0.0"/>
     </target>
 
     <target name="felix.utils-1.1.0" depends="felix.utils-1.1.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.utils-1.1.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.woodstox-core-asl-4.0.7.checkout">
-        <echo message="checkout felix.woodstox-core-asl-4.0.7 from ${gf.ext.svn.url}/felix.woodstox-core-asl/4.0.7"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.woodstox-core-asl/4.0.7" />
-            <arg line="felix.woodstox-core-asl-4.0.7" />
-	</exec>
+        <felix.build dir="felix.utils-1.1.0"/>
     </target>
 
     <target name="felix.woodstox-core-asl-4.0.7" depends="felix.woodstox-core-asl-4.0.7.checkout" >
-        <exec executable="ant" dir="${external.dir}/felix.woodstox-core-asl-4.0.7" failonerror="true" >
-            <arg line="dist" />
-	</exec>
-        <exec executable="mvn" dir="${external.dir}/felix.woodstox-core-asl-4.0.7" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-Dfile=dist/woodstox-core-asl-4.0.7.jar" />
-            <arg line="-DpomFile=dist/woodstox-core-asl-4.0.7.pom" />
-            <arg line="install:install-file" />
-        </exec>
-        <exec executable="mvn" dir="${external.dir}/felix.woodstox-core-asl-4.0.7" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-Dfile=dist/stax2-api-3.0.1.jar" />
-            <arg line="-DpomFile=dist/stax2-api-3.0.1.pom" />
-            <arg line="install:install-file" />
-        </exec>
-    </target>
+        <property name="woodstox.dir" value="${glassfish.external.dir}/felix/felix.woodstox-core-asl-4.0.7"/>
+        <ant dir="${woodstox.dir}" target="jars"/>
 
-    <target name="felix.bundlerepository-1.6.0.checkout">
-        <echo message="checkout felix.bundlerepository from ${gf.ext.svn.url}/felix.bundlerepository/1.6.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.bundlerepository/1.6.0" />
-            <arg line="felix.bundlerepository-1.6.0" />
-	</exec>
+        <!-- publish stax2-api -->
+        <copy overwrite="true" file="${woodstox.dir}/src/maven/stax2-api.pom"
+            tofile="${woodstox.dir}/build/stax2-api-3.0.1.pom" >
+          <filterset>
+            <filter token="VERSION" value="3.0.1"/>
+           </filterset>
+        </copy>            
+        <mvn.publish.local.pom
+            file="${woodstox.dir}/build/stax2-api-3.0.1.jar"
+            pom="${woodstox.dir}/build/stax2-api-3.0.1.pom"/>
+        
+        <!-- publish woodstox-core-asl -->
+        <copy overwrite="true" file="${woodstox.dir}/src/maven/woodstox-core-asl.pom"
+            tofile="${woodstox.dir}/build/woodstox-core-asl-4.0.7.pom" >
+          <filterset>
+            <filter token="VERSION" value="4.0.7"/>
+            <filter token="REQ_STAX2_VERSION" value="3.0.1"/>
+           </filterset>
+        </copy>
+        <mvn.publish.local.pom
+            file="${woodstox.dir}/build/woodstox-core-asl-4.0.7.jar"
+            pom="${woodstox.dir}/build/woodstox-core-asl-4.0.7.pom"/>
     </target>
 
     <target name="felix.bundlerepository-1.6.0" depends="felix.bundlerepository-1.6.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.bundlerepository-1.6.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.bundlerepository-1.6.2.checkout">
-        <echo message="checkout felix.bundlerepository from ${gf.ext.svn.url}/felix.bundlerepository/1.6.2"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.bundlerepository/1.6.2" />
-            <arg line="felix.bundlerepository-1.6.2" />
-	</exec>
+        <felix.build dir="felix.bundlerepository-1.6.0"/>
     </target>
 
     <target name="felix.bundlerepository-1.6.2" depends="felix.bundlerepository-1.6.2.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.bundlerepository-1.6.2" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.org.osgi.core-1.0.0.checkout">
-        <echo message="checkout felix.org.osgi.core from ${gf.ext.svn.url}/felix.org.osgi.core/1.0.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.org.osgi.core/1.0.0" />
-            <arg line="felix.org.osgi.core-1.0.0" />
-	</exec>
+        <felix.build dir="felix.bundlerepository-1.6.2"/>
     </target>
 
     <target name="felix.org.osgi.core-1.0.0" depends="felix.org.osgi.core-1.0.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.org.osgi.core-1.0.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.org.osgi.compendium-1.0.0.checkout">
-        <echo message="checkout felix.org.osgi.compendium from ${gf.ext.svn.url}/felix.org.osgi.compendium/1.0.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.org.osgi.compendium/1.0.0" />
-            <arg line="felix.org.osgi.compendium-1.0.0" />
-	</exec>
+        <felix.build dir="felix.org.osgi.core-1.0.0"/>
     </target>
 
     <target name="felix.org.osgi.compendium-1.0.0" depends="felix.org.osgi.compendium-1.0.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.org.osgi.compendium-1.0.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.configadmin-1.2.4.checkout">
-        <echo message="checkout felix.configadmin from ${gf.ext.svn.url}/felix.configadmin/1.2.4"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.configadmin/1.2.4" />
-            <arg line="felix.configadmin-1.2.4" />
-	</exec>
+        <felix.build dir="felix.org.osgi.compendium-1.0.0"/>
     </target>
 
     <target name="felix.configadmin-1.2.4" depends="felix.configadmin-1.2.4.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.configadmin-1.2.4" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	    <arg line="-Dmaven.test.skip=true" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.configadmin-1.2.8.checkout">
-        <echo message="checkout felix.configadmin from ${gf.ext.svn.url}/felix.configadmin/1.2.8"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.configadmin/1.2.8" />
-            <arg line="felix.configadmin-1.2.8" />
-	</exec>
+        <felix.build dir="felix.configadmin-1.2.4" skip-test="true"/>
     </target>
 
     <target name="felix.configadmin-1.2.8" depends="felix.configadmin-1.2.8.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.configadmin-1.2.8" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-	    <arg line="-Dmaven.test.skip=true" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.eventadmin-1.2.8.checkout">
-        <echo message="checkout felix.eventadmin from ${gf.ext.svn.url}/felix.eventadmin/1.2.8"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.eventadmin/1.2.8" />
-            <arg line="felix.eventadmin-1.2.8" />
-	</exec>
+        <felix.build dir="felix.configadmin-1.2.8" skip-test="true"/>
     </target>
 
     <target name="felix.eventadmin-1.2.8" depends="felix.eventadmin-1.2.8.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.eventadmin-1.2.8" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.fileinstall-3.1.10.checkout">
-        <echo message="checkout felix.fileinstall from ${gf.ext.svn.url}/felix.fileinstall/3.1.10"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.fileinstall/3.1.10" />
-            <arg line="felix.fileinstall-3.1.10" />
-	</exec>
+        <felix.build dir="felix.eventadmin-1.2.8"/>
     </target>
 
     <target name="felix.fileinstall-3.1.10" depends="felix.fileinstall-3.1.10.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.fileinstall-3.1.10" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.fileinstall-2.0.4.checkout">
-        <echo message="checkout felix.fileinstall from ${gf.ext.svn.url}/felix.fileinstall/2.0.4"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.fileinstall/2.0.4" />
-            <arg line="felix.fileinstall-2.0.4" />
-	</exec>
+        <felix.build dir="felix.fileinstall-3.1.10"/>
     </target>
 
     <target name="felix.fileinstall-2.0.4" depends="felix.fileinstall-2.0.4.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.fileinstall-2.0.4" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="org.osgi.core-4.2.0.checkout">
-        <echo message="checkout org.osgi.core from ${gf.ext.svn.url}/org.osgi.core/4.2.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/org.osgi.core/4.2.0" />
-            <arg line="org.osgi.core-4.2.0" />
-	</exec>
+        <felix.build dir="felix.fileinstall-2.0.4"/>
     </target>
 
     <target name="org.osgi.core-4.2.0" depends="org.osgi.core-4.2.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/org.osgi.core-4.2.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="org.osgi.compendium-4.1.0.checkout">
-        <echo message="checkout org.osgi.compendium from ${gf.ext.svn.url}/org.osgi.compendium/4.1.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/org.osgi.compendium/4.1.0" />
-            <arg line="org.osgi.compendium-4.1.0" />
-	</exec>
+        <felix.build dir="org.osgi.core-4.2.0"/>
     </target>
 
     <target name="org.osgi.compendium-4.1.0" depends="org.osgi.compendium-4.1.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/org.osgi.compendium-4.1.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="org.osgi.compendium-4.2.0.checkout">
-        <echo message="checkout org.osgi.compendium from ${gf.ext.svn.url}/org.osgi.compendium/4.2.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/org.osgi.compendium/4.2.0" />
-            <arg line="org.osgi.compendium-4.2.0" />
-	</exec>
+        <felix.build dir="org.osgi.compendium-4.1.0"/>
     </target>
 
     <target name="org.osgi.compendium-4.2.0" depends="org.osgi.compendium-4.2.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/org.osgi.compendium-4.2.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="org.osgi.enterprise-4.2.0.checkout">
-        <echo message="checkout org.osgi.enterprise from ${gf.ext.svn.url}/org.osgi.enterprise/4.2.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/org.osgi.enterprise/4.2.0" />
-            <arg line="org.osgi.enterprise-4.2.0" />
-	</exec>
+        <felix.build dir="org.osgi.compendium-4.2.0"/>
     </target>
 
     <target name="org.osgi.enterprise-4.2.0" depends="org.osgi.enterprise-4.2.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/org.osgi.enterprise-4.2.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.framework-3.0.8.checkout">
-        <echo message="checkout felix.framework from ${gf.ext.svn.url}/felix.framework/3.0.8"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.framework/3.0.8" />
-            <arg line="felix.framework-3.0.8" />
-	</exec>
+        <felix.build dir="org.osgi.enterprise-4.2.0"/>
     </target>
 
     <target name="felix.framework-3.0.8" depends="felix.framework-3.0.8.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.framework-3.0.8" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.framework-2.0.2.checkout">
-        <echo message="checkout felix.framework from ${gf.ext.svn.url}/felix.framework/2.0.2"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.framework/2.0.2" />
-            <arg line="felix.framework-2.0.2" />
-	</exec>
+        <felix.build dir="felix.framework-3.0.8"/>
     </target>
 
     <target name="felix.framework-2.0.2" depends="felix.framework-2.0.2.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.framework-2.0.2" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="org.osgi.core-4.0.0.checkout">
-        <echo message="checkout org.osgi.core from ${gf.ext.svn.url}/org.osgi.core/4.0.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/org.osgi.core/4.0.0" />
-            <arg line="org.osgi.core-4.0.0" />
-	</exec>
+        <felix.build dir="felix.framework-2.0.2"/>
     </target>
 
     <target name="org.osgi.core-4.0.0" depends="org.osgi.core-4.0.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/org.osgi.core-4.0.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.main-3.0.8.checkout">
-        <echo message="checkout felix.main from ${gf.ext.svn.url}/felix.main/3.0.8"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.main/3.0.8" />
-            <arg line="felix.main-3.0.8" />
-	</exec>
+        <felix.build dir="org.osgi.core-4.0.0"/>
     </target>
 
     <target name="felix.main-3.0.8" depends="felix.main-3.0.8.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.main-3.0.8" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.org.osgi.compendium-1.0.1.checkout">
-        <echo message="checkout felix.org.osgi.compendium from ${gf.ext.svn.url}/felix.org.osgi.compendium/1.0.1"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.org.osgi.compendium/1.0.1" />
-            <arg line="felix.org.osgi.compendium-1.0.1" />
-	</exec>
+        <felix.build dir="felix.main-3.0.8"/>
     </target>
 
     <target name="felix.org.osgi.compendium-1.0.1" depends="felix.org.osgi.compendium-1.0.1.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.org.osgi.compendium-1.0.1" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.shell-1.0.0.checkout">
-        <echo message="checkout felix.shell from ${gf.ext.svn.url}/felix.shell/1.0.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.shell/1.0.0" />
-            <arg line="felix.shell-1.0.0" />
-	</exec>
+        <felix.build dir="felix.org.osgi.compendium-1.0.1"/>
     </target>
 
     <target name="felix.shell-1.0.0" depends="felix.shell-1.0.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.shell-1.0.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+        <felix.build dir="felix.shell-1.0.0"/>
     </target>
-
-    <target name="felix.shell.remote-1.0.4.checkout">
-        <echo message="checkout felix.shell.remote from ${gf.ext.svn.url}/felix.shell.remote/1.0.4"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.shell.remote/1.0.4" />
-            <arg line="felix.shell.remote-1.0.4" />
-	</exec>
-    </target>
-
+    
     <target name="felix.shell.remote-1.0.4" depends="felix.shell.remote-1.0.4.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.shell.remote-1.0.4" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.shell.remote-1.1.2.checkout">
-        <echo message="checkout felix.shell.remote from ${gf.ext.svn.url}/felix.shell.remote/1.1.2"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.shell.remote/1.1.2" />
-            <arg line="felix.shell.remote-1.1.2" />
-	</exec>
+        <felix.build dir="felix.shell.remote-1.0.4"/>
     </target>
 
     <target name="felix.shell.remote-1.1.2" depends="felix.shell.remote-1.1.2.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.shell.remote-1.1.2" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.scr-1.0.8.checkout">
-        <echo message="checkout felix.scr from ${gf.ext.svn.url}/felix.scr/1.0.8"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.scr/1.0.8" />
-            <arg line="felix.scr-1.0.8" />
-	</exec>
+        <felix.build dir="felix.shell.remote-1.1.2"/>
     </target>
 
     <target name="felix.scr-1.0.8" depends="felix.scr-1.0.8.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.scr-1.0.8" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.scr-1.6.0.checkout">
-        <echo message="checkout felix.scr from ${gf.ext.svn.url}/felix.scr/1.6.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.scr/1.6.0" />
-            <arg line="felix.scr-1.6.0" />
-	</exec>
+        <felix.build dir="felix.scr-1.0.8"/>
     </target>
 
     <target name="felix.scr-1.6.0" depends="felix.scr-1.6.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.scr-1.6.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="-Dmaven.test.skip=true" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.org.osgi.core-1.2.0.checkout">
-        <echo message="checkout felix.org.osgi.core from ${gf.ext.svn.url}/felix.org.osgi.core/1.2.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.org.osgi.core/1.2.0" />
-            <arg line="felix.org.osgi.core-1.2.0" />
-        </exec>
+        <felix.build dir="felix.scr-1.6.0" skip-test="true"/>
     </target>
 
     <target name="felix.org.osgi.core-1.2.0" depends="felix.org.osgi.core-1.2.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.org.osgi.core-1.2.0" failonerror="true" >
-            <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-        </exec>
-    </target>
-
-    <target name="felix.org.osgi.foundation-1.2.0.checkout">
-        <echo message="checkout felix.org.osgi.foundation from ${gf.ext.svn.url}/felix.org.osgi.foundation/1.2.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-	    <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.org.osgi.foundation/1.2.0" />
-            <arg line="felix.org.osgi.foundation-1.2.0" />
-	</exec>
+        <felix.build dir="felix.org.osgi.core-1.2.0"/>
     </target>
 
     <target name="felix.org.osgi.foundation-1.2.0" depends="felix.org.osgi.foundation-1.2.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.org.osgi.foundation-1.2.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.org.osgi.compendium-1.2.0.checkout">
-        <echo message="checkout felix.org.osgi.compendium from ${gf.ext.svn.url}/felix.org.osgi.compendium/1.2.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.org.osgi.compendium/1.2.0" />
-            <arg line="felix.org.osgi.compendium-1.2.0" />
-        </exec>
+        <felix.build dir="felix.org.osgi.foundation-1.2.0"/>
     </target>
 
     <target name="felix.org.osgi.compendium-1.2.0" depends="felix.org.osgi.compendium-1.2.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.org.osgi.compendium-1.2.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.gogo-parent-0.6.0.checkout">
-        <echo message="checkout felix.gogo-parent from ${gf.ext.svn.url}/felix.gogo-parent/0.6.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.gogo-parent/0.6.0" />
-            <arg line="felix.gogo-parent-0.6.0" />
-        </exec>
+        <felix.build dir="felix.org.osgi.compendium-1.2.0"/>
     </target>
 
     <target name="felix.gogo-parent-0.6.0" depends="felix.gogo-parent-0.6.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.gogo-parent-0.6.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.gogo.runtime-0.6.1.checkout">
-        <echo message="checkout felix.gogo.runtime from ${gf.ext.svn.url}/felix.gogo.runtime/0.6.1"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.gogo.runtime/0.6.1" />
-            <arg line="felix.gogo.runtime-0.6.1" />
-        </exec>
+        <felix.build dir="felix.gogo-parent-0.6.0"/>
     </target>
 
     <target name="felix.gogo.runtime-0.6.1" depends="felix.gogo.runtime-0.6.1.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.gogo.runtime-0.6.1" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.gogo.runtime-0.8.0.checkout">
-        <echo message="checkout felix.gogo.runtime from ${gf.ext.svn.url}/felix.gogo.runtime/0.8.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.gogo.runtime/0.8.0" />
-            <arg line="felix.gogo.runtime-0.8.0" />
-        </exec>
+        <felix.build dir="felix.gogo.runtime-0.6.1"/>
     </target>
 
     <target name="felix.gogo.runtime-0.8.0" depends="felix.gogo.runtime-0.8.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.gogo.runtime-0.8.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.gogo.shell-0.8.0.checkout">
-        <echo message="checkout felix.gogo.shell from ${gf.ext.svn.url}/felix.gogo.shell/0.8.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.gogo.shell/0.8.0" />
-            <arg line="felix.gogo.shell-0.8.0" />
-        </exec>
+        <felix.build dir="felix.gogo.runtime-0.8.0"/>
     </target>
 
     <target name="felix.gogo.shell-0.8.0" depends="felix.gogo.shell-0.8.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.gogo.shell-0.8.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
-    </target>
-
-    <target name="felix.gogo.command-0.8.0.checkout">
-        <echo message="checkout felix.gogo.command from ${gf.ext.svn.url}/felix.gogo.command/0.8.0"/>
-        <exec executable="svn" dir="${external.dir}" failonerror="true" >
-            <arg line="checkout" />
-            <arg line="${gf.ext.svn.url}/felix.gogo.command/0.8.0" />
-            <arg line="felix.gogo.command-0.8.0" />
-        </exec>
+        <felix.build dir="felix.gogo.shell-0.8.0"/>
     </target>
 
     <target name="felix.gogo.command-0.8.0" depends="felix.gogo.command-0.8.0.checkout" >
-        <exec executable="mvn" dir="${external.dir}/felix.gogo.command-0.8.0" failonerror="true" >
-	    <arg line="-Dmaven.repo.local=${maven.repo.local}" />
-            <arg line="install" />
-	</exec>
+        <felix.build dir="felix.gogo.command-0.8.0"/>
     </target>
 
 </project>

@@ -1,37 +1,27 @@
 <?xml version="1.0" encoding="iso-8859-1"?>
 
-<project name="LDAP-BP source integration for security" default="build" basedir=".">
+<project name="LDAP-BP source integration for security" default="build" basedir="..">
 
     <!-- import build.xml for init target and inherited properties -->
-    <import file="build.xml"/>
+    <import file="${basedir}/build.xml"/>
 
-    <target name="build" depends="init">
-        <antcall target="ldapbp.build" />
-    </target>
+    <property name="ldapbp.dir" value="${glassfish.external.dir}/ldapbp"/>
 
-    <!--
-        Checkout ldapbp  source and build
-    -->
-    <target name="ldapbp.checkout" >
+    <target name="checkout" depends="init,check.proxy" unless="skipCheckout">
         <echo message="checkout ldapbp from ${ldapbp.url}."/>
-	<mkdir dir="${external.dir}/ldapbp"/>
-	<get src="http://download.java.net/javaee5/external/shared/ldapbp-src/jars/ldapbp-src-1_1_01.jar" verbose="true" dest="${external.dir}/ldapbp/ldapbp-src-1_1_01.jar"/>
-<!--	<get src="${ldapbp.url}" dest="${external.dir}/ldapbp/ldapbp-src-1_1_01.jar"/>-->
+	<mkdir dir="${ldapbp.dir}"/>
+	<get src="${ldapbp.url}"
+            verbose="true" dest="${ldapbp.dir}/${ldapbp.src.artifact}"/>
     </target>
-    <target name="ldapbp.build" depends="ldapbp.checkout" >
-	<exec executable="jar" dir="${external.dir}/ldapbp" failonerror="true">
-		<arg line="xvf"/>
-		<arg line="${ldapbp.src.artifact}"/>
-	</exec>
-        <exec executable="ant" dir="${external.dir}/ldapbp" failonerror="true" />
-        <exec executable="mvn" dir="${external.dir}/ldapbp" failonerror="true" >
-		<arg line="-Dpackaging=jar"/>
-		<arg line="-Dfile=${ldapbp.artifact}"/>
-		<arg line="-DgroupId=org.glassfish.external"/>
-		<arg line="-DartifactId=ldapbp-repackaged"/>
-		<arg line="-Dversion=${security.version}"/>
-		<arg line="install:install-file"/>
-	</exec>
+
+    <target name="build" depends="checkout" >
+        <unjar dest="${ldapbp.dir}" src="${ldapbp.dir}/${ldapbp.src.artifact}" />
+        <ant dir="${ldapbp.dir}"/>
+
+        <mvn.publish.local file="${ldapbp.dir}/${ldapbp.artifact}"
+            groupId="org.glassfish.external"
+            artifactId="ldapbp-repackaged"
+            version="${security.version}"/>
     </target>
 
 </project>
