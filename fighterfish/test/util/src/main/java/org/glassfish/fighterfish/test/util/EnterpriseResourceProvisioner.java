@@ -111,7 +111,7 @@ public class EnterpriseResourceProvisioner {
 //            Assert.fail(result.getOutput());
 //        }
         if (isInmemoryDerbyDb()) {
-            createPoolForInmemoryDerbyDb(gf, poolName, db);
+            createPoolForInmemoryEmbeddedDerbyDb(gf, poolName, db);
         } else {
             createPoolForEmbeddedDerbyDb(gf, poolName, db);
         }
@@ -152,7 +152,7 @@ public class EnterpriseResourceProvisioner {
             // So, it should something like like C\:\\temp\\foo
             dbDir = dbDir.replace("\\", "\\\\").replace(":", "\\:");
         }
-        final String poolProps = "databaseName=" + dbDir + ":" + "connectionAttributes=" + ";create\\=true";
+        final String poolProps = "databaseName=" + dbDir + ":" + "connectionAttributes=;create\\=true";
         execute(gf,
                 "create-jdbc-connection-pool",
                 "--ping",
@@ -170,17 +170,19 @@ public class EnterpriseResourceProvisioner {
      * @param db name of the database
      * @throws GlassFishException
      */
-    private void createPoolForInmemoryDerbyDb(GlassFish gf, String poolName, String db) throws GlassFishException {
+    private void createPoolForInmemoryEmbeddedDerbyDb(GlassFish gf, String poolName, String db) throws GlassFishException {
         // According to Derby guide available at
         // http://db.apache.org/derby/docs/10.7/devguide/cdevdvlpinmemdb.html#cdevdvlpinmemdb ,
         // an in-memory databae url is of the form: jdbc:derby:memory:db;create=true
         // The above syntax works if we create a java.sql.Driver type resource, but not with DataSource type.
-        String poolProps = "url=jdbc\\:derby\\:memory\\:" + db + ";create\\=true";
+        // That's because url is not a valid property while creating DataSource type resource.
+        // So, we use memory protocol in databaseName.
+        String poolProps = "databaseName=memory\\:" + db + ":" + "connectionAttributes=;create\\=true";
         execute(gf,
                 "create-jdbc-connection-pool",
                 "--ping",
-                "--restype=java.sql.Driver",
-                "--driverclassname=org.apache.derby.jdbc.EmbeddedDriver",
+                "--restype=javax.sql.XADataSource",
+                "--datasourceclassname=org.apache.derby.jdbc.EmbeddedXADataSource",
                 "--property",
                 poolProps,
                 poolName);
