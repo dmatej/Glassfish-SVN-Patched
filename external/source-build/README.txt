@@ -33,7 +33,8 @@ Overridable properties:
 
     2) from cli and user.properties
         - java.net.user (default: glassfish_sourcebuild)
-        - ssh.user.home (default: ${basedir}/.ssh)
+	- kenai.user (default: ${java.net.user})
+	- ssh.user.home (default: ${basedir}/.ssh)
         - maven.repo.local (default: ${maven.user.home}/repository)
         - maven.settings.xml (default: ${maven.user.home}/settings.xml)
         - local.maven.ant.tasks.jar (default: ${basedir}/lib/maven-ant-tasks-2.0.10.jar)

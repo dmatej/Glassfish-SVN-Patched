@@ -253,9 +253,15 @@
        <attribute name="dest"/>
        <sequential>
             <echo message="svn checkout from @{repo}"/>
-            <exec-3-trials
+            <!-- prevent svn failure if permissions of the private key are wrong --> 
+	    <chmod file="${ssh.user.home}/id_rsa" perm="600"/> 
+	    <exec-3-trials
                 exe="svn"
-                arg="-r @{tag} checkout @{repo} ${glassfish.external.dir}/@{dest}"/>
+                arg="-r @{tag} checkout @{repo} ${glassfish.external.dir}/@{dest}">
+      	  	<extra-args>
+		   <env key="SVN_SSH" value="ssh -i .ssh/id_rsa -o 'UserKnownHostsFile .ssh/known_hosts'"/>
+		</extra-args> 
+	    </exec-3-trials> 
        </sequential>
     </macrodef>
 
@@ -300,7 +306,7 @@
                 <arg line="@{repo}"/>
                 <arg line="@{dest}"/>
                 <env key="HOME" value="${ssh.user.home}/.."/>
-                <env key="GIT_SSH" value="${ssh.user.home}/config"/>
+                <env key="GIT_SSH" value="${ssh.user.home}/git"/>
             </exec>
             <exec executable="git" dir="${glassfish.external.dir}/@{dest}">
                 <arg line="checkout"/>
@@ -319,7 +325,8 @@
         <attribute name="verbose" default="true"/>
         <attribute name="output" default="/tmp/avoidOuput" />
         <attribute name="dir" default="${basedir}" />
-        <sequential>
+	<element name="args" optional="true"/>
+	<sequential>
             <condition property="@{exe}@{arg}-isVerbose">
                 <equals arg1="@{verbose}" arg2="true" />
             </condition>
@@ -332,7 +339,8 @@
                     failifexecutionfails="false"
                     resultproperty="@{res}" >
                     <arg line="@{arg}"/>
-                </exec>
+      		    <args/> 
+       		</exec>
             </selectiveTask>
             <selectiveTask unless="@{exe}@{arg}-isVerbose">
                 <exec
@@ -344,7 +352,8 @@
                     output="@{output}"
                     resultproperty="@{res}" >
                     <arg line="@{arg}"/>
-                </exec>
+              	    <args/> 
+	       </exec>
             </selectiveTask>
         </sequential>
     </macrodef>
@@ -356,24 +365,37 @@
     <macrodef name="exec-3-trials">
         <attribute name="exe"/>
         <attribute name="arg"/>
-        <sequential>
+        <element name="extra-args" optional="true"/>
+	<sequential>
             <!-- 1st try -->
-            <exec-nofail exe="@{exe}" res="@{arg}-res.1" arg="@{arg}"/>
-            <condition property="@{arg}-try1.succeed">
+            <exec-nofail exe="@{exe}" res="@{arg}-res.1" arg="@{arg}">
+	   	<args>		
+			<extra-args/>
+		</args>	
+            </exec-nofail>
+	    <condition property="@{arg}-try1.succeed">
                 <equals arg1="${@{arg}-res.1}" arg2="0"/>
             </condition>
             <selectiveTask unless="@{arg}-try1.succeed">
                 <!-- 2nd try -->
                 <echo message="exec try1 failed, 2nd try..."/>
-                <exec-nofail exe="@{exe}" res="@{arg}-res.2" arg="@{arg}"/>
-                <condition property="@{arg}-try2.succeed">
+                <exec-nofail exe="@{exe}" res="@{arg}-res.2" arg="@{arg}">
+                	<args>
+				<extra-args/>
+			</args>	
+		</exec-nofail>
+		<condition property="@{arg}-try2.succeed">
                     <equals arg1="${@{arg}-res.2}" arg2="0"/>
                 </condition>
                 <selectiveTask unless="@{arg}-try2.succeed">
                     <!-- 3rd try -->
                     <echo message="exec try2 failed, 3rd try..."/>
-                    <exec-nofail exe="@{exe}" res="@{arg}-res.3" arg="@{arg}"/>
-                    <condition property="@{arg}-try3.succeed">
+                    <exec-nofail exe="@{exe}" res="@{arg}-res.3" arg="@{arg}">
+                    	<args>
+		    		<extra-args/>
+			</args>
+		    </exec-nofail>
+		    <condition property="@{arg}-try3.succeed">
                         <equals arg1="${@{arg}-res.3}" arg2="0"/>
                     </condition>
                     <fail unless="@{arg}-try3.succeed"
