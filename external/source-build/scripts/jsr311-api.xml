@@ -12,11 +12,17 @@
     </target>
 
     <target name="build" depends="checkout">
+	<!-- generate a plugin-registry.xml -->
         <generate-plugin-registry-xml
             file="${maven.user.home}/plugin-registry.xml"
             groupId="org.codehaus.mojo"
             artifactId="buildnumber-maven-plugin"
             useVersion="1.0-beta-3" />
+	<!-- custom settings.xml to force usage of plugin-registry.xml -->
+	<xml.elt prop="additionalElts" name="usePluginRegistry" value="true"/>
+	<generate-settings-xml 
+		file="${jsr311-api.dir}/jsr311-settings.xml"
+		additionalElts="${additionalElts}"/>
 
         <!-- add project.scm.developerConnection and project.scm.connection properties since it's causing the -->
         <!-- build failure with the message:  "java.lang.NullPointerException: The scm url cannot be null."   -->
@@ -26,13 +32,11 @@
 
         <!-- build jsr311-api -->
         <mvn.install dir="${jsr311-api.dir}" skip-test="true"
-            settings-xml="${jsr311-api.dir}/jsr311-settings.xml">
+		settings-xml="${jsr311-api.dir}/jsr311-settings.xml">
             <extra-args>
                 <arg line="-npu"/>
                 <arg line="-Dproject.scm.developerConnection=${jsr311-scm}"/>
                 <arg line="-Dproject.scm.connection=${jsr311-scm}"/>
-	        <arg line="-DusePluginRegistry=true" />
-	        <arg line="-Pjsr311" />
             </extra-args>
         </mvn.install>
    </target>
