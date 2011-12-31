@@ -113,4 +113,13 @@ public class TestsConfiguration {
         }
         return paxExamConfigurator.configure();
     }
+
+    static {
+        // Work around for GLASSFISH-16510.
+        // This code gets executes before any test methods get executed, which means this code
+        // gets executed before any embedded glassfish gets provisioned. By eagely calling, getPlatformMBeanServer,
+        // we ensure that all embedded glassfish will use this as opposed to what is created by
+        // AppServerMBeanServerBuilder.
+        java.lang.management.ManagementFactory.getPlatformMBeanServer();
+    }
 }
