@@ -52,31 +52,37 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.logging.Logger;
+import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
+ * A simple bundle that can download GlassFish zip from a URL specified using {@link GLASSFISH_ARCHIVE_URL}
+ * into a location specified in {@link INSTALLATION_DIR} property. It then bootstraps GlassFish in the same
+ * JVM.
+ *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class Activator implements BundleActivator {
 
-    private final String GLASSFISH_ARCHIVE_URL = "org.glassfish.fighterfish.sample.embeddedgf.provisioner.url";
-    private final String INSTALLATION_DIR = "org.glassfish.fighterfish.sample.embeddedgf.provisioner.destination";
+    private final String GLASSFISH_ARCHIVE_URL = "fighterfish.provisioner.url";
+    private final String INSTALLATION_DIR = "fighterfish.provisioner.destination";
 
     private File dest;
+    private Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
     @Override
     public void start(BundleContext context) throws Exception {
         try {
-            System.out.println("***********************");
             String out = context.getProperty(INSTALLATION_DIR);
             if (out != null) {
                 dest = new File(out);
             } else {
                 dest = context.getDataFile(""); // get base dir
             }
-            if (needToExplode(dest)) {
-                explode(context, dest);
+            if (needToExplode()) {
+                if(dest.mkdirs());
+                explode(context);
             }
             startGlassFishBundle(context);
         } catch (Exception e) {
@@ -87,46 +93,31 @@ public class Activator implements BundleActivator {
 
     private void startGlassFishBundle(BundleContext context) throws BundleException {
         Bundle bundle = context.installBundle(new File(dest, "glassfish3/glassfish/modules/glassfish.jar").toURI().toString());
+        System.setProperty("com.sun.aas.installRoot", new File(dest, "glassfish3/glassfish/").getAbsolutePath());
+        System.setProperty("com.sun.aas.instanceRoot", new File(dest, "glassfish3/glassfish/domains/domain1/").getAbsolutePath());
         bundle.start(Bundle.START_TRANSIENT);
     }
 
-    private boolean needToExplode(File dest) throws Exception {
-        if (dest.exists()) {
-            if (dest.isFile()) {
-                throw new Exception(dest.getAbsolutePath() + " is a file");
-            } else {
-                // sanity check
-                final File glassfish3 = new File(dest, "glassfish3");
-                if (!glassfish3.exists()) {
-                    return true;
-                } else {
-                    if (glassfish3.isDirectory()) {
-                        System.out.println("GlassFish installation exists at " + dest.getAbsolutePath());
-                        return false;
-                    }
-                    throw new Exception("Some other files found at " + dest.getAbsolutePath());
-                }
-            }
-        } else {
-            if (dest.mkdirs()) {
-                throw new Exception("Unable to mkdir " + dest.getAbsolutePath());
-            }
+    private boolean needToExplode() throws Exception {
+        if (new File(dest, "glassfish3").isDirectory()) {
+            return false;
+        }
+        if (dest.isFile()) {
+            throw new Exception(dest.getAbsolutePath() + " is a file");
         }
         return true;
     }
 
-    private void explode(BundleContext context, File dest) throws Exception {
+    private void explode(BundleContext context) throws Exception {
         String in = context.getProperty(GLASSFISH_ARCHIVE_URL);
+        logger.info("Provisioning URL = " + in);
         if (in != null) {
             URL url = new URL(in);
-            System.out.println("I am here");
+            logger.info("Opening stream");
             InputStream is = url.openStream();
-            System.out.println("is = " + is);
-            Logger.getAnonymousLogger().info("xxxxxxxxxxx");
             ZipInputStream zis = new ZipInputStream(url.openStream());
-            System.out.println("zis = " + zis);
             try {
-                extractZip(zis, dest);
+                extractZip(zis);
             } finally {
                 zis.close();
             }
@@ -139,12 +130,14 @@ public class Activator implements BundleActivator {
     public void stop(BundleContext context) throws Exception {
     }
 
-    public static void extractZip(ZipInputStream zis, File destDir) throws IOException {
-        System.out.println("Exploding at " + destDir.getAbsolutePath());
+    public void extractZip(ZipInputStream zis) throws IOException {
+        logger.logp(Level.INFO, "Activator", "extractZip", "dest = {0}", new Object[]{dest});
         ZipEntry ze;
+        int n = 0;
+        int size = 0;
         while ((ze = zis.getNextEntry()) != null) {
-            System.out.println("ze.getName() = " + ze.getName() + ", size = " + ze.getSize());
-            java.io.File f = new java.io.File(destDir + java.io.File.separator + ze.getName());
+            logger.logp(Level.FINER, "Activator", "extractZip", "ZipEntry name = {0}, size = {1}", new Object[]{ze.getName(), ze.getSize()});
+            java.io.File f = new java.io.File(dest + java.io.File.separator + ze.getName());
             if (ze.isDirectory()) {
                 if (!f.exists()) {
                     if (!f.mkdirs()) {
@@ -167,7 +160,7 @@ public class Activator implements BundleActivator {
                     fos.write(buffer, 0, count);
                     totalcount += count;
                 }
-                System.out.println("totalcount = " + totalcount);
+                logger.logp(Level.FINER, "Activator", "extractZip", "totalcount for this zip entry = {0}", new Object[]{totalcount});
             } finally {
                 try {
                     if (fos != null) {
@@ -178,7 +171,11 @@ public class Activator implements BundleActivator {
                 }
             }
             zis.closeEntry();
+            n++;
+            size += ze.getSize();
         }
+        logger.logp(Level.INFO, "Activator", "extractZip", "Extracted {0} of entries of total size {1} bytes.", new Object[]{n, size});
+
     }
 
 }
