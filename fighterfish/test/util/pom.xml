@@ -1,167 +1,390 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<parent>
-		<groupId>net.java</groupId>
-		<artifactId>jvnet-parent</artifactId>
-		<version>1</version>
-	</parent>
-	<groupId>org.glassfish.fighterfish</groupId>
-	<artifactId>test.util</artifactId>
-	<version>1.1.0-SNAPSHOT</version>
-	<name>A utility bundle which helps writing test cases involving
-		GlassFish/Pax-Exam easier</name>
-	<scm>
-		<connection>scm:svn:https://svn.java.net/svn/glassfish~svn/trunk/fighterfish/test/util</connection>
-		<developerConnection>scm:svn:https://svn.java.net/svn/glassfish~svn/trunk/fighterfish/test/util</developerConnection>
-		<url>https://svn.java.net/svn/glassfish~svn/trunk/fighterfish/test/util</url>
-	</scm>
-	<build>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-				<filtering>true</filtering>
-			</resource>
-		</resources>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<!-- Configure maven-bundle-plugin to generate OSGi manifest. Please 
-					note: we use the manifest goal only and not the bundle goal. The bundle goal 
-					can lead to very surprising results if the package names are not correctly 
-					specified. So, we use the jar plugin to generate the jar. -->
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<version>2.3.4</version>
-				<configuration>
-					<!-- By default, we don't export anything. -->
-					<Export-Package />
-					<!-- Since, we are in a top level pom and we we don't want it to be 
-						active for plain jar type artifacts, enable the plugin for hk2-jar and bundle 
-						packaging type only, -->
-					<supportedProjectTypes>
-						<supportedProjectType>jar</supportedProjectType>
-					</supportedProjectTypes>
-					<instructions>
-						<!-- Read all the configuration from osgi.properties file, if it exists. 
-							See Felix-699 to find out why we use ${basedir}. -->
-						<_include>-${basedir}/osgi.properties</_include>
-					</instructions>
-				</configuration>
-				<executions>
-					<execution>
-						<id>bundle-manifest</id>
-						<phase>process-classes</phase>
-						<goals>
-							<goal>manifest</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-			<plugin>
-				<artifactId>maven-jar-plugin</artifactId>
-				<configuration>
-					<archive>
-						<manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF
-						</manifestFile>
-					</archive>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-release-plugin</artifactId>
-				<configuration>
-					<mavenExecutorId>forked-path</mavenExecutorId>
-					<useReleaseProfile>false</useReleaseProfile>
-					<arguments>${release.arguments}</arguments>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-	<dependencies>
-		<dependency>
-			<groupId>org.glassfish</groupId>
-			<artifactId>simple-glassfish-api</artifactId>
-			<version>3.1.1</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.8.1</version>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.osgi</groupId>
-			<artifactId>org.osgi.core</artifactId>
-			<version>4.2.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.osgi</groupId>
-			<artifactId>org.osgi.compendium</artifactId>
-			<version>4.2.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.ops4j.pax.exam</groupId>
-			<artifactId>pax-exam</artifactId>
-			<version>${pax-exam.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.ops4j.pax.exam</groupId>
-			<artifactId>pax-exam-junit4</artifactId>
-			<version>${pax-exam.version}</version>
-		</dependency>
-		<dependency>
-			<!-- Having this dependency instructs pax-exam to use in-process OSGi 
-				runtime -->
-			<groupId>org.ops4j.pax.exam</groupId>
-			<artifactId>pax-exam-container-native</artifactId>
-			<version>${pax-exam.version}</version>
-		</dependency>
-		<!-- Starting with pax-exam 2.2.0, native container requires pax-exam-link-assembly 
-			and pax-url-aether to be provisioned as well while using mvn protocol. -->
-		<dependency>
-			<groupId>org.ops4j.pax.exam</groupId>
-			<artifactId>pax-exam-link-assembly</artifactId>
-			<version>${pax-exam.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.ops4j.pax.url</groupId>
-			<artifactId>pax-url-aether</artifactId>
-			<version>1.3.3</version>
-		</dependency>
-		<!-- pax-exam uses slf4j. We need to provide a binding for the same here. -->
-		<dependency>
-			<groupId>org.slf4j</groupId>
-			<artifactId>slf4j-jdk14</artifactId>
-			<version>1.6.1</version>
-		</dependency>
-		<dependency>
-			<groupId>javax</groupId>
-			<artifactId>javaee-web-api</artifactId>
-			<version>6.0</version>
-			<scope>provided</scope>
-			<optional>true</optional>
-		</dependency>
-		<!-- Finally, we must specify the test framework that must be used when 
-				we use pax-exam native test container. Here we are using Felix. To use Equinox, 
-				replace by a suitable dependency here. 
-		<dependency>
-			<groupId>org.apache.felix</groupId>
-			<artifactId>org.apache.felix.framework</artifactId>
-			<version>3.0.8</version>
-		</dependency>
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>net.java</groupId>
+        <artifactId>jvnet-parent</artifactId>
+        <version>1</version>
+    </parent>
+    <!--
+    TODO: There is a lot of common configuration between this POM and POM of test/it. So,
+    we should have a common parent pom for all.
+    -->
+    <groupId>org.glassfish.fighterfish</groupId>
+    <artifactId>test.util</artifactId>
+    <version>1.1.0-SNAPSHOT</version>
+    <name>A junit extension which helps writing test cases involving GlassFish/Maven/JUnit/PAX-EXAM easier</name>
+    <description>
+        This is a small junit extension developed in FighterFish project to make the task of writing
+        test cases using maven/glassfish/junit much easier. It in turn leverages pax-exam test framework.
+    </description>
+    <scm>
+        <connection>scm:svn:https://svn.java.net/svn/glassfish~svn/trunk/fighterfish/test/util</connection>
+        <developerConnection>scm:svn:https://svn.java.net/svn/glassfish~svn/trunk/fighterfish/test/util
+        </developerConnection>
+        <url>https://svn.java.net/svn/glassfish~svn/trunk/fighterfish/test/util</url>
+    </scm>
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- Configure maven-bundle-plugin to generate OSGi manifest. Please
+                        note: we use the manifest goal only and not the bundle goal. The bundle goal
+                        can lead to very surprising results if the package names are not correctly
+                        specified. So, we use the jar plugin to generate the jar. -->
+                <groupId>org.apache.felix</groupId>
+                <artifactId>maven-bundle-plugin</artifactId>
+                <version>2.3.4</version>
+                <configuration>
+                    <!-- By default, we don't export anything. -->
+                    <Export-Package/>
+                    <!-- Since, we are in a top level pom and we we don't want it to be
+                             active for plain jar type artifacts, enable the plugin for hk2-jar and bundle
+                             packaging type only, -->
+                    <supportedProjectTypes>
+                        <supportedProjectType>jar</supportedProjectType>
+                    </supportedProjectTypes>
+                    <instructions>
+                        <!-- Read all the configuration from osgi.properties file, if it exists.
+                                  See Felix-699 to find out why we use ${basedir}. -->
+                        <_include>-${basedir}/osgi.properties</_include>
+                    </instructions>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>bundle-manifest</id>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>manifest</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF
+                        </manifestFile>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <mavenExecutorId>forked-path</mavenExecutorId>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <arguments>${release.arguments}</arguments>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!--
+                    Maven chooses to make provided dependencies part of test classpath.
+                    The javaee-api and javaee-web-api jars can't be used in runtime, for they
+                    don't contain proper classes, so we exclude them from test classpath.
+                    -->
+                    <classpathDependencyExcludes>
+                        <classpathDependencyExcludes>javax:javaee-web-api
+                        </classpathDependencyExcludes>
+                    </classpathDependencyExcludes>
+                </configuration>
+            </plugin>
+            <!--
+            Let's configure fail-safe plugin to execute integration tests for this module
+            -->
+            <plugin>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                </executions>
+                <configuration>
+                    <systemPropertyVariables>
+                        <!-- This is what is used by Derby Embedded Driver to decide where to keep the derby log messages -->
+                        <derby.stream.error.file>${project.build.directory}/derby.log</derby.stream.error.file>
+                        <!-- This is needed for pax-url-mvn to read custom settings.xml.
+                             pax-url-mvn tries to locate settings.xml in ~/.m2 or in ${maven.home}/conf
+                        -->
+                        <user.home>${user.home}</user.home>
+                        <!-- This is needed for pax-url-mvn to reads custom settings.xml.
+                             pax-url-mvn tries to locate settings.xml in ~/.m2 or in ${maven.home}/conf
+                        -->
+                        <maven.home>${maven.home}</maven.home>
+                    </systemPropertyVariables>
+                    <!--
+                    Maven chooses to make provided dependencies part of test classpath.
+                    The javaee-api and javaee-web-api jars can't be used in runtime, for they
+                    don't contain proper classes, so we exclude them from test classpath.
+                    -->
+                    <classpathDependencyExcludes>
+                        <classpathDependencyExcludes>javax:javaee-web-api
+                        </classpathDependencyExcludes>
+                    </classpathDependencyExcludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+    <dependencies>
+        <dependency>
+            <groupId>org.glassfish</groupId>
+            <artifactId>simple-glassfish-api</artifactId>
+            <version>3.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.8.1</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.core</artifactId>
+            <version>4.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.compendium</artifactId>
+            <version>4.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam</artifactId>
+            <version>${pax-exam.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-junit4</artifactId>
+            <version>${pax-exam.version}</version>
+        </dependency>
+        <dependency>
+            <!-- Having this dependency instructs pax-exam to use in-process OSGi
+                   runtime -->
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-container-native</artifactId>
+            <version>${pax-exam.version}</version>
+        </dependency>
+        <!-- Starting with pax-exam 2.2.0, native container requires pax-exam-link-assembly
+              and pax-url-aether to be provisioned as well while using mvn protocol. -->
+        <dependency>
+            <groupId>org.ops4j.pax.exam</groupId>
+            <artifactId>pax-exam-link-assembly</artifactId>
+            <version>${pax-exam.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.ops4j.pax.url</groupId>
+            <artifactId>pax-url-aether</artifactId>
+            <version>1.3.3</version>
+        </dependency>
+        <!-- pax-exam uses slf4j. We need to provide a binding for the same here. -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>1.6.1</version>
+        </dependency>
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-web-api</artifactId>
+            <version>6.0</version>
+            <scope>provided</scope>
+            <optional>true</optional>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>ToolsJar</id>
+            <activation>
+                <os>
+                    <family>!mac</family>
+                </os>
+            </activation>
+            <dependencies>
+                <!-- Add tools.jar to classpath as required by GlassFish. See ASMainHelper#createOSGiFrameworkLauncherCL -->
+                <dependency>
+                    <groupId>com.sun</groupId>
+                    <artifactId>tools</artifactId>
+                    <version>${java.version}</version>
+                    <scope>system</scope>
+                    <systemPath>${java.home}/../lib/tools.jar</systemPath>
+                </dependency>
+            </dependencies>
+        </profile>
+
+        <profile>
+            <id>Felix</id>
+            <activation>
+                <!-- We can't use activeByDefault, as such a profile is not selected when any other profile is selected
+                     because of explicit user request or because of activation rule.
+                     We don't want everyone to pass -PFelix either. So, we activate it using a rule
+                     which will always match. If you want this profile to be inactive (e.g. when running
+                     using Equinox), then you have to pass -P-Felix.
                 -->
-	</dependencies>
-	<properties>
-		<!-- The version of pax-exam being used. I have not tested test.util bundle 
-			with 2.2.0 yet, so, let's stick to 2.1.0 for now. -->
-		<pax-exam.version>2.2.0</pax-exam.version>
-	</properties>
+                <jdk>[1.6,1000)</jdk>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>org.apache.felix.framework</artifactId>
+                    <scope>test</scope>
+                    <version>${felix.version}</version>
+                </dependency>
+            </dependencies>
+            <properties>
+                <GlassFish_Platform>Felix</GlassFish_Platform>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>Equinox</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.sonatype.tycho</groupId>
+                    <artifactId>org.eclipse.osgi</artifactId>
+                    <version>${equinox.version}</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+            <properties>
+                <GlassFish_Platform>Equinox</GlassFish_Platform>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>SunJVM</id>
+            <activation>
+                <property>
+                    <name>java.vm.vendor</name>
+                    <value>Sun Microsystems Inc.</value>
+                </property>
+            </activation>
+            <properties>
+                <argLine>-XX:MaxPermSize=256m</argLine>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>IBM-J9-VM</id>
+            <activation>
+                <property>
+                    <name>java.vm.name</name>
+                    <value>IBM J9 VM</value>
+                </property>
+            </activation>
+            <properties>
+                <argLine>-XX:MaxPermSize=256m -Xverify:none</argLine>
+            </properties>
+        </profile>
+
+        <profile>
+            <!--
+            We want to run the tests multiple times with different settings like with an existing GlassFish
+            installation, without an installation, with Felix and Equinox, etc. So, we create multiple
+            test executions.
+            -->
+            <id>TestWithoutInstallation</id>
+            <activation>
+                <!--
+                See Felix profile to undertstand why we use this activation policy.
+                -->
+                <jdk>[1.6,1000)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>TestWithoutInstallation</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <systemPropertyVariables>
+                                        <fighterfish.provisioner.url>${glassfish.url}</fighterfish.provisioner.url>
+                                        <org.osgi.framework.storage>
+                                            ${project.build.directory}/osgi-cache/${GlassFish_Platform}/TestWithoutInstallation
+                                        </org.osgi.framework.storage>
+                                    </systemPropertyVariables>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>TestWithInstallation</id>
+            <activation>
+                <!--
+                See Felix profile to undertstand why we use this activation policy.
+                -->
+                <jdk>[1.6,1000)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>TestWithInstallation</id>
+                                <goals>
+                                    <goal>integration-test</goal>
+                                    <goal>verify</goal>
+                                </goals>
+                                <configuration>
+                                    <systemPropertyVariables>
+                                        <com.sun.aas.installRoot>${glassfish.home}</com.sun.aas.installRoot>
+                                        <org.osgi.framework.storage>
+                                            ${project.build.directory}/osgi-cache/${GlassFish_Platform}/TestWithInstallation
+                                        </org.osgi.framework.storage>
+                                    </systemPropertyVariables>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>Debug</id>
+            <properties>
+                <maven.failsafe.debug>-Xdebug -Xnoagent -Djava.compiler=NONE
+                    -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=9009
+                </maven.failsafe.debug>
+                <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE
+                    -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=9009
+                </maven.surefire.debug>
+            </properties>
+        </profile>
+
+    </profiles>
+    <properties>
+        <!-- The version of pax-exam being used. I have not tested test.util bundle
+              with 2.2.0 yet, so, let's stick to 2.1.0 for now. -->
+        <pax-exam.version>2.2.0</pax-exam.version>
+        <glassfish.home>/home/ss141213/WS/gf/v3/publish/glassfish3/glassfish/</glassfish.home>
+        <glassfish.url>mvn:org.glassfish.distributions/glassfish/4.0-SNAPSHOT/zip</glassfish.url>
+        <felix.version>3.0.8</felix.version>
+        <equinox.version>3.6.2.R36x_v20110210</equinox.version>
+    </properties>
 </project>

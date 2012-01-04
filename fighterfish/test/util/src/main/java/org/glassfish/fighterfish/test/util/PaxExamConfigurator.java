@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -41,9 +41,7 @@
 
 package org.glassfish.fighterfish.test.util;
 
-import org.ops4j.pax.exam.Info;
 import org.ops4j.pax.exam.Option;
-import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.osgi.framework.Constants;
 
 import java.io.File;
@@ -66,16 +64,10 @@ import static org.ops4j.pax.exam.OptionUtils.combine;
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class PaxExamConfigurator {
-//    Not needed, as this is set by NativeTestContainer automatically.
-//    static {
-//        System.setProperty( "java.protocol.handler.pkgs", "org.ops4j.pax.url" );
-//    }
-
     // TODO(Sahoo): Use mavenConfiguration to avoid having to encode version numbers while using maven urls.
 
     protected Logger logger = Logger.getLogger(getClass().getPackage().getName());
     private File gfHome;
-    private String provisioningUrl;
     private String platform;
     private final long timeout;
     private final File fwStorage;
@@ -83,13 +75,6 @@ public class PaxExamConfigurator {
     public PaxExamConfigurator(File gfHome, String platform, long timeout, File fwStorage) {
         this.gfHome = gfHome;
         this.platform = platform;
-        this.timeout = timeout;
-        this.fwStorage = fwStorage;
-    }
-
-    public PaxExamConfigurator(String provisioningUrl, long timeout, File fwStorage) {
-        this.provisioningUrl = provisioningUrl;
-        this.platform = org.glassfish.fighterfish.test.util.Constants.DEFAULT_GLASSFISH_PLATFORM;
         this.timeout = timeout;
         this.fwStorage = fwStorage;
     }
@@ -102,10 +87,7 @@ public class PaxExamConfigurator {
         final String version = Version.getVersion();
         logger.logp(Level.INFO, "PaxExamConfigurator", "provisioningBundles", "FighterFish Test Util Version = {0}",
                 new Object[]{version});
-        final Option gfBundle =
-                gfHome != null ? bundle(new File(gfHome, "modules/glassfish.jar").toURI().toString()) :
-                        mavenBundle().groupId("org.glassfish.fighterfish").artifactId("sample.embeddedgf.provisioner").
-                                version("1.0.0-SNAPSHOT");
+        final Option gfBundle = bundle(new File(gfHome, "modules/glassfish.jar").toURI().toString());
         return options(gfBundle,
                 mavenBundle().groupId("org.junit").artifactId("com.springsource.org.junit").version("4.8.1"),
                 mavenBundle().groupId("org.glassfish.fighterfish").artifactId("test.util").version(version)
@@ -115,19 +97,16 @@ public class PaxExamConfigurator {
     private Option[] frameworkConfiguration() throws IOException {
         // We currently read framework options from a separate file, but we could
         // as well inline them here in code.
-        List<Option> options = convertToOptions(readFrameworkConfiguration());
+        final Properties properties = readFrameworkConfiguration();
+        if (fwStorage!=null) {
+            // override by any explicitly provided value
+            properties.put(Constants.FRAMEWORK_STORAGE, fwStorage.getAbsolutePath());
+        }
+        List<Option> options = convertToOptions(properties);
 
         // See: http://team.ops4j.org/browse/PAXEXAM-267
         // NativeTestContainer does not export the following package, but our test.util needs it
 //        options.add(systemPackages("org.ops4j.pax.exam.options.extra; version=" + Info.getPaxExamVersion()));
-        if (fwStorage != null) {
-            // add this at the end so that it will override any value read from OSGiFramework.properties,
-            // There seems to be a behavior difference between exam 2.1.0 and 2.2.0.
-            // Prior to 2.2.0, a single option at the beginning was having precedence over others.
-            // Now it is the reverse.
-            options.add(workingDirectory(fwStorage.getAbsolutePath()));
-            options.add(cleanCaches(false)); // default is to remove the cache
-        }
         return options.toArray(new Option[options.size()]);
     }
 
@@ -136,7 +115,7 @@ public class PaxExamConfigurator {
     }
 
     /**
-     * Adapts priperties to pax-exam options.
+     * Adapts properties to pax-exam options.
      *
      * @param properties
      * @return
@@ -147,8 +126,8 @@ public class PaxExamConfigurator {
         // as pax-exam's native test container implementation
         // does not use bootdelegation system property.
         for (String p : properties.getProperty(Constants.FRAMEWORK_BOOTDELEGATION, "").split(",")) {
+            logger.logp(Level.INFO, "PaxExamConfigurator", "convertToOptions", "Boot delegation pkg = {0}", new Object[]{p});
             if (p.trim().isEmpty()) continue;
-            System.out.println("Boot delegation pkg = " + p);
             options.add(bootDelegationPackage(p.trim()));
         }
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
@@ -156,8 +135,11 @@ public class PaxExamConfigurator {
             if (entry.getKey().equals(Constants.FRAMEWORK_STORAGE)) {
                 // Starting with pax-exam 2.1.0, we need to specify framework storage using workingDirectory option
                 options.add(workingDirectory((String) entry.getValue()));
+                logger.logp(Level.INFO, "PaxExamConfigurator", "convertToOptions", "OSGi cache dir = {0}",
+                        new Object[]{fwStorage.getAbsolutePath()});
                 continue;
             }
+            options.add(cleanCaches(false)); // default is to remove the cache
             // use frameworkProperty after migrating to new pax-exam (see http://team.ops4j.org/browse/PAXEXAM-261)
             options.add(systemProperty((String) entry.getKey()).value((String) entry.getValue()));
         }

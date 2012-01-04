@@ -45,12 +45,15 @@ import org.ops4j.pax.exam.Option;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.util.Properties;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
  * Represents configuration common to all tests.
  * It reads configuration information from System properties and configures various underlying objects.
+ * Depending on configuration, this also installs GlassFish.
  *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
@@ -75,14 +78,15 @@ public class TestsConfiguration {
     }
 
     private TestsConfiguration(Properties properties) {
-        final String property = properties.getProperty(Constants.GLASSFISH_INSTALL_ROOT_PROP);
-        if (property != null) {
+        String property = properties.getProperty(Constants.GLASSFISH_INSTALL_ROOT_PROP);
+        if (property != null && !property.isEmpty()) {
             gfHome =  new File(property);
         }
-        provisioningUrl = properties.getProperty(Constants.FIGHTERFISH_PROVISIONER_URL_PROP);
-        if (gfHome == null && provisioningUrl == null) {
-            provisioningUrl = Constants.FIGHTERFISH_PROVISIONER_URL_DEFAULT_VALUE;
+        property = properties.getProperty(Constants.FIGHTERFISH_PROVISIONER_URL_PROP);
+        if (property != null && !property.isEmpty()) {
+            provisioningUrl = property;
         }
+        setup();
         platform  = properties.getProperty(Constants.GLASSFISH_PLATFORM_PROP, Constants.DEFAULT_GLASSFISH_PLATFORM);
         testTimeout = Long.parseLong(
                 properties.getProperty(Constants.FIGHTERFISH_TEST_TIMEOUT_PROP, Constants.FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE));
@@ -90,6 +94,52 @@ public class TestsConfiguration {
                 properties.getProperty(Constants.EXAM_TIMEOUT_PROP, Constants.EXAM_TIMEOUT_DEFAULT_VALUE));
         final String s = properties.getProperty(org.osgi.framework.Constants.FRAMEWORK_STORAGE);
         if (s != null) fwStorage = new File(s);
+    }
+
+    private void setup() {
+        boolean install = false;
+        File installDir = null;
+        if (gfHome == null) {
+            if (provisioningUrl == null) {
+                // both are unspecified
+                provisioningUrl = Constants.FIGHTERFISH_PROVISIONER_URL_DEFAULT_VALUE;
+            }
+            installDir = new File(System.getProperty("java.io.tmpdir"), "fighterfish");
+            gfHome = new File(installDir, "glassfish3/glassfish/");
+            install = !gfHome.exists();
+            if (!install) {
+                logger.logp(Level.INFO, "TestsConfiguration", "setup",
+                        "Reusing existing installation at {0}", new Object[]{gfHome});
+            }
+        } else {
+            // gfHome is specified
+            if(!gfHome.exists()) {
+                // explode only if provisioning url is explicitly specified
+                install = provisioningUrl!= null;
+                installDir = new File(gfHome, "../..");
+            }
+        }
+        if (install) {
+            logger.logp(Level.INFO, "TestsConfiguration", "TestsConfiguration",
+                "Will install {0} at {1}", new Object[]{provisioningUrl, installDir});
+            explode(provisioningUrl, installDir);
+        }
+        verifyInstallation();
+    }
+
+    private void verifyInstallation() {
+        final File file = new File(gfHome, "modules/glassfish.jar");
+        if (!file.exists()) {
+            throw new RuntimeException(file.getAbsolutePath() + " does not exist.");
+        }
+    }
+
+    private void explode(String provisioningUrl, File gfHome) {
+        try {
+            ZipUtil.explode(URI.create(provisioningUrl), gfHome);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public long getTimeout() {
@@ -105,13 +155,7 @@ public class TestsConfiguration {
     }
 
     public Option[] getPaxExamConfiguration() throws IOException {
-        PaxExamConfigurator paxExamConfigurator;
-        if(gfHome != null) {
-            paxExamConfigurator = new PaxExamConfigurator(getGfHome(), getPlatform(), examTimeout, fwStorage);
-        } else {
-            paxExamConfigurator = new PaxExamConfigurator(provisioningUrl, examTimeout, fwStorage);
-        }
-        return paxExamConfigurator.configure();
+        return new PaxExamConfigurator(getGfHome(), getPlatform(), examTimeout, fwStorage).configure();
     }
 
     static {
@@ -121,5 +165,8 @@ public class TestsConfiguration {
         // we ensure that all embedded glassfish will use this as opposed to what is created by
         // AppServerMBeanServerBuilder.
         java.lang.management.ManagementFactory.getPlatformMBeanServer();
+
+        // This is needed as we allow user to specify glassfish zip installer using schemes like mvn
+        System.setProperty( "java.protocol.handler.pkgs", "org.ops4j.pax.url" );
     }
 }
