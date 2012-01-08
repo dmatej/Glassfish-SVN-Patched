@@ -53,8 +53,10 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 
+import javax.inject.Inject;
 import java.io.IOException;
 
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 
 /**
@@ -63,6 +65,12 @@ import static org.junit.Assert.assertThat;
 @RunWith(JUnit4TestRunner.class)
 @ExamReactorStrategy( EagerSingleStagedReactorFactory.class )
 public class T3_SimpleIT {
+
+    /**
+     * Pax-Exam supports injection.
+     */
+    @Inject
+    private BundleContext ctx;
 
     /**
      * PaxExamJunit driver treats methods in Junit Test class annotated with @Configuration specially.
@@ -87,14 +95,14 @@ public class T3_SimpleIT {
      *
      * The test will automatically provision a GlassFish runtime for you.
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      * @throws IOException
      */
     @Test
-    public void test(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void test() throws GlassFishException, InterruptedException, BundleException, IOException {
+        assertNotNull(ctx);
         TestContext tc = TestContext.create(getClass());
         try {
         	// Let's install a couple of bundles one of which is an API bundle

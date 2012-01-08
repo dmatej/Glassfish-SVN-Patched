@@ -76,7 +76,7 @@ public class T1_SamplesTest extends AbstractTestObject {
     Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
     @Test
-    public void uas_sample_test(BundleContext ctx)
+    public void uas_sample_test()
             throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T1_SamplesTest", "uas_sample_test", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
@@ -234,7 +234,7 @@ public class T1_SamplesTest extends AbstractTestObject {
     }
 
     @Test
-    public void osgihttp_helloworld_sample_test(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void osgihttp_helloworld_sample_test() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T1_SamplesTest", "osgihttp_helloworld_sample_test", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {

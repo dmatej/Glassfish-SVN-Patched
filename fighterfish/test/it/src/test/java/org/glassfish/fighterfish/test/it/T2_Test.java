@@ -82,13 +82,12 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app0
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp0(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp0() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp0", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -109,13 +108,12 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app1
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp1(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp1() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp1", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -141,13 +139,12 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app2
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp2(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp2() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp2", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -173,13 +170,12 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app3
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp3(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp3() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp3", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -200,13 +196,12 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app4
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp4(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp4() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp4", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -227,13 +222,12 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app5
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp5(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp5() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp5", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -254,14 +248,13 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app6
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
     @Ignore // This is currently failing for EclipseLink's inability to handle URL with bundle scheme.
-    public void testapp6(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp6() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp6", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -276,14 +269,13 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app7
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
     @Ignore // This is currently failing for EclipseLink's inability to handle URL with bundle scheme.
-    public void testapp7(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp7() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp7", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -298,13 +290,12 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app8
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp8(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp8() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp8", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -319,13 +310,12 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app9
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp9(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp9() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp9", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -347,13 +337,12 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app10
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp10(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp10() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp10", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -375,13 +364,12 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app11.ejb
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      */
     @Test
-    public void testapp11_ejb(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp11_ejb() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp11_ejb", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -400,7 +388,6 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app11 as a WAB
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
@@ -408,7 +395,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     @Ignore
     // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
-    public void testapp11_wab(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp11_wab() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp11_wab", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -436,7 +423,6 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app11 as a plain war
      *
-     * @param ctx .
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
@@ -444,7 +430,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     @Ignore
     // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
-    public void testapp11_war(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp11_war() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp11_war", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         String appName = null;
@@ -474,10 +460,9 @@ public class T2_Test extends AbstractTestObject {
     /**
      * Tests test.app12
      *
-     * @param ctx
      */
     @Test
-    public void testapp12(BundleContext ctx) throws BundleException, GlassFishException, InterruptedException, IOException {
+    public void testapp12() throws BundleException, GlassFishException, InterruptedException, IOException {
         logger.entering("T2_Test", "testapp12", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -519,7 +504,7 @@ public class T2_Test extends AbstractTestObject {
 
 
     @Test
-    public void testapp13(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp13() throws GlassFishException, InterruptedException, BundleException {
         logger.entering("T2_Test", "testapp13", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -539,7 +524,7 @@ public class T2_Test extends AbstractTestObject {
     }
 
     @Test
-    public void testapp14(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp14() throws GlassFishException, InterruptedException, BundleException {
         logger.entering("T2_Test", "testapp14", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -558,7 +543,7 @@ public class T2_Test extends AbstractTestObject {
     }
 
     @Test
-    public void testapp15(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException {
+    public void testapp15() throws GlassFishException, InterruptedException, BundleException {
         logger.entering("T2_Test", "testapp15", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -577,7 +562,7 @@ public class T2_Test extends AbstractTestObject {
     }
 
     @Test
-    public void testapp16(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp16() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp16", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         final String cfName = "jms/fighterfish.TestApp16ConnectionFactory";
@@ -634,7 +619,7 @@ public class T2_Test extends AbstractTestObject {
     }
 
     @Test
-    public void testapp17(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp17() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp17", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -655,7 +640,7 @@ public class T2_Test extends AbstractTestObject {
     }
 
     @Test
-    public void testapp18(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp18() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "testapp18", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
         try {
@@ -693,7 +678,6 @@ public class T2_Test extends AbstractTestObject {
     //////////////////////////////////////////////////////////////////
 
     private void empDeptCrud(TestContext tc, String location, String testMethodName) throws BundleException, InterruptedException, IOException {
-        BundleContext ctx = tc.getBundleContext();
         Bundle bundle = tc.installBundle(location);
         WebAppBundle wab = new WebAppBundle(ctx, bundle);
         wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);

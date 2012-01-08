@@ -89,7 +89,7 @@ public class PaxExamConfigurator {
                 new Object[]{version});
         final Option gfBundle = bundle(new File(gfHome, "modules/glassfish.jar").toURI().toString());
         return options(gfBundle,
-                mavenBundle().groupId("org.junit").artifactId("com.springsource.org.junit").version("4.8.1"),
+                junitBundles(),
                 mavenBundle().groupId("org.glassfish.fighterfish").artifactId("test.util").version(version)
         );
     }
@@ -136,7 +136,7 @@ public class PaxExamConfigurator {
                 // Starting with pax-exam 2.1.0, we need to specify framework storage using workingDirectory option
                 options.add(workingDirectory((String) entry.getValue()));
                 logger.logp(Level.INFO, "PaxExamConfigurator", "convertToOptions", "OSGi cache dir = {0}",
-                        new Object[]{fwStorage.getAbsolutePath()});
+                        new Object[]{entry.getValue()});
                 continue;
             }
             options.add(cleanCaches(false)); // default is to remove the cache

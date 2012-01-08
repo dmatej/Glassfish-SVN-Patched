@@ -2,9 +2,12 @@ package org.glassfish.fighterfish.sample.testing.failsafe;
 
 import org.glassfish.fighterfish.test.util.FighterFishJUnitRunner;
 import org.glassfish.fighterfish.test.util.TestContext;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.osgi.framework.BundleContext;
+
+import javax.inject.Inject;
 
 
 /**
@@ -22,11 +25,18 @@ import org.osgi.framework.BundleContext;
  */
 @RunWith(FighterFishJUnitRunner.class)
 public class FighterFishJUnitRunnerIT {
+    /**
+     * This is how one can inject BundleContext. In fact, one can even inject provisioned services.
+     */
+    @Inject
+    private BundleContext ctx;
+
 	@Test
-	public void test(BundleContext ctx) throws Exception {
+	public void test() throws Exception {
 		System.out.println("FighterFishJUnitRunnerIT.test()");
 		TestContext tc = TestContext.create(getClass());
 		try {
+            Assert.assertSame(ctx, tc.getBundleContext());
             System.out.println("tc.getBundleContext() = " + tc.getBundleContext());
 			System.out.println(tc.getGlassFish());
 		} finally {

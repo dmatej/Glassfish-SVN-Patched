@@ -41,6 +41,8 @@
 
 package org.glassfish.fighterfish.test.util;
 
+import org.junit.internal.runners.model.ReflectiveCallable;
+import org.junit.internal.runners.statements.Fail;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
@@ -95,6 +97,37 @@ public class FighterFishJUnitRunner extends BlockJUnit4ClassRunner {
     }
 
     /**
+     * Override to avoid running BeforeClass and AfterClass by the driver.
+     * They shall only be run by the container.
+     */
+    protected Statement classBlock(final RunNotifier notifier) {
+        Statement statement= childrenInvoker(notifier);
+        return statement;
+    }
+
+    /**
+     * Override to avoid running Before, After and Rule methods by the driver.
+     * They shall only be run by the container.
+     */
+    protected Statement methodBlock(FrameworkMethod method) {
+        Object test;
+        try {
+            test= new ReflectiveCallable() {
+                @Override
+                protected Object runReflectiveCall() throws Throwable {
+                    return createTest();
+                }
+            }.run();
+        } catch (Throwable e) {
+            return new Fail(e);
+        }
+
+        Statement statement= methodInvoker(method, test);
+        return statement;
+    }
+
+
+    /**
      * We overwrite those with reactor content
      */
     @Override
@@ -143,19 +176,19 @@ public class FighterFishJUnitRunner extends BlockJUnit4ClassRunner {
         m_system = PaxExamRuntime.createTestSystem();
         Class testClass = getTestClass().getJavaClass();
         Object testClassInstance = testClass.newInstance();
-        ExxamReactor reactor = getReactor(testClass);
+        ExamReactor reactor = getReactor(testClass);
 
         addConfigurationsToReactor(reactor, testClass, testClassInstance);
         addTestsToReactor(reactor, testClass, testClassInstance);
         return reactor.stage(getFactory(testClass));
     }
 
-    private void addConfigurationsToReactor(ExxamReactor reactor, Class testClass, Object testClassInstance)
+    private void addConfigurationsToReactor(ExamReactor reactor, Class testClass, Object testClassInstance)
             throws IllegalAccessException, InvocationTargetException, IllegalArgumentException, IOException {
         reactor.addConfiguration(TestsConfiguration.getInstance().getPaxExamConfiguration());
     }
 
-    private void addTestsToReactor(ExxamReactor reactor, Class testClass, Object testClassInstance)
+    private void addTestsToReactor(ExamReactor reactor, Class testClass, Object testClassInstance)
             throws IOException, ExamConfigurationException {
         TestProbeBuilder probe = m_system.createProbe();
         probe = overwriteWithUserDefinition(testClass, testClassInstance, probe);

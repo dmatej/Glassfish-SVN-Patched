@@ -48,7 +48,9 @@ import org.ops4j.pax.exam.junit.Configuration;
 import org.ops4j.pax.exam.junit.ExamReactorStrategy;
 import org.ops4j.pax.exam.junit.JUnit4TestRunner;
 import org.ops4j.pax.exam.spi.reactors.EagerSingleStagedReactorFactory;
+import org.osgi.framework.BundleContext;
 
+import javax.inject.Inject;
 import java.io.IOException;
 
 /**
@@ -73,6 +75,9 @@ import java.io.IOException;
 @RunWith(JUnit4TestRunner.class)
 @ExamReactorStrategy( EagerSingleStagedReactorFactory.class )
 public abstract class AbstractTestObject {
+
+    @Inject
+    protected BundleContext ctx;
 
     /**
      * PaxExamJunit driver treats methods in Junit Test class annotated with @Configuration specially.

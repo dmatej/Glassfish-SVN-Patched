@@ -41,19 +41,26 @@
 
 package org.glassfish.fighterfish.test.util;
 
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.osgi.framework.BundleContext;
+
+import javax.inject.Inject;
 
 /**
  * @author sanjeeb.sahoo@oracle.com
  */
 @RunWith(FighterFishJUnitRunner.class)
 public class T2_FFRunnerIT {
+    @Inject
+    private BundleContext ctx;
 	@Test
-	public void test(BundleContext ctx) throws Exception {
+	public void test() throws Exception {
+        Assert.assertNotNull(ctx);
 		TestContext tc = TestContext.create(getClass());
 		try {
+            Assert.assertSame(tc.getBundleContext(), ctx);
             System.out.println("tc.getBundleContext() = " + tc.getBundleContext());
 			System.out.println(tc.getGlassFish());
 		} finally {
@@ -64,6 +71,7 @@ public class T2_FFRunnerIT {
     public void test2() throws Exception {
         TestContext tc = TestContext.create(getClass());
         try {
+            Assert.assertSame(tc.getBundleContext(), ctx);
             System.out.println("tc.getBundleContext() = " + tc.getBundleContext());
             System.out.println(tc.getGlassFish());
         } finally {

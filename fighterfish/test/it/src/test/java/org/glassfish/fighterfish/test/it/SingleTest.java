@@ -68,15 +68,14 @@ public class SingleTest extends AbstractTestObject {
      * Most simple test case. This test method waits a preconfigured amount of time for GlassFish to be started.
      * If GlassFish does not start within that time, it fails.
      *
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      * @throws IOException
      */
     @Test
-    public void test(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("SingleTest", "test", new Object[]{ctx});
+    public void test() throws GlassFishException, InterruptedException, BundleException, IOException {
+        logger.entering("SingleTest", "test", new Object[]{});
         TestContext tc = TestContext.create(getClass());
         try {
             GlassFish gf = tc.getGlassFish();

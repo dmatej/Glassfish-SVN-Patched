@@ -16,6 +16,7 @@ import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 
+import javax.inject.Inject;
 import java.io.IOException;
 
 import static org.junit.Assert.assertThat;
@@ -40,7 +41,13 @@ import static org.junit.Assert.assertThat;
 @RunWith(JUnit4TestRunner.class)
 @ExamReactorStrategy( EagerSingleStagedReactorFactory.class ) // Create one test container for all test methods
 public class PaxExamJunitRunnerIT {
-	
+
+    /**
+     * This is how one can inject BundleContext. In fact, one can even inject provisioned services.
+     */
+    @Inject
+    private BundleContext ctx;
+
     /**
      * PaxExamJunit driver treats methods in Junit Test class annotated with @Configuration specially.
      * For each such method, it creates a separate test container configuring it with the options as returned
@@ -71,14 +78,13 @@ public class PaxExamJunitRunnerIT {
      * 
      * The test will automatically provision a GlassFish runtime for you.
      * 
-     * @param ctx
      * @throws GlassFishException
      * @throws InterruptedException
      * @throws BundleException
      * @throws IOException
      */
     @Test
-    public void test(BundleContext ctx) throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void test() throws GlassFishException, InterruptedException, BundleException, IOException {
         TestContext tc = TestContext.create(getClass());
         try {
         	// Let's install a couple of bundles one of which is an API bundle 
