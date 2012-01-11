@@ -68,15 +68,11 @@ public class PaxExamConfigurator {
 
     protected Logger logger = Logger.getLogger(getClass().getPackage().getName());
     private File gfHome;
-    private String platform;
     private final long timeout;
-    private final File fwStorage;
 
-    public PaxExamConfigurator(File gfHome, String platform, long timeout, File fwStorage) {
+    public PaxExamConfigurator(File gfHome, long timeout) {
         this.gfHome = gfHome;
-        this.platform = platform;
         this.timeout = timeout;
-        this.fwStorage = fwStorage;
     }
 
     public Option[] configure() throws IOException {
@@ -98,9 +94,23 @@ public class PaxExamConfigurator {
         // We currently read framework options from a separate file, but we could
         // as well inline them here in code.
         final Properties properties = readFrameworkConfiguration();
-        if (fwStorage!=null) {
-            // override by any explicitly provided value
-            properties.put(Constants.FRAMEWORK_STORAGE, fwStorage.getAbsolutePath());
+
+        // override by system properties if set in system. We override everything except fileinstall properties
+        // as GlassFish's domain.xml  is known to set them incorrectly.
+        for(Map.Entry<Object, Object> entry : properties.entrySet()) {
+            Object orig = properties.get(entry.getKey());
+            Object override = System.getProperty((String) entry.getKey());
+            if (override != null) {
+                if (String.class.cast(entry.getKey()).startsWith("felix.fileinstall.")) {
+                    logger.logp(Level.INFO, "PaxExamConfigurator", "frameworkConfiguration",
+                            "Ignoring overriding of {0}", new Object[]{entry});
+                    continue;
+                }
+                properties.put(entry.getKey(), override);
+                logger.logp(Level.INFO, "PaxExamConfigurator", "frameworkConfiguration",
+                        "entry = {0}, original = {1}, override = {2}",
+                        new Object[]{entry.getKey(), orig, override});
+            }
         }
         List<Option> options = convertToOptions(properties);
 
@@ -122,27 +132,16 @@ public class PaxExamConfigurator {
      */
     private List<Option> convertToOptions(Properties properties) {
         List<Option> options = new ArrayList<Option>();
-        // parse boot delegation property and set it as a bootdelegation option
-        // as pax-exam's native test container implementation
-        // does not use bootdelegation system property.
-        for (String p : properties.getProperty(Constants.FRAMEWORK_BOOTDELEGATION, "").split(",")) {
-            logger.logp(Level.INFO, "PaxExamConfigurator", "convertToOptions", "Boot delegation pkg = {0}", new Object[]{p});
-            if (p.trim().isEmpty()) continue;
-            options.add(bootDelegationPackage(p.trim()));
-        }
         for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-            if (entry.getKey().equals(Constants.FRAMEWORK_BOOTDELEGATION)) continue; // already handled above
             if (entry.getKey().equals(Constants.FRAMEWORK_STORAGE)) {
                 // Starting with pax-exam 2.1.0, we need to specify framework storage using workingDirectory option
                 options.add(workingDirectory((String) entry.getValue()));
                 logger.logp(Level.INFO, "PaxExamConfigurator", "convertToOptions", "OSGi cache dir = {0}",
                         new Object[]{entry.getValue()});
-                continue;
             }
-            options.add(cleanCaches(false)); // default is to remove the cache
-            // use frameworkProperty after migrating to new pax-exam (see http://team.ops4j.org/browse/PAXEXAM-261)
-            options.add(systemProperty((String) entry.getKey()).value((String) entry.getValue()));
+            options.add(frameworkProperty((String) entry.getKey()).value(entry.getValue()));
         }
+        options.add(cleanCaches(false)); // default is to remove the cache
         return options;
     }
 

@@ -61,14 +61,11 @@ public class TestsConfiguration {
 
     private File gfHome;
     private String provisioningUrl;
-    private String platform;
     private long testTimeout;
-    private long examTimeout;
 
     protected Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
     private static TestsConfiguration instance;
-    private File fwStorage;
 
     public synchronized static TestsConfiguration getInstance() {
         if (instance == null) {
@@ -87,13 +84,9 @@ public class TestsConfiguration {
             provisioningUrl = property;
         }
         setup();
-        platform  = properties.getProperty(Constants.GLASSFISH_PLATFORM_PROP, Constants.DEFAULT_GLASSFISH_PLATFORM);
         testTimeout = Long.parseLong(
-                properties.getProperty(Constants.FIGHTERFISH_TEST_TIMEOUT_PROP, Constants.FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE));
-        examTimeout = Long.parseLong(
-                properties.getProperty(Constants.EXAM_TIMEOUT_PROP, Constants.EXAM_TIMEOUT_DEFAULT_VALUE));
-        final String s = properties.getProperty(org.osgi.framework.Constants.FRAMEWORK_STORAGE);
-        if (s != null) fwStorage = new File(s);
+                properties.getProperty(Constants.FIGHTERFISH_TEST_TIMEOUT_PROP,
+                        Constants.FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE));
     }
 
     private void setup() {
@@ -146,16 +139,12 @@ public class TestsConfiguration {
         return testTimeout;
     }
 
-    public File getGfHome() {
+    private File getGfHome() {
         return gfHome;
     }
 
-    public String getPlatform() {
-        return platform;
-    }
-
     public Option[] getPaxExamConfiguration() throws IOException {
-        return new PaxExamConfigurator(getGfHome(), getPlatform(), examTimeout, fwStorage).configure();
+        return new PaxExamConfigurator(getGfHome(), getTimeout()).configure();
     }
 
     static {
@@ -168,5 +157,6 @@ public class TestsConfiguration {
 
         // This is needed as we allow user to specify glassfish zip installer using schemes like mvn
         System.setProperty( "java.protocol.handler.pkgs", "org.ops4j.pax.url" );
+
     }
 }
