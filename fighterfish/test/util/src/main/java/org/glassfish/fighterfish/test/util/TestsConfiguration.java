@@ -62,6 +62,8 @@ public class TestsConfiguration {
     private File gfHome;
     private String provisioningUrl;
     private long testTimeout;
+    private boolean install;
+    private File installDir;
 
     protected Logger logger = Logger.getLogger(getClass().getPackage().getName());
 
@@ -75,6 +77,9 @@ public class TestsConfiguration {
     }
 
     private TestsConfiguration(Properties properties) {
+        testTimeout = Long.parseLong(
+                properties.getProperty(Constants.FIGHTERFISH_TEST_TIMEOUT_PROP,
+                        Constants.FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE));
         String property = properties.getProperty(Constants.GLASSFISH_INSTALL_ROOT_PROP);
         if (property != null && !property.isEmpty()) {
             gfHome =  new File(property);
@@ -83,26 +88,19 @@ public class TestsConfiguration {
         if (property != null && !property.isEmpty()) {
             provisioningUrl = property;
         }
-        setup();
-        testTimeout = Long.parseLong(
-                properties.getProperty(Constants.FIGHTERFISH_TEST_TIMEOUT_PROP,
-                        Constants.FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE));
-    }
-
-    private void setup() {
-        boolean install = false;
-        File installDir = null;
         if (gfHome == null) {
             if (provisioningUrl == null) {
                 // both are unspecified
                 provisioningUrl = Constants.FIGHTERFISH_PROVISIONER_URL_DEFAULT_VALUE;
             }
-            installDir = new File(System.getProperty("java.io.tmpdir"), "fighterfish");
+            // We compute a hashcode so that if user changes provisioning url, we are less likely to
+            // reuse the earlier created installation.
+            installDir = new File(System.getProperty("java.io.tmpdir"), "fighterfish-" + provisioningUrl.hashCode());
             gfHome = new File(installDir, "glassfish3/glassfish/");
-            install = !gfHome.exists();
+            install = !installDir.exists();
             if (!install) {
                 logger.logp(Level.INFO, "TestsConfiguration", "setup",
-                        "Reusing existing installation at {0}", new Object[]{gfHome});
+                        "Reusing existing installation at {0}", new Object[]{installDir});
             }
         } else {
             // gfHome is specified
@@ -112,6 +110,9 @@ public class TestsConfiguration {
                 installDir = new File(gfHome, "../..");
             }
         }
+    }
+
+    private void install() {
         if (install) {
             logger.logp(Level.INFO, "TestsConfiguration", "TestsConfiguration",
                 "Will install {0} at {1}", new Object[]{provisioningUrl, installDir});
@@ -127,9 +128,9 @@ public class TestsConfiguration {
         }
     }
 
-    private void explode(String provisioningUrl, File gfHome) {
+    private void explode(String provisioningUrl, File out) {
         try {
-            ZipUtil.explode(URI.create(provisioningUrl), gfHome);
+            ZipUtil.explode(URI.create(provisioningUrl), out);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -144,6 +145,7 @@ public class TestsConfiguration {
     }
 
     public Option[] getPaxExamConfiguration() throws IOException {
+        install();
         return new PaxExamConfigurator(getGfHome(), getTimeout()).configure();
     }
 
