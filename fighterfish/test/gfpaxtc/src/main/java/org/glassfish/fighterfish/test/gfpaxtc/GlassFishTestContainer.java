@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -43,62 +43,55 @@ package org.glassfish.fighterfish.test.gfpaxtc;
 
 import org.glassfish.embeddable.GlassFish;
 import org.glassfish.embeddable.GlassFishException;
+import org.glassfish.embeddable.GlassFishProperties;
+import org.glassfish.embeddable.GlassFishRuntime;
+import org.ops4j.pax.exam.Constants;
 import org.ops4j.pax.exam.*;
+import org.ops4j.pax.exam.TimeoutException;
+import org.ops4j.pax.exam.options.FrameworkStartLevelOption;
 import org.ops4j.pax.exam.options.ProvisionOption;
 import org.osgi.framework.*;
+import org.osgi.framework.launch.Framework;
 import org.osgi.service.packageadmin.PackageAdmin;
 import org.osgi.service.startlevel.StartLevel;
-import org.osgi.util.tracker.BundleTracker;
 import org.osgi.util.tracker.ServiceTracker;
 
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
+import java.util.Stack;
+import java.util.concurrent.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import static org.ops4j.pax.exam.Constants.START_LEVEL_SYSTEM_BUNDLES;
-import static org.ops4j.pax.exam.CoreOptions.bootDelegationPackage;
-import static org.ops4j.pax.exam.CoreOptions.mavenBundle;
-import static org.ops4j.pax.exam.LibraryOptions.junitBundles;
 
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class GlassFishTestContainer implements TestContainer {
-    BundleContext bctx;
+    private final ExamSystem m_system;
+    private Framework framework;
+    private GlassFishRuntime gfr;
     private GlassFish gf;
-    private Bundle paxExamProbeBundle;
-    private List<Bundle> paxBundles = new ArrayList<Bundle>();
+    private Stack<Long> m_installed = new Stack<Long>();
     private Logger logger = Logger.getLogger(getClass().getPackage().getName());
+    final private static String PROBE_SIGNATURE_KEY = "Probe-Signature";
+    private final GlassFishProperties gfProps;
 
-    public GlassFishTestContainer(GlassFish gf) {
-        logger.logp(Level.INFO, "GlassFishTestContainer", "GlassFishTestContainer", "gf = {0} and is loaded by {1}", new Object[]{gf, gf.getClass().getClassLoader()});
-        this.gf = gf;
-
-        // This returns null, so we have to retrieve BundleContext from getDeployer() in start()
-        // bctx = BundleReference.class.cast(gf.getClass().getClassLoader()).getBundle().getBundleContext();
-        // logger.logp(Level.INFO, "GlassFishTestContainer", "GlassFishTestContainer", "gf = {0}", new Object[]{gf});
-    }
-
-    public void setBundleStartLevel(long bundleId, int startLevel) throws TestContainerException {
-        getStartLevelService().setBundleStartLevel(bctx.getBundle(bundleId), startLevel);
-    }
-
-    private StartLevel getStartLevelService() {
-        return (StartLevel) bctx.getService(bctx.getServiceReference(StartLevel.class.getName()));
+    public GlassFishTestContainer(GlassFishRuntime gfr, GlassFishProperties gfProps, ExamSystem msystem) {
+        this.gfProps = gfProps;
+        logger.logp(Level.INFO, "GlassFishTestContainer", "GlassFishTestContainer",
+                "gfr = {0} and is loaded by {1}", new Object[]{gfr, gfr.getClass().getClassLoader()});
+        this.m_system = msystem;
+        this.gfr = gfr;
     }
 
     public TestContainer start() throws TimeoutException {
         try {
+            gf = gfr.newGlassFish(gfProps);
             gf.start();
-            // Let's get hold of Framework BundleContext
+            // Let's get hold of the framework
             PackageAdmin pa = gf.getService(PackageAdmin.class);
-            bctx = pa.getBundle(Bundle.class).getBundleContext();
-            logger.logp(Level.INFO, "GlassFishTestContainer", "start", "bctx = {0}", new Object[]{bctx});
-            provisionPaxExamBundles();
+            framework = (Framework) pa.getBundle(Bundle.class);
+            logger.logp(Level.INFO, "GlassFishTestContainer", "start", "framework = {0}", new Object[]{framework});
+            installAndStartBundles();
         } catch (GlassFishException e) {
             throw new RuntimeException(e);
         } catch (BundleException e) {
@@ -107,39 +100,16 @@ public class GlassFishTestContainer implements TestContainer {
         return this;
     }
 
-    public TestContainer stop() throws TimeoutException {
-        try {
-            gf.stop();
-        } catch (GlassFishException e) {
-            throw new RuntimeException(e);
-        }
-        return this;
-    }
-
-    public void waitForState(final long bundleId, int state, long timeoutInMillis) throws TimeoutException {
-        final CountDownLatch latch = new CountDownLatch(1);
-        BundleTracker bt = new BundleTracker(bctx, state, null) {
-            @Override
-            public Object addingBundle(Bundle bundle, BundleEvent event) {
-                if (bundle.getBundleId() == bundleId) {
-                    latch.countDown();
-                }
-                return null;
-            }
-        };
-        bt.open();
-        try {
-            latch.await(timeoutInMillis, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new TimeoutException(e);
-        } finally {
-            bt.close();
-        }
-    }
-
     public <T> T getService(Class<T> serviceType, String filter, long timeoutInMillis) throws TestContainerException {
-        ServiceTracker st = new ServiceTracker(bctx, serviceType.getName(), null);
+        final String objectClassFilter = "(objectclass=" + serviceType.getName() + ")";
+        filter = "(&" + objectClassFilter + filter + ")";
+        Filter filter1 = null;
+        try {
+            filter1 = framework.getBundleContext().createFilter(filter);
+        } catch (InvalidSyntaxException e) {
+            throw new TestContainerException(e);
+        }
+        ServiceTracker st = new ServiceTracker(framework.getBundleContext(), filter1, null);
         st.open(false);
         try {
             return serviceType.cast(st.waitForService(timeoutInMillis));
@@ -151,53 +121,138 @@ public class GlassFishTestContainer implements TestContainer {
         }
     }
 
+    public void setBundleStartLevel(long bundleId, int startLevel) throws TestContainerException {
+        getStartLevelService().setBundleStartLevel(framework.getBundleContext().getBundle(bundleId), startLevel);
+    }
+
+    private StartLevel getStartLevelService() {
+        return (StartLevel) framework.getBundleContext().getService(
+                framework.getBundleContext().getServiceReference(StartLevel.class.getName()));
+    }
+
     public long install(InputStream stream) {
+        return install("local", stream);
+    }
+
+    @Override
+    public long install(String location, InputStream stream) {
         try {
-            paxExamProbeBundle = bctx.installBundle("pax-exam-probe", stream);
-            paxExamProbeBundle.start(Bundle.START_TRANSIENT);
+            Bundle b = framework.getBundleContext().installBundle(location, stream);
+            m_installed.push(b.getBundleId());
+            setBundleStartLevel(b.getBundleId(), Constants.START_LEVEL_TEST_BUNDLE);
+            b.start();
+            logger.logp(Level.INFO, "GlassFishTestContainer", "install", "Installed pax exam probe: {0}", new Object[]{b});
+            return b.getBundleId();
         } catch (BundleException e) {
             throw new RuntimeException(e);
         }
-        logger.logp(Level.INFO, "GlassFishTestContainer", "install", "Installed pax exam probe: {0}", new Object[]{paxExamProbeBundle});
-        return paxExamProbeBundle.getBundleId();
     }
 
-    public void cleanup() {
-        try {
-            paxExamProbeBundle.uninstall();
-            for (Bundle paxBundle : paxBundles) {
-                paxBundle.uninstall();
+    public synchronized void call(TestAddress address) {
+        String filter = "(" + PROBE_SIGNATURE_KEY + "=" + address.root().identifier() + ")";
+        ProbeInvoker service = getService(ProbeInvoker.class, filter, m_system.getTimeout().getValue());
+        service.call(address.arguments());
+    }
+
+
+    public TestContainer stop() {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        Future<Boolean> result = executorService.submit(new Callable<Boolean>() {
+            @Override
+            public Boolean call() {
+                try {
+                    gf.stop();
+                    uninstallAll();
+                    gfr.shutdown();
+                } catch (GlassFishException e) {
+                    e.printStackTrace();
+                    return false;
+                } finally {
+                    m_system.clear();
+                }
+                return true;
             }
-            logger.logp(Level.INFO, "GlassFishTestContainer", "cleanup", "Uninstalled probe bundle and pax bundles");
-        } catch (BundleException e) {
+        });
+        try {
+            executorService.shutdown();
+            executorService.awaitTermination(
+                    m_system.getTimeout().getUpperValue() + 1000, TimeUnit.MILLISECONDS);
+            if (result.get()) {
+                logger.logp(Level.INFO, "GlassFishTestContainer", "stop", "Test container stopped successfully");
+            } else {
+                logger.logp(Level.INFO, "GlassFishTestContainer", "stop", "Test container did not stop successfully");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
+        return this;
     }
 
-    private void provisionPaxExamBundles() throws BundleException {
-        ProvisionOption[] options = {
-            mavenBundle()
-                .groupId( "org.ops4j.pax.logging" )
-                .artifactId( "pax-logging-api" )
-                .version( "1.4" )
-                .startLevel( START_LEVEL_SYSTEM_BUNDLES ),
-            mavenBundle()
-                .groupId( "org.ops4j.pax.exam" )
-                .artifactId( "pax-exam-extender-service" )
-                .version( Info.getPaxExamVersion() )
-                .update( Info.isPaxExamSnapshotVersion() )
-                .startLevel( START_LEVEL_SYSTEM_BUNDLES )
-        };
-
-        for (ProvisionOption option : options) {
-            Bundle bundle = bctx.installBundle(option.getURL());
-            paxBundles.add(bundle);
-            logger.logp(Level.INFO, "GlassFishTestContainer", "provisionPaxExamBundles", "bundle = {0}", new Object[]{bundle});
-        }
-
-        for (Bundle b : paxBundles) {
-            b.start(Bundle.START_TRANSIENT);
+    private synchronized void uninstallAll() {
+        while ((!m_installed.isEmpty())) {
+            try {
+                Long id = m_installed.pop();
+                Bundle bundle = framework.getBundleContext().getBundle(id);
+                bundle.uninstall();
+                logger.logp(Level.INFO, "GlassFishTestContainer", "uninstallAll", "Uninstalled {0}", new Object[]{bundle});
+            } catch (BundleException e) {
+                // Sometimes bundles go mad when install + uninstall happens too
+                // fast.
+            }
         }
     }
+
+    private void installAndStartBundles() throws BundleException {
+        BundleContext context = framework.getBundleContext();
+        for (ProvisionOption<?> bundle : m_system.getOptions(ProvisionOption.class)) {
+            Bundle b = context.installBundle(bundle.getURL());
+            m_installed.push(b.getBundleId());
+            int startLevel = getStartLevel(bundle);
+            setBundleStartLevel(b.getBundleId(), startLevel);
+            if (bundle.shouldStart()) {
+                b.start();
+                logger.logp(Level.INFO, "GlassFishTestContainer", "installAndStartBundles", "Install (start@{0}) {1}", new Object[]{startLevel, bundle});
+            } else {
+                logger.logp(Level.INFO, "GlassFishTestContainer", "installAndStartBundles", "Install (no start) {0}", new Object[]{bundle});
+            }
+        }
+
+        int startLevel = m_system.getSingleOption(FrameworkStartLevelOption.class).getStartLevel();
+        logger.logp(Level.INFO, "GlassFishTestContainer", "installAndStartBundles", "Jump to startlevel: " + startLevel);
+        getStartLevelService().setStartLevel(startLevel);
+        // Work around for FELIX-2942
+        final CountDownLatch latch = new CountDownLatch(1);
+        context.addFrameworkListener(new FrameworkListener() {
+            public void frameworkEvent(FrameworkEvent frameworkEvent) {
+                switch (frameworkEvent.getType()) {
+                    case FrameworkEvent.STARTLEVEL_CHANGED:
+                        latch.countDown();
+                }
+            }
+        });
+        try {
+            final long timeout = m_system.getTimeout().getLowerValue();
+            if (!latch.await(timeout, TimeUnit.MILLISECONDS)) {
+                // Framework start level has not reached yet, so report an error to cause the test process to abort
+                final String message = "Framework is yet to reach target start level " + startLevel + " after " +
+                        timeout + " ms. Current start level is " + getStartLevelService().getStartLevel();
+                throw new TestContainerException(message);
+            }
+        } catch (InterruptedException e) {
+            throw new TestContainerException(e);
+        }
+    }
+
+    private int getStartLevel(ProvisionOption<?> bundle) {
+        Integer start = bundle.getStartLevel();
+        if (start == null) {
+            start = Constants.START_LEVEL_DEFAULT_PROVISION;
+        }
+        return start;
+    }
+
 
 }

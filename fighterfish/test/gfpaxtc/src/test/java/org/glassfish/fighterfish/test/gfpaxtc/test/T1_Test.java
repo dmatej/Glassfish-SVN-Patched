@@ -56,12 +56,14 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.framework.ServiceReference;
 
+import javax.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
+import static org.ops4j.pax.exam.CoreOptions.junitBundles;
 import static org.ops4j.pax.exam.CoreOptions.options;
 import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 
@@ -72,24 +74,19 @@ import static org.ops4j.pax.exam.CoreOptions.systemProperty;
 @ExamReactorStrategy( EagerSingleStagedReactorFactory.class )
 public class T1_Test {
 
-    private File gfHome = new File(System.getProperty("com.sun.aas.installRoot"));
-    private File domainDir = new File(gfHome, "domains/domain1");
     @Configuration
     public Option[] configure() {
-        return options(systemProperty("com.sun.aas.installRoot").value(gfHome.getAbsolutePath()),
-                systemProperty("com.sun.aas.instanceRoot").value(domainDir.getAbsolutePath()),
-                systemProperty("GlassFish_Platform").value(System.getProperty("GlassFish_Platform"))
+        return options(
+                junitBundles()
         );
     }
 
+    @Inject
+    GlassFish gf;
     @Test
-    public void foo(BundleContext context) throws InterruptedException, BundleException, IOException, GlassFishException {
+    public void foo() throws InterruptedException, BundleException, IOException, GlassFishException {
         System.out.println("Hello World - I am inside GlassFish");
-        final ServiceReference reference = context.getServiceReference(GlassFish.class.getName());
-        assertNotNull(reference);
-        GlassFish gf = (GlassFish) context.getService(reference);
         assertNotNull(gf);
         assertEquals("GF Started", GlassFish.Status.STARTED, gf.getStatus());
-//        GlassFishTracker.waitForService(context, TIMEOUT);
     }
 }

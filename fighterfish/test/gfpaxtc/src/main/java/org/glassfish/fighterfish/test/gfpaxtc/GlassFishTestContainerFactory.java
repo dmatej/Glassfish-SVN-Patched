@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -43,7 +43,6 @@ package org.glassfish.fighterfish.test.gfpaxtc;
 
 import org.glassfish.embeddable.*;
 import org.ops4j.pax.exam.*;
-import org.ops4j.pax.exam.options.ProvisionOption;
 import org.ops4j.pax.exam.options.SystemPropertyOption;
 
 import java.io.*;
@@ -52,6 +51,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -64,39 +64,41 @@ public class GlassFishTestContainerFactory implements TestContainerFactory {
     private GlassFishRuntime gfr;
     private Logger logger = Logger.getLogger(getClass().getPackage().getName());
     private OptionsParser parser;
+    private ExamSystem examSystem;
 
-    public TestContainer[] parse(Option... options) throws TestContainerException {
-        logger.logp(Level.INFO, "GFTCF", "parse", "options = {0}", new Object[]{options});
-        System.setProperty("java.protocol.handler.pkgs", "org.ops4j.pax.url");
-        parser = new OptionsParser(options);
-        String[] osgiFWs = parser.getOSGiFWs();
-        TestContainer[] tcs = new TestContainer[osgiFWs.length];
-        for (int i = 0; i < osgiFWs.length; i++) {
-            tcs[i] = createTestContainer(osgiFWs[i]);
-        }
-        return tcs;
+    @Override
+    public TestContainer[] create(ExamSystem system) throws TestContainerException {
+        this.examSystem = system;
+        parser = new OptionsParser();
+        return new TestContainer[]{createTestContainer()};
     }
 
-    private TestContainer createTestContainer(String fwName) {
+    private TestContainer createTestContainer() {
+        String fwName = parser.getOSGiFW();
         logger.logp(Level.INFO, "GFTCF", "createTestContainer", "fwName = {0}", new Object[]{fwName});
         try {
-            ClassLoader launcherCL = getClass().getClassLoader();// createGFLauncherCL(fwName);
+            System.setProperty("java.protocol.handler.pkgs", "org.ops4j.pax.url");
+            ClassLoader launcherCL = createGFLauncherCL(parser.getOSGiFW());
             BootstrapProperties bsProperties = getBootstrapProperties(fwName);
             logger.logp(Level.INFO, "GFTCF", "createTestContainer", "GlassFishRuntime BootstrapProperties = {0}", new Object[]{bsProperties.getProperties()});
             gfr = GlassFishRuntime.bootstrap(bsProperties, launcherCL);
             GlassFishProperties gfProps = new GlassFishProperties(bsProperties.getProperties());
-            GlassFish gf = gfr.newGlassFish(gfProps);
-            return new GlassFishTestContainer(gf);
+            return new GlassFishTestContainer(gfr, gfProps, examSystem);
         } catch (GlassFishException e) {
+            throw new RuntimeException(e);
+        } catch (MalformedURLException e) {
             throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
         }
     }
 
     private BootstrapProperties getBootstrapProperties(String fwName) {
-        Properties props = parser.getSystemProperties();
-        props.putAll(getOSGiFWConfiguration(fwName));
-        Util.substVars(props);
-//        props.setProperty("GlassFish_Platform", fwName);
+        Properties props = getOSGiFWConfiguration(fwName);
+        props.putAll(parser.getSystemProperties()); // override by what's specified in options and system
+        Util.substVars(props); // variable resolution
+        for (String key : System.getProperties().stringPropertyNames()) {
+            if (key.startsWith("felix.fileinstall.")) continue;
+            props.put(key, System.getProperty(key));
+        }
         return new BootstrapProperties(props);
     }
 
@@ -134,14 +136,7 @@ public class GlassFishTestContainerFactory implements TestContainerFactory {
     }
 
     private Properties getOSGiFWConfiguration(String fwName) {
-        File propertiesFile;
-        if ("Felix".equals(fwName)) {
-            propertiesFile = new File(getOSGiFWDir(fwName), "conf/config.properties");
-        } else if ("Equinox".equals(fwName)) {
-            propertiesFile = new File(getOSGiFWDir(fwName), "configuration/config.ini");
-        } else {
-            throw new IllegalArgumentException("Unknown platform " + fwName);
-        }
+        File propertiesFile = new File(parser.getGFHome(), "config/osgi.properties");
         Properties props = new Properties();
         try {
             InputStream is = new FileInputStream(propertiesFile);
@@ -158,7 +153,7 @@ public class GlassFishTestContainerFactory implements TestContainerFactory {
         // Need to add this, else when JunitRunner calls getService (ProbeInvoker)
         // we can't cast the service registered by pax-exam-extender
         String bootdelegation = props.getProperty(org.osgi.framework.Constants.FRAMEWORK_BOOTDELEGATION);
-        final String paxBootDelegation = "org.ops4j.pax.exam.*, org.junit, org.junit.*";
+        final String paxBootDelegation = "org.ops4j.pax.exam, org.ops4j.pax.exam.*, org.junit, org.junit.*";
         if (bootdelegation == null) {
             bootdelegation = paxBootDelegation;
         } else {
@@ -168,40 +163,25 @@ public class GlassFishTestContainerFactory implements TestContainerFactory {
         return props;
     }
 
+    public ExamSystem getExamSystem() {
+        return examSystem;
+    }
+
     class OptionsParser {
-        Option[] options;
         private File gfHome;
         Properties props;
-        private List<String> bundles = new ArrayList<String>();
 
-        OptionsParser(Option[] options) {
-            this.options = options;
-            parseGFHome();
+        public OptionsParser() {
             props = new Properties();
             parseSystemProperties();
-            parseProvisonOptions();
+            parseGFHome();
         }
 
         private void parseSystemProperties() {
-            for (SystemPropertyOption spo : OptionUtils.filter(SystemPropertyOption.class, options)) {
-                props.setProperty(spo.getKey(), spo.getValue());
-            }
-            if (props.getProperty("com.sun.aas.installRootURI") == null) {
-                props.setProperty("com.sun.aas.installRootURI", getGFHome().toURI().toString());
-            }
-            String instanceRootStr = props.getProperty("com.sun.aas.instanceRoot");
-            if (instanceRootStr == null) {
-                instanceRootStr = new File(getGFHome(), "domains/domain1/").getAbsolutePath();
-                props.setProperty("com.sun.aas.instanceRoot", instanceRootStr);
-            }
-            if (props.getProperty("com.sun.aas.instanceRootURI") == null) {
-                props.setProperty("com.sun.aas.instanceRootURI", new File(instanceRootStr).toURI().toString());
-            }
-        }
-
-        private void parseProvisonOptions() {
-            for (ProvisionOption option : OptionUtils.filter(ProvisionOption.class, options)) {
-                bundles.add(option.getURL());
+            for (SystemPropertyOption spo : getExamSystem().getOptions(SystemPropertyOption.class)) {
+                String override = System.getProperty(spo.getKey());
+                String value = override!=null ? override : spo.getValue(); // prefer system property
+                props.setProperty(spo.getKey(), value);
             }
         }
 
@@ -209,34 +189,41 @@ public class GlassFishTestContainerFactory implements TestContainerFactory {
             return props;
         }
 
-        List<String> getBundles() {
-            return bundles;
-        }
-
         File getGFHome() {
             return gfHome;
         }
 
         private void parseGFHome() {
-            for (SystemPropertyOption spo : OptionUtils.filter(SystemPropertyOption.class, options)) {
-                if (spo.getKey().equals("com.sun.aas.installRoot")) {
-                    gfHome = new File(spo.getValue());
-                    return;
-                }
+            String installRootStr = getProperty("com.sun.aas.installRoot");
+            if (installRootStr != null) {
+                gfHome = new File(installRootStr);
+            } else {
+                throw new RuntimeException("System property called com.sun.aas.installRoot not set");
             }
-            throw new RuntimeException("System property called com.sun.aas.installRoot not set");
+            props.setProperty("com.sun.aas.installRootURI", gfHome.toURI().toString());
+            String instanceRootStr = getProperty("com.sun.aas.instanceRoot");
+            if (instanceRootStr == null) {
+                instanceRootStr = new File(gfHome, "domains/domain1/").getAbsolutePath();
+                props.setProperty("com.sun.aas.instanceRoot", instanceRootStr);
+            }
+            props.setProperty("com.sun.aas.instanceRootURI", new File(instanceRootStr).toURI().toString());
         }
 
-        private String[] getOSGiFWs() {
+        private String getProperty(final String key) {
+            return System.getProperty(key, props.getProperty(key)); // prefer system property
+        }
+
+        private String getOSGiFW() {
             List<String> names = new ArrayList<String>();
-            for (SystemPropertyOption spo : OptionUtils.filter(SystemPropertyOption.class, options)) {
+            for (SystemPropertyOption spo : getExamSystem().getOptions(SystemPropertyOption.class)) {
                 if (spo.getKey().equals("GlassFish_Platform")) {
                     names.add(spo.getValue());
                 }
             }
-            return names.isEmpty() ? new String[]{"Felix"} : names.toArray(new String[0]);
+            if (names.size() > 1) {
+                throw new RuntimeException("More than one platform specified: " + names);
+            }
+            return names.isEmpty() ? "Felix" : names.get(0);
         }
-
-
     }
 }
