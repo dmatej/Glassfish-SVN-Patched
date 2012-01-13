@@ -301,17 +301,18 @@
             <echo message="git clone @{repo} - @{tag}"/>
 	    <!-- prevent git failure if permissions of the private key are wrong -->
 	    <chmod file="${ssh.user.home}/id_rsa" perm="600"/>
-            <exec executable="git" dir="${glassfish.external.dir}">
-                <arg line="clone"/>
-                <arg line="@{repo}"/>
-                <arg line="@{dest}"/>
-                <env key="HOME" value="${ssh.user.home}/.."/>
-                <env key="GIT_SSH" value="${ssh.user.home}/git"/>
-            </exec>
-            <exec executable="git" dir="${glassfish.external.dir}/@{dest}">
-                <arg line="checkout"/>
-                <arg line="@{tag}"/>
-            </exec>
+            <exec-3-trials
+                exe="git"
+                arg="clone @{repo} ${glassfish.external.dir}/@{dest}">
+                <extra-args>
+                    <env key="HOME" value="${ssh.user.home}/.."/>
+                    <env key="GIT_SSH" value="${ssh.user.home}/git"/>
+                </extra-args>
+            </exec-3-trials>
+            <exec-3-trials
+                exe="git"
+                arg="checkout @{tag}">
+            </exec-3-trials>
         </sequential>
     </macrodef>
 
@@ -381,7 +382,7 @@
                 <echo message="exec try1 failed, 2nd try..."/>
                 <exec-nofail exe="@{exe}" res="@{arg}-res.2" arg="@{arg}">
                 	<args>
-				<extra-args/>
+                            <extra-args/>
 			</args>	
 		</exec-nofail>
 		<condition property="@{arg}-try2.succeed">
@@ -392,7 +393,7 @@
                     <echo message="exec try2 failed, 3rd try..."/>
                     <exec-nofail exe="@{exe}" res="@{arg}-res.3" arg="@{arg}">
                     	<args>
-		    		<extra-args/>
+                            <extra-args/>
 			</args>
 		    </exec-nofail>
 		    <condition property="@{arg}-try3.succeed">
