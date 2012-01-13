@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-12 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -39,52 +39,64 @@
  */
 
 
-package org.glassfish.fighterfish.test.gfpaxtc;
+package org.glassfish.fighterfish.test.gfpaxtc.test;
 
-import org.glassfish.embeddable.BootstrapProperties;
+import org.glassfish.embeddable.CommandResult;
+import org.glassfish.embeddable.GlassFish;
 import org.glassfish.embeddable.GlassFishException;
-import org.glassfish.embeddable.GlassFishProperties;
-import org.glassfish.embeddable.GlassFishRuntime;
-import org.ops4j.pax.exam.ExamSystem;
-import org.ops4j.pax.exam.TestContainer;
-import org.ops4j.pax.exam.TestContainerException;
-import org.ops4j.pax.exam.TestContainerFactory;
-import org.ops4j.pax.exam.options.SystemPropertyOption;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.ops4j.pax.exam.Option;
+import org.ops4j.pax.exam.junit.Configuration;
+import org.ops4j.pax.exam.junit.ExamReactorStrategy;
+import org.ops4j.pax.exam.junit.JUnit4TestRunner;
+import org.ops4j.pax.exam.spi.reactors.AllConfinedStagedReactorFactory;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 
-import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.inject.Inject;
+
+import static org.junit.Assert.*;
+import static org.ops4j.pax.exam.CoreOptions.junitBundles;
+import static org.ops4j.pax.exam.CoreOptions.options;
 
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
  */
-public class GlassFishTestContainerFactory implements TestContainerFactory {
-    static {
-        // Work around for GLASSFISH-16510.
-        // This code gets executes before any test methods get executed, which means this code
-        // gets executed before any embedded glassfish gets provisioned. By eagely calling, getPlatformMBeanServer,
-        // we ensure that all embedded glassfish will use this as opposed to what is created by
-        // AppServerMBeanServerBuilder.
-        java.lang.management.ManagementFactory.getPlatformMBeanServer();
+@RunWith(JUnit4TestRunner.class)
+@ExamReactorStrategy(AllConfinedStagedReactorFactory.class)
+public class T2_Test {
+
+    @Configuration
+    public Option[] configure() {
+        return options(
+                junitBundles()
+        );
     }
 
-    public GlassFishTestContainerFactory() throws MalformedURLException, GlassFishException {
+    @Inject
+    GlassFish gf;
+
+    @Inject
+    BundleContext bundleContext;
+
+    @Test
+    public void foo() throws GlassFishException {
+        System.out.println("T2_Test.foo");
+        assertSame(Bundle.ACTIVE, bundleContext.getBundle().getState());
+        System.out.println("Foo: Hello World - I am inside GlassFish");
+        assertNotNull(gf);
+        assertEquals("GF Started", GlassFish.Status.STARTED, gf.getStatus());
     }
 
-    @Override
-    public TestContainer[] create(ExamSystem system) throws TestContainerException {
-        return new TestContainer[]{createTestContainer(system)}; // we can only return one container
+    @Test
+    public void bar() throws GlassFishException {
+        System.out.println("T2_Test.bar");
+        assertSame(Bundle.ACTIVE, bundleContext.getBundle().getState());
+        System.out.println("Bar: Hello World - I am also inside GlassFish");
+        assertNotNull(gf);
+        CommandResult result = gf.getCommandRunner().run("list-components");
+        System.out.println(result.getOutput());
+        assertEquals(CommandResult.ExitStatus.SUCCESS, result.getExitStatus());
     }
-
-    private TestContainer createTestContainer(ExamSystem system) {
-        return new GlassFishTestContainer(system);
-    }
-
 }
