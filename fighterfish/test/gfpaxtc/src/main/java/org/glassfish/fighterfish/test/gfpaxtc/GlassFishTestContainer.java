@@ -42,12 +42,12 @@
 package org.glassfish.fighterfish.test.gfpaxtc;
 
 import org.glassfish.embeddable.*;
-import org.ops4j.pax.exam.Constants;
 import org.ops4j.pax.exam.*;
 import org.ops4j.pax.exam.TimeoutException;
 import org.ops4j.pax.exam.options.FrameworkStartLevelOption;
 import org.ops4j.pax.exam.options.ProvisionOption;
 import org.ops4j.pax.exam.options.SystemPropertyOption;
+import org.ops4j.pax.exam.options.UrlProvisionOption;
 import org.osgi.framework.*;
 import org.osgi.framework.launch.Framework;
 import org.osgi.service.packageadmin.PackageAdmin;
@@ -56,6 +56,7 @@ import org.osgi.util.tracker.ServiceTracker;
 
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.*;
@@ -67,7 +68,7 @@ import java.util.logging.Logger;
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class GlassFishTestContainer implements TestContainer {
-    private PropertyHelper propertyHelper;
+    private ConfigurationHelper configurationHelper;
     private BootstrapProperties bsProperties;
     private GlassFishProperties gfProps;
 
@@ -82,7 +83,7 @@ public class GlassFishTestContainer implements TestContainer {
     public GlassFishTestContainer(ExamSystem system) {
         System.setProperty("java.protocol.handler.pkgs", "org.ops4j.pax.url");
         this.system = system;
-        propertyHelper = new PropertyHelper(system);
+        configurationHelper = new ConfigurationHelper(system);
     }
 
     public TestContainer start() throws TimeoutException {
@@ -111,13 +112,19 @@ public class GlassFishTestContainer implements TestContainer {
     public long install(String location, InputStream stream) {
         try {
             Bundle b = framework.getBundleContext().installBundle(location, stream);
-            m_installed.push(b.getBundleId());
-            setBundleStartLevel(b.getBundleId(), Constants.START_LEVEL_TEST_BUNDLE);
+            addBundle(b);
+            setBundleStartLevel(b.getBundleId(), org.ops4j.pax.exam.Constants.START_LEVEL_TEST_BUNDLE);
             b.start();
             logger.logp(Level.INFO, "GlassFishTestContainer", "install", "Installed pax exam probe: {0}", new Object[]{b});
             return b.getBundleId();
         } catch (BundleException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private void addBundle(Bundle b) {
+        if(!m_installed.contains(b.getBundleId())) {
+            m_installed.push(b.getBundleId());
         }
     }
 
@@ -149,7 +156,7 @@ public class GlassFishTestContainer implements TestContainer {
             executorService.shutdown();
             executorService.awaitTermination(
                     system.getTimeout().getUpperValue() + 1000, TimeUnit.MILLISECONDS);
-            if (result.get()) {
+            if (result.get()!=null && result.get()) {
                 logger.logp(Level.INFO, "GlassFishTestContainer", "stop", "Test container stopped successfully");
             } else {
                 logger.logp(Level.INFO, "GlassFishTestContainer", "stop", "Test container did not stop successfully");
@@ -210,7 +217,7 @@ public class GlassFishTestContainer implements TestContainer {
     private int getStartLevel(ProvisionOption<?> bundle) {
         Integer start = bundle.getStartLevel();
         if (start == null) {
-            start = Constants.START_LEVEL_DEFAULT_PROVISION;
+            start = org.ops4j.pax.exam.Constants.START_LEVEL_DEFAULT_PROVISION;
         }
         return start;
     }
@@ -226,16 +233,23 @@ public class GlassFishTestContainer implements TestContainer {
 
     private void installAndStartBundles() throws BundleException {
         BundleContext context = framework.getBundleContext();
-        for (ProvisionOption<?> bundle : system.getOptions(ProvisionOption.class)) {
-            Bundle b = context.installBundle(bundle.getURL());
-            m_installed.push(b.getBundleId());
-            int startLevel = getStartLevel(bundle);
+        final ProvisionOption[] options = system.getOptions(ProvisionOption.class);
+        for (ProvisionOption<?> option : options) {
+            final String url = option.getURL();
+            logger.logp(Level.INFO, "GlassFishTestContainer", "installAndStartBundles", "Installing bundle from {0}", new Object[]{url});
+            Bundle b = context.installBundle(url);
+            logger.logp(Level.INFO, "GlassFishTestContainer", "installAndStartBundles", "Installed bundle {0}", new Object[]{b});
+            addBundle(b);
+        }
+        for (ProvisionOption<?> option : options) {
+            int startLevel = getStartLevel(option);
+            Bundle b = getBundle(option.getURL());
             setBundleStartLevel(b.getBundleId(), startLevel);
-            if (bundle.shouldStart()) {
+            if (option.shouldStart()) {
                 b.start();
-                logger.logp(Level.INFO, "GlassFishTestContainer", "installAndStartBundles", "Install (start@{0}) {1}", new Object[]{startLevel, bundle});
+                logger.logp(Level.INFO, "GlassFishTestContainer", "installAndStartBundles", "Install (start@{0}) {1}", new Object[]{startLevel, option});
             } else {
-                logger.logp(Level.INFO, "GlassFishTestContainer", "installAndStartBundles", "Install (no start) {0}", new Object[]{bundle});
+                logger.logp(Level.INFO, "GlassFishTestContainer", "installAndStartBundles", "Install (no start) {0}", new Object[]{option});
             }
         }
         int startLevel = system.getSingleOption(FrameworkStartLevelOption.class).getStartLevel();
@@ -264,6 +278,15 @@ public class GlassFishTestContainer implements TestContainer {
         }
     }
 
+    private Bundle getBundle(String url) {
+        for (Bundle b : framework.getBundleContext().getBundles()) {
+            if (url.equals(b.getLocation())) {
+                return b;
+            }
+        }
+        return null;
+    }
+
     private synchronized void uninstallAll() {
         while ((!m_installed.isEmpty())) {
             try {
@@ -281,7 +304,7 @@ public class GlassFishTestContainer implements TestContainer {
     private BootstrapProperties getBootstrapProperties() {
         Properties props = readOSGiFWConfiguration();
         // override by what's specified in system and options
-        props.putAll(propertyHelper.getProperties());
+        props.putAll(configurationHelper.getProperties());
         Util.substVars(props); // variable substitution
         augmentBootDelegation(props);
         return new BootstrapProperties(props);
@@ -290,7 +313,7 @@ public class GlassFishTestContainer implements TestContainer {
     private ClassLoader createGFLauncherCL() throws MalformedURLException {
         ClassLoader osgiFWLauncherCL = createOSGiFWLauncherCL();
         List<URL> cp = new ArrayList<URL>();
-        cp.add(new File(new File(propertyHelper.getGFHome(), "modules"), "glassfish.jar").toURI().toURL());
+        cp.add(new File(new File(configurationHelper.getGFHome(), "modules"), "glassfish.jar").toURI().toURL());
         return new URLClassLoader(cp.toArray(new URL[cp.size()]), osgiFWLauncherCL);
     }
 
@@ -303,7 +326,7 @@ public class GlassFishTestContainer implements TestContainer {
     }
 
     private File[] getOSGiFWJars() {
-        String fwName = propertyHelper.getOSGiFW();
+        String fwName = configurationHelper.getOSGiFW();
         if ("Felix".equals(fwName)) {
             return new File[]{new File(getOSGiFWDir(fwName), "bin/felix.jar")};
         } else if ("Equinox".equals(fwName)) {
@@ -317,7 +340,7 @@ public class GlassFishTestContainer implements TestContainer {
     }
 
     private File getOSGiFWDir(String fwName) {
-        return new File(new File(propertyHelper.getGFHome(), "osgi/"), fwName.toLowerCase());
+        return new File(new File(configurationHelper.getGFHome(), "osgi/"), fwName.toLowerCase());
     }
 
     private void augmentBootDelegation(Properties props) {
@@ -334,7 +357,7 @@ public class GlassFishTestContainer implements TestContainer {
     }
 
     private Properties readOSGiFWConfiguration() {
-        File propertiesFile = new File(propertyHelper.getGFHome(), "config/osgi.properties");
+        File propertiesFile = new File(configurationHelper.getGFHome(), "config/osgi.properties");
         Properties props = new Properties();
         try {
             InputStream is = new FileInputStream(propertiesFile);
@@ -349,23 +372,30 @@ public class GlassFishTestContainer implements TestContainer {
         return props;
     }
 
-    static class PropertyHelper {
+    static class ConfigurationHelper {
         private Properties props = new Properties();
         private ExamSystem examSystem;
+        private String provisioningUrl;
+        private File installDir;
+        private boolean install;
         private File gfHome;
-        private Logger logger = Logger.getLogger(PropertyHelper.class.getPackage().getName());
-        private final String INSTALL_ROOT = "com.sun.aas.installRoot";
-        private final String INSTALL_ROOT_URI = "com.sun.aas.installRootURI";
-        private final String INSTANCE_ROOT = "com.sun.aas.instanceRoot";
-        private final String DOMAIN_DIR = "domains/domain1/";
-        private final String INSTANCE_ROOT_URI = "com.sun.aas.instanceRootURI";
-        private final String PLATFORM = "GlassFish_Platform";
-        private final String FELIX = "Felix";
 
-        public PropertyHelper(ExamSystem examSystem) {
+        private Logger logger = Logger.getLogger(ConfigurationHelper.class.getPackage().getName());
+        private static final String PROVISIONER_URL = "fighterfish.provisioner.url";
+        private static final String PROVISIONER_URL_DEFAULT_VALUE = "mvn:org.glassfish.distributions/glassfish/3.1.1/zip";
+        private static final String INSTALL_ROOT = "com.sun.aas.installRoot";
+        private static final String INSTALL_ROOT_URI = "com.sun.aas.installRootURI";
+        private static final String INSTANCE_ROOT = "com.sun.aas.instanceRoot";
+        private static final String DOMAIN_DIR = "domains/domain1/";
+        private static final String INSTANCE_ROOT_URI = "com.sun.aas.instanceRootURI";
+        private static final String PLATFORM = "GlassFish_Platform";
+        private static final String FELIX = "Felix";
+
+        public ConfigurationHelper(ExamSystem examSystem) {
             this.examSystem = examSystem;
             parseSystemPropertyOptions();
             determineGlassFishHome();
+            install();
             logger.logp(Level.INFO, "GlassFishTestContainer$PropertyHelper", "PropertyHelper", "props = {0}", new Object[]{props});
         }
 
@@ -380,26 +410,83 @@ public class GlassFishTestContainer implements TestContainer {
         }
 
         private void determineGlassFishHome() {
-            String installRootStr = getProperty(INSTALL_ROOT);
-            if (installRootStr != null) {
-                gfHome = new File(installRootStr);
+            String property = getProperty(INSTALL_ROOT);
+            if (property != null && !property.isEmpty()) {
+                gfHome = new File(property);
+            }
+            property = getProperty(PROVISIONER_URL);
+            if (property != null && !property.isEmpty()) {
+                provisioningUrl = property;
+            }
+            if (gfHome == null) {
+                if (provisioningUrl == null) {
+                    // both are unspecified
+                    provisioningUrl = PROVISIONER_URL_DEFAULT_VALUE;
+                }
+                // We compute a hashcode so that if user changes provisioning url, we are less likely to
+                // reuse the earlier created installation.
+                installDir = new File(System.getProperty("java.io.tmpdir"), "fighterfish-" + provisioningUrl.hashCode());
+                gfHome = new File(installDir, "glassfish3/glassfish/");
+                install = !installDir.exists();
             } else {
-                throw new RuntimeException(INSTALL_ROOT + " not set");
+                // gfHome is specified
+                if (!gfHome.exists()) {
+                    // explode only if provisioning url is explicitly specified
+                    install = provisioningUrl != null;
+                    try {
+                        installDir = new File(gfHome, "../../").getCanonicalFile();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
             }
-            props.setProperty(INSTALL_ROOT, installRootStr);
-            props.setProperty(INSTALL_ROOT_URI, gfHome.toURI().toString());
+            props.setProperty(INSTALL_ROOT, gfHome.getAbsolutePath());
+            property = gfHome.toURI().toString();
+            if (!property.endsWith("/")) {
+                property = property + "/"; // GlassFish osgi.properties expect a '/'
+            }
+            props.setProperty(INSTALL_ROOT_URI, property);
 
-            String instanceRootStr = getProperty(INSTANCE_ROOT);
-            if (instanceRootStr == null) {
-                instanceRootStr = new File(gfHome, DOMAIN_DIR).getAbsolutePath();
-                props.setProperty(INSTANCE_ROOT, instanceRootStr);
+            property = getProperty(INSTANCE_ROOT);
+            if (property == null) {
+                property = new File(gfHome, DOMAIN_DIR).getAbsolutePath();
+                props.setProperty(INSTANCE_ROOT, property);
             }
-            props.setProperty(INSTANCE_ROOT_URI, new File(instanceRootStr).toURI().toString());
-            String platform = getProperty(PLATFORM);
-            if (platform == null) {
-                platform = FELIX;
+            props.setProperty(INSTANCE_ROOT_URI, new File(property).toURI().toString());
+            property = getProperty(PLATFORM);
+            if (property == null) {
+                property = FELIX;
             }
-            props.setProperty(PLATFORM, platform);
+            props.setProperty(PLATFORM, property);
+        }
+
+        private void install() {
+            if (install) {
+                if (installDir.exists()) {
+                    logger.logp(Level.INFO, "TestsConfiguration", "setup",
+                            "Reusing existing installation at {0}", new Object[]{installDir});
+                } else {
+                    logger.logp(Level.INFO, "ConfigurationHelper", "install",
+                            "Will install {0} at {1}", new Object[]{provisioningUrl, installDir});
+                    explode(provisioningUrl, installDir);
+                }
+            }
+            verifyInstallation();
+        }
+
+        private void verifyInstallation() {
+            final File file = new File(gfHome, "modules/glassfish.jar");
+            if (!file.exists()) {
+                throw new RuntimeException(file.getAbsolutePath() + " does not exist.");
+            }
+        }
+
+        private void explode(String provisioningUrl, File out) {
+            try {
+                ZipUtil.explode(URI.create(provisioningUrl), out);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
         }
 
         private String getProperty(String s) {
@@ -413,7 +500,5 @@ public class GlassFishTestContainer implements TestContainer {
         private String getOSGiFW() {
             return props.getProperty(PLATFORM);
         }
-
-
     }
 }
