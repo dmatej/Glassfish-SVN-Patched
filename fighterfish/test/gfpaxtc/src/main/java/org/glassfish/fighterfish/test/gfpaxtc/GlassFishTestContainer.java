@@ -91,7 +91,7 @@ public class GlassFishTestContainer implements TestContainer {
             bootstrapGf();
             // Let's get hold of the framework
             PackageAdmin pa = gf.getService(PackageAdmin.class);
-            framework = (Framework) pa.getBundle(Bundle.class);
+            framework = (Framework) pa.getBundle(pa.getClass());
             logger.logp(Level.INFO, "GlassFishTestContainer", "start", "framework = {0}", new Object[]{framework});
             installAndStartBundles();
         } catch (GlassFishException e) {
