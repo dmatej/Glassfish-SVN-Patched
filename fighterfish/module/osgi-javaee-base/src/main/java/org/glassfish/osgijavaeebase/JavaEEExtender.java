@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -68,6 +68,8 @@ public class JavaEEExtender implements Extender {
      * in https://glassfish.dev.java.net/issues/show_bug.cgi?id=14313.
      */
 
+    private static final String DEPLOYMENT_TIMEOUT =
+            "org.glassfish.osgijavaeebase.deployment.timeout";
     private volatile OSGiContainer c;
     private static final Logger logger =
             Logger.getLogger(JavaEEExtender.class.getPackage().getName());
@@ -180,9 +182,26 @@ public class JavaEEExtender implements Extender {
                 return;
             }
             try {
-                OSGiApplicationInfo deployedApp = deploymentTask.get();
+                OSGiApplicationInfo deployedApp = null;
+                try {
+                    deployedApp = deploymentTask.get(getDeploymentTimeout(), TimeUnit.MILLISECONDS);
+                } catch (TimeoutException e) {
+                    logger.logp(Level.FINE, "JavaEEExtender$HybridBundleTrackerCustomizer", "removedBundle",
+                            "Undeployer times out waiting for deployment to finish for bundle " + bundle, e);
+                    boolean isCancelled = deploymentTask.cancel(true);
+                    if (!isCancelled) {
+                        // cancellation of timer won't be successful if the deployer has finished by the time we attempt to cancel
+                        deployedApp = deploymentTask.get();
+                    } else {
+                        logger.logp(Level.INFO, "JavaEEExtender$HybridBundleTrackerCustomizer", "removedBundle",
+                                "isCancelled = {0}", new Object[]{isCancelled});
+                    }
+                }
                 // It is not sufficient to check the future only, as the DeployerAddedThread currently deploys
                 // without our knowledge, so we must also check isDeployed().
+                // More over, if the task has been cancelled, deployedApp will be null, but the deployer might have
+                // almost deployed the bundle as seen issue GLASSFISH-18159. In such case, we have to check the
+                // deployment status by calling isDeployed().
                 if (deployedApp != null || c.isDeployed(bundle)) {
                     undeploy(bundle); // undeploy synchronously to avoid any deadlock. See GF issue #
                 }
@@ -191,6 +210,17 @@ public class JavaEEExtender implements Extender {
             } catch (ExecutionException e) {
                 logger.logp(Level.FINE, "JavaEEExtender$HybridBundleTrackerCustomizer", "removedBundle", "e = {0}", new Object[]{e});
             }
+        }
+
+        public long getDeploymentTimeout() {
+            long timeOut;
+            String time = context.getProperty("DEPLOYMENT_TIMEOUT");
+            if (time != null) {
+                timeOut = Long.valueOf(time);
+            } else {
+                timeOut = 10000;
+            }
+            return timeOut;
         }
     }
 }
