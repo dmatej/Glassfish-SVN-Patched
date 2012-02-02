@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -672,6 +672,22 @@ public class T2_Test extends AbstractTestObject {
         }
     }
 
+    @Test
+    public void regression_GLASSFISH_18159() throws GlassFishException, InterruptedException, BundleException, IOException {
+        logger.entering("T2_Test", "regression_GLASSFISH_18159", new Object[]{ctx});
+        TestContext tc = TestContext.create(getClass());
+        try {
+           //Running a regression test for fix created on GLASSFISH-18159
+            String location = "mvn:org.glassfish.fighterfish/test.app3/1.0.0-SNAPSHOT/war";
+            Bundle bundle = tc.installBundle(location);
+            bundle.start();
+            bundle.uninstall();
+            assertTrue("Successfully uninstalled", bundle.getState() == bundle.UNINSTALLED);
+            logger.logp(Level.FINE, "T2_Test", "regression_GLASSFISH_18159", "Install/Uninstall");
+        } finally {
+            tc.destroy();
+        }
+    }
 
     //////////////////////////////////////////////////////////////////
     // Various utility methods used from test methods are found below.
