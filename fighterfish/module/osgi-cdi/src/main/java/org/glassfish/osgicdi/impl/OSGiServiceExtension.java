@@ -150,7 +150,8 @@ public class OSGiServiceExtension implements Extension{
                             + injectionPoint.getAnnotated()
                                     .getAnnotation(OSGiService.class)
                                     .serviceCriteria();
-                    logger.logp(Level.INFO, "OSGiServiceExtension", "discoverServiceInjectionPoints", s);
+                    //logger.logp(Level.INFO, "OSGiServiceExtension", "discoverServiceInjectionPoints", s);
+                    debug (s);
                     //Keep track of service-type and its injection point
                     //Add to list of framework services to be injected
                     addServiceInjectionInfo(injectionPoint);
