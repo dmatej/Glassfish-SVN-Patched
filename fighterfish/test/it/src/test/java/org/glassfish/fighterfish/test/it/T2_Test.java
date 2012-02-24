@@ -673,7 +673,6 @@ public class T2_Test extends AbstractTestObject {
     }
 
     @Test
-    @Ignore // Exclude this test until we have integrated osgi-javaee-base 1.0.2 which contains the fix
     public void regression_GLASSFISH_18159() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.entering("T2_Test", "regression_GLASSFISH_18159", new Object[]{ctx});
         TestContext tc = TestContext.create(getClass());
