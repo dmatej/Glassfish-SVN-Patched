@@ -685,7 +685,7 @@ public class T2_Test extends AbstractTestObject {
             assertTrue("Successfully uninstalled", bundle.getState() == bundle.UNINSTALLED);
             logger.logp(Level.FINE, "T2_Test", "regression_GLASSFISH_18159", "Install/Uninstall");
         } finally {
-            tc.destroy();
+          //  tc.destroy();
         }
     }
 
