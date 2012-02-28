@@ -89,9 +89,13 @@ public class BundleProvisioner {
      */
     protected void uninstallTestBundle(Bundle bundle) throws BundleException {
         if (testBundles.remove(bundle)) {
+            if(bundle.getState() != bundle.UNINSTALLED){
             logger.logp(Level.INFO, "AbstractTestObject", "uninstallTestBundle", "Uninstalling bundle = {0}", new Object[]{bundle});
             bundle.uninstall();
             logger.logp(Level.INFO, "AbstractTestObject", "uninstallTestBundle", "Uninstalled bundle = {0}", new Object[]{bundle});
+            } else {
+            logger.logp(Level.INFO, "AbstractTestObject", "uninstallTestBundle", "Bundle Already Uninstalled = {0}", new Object[]{bundle});
+            }
         } else {
             throw new RuntimeException(bundle + " is not a test bundle");
         }
