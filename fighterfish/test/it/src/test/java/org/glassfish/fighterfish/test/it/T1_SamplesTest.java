@@ -288,4 +288,44 @@ public class T1_SamplesTest extends AbstractTestObject {
             tc.destroy();
         }
     }
+
+    @Test
+    public void jaxrs_sample_test() throws GlassFishException, InterruptedException, BundleException, IOException {
+        logger.entering("T1_SamplesTest", "jaxrs_sample_test", new Object[]{ctx});
+        TestContext tc = TestContext.create(getClass());
+        try {
+                       /*
+             * URIs of various sample.uas bundles that we are going to use.
+             */
+            String uas_api = "mvn:org.glassfish.fighterfish/sample.uas.api/1.0.0-SNAPSHOT";
+            String uas_simpleservice = "mvn:org.glassfish.fighterfish/sample.uas.simpleservice/1.0.0-SNAPSHOT";
+            String uas_simplejaxrs = "mvn:org.glassfish.fighterfish/sample.uas.simplejaxrs/1.0.0-SNAPSHOT/war";
+
+            final String registrationRequest = "/register?name=admin&password=admin";
+            final String successfulRegistration = "Registered";
+            final String loginRequest = "/login?name=admin&password=admin";
+            final String successfulLogin = "Logged in";
+
+            Bundle uas_api_b = tc.installBundle(uas_api);
+            uas_api_b.start();
+            Bundle uas_simpleservice_b = tc.installBundle(uas_simpleservice);
+            uas_simpleservice_b.start();
+            Bundle uas_simplejaxwab_b = tc.installBundle(uas_simplejaxrs);
+            WebAppBundle uas_simple_jaxwebapp = new WebAppBundle(ctx, uas_simplejaxwab_b);
+            uas_simple_jaxwebapp.deploy(getTimeout(),TimeUnit.MILLISECONDS);
+            String response = null;
+            {
+                //  register a user
+                response = uas_simple_jaxwebapp.getResponse(registrationRequest);
+                logger.logp(Level.INFO, "T1_SamplesTest", "uas_jaxsample_test", "response = {0}", new Object[]{response});
+                assertThat(response, new StringPatternMatcher(successfulRegistration));
+                //  login the user
+                response = uas_simple_jaxwebapp.getResponse(loginRequest);
+                logger.logp(Level.INFO, "T1_SamplesTest", "uas_jaxsample_test", "response = {0}", new Object[]{response});
+                assertThat(response, new StringPatternMatcher(successfulLogin));
+            }
+        } finally {
+            tc.destroy();
+        }
+    }
 }
