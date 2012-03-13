@@ -48,7 +48,7 @@ import org.glassfish.web.valve.GlassFishValve;
 import javax.servlet.Servlet;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import java.util.Enumeration;
+import java.util.Set;
 
 /**
  * Unlike Java EE Web Application model, there is no notion of "context path"
@@ -75,6 +75,9 @@ public class OSGiServletWrapper extends StandardWrapper implements Wrapper {
         this.servlet = servlet;
         this.config = config;
         this.webModule = webModule;
+        // Set init params in the wrapper itself to avoid issues as reported in GLASSFISH-18492
+        Set<String> conflicts = setInitParameters(config.getInitParameters());
+        assert(conflicts.isEmpty());
         setOSGi(true);
         setServlet(servlet);
         setName(name);
@@ -108,15 +111,7 @@ public class OSGiServletWrapper extends StandardWrapper implements Wrapper {
         return config.getServletContext();
     }
 
-    @Override
-    public String getInitParameter(String name) {
-        return config.getInitParameter(name);
-    }
-
-    @Override
-    public Enumeration getInitParameterNames() {
-        return config.getInitParameterNames();
-    }
+    // no need to override initiParams related methods as we already set the params in super inside our constructor.
 
     // END: Override ServletConfig methods
 

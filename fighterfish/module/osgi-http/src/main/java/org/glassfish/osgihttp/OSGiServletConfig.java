@@ -88,4 +88,10 @@ public class OSGiServletConfig implements ServletConfig {
         return Collections.enumeration(initParams.keySet());
     }
 
+    /**
+     * @return an unmodifiable map of {@link #initParams}
+     */
+    /* package */Map<String,String> getInitParameters() {
+        return Collections.unmodifiableMap(initParams);
+    }
 }
