@@ -40,6 +40,7 @@
 
 package org.glassfish.osgiejb;
 
+import org.glassfish.osgijavaeebase.OSGiArchiveHandler;
 import org.glassfish.osgijavaeebase.OSGiDeploymentContext;
 import org.glassfish.osgijavaeebase.BundleClassLoader;
 import org.glassfish.internal.api.Globals;
@@ -68,6 +69,16 @@ public class OSGiEJBDeploymentContext extends OSGiDeploymentContext {
 
     public OSGiEJBDeploymentContext(ActionReport actionReport, Logger logger, ReadableArchive source, OpsParams params, ServerEnvironment env, Bundle bundle) throws Exception {
         super(actionReport, logger, source, params, env, bundle);
+        // ArchiveHandler must correctly return the ArchiveType for DOL processing to succeed,
+        setArchiveHandler(new OSGiArchiveHandler(){
+            @Override
+            public String getArchiveType() {
+                // Since I am not able to reference GF 4.0 APIs as they are not yet staged in a maven repo,
+                // I am accessing the value in a round about way.
+                return javax.enterprise.deploy.shared.ModuleType.EJB.toString(); // EjbType.ARCHIVE_TYPE;
+            }
+        });
+
     }
 
     protected void setupClassLoader() throws Exception {
