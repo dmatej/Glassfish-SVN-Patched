@@ -1,0 +1,47 @@
+#!/bin/sh 
+#
+# svnowner - convert from line number back to person who last changed that line
+#
+#	input is of the form "file: line: text",
+#	output is of the form "owner: file: line: text".
+#
+perl -e '
+
+$tmp = "/tmp/co" . $$;
+
+line: while (<>) {
+	#if (/^\s/ || !/\S+:\s*\d+:/) {
+        #	next line;
+	#}
+	chop;	# strip newline
+	($file, $lineno, $text) = split(/:/, $_, 3);
+#	if (! -r $file) {
+#		unlink $tmp;
+#		die "cant open $file\n";
+#	}
+	if ($file ne $curfile ) {
+		$curfile = $file;
+		if (-r $file) {
+			system("svn annotate $file >$tmp 2>/dev/null");
+			$fileok = 1;
+		} else {
+			$fileok = 0;
+		}
+	}
+	if ($fileok) {
+		if ($lineno le 0 ) { 
+			$lineno = 1;
+		}
+		$fline = `sed -n ${lineno}p $tmp`;
+		chop $fline;
+		#s/[0-9.]+ *\(([^ ]+) .*/\1/;
+		($owner = $fline) =~ s/[0-9.]+ *([^ ]+) .*/\1/;
+		$owner =~ s/^\s+//;
+	} else {
+		$owner =  "UNKNOWN";
+	}
+        
+	printf "%s: %s\n", $owner, $_;
+}
+unlink $tmp;
+'

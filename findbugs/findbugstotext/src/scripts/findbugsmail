@@ -1,0 +1,17 @@
+#!/bin/sh
+#
+# Run FindBugs and generate email to the owners of any errors found.
+#
+MAVEN_OPTS=-Xmx512m mvn findbugs:findbugs
+find [a-z]* -xdev -name .svn -prune -o -name .m2 -prune \
+	-name findbugsXml.xml -print | \
+while read file
+do
+	echo $file
+	dir=`dirname "$file"`
+	pdir=`dirname "$dir"`
+	java -jar findbugstotext.jar < "$file" | \
+		sed -e "s;^;$pdir/src/main/java/;" | \
+		svnowner | \
+		fbnag
+done

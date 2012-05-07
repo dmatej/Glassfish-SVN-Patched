@@ -1,0 +1,44 @@
+#! /bin/sh
+#
+# fbnag - nag people about FindBugs errors
+#
+#	input is of the form "owner: file: line: text" (output of svnowner).
+#
+#	users.bad contains a list of users who are never nagged directly
+#	users.alias contains aliases for users not known locally
+#	nag.msg is the nagging message
+#
+# For testing create "nagmail":
+#	#!/bin/sh
+#	cat > "mail.$1"
+#
+# and run with:
+#
+#	MAILPROG=nagmail cvsnag
+#
+MAILPROG=${MAILPROG:-/bin/mail}
+NAGMSG=${NAGMSG:-nag.msg}
+OWNER=shannon
+TMP=/tmp/cs.$$
+trap 'rm $TMP' 0 1 2 15
+cat >$TMP
+sed 's/:.*//' $TMP | sort -u >users
+comm -23 users users.bad >users.ok
+for i in `cat users.ok`
+do
+	if [ -r users.alias ]
+	then
+		alias=`awk '$1 == "'$i'" { print $2; }' <users.alias`
+	fi
+	if [ -z "$alias" ]; then alias=$i@java.net; fi
+	(echo "To: $alias"; echo "Subject: FindBugs errors"; echo; \
+	cat $NAGMSG; grep "^$i:" $TMP) | $MAILPROG $alias
+done
+#
+# Send errors for bad users to $OWNER.
+#
+for i in `comm -12 users users.bad`
+do
+	(echo "To: $OWNER"; echo "Subject: $i FindBugs errors"; echo; \
+	grep "^$i:" $TMP) | $MAILPROG $OWNER
+done
