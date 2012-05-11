@@ -56,9 +56,11 @@ import org.osgi.framework.*;
 
 import java.io.FileFilter;
 import java.io.InputStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.*;
 import java.util.jar.JarFile;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.io.IOException;
 import java.io.File;
@@ -89,6 +91,26 @@ class OSGiWebDeploymentContext extends OSGiDeploymentContext {
         super(actionReport, logger, source, params, env, bundle);
         // ArchiveHandler must correctly return the ArchiveType for DOL processing to succeed,
         setArchiveHandler(new OSGiArchiveHandler(){
+//            @Override
+            public List<URI> getClassPathURIs(ReadableArchive archive) {
+                final List<URI> uris = new ArrayList<URI>();
+                File base = getSourceDir();
+                assert (base != null && base.isDirectory());
+                uris.add(new File(base, "WEB-INF/classes/").toURI());
+                new File(base, "WEB-INF/lib/").listFiles(new FileFilter() {
+                    @Override
+                    public boolean accept(File pathname) {
+                        if (pathname.isFile() && pathname.getName().endsWith(".jar")) {
+                            uris.add(pathname.toURI());
+                        }
+                        return false;
+                    }
+                });
+                OSGiWebDeploymentContext.logger.logp(Level.INFO, "OSGiWebDeploymentContext", "getClassPathURIs",
+                        "uris = {0}", new Object[]{uris});
+                return uris;
+            }
+
             @Override
             public String getArchiveType() {
                 // Since I am not able to reference GF 4.0 APIs as they are not yet staged in a maven repo,
