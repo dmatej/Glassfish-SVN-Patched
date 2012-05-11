@@ -106,7 +106,7 @@
                         <property>
                             <!-- How long should we wait for asynchronous operations to finish -->
                             <name>fighterfish.test.setup.timeout</name>
-                            <value>100000</value>
+                            <value>200000</value>
                         </property>
                         <property>
                             <!-- This is needed for pax-url-mvn to read custom settings.xml.
@@ -195,6 +195,11 @@
             </properties>
         </profile>
 
+        <!--
+        A note about extraArgs. I don't know how to have multiple profiles each contributing 
+        jvm command line argument. So, I create a place holder variable called extraArgs.
+        It can be set from outside or from another profile like Proxy profile in the example below.
+        -->
         <profile>
             <id>SunJVM</id>
             <activation>
@@ -204,7 +209,7 @@
                 </property>
             </activation>
             <properties>
-                <argLine>-XX:MaxPermSize=256m</argLine>
+                <argLine>-XX:MaxPermSize=256m ${extraArgs}</argLine>
             </properties>
         </profile>
 
@@ -217,10 +222,21 @@
                 </property>
             </activation>
             <properties>
-                <argLine>-XX:MaxPermSize=256m -Xverify:none</argLine>
+                <argLine>-XX:MaxPermSize=256m -Xverify:none ${extraArgs}</argLine>
             </properties>
         </profile>
 
+        <!--
+        pax.url uses aether, but the version of pax.url that we use does not configure
+        aether to mimic maven settings as specified in various maven configuration files.
+        So, we have to set the proxy in brute force way via JVM settings.
+        -->
+        <profile>
+            <id>Proxy</id>
+            <properties>
+                <extraArgs>-Dhttp.proxyHost=www-proxy.us.oracle.com -Dhttp.proxyPort=80</extraArgs>
+            </properties>
+        </profile>
         <profile>
             <id>Debug</id>
             <properties>
