@@ -61,7 +61,15 @@ public class TestsConfiguration {
 
     private File gfHome;
     private String provisioningUrl;
+    /**
+     * Timeout corresponding to test execution
+     */
     private long testTimeout;
+
+    /**
+     * Timeout corresponding to exam system setup
+     */
+    private long examTimeout;
     private boolean install;
     private File installDir;
 
@@ -80,6 +88,9 @@ public class TestsConfiguration {
         testTimeout = Long.parseLong(
                 properties.getProperty(Constants.FIGHTERFISH_TEST_TIMEOUT_PROP,
                         Constants.FIGHTERFISH_TEST_TIMEOUT_DEFAULT_VALUE));
+        examTimeout = Long.parseLong(
+                properties.getProperty(Constants.EXAM_TIMEOUT_PROP,
+                        Constants.EXAM_TIMEOUT_DEFAULT_VALUE));
         String property = properties.getProperty(Constants.GLASSFISH_INSTALL_ROOT_PROP);
         if (property != null && !property.isEmpty()) {
             gfHome =  new File(property);
@@ -140,13 +151,17 @@ public class TestsConfiguration {
         return testTimeout;
     }
 
+    public long getExamTimeout() {
+        return examTimeout;
+    }
+
     private File getGfHome() {
         return gfHome;
     }
 
     public Option[] getPaxExamConfiguration() throws IOException {
         install();
-        return new PaxExamConfigurator(getGfHome(), getTimeout()).configure();
+        return new PaxExamConfigurator(getGfHome(), getExamTimeout()).configure();
     }
 
     static {
