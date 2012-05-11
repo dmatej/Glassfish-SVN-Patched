@@ -106,9 +106,12 @@ public class TestContext {
     }
 
     public void destroy() throws BundleException, GlassFishException {
-        bundleProvisioner.uninstallAllTestBundles();
-        resourceProvisioner.restoreDomainConfiguration();
         logger.info("Destroying test context for test id: " + testID);
+        try {
+            bundleProvisioner.uninstallAllTestBundles();
+        } finally {
+            resourceProvisioner.restoreDomainConfiguration();
+        }
     }
 
     /**
