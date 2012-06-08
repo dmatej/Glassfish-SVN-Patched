@@ -77,7 +77,6 @@ public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
 
         debug("LogMessagesResourceBundleGenerator invoked.");
 
-        String rbName = null;
         LogMessagesTreeMap logMessagesMap = new LogMessagesTreeMap();
         
         if (!env.processingOver()) {
@@ -85,12 +84,23 @@ public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
             String elementPackage = null;
 
             Set<? extends Element> rbElems = env.getElementsAnnotatedWith(LogMessagesResourceBundle.class);
-            if (rbElems.size() > 1) {
-                error("More than one resource bundle package specified.");
+            Set<String> rbNames = new HashSet<String>();
+            for (Element rbElem : rbElems) {
+                Object rbValue = ((VariableElement) rbElem).getConstantValue();
+                if (rbValue == null) {
+                    error("The resource bundle name needs to be a constant value. Specify the LogMessagesResourceBundle annotation only on a compile time constant String literal.");
+                    return false;                    
+                }
+                rbNames.add(rbValue.toString());
+            }
+            if (rbNames.size() > 1) {
+                error("More than one resource bundle name specified. Found the following resource bundle names: " 
+                        + rbNames + ". Please specify only one resource bundle name per module.");
                 return false;
             }
             
-            Iterator<? extends Element> rbElemsIterator = rbElems.iterator();
+            String rbName = null;
+            Iterator<? extends Element> rbElemsIterator = rbElems.iterator();                        
             while (rbElemsIterator.hasNext()) {
                 Element rbElem = rbElemsIterator.next();
                 if (rbName == null) {
