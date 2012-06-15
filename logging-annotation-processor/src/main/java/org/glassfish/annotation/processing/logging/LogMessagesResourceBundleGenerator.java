@@ -49,7 +49,6 @@ import java.util.HashSet;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
-import javax.annotation.processing.SupportedSourceVersion;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
@@ -62,7 +61,6 @@ import org.glassfish.logging.annotation.LogMessageInfo;
 import org.glassfish.logging.annotation.LogMessagesResourceBundle;
 
 @SupportedAnnotationTypes({"org.glassfish.logging.annotation.LogMessageInfo","org.glassfish.logging.annotation.LogMessagesResourceBundle"})
-@SupportedSourceVersion(SourceVersion.RELEASE_6)
 public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
 
     private static final String VALIDATE_LEVELS[] = {
@@ -70,6 +68,11 @@ public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
       "ALERT",
       "SEVERE",
     };
+    
+    @Override
+    public SourceVersion getSupportedSourceVersion() {
+        return SourceVersion.latestSupported();
+    }
 
     @Override
     public boolean process (Set<? extends TypeElement> annotations, 
@@ -81,17 +84,20 @@ public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
         
         if (!env.processingOver()) {
             Set<? extends Element> elements;
-            String elementPackage = null;
 
             Set<? extends Element> rbElems = env.getElementsAnnotatedWith(LogMessagesResourceBundle.class);
             Set<String> rbNames = new HashSet<String>();
             for (Element rbElem : rbElems) {
                 Object rbValue = ((VariableElement) rbElem).getConstantValue();
                 if (rbValue == null) {
-                    error("The resource bundle name needs to be a constant value. Specify the LogMessagesResourceBundle annotation only on a compile time constant String literal.");
+                    error("The resource bundle name value could not be computed. Specify the LogMessagesResourceBundle annotation only on a compile time constant String literal.");
                     return false;                    
                 }
                 rbNames.add(rbValue.toString());
+            }
+            if (rbNames.isEmpty()) {
+                error("No resource bundle name found. Atleast one String literal constant needs to be decorated with the LogMessagesResourceBundle annotation.");
+                return false;                
             }
             if (rbNames.size() > 1) {
                 error("More than one resource bundle name specified. Found the following resource bundle names: " 
@@ -99,18 +105,11 @@ public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
                 return false;
             }
             
-            String rbName = null;
-            Iterator<? extends Element> rbElemsIterator = rbElems.iterator();                        
-            while (rbElemsIterator.hasNext()) {
-                Element rbElem = rbElemsIterator.next();
-                if (rbName == null) {
-                    rbName = ((VariableElement) rbElem).getConstantValue().toString();
-                }
+            String rbName = rbNames.iterator().next();
+            if (!rbName.endsWith("LogMessages")) {
+                // HK2 Maven build plugin is swallowing the warning which is visible when plain javac is invoked.
+                warn("The fully qualified resource bundle name needs to be end with LogMessages as the best practice.");
             }
-            // XXX: The annotation processor should try to detect the
-            //      reuse of an existing log message id.
-            //      Degree 1: processed during same build pass.
-            //      Degree 2: processed during different builds.
 
             Set<String> messageIds = new HashSet<String>();
 
@@ -119,14 +118,8 @@ public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
 
             while (it.hasNext()) {
                 VariableElement element = (VariableElement)it.next();
-
-                elementPackage = processingEnv.getElementUtils().getPackageOf(element).
-                                                getQualifiedName().toString();
-
                 String msgId = (String)element.getConstantValue();
-                debug("Annotated pkg: " + elementPackage);
                 debug("Processing: " + msgId);
-
                 // Message ids must be unique
                 if (!messageIds.contains(msgId)) {
                     LogMessageInfo lmi = element.getAnnotation(LogMessageInfo.class);
@@ -143,14 +136,15 @@ public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
                     error("Duplicate use of message-id " + msgId);
                 }
             }
-            if (rbName == null) {
-                error("Resource bundle name not specified for logger");
-            }
+            debug("Messages found so far: " + logMessagesMap);
             loadLogMessages(logMessagesMap, rbName);
+            debug("Total Messages including ones found from disk so far: " + logMessagesMap);
             storeLogMessages(logMessagesMap, rbName);
+            info("Annotation processing finished successfully.");
+            return true; // Claim the annotations
+        } else {
+            return false;
         }
-
-        return true; // Claim the annotations
     }    
 
     private void checkLogMessageInfo(String msgId, LogMessageInfo lmi) {
@@ -160,7 +154,7 @@ public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
           needsCheck = true;
         }
       }
-      debug("Message " + msgId + " needs checks: " + needsCheck);
+      debug("Message " + msgId + " needs checking for cause/action: " + needsCheck);
       if (needsCheck) {
         if (lmi.cause().trim().length() == 0) {
           error("Missing cause for message id '" + msgId + "' for levels SEVERE and above.");
@@ -276,6 +270,7 @@ public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
         processingEnv.getMessager().printMessage(Kind.WARNING, 
                 getClass().getName() + ": " + msg);
     }
+    
     protected void warn(String msg, Throwable t) {
         String errMsg = msg + ": " + t.getMessage();
         processingEnv.getMessager().printMessage(Kind.WARNING, 
