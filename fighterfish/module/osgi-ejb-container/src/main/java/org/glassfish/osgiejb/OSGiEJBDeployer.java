@@ -42,8 +42,6 @@ package org.glassfish.osgiejb;
 
 import com.sun.enterprise.deploy.shared.ArchiveFactory;
 import com.sun.enterprise.deployment.Application;
-import com.sun.enterprise.deployment.EjbDescriptor;
-import com.sun.enterprise.deployment.EjbSessionDescriptor;
 import org.glassfish.api.ActionReport;
 import org.glassfish.internal.data.ApplicationInfo;
 import org.glassfish.internal.deployment.Deployment;
@@ -148,16 +146,18 @@ public class OSGiEJBDeployer extends AbstractOSGiDeployer {
                 exportEJB = exportEJB.trim();
                 ApplicationInfo ai = osgiApplicationInfo.getAppInfo();
                 Application app = ai.getMetaData(Application.class);
-                Collection<EjbDescriptor> ejbs = app.getEjbDescriptors();
+                Collection<DolAdapter.EjbDescriptor> ejbs = DolAdapter.convert(app.getEjbDescriptors());
                 logger.info("addingService: Found " + ejbs.size() + " no. of EJBs");
-                Collection<EjbDescriptor> ejbsToBeExported = new ArrayList<EjbDescriptor>();
+                Collection<DolAdapter.EjbDescriptor> ejbsToBeExported = new ArrayList<DolAdapter.EjbDescriptor>();
                 if (Constants.EXPORT_EJB_ALL.equals(exportEJB)) {
                     ejbsToBeExported = ejbs;
+                } else if (Constants.EXPORT_EJB_NONE.equals(exportEJB)) {
+                    logger.info("addingService: Skipping adding EJBs as OSGi services as per configuration");
                 } else {
                     StringTokenizer st = new StringTokenizer(exportEJB, ",");
                     while (st.hasMoreTokens()) {
                         String next = st.nextToken();
-                        for (EjbDescriptor ejb : ejbs) {
+                        for (DolAdapter.EjbDescriptor ejb : ejbs) {
                             if (next.equals(ejb.getName())) {
                                 ejbsToBeExported.add(ejb);
                             }
@@ -167,7 +167,7 @@ public class OSGiEJBDeployer extends AbstractOSGiDeployer {
                 b2ss.put(osgiApplicationInfo.getBundle().getBundleId(), new ArrayList<ServiceRegistration>());
                 ClassLoader oldTCC = switchTCC(osgiApplicationInfo);
                 try {
-                    for (EjbDescriptor ejb : ejbsToBeExported) {
+                    for (DolAdapter.EjbDescriptor ejb : ejbsToBeExported) {
                         registerEjbAsService(ejb, osgiApplicationInfo.getBundle());
                     }
                 } finally {
@@ -190,12 +190,12 @@ public class OSGiEJBDeployer extends AbstractOSGiDeployer {
             return oldTCC;
         }
 
-        private void registerEjbAsService(EjbDescriptor ejb, Bundle bundle) {
+        private void registerEjbAsService(DolAdapter.EjbDescriptor ejb, Bundle bundle) {
             System.out.println(ejb);
             try {
-                if (EjbSessionDescriptor.TYPE.equals(ejb.getType())) {
-                    EjbSessionDescriptor sessionBean = EjbSessionDescriptor.class.cast(ejb);
-                    if (EjbSessionDescriptor.STATEFUL.equals(sessionBean.getSessionType())) {
+                if (com.sun.enterprise.deployment.EjbSessionDescriptor.TYPE.equals(ejb.getType())) {
+                    DolAdapter.EjbSessionDescriptor sessionBean = DolAdapter.EjbSessionDescriptor.class.cast(ejb);
+                    if (com.sun.enterprise.deployment.EjbSessionDescriptor.STATEFUL.equals(sessionBean.getSessionType())) {
                         logger.warning("Stateful session bean can't be registered as OSGi service");
                     } else {
                         final BundleContext ejbBundleContext = bundle.getBundleContext();
@@ -233,7 +233,7 @@ public class OSGiEJBDeployer extends AbstractOSGiDeployer {
             OSGiApplicationInfo osgiApplicationInfo = OSGiApplicationInfo.class.cast(service);
             ApplicationInfo ai = osgiApplicationInfo.getAppInfo();
             Application app = ai.getMetaData(Application.class);
-            Collection<EjbDescriptor> ejbs = app.getEjbDescriptors();
+            Collection<DolAdapter.EjbDescriptor> ejbs = DolAdapter.convert(app.getEjbDescriptors());
             logger.info("removedService: Found " + ejbs.size() + " no. of EJBs");
             final Collection<ServiceRegistration> regs = b2ss.get(osgiApplicationInfo.getBundle().getBundleId());
             if (regs != null) { // it can be null if this bundle is not an OSGi-EJB bundle.
@@ -254,4 +254,5 @@ public class OSGiEJBDeployer extends AbstractOSGiDeployer {
             super.removedService(reference, service);
         }
     }
+
 }
