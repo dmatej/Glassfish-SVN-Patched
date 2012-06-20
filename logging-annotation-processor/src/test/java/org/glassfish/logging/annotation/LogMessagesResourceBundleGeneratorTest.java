@@ -35,6 +35,7 @@ public class LogMessagesResourceBundleGeneratorTest extends TestCase {
             System.out.println("Deleting " + f.getAbsolutePath());
             f.delete();
         }
+        ResourceBundle.clearCache();
     }
     
     private File[] getResourceBundles() {
@@ -76,11 +77,8 @@ public class LogMessagesResourceBundleGeneratorTest extends TestCase {
         File f1 = new File(BASE_PATH, "Coffee.java");
         String output = executeCompiler(f1);
         assertTrue(output.contains("The fully qualified resource bundle name needs to be end with LogMessages as the best practice."));
-        ResourceBundle rb = ResourceBundle.getBundle(Coffee.LOGMESSAGES_RB);
-        String value = rb.getString(Coffee.EJB_SYSTEM_INITIALIZED);
-        assertEquals("EJB subsystem initialized.", value);
-        value = rb.getString(Coffee.EJB_DEPLOYMENT_FAILED);
-        assertEquals("EJB module {0} failed to deploy.", value);        
+        File[] resourceBundles = getResourceBundles();
+        assertEquals(resourceBundles.length,0);        
     }
 
     @Test
@@ -108,7 +106,6 @@ public class LogMessagesResourceBundleGeneratorTest extends TestCase {
         File f2 = new File(BASE_PATH, "Chocolate.java");
         String output = executeCompiler(f1,f2);
         assertTrue(output.contains("Annotation processing finished successfully."));
-        ResourceBundle.clearCache();
         ResourceBundle rb = ResourceBundle.getBundle(JavaBean.LOGMESSAGES_RB);
         String value = rb.getString(JavaBean.EJB_SYSTEM_INITIALIZED);
         assertEquals("EJB subsystem initialized.", value);

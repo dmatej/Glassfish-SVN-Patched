@@ -40,28 +40,21 @@
 
 package org.glassfish.annotation.processing.logging;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.HashSet;
-import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.tools.Diagnostic.Kind;
-import javax.tools.FileObject;
-import javax.tools.StandardLocation;
 
 import org.glassfish.logging.annotation.LogMessageInfo;
 import org.glassfish.logging.annotation.LogMessagesResourceBundle;
 
 @SupportedAnnotationTypes({"org.glassfish.logging.annotation.LogMessageInfo","org.glassfish.logging.annotation.LogMessagesResourceBundle"})
-public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
+public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
 
     private static final String VALIDATE_LEVELS[] = {
       "EMERGENCY",
@@ -80,7 +73,7 @@ public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
 
         debug("LogMessagesResourceBundleGenerator invoked.");
 
-        LogMessagesTreeMap logMessagesMap = new LogMessagesTreeMap();
+        LoggingMetadata logMessagesMap = new LoggingMetadata();
         
         if (!env.processingOver()) {
             Set<? extends Element> elements;
@@ -107,8 +100,8 @@ public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
             
             String rbName = rbNames.iterator().next();
             if (!rbName.endsWith("LogMessages")) {
-                // HK2 Maven build plugin is swallowing the warning which is visible when plain javac is invoked.
-                warn("The fully qualified resource bundle name needs to be end with LogMessages as the best practice.");
+                error("The fully qualified resource bundle name needs to be end with LogMessages as the best practice.");
+                return false;
             }
 
             Set<String> messageIds = new HashSet<String>();
@@ -163,129 +156,6 @@ public class LogMessagesResourceBundleGenerator extends AbstractProcessor {
           error("Missing action for message id '" + msgId + "' for levels SEVERE and above.");
         }
       }
-    }
-
-    /**
-     * This method, given a pkg name will determine the path to the resource,
-     * create the LogResourceBundle for that path and load any resources
-     * from the existing resource bundle file.
-     * 
-     * @param rbName the package the resource bundle is relative
-     * @return a LogResourceBundle
-     */ 
-    private void loadLogMessages(LogMessagesTreeMap lrb, String rbName) {
-
-        BufferedReader bufferedReader = null;
-        try {
-            FileObject rbFileObject = getRBFileObject(rbName, true);
-            if (rbFileObject.getLastModified() > 0) {
-                bufferedReader = new BufferedReader(rbFileObject.openReader(true));
-                lrb.load(bufferedReader);                
-            }
-        } catch (IllegalArgumentException e) {
-            error("Unable to load log message resource bundle: " + 
-                    rbName, e);
-        } catch (IOException e) {
-            debug("Unable to load log message resource bundle: " +
-                    rbName, e);
-        } finally {
-            if (bufferedReader != null) {
-                try {
-                    bufferedReader.close();
-                } catch (IOException e) {
-                    error("Unable to close reader for log message resource bundle: " +
-                            rbName, e);
-                }
-            }
-        }
-    }
-
-    private void storeLogMessages(LogMessagesTreeMap lrb, String rbName) {
-        BufferedWriter bufferedWriter = null; 
-        try {
-            FileObject rbFileObject = getRBFileObject(rbName, false);
-            bufferedWriter = new BufferedWriter(rbFileObject.openWriter());
-            lrb.store(bufferedWriter);
-        } catch (IllegalArgumentException e) {
-            error("Unable to store log message resource bundle: " +
-                    rbName, e);
-        } catch (IOException e) {
-            error("Unable to store log message resource bundle: " +
-                    rbName, e);
-        }  finally {
-            if (bufferedWriter != null) {
-                try {
-                    bufferedWriter.close();
-                } catch (IOException e) {
-                    error("Unable to store log message resource bundle: " +
-                            rbName, e);
-                }
-            }
-        } 
-    }
-
-    /**
-     * We cache paths to the resource bundle because the compiler does not
-     * allow us to call createResource() more than once for an object.
-     * Note that in Java 7 getResource() throws FileNotFound if the
-     * target resource does not exist.   The behavior is different in Java 6.
-     * 
-     * @param rbName
-     * @return path to resource bundle relative to pkg 
-     */
-    private FileObject getRBFileObject(String rbName, boolean readObject) throws IllegalArgumentException, 
-            IOException {        
-        String rbFileName = rbName;
-        String rbPkg = "";
-        int lastIndex = rbName.lastIndexOf('.');
-        if (lastIndex > 0) {
-          rbFileName = rbName.substring(lastIndex+1);
-          rbPkg = rbName.substring(0, lastIndex);
-        } 
-        rbFileName = rbFileName + ".properties";
-        if (readObject) {
-            return processingEnv.getFiler().getResource(
-                    StandardLocation.CLASS_OUTPUT, rbPkg, rbFileName);
-        } else {
-            return processingEnv.getFiler().createResource(
-                    StandardLocation.CLASS_OUTPUT, rbPkg, rbFileName, 
-                    (javax.lang.model.element.Element[]) null);            
-        }
-    }
-
-    protected void debug(String msg) {
-        processingEnv.getMessager().printMessage(Kind.OTHER, msg);
-    }
-
-    protected void debug(String msg, Throwable t) {
-        processingEnv.getMessager().printMessage(Kind.OTHER, t.getMessage() + ":" + msg);
-    }
-
-    protected void info(String msg) {
-        processingEnv.getMessager().printMessage(Kind.NOTE, 
-            getClass().getName() + ": " + msg);
-    }
-
-    protected void warn(String msg) {
-        processingEnv.getMessager().printMessage(Kind.WARNING, 
-                getClass().getName() + ": " + msg);
-    }
-    
-    protected void warn(String msg, Throwable t) {
-        String errMsg = msg + ": " + t.getMessage();
-        processingEnv.getMessager().printMessage(Kind.WARNING, 
-                getClass().getName() + ": " + errMsg);
-    }
-
-    protected void error(String msg) {
-        processingEnv.getMessager().printMessage(Kind.ERROR, 
-                getClass().getName() + ": " + msg);
-    }
-    
-    protected void error(String msg, Throwable t) {
-        String errMsg = msg + ": " + t.getMessage();
-        processingEnv.getMessager().printMessage(Kind.ERROR, 
-                getClass().getName() + ": " + errMsg);
     }
     
 }

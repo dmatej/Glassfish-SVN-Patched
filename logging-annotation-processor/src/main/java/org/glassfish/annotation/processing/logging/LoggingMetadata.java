@@ -45,15 +45,15 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.TreeMap;
 
-class LogMessagesTreeMap extends TreeMap<String, String> {
+class LoggingMetadata extends TreeMap<String,Object>{
 
     private static final long serialVersionUID = 4958871376396137141L;
-    
+        
     private static final String COMMENT = ".MSG_COMMENT";
     
-    public LogMessagesTreeMap() { }
+    public LoggingMetadata() { }
 
-    public LogMessagesTreeMap load(BufferedReader reader) throws IOException {
+    public LoggingMetadata load(BufferedReader reader) throws IOException {
         String line; 
         String unusedLine = null; 
         int pos;
