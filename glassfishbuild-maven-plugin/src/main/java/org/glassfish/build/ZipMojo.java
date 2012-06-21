@@ -95,7 +95,9 @@ public class ZipMojo extends AbstractAntMojo {
     /**
      * dir the root of the directory tree of the default FileSet ;
      * Only when not fileset(s) provided.
-     *
+     * 
+     * TODO: rename to zipDir
+     * 
      * @parameter expression="${dir}" default-value="${project.build.directory}"
      */
     protected File dir;
