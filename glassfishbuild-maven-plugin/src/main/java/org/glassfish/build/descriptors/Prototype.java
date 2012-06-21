@@ -41,7 +41,7 @@ package org.glassfish.build.descriptors;
 
 /**
  *
- * @author romano
+ * @author Romain Grecourt
  */
 public class Prototype {
 

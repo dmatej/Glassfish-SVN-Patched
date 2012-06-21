@@ -46,7 +46,7 @@ import org.apache.tools.ant.BuildListener;
 
 /**
  *
- * @author romano
+ * @author Romain Grecourt
  */
 public abstract class AbstractAntMojo extends AbstractMojo implements BuildListener {
 
