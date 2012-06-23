@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-10-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -41,10 +41,7 @@
 package org.glassfish.osgiweb;
 
 import com.sun.enterprise.web.WebModuleDecorator;
-import com.sun.hk2.component.ExistingSingletonInhabitant;
-import org.glassfish.internal.api.Globals;
 import org.glassfish.osgijavaeebase.Extender;
-import org.jvnet.hk2.component.Inhabitant;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.url.URLConstants;
@@ -66,6 +63,7 @@ public class WebExtender implements Extender {
     private ServiceRegistration urlHandlerService;
     private OSGiWebModuleDecorator wmd;
     private OSGiWebDeployer deployer;
+    private ServiceRegistration wmdReg;
 
     public WebExtender(BundleContext context) {
         this.context = context;
@@ -115,16 +113,17 @@ public class WebExtender implements Extender {
 
     private void registerWmd() {
         wmd = new OSGiWebModuleDecorator();
-        Inhabitant i = new ExistingSingletonInhabitant(wmd);
-        String fqcn = WebModuleDecorator.class.getName();
-        Globals.getDefaultHabitat().addIndex(i, fqcn, wmd.getClass().getSimpleName());
+        // By registering this is OSGi service registry, it will automatically make it into HK2 service registry
+        // by OSGi->HK2 service mapper.
+        wmdReg = this.context.registerService(WebModuleDecorator.class.getName(), wmd, null);
     }
 
     private void unregisterWmd() {
-        if (wmd == null) return;
-        // Since there is no public API to remove an inhabitant, we
-        // nullify the fields and that ensures that this decorator
-        // is as good as removed.
+        if (wmdReg == null) return;
+        wmdReg.unregister();
+        // When we unregister the WebModuleDecorator from OSGi service registry, it also gets removed from
+        // HK2 service registry. But, I am not sure if web container is able to handle dynamic services, so
+        // I am making our custom decorator useless by deactivationg it which nullifies all its fields.
         wmd.deActivate();
     }
 
