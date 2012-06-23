@@ -47,40 +47,27 @@ import com.sun.enterprise.config.serverbeans.VirtualServer;
 import com.sun.enterprise.web.WebContainer;
 import com.sun.enterprise.web.WebModule;
 import com.sun.enterprise.web.WebModuleConfig;
-import org.apache.catalina.Container;
-import org.apache.catalina.Engine;
-import org.apache.catalina.Host;
-import org.apache.catalina.Manager;
-import org.apache.catalina.Realm;
+import org.apache.catalina.*;
 import org.apache.catalina.core.StandardContext;
 import org.apache.catalina.session.StandardManager;
 import org.apache.catalina.startup.ContextConfig;
 import org.glassfish.api.admin.ServerEnvironment;
-import org.glassfish.api.event.EventListener;
-import org.glassfish.api.event.EventTypes;
-import org.glassfish.api.event.Events;
+import org.glassfish.embeddable.GlassFish;
+import org.glassfish.embeddable.GlassFishException;
 import org.glassfish.internal.api.ClassLoaderHierarchy;
-import org.glassfish.internal.api.Globals;
+import org.glassfish.osgijavaeebase.Extender;
 import org.glassfish.web.valve.GlassFishValve;
-import org.jvnet.hk2.component.Habitat;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.Constants;
-import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.http.HttpService;
 import org.osgi.util.tracker.ServiceTracker;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
@@ -107,14 +94,15 @@ public class Activator implements BundleActivator {
     // this service is deployed.
     private static final String CONTEXT_PATH_PROP =
             Activator.class.getPackage().getName() + ".ContextPath";
-    private ServiceTracker serverTracker;
 
     private Logger logger = Logger.getLogger(getClass().getPackage().getName());
+    private Extender extender;
+    private GlassFish gf;
 
     public void start(BundleContext context) throws Exception {
         bctx = context;
-        serverTracker = new GlassFishServerTracker(bctx);
-        serverTracker.open();
+        extender = new OSGiHtttpExtender();
+        context.registerService(Extender.class.getName(), extender, null);
     }
 
     /**
@@ -127,7 +115,7 @@ public class Activator implements BundleActivator {
      *
      * @param webContainer
      */
-    private void doActualWork(WebContainer webContainer) {
+    private void doActualWork(WebContainer webContainer) throws GlassFishException {
         String defaultVsId = getDefaultVirtualServer();
         final StringTokenizer vsIds = new StringTokenizer(getAllVirtualServers(), ",");
         while (vsIds.hasMoreTokens()) {
@@ -177,7 +165,7 @@ public class Activator implements BundleActivator {
         // standardContext.setJ2EEServer(System.getProperty("com.sun.aas.instanceName"));
         standardContext.setJ2EEServer(getInstanceName());
         standardContext.addLifecycleListener(new ContextConfig());
-        Realm realm = Globals.getDefaultHabitat().getByContract(Realm.class);
+        Realm realm = gf.getService(Realm.class);
         standardContext.setRealm(realm);
         WebModuleConfig wmConfig = new WebModuleConfig();
         wmConfig.setWorkDirBase(System.getProperty("java.io.tmpdir"));
@@ -185,7 +173,7 @@ public class Activator implements BundleActivator {
 
         // Setting it in WebModuleConfig does not work, Ceck with Jan.
 //        wmConfig.setAppClassLoader(getCommonClassLoader());
-        standardContext.setParentClassLoader(getCommonClassLoader());
+        standardContext.setParentClassLoader(getCommonClassLoader(gf));
         standardContext.setWebModuleConfig(wmConfig);
 
         // See  See GLASSFISH-16764 for more details about this valve
@@ -200,14 +188,17 @@ public class Activator implements BundleActivator {
         return standardContext;
     }
 
-    private ClassLoader getCommonClassLoader() {
+    private ClassLoader getCommonClassLoader(GlassFish gf) throws GlassFishException {
         ClassLoaderHierarchy clh =
-                Globals.getDefaultHabitat().getComponent(ClassLoaderHierarchy.class);
+                gf.getService(ClassLoaderHierarchy.class);
         return clh.getAPIClassLoader();
     }
 
     public void stop(BundleContext context) throws Exception {
-        if (serverTracker != null) serverTracker.close();
+        // everything happens in Extender.stop
+    }
+
+    private void undoActualWork() {
         for (ServiceRegistration registration : registrations) registration.unregister();
         for (Host vs : vss.values()) {
             StandardContext standardContext =
@@ -245,46 +236,12 @@ public class Activator implements BundleActivator {
     }
 
     /**
-     * Tracks Habitat and obtains EVents service from it and registers a listener
-     * that takes care of doing the actual work.
-     */
-    private class GlassFishServerTracker extends ServiceTracker {
-        public GlassFishServerTracker(BundleContext context) {
-            super(context, Habitat.class.getName(), null);
-        }
-
-        @Override
-        public Object addingService(ServiceReference reference) {
-            ServiceReference habitatServiceRef = context.getServiceReference(Habitat.class.getName());
-            final Habitat habitat = Habitat.class.cast(context.getService(habitatServiceRef));
-            Events events = habitat.getComponent(Events.class);
-            EventListener listener = new org.glassfish.api.event.EventListener() {
-                public void event(Event event) {
-                    if (EventTypes.SERVER_READY.equals(event.type())) {
-                        WebContainer wc = habitat.getComponent(WebContainer.class);
-                        doActualWork(wc);
-                    }
-                }
-            };
-            events.register(listener);
-            // We can get into infinite waiting loop if server is already started. So check the status once.
-            if (habitat.getComponent(ServerEnvironment.class).getStatus() == ServerEnvironment.Status.started) {
-                WebContainer wc = habitat.getComponent(WebContainer.class);
-                doActualWork(wc);
-            }
-            close(); // no need to track any more
-            return super.addingService(reference);
-        }
-    }
-
-
-    /**
      * @return comma-separated list of all defined virtual servers (including __asadmin)
      */
-    private String getAllVirtualServers() {
+    private String getAllVirtualServers() throws GlassFishException {
         StringBuilder sb = new StringBuilder();
         boolean first = true;
-        Domain domain = Globals.get(Domain.class);
+        Domain domain = gf.getService(Domain.class);
         String target = getInstanceName();
         Server server = domain.getServerNamed(target);
         if (server != null) {
@@ -310,8 +267,8 @@ public class Activator implements BundleActivator {
         return sb.toString();
     }
 
-    private String getInstanceName() {
-        ServerEnvironment se = Globals.get(ServerEnvironment.class);
+    private String getInstanceName() throws GlassFishException {
+        ServerEnvironment se = gf.getService(ServerEnvironment.class);
         String target = se.getInstanceName();
         return target;
     }
@@ -319,7 +276,7 @@ public class Activator implements BundleActivator {
     /**
      * @return the dafault virtual server
      */
-    private String getDefaultVirtualServer() {
+    private String getDefaultVirtualServer() throws GlassFishException {
         // Grizzly renamed its package name from com.sun.grizzly to org.glassfish.grizzly in Grizzly 2.1. Since Grizzly 2.1 is only
         // integrated into GF3.2 only and we expect our module to work with GF 3.1.1 as well, we are not relying on Grizzly classes statically.
         // So, the code below does what the following line would have done.
@@ -334,7 +291,7 @@ public class Activator implements BundleActivator {
                 throw new RuntimeException(e);
             }
         }
-        Object networkListenerObj = Globals.get(netWorkListenerClass);
+        Object networkListenerObj = gf.getService(netWorkListenerClass);
         try {
             Method findHttpProtocolMethod = netWorkListenerClass.getMethod("findHttpProtocol");
             Object httpProtocolObj = findHttpProtocolMethod.invoke(networkListenerObj);
@@ -352,4 +309,35 @@ public class Activator implements BundleActivator {
         }
     }
 
+    private class OSGiHtttpExtender implements Extender {
+        private GlassFish getGlassFish() {
+            GlassFish gf = (GlassFish) bctx.getService(bctx.getServiceReference(GlassFish.class.getName()));
+            try {
+                assert(gf.getStatus() == GlassFish.Status.STARTED);
+            } catch (GlassFishException e) {
+                throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
+            }
+            return gf;
+        }
+
+        private WebContainer getWebContainer() throws GlassFishException {
+            return gf.getService(WebContainer.class);
+        }
+
+        @Override
+        public void start() {
+            gf = getGlassFish();
+            try {
+                doActualWork(getWebContainer());
+            } catch (GlassFishException e) {
+                throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
+            }
+        }
+
+        @Override
+        public void stop() {
+            undoActualWork();
+        }
+
+    }
 }
