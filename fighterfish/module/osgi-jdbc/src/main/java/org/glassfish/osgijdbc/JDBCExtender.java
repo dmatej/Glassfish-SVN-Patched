@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -40,10 +40,10 @@
 
 package org.glassfish.osgijdbc;
 
+import org.glassfish.embeddable.GlassFish;
+import org.glassfish.embeddable.GlassFishException;
 import org.glassfish.internal.api.ClassLoaderHierarchy;
-import org.glassfish.internal.api.Globals;
 import org.glassfish.osgijavaeebase.Extender;
-import org.jvnet.hk2.component.Habitat;
 import org.osgi.framework.*;
 import org.osgi.service.jdbc.DataSourceFactory;
 import org.osgi.service.url.URLConstants;
@@ -62,7 +62,6 @@ public class JDBCExtender implements Extender {
     private ServiceRegistration urlHandlerService;
 
     private Set<DataSourceFactoryImpl> dataSourceFactories = new HashSet<DataSourceFactoryImpl>();
-    private Habitat habitat;
 
     private BundleTracker bundleTracker;
 
@@ -75,7 +74,6 @@ public class JDBCExtender implements Extender {
 
     public void start() {
         debug("begin start()");
-        habitat = Globals.getDefaultHabitat();
         bundleTracker = new BundleTracker(bundleContext, Bundle.ACTIVE, new JDBCBundleTrackerCustomizer());
         bundleTracker.open();
         addURLHandler();
@@ -93,14 +91,19 @@ public class JDBCExtender implements Extender {
         debug("stopped");
     }
 
-    private Habitat getHabitat(){
-        return habitat;
+    private <T> T getService(Class<T> type){
+        GlassFish gf = (GlassFish) bundleContext.getService(bundleContext.getServiceReference(GlassFish.class.getName()));
+        try {
+            return gf.getService(type);
+        } catch (GlassFishException e) {
+            throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
+        }
     }
 
     private void addURLHandler() {
 
         //create parent class-loader (API ClassLoader to access Java EE API)
-        ClassLoaderHierarchy clh = getHabitat().getByContract(ClassLoaderHierarchy.class);
+        ClassLoaderHierarchy clh = getService(ClassLoaderHierarchy.class);
         ClassLoader apiClassLoader = clh.getAPIClassLoader();
 
         Properties p = new Properties();
