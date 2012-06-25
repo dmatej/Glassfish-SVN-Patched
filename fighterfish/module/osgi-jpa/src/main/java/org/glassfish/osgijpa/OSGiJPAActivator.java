@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -49,13 +49,14 @@ import org.glassfish.osgijavaeebase.Extender;
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class OSGiJPAActivator implements BundleActivator {
-    private JPAExtender extender;
+    private ServiceRegistration extenderReg;
 
     public void start(BundleContext context) throws Exception {
-        extender = new JPAExtender(context);
-        context.registerService(Extender.class.getName(), extender, null);
+        JPAExtender extender = new JPAExtender(context);
+        extenderReg = context.registerService(Extender.class.getName(), extender, null);
     }
 
     public void stop(BundleContext context) throws Exception {
+        extenderReg.unregister();
     }
 }
