@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -40,16 +40,18 @@
 
 package org.glassfish.osgijavaeebase;
 
-import org.glassfish.api.admin.ServerEnvironment;
 import org.glassfish.api.event.EventListener;
 import org.glassfish.api.event.EventTypes;
 import org.glassfish.api.event.Events;
+import org.glassfish.embeddable.GlassFish;
+import org.glassfish.embeddable.GlassFishException;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
 import org.osgi.util.tracker.ServiceTracker;
-import org.jvnet.hk2.component.Habitat;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -138,7 +140,8 @@ class ExtenderManager
         public Object addingService(ServiceReference reference)
         {
             Extender e = Extender.class.cast(context.getService(reference));
-            logger.logp(Level.FINE, "ExtenderManager$ExtenderTracker", "addingService", "Starting extender called {0}", new Object[]{e});
+            logger.logp(Level.FINE, "ExtenderManager$ExtenderTracker", "addingService",
+                    "Starting extender called {0}", new Object[]{e});
             e.start();
             return e;
         }
@@ -146,48 +149,68 @@ class ExtenderManager
         @Override
         public void removedService(ServiceReference reference, Object service) {
             Extender e = Extender.class.cast(context.getService(reference));
-            logger.logp(Level.FINE, "ExtenderManager$ExtenderTracker", "removedService", "Stopping extender called {0}", new Object[]{e});
+            logger.logp(Level.FINE, "ExtenderManager$ExtenderTracker", "removedService",
+                    "Stopping extender called {0}", new Object[]{e});
             e.stop();
         }
     }
 
     /**
-     * Tracks Habitat and obtains EVents service from it and registers a listener
+     * Tracks GlassFish and obtains EVents service from it and registers a listener
      * that takes care of actually starting and stopping other extenders.
      */
     private class GlassFishServerTracker extends ServiceTracker {
         public GlassFishServerTracker(BundleContext context)
         {
-            super(context, Habitat.class.getName(), null);
+            super(context, GlassFish.class.getName(), null);
         }
 
         @Override
         public Object addingService(ServiceReference reference)
         {
-            try {
-                logger.logp(Level.FINE, "ExtenderManager$GlassFishServerTracker", "addingService", "Habitat has been created");
-                ServiceReference habitatServiceRef = context.getServiceReference(Habitat.class.getName());
-                Habitat habitat = Habitat.class.cast(context.getService(habitatServiceRef));
-                events = habitat.getComponent(Events.class);
-                listener = new EventListener() {
-                    public void event(Event event)
-                    {
-                        if (EventTypes.SERVER_READY.equals(event.type())) {
-                            startExtenders();
-                        } else if (EventTypes.PREPARE_SHUTDOWN.equals(event.type())) {
-                            stopExtenders();
+            logger.logp(Level.FINE, "ExtenderManager$GlassFishServerTracker",
+                    "addingService", "GlassFish has been created");
+            final GlassFish gf = GlassFish.class.cast(context.getService(reference));
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            return executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        // Poll for GlassFish to start. GlassFish service might have been registered by
+                        // GlassFishRuntime.newGlassFish() and hence might not be ready to use.
+                        GlassFish.Status status;
+                        while ((status = gf.getStatus()) != GlassFish.Status.STARTED) {
+                            if (status == GlassFish.Status.DISPOSED) return;
+                            try {
+                                Thread.sleep(1000);
+                            } catch (InterruptedException e) {
+                                return;
+                            }
                         }
+                        events = gf.getService(Events.class);
+                        listener = new EventListener() {
+                            public void event(Event
+                                event)
+                            {
+                                if (EventTypes.PREPARE_SHUTDOWN.equals(event.type())) {
+                                    stopExtenders();
+                                }
+                            }
+                        };
+                        events.register(listener);
+                        startExtenders();
+                    } catch (GlassFishException e) {
+                        throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
                     }
-                };
-                events.register(listener);
-                // We can get into infinite waiting loop if server is already started. So check the status once.
-                if (habitat.getComponent(ServerEnvironment.class).getStatus() == ServerEnvironment.Status.started) {
-                    startExtenders();
                 }
-                return super.addingService(reference);
-            } finally {
-                close(); // no need to track any more
-            }
+            });
+        }
+
+        @Override
+        public void removedService(ServiceReference reference, Object service) {
+            Future future = (Future) service;
+            future.cancel(true); // interrupt if it is still waiting for gf to start or stop
+            super.removedService(reference, service);
         }
     }
 }
