@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -89,6 +89,7 @@ class ContextPathCollisionDetector implements BundleListener {
     }
 
     public static ContextPathCollisionDetector get() {
+        assert(_me != null);
         return _me;
     }
 
@@ -167,6 +168,7 @@ class ContextPathCollisionDetector implements BundleListener {
     }
 
     public synchronized void cleanUp(Bundle bundle) {
+        if (stopped) return;
         String contextPath = getContextPath(bundle);
         final Long bundleId = bundle.getBundleId();
         final Long deployedBundle = getCurrentlyDeployedBundle(contextPath);
@@ -235,6 +237,9 @@ class ContextPathCollisionDetector implements BundleListener {
 
     @Override
     public void bundleChanged(BundleEvent event) {
+        synchronized (this) {
+            if (stopped) return;
+        }
         if (BundleEvent.STOPPED == event.getType()) {
             Bundle bundle = event.getBundle();
             String contextPath = getContextPath(bundle);

@@ -70,6 +70,7 @@ public class WebExtender implements Extender {
     }
 
     public synchronized void start() {
+        ContextPathCollisionDetector.get();
         registerWmd();
         registerDeployer();
         addURLHandler();
