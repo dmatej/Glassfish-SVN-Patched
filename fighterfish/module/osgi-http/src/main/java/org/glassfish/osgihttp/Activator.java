@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -96,13 +96,13 @@ public class Activator implements BundleActivator {
             Activator.class.getPackage().getName() + ".ContextPath";
 
     private Logger logger = Logger.getLogger(getClass().getPackage().getName());
-    private Extender extender;
     private GlassFish gf;
+    private ServiceRegistration extenderReg;
 
     public void start(BundleContext context) throws Exception {
         bctx = context;
-        extender = new OSGiHtttpExtender();
-        context.registerService(Extender.class.getName(), extender, null);
+        Extender extender = new OSGiHtttpExtender();
+        extenderReg = context.registerService(Extender.class.getName(), extender, null);
     }
 
     /**
@@ -195,7 +195,8 @@ public class Activator implements BundleActivator {
     }
 
     public void stop(BundleContext context) throws Exception {
-        // everything happens in Extender.stop
+        extenderReg.unregister();
+        // let everything else happen in Extender.stop which will get called by ExtenderManager.stop()
     }
 
     private void undoActualWork() {
