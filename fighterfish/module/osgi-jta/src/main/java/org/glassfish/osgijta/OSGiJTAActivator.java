@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -43,18 +43,20 @@ package org.glassfish.osgijta;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.glassfish.osgijavaeebase.Extender;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class OSGiJTAActivator implements BundleActivator {
-    private Extender extender;
+    private ServiceRegistration extenderReg;
 
     public void start(BundleContext context) throws Exception {
-        extender = new JTAExtender(context);
-        context.registerService(Extender.class.getName(), extender, null);
+        Extender extender = new JTAExtender(context);
+        extenderReg = context.registerService(Extender.class.getName(), extender, null);
     }
 
     public void stop(BundleContext context) throws Exception {
+        extenderReg.unregister();
     }
 }
