@@ -88,7 +88,7 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     public void testapp0() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp0", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp0", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
             final String location = "mvn:org.glassfish.fighterfish/test.app0/1.0.0-SNAPSHOT/war";
@@ -114,7 +114,7 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     public void testapp1() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp1", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp1", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
             final String location = "mvn:org.glassfish.fighterfish/test.app1/1.0.0-SNAPSHOT/war";
@@ -145,7 +145,7 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     public void testapp2() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp2", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp2", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
             String location = "mvn:org.glassfish.fighterfish/test.app2/1.0.0-SNAPSHOT/war";
@@ -176,7 +176,7 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     public void testapp3() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp3", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp3", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
             String location = "mvn:org.glassfish.fighterfish/test.app3/1.0.0-SNAPSHOT/war";
@@ -202,7 +202,7 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     public void testapp4() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp4", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp4", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
             String location = "mvn:org.glassfish.fighterfish/test.app4/1.0.0-SNAPSHOT/war";
@@ -228,7 +228,7 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     public void testapp5() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp5", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp5", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
             String location = "mvn:org.glassfish.fighterfish/test.app5/1.0.0-SNAPSHOT/war";
@@ -255,7 +255,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     @Ignore // This is currently failing for EclipseLink's inability to handle URL with bundle scheme.
     public void testapp6() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp6", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp6", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
 
@@ -276,7 +276,7 @@ public class T2_Test extends AbstractTestObject {
     @Test
     @Ignore // This is currently failing for EclipseLink's inability to handle URL with bundle scheme.
     public void testapp7() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp7", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp7", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
 
@@ -296,7 +296,7 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     public void testapp8() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp8", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp8", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
 
@@ -316,7 +316,7 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     public void testapp9() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp9", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp9", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
 
@@ -343,7 +343,7 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     public void testapp10() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp10", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp10", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
 
@@ -370,7 +370,7 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     public void testapp11_ejb() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp11_ejb", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp11_ejb", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
 
@@ -396,7 +396,7 @@ public class T2_Test extends AbstractTestObject {
     @Ignore
     // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
     public void testapp11_wab() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp11_wab", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp11_wab", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
 
@@ -431,7 +431,7 @@ public class T2_Test extends AbstractTestObject {
     @Ignore
     // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
     public void testapp11_war() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp11_war", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp11_war", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         String appName = null;
         try {
@@ -463,7 +463,7 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     public void testapp12() throws BundleException, GlassFishException, InterruptedException, IOException {
-        logger.entering("T2_Test", "testapp12", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp12", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
             String location_host = "mvn:org.glassfish.fighterfish/test.app12/1.0.0-SNAPSHOT/war";
@@ -505,7 +505,7 @@ public class T2_Test extends AbstractTestObject {
 
     @Test
     public void testapp13() throws GlassFishException, InterruptedException, BundleException {
-        logger.entering("T2_Test", "testapp13", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp13", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
 
@@ -525,7 +525,7 @@ public class T2_Test extends AbstractTestObject {
 
     @Test
     public void testapp14() throws GlassFishException, InterruptedException, BundleException {
-        logger.entering("T2_Test", "testapp14", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp14", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
 
@@ -544,7 +544,7 @@ public class T2_Test extends AbstractTestObject {
 
     @Test
     public void testapp15() throws GlassFishException, InterruptedException, BundleException {
-        logger.entering("T2_Test", "testapp15", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp15", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
 
@@ -563,7 +563,7 @@ public class T2_Test extends AbstractTestObject {
 
     @Test
     public void testapp16() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp16", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp16", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         final String cfName = "jms/fighterfish.TestApp16ConnectionFactory";
         final String topicName = "jms/fighterfish.TestApp16Topic";
@@ -620,7 +620,7 @@ public class T2_Test extends AbstractTestObject {
 
     @Test
     public void testapp17() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp17", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp17", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
             String location_wab = "mvn:org.glassfish.fighterfish/test.app17/1.0.0-SNAPSHOT/war";
@@ -641,7 +641,7 @@ public class T2_Test extends AbstractTestObject {
 
     @Test
     public void testapp18() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "testapp18", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "testapp18", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
             String location_wab = "mvn:org.glassfish.fighterfish/test.app18/1.0.0-SNAPSHOT/war";
@@ -674,7 +674,7 @@ public class T2_Test extends AbstractTestObject {
 
     @Test
     public void regression_GLASSFISH_18159() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T2_Test", "regression_GLASSFISH_18159", new Object[]{ctx});
+        logger.logp(Level.INFO, "T2_Test", "regression_GLASSFISH_18159", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
            //Running a regression test for fix created on GLASSFISH-18159
@@ -683,7 +683,7 @@ public class T2_Test extends AbstractTestObject {
             bundle.start();
             bundle.uninstall();
             assertTrue("Successfully uninstalled", bundle.getState() == bundle.UNINSTALLED);
-            logger.logp(Level.FINE, "T2_Test", "regression_GLASSFISH_18159", "Install/Uninstall");
+            logger.logp(Level.INFO, "T2_Test", "regression_GLASSFISH_18159", "Install/Uninstall");
         } finally {
             tc.destroy();
         }

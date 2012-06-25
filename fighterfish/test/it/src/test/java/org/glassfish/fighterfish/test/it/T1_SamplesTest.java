@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -78,7 +78,7 @@ public class T1_SamplesTest extends AbstractTestObject {
     @Test
     public void uas_sample_test()
             throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T1_SamplesTest", "uas_sample_test", new Object[]{ctx});
+        logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
             /*
@@ -235,7 +235,7 @@ public class T1_SamplesTest extends AbstractTestObject {
 
     @Test
     public void osgihttp_helloworld_sample_test() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T1_SamplesTest", "osgihttp_helloworld_sample_test", new Object[]{ctx});
+        logger.logp(Level.INFO, "T1_SamplesTest", "osgihttp_helloworld_sample_test", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
             HttpService httpService = OSGiUtil.getService(ctx, HttpService.class);
@@ -291,7 +291,7 @@ public class T1_SamplesTest extends AbstractTestObject {
 
     @Test
     public void jaxrs_sample_test() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("T1_SamplesTest", "jaxrs_sample_test", new Object[]{ctx});
+        logger.logp(Level.INFO, "T1_SamplesTest", "jaxrs_sample_test", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
                        /*

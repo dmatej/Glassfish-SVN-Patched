@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -50,6 +50,7 @@ import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 
 import java.io.IOException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static org.junit.Assert.assertNotNull;
@@ -75,7 +76,7 @@ public class SingleTest extends AbstractTestObject {
      */
     @Test
     public void test() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.entering("SingleTest", "test", new Object[]{});
+        logger.logp(Level.INFO, "SingleTest", "test", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
             GlassFish gf = tc.getGlassFish();
