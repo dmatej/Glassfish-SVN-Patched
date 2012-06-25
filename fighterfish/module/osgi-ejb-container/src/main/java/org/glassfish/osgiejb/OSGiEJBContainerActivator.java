@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -43,21 +43,23 @@ package org.glassfish.osgiejb;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.glassfish.osgijavaeebase.Extender;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class OSGiEJBContainerActivator implements BundleActivator
 {
-    private EJBExtender ejbExtender;
+    private ServiceRegistration ejbExtenderReg;
 
     public void start(BundleContext context) throws Exception
     {
-        ejbExtender = new EJBExtender(context);
-        context.registerService(Extender.class.getName(), ejbExtender, null);
+        EJBExtender ejbExtender = new EJBExtender(context);
+        ejbExtenderReg = context.registerService(Extender.class.getName(), ejbExtender, null);
     }
 
     public void stop(BundleContext context) throws Exception
     {
+        ejbExtenderReg.unregister(); // Unregister so that ExtenderManager can stop Extender with an active bundle ctx
     }
 }
