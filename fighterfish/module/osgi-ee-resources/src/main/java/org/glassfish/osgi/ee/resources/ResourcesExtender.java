@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -40,9 +40,8 @@
 
 package org.glassfish.osgi.ee.resources;
 
-import org.glassfish.internal.api.Globals;
+import org.glassfish.embeddable.GlassFish;
 import org.glassfish.osgijavaeebase.Extender;
-import org.jvnet.hk2.component.Habitat;
 import org.osgi.framework.*;
 
 import java.util.logging.Level;
@@ -67,7 +66,8 @@ public class ResourcesExtender implements Extender {
 
     public void start() {
         debug("begin start()");
-        habitat = Globals.getDefaultHabitat();
+        GlassFish gf = (GlassFish) bundleContext.getService(bundleContext.getServiceReference(GlassFish.class.getName()));
+        habitat = new Habitat(gf);
         rps = new ResourceProviderService(habitat, bundleContext);
         rps.registerResources();
         debug("completed start()");

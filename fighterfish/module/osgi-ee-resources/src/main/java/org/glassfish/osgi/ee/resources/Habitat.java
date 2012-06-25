@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -38,52 +38,30 @@
  * holder.
  */
 
+
 package org.glassfish.osgi.ee.resources;
 
-import com.sun.enterprise.config.serverbeans.BindableResource;
-import com.sun.enterprise.config.serverbeans.ResourceRef;
-import org.osgi.framework.BundleContext;
-
+import org.glassfish.embeddable.GlassFish;
+import org.glassfish.embeddable.GlassFishException;
 
 /**
- * Resource-Manager to export resources defined in GlassFish to OSGi's service-registry
+ * Adapter for old Habitat's getComponent method
+ * We keep the class name same to reduce the no of lines that we have to change.
  *
- * @author Jagadish Ramu
+ * @author sanjeeb.sahoo@oracle.com
  */
-public interface ResourceManager {
+/*package*/ class Habitat {
+    private final GlassFish gf;
 
-    /**
-     * register all appropriate resources
-     * @param context bundle-context
-     */
-    void registerResources(BundleContext context);
+    Habitat(GlassFish gf) {
+        this.gf = gf;
+    }
 
-    /**
-     * register the resource that is created or enabled
-     * @param resource resource that is created or enabled
-     * @param resRef resource-ref of the resource
-     * @param bundleContext bundle-context
-     */
-    void registerResource(BindableResource resource, ResourceRef resRef, BundleContext bundleContext);
-
-    /**
-     * un-register the resource that is deleted or disabled
-     * @param resource resource that is deleted or disabled
-     * @param resRef resource-ref of the resource
-     * @param bundleContext bundle-context
-     */
-    void unRegisterResource(BindableResource resource, ResourceRef resRef, BundleContext bundleContext);
-
-    /**
-     * un-register all appropriate resources
-     * @param context bundle-context
-     */
-    void unRegisterResources(BundleContext context);
-
-    /**
-     * indicates whether the resource-manager can handle the resource in question
-     * @param resource resource to be handled
-     * @return boolean
-     */
-    boolean handlesResource(BindableResource resource);
+    public <T> T getComponent(Class<T> type) {
+        try {
+            return gf.getService(type);
+        } catch (GlassFishException e) {
+            throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
+        }
+    }
 }
