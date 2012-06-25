@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -43,21 +43,24 @@ package org.glassfish.osgiweb;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.glassfish.osgijavaeebase.Extender;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Sanjeeb.Sahoo@Sun.COM
  */
 public class OSGiWebContainerActivator implements BundleActivator
 {
-    private WebExtender webExtender;
+
+    private ServiceRegistration extenderReg;
 
     public void start(BundleContext context) throws Exception
     {
-        webExtender = new WebExtender(context);
-        context.registerService(Extender.class.getName(), webExtender, null);
+        WebExtender webExtender = new WebExtender(context);
+        extenderReg = context.registerService(Extender.class.getName(), webExtender, null);
     }
 
     public void stop(BundleContext context) throws Exception
     {
+        extenderReg.unregister(); // Call unregister so that ExtenderManager will stop with a valid BundleContext
     }
 }
