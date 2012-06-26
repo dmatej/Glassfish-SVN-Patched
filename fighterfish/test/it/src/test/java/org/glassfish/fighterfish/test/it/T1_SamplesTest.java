@@ -44,6 +44,7 @@ package org.glassfish.fighterfish.test.it;
 import org.glassfish.embeddable.GlassFishException;
 import org.glassfish.fighterfish.test.util.*;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
@@ -290,6 +291,7 @@ public class T1_SamplesTest extends AbstractTestObject {
     }
 
     @Test
+    @Ignore // Until GLASSFISH-18836 is fixed
     public void jaxrs_sample_test() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.logp(Level.INFO, "T1_SamplesTest", "jaxrs_sample_test", "ENTRY");
         TestContext tc = TestContext.create(getClass());
