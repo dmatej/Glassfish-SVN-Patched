@@ -72,13 +72,18 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
             RoundEnvironment env) {
 
         debug("LogMessagesResourceBundleGenerator invoked.");
-
-        LoggingMetadata logMessagesMap = new LoggingMetadata();
         
         if (!env.processingOver()) {
-            Set<? extends Element> elements;
 
+            LoggingMetadata logMessagesMap = new LoggingMetadata();
+
+            Set<? extends Element> elements = env.getElementsAnnotatedWith(LogMessageInfo.class);
             Set<? extends Element> rbElems = env.getElementsAnnotatedWith(LogMessagesResourceBundle.class);
+
+            if (rbElems.isEmpty() && elements.isEmpty()) {
+                return false;
+            }
+                        
             Set<String> rbNames = new HashSet<String>();
             for (Element rbElem : rbElems) {
                 Object rbValue = ((VariableElement) rbElem).getConstantValue();
@@ -104,11 +109,8 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
                 return false;
             }
 
-            Set<String> messageIds = new HashSet<String>();
-
-            elements = env.getElementsAnnotatedWith(LogMessageInfo.class);
             Iterator<? extends Element> it = elements.iterator();
-
+            Set<String> messageIds = new HashSet<String>();
             while (it.hasNext()) {
                 VariableElement element = (VariableElement)it.next();
                 String msgId = (String)element.getConstantValue();

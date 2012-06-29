@@ -104,17 +104,17 @@ public abstract class BaseLoggingProcessor extends AbstractProcessor {
                 lrb.load(bufferedReader);                
             }
         } catch (IllegalArgumentException e) {
-            error("Unable to load log message resource bundle: " + 
+            error("Unable to load resource bundle: " + 
                     rbName, e);
         } catch (IOException e) {
-            debug("Unable to load log message resource bundle: " +
+            debug("Unable to load resource bundle: " +
                     rbName, e);
         } finally {
             if (bufferedReader != null) {
                 try {
                     bufferedReader.close();
                 } catch (IOException e) {
-                    error("Unable to close reader for log message resource bundle: " +
+                    error("Unable to close reader for resource bundle: " +
                             rbName, e);
                 }
             }
@@ -128,17 +128,17 @@ public abstract class BaseLoggingProcessor extends AbstractProcessor {
             bufferedWriter = new BufferedWriter(rbFileObject.openWriter());
             lrb.store(bufferedWriter);
         } catch (IllegalArgumentException e) {
-            error("Unable to store log message resource bundle: " +
+            error("Unable to store resource bundle: " +
                     rbName, e);
         } catch (IOException e) {
-            error("Unable to store log message resource bundle: " +
+            error("Unable to store resource bundle: " +
                     rbName, e);
         }  finally {
             if (bufferedWriter != null) {
                 try {
                     bufferedWriter.close();
                 } catch (IOException e) {
-                    error("Unable to store log message resource bundle: " +
+                    error("Unable to store resource bundle: " +
                             rbName, e);
                 }
             }

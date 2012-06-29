@@ -21,7 +21,6 @@ import org.glassfish.annotation.processing.logging.LogMessagesResourceBundleGene
 import org.junit.Test;
 
 import com.foo.bar.Chocolate;
-import com.foo.bar.Coffee;
 import com.foo.bar.JavaBean;
 
 public class LogMessagesResourceBundleGeneratorTest extends TestCase {
