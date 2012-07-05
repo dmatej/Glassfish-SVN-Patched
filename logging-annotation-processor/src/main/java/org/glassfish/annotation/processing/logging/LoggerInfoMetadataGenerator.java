@@ -42,16 +42,18 @@ package org.glassfish.annotation.processing.logging;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 import javax.annotation.processing.RoundEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.tools.FileObject;
@@ -60,11 +62,11 @@ import org.apache.velocity.Template;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.glassfish.logging.annotation.LoggerInfo;
-import org.glassfish.logging.annotation.LoggerInfoMetadataServiceClassName;
 
-@SupportedAnnotationTypes({"org.glassfish.logging.annotation.LoggerInfo", "org.glassfish.logging.annotation.LoggerInfoMetadataService"})
+@SupportedAnnotationTypes({"org.glassfish.logging.annotation.LoggerInfo"})
 public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
 
+    private static final String LOGGER_INFO_METADATA_SERVICE = "LoggerInfoMetadataService";
     private static final char DELIMITER = '|';
     private static final String RBNAME = "org.glassfish.api.logging.LoggerInfoMetadata";
     private static final String VALID_PATTERN = "[a-z[A-Z]][^|]*";
@@ -84,7 +86,7 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
         
         if (!env.processingOver()) {
 
-            Set<String> loggerNames = new HashSet<String>();
+            SortedMap<String, Element> loggerInfoElements = new TreeMap<String, Element>();
 
             Set<? extends Element> elements = env.getElementsAnnotatedWith(LoggerInfo.class);
             if (elements.isEmpty()) {
@@ -102,12 +104,12 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
                 debug("Processing: " + loggerName + " on element " + element.getSimpleName());
                 debug("Enclosing type is " + element.getEnclosingElement().asType());
                 // Message ids must be unique
-                if (!loggerNames.contains(loggerName)) {
+                if (!loggerInfoElements.containsKey(loggerName)) {
                     LoggerInfo loggerInfo = element.getAnnotation(LoggerInfo.class);
                     validateLoggerInfo(loggerInfo);
                     // Save the log message...
                     loggerInfos.put(loggerName, renderLoggerInfo(loggerInfo));
-                    loggerNames.add(loggerName);
+                    loggerInfoElements.put(loggerName, element);
                 } else {
                     error("Duplicate use of logger name " + loggerName);
                     return false;
@@ -118,7 +120,9 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
             debug("Total Messages including ones found from disk so far: " + loggerInfos);
             storeLogMessages(loggerInfos, RBNAME);
             info("Generating logger metadata service.");
-            boolean result = generateLoggerInfoMetadataService(env);
+            // Get the root logger element
+            Element baseLoggerElement = loggerInfoElements.get(loggerInfoElements.firstKey());
+            boolean result = generateLoggerInfoMetadataService(baseLoggerElement);
             info("Annotation processing finished successfully.");
             return result; // Claim the annotations
         } else {
@@ -135,24 +139,21 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
         }        
     }
 
-    private boolean generateLoggerInfoMetadataService(RoundEnvironment env) {
-        Set<? extends Element> elements = env.getElementsAnnotatedWith(LoggerInfoMetadataServiceClassName.class);
-        if (elements.isEmpty()) {
-            warn("No LoggerInfoMetadataService annotation defined for the module.");
-            return false;
-        }
-        if (elements.size() > 1) {
-            error("Multiple LoggerInfo metadata service class names specified.");
-            return false;
-        }
-        VariableElement element = (VariableElement) elements.iterator().next();
-        String className = (String)element.getConstantValue();
-        int endIndex = className.lastIndexOf(".");
-        String packageName = (endIndex > 0) ? className.substring(0, endIndex) : "";
-        String simpleName = className.substring(endIndex+1);
-        BufferedWriter bufferedWriter = null; 
+    private boolean generateLoggerInfoMetadataService(Element element) {
+        String packageName = null;
+        do {
+            Element enclosing = element.getEnclosingElement();
+            debug("Found enclosing element " + element);
+            if (enclosing.getKind() == ElementKind.PACKAGE) {
+                packageName = enclosing.toString();
+            }
+            element = enclosing;
+        } while(packageName == null);
+        
+        String simpleName = LOGGER_INFO_METADATA_SERVICE;
+        BufferedWriter bufferedWriter = null;
         try {
-            FileObject srcFileObject = processingEnv.getFiler().createSourceFile(className);
+            FileObject srcFileObject = processingEnv.getFiler().createSourceFile(packageName + "." + simpleName);
             bufferedWriter = new BufferedWriter(srcFileObject.openWriter());
             VelocityEngine ve = new VelocityEngine();
             Properties props = new Properties();
