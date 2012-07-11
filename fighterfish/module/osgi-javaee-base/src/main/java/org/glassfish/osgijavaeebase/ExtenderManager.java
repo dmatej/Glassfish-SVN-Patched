@@ -59,9 +59,8 @@ import java.util.logging.Logger;
  * It is responsible for starting any registered {@link Extender} service
  * after GlassFish server is started and stopping them when server is shutdown.
  * We use GlassFish STARTED event to be notified of server startup and shutdown.
- * Because the order in which bundles are started is undefined, we can't just assume existence
- * of Habitat to ask for the {@link }Events} service. Fortunately, HK2 OSGi bundle registers
- * Habitat in service registry. So we track that service and from there we listen to GF events.
+ * We don't depend on HK2 service registry because of compatibility with GlassFish 3.1.x.
+ * We use embeddable GlassFish instead to locate services.
  *
  * @author Sanjeeb.Sahoo@Sun.COM
  */
@@ -178,6 +177,7 @@ class ExtenderManager
                     try {
                         // Poll for GlassFish to start. GlassFish service might have been registered by
                         // GlassFishRuntime.newGlassFish() and hence might not be ready to use.
+                        // This is the case for GlassFish < 4.0
                         GlassFish.Status status;
                         while ((status = gf.getStatus()) != GlassFish.Status.STARTED) {
                             if (status == GlassFish.Status.DISPOSED) return;
@@ -187,18 +187,18 @@ class ExtenderManager
                                 return;
                             }
                         }
+                        // start extenders first before registering for events, otherwise we can deadlock
+                        // if startExtender() is in progress and glassfish sends PREPARE_SHUTDOWN event.
+                        startExtenders();
                         events = gf.getService(Events.class);
                         listener = new EventListener() {
-                            public void event(Event
-                                event)
-                            {
+                            public void event(Event event) {
                                 if (EventTypes.PREPARE_SHUTDOWN.equals(event.type())) {
                                     stopExtenders();
                                 }
                             }
                         };
                         events.register(listener);
-                        startExtenders();
                     } catch (GlassFishException e) {
                         throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
                     }
