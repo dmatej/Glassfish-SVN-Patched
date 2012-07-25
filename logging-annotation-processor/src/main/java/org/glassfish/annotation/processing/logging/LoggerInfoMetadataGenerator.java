@@ -66,9 +66,11 @@ import org.glassfish.logging.annotation.LoggerInfo;
 @SupportedAnnotationTypes({"org.glassfish.logging.annotation.LoggerInfo"})
 public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
 
+    private static final String PUBLISH_SUFFIX = ".publish";
+    private static final String SUBSYSTEM_SUFFIX = ".subsystem";
+    private static final String DESCRIPTION_SUFFIX = ".description";
     private static final String LOGGER_INFO_METADATA_SERVICE = "LoggerInfoMetadataService";
-    private static final char DELIMITER = '|';
-    private static final String RBNAME = "org.glassfish.api.logging.LoggerInfoMetadata";
+    private static final String RBNAME = "LoggerInfoMetadata";
     private static final String VALID_PATTERN = "[a-z[A-Z]][^|]*";
 
     @Override
@@ -82,7 +84,7 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
 
         debug("LoggerInfoMetadataGenerator invoked.");
 
-        LoggingMetadata loggerInfos = new LoggingMetadata();
+        LoggingMetadata loggerMetadata = new LoggingMetadata();
         
         if (!env.processingOver()) {
 
@@ -108,21 +110,18 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
                     LoggerInfo loggerInfo = element.getAnnotation(LoggerInfo.class);
                     validateLoggerInfo(loggerInfo);
                     // Save the log message...
-                    loggerInfos.put(loggerName, renderLoggerInfo(loggerInfo));
+                    renderLoggerInfo(loggerMetadata, loggerName, loggerInfo);
                     loggerInfoElements.put(loggerName, element);
                 } else {
                     error("Duplicate use of logger name " + loggerName);
                     return false;
                 }
             }
-            debug("Loggers found so far: " + loggerInfos);
-            loadLogMessages(loggerInfos, RBNAME);
-            debug("Total Messages including ones found from disk so far: " + loggerInfos);
-            storeLogMessages(loggerInfos, RBNAME);
+            debug("Loggers found so far: " + loggerMetadata);
             info("Generating logger metadata service.");
             // Get the root logger element
             Element baseLoggerElement = loggerInfoElements.get(loggerInfoElements.firstKey());
-            boolean result = generateLoggerInfoMetadataService(baseLoggerElement);
+            boolean result = generateLoggerInfoMetadataService(baseLoggerElement, loggerMetadata);
             info("Annotation processing finished successfully.");
             return result; // Claim the annotations
         } else {
@@ -139,7 +138,7 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
         }        
     }
 
-    private boolean generateLoggerInfoMetadataService(Element element) {
+    private boolean generateLoggerInfoMetadataService(Element element, LoggingMetadata loggerInfos) {
         String packageName = null;
         do {
             Element enclosing = element.getEnclosingElement();
@@ -166,6 +165,11 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
             Template vt = ve.getTemplate("/org/glassfish/annotation/processing/logging/LoggerInfoMetadataService.template");
             vt.merge(vc, bufferedWriter);
             bufferedWriter.flush();
+            // Now persist the resource bundle
+            String resourceName = packageName + "." + RBNAME;
+            loadLogMessages(loggerInfos, resourceName);
+            debug("Total Messages including ones found from disk so far: " + loggerInfos);
+            storeLogMessages(loggerInfos, resourceName);            
         } catch (Exception e) {
             error("Unable to generate LoggerMetadataInfoService class", e);
             return false;
@@ -181,18 +185,12 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
         return true;
     }
 
-    private Object renderLoggerInfo(LoggerInfo loggerInfo) {
-        StringBuffer buffer = new StringBuffer();
-        addLoggerInfoField(buffer, loggerInfo.subsystem().trim());
-        addLoggerInfoField(buffer, DELIMITER);
-        addLoggerInfoField(buffer, loggerInfo.description().trim());
-        addLoggerInfoField(buffer, DELIMITER);
-        addLoggerInfoField(buffer, loggerInfo.publish());
-        return buffer.toString();
-    }
-
-    private void addLoggerInfoField(StringBuffer buffer, Object fieldValue) {
-        buffer.append(fieldValue);
+    private boolean renderLoggerInfo(LoggingMetadata loggerMetadata, 
+            String loggerName, LoggerInfo loggerInfo) {
+        loggerMetadata.put(loggerName + DESCRIPTION_SUFFIX, loggerInfo.description());
+        loggerMetadata.put(loggerName + SUBSYSTEM_SUFFIX, loggerInfo.subsystem());
+        loggerMetadata.put(loggerName + PUBLISH_SUFFIX, loggerInfo.publish());
+        return true;
     }
     
 }

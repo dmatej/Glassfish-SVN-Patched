@@ -41,23 +41,30 @@ package ${packageName};
 
 import java.util.ResourceBundle;
 import java.io.IOException;
+import java.io.InputStream;
 
-import javax.annotation.PostConstruct;
 import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.glassfish.api.logging.BaseLoggerInfoMetadataService;
 import org.glassfish.api.logging.LoggerInfoMetadata;
+import org.glassfish.hk2.api.PostConstruct;
 
 import org.jvnet.hk2.annotations.Service;
 
 @Service @Named("modular")
+@Singleton
 public class ${simpleName} extends BaseLoggerInfoMetadataService {
 
-    private static final String RBNAME = "/org/glassfish/api/logging/LoggerInfoMetadata.properties";
+    private static final String RBNAME = "LoggerInfoMetadata.properties";
     
-    @PostConstruct
-    private void initialize() throws IOException {
-        super.initializeMetadata(${simpleName}.class.getClassLoader().getResourceAsStream(RBNAME));
+    public void postConstruct() throws IOException {
+        InputStream inputStream = getClass().getResourceAsStream(RBNAME);
+        if (inputStream != null) {
+            super.initializeMetadata(inputStream);        
+        } else {
+            throw new IOException("Resource not found: " + RBNAME + " for class " + getClass().getName());
+        }
     }
 
 }
