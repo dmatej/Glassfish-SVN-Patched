@@ -1,0 +1,130 @@
+= EclipseLink MySports Example =
+
+The MySports example is a simple web application which demonstrates several key features of 
+<div style="float:right;width:300px">
+<div style="background:#ffffff;width:275px" align="center">
+[[Image:EclipseLink_Mysports.png]]
+__TOC__
+</div>
+</div>
+EclipseLink including: 
+
+*EclipseLink JPA 
+**@Multitenant(SINGLE_TABLE) 
+**Extensible entities with @VirtualAccessMethods
+* EclipseLink MOXy
+** XML Binding for JAX-RS 
+** Extensible Beans
+
+== Example Overview ==
+
+The example includes 3 projects 
+
+#MySports: A Dynamic Web project which deploys the primary application exposing a JSF and
+
+JAX-RS (REST) front end. 
+
+#MySports Admin: 
+#MySports Tests: A Java project containing Junit tests that verify the functionality of
+
+== Install & Config ==
+
+At present the example is only available through SVN access. When completed a ZIP download will be made available.
+
+Basic Steps
+# Prepare Prerequisites: 
+## GlassFish 3.1
+## Eclipse Java EE with GlassFish adapter
+# Configure Eclipse
+## Requires a variable named 'eclispelink_2.3_jar' for the javaagent usage of the test project
+## Ensure you have a GlassFish Server configured in the Java EE perspective
+# Configure GlassFish
+## EclipseLink 2.3 bundles installed in GlassFish
+## A connection pool named 'jdbc/MySports' must be defined in the server
+# Get the example's projects
+#* http://dev.eclipse.org/svnroot/rt/org.eclipse.persistence/trunk/examples/my-sports/MySports/
+#* http://dev.eclipse.org/svnroot/rt/org.eclipse.persistence/trunk/examples/my-sports/MySportsAdmin/
+#* http://dev.eclipse.org/svnroot/rt/org.eclipse.persistence/trunk/examples/my-sports/MySportsTests/
+## Import the projects
+## Customize the '''eclipselink-examples-mysports.properties''' file for your database
+# Run The example
+## Run the '''MySports AllTests''' launch target. This will create the database tables and prepare an initial population
+## Run the '''MySports Admin''' application
+## Run the '''MySports''' application
+
+== Example Details ==
+
+=== MySports Domain (example.mysports.model) ===
+
+The domain model is that of any arbitrary sports league. The intent is to build an application that captures the state of an arbitrary league and use it in a multitenant application where multiple leagues (tenants) can be hosted. The domain model is intentionally unaware of the potential support for multiple leagues and therefore only models entities that exist within an individual league.
+
+{|{{BMTableStyle}}
+|-{{BMTHStyle}}
+! Class/Interface
+! Description
+|-
+| Division 
+| <source lang="java">
+@Entity
+@Table(name = "mys_div")
+@Multitenant(MultitenantType.SINGLE_TABLE)
+@TenantDiscriminatorColumn(name = "LEAGUE_ID", contextProperty = LEAGUE_CONTEXT)
+@NamedQueries({
+    @NamedQuery(name="Division.findAll", query="SELECT d FROM Division d ORDER BY d.name",
+                hints={@QueryHint(name=QueryHints.QUERY_RESULTS_CACHE, value=HintValues.TRUE)}),
+    @NamedQuery(name="Division.findByName", query="SELECT d FROM Division d WHERE d.name = :NAME")
+})
+public class Division implements Extensible {
+</source>
+|-
+| Team
+| <source lang="java">
+@Entity
+@Table(name = "mys_team")
+@Multitenant(MultitenantType.SINGLE_TABLE)
+@TenantDiscriminatorColumn(name = "LEAGUE_ID", contextProperty = LEAGUE_CONTEXT)
+@NamedQuery(name="Team.findByDivisionAndName", query="SELECT t FROM Team t WHERE t.name = :NAME AND t.division.name = :DIV")
+public class Team implements Extensible {
+</source>
+|-
+| Player
+| <source lang="java">
+/**
+ * In the MySports demo a Player entity represents an individual member of a
+ * team. The Player entity is both multitenant and extensible.
+ */
+@Entity
+@Table(name = "mys_player")
+@Multitenant(MultitenantType.SINGLE_TABLE)
+@TenantDiscriminatorColumn(name = "LEAGUE_ID", contextProperty = LEAGUE_CONTEXT)
+@VirtualAccessMethods
+public class Player implements Extensible {
+</source>
+|-
+| Extensible 
+| An application interface used to indicate extensible types and enable their use in the presentation tier. This interface is not required or used by EclipseLink.
+|-
+| Divisions 
+| A non-entity container class used for returning multiple divisions from a JAX-RS call to enable the MOXy marshalling into XML.
+|}
+
+=== Persistence ===
+
+The persistence layer is the main purpose of this example application. The persistence layer makes use of application bootstrapped persistence contexts with support for an EntityManagerFactory and backing ServerSession (with Cache) per league (tenant). This all bootstrapped off of a single persistence-unit definition.
+
+==== Runtime Architecture ====
+
+<div align="center">
+[[Image:Mysports_persistence.png]]
+</div>
+
+==== LeagueRepository ====
+
+The LeagueRepository is the primary persistence abstraction responsible for league (tenant) specific persistence access managing both JPA persistence units and the MOXy JAXBContext.
+
+==== JPA Usage ====
+
+
+==== MOXy (JAXB) Usage ====
+
+The application makes use of EclipseLink MOXy to map its persistent entities into XML within the JAX-RS (RESTful) interface. The mapping is done using an eclipselink-oxm.xml mapping file instead of JAXB annotations.

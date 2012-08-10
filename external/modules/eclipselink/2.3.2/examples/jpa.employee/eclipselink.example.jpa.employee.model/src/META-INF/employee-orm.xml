@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings version="2.2"
+	xmlns="http://www.eclipse.org/eclipselink/xsds/persistence/orm"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<persistence-unit-metadata>
+		<persistence-unit-defaults>
+			<access>FIELD</access>
+		</persistence-unit-defaults>
+	</persistence-unit-metadata>
+
+	<object-type-converter name="gender-converter"
+		object-type="eclipselink.example.jpa.employee.model.Gender" data-type="java.lang.String">
+		<conversion-value object-value="Male" data-value="M" />
+		<conversion-value object-value="Female" data-value="F" />
+	</object-type-converter>
+	
+	<sequence-generator name="EMP_SEQ" sequence-name="EMP_SEQ" allocation-size="25" />
+	<sequence-generator name="ADDR_SEQ" sequence-name="ADDR_SEQ" allocation-size="25"  />
+	<sequence-generator name="PROJ_SEQ" sequence-name="PROJ_SEQ" allocation-size="25" />
+
+	<named-query name="Employee.findAll">
+		<query>SELECT e FROM Employee e ORDER BY e.lastName, e.firstName</query>
+	</named-query>
+
+	<named-query name="Employee.findAllNames">
+		<query>SELECT e.firstName, e.lastName FROM Employee e ORDER BY e.lastName, e.firstName</query>
+	</named-query>
+
+	<entity class="eclipselink.example.jpa.employee.model.LargeProject">
+		<table name="lproject"/>
+		<discriminator-value>L</discriminator-value>
+		<attributes>
+			<basic name="budget" />
+			<basic name="milestone">
+				<temporal>TIMESTAMP</temporal>
+			</basic>
+		</attributes>
+	</entity>
+
+<entity class="eclipselink.example.jpa.employee.model.Address">
+	<attributes>
+		<id name="id">
+			<column name="ADDRESS_ID" />
+			<generated-value generator="ADDR_SEQ"/>
+		</id>
+		<basic name="city" />
+		<basic name="country" />
+		<basic name="province" />
+		<basic name="postalCode">
+			<column name="P_CODE" />
+		</basic>
+		<basic name="street" />
+	</attributes>
+</entity>
+
+	<entity class="eclipselink.example.jpa.employee.model.Employee">
+		<secondary-table name="SALARY" />
+		<cache type="SOFT_WEAK" size="1000"
+			always-refresh="false" refresh-only-if-newer="true" disable-hits="false"
+			coordination-type="INVALIDATE_CHANGED_OBJECTS">
+			<expiry-time-of-day hour="0" minute="0" />
+		</cache>
+		<fetch-group name="names">
+			<attribute name="firstName" />
+			<attribute name="lastName" />
+		</fetch-group>
+		<attributes>
+			<id name="id">
+				<column name="EMP_ID" />
+				<generated-value generator="EMP_SEQ"/>
+			</id>
+			<basic name="firstName">
+				<column name="F_NAME" />
+			</basic>
+			<basic name="lastName">
+				<column name="L_NAME" />
+			</basic>
+			<basic name="gender">
+				<column name="GENDER" />
+				<convert>gender-converter</convert>
+			</basic>
+			<basic name="salary">
+				<column table="SALARY" />
+			</basic>
+			<version name="version" />
+			<many-to-one name="manager" fetch="LAZY" optional="true">
+				<join-column name="MANAGER_ID" />
+			</many-to-one>
+			<one-to-many name="managedEmployees" mapped-by="manager" />
+			<one-to-many name="phoneNumbers" mapped-by="owner">
+				<cascade>
+					<cascade-all />
+				</cascade>
+				<private-owned />
+			</one-to-many>
+			<one-to-one name="address" fetch="LAZY">
+				<join-column name="ADDR_ID" />
+				<cascade>
+					<cascade-all />
+				</cascade>
+				<private-owned />
+			</one-to-one>
+			<embedded name="period" />
+		</attributes>
+	</entity>
+
+	<entity class="eclipselink.example.jpa.employee.model.SmallProject">
+		<table name="PROJECT" />
+		<discriminator-value>S</discriminator-value>
+	</entity>
+
+	<entity class="eclipselink.example.jpa.employee.model.Project">
+		<inheritance strategy="JOINED" />
+		<discriminator-column name="PROJ_TYPE"
+			discriminator-type="CHAR" />
+		<attributes>
+			<id name="id">
+				<column name="PROJ_ID" />
+				<generated-value generator="PROJ_SEQ"/>
+			</id>
+			<basic name="description">
+				<column name="DESCRIP" />
+			</basic>
+			<basic name="name">
+				<column name="PROJ_NAME" />
+			</basic>
+			<version name="version" />
+		</attributes>
+	</entity>
+	
+	<entity class="eclipselink.example.jpa.employee.model.PhoneNumber">
+	</entity>
+
+	<embeddable class="eclipselink.example.jpa.employee.model.EmploymentPeriod">
+		<attributes>
+			<basic name="startDate">
+				<column name="START_DATE" />
+			</basic>
+			<basic name="endDate">
+				<column name="END_DATE" />
+			</basic>
+		</attributes>
+	</embeddable>
+
+</entity-mappings>
