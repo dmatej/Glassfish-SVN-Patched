@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings version="2.1"
+	xmlns="http://www.eclipse.org/eclipselink/xsds/persistence/orm"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+
+	<persistence-unit-metadata>
+		<persistence-unit-defaults>
+			<access>FIELD</access>
+		</persistence-unit-defaults>
+	</persistence-unit-metadata>
+ 
+	<object-type-converter name="gender-converter"
+		object-type="model.Gender" data-type="java.lang.String">
+		<conversion-value object-value="Male" data-value="M" />
+		<conversion-value object-value="Female" data-value="F" />
+	</object-type-converter>
+
+	<named-query name="Employee.findAll">
+		<query>SELECT e FROM Employee e ORDER BY e.lastName, e.firstName</query>
+		<hint name="eclipselink.query-results-cache" value="True" />
+	</named-query>
+
+	<named-query name="Employee.findMin">
+		<query>SELECT e FROM Employee e WHERE e.id IN (SELECT MIN(ee.id) FROM
+			Employee ee)</query>
+	</named-query>
+
+	<entity class="model.LargeProject">
+		<table name="LPROJECT" />
+		<discriminator-value>L</discriminator-value>
+		<attributes>
+			<basic name="budget" />
+			<basic name="milestone">
+				<temporal>TIMESTAMP</temporal>
+			</basic>
+		</attributes>
+	</entity>
+
+	<entity class="model.Address">
+		<attributes>
+			<id name="id">
+				<column name="ADDRESS_ID" />
+				<generated-value strategy="SEQUENCE" />
+			</id>
+			<basic name="city" />
+			<basic name="country" />
+			<basic name="province" />
+			<basic name="postalCode">
+				<column name="P_CODE" />
+			</basic>
+			<basic name="street" />
+		</attributes>
+	</entity>
+
+	<entity class="model.PhoneNumber">
+		<table name="PHONE" />
+		<id-class class="model.PhoneNumber$ID" />
+		<attributes>
+			<id name="id">
+				<column name="EMP_ID" updatable="false" insertable="false" />
+			</id>
+			<id name="type">
+				<column updatable="false" />
+			</id>
+			<basic name="areaCode">
+				<column name="AREA_CODE" />
+			</basic>
+			<basic name="number">
+				<column name="P_NUMBER" />
+			</basic>
+			<many-to-one name="owner" fetch="LAZY">
+				<join-column name="EMP_ID" />
+			</many-to-one>
+		</attributes>
+	</entity>
+
+	<entity class="model.Employee">
+		<secondary-table name="SALARY" />
+		<attributes>
+			<id name="id">
+				<column name="EMP_ID" />
+				<generated-value strategy="SEQUENCE" />
+			</id>
+			<basic name="firstName">
+				<column name="F_NAME" />
+			</basic>
+			<basic name="lastName">
+				<column name="L_NAME" />
+			</basic>
+			<basic name="startTime">
+				<column name="START_TIME" />
+			</basic>
+			<basic name="endTime">
+				<column name="END_TIME" />
+			</basic>
+			<basic name="gender">
+				<column name="GENDER" />
+				<convert>gender-converter</convert>
+			</basic>
+			<basic name="salary">
+				<column table="SALARY" />
+			</basic>
+			<basic-collection name="responsibilities">
+				<value-column name="RESPON_DESC" />
+				<collection-table name="RESPONS" />
+			</basic-collection>
+			<version name="version" />
+			<many-to-one name="manager" fetch="LAZY" optional="true">
+				<join-column name="MANAGER_ID" />
+			</many-to-one>
+			<one-to-many name="managedEmployees" mapped-by="manager" />
+			<one-to-many name="phoneNumbers" mapped-by="owner">
+				<cascade>
+					<cascade-all />
+				</cascade>
+				<private-owned />
+			</one-to-many>
+			<one-to-one name="address" fetch="LAZY">
+				<join-column name="ADDR_ID" />
+				<cascade>
+					<cascade-all />
+				</cascade>
+				<private-owned />
+				<batch-fetch type="JOIN" />
+			</one-to-one>
+			<many-to-many name="projects">
+				<join-table name="PROJ_EMP">
+					<join-column name="EMP_ID" />
+					<inverse-join-column name="PROJ_ID" />
+				</join-table>
+			</many-to-many>
+			<embedded name="period" />
+		</attributes>
+	</entity>
+
+	<entity class="model.SmallProject">
+		<table name="PROJECT" />
+		<discriminator-value>S</discriminator-value>
+	</entity>
+
+	<entity class="model.Project">
+		<inheritance strategy="JOINED" />
+		<discriminator-column name="PROJ_TYPE"
+			discriminator-type="CHAR" />
+		<attributes>
+			<id name="id">
+				<column name="PROJ_ID" />
+				<generated-value strategy="SEQUENCE" />
+			</id>
+			<basic name="description">
+				<column name="DESCRIP" />
+			</basic>
+			<basic name="name">
+				<column name="PROJ_NAME" />
+			</basic>
+			<version name="version" />
+			<many-to-one name="teamLeader" fetch="LAZY">
+				<join-column name="LEADER_ID" />
+			</many-to-one>
+		</attributes>
+	</entity>
+
+	<embeddable class="model.EmploymentPeriod">
+		<attributes>
+			<basic name="startDate">
+				<column name="START_DATE" />
+				<temporal>DATE</temporal>
+			</basic>
+			<basic name="endDate">
+				<column name="END_DATE" />
+				<temporal>DATE</temporal>
+			</basic>
+		</attributes>
+	</embeddable>
+
+</entity-mappings>
