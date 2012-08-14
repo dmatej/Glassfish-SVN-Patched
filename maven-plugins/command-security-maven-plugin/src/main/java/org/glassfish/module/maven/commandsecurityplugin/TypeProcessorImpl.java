@@ -70,6 +70,7 @@ import org.glassfish.module.maven.commandsecurityplugin.CommandAuthorizationInfo
  */
 public class TypeProcessorImpl implements TypeProcessor {
     
+    static Properties shared = new Properties();
     
     private boolean isFailureFatal;
     
@@ -471,7 +472,8 @@ public class TypeProcessorImpl implements TypeProcessor {
 //    }
     
     private Properties getSessionProperties() {
-        return session.getUserProperties();
+//        return session.getUserProperties();
+        return shared;
     }
     
     
