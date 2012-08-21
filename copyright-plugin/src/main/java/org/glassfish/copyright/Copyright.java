@@ -44,7 +44,7 @@
  *
  * Usage: java -jar copyright.jar
  *		[-w] -[y] [-r] [-n] [-s] [-m] [-g] [-c] [-q] [-j] [-x] [-p] [-t]
- *		[-X pat] [-C file] [-V] [files ...]
+ *		[-O] [-X pat] [-C file] [-V] [files ...]
  *
  * Options:
  *	-w	suppress warnings
@@ -60,6 +60,7 @@
  *	-x	check XML syntax files
  *	-p	check properties syntax files
  *	-t	check other text files
+ *	-O	use comma instead of dash in years when repairing files
  *	-X	exclude files matching pat (substring only)
  *	-C	file containing correct copyright template, using Java syntax
  *	-V	print version number
@@ -78,6 +79,7 @@ public class Copyright {
     public boolean debug = false;
     public boolean warn = true;
     public boolean ignoreYear = false;
+    public boolean useComma = false;
     public boolean doRepair = false;
     public boolean dontUpdate = false;
     public boolean skipNoSVN = false;
@@ -274,6 +276,8 @@ public class Copyright {
 		c.warn = false;
 	    } else if (argv[optind].equals("-y")) {
 		c.ignoreYear = true;
+	    } else if (argv[optind].equals("-O")) {
+		c.useComma = true;
 	    } else if (argv[optind].equals("-r")) {
 		c.doRepair = true;
 	    } else if (argv[optind].equals("-n")) {
@@ -313,7 +317,7 @@ public class Copyright {
 	    } else if (argv[optind].startsWith("-")) {
 		System.out.println("Usage: copyright " +
 		    "[-w] [-y] [-r] [-n] [-s] [-m] [-c] [-q] [-j] " +
-		    "[-x] [-p] [-t] [-V] [-X pat] [-C file] [files...]");
+		    "[-x] [-p] [-t] [-O] [-V] [-X pat] [-C file] [files...]");
 		System.out.println("\t-w\tsuppress warnings");
 		System.out.println("\t-y\tdon't check that year is correct " +
 				    "(much faster)");
@@ -329,6 +333,7 @@ public class Copyright {
 		System.out.println("\t-x\tcheck XML syntax files");
 		System.out.println("\t-p\tcheck properties syntax files");
 		System.out.println("\t-t\tcheck other text files");
+		System.out.println("\t-O\tcomma instead of dash between years");
 		System.out.println("\t-X\texclude files matching pat " +
 				    "(substring only)");
 		System.out.println("\t-C\tfile containing correct copyright " +

@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010-2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -421,7 +421,7 @@ public abstract class AbstractCopyright {
     protected String addCopyrightDate(String date, String lastChanged) {
 	if (date.length() == 4) {	// singe year
 	    if (!date.equals(lastChanged))
-		date = date + "-" + lastChanged;
+		date = date + (c.useComma ? ", " : "-") + lastChanged;
 	} else {	// "2001-2007" or "2001,2003,2007"
 	    String lastDate = date.substring(
 			    date.length() - 4, date.length());
@@ -430,8 +430,9 @@ public abstract class AbstractCopyright {
 		    // strip off last year and replace it with lastChanged
 		    date = date.substring(0, date.length() - 4) + lastChanged;
 		else
-		    // add range from last year to lastChanged
-		    date = date + "-" + lastChanged;
+		    // add range from first year to lastChanged
+		    date = date.substring(0, 4) + (c.useComma ? ", " : "-") +
+                                                                    lastChanged;
 	    }
 	}
 	return date;

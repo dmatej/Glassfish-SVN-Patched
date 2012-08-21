@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -133,6 +133,13 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
     protected boolean ignoreYear;
 
     /**
+     * Use comma instead of dash between years?
+     *
+     * @parameter expression="${copyright.usecomma}"
+     */
+    protected boolean useComma;
+
+    /**
      * Skip files not under SCM?
      *
      * @parameter expression="${copyright.scmonly}"
@@ -194,6 +201,7 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
 	c.debug = debug;
 	c.warn = warn;
 	c.ignoreYear = ignoreYear;
+	c.useComma = useComma;
 	c.skipNoSVN = scmOnly;
 
 	if (templateFile != null)
