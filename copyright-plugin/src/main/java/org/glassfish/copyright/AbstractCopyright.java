@@ -54,6 +54,7 @@ public abstract class AbstractCopyright {
 
     private String correctCopyright;
     private Pattern cpat;
+    private Pattern acpat;
 
     private static String correctBSDCopyright;
     private static Pattern sunpat;
@@ -127,6 +128,8 @@ public abstract class AbstractCopyright {
 		correctCopyright = getCopyrightText("cddl+gpl+ce-copyright.txt");
 		cpat = getCopyrightPattern("cddl+gpl+ce-copyright.txt");
 	    }
+	    if (c.alternateTemplate != null)
+		acpat = getCopyrightPattern(c.alternateTemplate);
 	} catch (IOException ex) {
 	    throw new RuntimeException("Can't load copyright template", ex);
 	}
@@ -191,6 +194,7 @@ public abstract class AbstractCopyright {
 	    return;
 	}
 	if (!matches(cpat, comment) &&
+		!(acpat != null && matches(acpat, comment)) &&
 		!matches(apat, comment) &&
 		!matches(anewpat, comment) &&
 		!matches(mitspat, comment) &&

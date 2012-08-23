@@ -63,6 +63,7 @@
  *	-O	use comma instead of dash in years when repairing files
  *	-X	exclude files matching pat (substring only)
  *	-C	file containing correct copyright template, using Java syntax
+ *	-A	file containing alternate correct copyright template
  *	-V	print version number
  *
  * @author	Bill Shannon
@@ -92,6 +93,7 @@ public class Copyright {
     public boolean doProps = false;
     public boolean doText = false;
     public File correctTemplate;
+    public File alternateTemplate;
 
     public int nMissing;
     public int nEmpty;
@@ -308,6 +310,8 @@ public class Copyright {
 		    c.addExclude(ex);
 	    } else if (argv[optind].equals("-C")) {
 		c.correctTemplate = new File(argv[++optind]);
+	    } else if (argv[optind].equals("-A")) {
+		c.alternateTemplate = new File(argv[++optind]);
 	    } else if (argv[optind].equals("-V")) {
 		System.out.println("Version: " + Version.getVersion());
 		System.exit(0);
@@ -317,7 +321,8 @@ public class Copyright {
 	    } else if (argv[optind].startsWith("-")) {
 		System.out.println("Usage: copyright " +
 		    "[-w] [-y] [-r] [-n] [-s] [-m] [-c] [-q] [-j] " +
-		    "[-x] [-p] [-t] [-O] [-V] [-X pat] [-C file] [files...]");
+		    "[-x] [-p] [-t] [-O] [-V] [-X pat] [-C file] [-A file] " +
+                    "[files...]");
 		System.out.println("\t-w\tsuppress warnings");
 		System.out.println("\t-y\tdon't check that year is correct " +
 				    "(much faster)");
@@ -338,6 +343,8 @@ public class Copyright {
 				    "(substring only)");
 		System.out.println("\t-C\tfile containing correct copyright " +
 				    "template, using Java syntax");
+		System.out.println("\t-A\tfile containing alternate correct " +
+				    "copyright template");
 		System.out.println("\t-V\tprint version number");
 		System.exit(-1);
 	    } else {

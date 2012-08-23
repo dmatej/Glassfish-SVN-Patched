@@ -154,6 +154,13 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
     protected String templateFile;
 
     /**
+     * Alternate copyright template file.
+     *
+     * @parameter expression="${copyright.alternatetemplate}"
+     */
+    protected String alternateTemplateFile;
+
+    /**
      * Log output, initialize this in the execute method.
      */
     protected Log log;
@@ -207,6 +214,9 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
 	if (templateFile != null)
 	    c.correctTemplate = 
 		new File(getResourceFile(templateFile).getPath());
+	if (alternateTemplateFile != null)
+	    c.alternateTemplate = 
+		new File(getResourceFile(alternateTemplateFile).getPath());
     }
 
     /**
