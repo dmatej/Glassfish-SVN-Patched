@@ -299,7 +299,10 @@ public abstract class AbstractCopyright {
 		break;
 
 	    case DATE:
-		updateCopyright(in, out, thisYear);
+                if (c.normalize)
+                    replaceCopyright(in, out, comment, thisYear);
+                else
+                    updateCopyright(in, out, thisYear);
 		break;
 	    }
 	    copy(in, out, true);
@@ -435,8 +438,9 @@ public abstract class AbstractCopyright {
 		    date = date.substring(0, date.length() - 4) + lastChanged;
 		else
 		    // add range from first year to lastChanged
-		    date = date.substring(0, 4) + (c.useComma ? ", " : "-") +
-                                                                    lastChanged;
+		    date = date.substring(0, 4);
+                    if (!date.equals(lastChanged))
+                        date = date + (c.useComma ? ", " : "-") + lastChanged;
 	    }
 	}
 	return date;

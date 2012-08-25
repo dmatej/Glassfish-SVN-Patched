@@ -133,6 +133,13 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
     protected boolean ignoreYear;
 
     /**
+     * Normalize format of repaired copyright to match template?
+     *
+     * @parameter expression="${copyright.normalize}"
+     */
+    protected boolean normalize;
+
+    /**
      * Use comma instead of dash between years?
      *
      * @parameter expression="${copyright.usecomma}"
@@ -208,6 +215,7 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
 	c.debug = debug;
 	c.warn = warn;
 	c.ignoreYear = ignoreYear;
+	c.normalize = normalize;
 	c.useComma = useComma;
 	c.skipNoSVN = scmOnly;
 
