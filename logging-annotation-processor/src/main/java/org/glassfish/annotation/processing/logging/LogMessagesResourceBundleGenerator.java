@@ -105,7 +105,7 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
             
             String rbName = rbNames.iterator().next();
             if (!rbName.endsWith("LogMessages")) {
-                error("The fully qualified resource bundle name needs to be end with LogMessages as the best practice.");
+                error("The resource bundle name '" + rbName + "' annotated by @LogMessagesResourceBundle does not end with 'LogMessages'");
                 return false;
             }
 

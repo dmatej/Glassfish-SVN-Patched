@@ -75,7 +75,7 @@ public class LogMessagesResourceBundleGeneratorTest extends TestCase {
     public void testNonStandardResourceBundleName() {
         File f1 = new File(BASE_PATH, "Coffee.java");
         String output = executeCompiler(f1);
-        assertTrue(output.contains("The fully qualified resource bundle name needs to be end with LogMessages as the best practice."));
+        assertTrue(output.contains("annotated by @LogMessagesResourceBundle does not end with 'LogMessages'"));
         File[] resourceBundles = getResourceBundles();
         assertEquals(resourceBundles.length,0);        
     }

@@ -70,7 +70,8 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
     private static final String SUBSYSTEM_SUFFIX = ".subsystem";
     private static final String DESCRIPTION_SUFFIX = ".description";
     private static final String LOGGER_INFO_METADATA_SERVICE = "LoggerInfoMetadataService";
-    private static final String RBNAME = "LoggerInfoMetadata";
+    // private static final String RBNAME = "loggerinfo.LoggerInfoMetadata";
+    private static final String RBNAME = "META-INF/loggerinfo/LoggerInfoMetadata";
     private static final String VALID_PATTERN = "[a-z[A-Z]][^|]*";
 
     @Override
@@ -105,16 +106,22 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
                 }
                 debug("Processing: " + loggerName + " on element " + element.getSimpleName());
                 debug("Enclosing type is " + element.getEnclosingElement().asType());
+                
+                LoggerInfo loggerInfo = element.getAnnotation(LoggerInfo.class);
+                validateLoggerInfo(loggerInfo);
+                // Save the log message...
+                
+                
                 // Message ids must be unique
-                if (!loggerInfoElements.containsKey(loggerName)) {
-                    LoggerInfo loggerInfo = element.getAnnotation(LoggerInfo.class);
-                    validateLoggerInfo(loggerInfo);
-                    // Save the log message...
+                if (loggerInfoElements.containsKey(loggerName)) {
+                    // Previous entry with same logger name found.
+                    LoggerInfo prevLoggerInfo = loggerInfoElements.get(loggerName).getAnnotation(LoggerInfo.class);
+                    if (!compareLoggerInfos(loggerInfo, prevLoggerInfo)) {
+                        error("Duplicate use of logger name " + loggerName + " with inconsistent LoggerInfo");
+                    }
+                } else {
                     renderLoggerInfo(loggerMetadata, loggerName, loggerInfo);
                     loggerInfoElements.put(loggerName, element);
-                } else {
-                    error("Duplicate use of logger name " + loggerName);
-                    return false;
                 }
             }
             debug("Loggers found so far: " + loggerMetadata);
@@ -127,6 +134,12 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
         } else {
             return false;
         }
+    }
+    
+    private boolean compareLoggerInfos(LoggerInfo info1, LoggerInfo info2) {
+        return (info1.description().equals(info2.description()) &&
+                info1.subsystem().equals(info2.subsystem()) &&
+                info1.publish() == info2.publish());
     }
 
     private void validateLoggerInfo(LoggerInfo loggerInfo) {
@@ -152,21 +165,9 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
         String simpleName = LOGGER_INFO_METADATA_SERVICE;
         BufferedWriter bufferedWriter = null;
         try {
-            FileObject srcFileObject = processingEnv.getFiler().createSourceFile(packageName + "." + simpleName);
-            bufferedWriter = new BufferedWriter(srcFileObject.openWriter());
-            VelocityEngine ve = new VelocityEngine();
-            Properties props = new Properties();
-            props.put("resource.loader", "classpath");
-            props.put("classpath.resource.loader.class","org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader");
-            ve.init(props);
-            VelocityContext vc = new VelocityContext();
-            vc.put("simpleName", simpleName);
-            vc.put("packageName", packageName);
-            Template vt = ve.getTemplate("/org/glassfish/annotation/processing/logging/LoggerInfoMetadataService.template");
-            vt.merge(vc, bufferedWriter);
-            bufferedWriter.flush();
             // Now persist the resource bundle
-            String resourceName = packageName + "." + RBNAME;
+            // String resourceName = packageName + "." + RBNAME;
+            String resourceName = RBNAME;
             loadLogMessages(loggerInfos, resourceName);
             debug("Total Messages including ones found from disk so far: " + loggerInfos);
             storeLogMessages(loggerInfos, resourceName);            
