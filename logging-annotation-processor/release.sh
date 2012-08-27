@@ -16,3 +16,4 @@
 
 mvn -B release:prepare -DpreparationGoals="install -P\!jvnet-release"
 mvn -B release:perform -Dgoals="deploy -Dhttps.proxyHost=inet-rmmc01.oracle.com -Dhttps.proxyPort=80 -Dgpg.passphrase=glassfish"
+
