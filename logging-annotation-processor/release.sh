@@ -1,4 +1,9 @@
 #!/bin/sh
+
+#
+# Usage:
+#   ./release.sh your-jvnet-password
+#
 #------------------------------------------------------   
 #--	BE SURE TO HAVE THE FOLLOWING IN YOUR SETTINGS.XML
 #------------------------------------------------------
@@ -11,9 +16,14 @@
 #        </server>
 #    </servers>
 
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 your-jvnet-password"
+  exit 1
+fi
+
 # see the following URL for gpg issues
 # https://docs.sonatype.org/display/Repository/How+To+Generate+PGP+Signatures+With+Maven#HowToGeneratePGPSignaturesWithMaven-GenerateaKeyPair
 
-mvn -B release:prepare -DpreparationGoals="install -P\!jvnet-release"
+mvn -B release:prepare -DpreparationGoals="install -P\!jvnet-release" -Dpassword $1
 mvn -B release:perform -Dgoals="deploy -Dhttps.proxyHost=inet-rmmc01.oracle.com -Dhttps.proxyPort=80 -Pjvnet-release -Dgpg.passphrase=glassfish"
 
