@@ -52,6 +52,9 @@ import org.apache.tools.ant.taskdefs.Zip.Duplicate;
 import org.apache.tools.ant.types.ZipFileSet;
 
 /**
+ * 
+ * TODO, create a property attach to allow not attaching the produced zip
+ * 
  * Creates a zip file
  *
  * @goal zip
