@@ -259,8 +259,11 @@ public class Copyright {
 	try {
 	    r = new BufferedReader(new FileReader(file));
 	    String line;
-	    while ((line = r.readLine()) != null)
+	    while ((line = r.readLine()) != null) {
+		if (line.trim().startsWith("#"))
+		    continue;		// ignore comment lines
 		addExclude(line);
+	    }
 	} finally {
 	    try {
 		if (r != null)
