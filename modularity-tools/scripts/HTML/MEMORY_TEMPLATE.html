@@ -1,0 +1,97 @@
+<html>
+<head>
+<title>Glassfish Memory Footprint</title>
+<!--Load the AJAX API-->
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type="text/javascript">
+
+// Load the Visualization API and the controls package.
+google.load('visualization', '1.0', {'packages':['controls']});
+
+// Set a callback to run when the Google Visualization API is loaded.
+google.setOnLoadCallback(drawDashboard);
+
+// Callback that creates and populates a data table,
+// instantiates a dashboard, a range slider and a pie chart,
+// passes in the data and draws it.
+
+  	function drawDashboard() {
+    	    if (window.XMLHttpRequest)
+    	    {// code for IE7+, Firefox, Chrome, Opera, Safari
+    	    xmlhttp=new XMLHttpRequest();
+    	    }
+    	  else
+    	    {// code for IE6, IE5
+    	    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+    	    }
+    	  xmlhttp.open("GET","REPLACE_ME",false);
+    	  xmlhttp.send();
+    	  xmlDoc=xmlhttp.responseXML;
+    	  var root = xmlDoc.getElementsByTagName('stat');
+    	  var length = root.length;
+    	  var start = 0;
+    	  var size=++length;
+    	  var data1 = new Array(size);
+    	   
+    	  data1[0]= ['X','Memory'];
+    	  var j = start;
+    	  
+    	  for (var i= 1; i < size; i++) {
+    		data1[i] = [ parseInt(xmlDoc.getElementsByTagName("build_id")[j].childNodes[0].nodeValue), parseInt(xmlDoc.getElementsByTagName("memory")[j].childNodes[0].nodeValue)];
+    		j++;
+    	  }   
+        // Create and populate the data table.
+        var data = google.visualization.arrayToDataTable(data1);
+    	  
+        // Create a dashboard.
+        var dashboard = new google.visualization.Dashboard(
+            document.getElementById('dashboard_div'));
+
+        // Create a range slider, passing some options
+        var donutRangeSlider = new google.visualization.ControlWrapper({
+          'controlType': 'NumberRangeFilter',
+          'containerId': 'filter_div',
+          'options': {
+            'filterColumnLabel': 'X',
+            'ui': {label: 'SVN Revision', labelSeparator: ':'}
+                       
+          }
+          
+        
+        });
+
+        // Create a pie chart, passing some options
+        var pieChart = new google.visualization.ChartWrapper({
+          'chartType': 'LineChart',
+          'containerId': 'chart_div',
+          'options': {
+            'width': 800,
+            'height': 600,
+            'legend': 'right',
+	    'vAxis':{ title: 'Memory in kB' }
+          }
+        });
+
+        // Establish dependencies, declaring that 'filter' drives 'pieChart',
+        // so that the pie chart will only display entries that are let through
+        // given the chosen slider range.
+        dashboard.bind(donutRangeSlider, pieChart);
+
+        // Draw the dashboard.
+        dashboard.draw(data);
+      }
+    </script>
+  </head>
+
+  <body>
+  <h2 align="center">Glassfish Memory Distribution</h2>
+    <!--Div that will hold the dashboard-->
+    <div id="dashboard_div">
+      <!--Divs that will hold each control and chart-->
+      
+      <div id="chart_div"></div>
+    <div id="filter_div" style="position:absolute; left:180; top:550;"></div>
+    
+    </div>
+  </body>
+</html>
