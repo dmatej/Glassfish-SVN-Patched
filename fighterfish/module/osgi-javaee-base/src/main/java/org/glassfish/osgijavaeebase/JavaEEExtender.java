@@ -108,7 +108,7 @@ public class JavaEEExtender implements Extender {
         try {
             return c.deploy(b);
         }
-        catch (Exception e) {
+        catch (Throwable e) {
             logger.logp(Level.SEVERE, "JavaEEExtender", "deploy",
                     "Exception deploying bundle {0}",
                     new Object[]{b.getLocation()});
