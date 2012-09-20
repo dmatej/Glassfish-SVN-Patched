@@ -42,6 +42,8 @@ package org.glassfish.osgijavaeebase;
 
 import com.sun.enterprise.deploy.shared.ArchiveFactory;
 import org.glassfish.api.ActionReport;
+import org.glassfish.embeddable.GlassFish;
+import org.glassfish.embeddable.GlassFishException;
 import org.glassfish.internal.api.Globals;
 import org.glassfish.internal.deployment.Deployment;
 import org.glassfish.server.ServerEnvironmentImpl;
@@ -143,8 +145,11 @@ public abstract class AbstractOSGiDeployer implements OSGiDeployer {
     }
 
     protected ActionReport getReport() {
-        return Globals.getDefaultHabitat().getComponent(ActionReport.class,
-                "plain");
+        try {
+            return getGlassFish().getService(ActionReport.class, "plain");
+        } catch (GlassFishException e) {
+            throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
+        }
     }
 
     /**
@@ -186,6 +191,17 @@ public abstract class AbstractOSGiDeployer implements OSGiDeployer {
      * Integration with Event Admin Service happens here.
      */
     protected void raiseEvent(State state, Bundle appBundle, Throwable throwable) {
+    }
+
+    private GlassFish getGlassFish() {
+        GlassFish gf = (GlassFish) getBundleContext().getService(getBundleContext().getServiceReference(
+                GlassFish.class.getName()));
+        try {
+            assert(gf.getStatus() == GlassFish.Status.STARTED);
+        } catch (GlassFishException e) {
+            throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
+        }
+        return gf;
     }
 
 }
