@@ -104,11 +104,11 @@ public class PrintMojo extends AbstractMojo {
     
     /**
      * Output type
-     * Can be "human-readable" or "wiki" or "csv"
+     * Can be "summary" or "wiki" or "csv"
      * 
      * @parameter 
-     *   expression="${command-security-plugin.output-type}"
-     *   default-value="human-readable"
+     *   expression="${command-security-maven-plugin.output-type}"
+     *   default-value="summary"
      * @readonly
      */
     protected String outputType;
@@ -253,15 +253,15 @@ public class PrintMojo extends AbstractMojo {
     }
     
     private OutputFormatter chooseOutputFormatter(final String outputType) {
-        if (outputType.equals("human-readable")) {
-            return new HumanReadableFormatter();
+        if (outputType.equals("summary")) {
+            return new SummaryFormatter();
         } else if (outputType.equals("wiki")) {
             return new WikiFormatter();
         } else if (outputType.equals("csv")) {
             return new CSVFormatter();
         } else {
             getLog().warn("Unrecognized output type " + outputType + "; using human-readable instead");
-            return new HumanReadableFormatter();
+            return new SummaryFormatter();
         }
     }
     private interface OutputFormatter {
@@ -270,7 +270,7 @@ public class PrintMojo extends AbstractMojo {
         void preClose();
     }
     
-    private class HumanReadableFormatter implements OutputFormatter {
+    private class SummaryFormatter implements OutputFormatter {
 
         public void postOpen() {
             pw.println(indent.toString() + "=================================================================================");

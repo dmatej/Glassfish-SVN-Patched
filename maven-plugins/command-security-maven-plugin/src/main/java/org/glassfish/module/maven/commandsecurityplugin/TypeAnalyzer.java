@@ -479,7 +479,7 @@ public class TypeAnalyzer {
             info = new RestEndpointInfo(configBeanClassName, path, opType, useForAuthorization);
             authInfo.addRestEndpoint(info);
             if (useForAuthorization) {
-                commandAuthInfo.hasRestAnno.set(true);
+                authInfo.hasRestAnno.set(true);
             }
             super.visitEnd();
         }
@@ -792,6 +792,7 @@ public class TypeAnalyzer {
         private final CommandAuthorizationInfo authInfo;
         private final CommandAuthorizationInfo.Param param;
         private final List<String> actions = new ArrayList<String>();
+        private String collection = "";
         
         AccessRequiredToAnnotationScanner(
                 final FieldScanner fieldScanner, 
@@ -811,6 +812,8 @@ public class TypeAnalyzer {
                 } else {
                     actions.addAll(Arrays.asList((String[]) value));
                 }
+            } else if (name.equals("collection")) {
+                collection = (String) value;
             }
             super.visit(name, value);
         }
@@ -831,7 +834,7 @@ public class TypeAnalyzer {
             final String dottedTypeName = fieldScanner.fullFriendlyTypeName().replace("/", ".");
             TypeProcessorImpl.Inhabitant i = typeProcessor.configBeans().get(dottedTypeName);
             for (String action : actions) {
-                authInfo.addResourceAction(i.fullPath(), action, "@AccessRequired.To");
+                authInfo.addResourceAction(i.fullPath() + (! collection.isEmpty() ? "/" : "") + collection + "/$xxx", action, "@AccessRequired.To");
             }
             super.visitEnd();
         }
@@ -859,8 +862,8 @@ public class TypeAnalyzer {
         private final CommandAuthorizationInfo authInfo;
         private final CommandAuthorizationInfo.Param param;
         private final List<String> actions = new ArrayList<String>();
-        private String collection = null;
-        private String type = null;
+        private String collection = "";
+        private String type = "";
         
         AccessRequiredNewChildAnnotationScanner(
                 final FieldScanner fieldScanner,
@@ -910,7 +913,9 @@ public class TypeAnalyzer {
             }
             for (String action : actions) {
                 
-                authInfo.addResourceAction(i.fullPath(), action, "@AccessRequired.NewChild");
+                authInfo.addResourceAction(i.fullPath()
+                        + ( ! type.isEmpty() ? "/" : "") + type
+                        + ( ! collection.isEmpty() ? "/" : "") + collection, action, "@AccessRequired.NewChild");
             }
             super.visitEnd();
         }
