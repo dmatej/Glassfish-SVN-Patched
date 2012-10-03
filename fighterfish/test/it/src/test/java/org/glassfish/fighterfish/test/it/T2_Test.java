@@ -682,8 +682,26 @@ public class T2_Test extends AbstractTestObject {
             Bundle bundle = tc.installBundle(location);
             bundle.start();
             bundle.uninstall();
-            assertTrue("Successfully uninstalled", bundle.getState() == bundle.UNINSTALLED);
             logger.logp(Level.INFO, "T2_Test", "regression_GLASSFISH_18159", "Install/Uninstall");
+            assertTrue("Successfully uninstalled", bundle.getState() == bundle.UNINSTALLED);
+
+        } finally {
+            tc.destroy();
+        }
+    }
+
+    @Test
+    public void regression_GLASSFISH_11748() throws GlassFishException, InterruptedException, BundleException, IOException {
+        logger.logp(Level.INFO, "T2_Test", "testapp19", "ENTRY");
+        TestContext tc = TestContext.create(getClass());
+        try {
+           //Running a regression test for  GLASSFISH-11748
+            String location = "mvn:org.glassfish.fighterfish/test.app19/1.0.0-SNAPSHOT/jar";
+            Bundle bundle = tc.installBundle(location);
+            logger.logp(Level.INFO, "T2_Test", "GLASSFISH_11748", "Start Bundle");
+            bundle.start();
+            assertTrue("Successfully Started Bundle", bundle.getState() == bundle.ACTIVE);
+
         } finally {
             tc.destroy();
         }
