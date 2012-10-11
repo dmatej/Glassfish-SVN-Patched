@@ -21,7 +21,7 @@ public class Activator implements BundleActivator {
 
             final String O2_version = out_object.getVersion();
 
-             if(O2_version != null){System.out.println("Marshall and UnMarshall Success.");}
+             if("3.0".equals(O2_version)){System.out.println("Marshall and UnMarshall Success.");}
 
              else { throw new RuntimeException("Marshall/UnMarshall of Persistence Object Failed.");}
 
