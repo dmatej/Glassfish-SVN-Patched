@@ -8,25 +8,25 @@ import java.io.ByteArrayOutputStream;
 public class Activator implements BundleActivator {
     public void start(BundleContext ctx) throws Exception {
         try {
-            System.out.println(Thread.currentThread().getContextClassLoader());
+            System.out.println("MY CLASSLOADER " + Thread.currentThread().getContextClassLoader());
 
-            JAXBContext jc = JAXBContext.newInstance(ObjectFactory.class);
+            JAXBContext jc = JAXBContext.newInstance(Persistence.class);
             Persistence test_object = new Persistence();
+            test_object.setVersion("3.0");
             ByteArrayOutputStream out = new ByteArrayOutputStream();
             jc.createMarshaller().marshal(test_object,out);
             byte[] data = out.toByteArray();
             ByteArrayInputStream istream = new ByteArrayInputStream(data);
             Persistence out_object = (Persistence) jc.createUnmarshaller().unmarshal(istream);
 
-            if (test_object.equals(out_object)){
-                System.out.println("Marshall and Unmarshall Success");
-            }
-            else {
-                throw new RuntimeException("Marshall/Unmarshall Failed. Exit Bundle");
-            }
+            final String O2_version = out_object.getVersion();
+
+             if(O2_version != null){System.out.println("Marshall and UnMarshall Success.");}
+
+             else { throw new RuntimeException("Marshall/UnMarshall of Persistence Object Failed.");}
 
         } catch(Exception e) {
-            e.printStackTrace();
+             throw new RuntimeException("Marshall/UnMarshall of Persistence Object Failed.");
         }
 
         // This works, because GlassFish uses StAX from JRE.
