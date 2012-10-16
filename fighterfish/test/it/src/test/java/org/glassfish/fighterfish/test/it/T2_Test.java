@@ -55,11 +55,12 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
+import org.osgi.service.http.HttpService;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.*;
 import java.net.URI;
-import java.net.URL;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -712,6 +713,65 @@ public class T2_Test extends AbstractTestObject {
         }
         finally {
             tc.destroy();
+        }
+    }
+
+    @Test
+    public void test_GLASSFISH_12975() throws GlassFishException, InterruptedException, BundleException, IOException {
+        logger.logp(Level.INFO, "T2_Test", "OSGI Web Console", "ENTRY");
+        TestContext tc = TestContext.create(getClass());
+        Bundle httpServiceBundle = null;
+        try {
+           //Running a test for  GLASSFISH-12975
+
+            HttpService httpService = OSGiUtil.getService(ctx, HttpService.class);
+            if (httpService == null) {
+                for (Bundle b : ctx.getBundles()) {
+                    if ("org.glassfish.fighterfish.osgi-http".equals(b.getSymbolicName())) {
+                        httpServiceBundle = b;
+                        httpServiceBundle.stop(Bundle.STOP_TRANSIENT);
+                        httpServiceBundle.start(Bundle.START_TRANSIENT);
+                    }
+                }
+            }
+            httpService = OSGiUtil.getService(ctx, HttpService.class, getTimeout());
+            assertNotNull(httpService);
+
+            String location = "mvn:org.apache.felix/org.apache.felix.webconsole/3.1.2/jar";
+            Bundle bundle = tc.installBundle(location);
+            String location2 = "mvn:org.glassfish.main.osgi-platforms/felix-webconsole-extension/4.0-SNAPSHOT/jar";
+            Bundle bundle2 = tc.installBundle(location2);
+
+            logger.logp(Level.INFO, "T2_Test", "GLASSFISH_12975 - Web Console Bundle", "Start Bundle");
+            bundle.start();
+            logger.logp(Level.INFO, "T2_Test", "GLASSFISH_12975 - GF web Console extension Plugin Bundle", "Start Bundle");
+            bundle2.start();
+
+        Authenticator.setDefault(new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                char[] pass = {};
+                return new PasswordAuthentication("admin", pass);
+            }
+        });
+
+        String testurl = "http://localhost:8080/osgi/system/console/bundles";
+        URL url = new URL(testurl);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.connect();
+        int responseCode = conn.getResponseCode();
+        String code = new Integer(responseCode).toString();
+        assertTrue("Admin Console Available", "200".equals(code));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail(e.toString());
+        }
+        finally {
+            tc.destroy();
+            if (httpServiceBundle != null) {
+                httpServiceBundle.stop(Bundle.STOP_TRANSIENT);
+            }
         }
     }
 
