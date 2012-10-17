@@ -718,12 +718,10 @@ public class T2_Test extends AbstractTestObject {
 
     @Test
     public void test_GLASSFISH_12975() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.logp(Level.INFO, "T2_Test", "OSGI Web Console", "ENTRY");
+        logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         Bundle httpServiceBundle = null;
         try {
-           //Running a test for  GLASSFISH-12975
-
             HttpService httpService = OSGiUtil.getService(ctx, HttpService.class);
             if (httpService == null) {
                 for (Bundle b : ctx.getBundles()) {
@@ -736,38 +734,35 @@ public class T2_Test extends AbstractTestObject {
             }
             httpService = OSGiUtil.getService(ctx, HttpService.class, getTimeout());
             assertNotNull(httpService);
+            logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "httpService = {0}", new Object[]{httpService});
 
             String location = "mvn:org.apache.felix/org.apache.felix.webconsole/3.1.2/jar";
             Bundle bundle = tc.installBundle(location);
             String location2 = "mvn:org.glassfish.main.osgi-platforms/felix-webconsole-extension/4.0-SNAPSHOT/jar";
             Bundle bundle2 = tc.installBundle(location2);
 
-            logger.logp(Level.INFO, "T2_Test", "GLASSFISH_12975 - Web Console Bundle", "Start Bundle");
             bundle.start();
-            logger.logp(Level.INFO, "T2_Test", "GLASSFISH_12975 - GF web Console extension Plugin Bundle", "Start Bundle");
             bundle2.start();
 
-        Authenticator.setDefault(new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                char[] pass = {};
-                return new PasswordAuthentication("admin", pass);
-            }
-        });
+            Authenticator.setDefault(new Authenticator() {
+                @Override
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    char[] pass = {};
+                    return new PasswordAuthentication("admin", pass);
+                }
+            });
 
-        String testurl = "http://localhost:8080/osgi/system/console/bundles";
-        URL url = new URL(testurl);
-        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.connect();
-        int responseCode = conn.getResponseCode();
-        String code = new Integer(responseCode).toString();
-        assertTrue("Admin Console Available", "200".equals(code));
-
+            String testurl = "http://localhost:8080/osgi/system/console/bundles";
+            URL url = new URL(testurl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.connect();
+            int responseCode = conn.getResponseCode();
+            String code = new Integer(responseCode).toString();
+            assertTrue("Admin Console Available", "200".equals(code));
         } catch (Exception e) {
             e.printStackTrace();
             fail(e.toString());
-        }
-        finally {
+        } finally {
             tc.destroy();
             if (httpServiceBundle != null) {
                 httpServiceBundle.stop(Bundle.STOP_TRANSIENT);
