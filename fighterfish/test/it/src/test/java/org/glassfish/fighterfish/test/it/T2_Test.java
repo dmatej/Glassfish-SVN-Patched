@@ -611,9 +611,6 @@ public class T2_Test extends AbstractTestObject {
             final int expectedNoOfMsgs = (noOfMsgs) * 2; // we have 2 MDBs
             logger.logp(Level.INFO, "T2_Test", "testapp16", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher("Total number of messages: " + expectedNoOfMsgs));
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail(e.toString());
         } finally {
             tc.destroy();
         }
@@ -632,9 +629,6 @@ public class T2_Test extends AbstractTestObject {
             String response = wab.getResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp17", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher("HelloWebServicePort"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail(e.toString());
         } finally {
             tc.destroy();
         }
@@ -665,9 +659,6 @@ public class T2_Test extends AbstractTestObject {
 
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS); // deployment is sufficient to test this bundle
             assertTrue("Incorrect no. of events", eventRaised.tryAcquire(1, getTimeout(), TimeUnit.MILLISECONDS));
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail(e.toString());
         } finally {
             tc.destroy();
         }
@@ -683,33 +674,30 @@ public class T2_Test extends AbstractTestObject {
             Bundle bundle = tc.installBundle(location);
             bundle.start();
             bundle.uninstall();
-            logger.logp(Level.INFO, "T2_Test", "regression_GLASSFISH_18159", "Install/Uninstall");
-            assertTrue("Successfully uninstalled", bundle.getState() == bundle.UNINSTALLED);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail(e.toString());
+            assertTrue("Uninstallation failed", bundle.getState() == bundle.UNINSTALLED);
         }
         finally {
             tc.destroy();
         }
     }
 
+    /**
+     * Regression test for  GLASSFISH-11748
+     * @throws GlassFishException
+     * @throws InterruptedException
+     * @throws BundleException
+     * @throws IOException
+     */
     @Test
-    public void regression_GLASSFISH_11748() throws GlassFishException, InterruptedException, BundleException, IOException {
+    public void testapp19() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.logp(Level.INFO, "T2_Test", "testapp19", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
-           //Running a regression test for  GLASSFISH-11748
             String location = "mvn:org.glassfish.fighterfish/test.app19/1.0.0-SNAPSHOT/jar";
             Bundle bundle = tc.installBundle(location);
-            logger.logp(Level.INFO, "T2_Test", "GLASSFISH_11748", "Start Bundle");
+            logger.logp(Level.INFO, "T2_Test", "testapp19", "Starting " + bundle);
             bundle.start();
-            assertTrue("Successfully Started Bundle", bundle.getState() == bundle.ACTIVE);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail(e.toString());
+            assertTrue("Bundle failed to activate", bundle.getState() == Bundle.ACTIVE);
         }
         finally {
             tc.destroy();
@@ -743,7 +731,7 @@ public class T2_Test extends AbstractTestObject {
 
             bundle.start();
             bundle2.start();
-
+//            Thread.sleep(10000); // Allow the console to start properly
             Authenticator.setDefault(new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
@@ -753,15 +741,12 @@ public class T2_Test extends AbstractTestObject {
             });
 
             String testurl = "http://localhost:8080/osgi/system/console/bundles";
+            logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "testurl = {0}", new Object[]{testurl});
             URL url = new URL(testurl);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.connect();
             int responseCode = conn.getResponseCode();
-            String code = new Integer(responseCode).toString();
-            assertTrue("Admin Console Available", "200".equals(code));
-        } catch (Exception e) {
-            e.printStackTrace();
-            fail(e.toString());
+            assertEquals("Admin Console Not Available", HttpURLConnection.HTTP_OK, responseCode);
         } finally {
             tc.destroy();
             if (httpServiceBundle != null) {
