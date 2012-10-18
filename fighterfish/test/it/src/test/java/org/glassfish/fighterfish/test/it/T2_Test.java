@@ -57,8 +57,10 @@ import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.osgi.service.http.HttpService;
 
+import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.*;
 import java.net.URI;
 import java.util.Properties;
@@ -746,7 +748,17 @@ public class T2_Test extends AbstractTestObject {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.connect();
             int responseCode = conn.getResponseCode();
+            String responseMessage = conn.getResponseMessage();
+            logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "responseCOde = {0}", responseCode);
+            logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "testurl = {0}", responseMessage);
+
             assertEquals("Admin Console Not Available", HttpURLConnection.HTTP_OK, responseCode);
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            String inputLine;
+            while ((inputLine = in.readLine()) != null)
+            System.out.println(inputLine);
+            in.close();
         } finally {
             tc.destroy();
             if (httpServiceBundle != null) {
