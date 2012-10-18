@@ -706,7 +706,7 @@ public class T2_Test extends AbstractTestObject {
         }
     }
 
-    @Test
+     @Test
     public void test_GLASSFISH_12975() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "ENTRY");
         TestContext tc = TestContext.create(getClass());
@@ -749,17 +749,17 @@ public class T2_Test extends AbstractTestObject {
             conn.connect();
             int responseCode = conn.getResponseCode();
             String responseMessage = conn.getResponseMessage();
-            logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "responseCOde = {0}", responseCode);
-            logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "testurl = {0}", responseMessage);
-
+            logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "responsecode = {0} responseMessage = {1}", new Object[]{responseCode,responseMessage});
             assertEquals("Admin Console Not Available", HttpURLConnection.HTTP_OK, responseCode);
-
             BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+            StringBuilder stringBuilder = new StringBuilder();
             String inputLine;
             while ((inputLine = in.readLine()) != null)
-            System.out.println(inputLine);
+            stringBuilder.append(inputLine + "\n");
             in.close();
-        } finally {
+            logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "Response Body = {0}", new Object[]{stringBuilder.toString()});
+        }
+        finally {
             tc.destroy();
             if (httpServiceBundle != null) {
                 httpServiceBundle.stop(Bundle.STOP_TRANSIENT);
