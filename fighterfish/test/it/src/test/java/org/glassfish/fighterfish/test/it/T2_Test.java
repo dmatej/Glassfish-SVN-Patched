@@ -706,7 +706,7 @@ public class T2_Test extends AbstractTestObject {
         }
     }
 
-     @Test
+    @Test
     public void test_GLASSFISH_12975() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "ENTRY");
         TestContext tc = TestContext.create(getClass());
@@ -733,7 +733,6 @@ public class T2_Test extends AbstractTestObject {
 
             bundle.start();
             bundle2.start();
-//            Thread.sleep(10000); // Allow the console to start properly
             Authenticator.setDefault(new Authenticator() {
                 @Override
                 protected PasswordAuthentication getPasswordAuthentication() {
@@ -748,18 +747,28 @@ public class T2_Test extends AbstractTestObject {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.connect();
             int responseCode = conn.getResponseCode();
+            for (int j = 0; j < 5; j++) {
+                conn = (HttpURLConnection) url.openConnection();
+                conn.connect();
+                responseCode = conn.getResponseCode();
+                if (responseCode != 200) {
+                    logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "Sleeping for 5 Seconds on testurl = {0}", new Object[]{testurl});
+                    Thread.sleep(5000);
+                } else {
+                    break;
+                }
+            }
             String responseMessage = conn.getResponseMessage();
-            logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "responsecode = {0} responseMessage = {1}", new Object[]{responseCode,responseMessage});
+            logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "responsecode = {0} responseMessage = {1}", new Object[]{responseCode, responseMessage});
             assertEquals("Admin Console Not Available", HttpURLConnection.HTTP_OK, responseCode);
             BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             StringBuilder stringBuilder = new StringBuilder();
             String inputLine;
             while ((inputLine = in.readLine()) != null)
-            stringBuilder.append(inputLine + "\n");
+                stringBuilder.append(inputLine + "\n");
             in.close();
             logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "Response Body = {0}", new Object[]{stringBuilder.toString()});
-        }
-        finally {
+        } finally {
             tc.destroy();
             if (httpServiceBundle != null) {
                 httpServiceBundle.stop(Bundle.STOP_TRANSIENT);
