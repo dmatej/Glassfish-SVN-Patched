@@ -751,7 +751,7 @@ public class T2_Test extends AbstractTestObject {
                 conn = (HttpURLConnection) url.openConnection();
                 conn.connect();
                 responseCode = conn.getResponseCode();
-                if (responseCode != 200) {
+                if (responseCode != HttpURLConnection.HTTP_OK) {
                     logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "Sleeping for 5 Seconds on testurl = {0}", new Object[]{testurl});
                     Thread.sleep(5000);
                 } else {
