@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -41,6 +41,7 @@
 package org.glassfish.osgicdi.impl;
 
 import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
@@ -231,7 +232,18 @@ class OSGiServiceFactory {
             debug ("looking a service as this is set to DYNAMIC=true");
             final Object instanceToUse =  lookupService(svcInjectionPoint);
             debug("calling Method " + method + " on proxy");
-            return method.invoke(instanceToUse, args);
+            
+            //see [GLASSFISH-18370] And java doc of UndeclaredThrowableException
+            //when InvocationTargetException happened, we must get the real cause
+            //of InvocationTargetException
+            try{
+               return method.invoke(instanceToUse, args);
+            }catch(InvocationTargetException e){
+            	if (e.getCause() != null){
+            		throw e.getCause();
+            	}
+               throw new Throwable(e);
+            }
         }
     }
     
@@ -328,7 +340,18 @@ class OSGiServiceFactory {
                 debug ("Using the service that was looked up earlier" +
                         " as this is set to DYNAMIC=false");
                 debug("Calling Method " + method + " on Proxy");
-                return method.invoke(instanceToUse, args);
+                
+                //see [GLASSFISH-18370] And java doc of UndeclaredThrowableException
+                //when InvocationTargetException happened, we must get the real cause
+                //of InvocationTargetException
+                try{
+                	return method.invoke(instanceToUse, args);
+                 }catch(InvocationTargetException e){
+                 	if (e.getCause() != null){
+                 		throw e.getCause();
+                 	}                 	
+                 	throw new Throwable(e);
+                 }               
             }
             return null;
         }

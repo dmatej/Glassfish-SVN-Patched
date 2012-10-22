@@ -689,6 +689,32 @@ public class T2_Test extends AbstractTestObject {
         }
     }
 
+    /**
+     * Regression test case for GLASSFISH_18370
+     *
+     * @throws GlassFishException
+     * @throws InterruptedException
+     * @throws BundleException
+     */
+    @Test
+    public void testapp20() throws GlassFishException, InterruptedException, BundleException, IOException {
+        logger.logp(Level.INFO, "T2_Test", "testapp20", "ENTRY");
+        TestContext tc = TestContext.create(getClass());
+        try {
+            String location = "mvn:org.glassfish.fighterfish/test.app20/1.0.0-SNAPSHOT/war";
+            Bundle bundle = tc.installBundle(location);
+            WebAppBundle wab = new WebAppBundle(ctx, bundle);
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
+            final String request = "/";
+            final String expectedResponse = "GLASSFISH-18370 has been fixed!";
+            String response = wab.getResponse(request);
+            logger.logp(Level.INFO, "T2_Test", "testapp20", "response = {0}", new Object[]{response});
+            assertThat(response, new StringPatternMatcher(expectedResponse));
+        } finally {
+            tc.destroy();
+        }
+    }
+
     @Test
     public void test_GLASSFISH_12975() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "ENTRY");
