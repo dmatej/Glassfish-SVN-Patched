@@ -666,23 +666,6 @@ public class T2_Test extends AbstractTestObject {
         }
     }
 
-    @Test
-    public void regression_GLASSFISH_18159() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.logp(Level.INFO, "T2_Test", "regression_GLASSFISH_18159", "ENTRY");
-        TestContext tc = TestContext.create(getClass());
-        try {
-           //Running a regression test for fix created on GLASSFISH-18159
-            String location = "mvn:org.glassfish.fighterfish/test.app3/1.0.0-SNAPSHOT/war";
-            Bundle bundle = tc.installBundle(location);
-            bundle.start();
-            bundle.uninstall();
-            assertTrue("Uninstallation failed", bundle.getState() == bundle.UNINSTALLED);
-        }
-        finally {
-            tc.destroy();
-        }
-    }
-
     /**
      * Regression test for  GLASSFISH-11748
      * @throws GlassFishException
@@ -773,6 +756,23 @@ public class T2_Test extends AbstractTestObject {
             if (httpServiceBundle != null) {
                 httpServiceBundle.stop(Bundle.STOP_TRANSIENT);
             }
+        }
+    }
+
+    @Test
+    public void test_GLASSFISH_18159() throws GlassFishException, InterruptedException, BundleException, IOException {
+        logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_18159", "ENTRY");
+        TestContext tc = TestContext.create(getClass());
+        try {
+           //Running a regression test for fix created on GLASSFISH-18159
+            String location = "mvn:org.glassfish.fighterfish/test.app3/1.0.0-SNAPSHOT/war";
+            Bundle bundle = tc.installBundle(location);
+            bundle.start();
+            bundle.uninstall();
+            assertTrue("Uninstallation failed", bundle.getState() == bundle.UNINSTALLED);
+        }
+        finally {
+            tc.destroy();
         }
     }
 
