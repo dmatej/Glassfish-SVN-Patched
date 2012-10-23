@@ -697,7 +697,6 @@ public class T2_Test extends AbstractTestObject {
      * @throws BundleException
      */
     @Test
-    @Ignore
     public void testapp20() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.logp(Level.INFO, "T2_Test", "testapp20", "ENTRY");
         TestContext tc = TestContext.create(getClass());
