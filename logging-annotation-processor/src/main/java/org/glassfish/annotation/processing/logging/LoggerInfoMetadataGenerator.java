@@ -95,7 +95,11 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
                 VariableElement element = (VariableElement)it.next();
                 String loggerName = (String)element.getConstantValue();
                 if (loggerName == null) {
-                    error("Logger name must be a constant string literal value, it cannot be a compile time computed expression.");
+                    StringBuffer buf = new StringBuffer();
+                    buf.append("Logger name must be a constant string literal value, it cannot be a compile time computed expression.");
+                    buf.append(System.getProperty("line.separator"));
+                    buf.append("Please check if the LoggerInfo annotation is on the logger name constant.");
+                    error(buf.toString());
                     return false;
                 }
                 debug("Processing: " + loggerName + " on element " + element.getSimpleName());

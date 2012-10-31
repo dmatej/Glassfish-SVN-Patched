@@ -18,6 +18,7 @@ import javax.tools.JavaCompiler.CompilationTask;
 import junit.framework.TestCase;
 
 import org.glassfish.annotation.processing.logging.LogMessagesResourceBundleGenerator;
+import org.glassfish.annotation.processing.logging.LoggerInfoMetadataGenerator;
 import org.junit.Test;
 
 import com.foo.bar.Chocolate;
@@ -115,6 +116,14 @@ public class LogMessagesResourceBundleGeneratorTest extends TestCase {
         assertEquals("EJB subsystem has been shutdown.", value);
     }
     
+    @Test
+    public void testIncorrectlyPlacedLoggerInfoAnnotation() {
+        File f1 = new File(BASE_PATH, "Tea.java");
+        String output = executeCompiler(f1);
+        assertTrue(output.contains("Logger name must be a constant string literal value, it cannot be a compile time computed expression."));
+        assertTrue(output.contains("Please check if the LoggerInfo annotation is on the logger name constant."));
+    }
+    
     private static String executeCompiler(File... srcFiles) {
         // Get an instance of java compiler
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
@@ -145,6 +154,7 @@ public class LogMessagesResourceBundleGeneratorTest extends TestCase {
 
         // Add an annotation processor to the list
         processors.add(new LogMessagesResourceBundleGenerator());
+        processors.add(new LoggerInfoMetadataGenerator());
 
         // Set the annotation processor to the compiler task
         task.setProcessors(processors);
