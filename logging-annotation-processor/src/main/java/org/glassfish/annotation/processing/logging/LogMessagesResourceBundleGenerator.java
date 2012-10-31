@@ -77,15 +77,16 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
 
             LoggingMetadata logMessagesMap = new LoggingMetadata();
 
-            Set<? extends Element> elements = env.getElementsAnnotatedWith(LogMessageInfo.class);
-            Set<? extends Element> rbElems = env.getElementsAnnotatedWith(LogMessagesResourceBundle.class);
+            Set<? extends Element> logMessageElements = env.getElementsAnnotatedWith(LogMessageInfo.class);
+            Set<? extends Element> logMessagesResourceBundleElements = env.getElementsAnnotatedWith(LogMessagesResourceBundle.class);
 
-            if (rbElems.isEmpty() && elements.isEmpty()) {
+            if (logMessagesResourceBundleElements.isEmpty() || logMessageElements.isEmpty()) {
+                warn("Skipping LogMessages resource bundle generation, either the LogMessageInfo or LogMessagesResourceBundle annotation is not specified in the current compilation round.");
                 return false;
             }
                         
             Set<String> rbNames = new HashSet<String>();
-            for (Element rbElem : rbElems) {
+            for (Element rbElem : logMessagesResourceBundleElements) {
                 Object rbValue = ((VariableElement) rbElem).getConstantValue();
                 if (rbValue == null) {
                     error("The resource bundle name value could not be computed. Specify the LogMessagesResourceBundle annotation only on a compile time constant String literal.");
@@ -109,7 +110,7 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
                 return false;
             }
 
-            Iterator<? extends Element> it = elements.iterator();
+            Iterator<? extends Element> it = logMessageElements.iterator();
             Set<String> messageIds = new HashSet<String>();
             while (it.hasNext()) {
                 VariableElement element = (VariableElement)it.next();

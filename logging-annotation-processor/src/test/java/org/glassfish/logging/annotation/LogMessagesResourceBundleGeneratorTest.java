@@ -56,6 +56,7 @@ public class LogMessagesResourceBundleGeneratorTest extends TestCase {
     public void testNoLoggingAnnotationsCompilation() {        
         File f1 = new File(BASE_PATH, "Vanilla.java");
         String output = executeCompiler(f1);
+        // The annotation processor is not invoked in this case.
         assertTrue(!output.contains("LogMessagesResourceBundleGenerator invoked."));
     }
 
@@ -94,7 +95,7 @@ public class LogMessagesResourceBundleGeneratorTest extends TestCase {
     public void testNoResourceBundleName() {
         File f1 = new File(BASE_PATH, "Cocoa.java");
         String output = executeCompiler(f1);
-        assertTrue(output.contains("Atleast one String literal constant needs to be decorated with the LogMessagesResourceBundle annotation."));
+        assertTrue(output.contains("Skipping LogMessages resource bundle generation"));
         File[] resourceBundles = getResourceBundles();
         assertEquals(resourceBundles.length,0);        
     }

@@ -43,7 +43,6 @@ package org.glassfish.annotation.processing.logging;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -56,11 +55,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
-import javax.tools.FileObject;
 
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
 import org.glassfish.logging.annotation.LoggerInfo;
 
 @SupportedAnnotationTypes({"org.glassfish.logging.annotation.LoggerInfo"})
@@ -69,7 +64,6 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
     private static final String PUBLISH_SUFFIX = ".publish";
     private static final String SUBSYSTEM_SUFFIX = ".subsystem";
     private static final String DESCRIPTION_SUFFIX = ".description";
-    private static final String LOGGER_INFO_METADATA_SERVICE = "LoggerInfoMetadataService";
     // private static final String RBNAME = "loggerinfo.LoggerInfoMetadata";
     private static final String RBNAME = "META-INF/loggerinfo/LoggerInfoMetadata";
     private static final String VALID_PATTERN = "[a-z[A-Z]][^|]*";
@@ -110,8 +104,6 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
                 LoggerInfo loggerInfo = element.getAnnotation(LoggerInfo.class);
                 validateLoggerInfo(loggerInfo);
                 // Save the log message...
-                
-                
                 // Message ids must be unique
                 if (loggerInfoElements.containsKey(loggerName)) {
                     // Previous entry with same logger name found.
@@ -162,7 +154,6 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
             element = enclosing;
         } while(packageName == null);
         
-        String simpleName = LOGGER_INFO_METADATA_SERVICE;
         BufferedWriter bufferedWriter = null;
         try {
             // Now persist the resource bundle
