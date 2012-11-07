@@ -41,10 +41,7 @@
 
 package org.glassfish.fighterfish.test.util;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintWriter;
+import java.io.*;
 import java.lang.management.*;
 import java.util.Date;
 
@@ -145,8 +142,13 @@ public class JStack {
         final String s = toString();
         try {
             System.out.println("JStack written out to " + f.getAbsolutePath());
-            new PrintWriter(new FileOutputStream(f)).print("Stack trace generated at " + new Date() + "\n" + s);
+            final FileOutputStream out = new FileOutputStream(f);
+            new PrintWriter(out).print("Stack trace generated at " + new Date() + "\n" + s);
+            out.flush();
+            out.close();
         } catch (FileNotFoundException e) {
+            throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
+        } catch (IOException e) {
             throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
         }
     }
