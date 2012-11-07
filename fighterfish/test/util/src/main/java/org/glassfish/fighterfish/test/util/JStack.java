@@ -142,7 +142,7 @@ public class JStack {
         final String s = toString();
         try {
             System.out.println("JStack written out to " + f.getAbsolutePath());
-            final FileOutputStream out = new FileOutputStream(f);
+            final FileOutputStream out = new FileOutputStream(f, true);
             new PrintWriter(out).print("Stack trace generated at " + new Date() + "\n" + s);
             out.flush();
             out.close();
