@@ -41,9 +41,7 @@
 
 package org.glassfish.fighterfish.test.util;
 
-import java.io.PrintStream;
 import java.lang.management.*;
-import java.util.Arrays;
 
 /**
  * This object represents the current stack traces of all threads in the system - very much similar to
@@ -60,26 +58,19 @@ public class JStack {
     }
 
     private static String getAllStack(ThreadInfo[] tis) {
-        if (tis == null)
-            return "null";
-	    int iMax = tis.length - 1;
-        if (iMax == -1)
-            return "[]";
+        if (tis == null) return "null";
         StringBuilder b = new StringBuilder("[");
-	    b.append('[');
-        for (int i = 0; ; i++) {
-            b.append(getStack(tis[i]));
-            if (i == iMax) {
-	        	return b.append(']').toString();
-            }
-	        b.append(", ");
+        for (ThreadInfo ti : tis) {
+            b.append("\n [" + getStack(ti) + " ]");
+            if (ti != tis[tis.length -1]) b.append(",");
         }
+        b.append("\n]");
+        return b.toString();
     }
 
     private static String getStack(ThreadInfo ti) {
         /*
-         * This method has been copied from ThreadInfo.java as toString() of ThreadInfo
-         * stops printing stack traces after 8th frame.
+         * This method has been largely copied from ThreadInfo.java as toString() of ThreadInfo
          */
         StringBuilder sb = new StringBuilder("\"" + ti.getThreadName() + "\"" +
                                              " Id=" + ti.getThreadId() + " " +
@@ -143,5 +134,24 @@ public class JStack {
        sb.append('\n');
        return sb.toString();
 
+    }
+
+    public static void main(String[] args) {
+        new Thread() {
+            {
+                setDaemon(false);
+            }
+            @Override
+            public void run() {
+                synchronized (this) {
+                    try {
+                        wait();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
+                    }
+                }
+            }
+        }.start();
+        System.out.println(new JStack());
     }
 }
