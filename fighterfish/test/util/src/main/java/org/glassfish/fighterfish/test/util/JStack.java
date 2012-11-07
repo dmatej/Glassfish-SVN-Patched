@@ -41,7 +41,12 @@
 
 package org.glassfish.fighterfish.test.util;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.lang.management.*;
+import java.util.Date;
 
 /**
  * This object represents the current stack traces of all threads in the system - very much similar to
@@ -93,7 +98,7 @@ public class JStack {
         StackTraceElement[] stackTrace = ti.getStackTrace();
         for (; i < stackTrace.length; i++) {
             StackTraceElement ste = stackTrace[i];
-            sb.append("\tat " + ste.toString());
+            sb.append("\t\tat " + ste.toString());
             sb.append('\n');
             if (i == 0 && ti.getLockInfo() != null) {
                 Thread.State ts = ti.getThreadState();
@@ -134,6 +139,16 @@ public class JStack {
        sb.append('\n');
        return sb.toString();
 
+    }
+
+    public void printStackTrace(File f) {
+        final String s = toString();
+        try {
+            System.out.println("JStack written out to " + f.getAbsolutePath());
+            new PrintWriter(new FileOutputStream(f)).print("Stack trace generated at " + new Date() + "\n" + s);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
+        }
     }
 
     public static void main(String[] args) {

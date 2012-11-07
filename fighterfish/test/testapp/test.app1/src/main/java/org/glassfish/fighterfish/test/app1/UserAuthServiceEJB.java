@@ -124,7 +124,7 @@ public class UserAuthServiceEJB
         }
         catch (Exception e)
         {
-            System.out.println(new JStack());
+            new JStack().printStackTrace(new java.io.File("jstack.txt"));
             e.printStackTrace();
         }
         finally
