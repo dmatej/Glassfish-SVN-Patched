@@ -74,7 +74,12 @@ public class UserAuthServiceEJB
     {
         System.out.println("UserAuthServiceEJB: registering " + name);
         UserCredential uc = new UserCredential(name, password);
-        em.persist(uc);
+        try {
+         em.persist(uc);
+        } catch (RuntimeException e) {
+         System.out.println(new org.glassfish.fighterfish.test.util.JStack());
+         throw  e;
+        }
         return true;
     }
 }
