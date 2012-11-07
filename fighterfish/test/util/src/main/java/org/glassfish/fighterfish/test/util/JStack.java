@@ -152,12 +152,9 @@ public class JStack {
 
     public void printStackTrace(OutputStream out) {
         final String s = toString();
-        try {
-            new PrintWriter(out).print("Stack trace generated at " + new Date() + "\n" + s);
-            out.flush();
-        } catch (IOException e) {
-            throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
-        }
+        final PrintWriter printWriter = new PrintWriter(out);
+        printWriter.println("Stack trace generated at " + new Date() + "\n" + s);
+        printWriter.flush();
     }
 
     public static void main(String[] args) {
