@@ -77,7 +77,9 @@ public class UserAuthServiceEJB
         try {
          em.persist(uc);
         } catch (RuntimeException e) {
-         new org.glassfish.fighterfish.test.util.JStack().printStackTrace(new java.io.File("jstack.txt"));
+         org.glassfish.fighterfish.test.util.JStack jstack = new org.glassfish.fighterfish.test.util.JStack();
+         jstack.printStackTrace();
+         System.out.println(jstack);
          throw  e;
         }
         return true;

@@ -138,16 +138,23 @@ public class JStack {
 
     }
 
-    public void printStackTrace(File f) {
+    public void printStackTrace() {
+        File f = new File(System.getProperty("user.home"), "jstack.txt");
+        System.out.println("JStack written out to " + f.getAbsolutePath());
+        try {
+            final FileOutputStream out = new FileOutputStream(f, true);
+            printStackTrace(out);
+            out.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
+        }
+    }
+
+    public void printStackTrace(OutputStream out) {
         final String s = toString();
         try {
-            System.out.println("JStack written out to " + f.getAbsolutePath());
-            final FileOutputStream out = new FileOutputStream(f, true);
             new PrintWriter(out).print("Stack trace generated at " + new Date() + "\n" + s);
             out.flush();
-            out.close();
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
         } catch (IOException e) {
             throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
         }
@@ -169,6 +176,8 @@ public class JStack {
                 }
             }
         }.start();
-        System.out.println(new JStack());
+        final JStack x = new JStack();
+        System.out.println(x);
+        x.printStackTrace();
     }
 }

@@ -77,7 +77,9 @@ public class RegistrationServlet extends HttpServlet {
                 out.println("Failed to register " + name);
             }
         } catch (Exception e) {
-            new org.glassfish.fighterfish.test.util.JStack().printStackTrace(new java.io.File("jstack.txt"));
+         org.glassfish.fighterfish.test.util.JStack jstack = new org.glassfish.fighterfish.test.util.JStack();
+         jstack.printStackTrace();
+         System.out.println(jstack);
             out.println("Failed to register " + name);
         }
         out.println("</BODY> </HTML> ");

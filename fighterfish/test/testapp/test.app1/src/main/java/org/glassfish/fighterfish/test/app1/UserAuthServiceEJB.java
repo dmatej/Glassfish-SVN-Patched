@@ -124,7 +124,9 @@ public class UserAuthServiceEJB
         }
         catch (Exception e)
         {
-            new JStack().printStackTrace(new java.io.File("jstack.txt"));
+         org.glassfish.fighterfish.test.util.JStack jstack = new org.glassfish.fighterfish.test.util.JStack();
+         jstack.printStackTrace();
+         System.out.println(jstack);
             e.printStackTrace();
         }
         finally
