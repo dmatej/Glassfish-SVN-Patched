@@ -124,11 +124,8 @@ public class UserAuthServiceEJB
         }
         catch (Exception e)
         {
-            JStack stack  = new JStack();
-            System.out.println(stack.toString());
+            System.out.println(new JStack());
             e.printStackTrace();
-
-
         }
         finally
         {
