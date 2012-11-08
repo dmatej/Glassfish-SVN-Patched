@@ -178,6 +178,7 @@ public class WebAppBundle {
         URL serverAddress = null;
 
         serverAddress = new URL("http", getHost(), getPort(), contextPath + relativePath);
+        System.getProperties().setProperty("sun.net.http.retryPost", "false" );
         connection = (HttpURLConnection)serverAddress.openConnection();
         connection.setRequestMethod("POST");
         connection.setReadTimeout(60000);
