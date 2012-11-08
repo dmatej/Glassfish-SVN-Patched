@@ -128,7 +128,7 @@ public class T2_Test extends AbstractTestObject {
             final String loginRequest = "/LoginServlet?name=foo&password=bar";
             final String registrationSuccessful = "Registered foo";
             final String loginSuccessful = "Welcome foo";
-            String response = wab.getResponse(registrationRequest);
+            String response = wab.getHttpResponse(registrationRequest);
             logger.logp(Level.INFO, "T2_Test", "testapp1", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(registrationSuccessful));
             response = wab.getResponse(loginRequest);
