@@ -49,6 +49,7 @@ import javax.servlet.ServletContext;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.CountDownLatch;
@@ -161,6 +162,30 @@ public class WebAppBundle {
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(
                         yc.getInputStream()));
+
+        StringBuilder sb = new StringBuilder();
+        String inputLine;
+        while ((inputLine = in.readLine()) != null) {
+            sb.append(inputLine);
+        }
+        in.close();
+        return sb.toString();
+    }
+
+    public String getHttpResponse(String relativePath) throws IOException {
+
+        HttpURLConnection connection = null;
+        URL serverAddress = null;
+
+        serverAddress = new URL("http", getHost(), getPort(), contextPath + relativePath);
+        connection = (HttpURLConnection)serverAddress.openConnection();
+        connection.setRequestMethod("POST");
+        connection.setReadTimeout(60000);
+        connection.connect();
+
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(
+                        connection.getInputStream()));
 
         StringBuilder sb = new StringBuilder();
         String inputLine;
