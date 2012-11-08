@@ -154,6 +154,13 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
     protected boolean scmOnly;
 
     /**
+     * Check hidden files too?
+     *
+     * @parameter expression="${copyright.hidden}"
+     */
+    protected boolean doHidden;
+
+    /**
      * Copyright template file.
      *
      * @parameter expression="${copyright.template}"
@@ -218,6 +225,7 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
 	c.normalize = normalize;
 	c.useComma = useComma;
 	c.skipNoSVN = scmOnly;
+	c.doHidden = doHidden;
 
 	if (templateFile != null)
 	    c.correctTemplate = 

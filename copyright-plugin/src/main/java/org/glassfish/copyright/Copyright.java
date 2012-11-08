@@ -43,8 +43,8 @@
  * Optionally repair any that are wrong.
  *
  * Usage: java -jar copyright.jar
- *		[-w] -[y] [-r] [-n] [-s] [-m] [-g] [-c] [-q] [-j] [-x] [-p] [-t]
- *		[-N] [-O] [-X pat] [-C file] [-V] [files ...]
+ *		[-w] -[y] [-r] [-n] [-s] [-h] [-m] [-g] [-c] [-q] [-j] [-x] [-p]
+ *		[-t] [-N] [-O] [-X pat] [-C file] [-V] [files ...]
  *
  * Options:
  *	-w	suppress warnings
@@ -52,6 +52,7 @@
  *	-r	repair files that are wrong
  *	-n	with -r, leave the updated file in file.new
  *	-s	skip files not under SVN (slower)
+ *	-h	check hidden files too
  *	-m	use Mercurial instead of SVN
  *	-g	use git instead of SVN
  *	-c	count errors and print summary
@@ -86,6 +87,7 @@ public class Copyright {
     public boolean dontUpdate = false;
     public boolean normalize = false;
     public boolean skipNoSVN = false;
+    public boolean doHidden = false;
     public boolean mercurial = false;
     public boolean git = false;
     public static boolean count = false;
@@ -159,6 +161,8 @@ public class Copyright {
 	    System.out.println(file + ": can't read");
 	    return;
 	}
+	if (!doHidden && file.isHidden() && !file.getName().equals("."))
+	    return;
 	if (file.isDirectory()) {
 	    String name = file.getName();
 	    if (ignoredDirs.contains(name))
@@ -184,6 +188,8 @@ public class Copyright {
 	    System.out.println(file + ": can't read");
 	    return;
 	}
+	if (!doHidden && file.isHidden() && !file.getName().equals("."))
+	    return;
 	if (file.isDirectory()) {
 	    String name = file.getName();
 	    if (ignoredDirs.contains(name))
@@ -293,6 +299,8 @@ public class Copyright {
 		c.dontUpdate = true;
 	    } else if (argv[optind].equals("-s")) {
 		c.skipNoSVN = true;
+	    } else if (argv[optind].equals("-h")) {
+		c.doHidden = true;
 	    } else if (argv[optind].equals("-m")) {
 		c.mercurial = true;
 	    } else if (argv[optind].equals("-g")) {
@@ -327,7 +335,7 @@ public class Copyright {
 		break;
 	    } else if (argv[optind].startsWith("-")) {
 		System.out.println("Usage: copyright " +
-		    "[-w] [-y] [-r] [-n] [-s] [-m] [-c] [-q] [-j] " +
+		    "[-w] [-y] [-r] [-n] [-s] [-h] [-m] [-c] [-q] [-j] " +
 		    "[-x] [-p] [-t] [-N] [-O] [-V] [-X pat] [-C file] " +
                     "[-A file] [files...]");
 		System.out.println("\t-w\tsuppress warnings");
@@ -337,6 +345,7 @@ public class Copyright {
 		System.out.println("\t-n\twith -r, leave the updated file in " +
 				    "file.new");
 		System.out.println("\t-s\tskip files not under SVN (slower)");
+		System.out.println("\t-h\tcheck hidden files too");
 		System.out.println("\t-m\tuse Mercurial instead of SVN");
 		System.out.println("\t-g\tuse Git instead of SVN");
 		System.out.println("\t-c\tcount errors and print summary");

@@ -148,9 +148,13 @@ public abstract class AbstractCopyright {
     protected void checkCopyright(File file) throws IOException {
 	String lc = null;
 	if (c.skipNoSVN) {
-	    lc = lastChanged(file.getPath());
-	    if (lc.length() == 0)
-		return;
+	    if (isModified(file.getPath())) {
+		// yes, under SCM control
+	    } else {
+		lc = lastChanged(file.getPath());
+		if (lc.length() == 0)
+		    return;	// no, not under SCM control
+	    }
 	}
 
 	BufferedReader r = null;
@@ -639,6 +643,7 @@ public abstract class AbstractCopyright {
 
     private static String lastChangedSvn(String file) throws IOException {
 	final String lastChangedDate = "Last Changed Date: ";
+	final String addedFile = "Schedule: add";
 	ProcessBuilder pb = new ProcessBuilder("svn", "info", file);
 	pb.redirectErrorStream(true);
 	Process p = pb.start();
@@ -648,6 +653,8 @@ public abstract class AbstractCopyright {
 	String lcd = "";
 	String line;
 	while ((line = r.readLine()) != null) {
+	    if (line.equals(addedFile))
+		lcd = thisYear;
 	    if (line.startsWith(lastChangedDate))
 		lcd = line.substring(lastChangedDate.length(),
 					lastChangedDate.length() + 4);
@@ -726,7 +733,7 @@ public abstract class AbstractCopyright {
 	boolean modified = false;
 	String line;
 	while ((line = r.readLine()) != null) {
-	    if (line.startsWith("M"))
+	    if (line.startsWith("M") || line.startsWith("A"))
 		modified = true;
 	}
 	p.getInputStream().close();
