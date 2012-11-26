@@ -53,8 +53,6 @@ import org.apache.tools.ant.types.ZipFileSet;
 
 /**
  * 
- * TODO, create a property attach to allow not attaching the produced zip
- * 
  * Creates a zip file
  *
  * @goal zip
@@ -69,14 +67,14 @@ public class ZipMojo extends AbstractAntMojo {
     /**
      * The directory where the zip will be created.
      *
-     * @parameter expression="${outputDirectory}" default-value="${project.build.directory}"
+     * @parameter expression="${gfzip.outputDirectory}" default-value="${project.build.directory}"
      */
     protected File outputDirectory;
 
     /**
      * The file name of the created zip.
      *
-     * @parameter expression="${finalName}" default-value="${project.build.finalName}.zip"
+     * @parameter expression="${gfzip.finalName}" default-value="${project.build.finalName}"
      */
     protected String finalName;
 
@@ -84,14 +82,14 @@ public class ZipMojo extends AbstractAntMojo {
      * behavior when a duplicate file is found ;
      * Valid values are "add", "preserve", and "fail" ; default value is "add"
      *
-     * @parameter expression="${duplicate}" default-value="add"
+     * @parameter expression="${gfzip.duplicate}" default-value="add"
      */
     protected String duplicate;
 
     /**
      * Filesets describe content to include in the zip
      *
-     * @parameter expression="${filesets}"
+     * @parameter expression="${gfzip.filesets}"
      */
     protected ZipFileSet[] filesets;
 
@@ -99,9 +97,7 @@ public class ZipMojo extends AbstractAntMojo {
      * dir the root of the directory tree of the default FileSet ;
      * Only when not fileset(s) provided.
      * 
-     * TODO: rename to zipDir
-     * 
-     * @parameter expression="${dir}" default-value="${project.build.directory}"
+     * @parameter expression="${gfzip.dir}" default-value="${project.build.directory}"
      */
     protected File dir;
 
@@ -109,7 +105,7 @@ public class ZipMojo extends AbstractAntMojo {
      * comma- or space-separated list of patterns of files that must be included ;
      * all files are included when omitted ; Only when not fileset(s) provided.
      *
-     * @parameter expression="${includes}"
+     * @parameter expression="${gfzip.includes}"
      */
     protected String includes;
 
@@ -117,14 +113,31 @@ public class ZipMojo extends AbstractAntMojo {
      * comma- or space-separated list of patterns of files that must be included ;
      * all files are included when omitted ; Only when not fileset(s) provided.
      *
-     * @parameter expression="${excludes}"
+     * @parameter expression="${gfzip.excludes}"
      */
     protected String excludes;
+    
+    /**
+     * The extension of the generated file.
+     * 
+     * @parameter expression="${gfzip.extension}" default-value="zip"
+     */
+    protected String extension;
+    
+    /**
+     * Attach the produced artifact
+     * 
+     * @parameter expression="${gfzip.attach}" default-value="true"
+     */
+    protected Boolean attach;  
+    
 
     public void execute() throws MojoExecutionException, MojoFailureException {
 
         Project antProject = new Project();
         antProject.addBuildListener(this);
+        
+        this.project.addCompileSourceRoot(null);
 
         Properties mavenProperties = project.getProperties();
         Iterator it = mavenProperties.keySet().iterator();
@@ -135,7 +148,12 @@ public class ZipMojo extends AbstractAntMojo {
         Zip zip = new Zip();
         zip.setProject(antProject);
 
-        File target = new File(outputDirectory, finalName);
+        // compute the final file name
+        StringBuilder finalFileName = new StringBuilder(finalName);
+        finalFileName.append('.');
+        finalFileName.append(extension);
+        
+        File target = new File(outputDirectory, finalFileName.toString());
         zip.setDestFile(target);
 
         Duplicate df = new Zip.Duplicate();
@@ -167,8 +185,10 @@ public class ZipMojo extends AbstractAntMojo {
 
         zip.executeMain();
 
-        project.getArtifact().setFile(target);
-        project.getArtifact().setArtifactHandler(new DistributionArtifactHandler());
+        if (attach.booleanValue()) {
+            project.getArtifact().setFile(target);
+            project.getArtifact().setArtifactHandler(new DistributionArtifactHandler(extension, project.getPackaging()));
+        }
     }
 
     public static String displayStringArray(String[] strArray){
@@ -176,8 +196,9 @@ public class ZipMojo extends AbstractAntMojo {
         if (strArray != null) {
             for(int i=0 ; i<strArray.length ; i++){
                 sb.append(strArray[i]);
-                if(i != strArray.length -1)
+                if(i != strArray.length -1) {
                     sb.append(", ");
+                }
             }
         }
         sb.append("]");

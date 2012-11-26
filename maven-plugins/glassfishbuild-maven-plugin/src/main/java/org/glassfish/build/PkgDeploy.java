@@ -52,7 +52,6 @@ import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 
 /**
- *
  * Deploy aggregate
  *
  * @goal pkgdeploy

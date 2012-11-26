@@ -41,7 +41,8 @@ package org.glassfish.build.utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.maven.artifact.Artifact;
@@ -51,25 +52,181 @@ import org.apache.maven.artifact.installer.ArtifactInstallationException;
 import org.apache.maven.artifact.installer.ArtifactInstaller;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.versioning.VersionRange;
+import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.io.DefaultModelReader;
 import org.apache.maven.model.io.DefaultModelWriter;
-import org.apache.maven.model.io.ModelWriter;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.apache.maven.shared.artifact.filter.collection.*;
+import org.codehaus.plexus.archiver.ArchiverException;
+import org.codehaus.plexus.archiver.UnArchiver;
+import org.codehaus.plexus.archiver.manager.ArchiverManager;
+import org.codehaus.plexus.archiver.manager.NoSuchArchiverException;
+import org.codehaus.plexus.components.io.fileselectors.IncludeExcludeFileSelector;
+import org.codehaus.plexus.util.FileUtils;
+import org.codehaus.plexus.util.StringUtils;
+import org.sonatype.aether.RepositorySystem;
+import org.sonatype.aether.RepositorySystemSession;
+import org.sonatype.aether.repository.RemoteRepository;
+import org.sonatype.aether.resolution.ArtifactRequest;
+import org.sonatype.aether.resolution.ArtifactResolutionException;
+import org.sonatype.aether.resolution.ArtifactResult;
 
 /**
  *
  * @author Romain Grecourt
  */
 public class MavenUtils {
-    private static ModelWriter modelWriter = new DefaultModelWriter();
+    
+    /**
+     * Reads a given model
+     * @param pom the pom File
+     * @return an instance of Model
+     * @throws MojoExecutionException
+     */
+    public static Model readModel(File pom) throws MojoExecutionException{
+        try {
+           return new DefaultModelReader().read(pom, null);
+        } catch (IOException ex) {
+            throw new MojoExecutionException(ex.getMessage(),ex);
+        }
+    }
+    
+    private static String getFinalName(Model model){
+        Build b = model.getBuild();
+        String finalName;
+        if(b != null){
+            finalName = b.getFinalName();
+        } else {
+            finalName = model.getArtifactId()+"-"+model.getVersion();
+        }
+        return finalName;
+    }
+    
+    /**
+     * Create a list of attached artifacts and their associated files by searching for target/${project.build.finalName}-*.*
+     * 
+     * @param dir ${project.build.directory}
+     * @param model an instance of model
+     * @return
+     * @throws MojoExecutionException
+     */
+    public static List<Artifact> createAttachedArtifacts(String dir, Model model) throws MojoExecutionException {
+        List<Artifact> attachedArtifacts = new ArrayList<Artifact>();
+        String finalName = getFinalName(model);
+        List<File> attachedArtifactFiles = MavenUtils.getFiles(
+                    dir,
+                    finalName+"-*.*",
+                    finalName+"."+model.getPackaging());
+        
+        if(!attachedArtifactFiles.isEmpty()){
+            for(File attachedArtifactFile : attachedArtifactFiles){
+                String fName = attachedArtifactFile.getName();
+                String classifier = fName.substring(fName.lastIndexOf('-')+1,fName.lastIndexOf('.'));
+                String type = fName.substring(fName.lastIndexOf('.')+1,fName.length());
+                Artifact attachedArtifact = MavenUtils.createArtifact(model,type,classifier);
+                attachedArtifact.setFile(attachedArtifactFile);
+                attachedArtifacts.add(attachedArtifact);
+            }
+        }
+        return attachedArtifacts;
+    }    
+    
+    /**
+     * Create an artifact and its associated file by searching for target/${project.build.finalName}.${project.packaging}
+     * 
+     * @param dir ${project.build.directory}
+     * @param model an instance of model
+     * @return
+     * @throws MojoExecutionException
+     */
+    public static Artifact createArtifact(String dir, Model model) throws MojoExecutionException{
+        Artifact artifact = MavenUtils.createArtifact(model);
+        
+        String finalName = getFinalName(model);
+        List<File> artifactFiles = MavenUtils.getFiles(
+                    dir,
+                    finalName+"."+model.getPackaging(),
+                    finalName+"-*." + model.getPackaging());
+        
+        if(!artifactFiles.isEmpty()){
+            artifact.setFile(artifactFiles.get(0));
+        }
+        
+        return artifact;
+    }
 
+    /**
+     * Return the files contained in the directory, using inclusion and exclusion Ant patterns
+     * 
+     * @param dir the directory to scan
+     * @param includes the includes pattern, comma separated
+     * @param excludes the excludes pattern, comma separated
+     * @return
+     * @throws MojoExecutionException if an IO exception occurred
+     */
+    public static List<File> getFiles(String dir, String includes, String excludes)
+            throws MojoExecutionException{
+        
+        try {
+            return FileUtils.getFiles(new File(dir),includes,excludes);
+        } catch (IOException ex) {
+            throw new MojoExecutionException(ex.getMessage(),ex);
+        }
+    }
+    
+    /**
+     * Creates an artifact instance for the supplied model
+     * 
+     * @param m the model
+     * @return the created artifact
+     */
+    public static Artifact createArtifact(Model m) {
+        return createArtifact(m,m.getPackaging(),null);
+    }
+    
+    /**
+     * Creates an artifact instance for the supplied model
+     * 
+     * @param m the model
+     * @param type the type of the artifact
+     * @param classifier the classifier to use
+     * @return the created artifact
+     */
+    public static Artifact createArtifact(Model m, String type, String classifier) {
+        
+        String groupId = m.getGroupId();
+        groupId = (groupId == null?m.getParent().getGroupId():groupId);
+        String version = m.getVersion();
+        version = (version == null?m.getParent().getVersion():version);
+
+        return new DefaultArtifact(
+                groupId,
+                m.getArtifactId(),
+                VersionRange.createFromVersion(version),
+                "runtime",
+                type,
+                classifier,
+                new DefaultArtifactHandler(type));
+    }
+    
+    /**
+     * Creates an artifact instance for the supplied coordinates
+     * 
+     * @param groupId The groupId
+     * @param artifactId The artifactId
+     * @param version The version
+     * @param type The type of the artifact. e.g "jar", "war" or "zip"
+     * @param classifier The classifier
+     * @return the created artifact
+     */
     public static Artifact createArtifact(
             String groupId, String artifactId, String version, String type, String classifier) {
-        
+
         return new DefaultArtifact(
                 groupId,
                 artifactId,
@@ -79,10 +236,19 @@ public class MavenUtils {
                 classifier,
                 new DefaultArtifactHandler(type));
     }
-    
+
+    /**
+     * Creates an artifact instance for the supplied coordinates
+     * 
+     * @param groupId The groupId
+     * @param artifactId The artifactId
+     * @param version The version
+     * @param type The type of the artifact. e.g "jar", "war" or "zip"
+     * @return the created artifact
+     */
     public static Artifact createArtifact(
             String groupId, String artifactId, String version, String type) {
-        
+
         return createArtifact(
                 groupId,
                 artifactId,
@@ -90,7 +256,13 @@ public class MavenUtils {
                 type,
                 null);
     }
-    
+
+    /**
+     * Creates an artifact instance out of a dependency object.
+     * 
+     * @param dep
+     * @return the created artifact
+     */
     public static Artifact createArtifact(Dependency dep) {
         return createArtifact(
                 dep.getGroupId(),
@@ -98,20 +270,36 @@ public class MavenUtils {
                 dep.getVersion(),
                 dep.getType(),
                 dep.getClassifier());
-    }    
+    }
 
+    
+    /**
+     * Write the model to the buildDir/${project.build.finalName}.pom
+     * @param m an instance of model
+     * @param buildDir the directory in which to write the pom
+     * @throws IOException
+     */
     public static void writePom(Model m, File buildDir) throws IOException {
-        File pomFile = new File(buildDir, m.getArtifactId() + ".pom");
-        modelWriter.write(pomFile, null, m);
+        File pomFile = new File(buildDir, m.getBuild().getFinalName() + ".pom");
+        new DefaultModelWriter().write(pomFile, null, m);
         m.setPomFile(pomFile);
     }
 
+    /**
+     * Installs a given model to the local repository
+     * 
+     * @param installer an ArtifactInstaller instance
+     * @param repository an ArtifactRepository instance
+     * @param p the maven project against which to install the pom
+     * @param m The model to install
+     * @throws MojoExecutionException
+     */
     public static void installPom(
             ArtifactInstaller installer,
             ArtifactRepository repository,
             MavenProject p,
             Model m) throws MojoExecutionException {
-        
+
         Artifact artifact = createArtifact(
                 p.getArtifact().getGroupId(),
                 p.getArtifact().getArtifactId(),
@@ -126,14 +314,24 @@ public class MavenUtils {
         }
     }
 
+    /**
+     * Installs a given file as attached artifact for a given project and given classifier
+     * @param installer an ArtifactInstaller instance
+     * @param repository an ArtifactRepository instance
+     * @param project the maven project against which to install the pom
+     * @param file The file to install
+     * @param type The type of the attached artifact
+     * @param classifier The classifier to use
+     * @throws MojoExecutionException
+     */
     public static void installAttached(
-            ArtifactInstaller installer, 
+            ArtifactInstaller installer,
             ArtifactRepository repository,
             MavenProject project,
             File file,
             String type,
             String classifier) throws MojoExecutionException {
-        
+
         Artifact attached = createArtifact(
                 project.getGroupId(),
                 project.getArtifactId(),
@@ -147,10 +345,18 @@ public class MavenUtils {
             throw new MojoExecutionException(ex.getMessage(), ex);
         }
     }
-    
+
+    /**
+     * Resolves the version of a given groupId/ArtifactId pair
+     * 
+     * @param module the MavenProject on which to process
+     * @param groupId the groupId
+     * @param artifactId the artifactId
+     * @return the resolved version
+     */
     public static String getManagedVersion(
-            MavenProject module, String groupId, String artifactId) {
-        
+            MavenProject module, String groupId, String artifactId) throws MojoExecutionException {
+
         // 1st look at the dependencyManagement
         for (Dependency d : module.getModel().getDependencyManagement().getDependencies()) {
             if (d.getGroupId().equals(groupId)
@@ -159,40 +365,298 @@ public class MavenUtils {
             }
         }
         // 2nd, look at the modules dependencies
-        for(Artifact a : getDependencySet(module, null)){
+        for (Artifact a : getDependencySet(module, null)) {
             if (a.getGroupId().equals(groupId)
                     && a.getArtifactId().equals(artifactId)) {
                 return a.getVersion();
             }
         }
         // 3rd, if groupId match the module return module's version
-        if(module.getGroupId().equals(groupId))
+        if (module.getGroupId().equals(groupId)) {
             return module.getModel().getVersion();
-        else 
+        } else {
             return "";
+        }
     }
-    
-    public static Set<Artifact> getDependencySet(
-            MavenProject p, Map<MavenProject, Set<Artifact>> dependencySets) {
 
-        if (dependencySets != null && 
-                dependencySets.containsKey(p)) {
+    /**
+     * Get the Dependency set of a given project
+     * 
+     * @param p the project on which to execute
+     * @param dependencySets a map to cache the dependency set, can be null
+     * @return The dependency set
+     */
+    public static Set<Artifact> getDependencySet(
+            MavenProject p, Map<MavenProject, Set<Artifact>> dependencySets) 
+            throws MojoExecutionException {
+
+        if (dependencySets != null
+                && dependencySets.containsKey(p)) {
             return dependencySets.get(p);
         }
-        
-        FilterArtifacts filter = new FilterArtifacts();
-        filter.addFilter(new ProjectTransitivityFilter(p.getDependencyArtifacts(), false));
-        filter.addFilter(new ScopeFilter("runtime", "test"));
-        filter.addFilter(new TypeFilter("jar", ""));
 
-        Set<Artifact> artifacts = new HashSet<Artifact>();
-        try {
-            artifacts = filter.filter(p.getArtifacts());
-        } catch (ArtifactFilterException e) { }
-        
-        if(dependencySets != null){
+        Set<Artifact> artifacts = filterArtifacts(
+                p.getArtifacts(),
+                p.getDependencyArtifacts(),
+                false,
+                "runtime",
+                "test",
+                "jar",
+                "");
+
+        if (dependencySets != null) {
             dependencySets.put(p, artifacts);
         }
         return artifacts;
+    }
+    
+    /**
+     * Filters a set of artifacts
+     * 
+     * @param artifacts the set of artifacts to filter
+     * @param dependencyArtifacts the set of artifact representing direct dependencies
+     * @param excludeTransitive exclude transitive dependencies
+     * @param includeScope the scopes to include, comma separated, can be null
+     * @param excludeScope the scopes to exclude, comma separated, can be null
+     * @param excludeTypes the types to include, comma separated, can be null
+     * @param includeTypes the types to exclude, comma separated, can be null
+     * @return the set of filtered artifacts
+     * @throws MojoExecutionException
+     */
+    public static Set<Artifact> filterArtifacts(
+            Set<Artifact> artifacts,
+            Set<Artifact> dependencyArtifacts,
+            boolean excludeTransitive,
+            String includeScope,
+            String excludeScope,
+            String excludeTypes,
+            String includeTypes) throws MojoExecutionException {
+        
+        return filterArtifacts(
+                artifacts,
+                dependencyArtifacts,
+                excludeTransitive,
+                includeScope,
+                excludeScope,
+                includeTypes,
+                excludeTypes,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);
+    }
+    
+    /**
+     * Filters a set of artifacts
+     * 
+     * @param artifacts the set of artifacts to filter
+     * @param dependencyArtifacts the set of artifact representing direct dependencies
+     * @param excludeTransitive exclude transitive dependencies
+     * @param includeScope the scopes to include, comma separated, can be null
+     * @param excludeScope the scopes to exclude, comma separated, can be null
+     * @param excludeTypes the types to exclude, comma separated, can be null
+     * @param includeTypes the types to include, comma separated, can be null
+     * @param includeClassifiers the classifiers to include, comma separated, can be null
+     * @param excludeClassifiers the classifiers to exclude, comma separated, can be null
+     * @param includeGroupIds the groupIds to include, comma separated, can be null
+     * @param excludeGroupIds the groupIds to exclude, comma separated, can be null
+     * @param includeArtifactIds the artifactIds to include, comma separated, can be null
+     * @param excludeArtifactIds the artifactIds to exclude, comma separated, can be null
+     * @return the set of filtered artifacts* 
+     * @throws MojoExecutionException
+     */
+    public static Set<Artifact> filterArtifacts(
+            Set<Artifact> artifacts,
+            Set<Artifact> dependencyArtifacts,
+            boolean excludeTransitive,
+            String includeScope,
+            String excludeScope,
+            String excludeTypes,
+            String includeTypes,
+            String includeClassifiers,
+            String excludeClassifiers,
+            String includeGroupIds,
+            String excludeGroupIds,
+            String includeArtifactIds,
+            String excludeArtifactIds) throws MojoExecutionException {
+        
+        // init all params with empty string if null
+        includeScope = (includeScope == null? "":includeScope);
+        excludeScope = (excludeScope == null? "":excludeScope);
+        includeTypes = (includeTypes == null? "":includeTypes);
+        excludeTypes = (excludeTypes == null? "":excludeTypes);
+        includeClassifiers = (includeClassifiers == null? "":includeClassifiers);
+        excludeClassifiers = (excludeClassifiers == null? "":excludeClassifiers);
+        includeGroupIds = (includeGroupIds == null? "":includeGroupIds);
+        excludeGroupIds = (excludeGroupIds == null? "":excludeGroupIds);
+        includeArtifactIds = (includeArtifactIds == null? "":includeArtifactIds);
+        excludeArtifactIds = (excludeArtifactIds == null? "":excludeArtifactIds);
+
+        FilterArtifacts filter = new FilterArtifacts();
+
+        filter.addFilter(new ProjectTransitivityFilter(
+                dependencyArtifacts,
+                excludeTransitive));
+
+        filter.addFilter(new ScopeFilter(
+                cleanToBeTokenizedString(includeScope),
+                cleanToBeTokenizedString(excludeScope)));
+
+        filter.addFilter(new TypeFilter(
+                cleanToBeTokenizedString(includeTypes),
+                cleanToBeTokenizedString(excludeTypes)));
+
+        filter.addFilter(new ClassifierFilter(
+                cleanToBeTokenizedString(includeClassifiers),
+                cleanToBeTokenizedString(excludeClassifiers)));
+
+        filter.addFilter(new GroupIdFilter(
+                cleanToBeTokenizedString(includeGroupIds),
+                cleanToBeTokenizedString(excludeGroupIds)));
+
+        filter.addFilter(new ArtifactIdFilter(
+                cleanToBeTokenizedString(includeArtifactIds),
+                cleanToBeTokenizedString(excludeArtifactIds)));
+
+        try {
+            artifacts = filter.filter(artifacts);
+        } catch (ArtifactFilterException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
+        }
+        return artifacts;
+    }
+
+    /**
+     * Unpacks a given file
+     * 
+     * @param file the file to unpack
+     * @param location the directory where to unpack
+     * @param includes includes pattern for the files to unpack
+     * @param excludes exclude pattern for the files to unpack
+     * @param silent log unpack or not
+     * @param log the Maven logger instance, can be null
+     * @param archiverManager an instance of ArchiveManager
+     * @throws MojoExecutionException
+     */
+    public static void unpack(
+            File file,
+            File location,
+            String includes,
+            String excludes,
+            boolean silent,
+            Log log,
+            ArchiverManager archiverManager) throws MojoExecutionException {
+
+        if (log != null && log.isInfoEnabled() && !silent) {
+            log.info(logUnpack(file, location, includes, excludes));
+        }
+
+        location.mkdirs();
+
+        try {
+            UnArchiver unArchiver = archiverManager.getUnArchiver(file);
+            unArchiver.setSourceFile(file);
+            unArchiver.setDestDirectory(location);
+
+            if (StringUtils.isNotEmpty(excludes)
+                    || StringUtils.isNotEmpty(includes)) {
+
+                IncludeExcludeFileSelector[] selectors =
+                        new IncludeExcludeFileSelector[]{
+                    new IncludeExcludeFileSelector()
+                };
+
+                if (StringUtils.isNotEmpty(excludes)) {
+                    selectors[0].setExcludes(excludes.split(","));
+                }
+                if (StringUtils.isNotEmpty(includes)) {
+                    selectors[0].setIncludes(includes.split(","));
+                }
+                unArchiver.setFileSelectors(selectors);
+            }
+
+            unArchiver.extract();
+        } catch (NoSuchArchiverException e) {
+            throw new MojoExecutionException("Unknown archiver type", e);
+        } catch (ArchiverException e) {
+            throw new MojoExecutionException(
+                    "Error unpacking file: " + file + " to: " + location + "\r\n"
+                    + e.toString(), e);
+        }
+    }
+
+    private static String logUnpack(
+            File file,
+            File location,
+            String includes,
+            String excludes) {
+
+        StringBuilder msg = new StringBuilder();
+        msg.append("Unpacking ");
+        msg.append(file);
+        msg.append(" to ");
+        msg.append(location);
+
+        if (includes != null && excludes != null) {
+            msg.append(" with includes \"");
+            msg.append(includes);
+            msg.append("\" and excludes \"");
+            msg.append(excludes);
+            msg.append("\"");
+        } else if (includes != null) {
+            msg.append(" with includes \"");
+            msg.append(includes);
+            msg.append("\"");
+        } else if (excludes != null) {
+            msg.append(" with excludes \"");
+            msg.append(excludes);
+            msg.append("\"");
+        }
+
+        return msg.toString();
+    }
+
+    /**
+     * Resolves an artifact
+     * 
+     * @param requestArtifact the requested artifact
+     * @param repoSystem an instance of RepositorySystem
+     * @param repoSession an instance of RepositorySystemSession
+     * @param remoteRepos a list of RemoteRepository
+     * @return an instance of ArtifactResult
+     * @throws MojoExecutionException
+     */
+    public static ArtifactResult resolveArtifact(
+            org.sonatype.aether.util.artifact.DefaultArtifact requestArtifact,
+            RepositorySystem repoSystem,
+            RepositorySystemSession repoSession,
+            List<RemoteRepository> remoteRepos) throws MojoExecutionException {
+
+        ArtifactRequest request = new ArtifactRequest();
+        request.setArtifact(requestArtifact);
+        request.setRepositories(remoteRepos);
+
+        ArtifactResult result;
+        try {
+            result = repoSystem.resolveArtifact(repoSession, request);
+        } catch (ArtifactResolutionException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
+        }
+        return result;
+    }
+
+    /**
+     * Clean the pattern string for future regexp usage
+     * @param str the string to cleanup
+     * @return the cleaned string
+     */
+    public static String cleanToBeTokenizedString(String str) {
+        String ret = "";
+        if (!StringUtils.isEmpty(str)) {
+            ret = str.trim().replaceAll("[\\s]*,[\\s]*", ",");
+        }
+        return ret;
     }
 }

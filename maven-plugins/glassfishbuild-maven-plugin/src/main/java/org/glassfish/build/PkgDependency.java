@@ -169,8 +169,9 @@ public class PkgDependency extends AbstractAggregatorMojo {
     
     @Override
     protected void executeAggregate() throws MojoExecutionException {
-        if(skipPkgDependency.booleanValue())
+        if(skipPkgDependency.booleanValue()) {
             return;
+        }
         
         HashMap<MavenProject,Set<Artifact>> allDeps = new HashMap<MavenProject,Set<Artifact>>();
         List<String> packagingTypesList = Arrays.asList(packagingTypes.split(","));
@@ -190,10 +191,12 @@ public class PkgDependency extends AbstractAggregatorMojo {
                     packagingTypesList,
                     processHidden);
         } catch (DuplicatedArtifactIdEx ex) {
-            if(failForDuplicates)
+            if(failForDuplicates) {
                 throw new MojoExecutionException(ex.getMessage());
-            else
+            }
+            else {
                 getLog().warn(ex.getMessage());
+            }
         }
         
         // read provided descriptor if exist
@@ -368,8 +371,9 @@ public class PkgDependency extends AbstractAggregatorMojo {
                             module.getArtifactId(),
                             module.getVersion());
 
-                if (processHidden)
-                    curPackage = processHiddenDependencies(module,curPackage);
+                if (processHidden) {
+                    curPackage = processHiddenDependencies(module, curPackage);
+                }
 
                 // describe what was filtered by dependency plugin
                 Iterator<Artifact> it = deps.iterator();

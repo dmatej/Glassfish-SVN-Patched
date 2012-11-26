@@ -130,8 +130,9 @@ public class Packages {
                 PackageItem pkgItem = it.next();
                 if(gId == null || pkgItem.getGroupId().equals(gId)){
                     if(version==null || pkgItem.getVersion().equals(version)){
-                        if(pkgItem.getArtifactId().equals(aId))
+                        if(pkgItem.getArtifactId().equals(aId)) {
                             return true;
+                        }
                     }
                 }
             }
@@ -153,8 +154,10 @@ public class Packages {
             public PackageItem() {}
             
             public PackageItem(String gId, String aId, String version) throws DuplicatedArtifactIdEx {
-                if(artifactsIds.contains(aId))
-                    throw new DuplicatedArtifactIdEx("artifactId("+aId+") is duplicated in package");
+                if(artifactsIds.contains(aId)) {
+                    throw new DuplicatedArtifactIdEx(
+                            "artifactId("+aId+") is duplicated in package");
+                }
                 memberGroupId = gId;
                 memberArtifactId = aId;
                 memberVersion = version;
