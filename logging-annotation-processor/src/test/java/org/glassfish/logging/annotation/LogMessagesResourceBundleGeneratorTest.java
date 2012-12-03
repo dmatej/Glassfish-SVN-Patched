@@ -160,7 +160,7 @@ public class LogMessagesResourceBundleGeneratorTest extends TestCase {
     public void testIncorrectlyPlacedLoggerInfoAnnotation() {
         File f1 = new File(BASE_PATH, "Tea.java");
         String output = executeCompiler(f1);
-        assertTrue(output.contains("Logger name must be a constant string literal value, it cannot be a compile time computed expression."));
+        assertTrue(output.contains("Logger name must be a constant string literal value, it cannot be a compile time computed expression"));
         assertTrue(output.contains("Please check if the LoggerInfo annotation is on the logger name constant."));
     }
     

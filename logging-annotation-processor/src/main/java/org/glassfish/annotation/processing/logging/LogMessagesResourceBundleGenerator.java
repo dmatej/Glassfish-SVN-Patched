@@ -87,9 +87,13 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
                         
             Set<String> rbNames = new HashSet<String>();
             for (Element rbElem : logMessagesResourceBundleElements) {
+                if (!(rbElem instanceof VariableElement)) {
+                    error("The LogMessagesResourceBundle annotation is applied on an invalid element.");
+                    return false;
+                }
                 Object rbValue = ((VariableElement) rbElem).getConstantValue();
                 if (rbValue == null) {
-                    error("The resource bundle name value could not be computed. Specify the LogMessagesResourceBundle annotation only on a compile time constant String literal.");
+                    error("The resource bundle name value could not be computed. Specify the LogMessagesResourceBundle annotation only on a compile time constant String literal field in the class.");
                     return false;                    
                 }
                 rbNames.add(rbValue.toString());
@@ -113,12 +117,21 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
             Iterator<? extends Element> it = logMessageElements.iterator();
             Set<String> messageIds = new HashSet<String>();
             while (it.hasNext()) {
-                VariableElement element = (VariableElement)it.next();
-                String msgId = (String)element.getConstantValue();
+                Element elem = it.next();
+                if (!(elem instanceof VariableElement)) {
+                    error("The LogMessageInfo annotation is applied on an invalid element.");
+                    return false;
+                }
+                VariableElement varElem = (VariableElement)elem;
+                String msgId = (String)varElem.getConstantValue();
+                if (msgId == null) {
+                    error("The LogMessageInfo annotation is not applied on a String constant field.");
+                    return false;                    
+                }
                 debug("Processing: " + msgId);
                 // Message ids must be unique
                 if (!messageIds.contains(msgId)) {
-                    LogMessageInfo lmi = element.getAnnotation(LogMessageInfo.class);
+                    LogMessageInfo lmi = varElem.getAnnotation(LogMessageInfo.class);
                     checkLogMessageInfo(msgId, lmi);
 
                     // Save the log message...
