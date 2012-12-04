@@ -15,10 +15,10 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <th>Used</th>
 <th>Unused</th>
 <th>Total Imports</th>
+<th>Level</th>
 <th>Classes</th>
 <th>Stability</th>
 <th>Instability</th>
-<th>Layers</th>
 </tr>
 <xsl:for-each select="ModuleStats/Module">
 <tr>
@@ -28,10 +28,10 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 <td><a href="Bundles.html#{name}"><xsl:value-of select="used-export"/></a></td>
 <td><a href="Bundles.html#{name}"><xsl:value-of select="unused-export"/></a></td>
 <td><a href="Bundles.html#{name}"><xsl:value-of select="total-import"/></a></td>
+<td><a href=""><xsl:value-of select="layer"/></a></td>
 <td><a href=""><xsl:value-of select="classes"/></a></td>
 <td><a href=""><xsl:value-of select="stability"/></a></td>
 <td><a href=""><xsl:value-of select="instability"/></a></td>
-<td><a href=""><xsl:value-of select="layer"/></a></td>
 </tr>
 </xsl:for-each>
 </table>
