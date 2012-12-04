@@ -1070,15 +1070,16 @@ public class PackageAnalyser {
             sb.append("\t\t<Imports>\n");
             List<PackageRequirement> prs = new ArrayList<PackageRequirement>(b.getImportedPkgs());
             Collections.sort(prs);
-            i = 0;
+            //i = 0;
             for (PackageRequirement pr : prs) {
-                sb.append("\t\t\t" + pr);
-                if (++i < prs.size()) {
-                    sb.append(",\\");
-                }
-                sb.append("\n");
+               // sb.append("\t\t\t" + pr);
+                  sb.append(pr + ":");
+               // if (++i < prs.size()) {
+                 //   sb.append(",\\");
+                //}
+                //sb.append("\n");
             }
-            sb.append("\t\t</Imports>\n");
+            sb.append("\n\t\t</Imports>\n");
             sb.append("\t</Bundle>");
             out.println(sb);
         }
