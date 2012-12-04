@@ -161,14 +161,37 @@ public class DotGenerator {
 
         String bundleName, exportUsed, exportUnused, totalImports, totalExports = null;
 
-        public BundleInfo(String bundleName, String exportUsed, String exportUnused, String totalImports, String totalExports) {
+        int level = 0;
+    //    List<String> ExportModules = new ArrayList<String>();
+    //    List<String> ImportModules = new ArrayList<String>();
+
+        Set<String> ExportModules = new HashSet<String>();
+        Set<String> ImportModules = new HashSet<String>();
+
+
+        public BundleInfo(String bundleName, String exportUsed, String exportUnused, String totalImports, String totalExports,Set<String> ExportModules,Set<String> ImportModules ) {
 
             this.bundleName = bundleName;
             this.exportUsed = exportUsed;
             this.exportUnused = exportUnused;
             this.totalImports = totalImports;
             this.totalExports = totalExports;
+            this.ExportModules = ExportModules;
+            this.ImportModules = ImportModules;
+        }
 
+
+        public int getLevel(){
+            return this.level;
+
+        }
+
+        public void setLevel(int level){
+            this.level=level;
+        }
+
+        public String getBundleName(){
+            return this.bundleName;
         }
 
     }
@@ -246,6 +269,8 @@ public class DotGenerator {
 
         PackageInfo[] refpkgInfo = getPackageXML();
         BundleInfo[] bndlInfo = getBundleXML();
+        BundleInfo[] copybndlInfo = bndlInfo;
+
         //PackageInfo[] refpkgInfo =  pkgInfo;
         Set<String> s = new HashSet<String>();
 
@@ -300,6 +325,10 @@ public class DotGenerator {
          String instability = "";
          String layer = "";
 
+        List<BundleInfo> bndList = new ArrayList<BundleInfo>(Arrays.asList(copybndlInfo));
+        BundleInfo my_bundle = getBundle(ExportModule,bndList);
+        layer = ((Integer)my_bundle.getLevel()).toString();
+
         for (BundleInfo refbdl : bndlInfo) {
             if(refbdl.bundleName.contains(ExportModule)){
                 used = refbdl.exportUsed;
@@ -311,7 +340,6 @@ public class DotGenerator {
 
         }
 
-
         for (PackageInfo refpkg : refpkgInfo) {
             if(refpkg.exportedBy.contains(ExportModule)) {
 
@@ -321,6 +349,7 @@ public class DotGenerator {
                     }
                 }
             }
+
         for (int d=0; d<refpkg.importedBy.length; d++) {
             if (refpkg.importedBy[d].contains(ExportModule) && !refpkg.exportedBy.contains(ExportModule)) {
                 exports++;
@@ -398,8 +427,8 @@ public class DotGenerator {
         transformer.setOutputProperty(OutputKeys.METHOD, "xml");
         transformer.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-1");
         // we want to pretty format the XML output
-        transformer.setOutputProperty
-       ("{http://xml.apache.org/xslt}indent-amount", "4");
+        // transformer.setOutputProperty
+        //("{http://xml.apache.org/xslt}indent-amount", "4");
         transformer.setOutputProperty(OutputKeys.INDENT, "yes");
         DOMSource source = new DOMSource(doc);
 
@@ -421,17 +450,17 @@ public class DotGenerator {
 
          // Transformation to HTML
 
-       /*
 
         TransformerFactory tFactory = TransformerFactory.newInstance();
-        Transformer Transformer = tFactory.newTransformer(new StreamSource("Bundles.xsl"));
-        Transformer.transform( new StreamSource("bundles.xml"),new StreamResult(new FileOutputStream("Bundles.html")));
+        //Transformer Transformer = tFactory.newTransformer(new StreamSource("Bundles.xsl"));
+        Transformer Transformer = tFactory.newTransformer(new StreamSource(new File("Bundles.xsl")));
+        Transformer.transform( new StreamSource(new File("bundles.xml")),new StreamResult(new FileOutputStream("Bundles.html")));
 
-               */
 
-            TransformerFactory tFactory = TransformerFactory.newInstance();
-            Transformer Transformer = tFactory.newTransformer(new StreamSource("wires.xsl"));
-            Transformer.transform( new StreamSource("wires.xml"),new StreamResult(new FileOutputStream("wires.html")));
+
+           // TransformerFactory tFactory = TransformerFactory.newInstance();
+            Transformer = tFactory.newTransformer(new StreamSource(new File("wires.xsl")));
+            Transformer.transform( new StreamSource(new File("wires.xml")),new StreamResult(new FileOutputStream("wires.html")));
 
        }
       catch (ParserConfigurationException pce) {
@@ -502,60 +531,200 @@ public class DotGenerator {
 	}
 
 
-    	private BundleInfo[] getBundleXML() throws IOException {
-		NodeList bdLst = bdoc.getElementsByTagName("Bundle");
-		debug("Bundles count:" + bdLst.getLength());
-		List<BundleInfo> bdInfos = new ArrayList<BundleInfo>();
-		for (int i = 0; i < bdLst.getLength(); i++) {
-			Node bdNode = bdLst.item(i);
-			if (bdNode.getNodeType() == Node.ELEMENT_NODE) {
-				Element packageElement = (Element) bdNode;
+    private BundleInfo[] getBundleXML() throws IOException {
 
-				// Get Bundle  name and attributes and return bdInfos
+        NodeList bdLst = bdoc.getElementsByTagName("Bundle");
+        debug("Bundles count:" + bdLst.getLength());
+        List<BundleInfo> bdInfos = new ArrayList<BundleInfo>();
+        PackageInfo[] Info = getPackageXML();
 
-				String bName = packageElement.getAttribute("name").trim();
+        for (int i = 0; i < bdLst.getLength(); i++) {
+            Node bdNode = bdLst.item(i);
+            if (bdNode.getNodeType() == Node.ELEMENT_NODE) {
+                Element packageElement = (Element) bdNode;
+
+                // Get Bundle  name and attributes and return bdInfos
+
+                String bName = packageElement.getAttribute("name").trim();
                 String uexport = packageElement.getAttribute("used").trim();
                 String unexport = packageElement.getAttribute("unused").trim();
                 String timports = packageElement.getAttribute("total-imports").trim();
                 String texports = packageElement.getAttribute("total-exports").trim();
 
-				debug("Bundle Name : " + bName);
-				BundleInfo bInfo = new BundleInfo(bName, uexport, unexport, timports, texports);
-				bdInfos.add(bInfo);
-			}
-		}
-		return bdInfos.toArray(new BundleInfo[] {});
-	}
+                debug("Bundle Name : " + bName);
 
 
+                ///////////////////////////////////////////////////////////////
+
+                if (bName == null || bName == "")
+                    System.out.println("Null Names exist");
+
+                PackageInfo[] pkInfo = Info;
+
+
+                // For each bundle name find list of export bundles and import bundles from wires.xml info in pkinfo's.
+                //     List<String> ExportModules = new ArrayList<String>();
+                //     List<String> ImportModules = new ArrayList<String>();
+
+                Set<String> ExportModules = new HashSet<String>();
+                Set<String> ImportModules = new HashSet<String>();
+
+                for (PackageInfo pkg : pkInfo) {
+                    if (pkg.exportedBy != "" || pkg.exportedBy != null) {
+
+                        //  System.out.println("Pkg Name:Bname= " + pkg.exportedBy + bName);
+                        if (bName.equals(pkg.exportedBy)) {
+                            List<String> group = Arrays.asList(pkg.importedBy);
+                            ExportModules.addAll(group);
+
+                        }
+
+                        PackageInfo[] copypkInfo = Info;
+                        for (PackageInfo cpkg : copypkInfo) {
+
+                            if (pkg.importedBy != null || pkg.importedBy.length != 0) {
+                                List<String> impgroup = Arrays.asList(cpkg.importedBy);
+                                if (impgroup.contains(bName)) {
+                                    ImportModules.add(cpkg.exportedBy);
+                                }
+                            }
+
+                        }
+
+                    }
+                }
+
+                if (ExportModules.contains(bName))
+                    ExportModules.remove(bName);
+
+                if (ImportModules.contains(bName))
+                    ImportModules.remove(bName);
+
+                //////////////////////////////////////////////////////////////////////
+                //   System.out.println("Bundle Name: " + bName);
+                //   System.out.println("Export List: " + ExportModules.toString());
+                //   System.out.println("Import List: " + ImportModules.toString());
+
+                BundleInfo bInfo = new BundleInfo(bName, uexport, unexport, timports, texports, ExportModules, ImportModules);
+                bdInfos.add(bInfo);
+            }
+        }
+
+        //////////////////////////////////////////////
+        List<BundleInfo> copybdInfos = new ArrayList<BundleInfo>();
+        copybdInfos = bdInfos;
+        int j = 0;
+
+        for (BundleInfo bdl : copybdInfos) {
+
+            //  System.out.println("Iteration " + ++j);
+
+            String bndl_name = bdl.getBundleName();
+            BundleInfo MyBndl = getBundle(bndl_name, bdInfos);
+            //  System.out.println("BundleName: " + bndl_name);
+
+            int level = MyBndl.getLevel();
+            int max_level = 0;
+            Iterator iter = bdl.ImportModules.iterator();
+
+            if (!bdl.ImportModules.isEmpty()) {
+
+                while (iter.hasNext()) {
+                    String Iname = (String) iter.next();
+                    //  System.out.println("Import BName " + Iname);
+                    BundleInfo ImpBndl = getBundle(Iname, bdInfos);
+                    if (ImpBndl == null)
+                        continue;
+                    int imp_level = ImpBndl.getLevel();
+                    //  System.out.println("Import BLevel  " + imp_level);
+                    //  System.out.println("Max BLevel " + max_level);
+                    if (imp_level > max_level)
+                        max_level = imp_level;
+
+                }
+
+                if (level <= max_level)
+                    level = max_level + 1;
+
+            }
+
+            MyBndl.setLevel(level);
+            //System.out.println("Set BLevel " + level);
+            iter = bdl.ExportModules.iterator();
+
+            int elevel = level + 1;
+
+            while (iter.hasNext()) {
+                BundleInfo ExpBndl = getBundle((String) iter.next(), bdInfos);
+                if (ExpBndl == null)
+                    continue;
+                if (ExpBndl.getLevel() <= level) {
+                    ExpBndl.setLevel(elevel);
+                }
+                //System.out.println("Export Level BName:level " + ExpBndl.bundleName + ExpBndl.getLevel() );
+            }
+
+        }
+
+        for (BundleInfo bmdl : bdInfos) {
+
+            System.out.println("Bundle Name: " + bmdl.bundleName + " Level No: " + bmdl.getLevel());
+        }
+
+
+        //////////////////////////////////////////////////
+
+
+        return bdInfos.toArray(new BundleInfo[]{});
+    }
+
+
+    private BundleInfo getBundle(String name, List<BundleInfo> BundleList) {
+        String b_name = name;
+        List<BundleInfo> bList = BundleList;
+
+        BundleInfo sbundle = null;
+
+        for (BundleInfo bdl : bList) {
+            //   System.out.println("In LOOP"+ bdl.bundleName);
+            if (b_name.equalsIgnoreCase(bdl.bundleName)) {
+                return bdl;
+            }
+        }
+
+        //System.out.println("Not Found Bundle: " + b_name);
+
+        return sbundle;
+
+    }
 
 
     private ArrayList<String> getbundleNames(String file) throws IOException {
-       ArrayList<String> modules = new ArrayList<String>();
-       try{
-        String fileName = file;
-        FileInputStream fstream = new FileInputStream(fileName);
-		// Get the object of DataInputStream
-		DataInputStream in = new DataInputStream(fstream);
-		BufferedReader br = new BufferedReader(new InputStreamReader(in));
-		String strLine;
+        ArrayList<String> modules = new ArrayList<String>();
+        try {
+            String fileName = file;
+            FileInputStream fstream = new FileInputStream(fileName);
+            // Get the object of DataInputStream
+            DataInputStream in = new DataInputStream(fstream);
 
-        while ((strLine = br.readLine()) != null) {
+            BufferedReader br = new BufferedReader(new InputStreamReader(in));
+            String strLine;
+
+            while ((strLine = br.readLine()) != null) {
 
                 modules.add(strLine);
 
-			}
-       }catch (Exception e) {// Catch exception if any
-			System.err.println("Error: " + e.getMessage()
-					+ e.getLocalizedMessage());
-		}
+            }
+        } catch (Exception e) {// Catch exception if any
+            System.err.println("Error: " + e.getMessage()
+                    + e.getLocalizedMessage());
+        }
         return modules;
 
     }
 
 
-
-        private void generate() throws Exception {
+    private void generate() throws Exception {
             generateDotStart();
             PackageInfo[] pkgInfos = getPackageXML();
             String drawoption = this.options.drawtype.trim();
@@ -738,6 +907,7 @@ public class DotGenerator {
 			return;
 		}
 		new DotGenerator(options);
+
 	}
 
 	// Generate the beginning of the dot file
