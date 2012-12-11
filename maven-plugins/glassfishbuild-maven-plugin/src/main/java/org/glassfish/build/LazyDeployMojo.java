@@ -109,7 +109,7 @@ public class LazyDeployMojo extends AbstractDeployMojo {
         // parent's deployer might be null
         if(getDeployer() == null){
             setDeployer(deployer);
-        }        
+        }
         
         // if supplied pomFile is invalid, default to the project's pom
         if(pomFile == null || !pomFile.exists()){
@@ -121,7 +121,7 @@ public class LazyDeployMojo extends AbstractDeployMojo {
         // create the project artifact manually
         Artifact artifact = MavenUtils.createArtifact(project.getBuild().getDirectory(), model);
         // create the project attached artifact manually
-        List<Artifact> attachedArtifacts = MavenUtils.createAttachedArtifacts(project.getBuild().getDirectory(), model);
+        List<Artifact> attachedArtifacts = MavenUtils.createAttachedArtifacts(project.getBuild().getDirectory(), artifact, model);
         
         // handle scp
         ArtifactRepository repo = project.getDistributionManagementArtifactRepository();

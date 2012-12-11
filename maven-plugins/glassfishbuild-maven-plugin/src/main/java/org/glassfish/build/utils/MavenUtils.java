@@ -42,6 +42,7 @@ package org.glassfish.build.utils;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -99,10 +100,11 @@ public class MavenUtils {
     private static String getFinalName(Model model){
         Build b = model.getBuild();
         String finalName;
-        if(b != null){
+        if(b != null && b.getFinalName() !=null){
             finalName = b.getFinalName();
         } else {
-            finalName = model.getArtifactId()+"-"+model.getVersion();
+            String version = model.getVersion() != null ? model.getVersion() : model.getParent().getVersion();
+            finalName = model.getArtifactId()+"-"+version;
         }
         return finalName;
     }
@@ -115,13 +117,19 @@ public class MavenUtils {
      * @return
      * @throws MojoExecutionException
      */
-    public static List<Artifact> createAttachedArtifacts(String dir, Model model) throws MojoExecutionException {
+    public static List<Artifact> createAttachedArtifacts(String dir, Artifact mainArtifact, Model model) throws MojoExecutionException {
         List<Artifact> attachedArtifacts = new ArrayList<Artifact>();
         String finalName = getFinalName(model);
+        
+        String mainArtifactName = "";
+        if(mainArtifact.getFile() != null
+                && mainArtifact.getFile().exists()){
+            mainArtifactName = mainArtifact.getFile().getName();
+        }
         List<File> attachedArtifactFiles = MavenUtils.getFiles(
                     dir,
                     finalName+"-*.*",
-                    finalName+"."+model.getPackaging());
+                    mainArtifactName);
         
         if(!attachedArtifactFiles.isEmpty()){
             for(File attachedArtifactFile : attachedArtifactFiles){
@@ -150,12 +158,23 @@ public class MavenUtils {
         String finalName = getFinalName(model);
         List<File> artifactFiles = MavenUtils.getFiles(
                     dir,
-                    finalName+"."+model.getPackaging(),
-                    finalName+"-*." + model.getPackaging());
+                    finalName+".",
+                    finalName+"-*.");
         
         if(!artifactFiles.isEmpty()){
             artifact.setFile(artifactFiles.get(0));
+            return artifact;
         }
+        
+        artifactFiles = MavenUtils.getFiles(
+            dir,
+            model.getArtifactId()+".*",
+            model.getArtifactId()+"-*.");
+        
+        if(!artifactFiles.isEmpty()){
+            artifact.setFile(artifactFiles.get(0));
+            return artifact;
+        }        
         
         return artifact;
     }
@@ -171,12 +190,16 @@ public class MavenUtils {
      */
     public static List<File> getFiles(String dir, String includes, String excludes)
             throws MojoExecutionException{
-        
-        try {
-            return FileUtils.getFiles(new File(dir),includes,excludes);
-        } catch (IOException ex) {
-            throw new MojoExecutionException(ex.getMessage(),ex);
+
+        File f = new File(dir);
+        if (f.exists() && f.isDirectory()) {
+            try {
+                return FileUtils.getFiles(f, includes, excludes);
+            } catch (IOException ex) {
+                throw new MojoExecutionException(ex.getMessage(), ex);
+            }
         }
+        return Collections.EMPTY_LIST;
     }
     
     /**

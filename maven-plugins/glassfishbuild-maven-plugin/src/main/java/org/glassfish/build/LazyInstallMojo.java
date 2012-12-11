@@ -112,7 +112,7 @@ public class LazyInstallMojo extends AbstractInstallMojo {
         // create the project artifact manually
         Artifact artifact = MavenUtils.createArtifact(project.getBuild().getDirectory(), model);
         // create the project attached artifact manually
-        List<Artifact> attachedArtifacts = MavenUtils.createAttachedArtifacts(project.getBuild().getDirectory(), model);
+        List<Artifact> attachedArtifacts = MavenUtils.createAttachedArtifacts(project.getBuild().getDirectory(), artifact, model);
 
         // TODO: push into transformation
         boolean isPomArtifact = "pom".equals(packaging);
