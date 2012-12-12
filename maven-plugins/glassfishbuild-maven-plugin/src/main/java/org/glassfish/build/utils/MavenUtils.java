@@ -124,7 +124,8 @@ public class MavenUtils {
         String artifactName = "", finalName;
         
         // compute finalName
-        if(artifact.getFile() != null
+        if(artifact!=null 
+                && artifact.getFile() != null
                 && artifact.getFile().exists()){
             artifactName = artifact.getFile().getName();
             finalName = artifactName.substring(0, artifactName.lastIndexOf('.'));
