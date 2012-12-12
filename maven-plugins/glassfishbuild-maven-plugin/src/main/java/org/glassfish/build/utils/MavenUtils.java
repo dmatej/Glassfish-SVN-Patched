@@ -178,7 +178,7 @@ public class MavenUtils {
         return attachedArtifacts;
     }
     
-    private static File getArtifactFile(String dir, String finalName, String packaging) throws MojoExecutionException{
+    private static Artifact getArtifactFile(String dir, String finalName, Model model) throws MojoExecutionException{
         List<File> files = MavenUtils.getFiles(
                     dir,
                     finalName+".*",
@@ -190,15 +190,21 @@ public class MavenUtils {
         }
         
         // 1. guess the extension from the packaging
-        File artifactFile = extensionMap.get(packaging);
+        File artifactFile = extensionMap.get(model.getPackaging());
         if(artifactFile != null){
-            return artifactFile;
+            Artifact artifact = MavenUtils.createArtifact(model);
+            artifact.setFile(artifactFile);
+            return artifact;
         }
         // 2. take what's available
         for(String ext : extensionMap.keySet()){
             if(!ext.equals("pom") 
                     && !ext.endsWith(".asc")){
-                return extensionMap.get(ext);
+                // packaging does not match the type
+                // hence we provide type = ext
+                Artifact artifact = MavenUtils.createArtifact(model,ext,null);
+                artifact.setFile(extensionMap.get(ext));
+                return artifact;
             }
         }
         return null;
@@ -213,15 +219,12 @@ public class MavenUtils {
      * @throws MojoExecutionException
      */
     public static Artifact createArtifact(String dir, Model model) throws MojoExecutionException{
-        Artifact artifact = MavenUtils.createArtifact(model);
-        
         // resolving using finalName
-        File artifactFile = getArtifactFile(dir,getFinalName(model),model.getPackaging());
-        if(artifactFile == null){
+        Artifact artifact = getArtifactFile(dir,getFinalName(model),model);
+        if(artifact == null){
             // resolving using artifactId
-            artifactFile = getArtifactFile(dir,model.getArtifactId(),model.getPackaging());
+            artifact = getArtifactFile(dir,model.getArtifactId(),model);
         }
-        artifact.setFile(artifactFile);
         return artifact;
     }
 
