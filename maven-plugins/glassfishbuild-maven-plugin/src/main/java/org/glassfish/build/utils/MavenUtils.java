@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -117,32 +118,91 @@ public class MavenUtils {
      * @return
      * @throws MojoExecutionException
      */
-    public static List<Artifact> createAttachedArtifacts(String dir, Artifact mainArtifact, Model model) throws MojoExecutionException {
-        List<Artifact> attachedArtifacts = new ArrayList<Artifact>();
-        String finalName = getFinalName(model);
+    public static List<Artifact> createAttachedArtifacts(String dir, Artifact artifact, Model model)
+            throws MojoExecutionException {
+
+        String artifactName = "", finalName;
         
-        String mainArtifactName = "";
-        if(mainArtifact.getFile() != null
-                && mainArtifact.getFile().exists()){
-            mainArtifactName = mainArtifact.getFile().getName();
+        // compute finalName
+        if(artifact.getFile() != null
+                && artifact.getFile().exists()){
+            artifactName = artifact.getFile().getName();
+            finalName = artifactName.substring(0, artifactName.lastIndexOf('.'));
+        } else {
+            finalName = getFinalName(model);
         }
-        List<File> attachedArtifactFiles = MavenUtils.getFiles(
-                    dir,
-                    finalName+"-*.*",
-                    mainArtifactName);
         
-        if(!attachedArtifactFiles.isEmpty()){
-            for(File attachedArtifactFile : attachedArtifactFiles){
-                String fName = attachedArtifactFile.getName();
-                String classifier = fName.substring(fName.lastIndexOf('-')+1,fName.lastIndexOf('.'));
-                String type = fName.substring(fName.lastIndexOf('.')+1,fName.length());
+        List<File> attachedFiles = MavenUtils.getFiles(
+                    dir,
+                    finalName+"*.*",
+                    artifactName);
+        
+        List<Artifact> attachedArtifacts = new ArrayList<Artifact>();
+        if(!attachedFiles.isEmpty()){
+            for(File attached : attachedFiles){
+                String tokens = attached.getName().substring(finalName.length());
+                
+                // pom is not an attached artifact
+                if(tokens.endsWith(".pom")){
+                    continue;
+                }
+                
+                String type;
+                if(tokens.endsWith(".asc")){
+                    // compute type as xxx.asc
+                    type = tokens.substring(
+                            tokens.substring(0,tokens.length()-4).lastIndexOf('.')+1,
+                            tokens.length());
+                } else {
+                    type = tokens.substring(
+                            tokens.lastIndexOf('.')+1,
+                            tokens.length());
+                }
+                
+                // classifier = tokens - type
+                String classifier = tokens.substring(
+                        tokens.lastIndexOf('-')+1,
+                        tokens.length() - (type.length()+1));
+                
+                if(classifier.contains(artifact.getVersion())){
+                    classifier = classifier.substring(
+                            classifier.indexOf(artifact.getVersion()+1,
+                            classifier.length()-(artifact.getVersion().length())));
+                }
+
                 Artifact attachedArtifact = MavenUtils.createArtifact(model,type,classifier);
-                attachedArtifact.setFile(attachedArtifactFile);
+                attachedArtifact.setFile(attached);
                 attachedArtifacts.add(attachedArtifact);
             }
         }
         return attachedArtifacts;
-    }    
+    }
+    
+    private static File getArtifactFile(String dir, String finalName, String packaging) throws MojoExecutionException{
+        List<File> files = MavenUtils.getFiles(
+                    dir,
+                    finalName+".*",
+                    finalName+"-*.");
+        
+        Map<String, File> extensionMap = new HashMap<String, File>(files.size());
+        for (File f : files) {
+            extensionMap.put(f.getName().substring(finalName.length() + 1), f);
+        }
+        
+        // 1. guess the extension from the packaging
+        File artifactFile = extensionMap.get(packaging);
+        if(artifactFile != null){
+            return artifactFile;
+        }
+        // 2. take what's available
+        for(String ext : extensionMap.keySet()){
+            if(!ext.equals("pom") 
+                    && !ext.endsWith(".asc")){
+                return extensionMap.get(ext);
+            }
+        }
+        return null;
+    }
     
     /**
      * Create an artifact and its associated file by searching for target/${project.build.finalName}.${project.packaging}
@@ -155,27 +215,13 @@ public class MavenUtils {
     public static Artifact createArtifact(String dir, Model model) throws MojoExecutionException{
         Artifact artifact = MavenUtils.createArtifact(model);
         
-        String finalName = getFinalName(model);
-        List<File> artifactFiles = MavenUtils.getFiles(
-                    dir,
-                    finalName+".",
-                    finalName+"-*.");
-        
-        if(!artifactFiles.isEmpty()){
-            artifact.setFile(artifactFiles.get(0));
-            return artifact;
+        // resolving using finalName
+        File artifactFile = getArtifactFile(dir,getFinalName(model),model.getPackaging());
+        if(artifactFile == null){
+            // resolving using artifactId
+            artifactFile = getArtifactFile(dir,model.getArtifactId(),model.getPackaging());
         }
-        
-        artifactFiles = MavenUtils.getFiles(
-            dir,
-            model.getArtifactId()+".*",
-            model.getArtifactId()+"-*.");
-        
-        if(!artifactFiles.isEmpty()){
-            artifact.setFile(artifactFiles.get(0));
-            return artifact;
-        }        
-        
+        artifact.setFile(artifactFile);
         return artifact;
     }
 

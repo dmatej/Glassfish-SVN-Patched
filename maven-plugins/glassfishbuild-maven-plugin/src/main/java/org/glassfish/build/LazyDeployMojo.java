@@ -176,10 +176,12 @@ public class LazyDeployMojo extends AbstractDeployMojo {
                     
                     getLog().info("No primary artifact to deploy, deploying attached artifacts instead.");
 
-                    Artifact pomArtifact = artifactFactory.createProjectArtifact(
+                    Artifact pomArtifact = MavenUtils.createArtifact(
                             artifact.getGroupId(),
                             artifact.getArtifactId(),
-                            artifact.getBaseVersion());
+                            artifact.getBaseVersion()
+                            ,"pom"
+                            ,"");
                     pomArtifact.setFile(pomFile);
                     
                     if (updateReleaseInfo) {

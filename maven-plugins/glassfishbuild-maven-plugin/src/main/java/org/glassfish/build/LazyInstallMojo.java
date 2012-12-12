@@ -138,10 +138,12 @@ public class LazyInstallMojo extends AbstractInstallMojo {
                 } else if (!attachedArtifacts.isEmpty()) {
                     getLog().info("No primary artifact to install, installing attached artifacts instead.");
 
-                    Artifact pomArtifact = artifactFactory.createProjectArtifact(
+                    Artifact pomArtifact = MavenUtils.createArtifact(
                             artifact.getGroupId(),
                             artifact.getArtifactId(),
-                            artifact.getBaseVersion());
+                            artifact.getBaseVersion()
+                            ,"pom"
+                            ,"");
                     pomArtifact.setFile(pomFile);
                     if (updateReleaseInfo) {
                         pomArtifact.setRelease(true);
