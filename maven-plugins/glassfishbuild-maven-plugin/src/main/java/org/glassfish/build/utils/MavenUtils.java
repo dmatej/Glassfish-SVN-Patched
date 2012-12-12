@@ -160,17 +160,23 @@ public class MavenUtils {
                             tokens.length());
                 }
                 
-                // classifier = tokens - type
-                String classifier = tokens.substring(
-                        tokens.lastIndexOf('-')+1,
-                        tokens.length() - (type.length()+1));
-                
-                if(classifier.contains(artifact.getVersion())){
-                    classifier = classifier.substring(
-                            classifier.indexOf(artifact.getVersion()+1,
-                            classifier.length()-(artifact.getVersion().length())));
-                }
+                String classifier;
+                if(tokens.endsWith(".pom.asc")){
+                    // pom.asc does not have any classifier
+                    classifier = "";
+                } else {
+                    // classifier = tokens - type
+                    classifier = tokens.substring(
+                            tokens.lastIndexOf('-') + 1,
+                            tokens.length() - (type.length() + 1));
 
+                    if (classifier.contains(artifact.getVersion())) {
+                        classifier = classifier.substring(
+                                classifier.indexOf(artifact.getVersion() + 1,
+                                classifier.length() - (artifact.getVersion().length())));
+                    }
+                }
+                
                 Artifact attachedArtifact = MavenUtils.createArtifact(model,type,classifier);
                 attachedArtifact.setFile(attached);
                 attachedArtifacts.add(attachedArtifact);
