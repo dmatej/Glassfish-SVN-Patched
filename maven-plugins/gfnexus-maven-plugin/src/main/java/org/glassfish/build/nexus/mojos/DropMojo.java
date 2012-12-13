@@ -56,5 +56,6 @@ public class DropMojo extends AbstractNexusMojo{
         stagingRepo.drop();
         
         // TODO, drop promoted
+        // TODO, provide an option to ignore failures
     }
 }
