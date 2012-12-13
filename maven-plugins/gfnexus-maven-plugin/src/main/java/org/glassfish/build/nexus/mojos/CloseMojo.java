@@ -46,7 +46,7 @@ import org.glassfish.nexus.client.NexusClientException;
  * Close a staging repository
  *
  * @goal close
- * @phase package
+ * @aggregator
  *
  * @author Romain Grecourt
  */
