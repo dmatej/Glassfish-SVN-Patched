@@ -234,6 +234,25 @@ public class MavenUtils {
         }
         return artifact;
     }
+    
+    /**
+     * Returns the pom installed in target or null if not found
+     * 
+     * @param dir ${project.build.directory}
+     * @return an instance of the pom file or null if not found
+     * @throws MojoExecutionException
+     */
+    public static File getPomInTarget(String dir) throws MojoExecutionException{
+        // check for an existing .pom
+         List<File> poms = MavenUtils.getFiles(
+                    dir,
+                    "*.pom",
+                    "");
+         if(!poms.isEmpty()){
+            return poms.get(0);
+         }
+         return null;
+    }
 
     /**
      * Return the files contained in the directory, using inclusion and exclusion Ant patterns
