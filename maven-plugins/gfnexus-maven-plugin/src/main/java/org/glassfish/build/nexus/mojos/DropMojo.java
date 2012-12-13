@@ -54,5 +54,7 @@ public class DropMojo extends AbstractNexusMojo{
     @Override
     public void nexusMojoExecute() throws NexusClientException {
         stagingRepo.drop();
+        
+        // TODO, drop promoted
     }
 }
