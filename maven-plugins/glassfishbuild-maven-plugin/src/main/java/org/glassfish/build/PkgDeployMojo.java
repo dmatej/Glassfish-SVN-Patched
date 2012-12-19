@@ -60,7 +60,7 @@ import org.apache.maven.project.artifact.ProjectArtifactMetadata;
  *
  * @author Romain Grecourt
  */
-public class PkgDeploy extends AbstractAggregatorMojo {
+public class PkgDeployMojo extends AbstractAggregatorMojo {
 
     /**
      * @component

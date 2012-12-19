@@ -72,7 +72,7 @@ import org.glassfish.build.utils.MavenUtils;
  *
  * @author Romain Grecourt
  */
-public class PkgDependency extends AbstractAggregatorMojo {
+public class PkgDependencyMojo extends AbstractAggregatorMojo {
     
     /**
      * @component

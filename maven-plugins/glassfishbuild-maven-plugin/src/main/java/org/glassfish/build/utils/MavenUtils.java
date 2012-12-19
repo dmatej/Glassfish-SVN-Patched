@@ -41,12 +41,15 @@ package org.glassfish.build.utils;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
@@ -64,13 +67,17 @@ import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.apache.maven.shared.artifact.filter.collection.*;
+import org.codehaus.mojo.versions.rewriting.ModifiedPomXMLEventReader;
 import org.codehaus.plexus.archiver.ArchiverException;
 import org.codehaus.plexus.archiver.UnArchiver;
 import org.codehaus.plexus.archiver.manager.ArchiverManager;
 import org.codehaus.plexus.archiver.manager.NoSuchArchiverException;
 import org.codehaus.plexus.components.io.fileselectors.IncludeExcludeFileSelector;
 import org.codehaus.plexus.util.FileUtils;
+import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.StringUtils;
+import org.codehaus.plexus.util.WriterFactory;
+import org.codehaus.stax2.XMLInputFactory2;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.repository.RemoteRepository;
@@ -756,5 +763,20 @@ public class MavenUtils {
             ret = str.trim().replaceAll("[\\s]*,[\\s]*", ",");
         }
         return ret;
+    }
+    
+    public static ModifiedPomXMLEventReader newModifiedPomXER(StringBuilder input) throws XMLStreamException {
+        XMLInputFactory inputFactory = XMLInputFactory2.newInstance();
+        inputFactory.setProperty(XMLInputFactory2.P_PRESERVE_LOCATION, Boolean.TRUE);
+        return new ModifiedPomXMLEventReader(input, inputFactory);
+    }
+    
+    public static void writeFile(File outFile, StringBuilder input) throws IOException {
+        Writer writer = WriterFactory.newXmlWriter(outFile);
+        try {
+            IOUtil.copy(input.toString(), writer);
+        } finally {
+            IOUtil.close(writer);
+        }
     }
 }
