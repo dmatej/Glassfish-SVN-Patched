@@ -1,6 +1,45 @@
+Index: appserver/admingui/common/src/main/java/org/glassfish/admingui/common/security/AdminConsoleAuthModule.java
+===================================================================
+--- appserver/admingui/common/src/main/java/org/glassfish/admingui/common/security/AdminConsoleAuthModule.java	(revision 57629)
++++ appserver/admingui/common/src/main/java/org/glassfish/admingui/common/security/AdminConsoleAuthModule.java	(working copy)
+@@ -256,7 +256,7 @@
+         Client client2 = ClientFactory.newClient();
+         RestUtil.initialize(client2);
+         WebTarget target = client2.target(restURL);
+-        target.configuration().register(new HttpBasicAuthFilter(username, password));
++        target.register(new HttpBasicAuthFilter(username, password));
+         MultivaluedMap payLoad = new MultivaluedHashMap();
+         payLoad.putSingle("remoteHostName", request.getRemoteHost());
+ 
+Index: appserver/admingui/common/src/main/java/org/glassfish/admingui/common/util/RestUtil.java
+===================================================================
+--- appserver/admingui/common/src/main/java/org/glassfish/admingui/common/util/RestUtil.java	(revision 57629)
++++ appserver/admingui/common/src/main/java/org/glassfish/admingui/common/util/RestUtil.java	(working copy)
+@@ -109,8 +109,7 @@
+     public static Client getJerseyClient() {
+         if (JERSEY_CLIENT == null) {
+             JERSEY_CLIENT = ClientFactory.newClient();
+-            JERSEY_CLIENT.configuration()
+-                    .register(new CsrfProtectionFilter())
++            JERSEY_CLIENT.register(new CsrfProtectionFilter())
+                     .register(new RequiredHeadersFilter())
+                     .register(new JacksonFeature());
+         }
+@@ -925,9 +924,9 @@
+         try {
+             ServiceLocator habitat = SecurityServicesUtil.getInstance().getHabitat();
+             SecureAdmin secureAdmin = habitat.getService(SecureAdmin.class);
+-            client.configuration().setProperty(ClientProperties.SSL_CONFIG, new SslConfig(new BasicHostnameVerifier(),
++            client.setProperty(ClientProperties.SSL_CONFIG, new SslConfig(new BasicHostnameVerifier(),
+                                                                                           habitat.<SSLUtils>getService(SSLUtils.class).getAdminSSLContext(SecureAdmin.Util.DASAlias(secureAdmin), null)));
+-            client.configuration().register(CsrfProtectionFilter.class);
++            client.register(CsrfProtectionFilter.class);
+ 
+         } catch (Exception ex) {
+             Throwable cause = ex;
 Index: nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/ClientWrapper.java
 ===================================================================
---- nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/ClientWrapper.java	(revision 57623)
+--- nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/ClientWrapper.java	(revision 57629)
 +++ nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/ClientWrapper.java	(working copy)
 @@ -47,9 +47,9 @@
  import javax.ws.rs.client.Client;
@@ -115,7 +154,7 @@ Index: nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/cli
  }
 Index: nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/RestClient.java
 ===================================================================
---- nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/RestClient.java	(revision 57623)
+--- nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/RestClient.java	(revision 57629)
 +++ nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/RestClient.java	(working copy)
 @@ -70,9 +70,9 @@
          this.useSsl = useSsl;
@@ -131,7 +170,7 @@ Index: nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/cli
  
 Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/AbstractRestResourceProvider.java
 ===================================================================
---- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/AbstractRestResourceProvider.java	(revision 57623)
+--- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/AbstractRestResourceProvider.java	(revision 57629)
 +++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/AbstractRestResourceProvider.java	(working copy)
 @@ -110,7 +110,7 @@
  
@@ -168,7 +207,7 @@ Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/ad
  
 Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/RestManagementResourceProvider.java
 ===================================================================
---- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/RestManagementResourceProvider.java	(revision 57623)
+--- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/RestManagementResourceProvider.java	(revision 57629)
 +++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/RestManagementResourceProvider.java	(working copy)
 @@ -93,7 +93,7 @@
                                              final Set<? extends Binder> additionalBinders)
@@ -181,7 +220,7 @@ Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/ad
  
 Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/ProxyImpl.java
 ===================================================================
---- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/ProxyImpl.java	(revision 57623)
+--- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/ProxyImpl.java	(revision 57629)
 +++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/ProxyImpl.java	(working copy)
 @@ -137,7 +137,7 @@
      private void addAuthenticationInfo(Client client, WebTarget resourceBuilder, Server server, ServiceLocator habitat) {
@@ -194,7 +233,7 @@ Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/ut
  
 Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/resources/admin/CommandResource.java
 ===================================================================
---- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/resources/admin/CommandResource.java	(revision 57623)
+--- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/resources/admin/CommandResource.java	(revision 57629)
 +++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/resources/admin/CommandResource.java	(working copy)
 @@ -467,7 +467,7 @@
          if (model != null ) {
@@ -207,7 +246,7 @@ Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/re
          }
 Index: nucleus/admin/util/src/main/java/com/sun/enterprise/admin/remote/RemoteRestAdminCommand.java
 ===================================================================
---- nucleus/admin/util/src/main/java/com/sun/enterprise/admin/remote/RemoteRestAdminCommand.java	(revision 57623)
+--- nucleus/admin/util/src/main/java/com/sun/enterprise/admin/remote/RemoteRestAdminCommand.java	(revision 57629)
 +++ nucleus/admin/util/src/main/java/com/sun/enterprise/admin/remote/RemoteRestAdminCommand.java	(working copy)
 @@ -830,8 +830,7 @@
  
@@ -239,7 +278,7 @@ Index: nucleus/admin/util/src/main/java/com/sun/enterprise/admin/remote/RemoteRe
                  Builder request = target.request(acceptedResponseTypes);
 Index: nucleus/pom.xml
 ===================================================================
---- nucleus/pom.xml	(revision 57623)
+--- nucleus/pom.xml	(revision 57629)
 +++ nucleus/pom.xml	(working copy)
 @@ -115,8 +115,8 @@
          <woodstox.version>4.1.2</woodstox.version>
