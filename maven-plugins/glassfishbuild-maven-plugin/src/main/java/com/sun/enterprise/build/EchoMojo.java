@@ -52,15 +52,13 @@ public class EchoMojo extends AbstractMojo
 {
     /**
      * Any String to print out.
-     * @parameter alias="messages"
+     * @parameter expression="${message}"
      */
-    private String[] messages;    
+    private String message;
 
     public void execute() throws MojoExecutionException,  MojoFailureException {
         getLog().info("------------------------------------------------------------------------");
-        for (String message : messages) {
-            getLog().info( message.toString() );
-	}
+        getLog().info( message.toString());
         getLog().info("------------------------------------------------------------------------");
     }
 }

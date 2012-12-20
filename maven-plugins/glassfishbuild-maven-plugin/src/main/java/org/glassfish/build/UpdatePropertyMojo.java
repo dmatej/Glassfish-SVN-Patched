@@ -40,7 +40,6 @@
 package org.glassfish.build;
 
 import java.io.IOException;
-import java.io.Writer;
 import javax.xml.stream.XMLStreamException;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -48,8 +47,6 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.mojo.versions.api.PomHelper;
 import org.codehaus.mojo.versions.rewriting.ModifiedPomXMLEventReader;
-import org.codehaus.plexus.util.IOUtil;
-import org.codehaus.plexus.util.WriterFactory;
 import org.glassfish.build.utils.MavenUtils;
 
 /**
