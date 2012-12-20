@@ -124,6 +124,7 @@ public class LazyInstallMojo extends AbstractInstallMojo {
         ArtifactMetadata metadata;
         try {
             if (isPomArtifact) {
+                artifact.setFile(pomFile);
                 installer.install(pomFile, artifact, localRepository);
                 installChecksums(artifact);
             } else {
