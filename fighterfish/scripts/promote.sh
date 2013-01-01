@@ -12,7 +12,7 @@ then
 fi
 
 # Create a temporary dir to checkout the module(s) that need to be released.
-TS=`date +%F_%T`
+TS=`date +%Y%m%d_%H%M%S`
 mkdir $WORKSPACE/$TS
 cd $WORKSPACE/$TS
 svn co https://svn.java.net/svn/glassfish~svn/trunk/fighterfish/$MODULE $MODULE
