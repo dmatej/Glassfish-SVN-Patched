@@ -3,7 +3,7 @@
 
     DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
-    Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
+    Copyright (c) 2011-2013 Oracle and/or its affiliates. All rights reserved.
 
     The contents of this file are subject to the terms of either the GNU
     General Public License Version 2 only ("GPL") or the Common Development
@@ -246,6 +246,11 @@
         </dependency>
     </dependencies>
 
+    <!--
+    We want to run the tests multiple times with different settings like with an existing GlassFish
+    installation, without an installation, with Felix and Equinox, etc. So, we create multiple
+    test executions.
+    -->
     <profiles>
         <profile>
             <id>ToolsJar</id>
@@ -334,12 +339,11 @@
             </properties>
         </profile>
 
+        <!--
+        In this profile, the test framework downloads and installs glassfish and uses it to run tests.
+        The location to download glassfish can be overridden via a property called fighterfish.provisioner.url.
+        -->
         <profile>
-            <!--
-            We want to run the tests multiple times with different settings like with an existing GlassFish
-            installation, without an installation, with Felix and Equinox, etc. So, we create multiple
-            test executions.
-            -->
             <id>TestWithoutInstallation</id>
             <activation>
                 <!--
@@ -360,7 +364,7 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <fighterfish.provisioner.url>${glassfish.url}</fighterfish.provisioner.url>
+                                        <fighterfish.provisioner.url>${fighterfish.provisioner.url}</fighterfish.provisioner.url>
                                         <org.osgi.framework.storage>
                                             ${project.build.directory}/osgi-cache/${GlassFish_Platform}/TestWithoutInstallation
                                         </org.osgi.framework.storage>
@@ -373,6 +377,15 @@
             </build>
         </profile>
 
+        <!--
+        In this profile, it is NOT the responsibility of test framework to install glassfish.
+        So, we use maven-dependency-plugin:unpack to install glassfish in target dir and pass its
+        location to test framework via com.sun.aas.installRoot property.
+        We have hard coded the version of glassfish to install,
+        because the purpose of this profile is to make sure that this utility can use an existing installation.
+        If we want to test compatibility with various gf versions, we can easily
+        do that using TestWithoutInstallation profile by overriding fighterfish.provisioner.url.
+        -->
         <profile>
             <id>TestWithInstallation</id>
             <activation>
@@ -384,6 +397,33 @@
             <build>
                 <plugins>
                     <plugin>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>install-glassfish</id>
+                                <goals>
+                                    <goal>unpack</goal>
+                                </goals>
+                                <phase>pre-integration-test</phase>
+                                <configuration>
+                                    <artifactItems>
+                                        <artifactItem>
+                                            <groupId>org.glassfish.main.distributions</groupId>
+                                            <artifactId>glassfish</artifactId>
+                                            <version>3.1.2.2</version>
+                                            <type>zip</type>
+                                        </artifactItem>
+                                    </artifactItems>
+                                    <outputDirectory>
+                                        ${project.build.directory}/stages/
+                                    </outputDirectory>
+                                    <overWriteReleases>true</overWriteReleases>
+                                    <overWriteSnapshots>true</overWriteSnapshots>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <executions>
                             <execution>
@@ -394,7 +434,9 @@
                                 </goals>
                                 <configuration>
                                     <systemPropertyVariables>
-                                        <com.sun.aas.installRoot>${glassfish.home}</com.sun.aas.installRoot>
+                                        <com.sun.aas.installRoot>
+                                            ${project.build.directory}/stages/glassfish3/glassfish
+                                        </com.sun.aas.installRoot>
                                         <org.osgi.framework.storage>
                                             ${project.build.directory}/osgi-cache/${GlassFish_Platform}/TestWithInstallation
                                         </org.osgi.framework.storage>
@@ -417,11 +459,10 @@
 
     </profiles>
     <properties>
-        <!-- The version of pax-exam being used. I have not tested test.util bundle
-              with 2.2.0 yet, so, let's stick to 2.1.0 for now. -->
+        <!-- The version of pax-exam being used. I have tested test.util bundle
+              with 2.3.0 only, so, let's stick to this version for now. -->
         <pax-exam.version>2.3.0</pax-exam.version>
-        <glassfish.home>/home/ss141213/WS/gf/v3/appserver/distributions/glassfish/target/stage/glassfish3/glassfish/</glassfish.home>
-        <glassfish.url>mvn:org.glassfish.main.distributions/glassfish/4.0-SNAPSHOT/zip</glassfish.url>
+        <fighterfish.provisioner.url>mvn:org.glassfish.main.distributions/glassfish/3.1.2.2/zip</fighterfish.provisioner.url>
         <felix.version>3.0.8</felix.version>
         <equinox.version>3.6.2.R36x_v20110210</equinox.version>
     </properties>
