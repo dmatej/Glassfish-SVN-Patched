@@ -18,6 +18,7 @@ cd $WORKSPACE/$TS
 svn co https://svn.java.net/svn/glassfish~svn/trunk/fighterfish/$MODULE $MODULE
 
 cd $MODULE
-mvn -Dmaven.repo.local=$WORKSPACE/repository -Dhttps.proxyHost=www-proxy.us.oracle.com -Dhttps.proxyPort=80 -Prelease -B -DtagBase=https://svn.java.net/svn/glassfish~svn/tags/fighterfish-releases -DtagNameFormat=@{project.groupId}.@{project.artifactId}-@{project.version} release:prepare
+# Because of the way test/util is setup, we can't run tests while releasing it, so we have to skip tests.
+mvn -Dmaven.repo.local=$WORKSPACE/repository -Dhttps.proxyHost=www-proxy.us.oracle.com -Dhttps.proxyPort=80 -Prelease -B -DtagBase=https://svn.java.net/svn/glassfish~svn/tags/fighterfish-releases -DtagNameFormat=@{project.groupId}.@{project.artifactId}-@{project.version} release:prepare -Drelease.arguments=-DskipTests=true
  
 mvn -Dmaven.repo.local=$WORKSPACE/repository -Dhttps.proxyHost=www-proxy.us.oracle.com -Dhttps.proxyPort=80 -Prelease -B release:perform 
