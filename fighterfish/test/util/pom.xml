@@ -67,6 +67,74 @@
         <url>https://svn.java.net/svn/glassfish~svn/trunk/fighterfish/test/util</url>
     </scm>
     <build>
+        <!-- This or a subset of it should go to a higher level pom -->
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>2.3.2</version>
+                    <configuration>
+                        <source>1.6</source>
+                        <target>1.6</target>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <!-- Configure maven-bundle-plugin to generate OSGi manifest. Please
+                            note: we use the manifest goal only and not the bundle goal. The bundle goal
+                            can lead to very surprising results if the package names are not correctly
+                            specified. So, we use the jar plugin to generate the jar. -->
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>maven-bundle-plugin</artifactId>
+                    <version>2.3.4</version>
+                    <configuration>
+                        <!-- By default, we don't export anything. -->
+                        <Export-Package/>
+                        <!-- Since, we are in a top level pom and we we don't want it to be
+                                 active for plain jar type artifacts, enable the plugin for hk2-jar and bundle
+                                 packaging type only, -->
+                        <supportedProjectTypes>
+                            <supportedProjectType>jar</supportedProjectType>
+                        </supportedProjectTypes>
+                        <instructions>
+                            <!-- Read all the configuration from osgi.properties file, if it exists.
+                                      See Felix-699 to find out why we use ${basedir}. -->
+                            <_include>-${basedir}/osgi.properties</_include>
+                        </instructions>
+                    </configuration>
+                    <executions>
+                        <execution>
+                            <id>bundle-manifest</id>
+                            <phase>process-classes</phase>
+                            <goals>
+                                <goal>manifest</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.3.2</version>
+                    <configuration>
+                        <archive>
+                            <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF
+                            </manifestFile>
+                        </archive>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>2.12.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.10</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
@@ -75,64 +143,19 @@
         </resources>
         <plugins>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
-                </configuration>
             </plugin>
             <plugin>
-                <!-- Configure maven-bundle-plugin to generate OSGi manifest. Please
-                        note: we use the manifest goal only and not the bundle goal. The bundle goal
-                        can lead to very surprising results if the package names are not correctly
-                        specified. So, we use the jar plugin to generate the jar. -->
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
-                <version>2.3.4</version>
-                <configuration>
-                    <!-- By default, we don't export anything. -->
-                    <Export-Package />
-                    <!-- Since, we are in a top level pom and we we don't want it to be
-                             active for plain jar type artifacts, enable the plugin for hk2-jar and bundle
-                             packaging type only, -->
-                    <supportedProjectTypes>
-                        <supportedProjectType>jar</supportedProjectType>
-                    </supportedProjectTypes>
-                    <instructions>
-                        <!-- Read all the configuration from osgi.properties file, if it exists.
-                                  See Felix-699 to find out why we use ${basedir}. -->
-                        <_include>-${basedir}/osgi.properties</_include>
-                    </instructions>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>bundle-manifest</id>
-                        <phase>process-classes</phase>
-                        <goals>
-                            <goal>manifest</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <artifactId>maven-jar-plugin</artifactId>
-                <configuration>
-                    <archive>
-                        <manifestFile>${project.build.outputDirectory}/META-INF/MANIFEST.MF
-                        </manifestFile>
-                    </archive>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <configuration>
-                    <mavenExecutorId>forked-path</mavenExecutorId>
-                    <useReleaseProfile>false</useReleaseProfile>
-                    <arguments>${release.arguments}</arguments>
-                </configuration>
+                <artifactId>maven-jar-plugin</artifactId>
             </plugin>
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
                     <!--
@@ -150,6 +173,7 @@
             Let's configure fail-safe plugin to execute integration tests for this module
             -->
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
                 <executions>
                 </executions>
@@ -455,7 +479,6 @@
                 <maven.surefire.debug>-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=9009</maven.surefire.debug>
             </properties>
         </profile>
-
     </profiles>
     <properties>
         <!-- The version of pax-exam being used. I have tested test.util bundle
