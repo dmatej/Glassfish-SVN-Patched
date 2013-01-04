@@ -12,6 +12,6 @@ then
 fi
 
 # Directory where last failed promotion job ran.
-cd $WORKSPACE/20130103_060412/$MODULE
+cd $WORKSPACE/20130104_040249/$MODULE
  
-mvn -Dmaven.repo.local=$WORKSPACE/repository -Dhttps.proxyHost=www-proxy.us.oracle.com -Dhttps.proxyPort=80 -Prelease -B release:rollback
+mvn -Dmaven.repo.local=$WORKSPACE/repository -Dhttps.proxyHost=www-proxy.us.oracle.com -Dhttps.proxyPort=80 -B release:rollback
