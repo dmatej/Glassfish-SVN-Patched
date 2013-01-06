@@ -5,7 +5,7 @@
 # everytime we want to rollback. This also allows us better tracking.
 MODULE=sample/uas/api
 # Directory relative to WORKSPACE where last failed promotion job ran.
-DIRNAME=20130105_231629
+DIRNAME=20130105_232930
 
 if [ "$MODULE" = "" ]
 then
@@ -15,4 +15,4 @@ fi
 
 cd $WORKSPACE/$DIRNAME/$MODULE
  
-mvn -Dmaven.repo.local=$WORKSPACE/repository -Dhttps.proxyHost=www-proxy.us.oracle.com -Dhttps.proxyPort=80 -B release:rollback
+mvn -Dhttps.proxyHost=www-proxy.us.oracle.com -Dhttps.proxyPort=80 -B release:rollback
