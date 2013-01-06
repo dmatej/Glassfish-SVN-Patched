@@ -89,8 +89,8 @@ public class PaxExamJunitRunnerTest {
         try {
         	// Let's install a couple of bundles one of which is an API bundle 
         	// which is consumed by the second one which is a WAB. 
-            Bundle uas_api_b = tc.installBundle("mvn:org.glassfish.fighterfish/sample.uas.api/1.0.0-SNAPSHOT");
-            Bundle uas_simplewab_b = tc.installBundle("mvn:org.glassfish.fighterfish/sample.uas.simplewab/1.0.0-SNAPSHOT/war");
+            Bundle uas_api_b = tc.installBundle("mvn:org.glassfish.fighterfish/sample.uas.api/1.0.0");
+            Bundle uas_simplewab_b = tc.installBundle("mvn:org.glassfish.fighterfish/sample.uas.simplewab/1.0.0/war");
             WebAppBundle uas_simple_webapp = tc.deployWebAppBundle(uas_simplewab_b);
             String response = uas_simple_webapp.getResponse("/LoginServlet?name=foo&password=bar");
             System.out.println(response);
