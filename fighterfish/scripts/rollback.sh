@@ -4,6 +4,8 @@
 # We hard code the module name to avoid having to update the hudson job
 # everytime we want to rollback. This also allows us better tracking.
 MODULE=sample/uas/api
+# Directory relative to WORKSPACE where last failed promotion job ran.
+DIRNAME=20130105_231629
 
 if [ "$MODULE" = "" ]
 then
@@ -11,7 +13,6 @@ then
  exit 1
 fi
 
-# Directory where last failed promotion job ran.
-cd $WORKSPACE/20130105_013819/$MODULE
+cd $WORKSPACE/$DIRNAME/$MODULE
  
 mvn -Dmaven.repo.local=$WORKSPACE/repository -Dhttps.proxyHost=www-proxy.us.oracle.com -Dhttps.proxyPort=80 -B release:rollback
