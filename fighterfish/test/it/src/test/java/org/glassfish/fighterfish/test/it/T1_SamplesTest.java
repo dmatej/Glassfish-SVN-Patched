@@ -85,14 +85,14 @@ public class T1_SamplesTest extends AbstractTestObject {
             /*
              * URIs of various sample.uas bundles that we are going to use.
              */
-            String uas_api = "mvn:org.glassfish.fighterfish/sample.uas.api/1.0.0-SNAPSHOT";
-            String uas_simpleservice = "mvn:org.glassfish.fighterfish/sample.uas.simpleservice/1.0.0-SNAPSHOT";
-            String uas_simplewab = "mvn:org.glassfish.fighterfish/sample.uas.simplewab/1.0.0-SNAPSHOT/war";
-            String uas_simplewabfragment = "mvn:org.glassfish.fighterfish/sample.uas.simplewabfragment/1.0.0-SNAPSHOT";
-            String uas_entities = "mvn:org.glassfish.fighterfish/sample.uas.entities/1.0.0-SNAPSHOT";
-            String uas_ejbservice = "mvn:org.glassfish.fighterfish/sample.uas.ejbservice/1.0.0-SNAPSHOT";
-            String uas_ejbservice2 = "mvn:org.glassfish.fighterfish/sample.uas.ejbservice2/1.0.0-SNAPSHOT";
-            String uas_advservice = "mvn:org.glassfish.fighterfish/sample.uas.advservice/1.0.0-SNAPSHOT";
+            String uas_api = "mvn:org.glassfish.fighterfish/sample.uas.api/1.0.0";
+            String uas_simpleservice = "mvn:org.glassfish.fighterfish/sample.uas.simpleservice/1.0.0";
+            String uas_simplewab = "mvn:org.glassfish.fighterfish/sample.uas.simplewab/1.0.0/war";
+            String uas_simplewabfragment = "mvn:org.glassfish.fighterfish/sample.uas.simplewabfragment/1.0.0";
+            String uas_entities = "mvn:org.glassfish.fighterfish/sample.uas.entities/1.0.0";
+            String uas_ejbservice = "mvn:org.glassfish.fighterfish/sample.uas.ejbservice/1.0.0";
+            String uas_ejbservice2 = "mvn:org.glassfish.fighterfish/sample.uas.ejbservice2/1.0.0";
+            String uas_advservice = "mvn:org.glassfish.fighterfish/sample.uas.advservice/1.0.0";
 
             Bundle uas_api_b = tc.installBundle(uas_api);
             Bundle uas_simpleservice_b = tc.installBundle(uas_simpleservice);
@@ -249,7 +249,7 @@ public class T1_SamplesTest extends AbstractTestObject {
             }
             httpService = OSGiUtil.getService(ctx, HttpService.class, getTimeout());
             assertNotNull(httpService);
-            final String location = "mvn:org.glassfish.fighterfish/sample.osgihttp.helloworld/1.0.0-SNAPSHOT";
+            final String location = "mvn:org.glassfish.fighterfish/sample.osgihttp.helloworld/1.0.0";
             Bundle bundle = tc.installBundle(location);
             final Semaphore eventRaised = new Semaphore(0);
             EventAdmin eventAdmin = OSGiUtil.getService(ctx, EventAdmin.class, getTimeout());
@@ -299,9 +299,9 @@ public class T1_SamplesTest extends AbstractTestObject {
                        /*
              * URIs of various sample.uas bundles that we are going to use.
              */
-            String uas_api = "mvn:org.glassfish.fighterfish/sample.uas.api/1.0.0-SNAPSHOT";
-            String uas_simpleservice = "mvn:org.glassfish.fighterfish/sample.uas.simpleservice/1.0.0-SNAPSHOT";
-            String uas_simplejaxrs = "mvn:org.glassfish.fighterfish/sample.uas.simplejaxrs/1.0.0-SNAPSHOT/war";
+            String uas_api = "mvn:org.glassfish.fighterfish/sample.uas.api/1.0.0";
+            String uas_simpleservice = "mvn:org.glassfish.fighterfish/sample.uas.simpleservice/1.0.0";
+            String uas_simplejaxrs = "mvn:org.glassfish.fighterfish/sample.uas.simplejaxrs/1.0.0/war";
 
             final String registrationRequest = "/register?name=admin&password=admin";
             final String successfulRegistration = "Registered";

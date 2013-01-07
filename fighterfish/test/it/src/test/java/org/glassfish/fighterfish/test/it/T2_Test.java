@@ -94,7 +94,7 @@ public class T2_Test extends AbstractTestObject {
         logger.logp(Level.INFO, "T2_Test", "testapp0", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
-            final String location = "mvn:org.glassfish.fighterfish/test.app0/1.0.0-SNAPSHOT/war";
+            final String location = "mvn:org.glassfish.fighterfish/test.app0/1.0.0/war";
             Bundle bundle = tc.installBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
@@ -120,7 +120,7 @@ public class T2_Test extends AbstractTestObject {
         logger.logp(Level.INFO, "T2_Test", "testapp1", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
-            final String location = "mvn:org.glassfish.fighterfish/test.app1/1.0.0-SNAPSHOT/war";
+            final String location = "mvn:org.glassfish.fighterfish/test.app1/1.0.0/war";
             Bundle bundle = tc.installBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
@@ -151,7 +151,7 @@ public class T2_Test extends AbstractTestObject {
         logger.logp(Level.INFO, "T2_Test", "testapp2", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
-            String location = "mvn:org.glassfish.fighterfish/test.app2/1.0.0-SNAPSHOT/war";
+            String location = "mvn:org.glassfish.fighterfish/test.app2/1.0.0/war";
             Bundle bundle = tc.installBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
@@ -182,7 +182,7 @@ public class T2_Test extends AbstractTestObject {
         logger.logp(Level.INFO, "T2_Test", "testapp3", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
-            String location = "mvn:org.glassfish.fighterfish/test.app3/1.0.0-SNAPSHOT/war";
+            String location = "mvn:org.glassfish.fighterfish/test.app3/1.0.0/war";
             Bundle bundle = tc.installBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
@@ -208,7 +208,7 @@ public class T2_Test extends AbstractTestObject {
         logger.logp(Level.INFO, "T2_Test", "testapp4", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
-            String location = "mvn:org.glassfish.fighterfish/test.app4/1.0.0-SNAPSHOT/war";
+            String location = "mvn:org.glassfish.fighterfish/test.app4/1.0.0/war";
             Bundle bundle = tc.installBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
@@ -234,7 +234,7 @@ public class T2_Test extends AbstractTestObject {
         logger.logp(Level.INFO, "T2_Test", "testapp5", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
-            String location = "mvn:org.glassfish.fighterfish/test.app5/1.0.0-SNAPSHOT/war";
+            String location = "mvn:org.glassfish.fighterfish/test.app5/1.0.0/war";
             Bundle bundle = tc.installBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
@@ -262,7 +262,7 @@ public class T2_Test extends AbstractTestObject {
         TestContext tc = TestContext.create(getClass());
         try {
 
-            String location = "mvn:org.glassfish.fighterfish/test.app6/1.0.0-SNAPSHOT"; // this is a .jar file, so no classifier needed
+            String location = "mvn:org.glassfish.fighterfish/test.app6/1.0.0"; // this is a .jar file, so no classifier needed
             empDeptCrud(tc, location, "testapp6");
         } finally {
             tc.destroy();
@@ -283,7 +283,7 @@ public class T2_Test extends AbstractTestObject {
         TestContext tc = TestContext.create(getClass());
         try {
 
-            String location = "mvn:org.glassfish.fighterfish/test.app7/1.0.0-SNAPSHOT/war";
+            String location = "mvn:org.glassfish.fighterfish/test.app7/1.0.0/war";
             empDeptCrud(tc, location, "testapp7");
         } finally {
             tc.destroy();
@@ -303,7 +303,7 @@ public class T2_Test extends AbstractTestObject {
         TestContext tc = TestContext.create(getClass());
         try {
 
-            String location = "mvn:org.glassfish.fighterfish/test.app8/1.0.0-SNAPSHOT"; // this is a jar
+            String location = "mvn:org.glassfish.fighterfish/test.app8/1.0.0"; // this is a jar
             empDeptCrud(tc, location, "testapp8");
         } finally {
             tc.destroy();
@@ -323,7 +323,7 @@ public class T2_Test extends AbstractTestObject {
         TestContext tc = TestContext.create(getClass());
         try {
 
-            String location = "mvn:org.glassfish.fighterfish/test.app9/1.0.0-SNAPSHOT";
+            String location = "mvn:org.glassfish.fighterfish/test.app9/1.0.0";
             Bundle bundle = tc.installBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
@@ -350,7 +350,7 @@ public class T2_Test extends AbstractTestObject {
         TestContext tc = TestContext.create(getClass());
         try {
 
-            String location = "mvn:org.glassfish.fighterfish/test.app10/1.0.0-SNAPSHOT"; // this has .jar extn
+            String location = "mvn:org.glassfish.fighterfish/test.app10/1.0.0"; // this has .jar extn
             Bundle bundle = tc.installBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
@@ -378,7 +378,7 @@ public class T2_Test extends AbstractTestObject {
         try {
 
             // Tests only deploying an ejb bundle with remote and local ejb in it to make sure the bug reported in #11855 is fixed.
-            String location_ejb = "mvn:org.glassfish.fighterfish/test.app11.ejb/1.0.0-SNAPSHOT";
+            String location_ejb = "mvn:org.glassfish.fighterfish/test.app11.ejb/1.0.0";
             Bundle bundle_ejb = tc.installBundle(location_ejb);
             EjbBundle ejbBundle = new EjbBundle(ctx, bundle_ejb, new String[]{"org.glassfish.fighterfish.test.app11.ejb.TestLocal"});
             ejbBundle.deploy(getTimeout(), TimeUnit.MILLISECONDS);
@@ -403,8 +403,8 @@ public class T2_Test extends AbstractTestObject {
         TestContext tc = TestContext.create(getClass());
         try {
 
-            String location_ejb = "mvn:org.glassfish.fighterfish/test.app11.ejb/1.0.0-SNAPSHOT";
-            String location_war = "mvn:org.glassfish.fighterfish/test.app11/1.0.0-SNAPSHOT/war";
+            String location_ejb = "mvn:org.glassfish.fighterfish/test.app11.ejb/1.0.0";
+            String location_war = "mvn:org.glassfish.fighterfish/test.app11/1.0.0/war";
             Bundle bundle_ejb = tc.installBundle(location_ejb);
             EjbBundle ejbBundle = new EjbBundle(ctx, bundle_ejb, new String[]{"org.glassfish.fighterfish.test.app11.ejb.TestLocal"});
             ejbBundle.deploy(getTimeout(), TimeUnit.MILLISECONDS);
@@ -439,8 +439,8 @@ public class T2_Test extends AbstractTestObject {
         String appName = null;
         try {
 
-            String location_ejb = "mvn:org.glassfish.fighterfish/test.app11.ejb/1.0.0-SNAPSHOT";
-            String location_war = "mvn:org.glassfish.fighterfish/test.app11/1.0.0-SNAPSHOT/war";
+            String location_ejb = "mvn:org.glassfish.fighterfish/test.app11.ejb/1.0.0";
+            String location_war = "mvn:org.glassfish.fighterfish/test.app11/1.0.0/war";
             Bundle bundle_ejb = tc.installBundle(location_ejb);
             EjbBundle ejbBundle = new EjbBundle(ctx, bundle_ejb, new String[]{"org.glassfish.fighterfish.test.app11.ejb.TestLocal"});
             ejbBundle.deploy(getTimeout(), TimeUnit.MILLISECONDS);
@@ -469,8 +469,8 @@ public class T2_Test extends AbstractTestObject {
         logger.logp(Level.INFO, "T2_Test", "testapp12", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
-            String location_host = "mvn:org.glassfish.fighterfish/test.app12/1.0.0-SNAPSHOT/war";
-            String location_fragment = "mvn:org.glassfish.fighterfish/test.app12.fragment/1.0.0-SNAPSHOT";
+            String location_host = "mvn:org.glassfish.fighterfish/test.app12/1.0.0/war";
+            String location_fragment = "mvn:org.glassfish.fighterfish/test.app12.fragment/1.0.0";
 
             Bundle bundle_host = tc.installBundle(location_host);
             WebAppBundle wab = new WebAppBundle(ctx, bundle_host);
@@ -512,7 +512,7 @@ public class T2_Test extends AbstractTestObject {
         TestContext tc = TestContext.create(getClass());
         try {
 
-            String location = "mvn:org.glassfish.fighterfish/test.app13/1.0.0-SNAPSHOT";
+            String location = "mvn:org.glassfish.fighterfish/test.app13/1.0.0";
 
             {
                 Bundle bundle = tc.installBundle(location);
@@ -532,7 +532,7 @@ public class T2_Test extends AbstractTestObject {
         TestContext tc = TestContext.create(getClass());
         try {
 
-            String location = "mvn:org.glassfish.fighterfish/test.app14/1.0.0-SNAPSHOT";
+            String location = "mvn:org.glassfish.fighterfish/test.app14/1.0.0";
             {
                 Bundle bundle = tc.installBundle(location);
                 bundle.start();
@@ -551,7 +551,7 @@ public class T2_Test extends AbstractTestObject {
         TestContext tc = TestContext.create(getClass());
         try {
 
-            String location = "mvn:org.glassfish.fighterfish/test.app15/1.0.0-SNAPSHOT";
+            String location = "mvn:org.glassfish.fighterfish/test.app15/1.0.0";
             {
                 Bundle bundle = tc.installBundle(location);
                 bundle.start();
@@ -573,10 +573,10 @@ public class T2_Test extends AbstractTestObject {
         tc.createJmsCF(cfName);
         tc.createJmsTopic(topicName);
         try {
-            String location_entities = "mvn:org.glassfish.fighterfish/test.app16.entities/1.0.0-SNAPSHOT";
-            String location_msgproducer = "mvn:org.glassfish.fighterfish/test.app16.msgproducer/1.0.0-SNAPSHOT";
-            String location_mdb = "mvn:org.glassfish.fighterfish/test.app16.mdb/1.0.0-SNAPSHOT";
-            String location_wab = "mvn:org.glassfish.fighterfish/test.app16/1.0.0-SNAPSHOT/war";
+            String location_entities = "mvn:org.glassfish.fighterfish/test.app16.entities/1.0.0";
+            String location_msgproducer = "mvn:org.glassfish.fighterfish/test.app16.msgproducer/1.0.0";
+            String location_mdb = "mvn:org.glassfish.fighterfish/test.app16.mdb/1.0.0";
+            String location_wab = "mvn:org.glassfish.fighterfish/test.app16/1.0.0/war";
             String request = "/MessageReaderServlet";
             Bundle bundle_entities = tc.installBundle(location_entities);
             bundle_entities.start();
@@ -623,7 +623,7 @@ public class T2_Test extends AbstractTestObject {
         logger.logp(Level.INFO, "T2_Test", "testapp17", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
-            String location_wab = "mvn:org.glassfish.fighterfish/test.app17/1.0.0-SNAPSHOT/war";
+            String location_wab = "mvn:org.glassfish.fighterfish/test.app17/1.0.0/war";
             Bundle bundle_wab = tc.installBundle(location_wab);
             WebAppBundle wab = new WebAppBundle(ctx, bundle_wab);
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS); // deployment is sufficient to test this bundle
@@ -641,7 +641,7 @@ public class T2_Test extends AbstractTestObject {
         logger.logp(Level.INFO, "T2_Test", "testapp18", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
-            String location_wab = "mvn:org.glassfish.fighterfish/test.app18/1.0.0-SNAPSHOT/war";
+            String location_wab = "mvn:org.glassfish.fighterfish/test.app18/1.0.0/war";
             final Bundle bundle_wab = tc.installBundle(location_wab);
             WebAppBundle wab = new WebAppBundle(ctx, bundle_wab);
 
@@ -678,7 +678,7 @@ public class T2_Test extends AbstractTestObject {
         logger.logp(Level.INFO, "T2_Test", "testapp19", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
-            String location = "mvn:org.glassfish.fighterfish/test.app19/1.0.0-SNAPSHOT/jar";
+            String location = "mvn:org.glassfish.fighterfish/test.app19/1.0.0/jar";
             Bundle bundle = tc.installBundle(location);
             logger.logp(Level.INFO, "T2_Test", "testapp19", "Starting " + bundle);
             bundle.start();
@@ -701,7 +701,7 @@ public class T2_Test extends AbstractTestObject {
         logger.logp(Level.INFO, "T2_Test", "testapp20", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
-            String location = "mvn:org.glassfish.fighterfish/test.app20/1.0.0-SNAPSHOT/war";
+            String location = "mvn:org.glassfish.fighterfish/test.app20/1.0.0/war";
             Bundle bundle = tc.installBundle(location);
             WebAppBundle wab = new WebAppBundle(ctx, bundle);
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
@@ -791,7 +791,7 @@ public class T2_Test extends AbstractTestObject {
         TestContext tc = TestContext.create(getClass());
         try {
            //Running a regression test for fix created on GLASSFISH-18159
-            String location = "mvn:org.glassfish.fighterfish/test.app3/1.0.0-SNAPSHOT/war";
+            String location = "mvn:org.glassfish.fighterfish/test.app3/1.0.0/war";
             Bundle bundle = tc.installBundle(location);
             bundle.start();
             bundle.uninstall();
