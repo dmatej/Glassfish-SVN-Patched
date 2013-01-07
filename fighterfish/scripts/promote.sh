@@ -5,10 +5,6 @@
 # We hard code the module name to avoid having to update the hudson job
 # everytime we want to promote. This also allows us better tracking.
 MODULES="\
- test/app/app8.entities \
- test/app/app8 \
- test/app/app9 \
- test/app/app10.bean \
  test/app/app10 \
  test/app/app11 \
  test/app/app11.ejb \
