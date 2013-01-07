@@ -51,8 +51,6 @@ import javax.ejb.LocalBean;
 import javax.ejb.Stateless;
 import javax.sql.DataSource;
 
-import org.glassfish.fighterfish.test.util.JStack;
-
 /**
  * Session Bean implementation class UserAuthServiceEJB
  */
@@ -124,9 +122,6 @@ public class UserAuthServiceEJB
         }
         catch (Exception e)
         {
-         org.glassfish.fighterfish.test.util.JStack jstack = new org.glassfish.fighterfish.test.util.JStack();
-         jstack.printStackTrace();
-         System.out.println(jstack);
             e.printStackTrace();
         }
         finally

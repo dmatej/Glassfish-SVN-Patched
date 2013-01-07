@@ -70,17 +70,14 @@ public class RegistrationServlet extends HttpServlet {
         String name = req.getParameter("name");
         String password = req.getParameter("password");
         try {
-
             if (userAuthService.register(name, password)) {
                 out.println("Registered " + name);
             } else {
                 out.println("Failed to register " + name);
             }
         } catch (Exception e) {
-         org.glassfish.fighterfish.test.util.JStack jstack = new org.glassfish.fighterfish.test.util.JStack();
-         jstack.printStackTrace();
-         System.out.println(jstack);
             out.println("Failed to register " + name);
+            e.printStackTrace();
         }
         out.println("</BODY> </HTML> ");
 

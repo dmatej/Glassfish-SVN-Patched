@@ -78,6 +78,7 @@ public class RegistrationServlet extends HttpServlet {
             }
         } catch (Exception e) {
             out.println("Failed to register " + name);
+            e.printStackTrace();
         }
         out.println("</BODY> </HTML> ");
 
