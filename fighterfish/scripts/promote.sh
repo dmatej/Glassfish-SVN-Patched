@@ -3,7 +3,7 @@
 # MODULE is relative path of module to be promoted wrt fighterfish dir.
 # We hard code the module name to avoid having to update the hudson job
 # everytime we want to promote. This also allows us better tracking.
-MODULE=test/parent-pom
+MODULE=sample/parent-pom
 
 if [ "$MODULE" = "" ]
 then
