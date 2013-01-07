@@ -80,7 +80,9 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
         debug("LoggerInfoMetadataGenerator invoked.");
 
         LoggingMetadata loggerMetadata = new LoggingMetadata();
-        
+        loadLogMessages(loggerMetadata, RBNAME);
+        debug("Total Messages including ones found from disk so far: " + loggerMetadata);
+
         if (!env.processingOver()) {
 
             SortedMap<String, Element> loggerInfoElements = new TreeMap<String, Element>();
@@ -113,7 +115,7 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
                     // Previous entry with same logger name found.
                     LoggerInfo prevLoggerInfo = loggerInfoElements.get(loggerName).getAnnotation(LoggerInfo.class);
                     if (!compareLoggerInfos(loggerInfo, prevLoggerInfo)) {
-                        error("Duplicate use of logger name " + loggerName + " with inconsistent LoggerInfo");
+                        warn("Overwriting entry for logger " + loggerName);
                     }
                 } else {
                     renderLoggerInfo(loggerMetadata, loggerName, loggerInfo);
@@ -163,8 +165,6 @@ public class LoggerInfoMetadataGenerator extends BaseLoggingProcessor {
             // Now persist the resource bundle
             // String resourceName = packageName + "." + RBNAME;
             String resourceName = RBNAME;
-            loadLogMessages(loggerInfos, resourceName);
-            debug("Total Messages including ones found from disk so far: " + loggerInfos);
             storeLogMessages(loggerInfos, resourceName);            
         } catch (Exception e) {
             error("Unable to generate LoggerMetadataInfoService class", e);

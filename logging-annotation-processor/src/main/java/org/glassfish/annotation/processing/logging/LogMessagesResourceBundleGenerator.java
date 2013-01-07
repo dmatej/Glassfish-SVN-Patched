@@ -56,11 +56,15 @@ import org.glassfish.logging.annotation.LogMessagesResourceBundle;
 @SupportedAnnotationTypes({"org.glassfish.logging.annotation.LogMessageInfo","org.glassfish.logging.annotation.LogMessagesResourceBundle"})
 public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
 
+    private static final String RESOURCE_BUNDLE_KEY = "resourceBundle";
+
     private static final String VALIDATE_LEVELS[] = {
       "EMERGENCY",
       "ALERT",
       "SEVERE",
     };
+    
+    private static final String LOG_MESSAGES_METADATA = "META-INF/logmessages/LogMessagesMetadata";
     
     @Override
     public SourceVersion getSupportedSourceVersion() {
@@ -76,16 +80,27 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
         if (!env.processingOver()) {
 
             LoggingMetadata logMessagesMap = new LoggingMetadata();
+            
+            LoggingMetadata logMessagesMetada = new LoggingMetadata();
 
             Set<? extends Element> logMessageElements = env.getElementsAnnotatedWith(LogMessageInfo.class);
             Set<? extends Element> logMessagesResourceBundleElements = env.getElementsAnnotatedWith(LogMessagesResourceBundle.class);
 
+            Set<String> rbNames = new HashSet<String>();
+
             if (logMessagesResourceBundleElements.isEmpty() || logMessageElements.isEmpty()) {
-                warn("Skipping LogMessages resource bundle generation, either the LogMessageInfo or LogMessagesResourceBundle annotation is not specified in the current compilation round.");
-                return false;
+                loadLogMessages(logMessagesMetada, LOG_MESSAGES_METADATA);
+                if (logMessagesMetada.containsKey(RESOURCE_BUNDLE_KEY)) {
+                    String rb = (String) logMessagesMetada.get(RESOURCE_BUNDLE_KEY);
+                    if (rb != null && !rb.isEmpty()) {
+                        rbNames.add(rb);
+                    }
+                } else {
+                    warn("Skipping LogMessages resource bundle generation, either the LogMessageInfo or LogMessagesResourceBundle annotation is not specified in the current compilation round.");
+                    return false;                    
+                }
             }
                         
-            Set<String> rbNames = new HashSet<String>();
             for (Element rbElem : logMessagesResourceBundleElements) {
                 if (!(rbElem instanceof VariableElement)) {
                     error("The LogMessagesResourceBundle annotation is applied on an invalid element.");
@@ -116,6 +131,10 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
 
             Iterator<? extends Element> it = logMessageElements.iterator();
             Set<String> messageIds = new HashSet<String>();
+            
+            debug("Initial messages found so far: " + logMessagesMap);
+            loadLogMessages(logMessagesMap, rbName);
+
             while (it.hasNext()) {
                 Element elem = it.next();
                 if (!(elem instanceof VariableElement)) {
@@ -145,10 +164,10 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
                     error("Duplicate use of message-id " + msgId);
                 }
             }
-            debug("Messages found so far: " + logMessagesMap);
-            loadLogMessages(logMessagesMap, rbName);
             debug("Total Messages including ones found from disk so far: " + logMessagesMap);
             storeLogMessages(logMessagesMap, rbName);
+            logMessagesMetada.put(RESOURCE_BUNDLE_KEY, rbName);
+            storeLogMessages(logMessagesMetada, LOG_MESSAGES_METADATA);
             info("Annotation processing finished successfully.");
             return true; // Claim the annotations
         } else {

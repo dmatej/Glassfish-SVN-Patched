@@ -136,9 +136,9 @@ public class LogMessagesResourceBundleGeneratorTest extends TestCase {
     public void testNoResourceBundleName() {
         File f1 = new File(BASE_PATH, "Cocoa.java");
         String output = executeCompiler(f1);
-        assertTrue(output.contains("Skipping LogMessages resource bundle generation"));
+        assertTrue(output.contains("Annotation processing finished successfully."));
         File[] resourceBundles = getResourceBundles();
-        assertEquals(resourceBundles.length,0);        
+        assertEquals(resourceBundles.length,1);        
     }
 
     @Test
