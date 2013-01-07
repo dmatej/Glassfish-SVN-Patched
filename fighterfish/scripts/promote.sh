@@ -36,10 +36,6 @@ MODULES="\
  test/app/app20 \
 "
 
-
-"
-
-
 GPG_PASSPHRASE=$1 #Take as argument for security reasons
 
 function promote_one_module() {
