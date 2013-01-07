@@ -5,16 +5,6 @@
 # We hard code the module name to avoid having to update the hudson job
 # everytime we want to promote. This also allows us better tracking.
 MODULES="\
- test/app/app10 \
- test/app/app11 \
- test/app/app11.ejb \
- test/app/app12.fragment \
- test/app/app12 \
- test/app/app13 \
- test/app/app14 \
- test/app/app15 \
- test/app/app16.entities \
- test/app/app16.msgproducer \
  test/app/app16.mdb \
  test/app/app16 \
  test/app/app17 \
