@@ -3,9 +3,9 @@
 # MODULE is relative path of module to be promoted wrt fighterfish dir.
 # We hard code the module name to avoid having to update the hudson job
 # everytime we want to rollback. This also allows us better tracking.
-MODULE=test/parent-pom
+MODULE=test/app/app6.entities
 # Directory relative to WORKSPACE where last failed promotion job ran.
-DIRNAME=20130106_084221
+DIRNAME=20130106_215619
 
 if [ "$MODULE" = "" ]
 then
