@@ -5,7 +5,7 @@
 # everytime we want to rollback. This also allows us better tracking.
 MODULE=test/app/app6.entities
 # Directory relative to WORKSPACE where last failed promotion job ran.
-DIRNAME=20130106_215619
+DIRNAME=20130106_220440
 
 if [ "$MODULE" = "" ]
 then
