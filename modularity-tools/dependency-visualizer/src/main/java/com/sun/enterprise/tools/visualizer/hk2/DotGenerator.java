@@ -666,6 +666,9 @@ public class DotGenerator {
 
         }
 
+        copybdInfos = bdInfos;
+        writeLevelXML(copybdInfos);
+
         for (BundleInfo bmdl : bdInfos) {
 
             System.out.println("Bundle Name: " + bmdl.bundleName + " Level No: " + bmdl.getLevel());
@@ -676,6 +679,94 @@ public class DotGenerator {
 
 
         return bdInfos.toArray(new BundleInfo[]{});
+    }
+
+
+    private void writeLevelXML(List<BundleInfo> BndlInfo){
+
+        try{
+
+        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
+        // root elements
+        Document doc = docBuilder.newDocument();
+        Element rootElement = doc.createElement("BundleStats");
+        //rootElement.setAttribute("maxlevel","");
+        doc.appendChild(rootElement);
+
+            int maxlevel = 0;
+
+        for(BundleInfo bdl:BndlInfo){
+
+            // Bundle elements
+		Element module = doc.createElement("Bundle");
+		rootElement.appendChild(module);
+
+            String name = bdl.bundleName;
+            int level = bdl.level;
+            Integer i = level;
+
+            if (level > maxlevel){
+                maxlevel = level;
+            }
+
+        // name element
+		Element modulename = doc.createElement("name");
+		modulename.appendChild(doc.createTextNode(name));
+		module.appendChild(modulename);
+
+        //level element
+        Element imp = doc.createElement("level");
+		imp.appendChild(doc.createTextNode(i.toString()));
+		module.appendChild(imp);
+
+        }
+
+        Integer max = maxlevel;
+        rootElement.setAttribute("maxlevel",max.toString());
+
+       // write the content into xml file
+		TransformerFactory transformerFactory = TransformerFactory.newInstance();
+		Transformer transformer = transformerFactory.newTransformer();
+		transformer.setOutputProperty
+        (OutputKeys.OMIT_XML_DECLARATION, "no");
+        transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+        transformer.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-1");
+        // we want to pretty format the XML output
+        // transformer.setOutputProperty
+        //("{http://xml.apache.org/xslt}indent-amount", "4");
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        DOMSource source = new DOMSource(doc);
+
+
+       //   Node pi = doc.createProcessingInstruction
+       //  ("xml-stylesheet", "type=\"text/xsl\" href=\"ModuleStyle.xsl\"");
+       //   doc.insertBefore(pi, rootElement);
+
+        StreamResult result = new StreamResult(new File("LevelStats.xml"));
+
+		// Output to console for testing
+		// StreamResult result = new StreamResult(System.out);
+
+		transformer.transform(source, result);
+
+		System.out.println("Level File saved!");
+
+
+
+        }
+        catch (ParserConfigurationException pce) {
+		pce.printStackTrace();
+	  }catch (TransformerException tfe) {
+		tfe.printStackTrace();
+	  }
+
+
+
+
+
+
     }
 
 
