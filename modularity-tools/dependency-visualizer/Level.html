@@ -1,0 +1,82 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title>
+      Level Map for Glassfish Bundles
+    </title>
+    <script type="text/javascript" src="http://www.google.com/jsapi"></script>
+    <script type="text/javascript">
+      google.load('visualization', '1', {packages: ['treemap']});
+    </script>
+    <script type="text/javascript">
+      function drawVisualization() {
+	if (window.XMLHttpRequest)
+    	    {// code for IE7+, Firefox, Chrome, Opera, Safari
+    	    xmlhttp=new XMLHttpRequest();
+    	    }
+    	  else
+    	    {// code for IE6, IE5
+    	    xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+    	    }
+    	  xmlhttp.open("GET","LevelStats.xml",false);
+    	  xmlhttp.send();
+    	  xmlDoc=xmlhttp.responseXML;
+    	  var root = xmlDoc.getElementsByTagName('Bundle');
+          var maxlevel = xmlDoc.getElementsByTagName('BundleStats')[0].getAttribute('maxlevel');
+          //var bit = xmlDoc.getElementsByTagName("total")[0].childNodes[0].nodeValue;
+          var length = root.length;
+          var start = 0;
+   	  var size=++length;
+    	
+          for (var k=0; k<=maxlevel; k++){
+             size++;           
+          }
+          size++;
+
+          var data1 = new Array(size);
+    	   
+    	  data1[0]= ['Level','Parent','size'];
+    	  data1[1]= ['Level', null,0];
+    	  var j = start;
+    	  var m = 2;
+          for (var l=0; l<=maxlevel; l++){
+            var mname = l.toString();
+            data1[m]=[mname,'Level',0];
+            m++;
+          }
+
+    	  for (var i= m; i < size; i++) {
+                var par = parseInt(xmlDoc.getElementsByTagName("level")[j].childNodes[0].nodeValue);
+                var sparent = par.toString();
+    		data1[i] = [ xmlDoc.getElementsByTagName("name")[j].childNodes[0].nodeValue,sparent,1];
+    		j++;
+    	  }   
+  
+ 
+        // Create and populate the data table.
+        var data = google.visualization.arrayToDataTable(data1);
+    	 
+        // Create and draw the visualization.
+        var treemap = new google.visualization.TreeMap(document.getElementById('visualization'));
+        treemap.draw(data, {
+          maxDepth:1,
+          maxPostDepth:1,
+          headerColor:'#FF4000',
+          minColor: 'red',
+          midColor: '#ddd',
+          maxColor: '#0d0',
+          headerHeight: 30,
+          showTooltips:true,
+          fontColor: 'black',
+          showScale: false});
+      }
+      
+
+      google.setOnLoadCallback(drawVisualization);
+    </script>
+  </head>
+  <body style="font-family: Arial;border: 0 none;">
+    <h2 align="center">Level Number Map of Modules</h2>
+    <div id="visualization" style="width: 1024px; height: 768px; margin: auto;"></div>
+  </body>
+</html> 
