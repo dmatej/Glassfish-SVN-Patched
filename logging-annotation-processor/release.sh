@@ -16,7 +16,7 @@
 #        </server>
 #    </servers>
 
-if [ "$#" -ne 2 ] || [ "$#" -ne 0 ]
+if [ "$#" -ne 2 ] && [ "$#" -ne 0 ]
 then
   echo "Usage: $0 your-jvnet-username your-jvnet-password"
   exit 1
