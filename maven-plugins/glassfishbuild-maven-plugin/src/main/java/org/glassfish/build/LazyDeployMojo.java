@@ -126,7 +126,11 @@ public class LazyDeployMojo extends AbstractDeployMojo {
         Model model = MavenUtils.readModel(pomFile);
         // create the project artifact manually
         Artifact artifact = MavenUtils.createArtifact(project.getBuild().getDirectory(), model);
-        // create the project attached artifact manually
+        if(artifact == null){
+            getLog().info("Skipping as there is no file found for this artifact");
+            return;
+        }        
+        // create the project attached artifacts manually
         List<Artifact> attachedArtifacts = MavenUtils.createAttachedArtifacts(project.getBuild().getDirectory(), artifact, model);
         
         // handle scp
