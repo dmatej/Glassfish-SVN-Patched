@@ -40,5 +40,5 @@
 # glassfish
 
 # Sample usage: to generate "admin" wiring dependency diagram: invoke: ./module.sh admin imports/exports/both. This generate admin.jpg
-./generate.sh -i wires.xml -o $1.dot -n $1 -drawtype $2  && ./rundot.sh $1.dot $1.jpg
+./generate.sh -i wires.xml -o $1.dot -n $1 -drawtype $2  && ./rundot.sh $1.dot $1.svg
 
