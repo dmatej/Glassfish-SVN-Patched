@@ -46,7 +46,7 @@
 
 # sample usage: to create a jpeg image of foo.dot: ./rundot foo.dot foo.jpg
 
-dot -Goverlap=false -Tjpg $1 -o $2 
+dot -Goverlap=false -Tsvg $1 -o $2 
 
 #open the generated image
 #eog $2 &
