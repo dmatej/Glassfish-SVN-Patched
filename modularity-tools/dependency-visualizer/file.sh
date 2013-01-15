@@ -40,5 +40,5 @@
 # glassfish
 
 # Sample usage: to generate wiring dependency diagram: invoke: ./file.sh filename set/all. This generate filename.jpg. And -drawgroup options are set/all.
-./generate.sh -i wires.xml -o $1.dot -f $1 -drawgroup $2 && ./rundot.sh $1.dot $1.jpg
+./generate.sh -i wires.xml -o $1.dot -f $1 -drawgroup $2 && ./rundot.sh $1.dot $1.svg
 
