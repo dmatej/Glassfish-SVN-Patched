@@ -43,4 +43,4 @@
 # glassfish
 
 # Sample usage: to generate "admin" wiring dependency diagram: invoke: ./subset admin. This generate admin.jpg
-./generate.sh -i wires.xml -o $1.dot -m $1  && ./rundot.sh $1.dot $1.jpg
+./generate.sh -i wires.xml -o $1.dot -m $1  && ./rundot.sh $1.dot $1.svg
