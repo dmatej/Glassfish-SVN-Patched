@@ -22,9 +22,9 @@ xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 </tr>
 <xsl:for-each select="ModuleStats/Module">
 <tr>
-<td><a href="Modules/{name}/both/{name}.jpg"><xsl:value-of select="name"/></a> </td>               
-<td><a href="Modules/{name}/imports/{name}.jpg"><xsl:value-of select="import"/></a></td>
-<td><a href="Modules/{name}/exports/{name}.jpg"><xsl:value-of select="export"/></a></td>
+<td><a href="Modules/{name}/both/{name}.svg"><xsl:value-of select="name"/></a> </td>               
+<td><a href="Modules/{name}/imports/{name}.svg"><xsl:value-of select="import"/></a></td>
+<td><a href="Modules/{name}/exports/{name}.svg"><xsl:value-of select="export"/></a></td>
 <td><a href="Bundles.html#{name}"><xsl:value-of select="used-export"/></a></td>
 <td><a href="Bundles.html#{name}"><xsl:value-of select="unused-export"/></a></td>
 <td><a href="Bundles.html#{name}"><xsl:value-of select="total-import"/></a></td>
