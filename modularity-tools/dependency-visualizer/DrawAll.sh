@@ -63,29 +63,29 @@ if [ ! -d "Modules/$line/both" ]
                 mkdir Modules/$line/both
 fi
 
-./generate.sh -i wires.xml -o $line.dot -n $line -drawtype imports  && ./rundot.sh $line.dot $line.jpg
+./generate.sh -i wires.xml -o $line.dot -n $line -drawtype imports  && ./rundot.sh $line.dot $line.svg
 
 cp $line.dot Modules/$line/imports
-cp $line.jpg Modules/$line/imports
+cp $line.svg Modules/$line/imports
 
 rm $line.dot
-rm $line.jpg
+rm $line.svg
 
-./generate.sh -i wires.xml -o $line.dot -n $line -drawtype exports  && ./rundot.sh $line.dot $line.jpg
+./generate.sh -i wires.xml -o $line.dot -n $line -drawtype exports  && ./rundot.sh $line.dot $line.svg
 
 cp $line.dot Modules/$line/exports
-cp $line.jpg Modules/$line/exports
+cp $line.svg Modules/$line/exports
 
 rm $line.dot
-rm $line.jpg
+rm $line.svg
 
-./generate.sh -i wires.xml -o $line.dot -n $line -drawtype both  && ./rundot.sh $line.dot $line.jpg
+./generate.sh -i wires.xml -o $line.dot -n $line -drawtype both  && ./rundot.sh $line.dot $line.svg
 
 cp $line.dot Modules/$line/both
-cp $line.jpg Modules/$line/both
+cp $line.svg Modules/$line/both
 
 rm $line.dot
-rm $line.jpg
+rm $line.svg
         
 done < ModuleNames.txt
 
