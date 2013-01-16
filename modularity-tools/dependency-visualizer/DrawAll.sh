@@ -44,48 +44,48 @@ while read line
 do
 if [ ! -d "Modules" ]
         then
-                mkdir Modules
+                mkdir Modules || true
 fi
 if [ ! -d "Modules/$line" ]
         then
-                mkdir Modules/$line
+                mkdir Modules/$line || true
 fi
 if [ ! -d "Modules/$line/imports" ]
         then
-                mkdir Modules/$line/imports
+                mkdir Modules/$line/imports || true
 fi
 if [ ! -d "Modules/$line/exports" ]
         then
-                mkdir Modules/$line/exports
+                mkdir Modules/$line/exports || true
 fi
 if [ ! -d "Modules/$line/both" ]
         then
-                mkdir Modules/$line/both
+                mkdir Modules/$line/both || true
 fi
 
 ./generate.sh -i wires.xml -o $line.dot -n $line -drawtype imports  && ./rundot.sh $line.dot $line.svg
 
-cp $line.dot Modules/$line/imports
-cp $line.svg Modules/$line/imports
+cp $line.dot Modules/$line/imports || true
+cp $line.svg Modules/$line/imports || true
 
-rm $line.dot
-rm $line.svg
+rm $line.dot || true
+rm $line.svg || true
 
 ./generate.sh -i wires.xml -o $line.dot -n $line -drawtype exports  && ./rundot.sh $line.dot $line.svg
 
-cp $line.dot Modules/$line/exports
-cp $line.svg Modules/$line/exports
+cp $line.dot Modules/$line/exports || true
+cp $line.svg Modules/$line/exports || true
 
-rm $line.dot
-rm $line.svg
+rm $line.dot || true
+rm $line.svg || true
 
 ./generate.sh -i wires.xml -o $line.dot -n $line -drawtype both  && ./rundot.sh $line.dot $line.svg
 
-cp $line.dot Modules/$line/both
-cp $line.svg Modules/$line/both
+cp $line.dot Modules/$line/both || true
+cp $line.svg Modules/$line/both || true
 
-rm $line.dot
-rm $line.svg
+rm $line.dot || true
+rm $line.svg || true
         
 done < ModuleNames.txt
 
