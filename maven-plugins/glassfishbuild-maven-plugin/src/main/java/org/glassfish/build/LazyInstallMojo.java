@@ -105,6 +105,8 @@ public class LazyInstallMojo extends AbstractInstallMojo {
         // if supplied pomFile is invalid, default to the project's pom
         if (pomFile == null || !pomFile.exists()) {
             pomFile = project.getFile();
+        } else {
+            project.setFile(pomFile);
         }
 
         // read the model manually

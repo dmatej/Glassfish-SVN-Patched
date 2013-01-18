@@ -115,6 +115,8 @@ public class LazyDeployMojo extends AbstractDeployMojo {
         File targetPom = MavenUtils.getPomInTarget(project.getBuild().getDirectory());
         if(targetPom != null){
             pomFile = targetPom;
+        } else {
+            project.setFile(pomFile);
         }
         
         // if supplied pomFile is invalid, default to the project's pom
