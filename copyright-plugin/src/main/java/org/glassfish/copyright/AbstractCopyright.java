@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -269,7 +269,7 @@ public abstract class AbstractCopyright {
     enum RepairType { MISSING, WRONG, DATE };
 
     /**
-     * Repair the c.errors in the file.
+     * Repair the errors in the file.
      *
      * Repair cases and strategy:
      *
@@ -440,11 +440,12 @@ public abstract class AbstractCopyright {
 		if (date.charAt(date.length() - 5) == '-')
 		    // strip off last year and replace it with lastChanged
 		    date = date.substring(0, date.length() - 4) + lastChanged;
-		else
+		else {
 		    // add range from first year to lastChanged
 		    date = date.substring(0, 4);
                     if (!date.equals(lastChanged))
                         date = date + (c.useComma ? ", " : "-") + lastChanged;
+		}
 	    }
 	}
 	return date;
