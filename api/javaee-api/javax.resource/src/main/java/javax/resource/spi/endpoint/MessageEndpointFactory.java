@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 1997-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -47,8 +47,9 @@ import javax.resource.spi.UnavailableException;
 /**
  * This serves as a factory for creating message endpoints.
  *
- * @version 1.0
- * @author  Ram Jeyaraman
+ * @version 1.7-working-draft
+ * @since 1.5
+ * @author  Ram Jeyaraman, Sivakumar Thyagarajan
  */
 public interface MessageEndpointFactory {
 
@@ -89,6 +90,7 @@ public interface MessageEndpointFactory {
      * @throws UnavailableException indicates a transient failure
      * in creating a message endpoint. Subsequent attempts to create a message
      * endpoint might succeed.
+     * @since 1.6
      */
     MessageEndpoint createEndpoint(XAResource xaResource, long timeout)
     throws UnavailableException;
@@ -116,42 +118,25 @@ public interface MessageEndpointFactory {
 	throws NoSuchMethodException;
     
     /**
-     * Returns a unique name for this message endpoint. If the application has 
+     * Returns a unique name for the message endpoint deployment represented
+     * by the <code>MessageEndpointFactory</code>. If the message endpoint has 
      * been deployed into a clustered application server then this method must 
-     * return the same name for the same endpoint in each application server 
-     * instance. Otherwise, a different name must be returned for every endpoint 
-     * in every application in every application server instance.
+     * return the same name for that message endpoint’s activation in each 
+     * application server instance. 
      * 
-     * The name must consist of Java letters or digits (as defined in the Java 
-     * Language Specification) or the ASCII underscore (_ or \u005f).
+     * It is recommended that this name be human-readable since this name may
+     * be used by the resource adapter in ways that may be visible to a user
+     * or administrator. 
+     * 
+     * It is also recommended that this name remain unchanged even in cases 
+     * when the application server is restarted or the message endpoint 
+     * redeployed.
      *
-     * Since a subscription name may be visible to the user or administrator it
-     * is recommended that this name is at least partly human-readable.
-     *
-     * The resource adapter may use this value as a valid JMS subscription name, 
-     * either on its own or in combination with the value returned by the 
-     * <code>BootstrapContext.getInstanceName</code> method. This value may be 
-     * used on its own if the subscription name needs to be the same for the same 
-     * endpoint in each application server instance within a cluster but otherwise 
-     * unique. This value may be used in combination with the value returned by the 
-     * <code>BootstrapContext.getInstanceName</code> method if the subscription 
-     * name needs to be unique to this endpoint.
-     *
-     * Since a durable subscription can be used to store messages indefinitely it
-     * is recommended that this name remains unchanged even if the application
-     * server is restarted or reconfigured, or if the application is redeployed.
-     *
-     * The combination of this value and the value returned by the
-     * <code>BootstrapContext.getInstanceName</code>  method should be no longer
-     * than 128 characters.
-     *
-     * @return a new <code>String</code> instance.
+     * @return a new <code>String</code> instance representing the unique
+     * name of the message endpoint deployment
      * @see javax.resource.spi.BootstrapContext
-     * @version Java EE Connector Architecture 1.7
+     * @since 1.7
      */
     String getActivationName();
 
 }
-
-
-

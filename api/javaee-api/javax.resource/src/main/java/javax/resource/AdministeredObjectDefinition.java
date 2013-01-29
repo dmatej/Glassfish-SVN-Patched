@@ -53,40 +53,51 @@ import java.lang.annotation.Target;
  *  <code>Resource</code> annotation.
  *
  *  @see javax.annotation.Resource
- * 
+ *  @version 1.7-working-draft
+ *  @since 1.7
  */
 @Retention(RUNTIME)
 @Target({TYPE})
 public @interface AdministeredObjectDefinition {
 
     /**
+     *  JNDI name of the administered object being defined.
+     */
+    String name();
+    
+    /**
      *  Description of the administered object.
      */
     String description() default "";
 
     /**
-     *  JNDI name of the administered object being defined.
+     *  The name of the resource adapter that the administered object must be 
+     *  created from. The resource adapter is required to be available at 
+     *  deployment time.
      */
-    String name();
+    String resourceAdapterName();
+
 
     /**
-     *  Interface name of the administered object.
-     */
-    String interfaceName() default "";
-
-    /**
-     *  Class name of the administered object.
+     *  Fully qualified package name of the administered object’s class
      */
     String className();
 
     /**
-     *  Name of the resource adapter.
+     *  Fully qualified package name of the administered object’s interface 
      */
-    String resourceAdapterName();
+    String interfaceName() default "";
+
 
     /**
-     *  Properties of the administered object.  These may be
-     *  vendor-specific properties.
+     *  Properties of the administered object.  These properties may be
+     *  vendor-specific properties. Vendor-specific properties may be combined 
+     *  with or used to override the administered object properties 
+     *  defined using this annotation.
+     *  
+     *  Administered Object properties that are specified and are not supported 
+     *  in a given resource adapter or cannot be mapped to a vendor specific 
+     *  configuration property may be ignored.  
      */
     String[] properties() default {};
 }

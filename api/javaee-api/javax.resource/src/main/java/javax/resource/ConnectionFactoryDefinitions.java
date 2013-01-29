@@ -45,14 +45,16 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
 
 /**
- *  Specifies one or more <code>ConnectorResourceDefinition</code>
+ *  Declares one or more <code>ConnectorResourceDefinition</code>
  *  annotations.
  *
- *  @see ConnectorResourceDefinition
+ *  @see ConnectionFactoryDefinition
+ *  @version 1.7-working-draft
+ *  @since 1.7
  */
 @Retention(RUNTIME)
 @Target({TYPE})
-public @interface ConnectorResourceDefinitions {
+public @interface ConnectionFactoryDefinitions {
 
-    ConnectorResourceDefinition[] value();
+    ConnectionFactoryDefinition[] value();
 }

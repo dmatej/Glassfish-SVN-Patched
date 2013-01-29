@@ -45,10 +45,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
 
 /**
- *  Specifies one or more <code>AdministeredObjectDefinition</code>
+ *  Declares one or more <code>AdministeredObjectDefinition</code>
  *  annotations.
  *
  *  @see AdministeredObjectDefinition
+ *  @version 1.7-working-draft
+ *  @since 1.7
  */
 @Retention(RUNTIME)
 @Target({TYPE})

@@ -44,16 +44,27 @@ import java.lang.annotation.Retention;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 import java.lang.annotation.Target;
 
+import static javax.resource.spi.TransactionSupport.TransactionSupportLevel;;
+
 /**
- *  Annotation used to define a Connector resource to be registered in JNDI.
+ *  Annotation used to define a Connector Connection Factory resource to be 
+ *  registered in JNDI.
+ *  
  *  Once defined, a resource may be referenced by a component using the
  *  <code>lookup</code> element of the <code>Resource</code> annotation.
  *
  *  @see javax.annotation.Resource
+ *  @version 1.7-working-draft
+ *  @since 1.7
  */
 @Retention(RUNTIME)
 @Target({TYPE})
-public @interface ConnectorResourceDefinition {
+public @interface ConnectionFactoryDefinition {
+
+    /**
+     *  JNDI name of the connection factory resource being defined.
+     */
+    String name();
 
     /**
      *  Description of the resource.
@@ -61,17 +72,53 @@ public @interface ConnectorResourceDefinition {
     String description() default "";
 
     /**
-     *  JNDI name of the resource being defined.
+     *  The name of the resource adapter that the administered object must be 
+     *  created from. The resource adapter is required to be available at 
+     *  deployment time.
      */
-    String name();
+    String resourceAdapterName();
 
     /**
-     *  The resource type.
+     *  The fully qualified domain name of the connection factory interface 
+     *  class.
      */
     String className();
+    
+    /**
+     *  The level of transaction support the connection factory resource 
+     *  needs to support. If a transaction support specification is specified, 
+     *  it must be a level of transaction support whose ordinal value in the 
+     *  <code>TransactionSupport.TransactionSupportLevel</code> enum is equal
+     *  to or lesser than the resource adapter's transaction support 
+     *  classification.
+     */
+    TransactionSupportLevel transactionSupport() 
+                default TransactionSupportLevel.NoTransaction;
+    
+    /**
+     *  The maximum number of connections that should be allocated for a 
+     *  connection pool that backs this connnection factory resource. The 
+     *  default for this attribute is vendor specific. 
+     */
+    int maxPoolSize() default -1;
+    
+    /**
+     *  The minimum number of connections that should be allocated for a 
+     *  connection pool that backs this connnection factory resource. The 
+     *  default for this attribute is vendor specific. 
+     */
+    int minPoolSize() default -1;
+    
 
     /**
-     *  Resource properties.  These may include vendor-specific properties.
+     *  Properties of the Connection Factory.  These properties may be
+     *  vendor-specific properties. Vendor-specific properties may be combined 
+     *  with or used to override the connection factory properties 
+     *  defined using this annotation.
+     *  
+     *  Connection Factory properties that are specified and are not supported 
+     *  in a given resource adapter or cannot be mapped to a vendor specific 
+     *  configuration property may be ignored.  
      */
     String[] properties() default {};
 }
