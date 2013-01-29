@@ -41,10 +41,6 @@
 package org.glassfish.nexus.client.beans;
 
 import javax.xml.bind.annotation.XmlType;
-import org.glassfish.nexus.client.NexusClientImpl;
-import org.glassfish.nexus.client.NexusClientException;
-import org.glassfish.nexus.client.StagingAggregation;
-import org.glassfish.nexus.client.StagingOperation;
 
 /**
  *
@@ -92,28 +88,7 @@ final public class RepoDetail {
 
     public RepoDetail() {
     }
-
-//    public void close() throws NexusClientException {
-//        NexusClient.getInstance().closeStagingRepo(this.getRepositoryId());
-//    }
-//
-//    public void drop() throws NexusClientException {
-//        NexusClient.getInstance().dropStagingRepo(this.getRepositoryId());
-//    }
-//
-//    public Repo promote(String profile) throws NexusClientException {
-//        NexusClient.getInstance().promoteStagingRepo(profile, this.getRepositoryId());
-//        return null;
-//    }
-//
-//    public StagingAggregation aggregate(StagingOperation repo) throws NexusClientException {
-//        return new StagingAggregation(this).aggregate(repo);
-//    }
-//
-//    public String[] getIds() {
-//        return new String[]{getRepositoryId()};
-//    }
-
+    
     public boolean isGroup(){
         return getRepositoryKind().equals("group");
     }

@@ -394,6 +394,7 @@ public class NexusClientImpl implements NexusClient {
                 sb.append(repo.getRepositoryId());
                 sb.append('/');
                 sb.append("content");
+                sb.append('/');
                 sb.append(refArtifact.getRepositoryRelativePath());
                 sb.append(".sha1");
                 String checksum = request(sb.toString()).get().readEntity(String.class);
