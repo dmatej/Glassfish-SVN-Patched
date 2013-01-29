@@ -119,7 +119,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
     private String stagingProfile;
     
    /**
-     * @parameter expression="${ignoreFailures}" default-value="true"
+     * @parameter expression="${ignoreFailures}" default-value="false"
      */
     private boolean ignoreFailures;    
 
