@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -40,6 +40,7 @@
 package org.glassfish.build.nexus.mojos;
 
 import org.glassfish.nexus.client.NexusClientException;
+import org.glassfish.nexus.client.beans.Repo;
 
 /**
  * Drop a staging repository
@@ -50,12 +51,32 @@ import org.glassfish.nexus.client.NexusClientException;
  * @author Romain Grecourt
  */
 public class DropMojo extends AbstractNexusMojo{
+    
+   /**
+     * @parameter expression="${ignoreFailures}" default-value="true"
+     */
+    private boolean ignoreFailures;
+    
+   /**
+     * @parameter expression="${force}" default-value="true"
+     */
+    private boolean force;
 
     @Override
     public void nexusMojoExecute() throws NexusClientException {
-        stagingRepo.drop();
-        
-        // TODO, drop promoted
-        // TODO, provide an option to ignore failures
+        try {
+            Repo parent = null;
+            if (force && stagingRepo.getRepoType().equals("promoted")
+                    && ((parent = stagingRepo.getParent()) != null)) {
+                parent.drop();
+            }
+            stagingRepo.drop();
+        } catch (NexusClientException ex) {
+            if (!ignoreFailures) {
+                throw ex;
+            } else {
+                
+            }
+        }
     }
 }
