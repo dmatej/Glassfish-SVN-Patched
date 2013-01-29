@@ -74,8 +74,6 @@ public class DropMojo extends AbstractNexusMojo{
         } catch (NexusClientException ex) {
             if (!ignoreFailures) {
                 throw ex;
-            } else {
-                
             }
         }
     }
