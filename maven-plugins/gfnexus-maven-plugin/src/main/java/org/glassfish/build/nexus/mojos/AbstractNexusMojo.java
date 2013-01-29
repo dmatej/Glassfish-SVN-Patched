@@ -117,6 +117,11 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
      * @parameter expression="${stagingProfile}"
      */
     private String stagingProfile;
+    
+   /**
+     * @parameter expression="${ignoreFailures}" default-value="true"
+     */
+    private boolean ignoreFailures;    
 
     protected NexusClient nexusClient;
 
@@ -263,9 +268,15 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
                 artifact.getFile());
         
         createNexusClient();
-        stagingRepo = nexusClient.getStagingRepo(stagingProfile, refArtifact);
         
-        nexusMojoExecute();
+        try {
+            stagingRepo = nexusClient.getStagingRepo(stagingProfile, refArtifact);
+            nexusMojoExecute();
+        } catch (NexusClientException ex) {
+            if (!ignoreFailures) {
+                throw ex;
+            }
+        }
     }
 
     public abstract void nexusMojoExecute() throws NexusClientException, MojoFailureException;

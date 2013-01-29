@@ -53,27 +53,16 @@ import org.glassfish.nexus.client.beans.Repo;
 public class DropMojo extends AbstractNexusMojo{
     
    /**
-     * @parameter expression="${ignoreFailures}" default-value="true"
-     */
-    private boolean ignoreFailures;
-    
-   /**
      * @parameter expression="${force}" default-value="true"
      */
     private boolean force;
 
     @Override
     public void nexusMojoExecute() throws NexusClientException {
-        try {
-            Repo parent = null;
-            if (force && ((parent = stagingRepo.getParent()) != null)) {
-                parent.drop();
-            }
-            stagingRepo.drop();
-        } catch (NexusClientException ex) {
-            if (!ignoreFailures) {
-                throw ex;
-            }
+        Repo parent = null;
+        if (force && ((parent = stagingRepo.getParent()) != null)) {
+            parent.drop();
         }
+        stagingRepo.drop();
     }
 }
