@@ -1,0 +1,225 @@
+/*
+* JBoss, Home of Professional Open Source
+* Copyright 2010, Red Hat Middleware LLC, and individual contributors
+* by the @authors tag. See the copyright.txt in the distribution for a
+* full listing of individual contributors.
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+* http://www.apache.org/licenses/LICENSE-2.0
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
+package org.hibernate.validator.internal.metadata.raw;
+
+import java.lang.annotation.ElementType;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.hibernate.validator.internal.metadata.core.MetaConstraint;
+import org.hibernate.validator.internal.metadata.location.ExecutableConstraintLocation;
+import org.hibernate.validator.internal.util.ReflectionHelper;
+import org.hibernate.validator.internal.util.logging.Log;
+import org.hibernate.validator.internal.util.logging.LoggerFactory;
+
+/**
+ * Represents a method or constructor of a Java type and all its associated
+ * meta-data relevant in the context of bean validation, for instance the
+ * constraints at it's parameters or return value.
+ *
+ * @author Gunnar Morling
+ */
+public class ConstrainedExecutable extends AbstractConstrainedElement {
+
+	private static final Log log = LoggerFactory.make();
+
+	/**
+	 * Constrained-related meta data for this executable's parameters.
+	 */
+	private final List<ConstrainedParameter> parameterMetaData;
+
+	private final boolean hasParameterConstraints;
+
+	private final Set<MetaConstraint<?>> crossParameterConstraints;
+
+	/**
+	 * Creates a new executable meta data object for a parameter-less executable.
+	 *
+	 * @param source The source of meta data.
+	 * @param location The location of the represented executable.
+	 * @param returnValueConstraints The return value constraints of the represented executable, if
+	 * any.
+	 * @param isCascading Whether a cascaded validation of the represented executable's
+	 * return value shall be performed or not.
+	 */
+	public ConstrainedExecutable(
+			ConfigurationSource source,
+			ExecutableConstraintLocation location,
+			Set<MetaConstraint<?>> returnValueConstraints,
+			boolean isCascading) {
+
+		this(
+				source,
+				location,
+				Collections.<ConstrainedParameter>emptyList(),
+				Collections.<MetaConstraint<?>>emptySet(),
+				returnValueConstraints,
+				Collections.<Class<?>, Class<?>>emptyMap(),
+				isCascading
+		);
+	}
+
+	/**
+	 * Creates a new executable meta data object.
+	 *
+	 * @param source The source of meta data.
+	 * @param location The location of the represented executable.
+	 * @param parameterMetaData A list with parameter meta data. The length must correspond
+	 * with the number of parameters of the represented executable. So
+	 * this list may be empty (in case of a parameterless executable),
+	 * but never {@code null}.
+	 * @param returnValueConstraints The return value constraints of the represented executable, if
+	 * any.
+	 * @param groupConversions The group conversions of the represented executable, if any.
+	 * @param isCascading Whether a cascaded validation of the represented executable's
+	 * return value shall be performed or not.
+	 */
+	public ConstrainedExecutable(
+			ConfigurationSource source,
+			ExecutableConstraintLocation location,
+			List<ConstrainedParameter> parameterMetaData,
+			Set<MetaConstraint<?>> crossParameterConstraints,
+			Set<MetaConstraint<?>> returnValueConstraints,
+			Map<Class<?>, Class<?>> groupConversions,
+			boolean isCascading) {
+
+		super(
+				source,
+				location.getElementType() == ElementType.CONSTRUCTOR ? ConstrainedElementKind.CONSTRUCTOR : ConstrainedElementKind.METHOD,
+				location,
+				returnValueConstraints,
+				groupConversions,
+				isCascading
+		);
+
+		ExecutableElement executable = location.getExecutableElement();
+
+		if ( parameterMetaData.size() != executable.getParameterTypes().length ) {
+			throw log.getInvalidLengthOfParameterMetaDataListException(
+					executable,
+					executable.getParameterTypes().length,
+					parameterMetaData.size()
+			);
+		}
+
+		this.crossParameterConstraints = crossParameterConstraints;
+		this.parameterMetaData = Collections.unmodifiableList( parameterMetaData );
+		this.hasParameterConstraints = hasParameterConstraints( parameterMetaData ) || !crossParameterConstraints.isEmpty();
+
+		if ( isConstrained() ) {
+			ReflectionHelper.setAccessibility( executable.getMember() );
+		}
+	}
+
+	private boolean hasParameterConstraints(List<ConstrainedParameter> parameterMetaData) {
+
+		for ( ConstrainedParameter oneParameter : parameterMetaData ) {
+			if ( oneParameter.isConstrained() ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	@Override
+	public ExecutableConstraintLocation getLocation() {
+		return (ExecutableConstraintLocation) super.getLocation();
+	}
+
+	/**
+	 * Constraint meta data for the specified parameter.
+	 *
+	 * @param parameterIndex The index in this executable's parameter array of the parameter of
+	 * interest.
+	 *
+	 * @return Meta data for the specified parameter. Will never be {@code null}.
+	 *
+	 * @throws IllegalArgumentException In case this executable doesn't have a parameter with the
+	 * specified index.
+	 */
+	public ConstrainedParameter getParameterMetaData(int parameterIndex) {
+
+		if ( parameterIndex < 0 || parameterIndex > parameterMetaData.size() - 1 ) {
+			throw log.getInvalidMethodParameterIndexException( getLocation().getMember().getName(), parameterIndex );
+		}
+
+		return parameterMetaData.get( parameterIndex );
+	}
+
+	/**
+	 * Returns meta data for all parameters of the represented executable.
+	 *
+	 * @return A list with parameter meta data. The length corresponds to the
+	 *         number of parameters of the executable represented by this meta data
+	 *         object, so an empty list may be returned (in case of a
+	 *         parameterless executable), but never {@code null}.
+	 */
+	public List<ConstrainedParameter> getAllParameterMetaData() {
+		return parameterMetaData;
+	}
+
+	public Set<MetaConstraint<?>> getCrossParameterConstraints() {
+		return crossParameterConstraints;
+	}
+
+	/**
+	 * Whether the represented executable is constrained or not. This is the case if
+	 * it has at least one constrained parameter, at least one parameter marked
+	 * for cascaded validation, at least one cross-parameter constraint, at
+	 * least one return value constraint or if the return value is marked for
+	 * cascaded validation.
+	 *
+	 * @return {@code True} if this executable is constrained by any means,
+	 *         {@code false} otherwise.
+	 */
+	@Override
+	public boolean isConstrained() {
+		return super.isConstrained() || hasParameterConstraints;
+	}
+
+	/**
+	 * Whether this executable has at least one cascaded parameter or at least one
+	 * parameter with constraints or at least one cross-parameter constraint.
+	 *
+	 * @return {@code True}, if this executable is parameter-constrained by any
+	 *         means, {@code false} otherwise.
+	 */
+	public boolean hasParameterConstraints() {
+		return hasParameterConstraints;
+	}
+
+	/**
+	 * Whether the represented executable is a JavaBeans getter executable or not.
+	 *
+	 * @return {@code True}, if this executable is a getter method, {@code false}
+	 *         otherwise.
+	 */
+	public boolean isGetterMethod() {
+		return getLocation().getExecutableElement().isGetterMethod();
+	}
+
+	@Override
+	public String toString() {
+		return "ConstrainedExecutable [location=" + getLocation()
+				+ ", parameterMetaData=" + parameterMetaData
+				+ ", hasParameterConstraints=" + hasParameterConstraints + "]";
+	}
+
+}
