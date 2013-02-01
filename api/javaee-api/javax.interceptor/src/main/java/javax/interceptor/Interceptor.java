@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 1997-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -69,6 +69,71 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Target(TYPE)
 @Documented
-public @interface Interceptor
-{
+public @interface Interceptor {
+    /**
+     * <p>Priorities that define the order in which interceptors are
+     * invoked.  These values should be used with the
+     * {@link javax.annotations.Priority Priority} annotation.
+     * <ul>
+     * <li>Interceptors defined by platform specifications should be in the
+     * range <a href="#PLATFORM_BEFORE">PLATFORM_BEFORE</a> up until 
+     * <a href="#LIBRARY_BEFORE">LIBRARY_BEFORE</a>, or starting at
+     * <a href="#PLATFORM_AFTER">PLATFORM_AFTER</a>.  
+     * <li>Interceptors defined by extension libraries
+     * should be in the range <a href="#LIBRARY_BEFORE">LIBRARY_BEFORE</a>
+     * up until <a href="#APPLICATION">APPLICATION</a>, or
+     * <a href="#LIBRARY_AFTER">LIBRARY_AFTER</a> up until 
+     * <a href="#PLATFORM_AFTER">PLATFORM_AFTER</a>.  
+     * <li>Interceptors defined by applications should be in the range 
+     * <a href="#APPLICATION">APPLICATION</a> up until
+     * <a href="#LIBRARY_AFTER">LIBRARY_AFTER</a>.  
+     * </ul>
+     * An interceptor that must be invoked before or
+     * after another defined interceptor can choose any appropriate
+     * value.</p>
+     *
+     * <p>For example, an extension library might define an interceptor
+     * like this:</p>
+     *
+     * <pre>
+     * &#064;Priority(Interceptor.Priority.LIBRARY_BEFORE+1)
+     * &#064;Interceptor
+     * public class ValidationInterceptor { ... }
+     * </pre>
+     *
+     * @since Interceptors 1.2
+     */
+    public static class Priority {
+	private Priority() { }	// don't allow instances
+
+	/**
+	 * Start of range for early interceptors defined by
+	 * platform specifications.
+	 */
+	public static final int PLATFORM_BEFORE = 0;
+
+	/**
+	 * Start of range for early interceptors defined by
+	 * extension libraries.
+	 */
+	public static final int LIBRARY_BEFORE = 1000;
+
+	/**
+	 * Start of range for interceptors defined by
+	 * applications.
+	 */
+	public static final int APPLICATION = 2000;
+
+	/**
+	 * Start of range for late interceptors defined by
+	 * extension libraries.
+	 */
+	public static final int LIBRARY_AFTER = 3000;
+
+	/**
+	 * Start of range for late interceptors defined by
+	 * platform specifications.
+	 */
+	public static final int PLATFORM_AFTER = 4000;
+    }
 }
