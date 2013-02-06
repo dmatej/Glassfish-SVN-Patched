@@ -215,8 +215,7 @@ public class NexusClientImpl implements NexusClient {
 
         // something is wrong
         if (r.getStatus() >= 299) {
-            throw new NexusClientException(
-                    "http return code (" + r.getStatus() + ")");
+            throw new NexusResponseException(r.getStatus());
         }
 
         if (c != null) {
@@ -397,12 +396,20 @@ public class NexusClientImpl implements NexusClient {
                 sb.append('/');
                 sb.append(refArtifact.getRepositoryRelativePath());
                 sb.append(".sha1");
-                String checksum = request(sb.toString()).get().readEntity(String.class);
+                
+                String checksum = null;
+                try{
+                    checksum = (String) handleResponse(request(sb.toString()).get(),String.class);
+                } catch (NexusResponseException ex){
+                    logger.log(Level.INFO,
+                        "[{0}] does not contain the ref artifact",
+                        new Object[]{repo.getRepositoryId()});
+                }
                 
                 // if the checksum is not null and not empty, the coordinates exist
                 // we always return the staging repo, even if the checsum does not match
                 // since there can be only one representation of a coordinate
-                if (checksum != null && !checksum.isEmpty()) {
+                if (checksum != null) {
                     if (refChecksum.equals(checksum)) {
                         logger.log(Level.INFO,
                                 "found staging repository: [{0}]",
@@ -414,10 +421,6 @@ public class NexusClientImpl implements NexusClient {
                     }
                     return getStagingRepo(repo.getRepositoryId());
                 }
-
-                logger.log(Level.INFO,
-                        "[{0}] does not contain the ref artifact",
-                        new Object[]{repo.getRepositoryId()});
             }
         }
 
