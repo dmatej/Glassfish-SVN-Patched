@@ -398,19 +398,26 @@ public class NexusClientImpl implements NexusClient {
                 sb.append(refArtifact.getRepositoryRelativePath());
                 sb.append(".sha1");
                 String checksum = request(sb.toString()).get().readEntity(String.class);
-
-                if(refChecksum.equals(checksum)){
-
-                    logger.log(Level.INFO
-                            ,"found staging repository: [{0}]"
-                            , new Object[]{repo.getRepositoryId()});
-
+                
+                // if the checksum is not null and not empty, the coordinates exist
+                // we always return the staging repo, even if the checsum does not match
+                // since there can be only one representation of a coordinate
+                if (checksum != null && !checksum.isEmpty()) {
+                    if (refChecksum.equals(checksum)) {
+                        logger.log(Level.INFO,
+                                "found staging repository: [{0}]",
+                                new Object[]{repo.getRepositoryId()});
+                    } else {
+                        logger.log(Level.INFO,
+                                "staging repository: [{0}] contains a different version of {1}",
+                                new Object[]{repo.getRepositoryId(), refArtifact});
+                    }
                     return getStagingRepo(repo.getRepositoryId());
                 }
 
-                logger.log(Level.INFO
-                        ,"[{0}] does not contain the ref artifact"
-                        , new Object[]{repo.getRepositoryId()});
+                logger.log(Level.INFO,
+                        "[{0}] does not contain the ref artifact",
+                        new Object[]{repo.getRepositoryId()});
             }
         }
 
@@ -422,23 +429,22 @@ public class NexusClientImpl implements NexusClient {
                 + "\"");
     }
     
-    public Repo getHostedRepo(File f)
-            throws NexusClientException {
+    public Repo getHostedRepo(File f) throws NexusClientException {
 
-            RepoDetail[] results = ((RepoDetails) handleResponse(
-                    target(SEARCH_PATH)
-                    .queryParam("sha1", checksum(f))
-                    .request(MediaType.APPLICATION_JSON).get(),
-                    RepoDetails.class)).getRepoDetails();
+        RepoDetail[] results = ((RepoDetails) handleResponse(
+                target(SEARCH_PATH)
+                .queryParam("sha1", checksum(f))
+                .request(MediaType.APPLICATION_JSON).get(),
+                RepoDetails.class)).getRepoDetails();
 
-            if (results != null) {
-                for (RepoDetail detail : results) {
-                    if (!detail.isGroup()) {
-                        return getStagingRepo(detail.getRepositoryId());
-                    }
+        if (results != null) {
+            for (RepoDetail detail : results) {
+                if (!detail.isGroup()) {
+                    return getStagingRepo(detail.getRepositoryId());
                 }
             }
-            return null;
+        }
+        return null;
     }
 
     public static void main (String[] args){
