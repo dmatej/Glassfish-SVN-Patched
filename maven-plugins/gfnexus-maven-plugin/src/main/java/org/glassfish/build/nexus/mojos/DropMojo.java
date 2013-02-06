@@ -59,9 +59,12 @@ public class DropMojo extends AbstractNexusMojo{
 
     @Override
     public void nexusMojoExecute() throws NexusClientException {
-        Repo parent = null;
-        if (force && ((parent = stagingRepo.getParent()) != null)) {
-            parent.drop();
+        Repo parent;
+        if ((parent = stagingRepo.getParent()) != null) {
+            getLog().info("[" + stagingRepo.getId() + "] is a member of [" + parent.getId() + "]");
+            if (force) {
+                parent.drop();
+            }
         }
         stagingRepo.drop();
     }

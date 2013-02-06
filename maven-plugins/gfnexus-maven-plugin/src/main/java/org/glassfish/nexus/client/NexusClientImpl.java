@@ -416,7 +416,7 @@ public class NexusClientImpl implements NexusClient {
                                 new Object[]{repo.getRepositoryId()});
                     } else {
                         logger.log(Level.INFO,
-                                "staging repository: [{0}] contains a different version of {1}",
+                                "[{0}] contains a different version of {1}",
                                 new Object[]{repo.getRepositoryId(), refArtifact});
                     }
                     return getStagingRepo(repo.getRepositoryId());
