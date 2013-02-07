@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -45,6 +45,9 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.shared.release.versions.DefaultVersionInfo;
+import org.apache.maven.shared.release.versions.VersionInfo;
+import org.apache.maven.shared.release.versions.VersionParseException;
 import org.codehaus.mojo.versions.api.PomHelper;
 import org.codehaus.mojo.versions.rewriting.ModifiedPomXMLEventReader;
 import org.glassfish.build.utils.MavenUtils;
@@ -52,11 +55,11 @@ import org.glassfish.build.utils.MavenUtils;
 /**
  * Update a property
  *
- * @goal update-property
+ * @goal increment-version-property
  *
  * @author Romain Grecourt
  */
-public class UpdatePropertyMojo extends AbstractMojo {    
+public class IncrementVersionPropertyMojo extends AbstractMojo {    
 
     /**
      * @parameter default-value="${project}"
@@ -73,13 +76,6 @@ public class UpdatePropertyMojo extends AbstractMojo {
     private String property = null;
 
     /**
-     * The new version to set the property to (can be a version range to find a version within).
-     *
-     * @parameter expression="${value}"
-     */
-    private String value = null;
-    
-    /**
      * The profile on which to operate
      *
      * @parameter expression="${profileId}"
@@ -90,8 +86,19 @@ public class UpdatePropertyMojo extends AbstractMojo {
         try {
             StringBuilder input = PomHelper.readXmlFile(project.getFile());
             ModifiedPomXMLEventReader newPom = MavenUtils.newModifiedPomXER(input);
-            PomHelper.setPropertyVersion(newPom, profile, property, value);
+
+            String newVersion;
+            VersionInfo version = new DefaultVersionInfo((String) newPom.getProperty(property));
+            VersionInfo nextVersion = version.getNextVersion();
+            if (nextVersion.isSnapshot()) {
+                newVersion = nextVersion.getSnapshotVersionString();
+            } else {
+                newVersion = nextVersion.getReleaseVersionString();
+            }
+            PomHelper.setPropertyVersion(newPom, profile, property, newVersion);
             MavenUtils.writeFile(project.getFile(), input);
+        } catch (VersionParseException ex) {
+            getLog().error(ex);
         } catch (XMLStreamException ex) {
             getLog().error(ex);
         } catch (IOException ex) {

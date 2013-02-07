@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -43,39 +43,27 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.List;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.installer.ArtifactInstallationException;
-import org.apache.maven.artifact.installer.ArtifactInstaller;
 import org.apache.maven.artifact.metadata.ArtifactMetadata;
 import org.apache.maven.model.Model;
+import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.maven.plugin.install.AbstractInstallMojo;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.glassfish.build.utils.MavenUtils;
 
 /**
- * Lazy version of install:install.
- * does not require any phase to run.
- * does not require any dependency resolution.
- * does not use the maven API to get the attached files.
- * does the pomFile can be supplied.
+ * Guess artifacts from target directory and attach them to the project
+ * does not require any phase to run
+ * does not require any dependency resolution
  *
- * @goal lazy-install
+ * @goal attach-all-artifacts
+ * @requiresOnline true
  *
  * @author Romain Grecourt
  */
-public class LazyInstallMojo extends AbstractInstallMojo {
-    /**
-     * @component
-     */
-    private ArtifactInstaller installer;       
-    
-    /**
-     * @parameter default-value="${project.packaging}"
-     * @required
-     */
-    protected String packaging;
+public class AttachAllArtifactsMojo extends AbstractMojo {
+
     /**
      * @parameter default-value="${project}"
      * @required
@@ -84,33 +72,39 @@ public class LazyInstallMojo extends AbstractInstallMojo {
     private MavenProject project;
     
     /**
-     * @parameter expression="${lazyInstall.pomFile}"
-     * default-value="${project.file}"
+     * @parameter expression="${attach.all.artifacts.pomFile}" default-value="${project.file}"
      * @required
      */
     private File pomFile;
     
     /**
      *       
-     * @parameter expression="${maven.install.skip}" default-value="false"
+     * @parameter expression="${attach.all.artifacts.skip}" default-value="false"
      */
     private boolean skip;
-
+    
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skip) {
-            getLog().info("Skipping artifact installation");
+            getLog().info("Skipping artifact attachment");
             return;
         }
-        
-        // if supplied pomFile is invalid, default to the project's pom
-        if (pomFile == null || !pomFile.exists()) {
-            pomFile = project.getFile();
+
+        // check for an existing .pom under target
+        File targetPom = MavenUtils.getPomInTarget(project.getBuild().getDirectory());
+        if(targetPom != null){
+            pomFile = targetPom;
         } else {
             project.setFile(pomFile);
         }
-
+        
+        // if supplied pomFile is invalid, default to the project's pom
+        if(pomFile == null || !pomFile.exists()){
+            pomFile = project.getFile();
+        }
+        
         // read the model manually
         Model model = MavenUtils.readModel(pomFile);
+        
         // create the project artifact manually
         Artifact artifact = MavenUtils.createArtifact(project.getBuild().getDirectory(), model);
         if(artifact == null){
@@ -119,59 +113,20 @@ public class LazyInstallMojo extends AbstractInstallMojo {
         }
         
         // create the project attached artifacts manually
-        List<Artifact> attachedArtifacts = MavenUtils.createAttachedArtifacts(project.getBuild().getDirectory(), artifact, model);
-
-        // TODO: push into transformation
-        boolean isPomArtifact = "pom".equals(packaging);
-
-        if (updateReleaseInfo) {
-            artifact.setRelease(true);
+        List<Artifact> attachedArtifacts = 
+                MavenUtils.createAttachedArtifacts(project.getBuild().getDirectory(), artifact, model);
+       
+        // add metadata to the project is not a "pom" type
+        if (!"pom".equals(model.getPackaging())) {
+            ArtifactMetadata metadata = new ProjectArtifactMetadata(artifact, pomFile);
+            artifact.addMetadata(metadata);
         }
+        
+        // set main artifact
+        project.setArtifact(artifact);
 
-        ArtifactMetadata metadata;
-        try {
-            if (isPomArtifact) {
-                artifact.setFile(pomFile);
-                installer.install(pomFile, artifact, localRepository);
-                installChecksums(artifact);
-            } else {
-                metadata = new ProjectArtifactMetadata(artifact, pomFile);
-                artifact.addMetadata(metadata);
-
-                File file = artifact.getFile();
-
-                if (file != null && file.isFile()) {
-                    installer.install(file, artifact, localRepository);
-                    installChecksums(artifact);
-                } else if (!attachedArtifacts.isEmpty()) {
-                    getLog().info("No primary artifact to install, installing attached artifacts instead.");
-
-                    Artifact pomArtifact = MavenUtils.createArtifact(
-                            artifact.getGroupId(),
-                            artifact.getArtifactId(),
-                            artifact.getBaseVersion()
-                            ,"pom"
-                            ,"");
-                    pomArtifact.setFile(pomFile);
-                    if (updateReleaseInfo) {
-                        pomArtifact.setRelease(true);
-                    }
-
-                    installer.install(pomFile, pomArtifact, localRepository);
-                    installChecksums(pomArtifact);
-                } else {
-                    throw new MojoExecutionException(
-                            "The packaging for this project did not assign a file to the build artifact");
-                }
-            }
-
-            for (Iterator i = attachedArtifacts.iterator(); i.hasNext();) {
-                Artifact attached = (Artifact) i.next();
-                installer.install(attached.getFile(), attached, localRepository);
-                installChecksums(attached);
-            }
-        } catch (ArtifactInstallationException e) {
-            throw new MojoExecutionException(e.getMessage(), e);
+        for (Iterator i = attachedArtifacts.iterator(); i.hasNext();) {
+            project.addAttachedArtifact((Artifact) i.next());
         }
     }
 }
