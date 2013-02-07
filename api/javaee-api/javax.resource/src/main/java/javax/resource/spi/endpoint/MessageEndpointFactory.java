@@ -47,7 +47,7 @@ import javax.resource.spi.UnavailableException;
 /**
  * This serves as a factory for creating message endpoints.
  *
- * @version 1.7-working-draft
+ * @version 1.7
  * @since 1.5
  * @author  Ram Jeyaraman, Sivakumar Thyagarajan
  */
@@ -134,7 +134,7 @@ public interface MessageEndpointFactory {
      *
      * @return a new <code>String</code> instance representing the unique
      * name of the message endpoint deployment
-     * @see javax.resource.spi.BootstrapContext
+     *
      * @since 1.7
      */
     String getActivationName();

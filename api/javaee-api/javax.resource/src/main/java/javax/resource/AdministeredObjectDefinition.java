@@ -53,7 +53,7 @@ import java.lang.annotation.Target;
  *  <code>Resource</code> annotation.
  *
  *  @see javax.annotation.Resource
- *  @version 1.7-working-draft
+ *  @version 1.7
  *  @since 1.7
  */
 @Retention(RUNTIME)
@@ -77,7 +77,6 @@ public @interface AdministeredObjectDefinition {
      */
     String resourceAdapterName();
 
-
     /**
      *  Fully qualified package name of the administered object’s class
      */
@@ -87,7 +86,6 @@ public @interface AdministeredObjectDefinition {
      *  Fully qualified package name of the administered object’s interface 
      */
     String interfaceName() default "";
-
 
     /**
      *  Properties of the administered object.  These properties may be
