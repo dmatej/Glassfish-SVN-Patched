@@ -62,6 +62,9 @@ import javax.enterprise.context.NormalScope;
  *      <li>Status.STATUS_COMMITTING</li>
  *      <li>Status.STATUS_ROLLING_BACK</li>
  *
+ * It is not intended that the term "active" as defined here in relation
+ *  to TransactionScoped should also apply to its use in relation to transaction
+ *  context, lifecycle, etc. mentioned elsewhere in this specification.
  * The transaction context is destroyed after any
  *  <code>Synchronization.beforeCompletion</code> methods are called and
  *  after completion calls have been made on enlisted resources.
