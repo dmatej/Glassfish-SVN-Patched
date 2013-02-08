@@ -27,9 +27,119 @@ Added: svn:ignore
    + target
 
 
+Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/AbstractRestResourceProvider.java
+===================================================================
+--- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/AbstractRestResourceProvider.java	(revision 59323)
++++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/AbstractRestResourceProvider.java	(working copy)
+@@ -49,8 +49,8 @@
+ import org.glassfish.hk2.utilities.AbstractActiveDescriptor;
+ import org.glassfish.hk2.utilities.Binder;
+ import org.glassfish.hk2.utilities.BuilderHelper;
++import org.glassfish.hk2.utilities.binding.AbstractBinder;
+ import org.glassfish.internal.api.ServerContext;
+-import org.glassfish.jersey.internal.inject.AbstractBinder;
+ import org.glassfish.jersey.jettison.JettisonFeature;
+ import org.glassfish.jersey.media.multipart.MultiPartFeature;
+ import org.glassfish.jersey.message.MessageProperties;
+Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/JerseyContainerCommandService.java
+===================================================================
+--- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/JerseyContainerCommandService.java	(revision 59323)
++++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/JerseyContainerCommandService.java	(working copy)
+@@ -62,8 +62,8 @@
+ import org.glassfish.hk2.api.TypeLiteral;
+ import org.glassfish.hk2.runlevel.RunLevel;
+ import org.glassfish.hk2.utilities.Binder;
++import org.glassfish.hk2.utilities.binding.AbstractBinder;
+ import org.glassfish.internal.api.ServerContext;
+-import org.glassfish.jersey.internal.inject.AbstractBinder;
+ import org.glassfish.jersey.internal.inject.ReferencingFactory;
+ import org.glassfish.jersey.internal.util.collection.Ref;
+ import org.glassfish.jersey.process.internal.RequestScoped;
+@@ -79,12 +79,12 @@
+ //@RunLevel(value= InitRunLevel.VAL)
+ @RunLevel(value= StartupRunLevel.VAL)
+ public class JerseyContainerCommandService implements PostConstruct {
+-    
++
+     @Inject
+     protected ServiceLocator habitat;
+-    
++
+     private Future<JerseyContainer> future;
+-    
++
+     @Override
+     public void postConstruct() {
+         ExecutorService executor = Executors.newFixedThreadPool(2);
+@@ -107,8 +107,8 @@
+                             });
+         executor.shutdown();
+     }
+-    
+-    
++
++
+     public JerseyContainer getJerseyContainer() throws EndpointRegistrationException {
+         try {
+             return future.get();
+@@ -122,11 +122,11 @@
+             return null;
+         }
+     }
+-    
++
+     private ServerContext getServerContext() {
+         return habitat.getService(ServerContext.class);
+     }
+-    
++
+     private JerseyContainer exposeContext() throws EndpointRegistrationException {
+         Set<Class<?>> classes = RestCommandResourceProvider.getResourceClasses();
+         // Use common classloader. Jersey artifacts are not visible through
+@@ -144,7 +144,7 @@
+             Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+         }
+     }
+-    
++
+     private JerseyContainer getJerseyContainer(ResourceConfig rc) {
+         final HttpHandler httpHandler = ContainerFactory.createContainer(HttpHandler.class, rc);
+         return new JerseyContainer() {
+@@ -154,7 +154,7 @@
+             }
+         };
+     }
+-    
++
+     private Set<? extends Binder> getAdditionalBinders() {
+         return Collections.singleton(new AbstractBinder() {
+             @Override
+@@ -166,5 +166,5 @@
+             }
+         });
+     }
+-    
++
+ }
+Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/RestAdapter.java
+===================================================================
+--- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/RestAdapter.java	(revision 59323)
++++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/RestAdapter.java	(working copy)
+@@ -78,10 +78,10 @@
+ import org.glassfish.grizzly.http.server.Response;
+ import org.glassfish.hk2.api.*;
+ import org.glassfish.hk2.utilities.Binder;
++import org.glassfish.hk2.utilities.binding.AbstractBinder;
+ import org.glassfish.internal.api.AdminAccessController;
+ import org.glassfish.internal.api.RemoteAdminAccessException;
+ import org.glassfish.internal.api.ServerContext;
+-import org.glassfish.jersey.internal.inject.AbstractBinder;
+ import org.glassfish.jersey.internal.inject.ReferencingFactory;
+ import org.glassfish.jersey.internal.util.collection.Ref;
+ import org.glassfish.jersey.internal.util.collection.Refs;
 Index: nucleus/pom.xml
 ===================================================================
---- nucleus/pom.xml	(revision 59112)
+--- nucleus/pom.xml	(revision 59323)
 +++ nucleus/pom.xml	(working copy)
 @@ -114,7 +114,7 @@
          <gmbal.version>3.2.0-b003</gmbal.version>
