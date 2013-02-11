@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -509,8 +509,8 @@ function resolveEntityUsingBuildDirectory(publicId, systemId, fallbackDir) {
     printDebug("RESOLVING RESOURCE (" + publicId + "," + systemId + ")");
     systemId = cleanUpFileName(systemId);
     var resolvedUrl = systemId;
-    var prefix_javaee = "http://java.sun.com/xml/ns/javaee/";
-    var prefix_j2ee = "http://java.sun.com/xml/ns/j2ee/";
+    var prefix_javaee = "http://xmlns.jcp.org/xml/ns/javaee/";
+    var prefix_j2ee = "http://xmlns.jcp.org/xml/ns/j2ee/";
     var prefix_ibm = "http://www.ibm.com/webservices/xsd/";
     
     if (windows)
