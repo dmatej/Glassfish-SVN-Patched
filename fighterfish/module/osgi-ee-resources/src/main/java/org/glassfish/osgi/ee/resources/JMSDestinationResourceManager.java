@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -40,10 +40,15 @@
 
 package org.glassfish.osgi.ee.resources;
 
-import com.sun.enterprise.config.serverbeans.*;
+import com.sun.enterprise.config.serverbeans.BindableResource;
+import com.sun.enterprise.config.serverbeans.Domain;
+import com.sun.enterprise.config.serverbeans.ResourceRef;
+import com.sun.enterprise.config.serverbeans.Resources;
+import org.glassfish.connectors.config.AdminObjectResource;
 import org.osgi.framework.BundleContext;
 
-import javax.jms.*;
+import javax.jms.Queue;
+import javax.jms.Topic;
 import java.util.Collection;
 import java.util.Dictionary;
 import java.util.Hashtable;
