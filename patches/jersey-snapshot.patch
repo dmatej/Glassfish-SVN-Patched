@@ -27,10 +27,322 @@ Added: svn:ignore
    + target
 
 
+Index: appserver/admingui/common/src/main/java/org/glassfish/admingui/common/security/AdminConsoleAuthModule.java
+===================================================================
+--- appserver/admingui/common/src/main/java/org/glassfish/admingui/common/security/AdminConsoleAuthModule.java	(revision 59323)
++++ appserver/admingui/common/src/main/java/org/glassfish/admingui/common/security/AdminConsoleAuthModule.java	(working copy)
+@@ -1,7 +1,7 @@
+ /*
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  *
+- * Copyright (c) 1997-2012 Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 1997-2013 Oracle and/or its affiliates. All rights reserved.
+  *
+  * The contents of this file are subject to the terms of either the GNU
+  * General Public License Version 2 only ("GPL") or the Common Development
+@@ -54,7 +54,7 @@
+ import javax.ws.rs.core.MultivaluedHashMap;
+ import javax.ws.rs.core.MultivaluedMap;
+ import javax.ws.rs.core.Response;
+-import javax.ws.rs.client.ClientFactory;
++import javax.ws.rs.client.ClientBuilder;
+ 
+ import javax.security.auth.Subject;
+ import javax.security.auth.callback.Callback;
+@@ -253,7 +253,7 @@
+ 
+         // Make REST Request
+ 
+-        Client client2 = ClientFactory.newClient();
++        Client client2 = ClientBuilder.newClient();
+         RestUtil.initialize(client2);
+         WebTarget target = client2.target(restURL);
+         target.register(new HttpBasicAuthFilter(username, password));
+Index: appserver/admingui/common/src/main/java/org/glassfish/admingui/common/util/RestUtil.java
+===================================================================
+--- appserver/admingui/common/src/main/java/org/glassfish/admingui/common/util/RestUtil.java	(revision 59323)
++++ appserver/admingui/common/src/main/java/org/glassfish/admingui/common/util/RestUtil.java	(working copy)
+@@ -1,7 +1,7 @@
+ /*
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  *
+- * Copyright (c) 2009-2012 Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2009-2013 Oracle and/or its affiliates. All rights reserved.
+  *
+  * The contents of this file are subject to the terms of either the GNU
+  * General Public License Version 2 only ("GPL") or the Common Development
+@@ -56,7 +56,7 @@
+ import java.util.logging.Logger;
+ 
+ import javax.ws.rs.client.Client;
+-import javax.ws.rs.client.ClientFactory;
++import javax.ws.rs.client.ClientBuilder;
+ import javax.ws.rs.client.Entity;
+ import javax.ws.rs.client.WebTarget;
+ import javax.ws.rs.core.Cookie;
+@@ -108,7 +108,7 @@
+ 
+     public static Client getJerseyClient() {
+         if (JERSEY_CLIENT == null) {
+-            JERSEY_CLIENT = ClientFactory.newClient();
++            JERSEY_CLIENT = ClientBuilder.newClient();
+             JERSEY_CLIENT.register(new CsrfProtectionFilter())
+                     .register(new RequiredHeadersFilter())
+                     .register(new JacksonFeature());
+@@ -924,7 +924,7 @@
+         try {
+             ServiceLocator habitat = SecurityServicesUtil.getInstance().getHabitat();
+             SecureAdmin secureAdmin = habitat.getService(SecureAdmin.class);
+-            client.setProperty(ClientProperties.SSL_CONFIG, new SslConfig(new BasicHostnameVerifier(),
++            client.property(ClientProperties.SSL_CONFIG, new SslConfig(new BasicHostnameVerifier(),
+                                                                                           habitat.<SSLUtils>getService(SSLUtils.class).getAdminSSLContext(SecureAdmin.Util.DASAlias(secureAdmin), null)));
+             client.register(CsrfProtectionFilter.class);
+ 
+Index: nucleus/admin/util/src/main/java/com/sun/enterprise/admin/remote/RemoteRestAdminCommand.java
+===================================================================
+--- nucleus/admin/util/src/main/java/com/sun/enterprise/admin/remote/RemoteRestAdminCommand.java	(revision 59323)
++++ nucleus/admin/util/src/main/java/com/sun/enterprise/admin/remote/RemoteRestAdminCommand.java	(working copy)
+@@ -65,7 +65,6 @@
+ import java.util.logging.Logger;
+ 
+ import javax.ws.rs.client.Client;
+-import javax.ws.rs.client.ClientException;
+ import javax.ws.rs.client.Entity;
+ import javax.ws.rs.client.Invocation;
+ import javax.ws.rs.client.Invocation.Builder;
+@@ -89,9 +88,8 @@
+ import org.glassfish.api.admin.CommandModel.ParamModel;
+ import org.glassfish.api.admin.Payload.Part;
+ import org.glassfish.common.util.admin.AuthTokenManager;
+-import org.glassfish.jersey.client.ClientConfig;
+ import org.glassfish.jersey.client.ClientProperties;
+-import org.glassfish.jersey.client.JerseyClientFactory;
++import org.glassfish.jersey.client.JerseyClientBuilder;
+ import org.glassfish.jersey.client.SslConfig;
+ import org.glassfish.jersey.client.filter.CsrfProtectionFilter;
+ import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
+@@ -122,6 +120,7 @@
+ import com.sun.enterprise.universal.io.SmartFile;
+ import com.sun.enterprise.util.StringUtils;
+ import com.sun.enterprise.util.net.NetUtils;
++import javax.ws.rs.ProcessingException;
+ 
+ /**
+  * Utility class for executing remote admin commands.
+@@ -698,21 +697,21 @@
+                     continue;
+                 }
+                 String paramName = opt.getName();
+-                
++
+                 List<String> paramValues = new ArrayList<String>(options.get(paramName.toLowerCase(Locale.ENGLISH)));
+-                if (!opt.getParam().alias().isEmpty() && 
++                if (!opt.getParam().alias().isEmpty() &&
+                         !paramName.equalsIgnoreCase(opt.getParam().alias())) {
+                     paramValues.addAll(options.get(opt.getParam().alias().toLowerCase(Locale.ENGLISH)));
+                 }
+                 if (!opt.getParam().multiple() && paramValues.size() > 1) {
+-                    throw new CommandException(strings.get("tooManyOptions", 
++                    throw new CommandException(strings.get("tooManyOptions",
+                             paramName));
+                 }
+                 if (paramValues.isEmpty()) {
+                     // perhaps it's set in the environment?
+                     String envValue = getFromEnvironment(paramName);
+                     if (envValue != null) {
+-                        paramValues.add(envValue); 
++                        paramValues.add(envValue);
+                     }
+                 }
+                 if (paramValues.isEmpty()) {
+@@ -829,7 +828,7 @@
+     }
+ 
+     private static Client createClient() {
+-        Client c = JerseyClientFactory.newClient();
++        Client c = JerseyClientBuilder.newClient();
+         c.register(new MultiPartFeature())
+             .register(new CsrfProtectionFilter("CLI"))
+             .register(new ActionReportJsonReader())
+@@ -897,7 +896,7 @@
+             Metrix.event("doRestCommand() - about to create target");
+             WebTarget target = createTarget(uri);
+             Metrix.event("doRestCommand() - about to configure security");
+-            target.setProperty(ClientProperties.SSL_CONFIG, new SslConfig(new BasicHostnameVerifier(host), getSslContext()));
++            target.property(ClientProperties.SSL_CONFIG, new SslConfig(new BasicHostnameVerifier(host), getSslContext()));
+             /*
+              * Any code that wants to trigger a retry will say so explicitly.
+              */
+@@ -974,7 +973,7 @@
+                 Response response;
+                 try {
+                     response = invoc.invoke();
+-                } catch (ClientException ex) {
++                } catch (ProcessingException ex) {
+                     //Rethrow original execaption (not Throwable) for future processing
+                     if (ex.getCause() != null && ex.getCause() instanceof Exception) {
+                         throw (Exception) ex.getCause();
+@@ -1541,7 +1540,7 @@
+             if (paramName.equals("DEFAULT"))    // operands handled below
+                 continue;
+             ParamModel opt = commandModel.getModelFor(paramName);
+-            if (opt != null && 
++            if (opt != null &&
+                     (opt.getType() == File.class ||
+                      opt.getType() == File[].class)) {
+                 sawFile = true;
+@@ -1549,7 +1548,7 @@
+                     final File optionFile = new File(fname);
+                     sawDirectory |= optionFile.isDirectory();
+                     sawUploadableFile |= optionFile.isFile();
+-                }              
++                }
+             }
+         }
+ 
+Index: nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/ClientWrapper.java
+===================================================================
+--- nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/ClientWrapper.java	(revision 59323)
++++ nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/ClientWrapper.java	(working copy)
+@@ -1,7 +1,7 @@
+ /*
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  *
+- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
+  *
+  * The contents of this file are subject to the terms of either the GNU
+  * General Public License Version 2 only ("GPL") or the Common Development
+@@ -43,6 +43,7 @@
+ import java.net.URI;
+ import java.util.HashMap;
+ import java.util.Map;
++import javax.net.ssl.SSLContext;
+ 
+ import javax.ws.rs.client.Client;
+ import javax.ws.rs.client.ClientRequestContext;
+@@ -53,14 +54,14 @@
+ import javax.ws.rs.core.Link;
+ import javax.ws.rs.core.UriBuilder;
+ 
+-import org.glassfish.jersey.client.JerseyClientFactory;
++import org.glassfish.jersey.client.JerseyClientBuilder;
+ import org.glassfish.jersey.client.filter.CsrfProtectionFilter;
+ import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
+ import org.glassfish.jersey.jettison.JettisonFeature;
+ import org.glassfish.jersey.media.multipart.MultiPartFeature;
+ 
+ /**
+- * This class wraps the Client returned by JerseyClientFactory. Using this class allows us to encapsulate many of the
++ * This class wraps the Client returned by JerseyClientBuilder. Using this class allows us to encapsulate many of the
+  * client configuration concerns, such as registering the <code>CsrfProtectionFilter</code>.
+  * @author jdlee
+  */
+@@ -81,7 +82,7 @@
+     }
+ 
+     public ClientWrapper(final Map<String, String> headers, String userName, String password) {
+-        realClient = JerseyClientFactory.newClient();
++        realClient = JerseyClientBuilder.newClient();
+         realClient.register(new MultiPartFeature());
+         realClient.register(new JettisonFeature());
+         realClient.register(new CsrfProtectionFilter());
+@@ -137,8 +138,8 @@
+     }
+ 
+     @Override
+-    public Client setProperty(String name, Object value) {
+-        realClient.setProperty(name, value);
++    public Client property(String name, Object value) {
++        realClient.property(name, value);
+         return this;
+     }
+ 
+@@ -195,4 +196,9 @@
+         realClient.replaceWith(config);
+         return this;
+     }
++
++    @Override
++    public SSLContext getSslContext() {
++        return realClient.getSslContext();
++    }
+ }
+Index: nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/RestClient.java
+===================================================================
+--- nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/RestClient.java	(revision 59323)
++++ nucleus/admin/rest/rest-client/src/main/java/org/glassfish/admin/rest/client/RestClient.java	(working copy)
+@@ -1,7 +1,7 @@
+ /*
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  *
+- * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2011-2013 Oracle and/or its affiliates. All rights reserved.
+  *
+  * The contents of this file are subject to the terms of either the GNU
+  * General Public License Version 2 only ("GPL") or the Common Development
+@@ -44,7 +44,7 @@
+ import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
+ 
+ import javax.ws.rs.client.Client;
+-import javax.ws.rs.client.ClientFactory;
++import javax.ws.rs.client.ClientBuilder;
+ 
+ /**
+  *
+@@ -68,7 +68,7 @@
+         this.host = host;
+         this.port = port;
+         this.useSsl = useSsl;
+-        client = ClientFactory.newClient();
++        client = ClientBuilder.newClient();
+ 
+         client.register(new CsrfProtectionFilter());
+         if(user != null) {
+Index: nucleus/admin/rest/rest-service/src/test/java/org/glassfish/admin/rest/composite/resource/DummyUriInfo.java
+===================================================================
+--- nucleus/admin/rest/rest-service/src/test/java/org/glassfish/admin/rest/composite/resource/DummyUriInfo.java	(revision 59323)
++++ nucleus/admin/rest/rest-service/src/test/java/org/glassfish/admin/rest/composite/resource/DummyUriInfo.java	(working copy)
+@@ -144,6 +144,26 @@
+         throw new UnsupportedOperationException("Not supported yet.");
+     }
+ 
++    @Override
++    public URI resolve(URI uri) {
++        throw new UnsupportedOperationException("Not supported yet.");
++    }
++
++    @Override
++    public URI resolve(URI baseUri, URI uri) {
++        throw new UnsupportedOperationException("Not supported yet.");
++    }
++
++    @Override
++    public URI relativize(URI uri) {
++        throw new UnsupportedOperationException("Not supported yet.");
++    }
++
++    @Override
++    public URI relativize(URI from, URI uri) {
++        throw new UnsupportedOperationException("Not supported yet.");
++    }
++
+     private static class UriBuilderImpl extends UriBuilder {
+ 
+         public UriBuilderImpl() {
 Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/AbstractRestResourceProvider.java
 ===================================================================
 --- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/AbstractRestResourceProvider.java	(revision 59323)
 +++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/AbstractRestResourceProvider.java	(working copy)
+@@ -1,7 +1,7 @@
+ /*
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  *
+- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
+  *
+  * The contents of this file are subject to the terms of either the GNU
+  * General Public License Version 2 only ("GPL") or the Common Development
 @@ -49,8 +49,8 @@
  import org.glassfish.hk2.utilities.AbstractActiveDescriptor;
  import org.glassfish.hk2.utilities.Binder;
@@ -41,10 +353,28 @@ Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/ad
  import org.glassfish.jersey.jettison.JettisonFeature;
  import org.glassfish.jersey.media.multipart.MultiPartFeature;
  import org.glassfish.jersey.message.MessageProperties;
+@@ -161,7 +161,7 @@
+             rc.register(b);
+         }
+ 
+-        rc.setProperty(MessageProperties.LEGACY_WORKERS_ORDERING, true);
++        rc.property(MessageProperties.LEGACY_WORKERS_ORDERING, true);
+ 
+         //add a rest config listener for possible reload of Jersey
+         new RestConfigChangeListener(habitat, r, rc, sc);
 Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/JerseyContainerCommandService.java
 ===================================================================
 --- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/JerseyContainerCommandService.java	(revision 59323)
 +++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/JerseyContainerCommandService.java	(working copy)
+@@ -1,7 +1,7 @@
+ /*
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  *
+- * Copyright (c) 2006-2012 Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2006-2013 Oracle and/or its affiliates. All rights reserved.
+  *
+  * The contents of this file are subject to the terms of either the GNU
+  * General Public License Version 2 only ("GPL") or the Common Development
 @@ -62,8 +62,8 @@
  import org.glassfish.hk2.api.TypeLiteral;
  import org.glassfish.hk2.runlevel.RunLevel;
@@ -121,6 +451,19 @@ Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/ad
 -    
 +
  }
+Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/RestManagementResourceProvider.java
+===================================================================
+--- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/RestManagementResourceProvider.java	(revision 59323)
++++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/RestManagementResourceProvider.java	(working copy)
+@@ -179,7 +179,7 @@
+                 ad = (ActiveDescriptor<JavadocWadlGeneratorConfig>) serviceLocator.reifyDescriptor(ad);
+             }
+             final Class<?> implementationClass = ad.getImplementationClass();
+-            rc.setProperty(ServerProperties.PROPERTY_WADL_GENERATOR_CONFIG, implementationClass.getName());
++            rc.property(ServerProperties.PROPERTY_WADL_GENERATOR_CONFIG, implementationClass.getName());
+             classes.add(implementationClass);
+         }
+ 
 Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/RestAdapter.java
 ===================================================================
 --- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/adapter/RestAdapter.java	(revision 59323)
@@ -137,11 +480,64 @@ Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/ad
  import org.glassfish.jersey.internal.inject.ReferencingFactory;
  import org.glassfish.jersey.internal.util.collection.Ref;
  import org.glassfish.jersey.internal.util.collection.Refs;
+Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/ProxyImpl.java
+===================================================================
+--- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/ProxyImpl.java	(revision 59323)
++++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/ProxyImpl.java	(working copy)
+@@ -1,7 +1,7 @@
+ /*
+  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+  *
+- * Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
++ * Copyright (c) 2011-2013 Oracle and/or its affiliates. All rights reserved.
+  *
+  * The contents of this file are subject to the terms of either the GNU
+  * General Public License Version 2 only ("GPL") or the Common Development
+@@ -137,7 +137,7 @@
+     private void addAuthenticationInfo(Client client, WebTarget resourceBuilder, Server server, ServiceLocator habitat) {
+         SecureAdmin secureAdmin = habitat.getService(SecureAdmin.class);
+         //Instruct Jersey to use HostNameVerifier and SSLContext provided by us.
+-        client.setProperty(ClientProperties.SSL_CONFIG, new SslConfig(new BasicHostnameVerifier(server.getAdminHost()),
++        client.property(ClientProperties.SSL_CONFIG, new SslConfig(new BasicHostnameVerifier(server.getAdminHost()),
+                 habitat.<SSLUtils>getService(SSLUtils.class).getAdminSSLContext(SecureAdmin.Util.DASAlias(secureAdmin), "TLS" ))); //TODO need to get hardcoded "TLS" from corresponding ServerRemoteAdminCommand constant);
+     }
+ 
+Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/Util.java
+===================================================================
+--- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/Util.java	(revision 59323)
++++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/Util.java	(working copy)
+@@ -63,7 +63,7 @@
+ import java.util.logging.Level;
+ import javax.security.auth.Subject;
+ import javax.ws.rs.core.PathSegment;
+-import javax.ws.rs.client.ClientFactory;
++import javax.ws.rs.client.ClientBuilder;
+ import javax.ws.rs.core.HttpHeaders;
+ import org.glassfish.admin.rest.Constants;
+ import org.glassfish.admin.rest.RestLogging;
+@@ -292,7 +292,7 @@
+ 
+     public static synchronized Client getJerseyClient() {
+         if (client == null) {
+-            client = ClientFactory.newClient();
++            client = ClientBuilder.newClient();
+         }
+ 
+         return client;
+@@ -318,7 +318,7 @@
+             }
+         }
+         if (!parameters.entrySet().isEmpty()) {
+-           return ResourceUtil.runCommand("set", parameters, subject); 
++           return ResourceUtil.runCommand("set", parameters, subject);
+         } else {
+             return new RestActionReporter(); // noop
+         }
 Index: nucleus/pom.xml
 ===================================================================
 --- nucleus/pom.xml	(revision 59323)
 +++ nucleus/pom.xml	(working copy)
-@@ -114,7 +114,7 @@
+@@ -114,11 +114,11 @@
          <gmbal.version>3.2.0-b003</gmbal.version>
          <woodstox.version>4.1.2</woodstox.version>
          <antlr.version>2.7.6</antlr.version>
@@ -150,3 +546,8 @@ Index: nucleus/pom.xml
          <jackson.version>1.9.8</jackson.version>
          <jettison.version>1.3.1</jettison.version>
          <guava.version>13.0</guava.version>
+-        <jax-rs-api.version>2.0-m15</jax-rs-api.version>
++        <jax-rs-api.version>2.0-m16</jax-rs-api.version>
+         <mimepull.version>1.9.1</mimepull.version>
+         <jbi.version>1.0</jbi.version>
+         <glassfish-management-api.version>3.2.0-b001</glassfish-management-api.version>
