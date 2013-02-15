@@ -58,10 +58,7 @@ import java.lang.annotation.RetentionPolicy;
  * public void &#060;METHOD&#062;(InvocationContext ctx) { ... }
  * </pre>
  * 
- * <p>An <tt>AroundConstruct</tt> method may be only declared on an interceptor class.</p>
- *
- * <p>An <tt>AroundConstruct</tt> method cannot invoke methods of the component which 
- * constructor it interposes on.</p>
+ * <p>An <tt>AroundConstruct</tt> interceptor method may be only declared on an interceptor class.</p>
  *
  * <p>An interceptor class must not declare more than one <tt>AroundConstruct</tt> 
  * method.</p>
@@ -69,6 +66,13 @@ import java.lang.annotation.RetentionPolicy;
  * <p><tt>AroundConstruct</tt> methods may throw runtime exceptions, 
  * but not checked exceptions.
  * </p>
+ *
+ * <p> The target instance is created and its constructor injection is performed, if applicable, 
+ * when the last interceptor method in the <tt>AroundConstruct</tt> interceptor chain invokes 
+ * the {@link javax.interceptor.InvocationContext#proceed()} method.
+ *
+ * <p>An <tt>AroundConstruct</tt> interceptor method should exercise caution accessing the instance which 
+ * constructor it interposes on.</p>
  *
  * @since Interceptors 1.2 
  */

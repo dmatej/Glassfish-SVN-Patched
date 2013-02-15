@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 1997-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -40,6 +40,7 @@
 
 package javax.interceptor;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Map;
 
@@ -73,7 +74,9 @@ import java.util.Map;
 public interface InvocationContext {
 
     /**
-     * Returns the target instance.
+     * Returns the target instance. For the {@link AroundConstruct} lifecycle callback 
+     * interceptor method, the <tt>getTarget</tt> returns <code>null</code> 
+     * if called before the {@link #proceed} method.
      * 
      * @return the target instance
      */
@@ -93,38 +96,50 @@ public interface InvocationContext {
 
     /**
      * Returns the method of the target class for which the interceptor
-     * was invoked.  For method interceptors, the method of the 
-     * target class is returned. For lifecycle callback interceptors, 
-     * a null value is returned.
+     * was invoked.  For around-invoke and around-timeout method interceptors, 
+     * the method of the target class is returned. For lifecycle callback 
+     * interceptors, a null value is returned.
      * 
      * @return the method, or a null value
      */
     public Method getMethod();
 
     /**
-     * Returns the parameter values that will be passed to the method of
-     * the target class. If {@code setParameters()} has been called,
-     * {@code getParameters()} returns the values to which the parameters 
+     * Returns the constructor of the target class for which the interceptor
+     * was invoked.  For {@link AroundConstruct} interceptor, the constructor of the 
+     * target class is returned. For all other interceptors, 
+     * a null value is returned.
+     * 
+     * @return the constructor, or a null value
+     */
+    public Constructor getConstructor();
+
+    /**
+     * Returns the parameter values that will be passed to the method or
+     * constructor of the target class. If {@link #setParameters} has been 
+     * called, <code>getParameters</code> returns the values to which the parameters 
      * have been set.  
      * 
      * @return the parameter values, as an array
      * 
      * @exception java.lang.IllegalStateException if invoked within
-     * a lifecycle callback method.
+     * a lifecycle callback method which is not an {@link AroundConstruct} callback.
      */
     public Object[] getParameters();
     
     /**
-     * Sets the parameter values that will be passed to the method of the 
-     * target class.  
+     * Sets the parameter values that will be passed to the method  or
+     * constructor of the target class.  
      *
      * @exception java.lang.IllegalStateException if invoked within
-     * a lifecycle callback method.
+     * a lifecycle callback method which is not an {@link AroundConstruct} callback.
      *
      * @exception java.lang.IllegalArgumentException if the types of the 
-     * given parameter values do not match the types of the method parameters, 
-     * or if the number of parameters supplied does not equal the number of 
-     * method parameters.
+     * given parameter values do not match the types of the method or constructor
+     * parameters, or if the number of parameters supplied does not equal the 
+     * number of method or constructor parameters (if the last parameter is a 
+     * vararg parameter of type <code>T</code>, it is considered to be equivalent 
+     * to a parameter of type <code>T[]</code>).
      * 
      * @param params the parameter values, as an array
      */
@@ -146,9 +161,20 @@ public interface InvocationContext {
     public Map<String, Object> getContextData();
 
     /**
-     * Proceed to the next interceptor in the interceptor chain.
-     * Return the result of the next method invoked, or a null 
+     * Proceed to the next interceptor in the interceptor chain. For the 
+     * around-invoke or around-timeout interceptor methods, the invocation of the 
+     * last interceptor method in the chain causes the invocation of the target 
+     * class method. For {@link AroundConstruct} lifecycle callback interceptor 
+     * methods, the invocation of the last interceptor method in the chain causes 
+     * the target instance to be created. For all other lifecycle callback 
+     * interceptor methods, if there is no callback method defined on the target 
+     * class, the invocation of proceed in the last interceptor method in the chain 
+     * is a no-op
+     *
+     * <p>Return the result of the next method invoked, or a null 
      * value if the method has return type void.
+     *
+     * <p>
      * 
      * @return the return value of the next method in the chain
      */
