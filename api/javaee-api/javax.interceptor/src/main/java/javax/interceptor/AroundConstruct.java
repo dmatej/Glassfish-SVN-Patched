@@ -49,13 +49,18 @@ import java.lang.annotation.RetentionPolicy;
  * <p>Designates an interceptor method that receives a callback when
  * the target class constructor is invoked.
  * </p>
- * <p>The method to which this annotation is applied must have the 
- * following signature.
+ * <p>The method to which this annotation is applied must have one of the 
+ * following signatures.
  * </p>
  * 
  * <pre>
  * &#064;AroundConstruct
  * public void &#060;METHOD&#062;(InvocationContext ctx) { ... }
+ * </pre>
+ * 
+ * <pre>
+ * &#064;AroundConstruct
+ * public Object &#060;METHOD&#062;(InvocationContext ctx) throws Exception { ... }
  * </pre>
  * 
  * <p>An <tt>AroundConstruct</tt> interceptor method may be only declared on an interceptor class.</p>

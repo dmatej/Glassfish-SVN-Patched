@@ -75,28 +75,33 @@ public @interface Interceptor {
      * invoked.  These values should be used with the
      * {@link javax.annotations.Priority Priority} annotation.
      * <ul>
-     * <li>Interceptors defined by platform specifications should be in the
-     * range <a href="#PLATFORM_BEFORE">PLATFORM_BEFORE</a> up until 
-     * <a href="#LIBRARY_BEFORE">LIBRARY_BEFORE</a>, or starting at
+     * <li>Interceptors defined by platform specifications should have 
+     * priority values in the range <a href="#PLATFORM_BEFORE">PLATFORM_BEFORE</a> 
+     * up until <a href="#LIBRARY_BEFORE">LIBRARY_BEFORE</a>, or starting at
      * <a href="#PLATFORM_AFTER">PLATFORM_AFTER</a>.  
      * <li>Interceptors defined by extension libraries
-     * should be in the range <a href="#LIBRARY_BEFORE">LIBRARY_BEFORE</a>
+     * should have priority values in the range <a href="#LIBRARY_BEFORE">LIBRARY_BEFORE</a>
      * up until <a href="#APPLICATION">APPLICATION</a>, or
      * <a href="#LIBRARY_AFTER">LIBRARY_AFTER</a> up until 
      * <a href="#PLATFORM_AFTER">PLATFORM_AFTER</a>.  
-     * <li>Interceptors defined by applications should be in the range 
+     * <li>Interceptors defined by applications should have priority values in the range 
      * <a href="#APPLICATION">APPLICATION</a> up until
      * <a href="#LIBRARY_AFTER">LIBRARY_AFTER</a>.  
      * </ul>
-     * An interceptor that must be invoked before or
+     *
+     * <p>An interceptor that must be invoked before or
      * after another defined interceptor can choose any appropriate
      * value.</p>
+     *
+     * <p>Interceptors with smaller priority values are called first. If more than 
+     * one interceptor has the same priority, the relative order of these interceptor 
+     * is undefined.</p>
      *
      * <p>For example, an extension library might define an interceptor
      * like this:</p>
      *
      * <pre>
-     * &#064;Priority(Interceptor.Priority.LIBRARY_BEFORE+1)
+     * &#064;Priority(Interceptor.Priority.LIBRARY_BEFORE+10)
      * &#064;Interceptor
      * public class ValidationInterceptor { ... }
      * </pre>
