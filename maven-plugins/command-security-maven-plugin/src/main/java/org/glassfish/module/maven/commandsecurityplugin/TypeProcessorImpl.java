@@ -53,6 +53,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
+import org.glassfish.hk2.utilities.DescriptorImpl;
 import org.glassfish.module.maven.commandsecurityplugin.CommandAuthorizationInfo.Param;
 
 /**
@@ -73,6 +74,7 @@ public class TypeProcessorImpl implements TypeProcessor {
     static Properties shared = new Properties();
     
     private boolean isFailureFatal;
+    private boolean isCheckAPIvsParse;
     
     private static final String KNOWN_NONCOMMAND_TYPES_NAME = "org.glassfish.api.admin.knownNonCommandTypes";
     private static final String PROCESSED_MODULES_NAME = "org.glassfish.api.admin.processedModules";
@@ -91,7 +93,7 @@ public class TypeProcessorImpl implements TypeProcessor {
     private final static Pattern CONFIG_BEAN_CHILD_PATTERN = Pattern.compile(
             ",(?:<([^>]+)>=\\{(?:collection\\\\:)?([^,}]+)[},])|(?:\\@[^}]+})|(?:key=[^}]+)|(?:keyed-as=[^}]+)");
     private static final Pattern GENERIC_COMMAND_INFO_PATTERN = Pattern.compile("metadata=MethodListActual=\\{([^\\}]+)\\},MethodName=\\{([^\\}]+)\\},ParentConfigured=\\{([^\\}]+)\\}");
-        
+    private static final Pattern CONFIG_BEAN_CHILD_NAME_KEY_PATTERN = Pattern.compile("<([^>]+)>");
     
     
     private static final String ADMIN_COMMAND_NAME = "org.glassfish.api.admin.AdminCommand";
@@ -145,22 +147,26 @@ public class TypeProcessorImpl implements TypeProcessor {
     
     TypeProcessorImpl(final AbstractMojo mojo, final MavenSession session, 
             final MavenProject project) {
-        this(mojo, session, project, false);
+        this(mojo, session, project, false, false);
     }
     
     private TypeProcessorImpl(final AbstractMojo mojo, final MavenSession session, 
             final MavenProject project,
-            final boolean isFailureFatal) {
+            final boolean isFailureFatal,
+            final boolean isCheckAPIvsParse) {
         this.mojo = mojo;
         this.session = session;
         this.project = project;
         this.isFailureFatal = isFailureFatal;
+        this.isCheckAPIvsParse = isCheckAPIvsParse;
     }
     
     TypeProcessorImpl(final AbstractMojo mojo, final MavenSession session, 
             final MavenProject project,
-            final String isFailureFatalSetting) {
-        this(mojo, session, project, Boolean.parseBoolean(isFailureFatalSetting));
+            final String isFailureFatalSetting,
+            final String isCheckAPIvsParse) {
+        this(mojo, session, project, Boolean.parseBoolean(isFailureFatalSetting),
+                Boolean.parseBoolean(isCheckAPIvsParse));
     }
     
     @Override
@@ -209,7 +215,7 @@ public class TypeProcessorImpl implements TypeProcessor {
         try {
             loadConfigBeans();
         } catch (Exception ex) {
-            throw new MojoExecutionException("Error loading config beans" + ex.toString());
+            throw new MojoExecutionException("Error loading config beans", ex);
         }
         
         final Collection<Inhabitant> inhabitants;
@@ -267,7 +273,36 @@ public class TypeProcessorImpl implements TypeProcessor {
          * specified input to configBeans.
          */
         try {
-            findInhabitantsInModule(new InputStreamReader(is));
+            Map<String,Inhabitant> preBeans = 
+                    (isCheckAPIvsParse ? new HashMap<String,Inhabitant>(configBeans) : null);
+            
+            final List<Inhabitant> inhabitants = findInhabitantsInModule(new BufferedReader(new InputStreamReader(is)));
+            
+            if (isCheckAPIvsParse) {
+                Set<Inhabitant> beansAddedByNew = new HashSet<Inhabitant>(configBeans.values());
+                beansAddedByNew.removeAll(preBeans.values());
+
+                final InputStream isAgain = new BufferedInputStream(inhabitantsURL.openStream());
+                final List<Inhabitant> old = findInhabitantsInModule(new InputStreamReader(isAgain));
+                Set<Inhabitant> beansAddedByOld = new HashSet<Inhabitant>(configBeans.values());
+                beansAddedByOld.removeAll(preBeans.values());
+                if ( ! beansAddedByOld.equals(beansAddedByNew)) {
+                    Set<Inhabitant> beansAddedByNewNotOld = beansAddedByNew;
+                    beansAddedByNewNotOld.removeAll(beansAddedByOld);
+                    Set<Inhabitant> beansAddedByOldNotNew = beansAddedByOld;
+                    beansAddedByOldNotNew.removeAll(beansAddedByNew);
+                    throw new RuntimeException("Beans added mismatch for URL " + url.toExternalForm() + "\n  added by new not old: " + beansAddedByNewNotOld.toString() + "\n  added by old not new: " + beansAddedByOldNotNew.toString());
+                } else {
+                    getLog().info("ConfigBeans match for file " + url.toExternalForm());
+                }
+                if ( ! old.equals(inhabitants)) {
+                    Set<Inhabitant> inNewerNotInOld = new HashSet<Inhabitant>(inhabitants);
+                    inNewerNotInOld.removeAll(old);
+                    Set<Inhabitant> inOldNotInNewer = new HashSet<Inhabitant>(old);
+                    inOldNotInNewer.removeAll(inhabitants);
+                    throw new RuntimeException("Inhabitants mismatch for file " + inhabitantsURL.toExternalForm() + "\n  extra in old: " + inOldNotInNewer.toString() + "\n  extra in new: " + inNewerNotInOld.toString() );
+                }
+            }
         } finally {
             is.close();
         }
@@ -447,8 +482,7 @@ public class TypeProcessorImpl implements TypeProcessor {
     private Collection<Inhabitant> findCommandInhabitants(final Collection<Inhabitant> inhabitants) {
         final List<Inhabitant> result = new ArrayList<Inhabitant>();
         for (Inhabitant inh : inhabitants) {
-            if (inh.contracts.contains(ADMIN_COMMAND_NAME) ||
-                inh.contracts.contains(CLI_COMMAND_NAME)) {
+            if (inh.contracts.contains(ADMIN_COMMAND_NAME)) {
                 if (trace != null) {
                     trace.append(LINE_SEP).append(" Inhabitant ").append(inh.className).append(" seems to be a command");
                 }
@@ -488,9 +522,133 @@ public class TypeProcessorImpl implements TypeProcessor {
             return Collections.EMPTY_LIST;
         }
         
-        return findInhabitantsInModule(new InputStreamReader(new BufferedInputStream(new FileInputStream(inhabFile))));
+        Map<String,Inhabitant> preBeans = (isCheckAPIvsParse ? new HashMap<String,Inhabitant>(configBeans) : null);
+        
+        final List<Inhabitant> inhabitants = findInhabitantsInModule(new BufferedReader(new InputStreamReader(new BufferedInputStream(new FileInputStream(inhabFile)))));
+        if (isCheckAPIvsParse) {
+            final List<Inhabitant> old = findInhabitantsInModule(new InputStreamReader(new BufferedInputStream(new FileInputStream(inhabFile))));
+            final Set<Inhabitant> beansAddedByOld = new HashSet<Inhabitant>(configBeans.values());
+            beansAddedByOld.removeAll(preBeans.values());
+
+            final Set<Inhabitant> beansAddedByNew = new HashSet<Inhabitant>(configBeans.values());
+            beansAddedByNew.removeAll(preBeans.values());
+            if ( ! beansAddedByOld.equals(beansAddedByNew)) {
+                final Set<Inhabitant> beansAddedByNewNotOld = beansAddedByNew;
+                beansAddedByNewNotOld.removeAll(beansAddedByOld);
+                final Set<Inhabitant> beansAddedByOldNotNew = beansAddedByOld;
+                beansAddedByOldNotNew.removeAll(beansAddedByNew);
+                throw new RuntimeException("Beans added mismatch for URL " + inhabFile.getAbsolutePath()+ "\n  added by new not old: " + beansAddedByNewNotOld.toString() + "\n  added by old not new: " + beansAddedByOldNotNew.toString());
+            } else {
+                getLog().info("ConfigBeans match for file " + inhabFile.getAbsolutePath());
+            }
+            if ( ! old.equals(inhabitants)) {
+                final Set<Inhabitant> inNewerNotInOld = new HashSet<Inhabitant>(inhabitants);
+                inNewerNotInOld.removeAll(old);
+                final Set<Inhabitant> inOldNotInNewer = new HashSet<Inhabitant>(old);
+                inOldNotInNewer.removeAll(inhabitants);
+                throw new RuntimeException("Inhabitants mismatch for file " + inhabFile.getAbsolutePath() + "\n  extra in old: " + inOldNotInNewer.toString() + "\n  extra in new: " + inNewerNotInOld.toString() );
+            }
+        }
+        return inhabitants;
     }
     
+    private List<Inhabitant> findInhabitantsInModule(final BufferedReader br) throws IOException {
+        final List<Inhabitant> result = new ArrayList<Inhabitant>();
+        DescriptorImpl di;
+        while ((di = new DescriptorImpl()).readObject(br)) {
+            final Inhabitant inhabitant = new Inhabitant(di.getImplementation());
+            inhabitant.contracts = new ArrayList<String>(di.getAdvertisedContracts());
+            inhabitant.serviceName = di.getName();
+            inhabitant.methodListActual = getFirstIfAny(di.getMetadata(), "MethodListActual");
+            inhabitant.methodName = getFirstIfAny(di.getMetadata(), "MethodName");
+            inhabitant.parentConfigured = getFirstIfAny(di.getMetadata(), "ParentConfigured");
+            if (inhabitant.methodName != null) {
+                getLog().debug("Recognized generic command " + inhabitant.serviceName);
+                inhabitant.action = genericCommandNameToAction.get(inhabitant.className);
+                Inhabitant configBeanParent = configBeans.get(inhabitant.parentConfigured);
+                if (configBeanParent == null) {
+                    configBeanParent = new Inhabitant(inhabitant.parentConfigured);
+                    configBeans.put(configBeanParent.className, configBeanParent);
+                    getLog().debug("Created parent bean " + configBeanParent.className + " for target bean " + inhabitant.methodListActual);
+                } else {
+                    getLog().debug("Found parent bean " + configBeanParent.className + " for target bean " + inhabitant.methodListActual);
+                }
+
+                Inhabitant configBean = configBeans.get(inhabitant.methodListActual);
+                if (configBean == null) {
+                    configBean = new Inhabitant(inhabitant.methodListActual);
+                    configBeans.put(configBean.className, configBean);
+                    getLog().debug("Created new config bean for " + configBean.className);
+                } else {
+                    getLog().debug("Found existing config bean for " + configBean.className);
+                }
+                configBean.parent = configBeanParent;
+                inhabitant.configBeanForCommand = configBean;
+            }
+            final List<String> targets = di.getMetadata().get("target");
+            if (targets != null && targets.size() > 0) {
+                final String configBeanClassName = targets.get(0);
+                getLog().debug("Recognized " + configBeanClassName + " as a config bean");
+                Inhabitant configBean = configBeans.get(configBeanClassName);
+                if (configBean == null) {
+                    configBean = new Inhabitant(configBeanClassName);
+                    configBeans.put(configBeanClassName, configBean);
+                }
+
+                /*
+                 * Search for and process child elements.
+                 */
+                for (Map.Entry<String,List<String>> entry : di.getMetadata().entrySet()) {
+                    final Matcher m = CONFIG_BEAN_CHILD_NAME_KEY_PATTERN.matcher(entry.getKey());
+                    if (m.matches()) {
+                        /*
+                         * Group 1 (from the key) is the child name and the first 
+                         * part of the value is the child type which might have
+                         * the prefix "collection:".
+                         */
+                        String childClassName = entry.getValue().get(0);
+                        String subpathInParent = m.group(1);
+                        final boolean isCollection = childClassName.startsWith("collection:");
+                        if (isCollection) {
+                            childClassName = childClassName.substring("collection:".length());
+                        }
+                        getLog().debug("Identified " + childClassName + " as child " + (isCollection ? "collection " : "") + subpathInParent + " of " + configBean.className);
+                        Inhabitant childInh = configBeans.get(childClassName);
+                        if (childInh == null) {
+                            childInh = new Inhabitant(childClassName);
+                            configBeans.put(childClassName, childInh);
+                            getLog().debug("Added child inhabitant to configBeans");
+                        } else {
+                            getLog().debug("Found child as previously-defined config bean");
+                        }
+                        getLog().debug("Assigning " + configBean.className + " as parent of " + childInh.className);
+                        childInh.parent = configBean;
+
+                        if (configBean.children == null) {
+                            configBean.children = new HashMap<String,Child>();
+                        }
+                        Child child = configBean.children.get(childClassName);
+                        if (child == null) {
+                            child = new Child(subpathInParent, childInh);
+                            configBean.children.put(childClassName, child);
+                            getLog().debug("Adding config bean " + childClassName + " as child " + subpathInParent + " to config bean " + configBean.className);
+                        }
+                    }
+                }
+            }
+            result.add(inhabitant);
+        }
+        return result;
+    }
+    
+    private String getFirstIfAny(final Map<String,List<String>> map, final String key) {
+        final List<String> values = map.get(key);
+        if (values != null && values.size() > 0) {
+            return values.get(0);
+        } else {
+            return null;
+        }
+    }
     private List<Inhabitant> findInhabitantsInModule(final Reader r) throws IOException {
         
         /*
@@ -750,35 +908,35 @@ public class TypeProcessorImpl implements TypeProcessor {
         }
     }
     
-    public static class Inhabitant {
-        
-        private enum GenericCommand {
-            CREATE(GENERIC_CREATE_COMMAND, "create"),
-            DELETE(GENERIC_DELETE_COMMAND, "delete"),
-            LIST(GENERIC_LIST_COMMAND, "read"),
-            UNKNOWN("","????");
+    private enum GenericCommand {
+        CREATE(GENERIC_CREATE_COMMAND, "create"),
+        DELETE(GENERIC_DELETE_COMMAND, "delete"),
+        LIST(GENERIC_LIST_COMMAND, "read"),
+        UNKNOWN("","????");
 
-            private final String commandType;
-            private final String action;
-            GenericCommand(final String commandType, final String action) {
-                this.commandType = commandType;
-                this.action = action;
-            }
-
-            String action() {
-                return action;
-            }
-
-            static GenericCommand match(final String commandType) {
-                for (GenericCommand gc : GenericCommand.values()) {
-                    if (gc.commandType.equals(commandType)) {
-                        return gc;
-                    }
-                }
-                return UNKNOWN;
-            }
-
+        private final String commandType;
+        private final String action;
+        GenericCommand(final String commandType, final String action) {
+            this.commandType = commandType;
+            this.action = action;
         }
+
+        String action() {
+            return action;
+        }
+
+        static GenericCommand match(final String commandType) {
+            for (GenericCommand gc : GenericCommand.values()) {
+                if (gc.commandType.equals(commandType)) {
+                    return gc;
+                }
+            }
+            return UNKNOWN;
+        }
+
+    }
+    
+    public class Inhabitant {
         
         private List<String> contracts = new ArrayList<String>();
 //        private final Map<String,String> indexes = new HashMap<String,String>();
@@ -819,6 +977,13 @@ public class TypeProcessorImpl implements TypeProcessor {
         
         void setParent(final Inhabitant p) {
             parent = p;
+            Inhabitant ancestor = this;
+            while (ancestor != null) {
+                if (p == ancestor) {
+                    throw new RuntimeException("Ancestry loop: me=" + toString() + " and candidate parent = " + p.toString());
+                }
+                ancestor = ancestor.parent;
+            }
         }
         
         void set(final List<String> contracts, final String serviceName,
@@ -832,6 +997,54 @@ public class TypeProcessorImpl implements TypeProcessor {
             this.parentConfigured = parentConfigured;
             isFilledIn = true;
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null || ! Inhabitant.class.isAssignableFrom(obj.getClass())) {
+                return false;
+            }
+            final Inhabitant other = (Inhabitant) obj;
+            return  check(action, other.action) &&
+                    check(className, other.className) &&
+                    check(configBeanForCommand, other.configBeanForCommand) &&
+                    check(contracts, other.contracts) &&
+                    (isFilledIn == other.isFilledIn) &&
+                    check(methodListActual, other.methodListActual) &&
+                    check(methodName, other.methodName) &&
+                    check(nameInParent, other.nameInParent) &&
+                    check(parentConfigured, other.parentConfigured) &&
+                    check(serviceName, other.serviceName)
+                    ;
+                    
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 29 * hash + (this.contracts != null ? this.contracts.hashCode() : 0);
+            hash = 29 * hash + (this.isFilledIn ? 1 : 0);
+            hash = 29 * hash + (this.className != null ? this.className.hashCode() : 0);
+            hash = 29 * hash + (this.serviceName != null ? this.serviceName.hashCode() : 0);
+            hash = 29 * hash + (this.methodListActual != null ? this.methodListActual.hashCode() : 0);
+            hash = 29 * hash + (this.methodName != null ? this.methodName.hashCode() : 0);
+            hash = 29 * hash + (this.parentConfigured != null ? this.parentConfigured.hashCode() : 0);
+            hash = 29 * hash + (this.nameInParent != null ? this.nameInParent.hashCode() : 0);
+            hash = 29 * hash + (this.action != null ? this.action.hashCode() : 0);
+            hash = 29 * hash + (this.configBeanForCommand != null ? this.configBeanForCommand.hashCode() : 0);
+            return hash;
+        }
+        
+        private boolean check(final Object x, final Object y) {
+            return (x == null? y == null : x.equals(y));
+        }
+
+        @Override
+        public String toString() {
+            return "Inhabitant: " + className + " @Service(\"" + serviceName + "\")\n";
+        }
+        
+        
+        
         
         boolean isFilledIn() {
             return isFilledIn;

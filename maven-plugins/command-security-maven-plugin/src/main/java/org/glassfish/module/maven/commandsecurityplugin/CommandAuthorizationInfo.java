@@ -64,8 +64,13 @@ public class CommandAuthorizationInfo {
     private String genericParentConfigured = "";
     private String fullPath = "";
     private String genericAction = "";
+    private Delegate delegate = null;
     
     private final List<ResourceAction> resourceActionPairs = new ArrayList<ResourceAction>();
+    
+    public void setDelegate(final String delegateClassName) {
+        delegate = new Delegate(delegateClassName);
+    }
     
     public void addRestEndpoint(final RestEndpointInfo endpoint) {
         endpoints.add(endpoint);
@@ -138,7 +143,7 @@ public class CommandAuthorizationInfo {
     }
     
     boolean isOK() {
-        return hasRestAnno.get() || hasCommandLevelAccessRequiredAnno.get() || hasFieldLevelAccessRequiredAnno.get() || isAccessCheckProvider.get();
+        return (delegate != null) || hasRestAnno.get() || hasCommandLevelAccessRequiredAnno.get() || hasFieldLevelAccessRequiredAnno.get() || isAccessCheckProvider.get();
     }
     
     boolean isOKDeep() {
@@ -147,6 +152,10 @@ public class CommandAuthorizationInfo {
     
     boolean isAccessCheckProvider() {
         return isAccessCheckProvider.get();
+    }
+    
+    Delegate delegate() {
+        return delegate;
     }
     
     private String name;
@@ -184,7 +193,12 @@ public class CommandAuthorizationInfo {
 
     
     public String toString(final String indent, final boolean isFull) {
-        final StringBuffer sb = new StringBuffer(/* indent + */ name + " (" + (fullPath != null && ! fullPath.isEmpty() ? "[" + adjustedGenericAction() + "] " + genericSubpathPerAction("/") : className) + ")");
+        final StringBuffer sb = new StringBuffer();
+        if (delegate != null) {
+            sb.append(name).append(" delegates to ").append(delegate.delegateInternalClassName);
+        } else {
+            sb.append(name).append(" (").append(fullPath != null && ! fullPath.isEmpty() ? "[" + adjustedGenericAction() + "] " + genericSubpathPerAction("/") : className).append(/* indent + */ ")");
+        }
         if (isFull) {
             sb.append(LINE_SEP);
             final Deque<CommandAuthorizationInfo> levelsToProcess = new LinkedList<CommandAuthorizationInfo>();
@@ -277,6 +291,18 @@ public class CommandAuthorizationInfo {
             this.resource = resource;
             this.action = action;
             this.origin = origin;
+        }
+    }
+    
+    static class Delegate {
+        String delegateInternalClassName;
+        
+        Delegate(final String delegateInternalClassName) {
+            this.delegateInternalClassName = delegateInternalClassName;
+        }
+        
+        String delegateInternalClassName() {
+            return delegateInternalClassName;
         }
     }
 }

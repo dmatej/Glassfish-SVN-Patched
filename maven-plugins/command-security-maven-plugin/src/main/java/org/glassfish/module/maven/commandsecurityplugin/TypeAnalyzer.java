@@ -42,6 +42,7 @@ package org.glassfish.module.maven.commandsecurityplugin;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -49,8 +50,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.objectweb.asm.*;
-import org.objectweb.asm.Type;
 
 /**
  * Analyzes a class, searching for annotations or interface implementations
@@ -65,7 +67,10 @@ public class TypeAnalyzer {
     
     private final static String ACCESS_REQUIRED_DESC_PATH_ONLY = "org/glassfish/api/admin/AccessRequired";
     private final static String ACCESS_REQUIRED_DESC = 'L' + ACCESS_REQUIRED_DESC_PATH_ONLY + ';';
-    private final static String ACCESS_REQUIRED_LIST_DESC = 'L' + ACCESS_REQUIRED_DESC_PATH_ONLY + ".List;";
+    private final static String ACCESS_REQUIRED_LIST_DESC = 'L' + ACCESS_REQUIRED_DESC_PATH_ONLY + "$List;";
+    
+    private final static String ACCESS_REQUIRED_DELEGATE_PATH_ONLY = "org/glassfish/api/admin/AccessRequired$Delegate";
+    private final static String ACCESS_REQUIRED_DELEGATE_DESC = 'L' + ACCESS_REQUIRED_DELEGATE_PATH_ONLY + ';';
     
     private final static String REST_ENDPOINT_DESC_PATH_ONLY = "org/glassfish/api/admin/RestEndpoint";
     private final static String REST_ENDPOINT_DESC = 'L' + REST_ENDPOINT_DESC_PATH_ONLY + ';';
@@ -223,12 +228,10 @@ public class TypeAnalyzer {
 //        }
         
         private boolean isExtensionOrImplementationOfCommandType(final String name, final String[] interfaces) {
-            boolean result = name.equals(CLI_COMMAND_INTERNAL_NAME);
-            if ( ! result) {
-                for (String i : interfaces) {
-                    if ((result = i.equals(ADMIN_COMMAND_INTERNAL_NAME))) {
-                        break;
-                    }
+            boolean result = false;
+            for (String i : interfaces) {
+                if ((result = i.equals(ADMIN_COMMAND_INTERNAL_NAME))) {
+                    break;
                 }
             }
             return result;
@@ -260,6 +263,12 @@ public class TypeAnalyzer {
                     }
                     commandAuthInfo.hasCommandLevelAccessRequiredAnno.set(true);
                     return new CommandLevelAccessRequiredAnnotationScanner(commandAuthInfo);
+                } else if (desc.equals(ACCESS_REQUIRED_DELEGATE_DESC)) {
+                    if (trace != null) {
+                        trace.append(LINE_SEP).append("  Found @AccessRequired.Delegate at class level");
+                    }
+                    commandAuthInfo.hasCommandLevelAccessRequiredAnno.set(true);
+                    return new CommandLevelAccessRequiredDelegateAnnotationScanner(commandAuthInfo);
                 } else if (desc.equals(REST_ENDPOINT_DESC)) {
                     if (trace != null) {
                         trace.append(LINE_SEP).append("  Found @RestEndpoint at class level");
@@ -268,7 +277,9 @@ public class TypeAnalyzer {
                     return new RestEndpointAnnoScanner(commandAuthInfo);
                 } else if (desc.equals(ACCESS_REQUIRED_LIST_DESC)) {
 //                        return new AccessRequiredListAnnoScanner(commandAuthInfo);
-                        return new RepeatingAnnoScanner(commandAuthInfo.hasCommandLevelAccessRequiredAnno, ACCESS_REQUIRED_DESC);
+                        return new RepeatingAnnoScanner(commandAuthInfo, 
+                                ACCESS_REQUIRED_DESC,
+                                CommandLevelAccessRequiredAnnotationScanner.class);
                 } else if (desc.equals(REST_ENDPOINTS_DESC)) {
                     return new RestEndpointsAnnoScanner(commandAuthInfo);
 //                    return new RepeatingAnnoScanner(commandAuthInfo.hasRestAnno, REST_ENDPOINT_DESC);
@@ -377,17 +388,27 @@ public class TypeAnalyzer {
 //        }
 //    }
 //    
-    private class CommandLevelAccessRequiredAnnotationScanner extends AnnotationVisitor {
+    private static class CommandLevelAccessRequiredAnnotationScanner extends AnnotationVisitor {
         private final List<String> resources = new ArrayList<String>();
         private final List<String> actions = new ArrayList<String>();
         private final CommandAuthorizationInfo commandAuthInfo;
         
-        private CommandLevelAccessRequiredAnnotationScanner(
+        public CommandLevelAccessRequiredAnnotationScanner(
                 final CommandAuthorizationInfo commandAuthInfo) {
             super(Opcodes.ASM4);
             this.commandAuthInfo = commandAuthInfo;
         }
 
+        @Override
+        public AnnotationVisitor visitAnnotation(String name, String desc) {
+            /*
+             * Invoked only when the command has @AccessRequired.List and 
+             * the repeating anno processor is processing one of the list 
+             * items.
+             */
+            return new CommandLevelAccessRequiredAnnotationScanner(commandAuthInfo);
+        }
+        
         @Override
         public AnnotationVisitor visitArray(String name) {
             if (name.equals("resource")) {
@@ -400,12 +421,35 @@ public class TypeAnalyzer {
 
         @Override
         public void visitEnd() {
+            if ( ! resources.isEmpty() && ! actions.isEmpty()) {
+                commandAuthInfo.hasCommandLevelAccessRequiredAnno.set(true);
+            }
             for (String resource : resources) {
                 for (String action : actions) {
                     commandAuthInfo.addResourceAction(resource, action, "@AccessRequired");
                 }
             }
             super.visitEnd();
+        }
+    }
+    
+    private class CommandLevelAccessRequiredDelegateAnnotationScanner extends AnnotationVisitor {
+        
+        private final CommandAuthorizationInfo commandAuthInfo;
+        
+        private CommandLevelAccessRequiredDelegateAnnotationScanner(
+                final CommandAuthorizationInfo commandAuthInfo) {
+            super(Opcodes.ASM4);
+            this.commandAuthInfo = commandAuthInfo;
+        }
+
+        @Override
+        public void visit(String name, Object value) {
+            if (name.equals("value")) {
+                commandAuthInfo.setDelegate(((Type) value).getInternalName());
+            } else {
+                super.visit(name, value);
+            }
         }
     }
     
@@ -424,7 +468,6 @@ public class TypeAnalyzer {
                 if (trace != null) {
                     trace.append(LINE_SEP).append("    Found ").append(name).append(" in array at class level");
                 }
-                authInfo.hasRestAnno.set(true);
                 return new RestEndpointAnnoScanner(authInfo);
             }
             return null;
@@ -495,13 +538,17 @@ public class TypeAnalyzer {
     
     
     private class RepeatingAnnoScanner extends AnnotationVisitor {
-        private final AtomicBoolean annoFlag;
+        private final CommandAuthorizationInfo authInfo;
         private final String singleAnnoDesc;
+        private final Class<? extends AnnotationVisitor> scannerClass;
         
-        private RepeatingAnnoScanner(final AtomicBoolean annoFlag, final String singleAnnoDesc) {
+        private RepeatingAnnoScanner(final CommandAuthorizationInfo authInfo, 
+                final String singleAnnoDesc,
+                final Class<? extends AnnotationVisitor> scannerClass) {
             super(Opcodes.ASM4);
-            this.annoFlag = annoFlag;
+            this.authInfo = authInfo;
             this.singleAnnoDesc = singleAnnoDesc;
+            this.scannerClass = scannerClass;
         }
 
         @Override
@@ -510,25 +557,30 @@ public class TypeAnalyzer {
                 if (trace != null) {
                     trace.append(LINE_SEP).append("    Found ").append(name).append(" in array of ").append(singleAnnoDesc).append(" at class level");
                 }
-                annoFlag.set(true);
             }
             return null;
         }
 
         @Override
         public AnnotationVisitor visitArray(String name) {
-            return new AnnoScanner(annoFlag, singleAnnoDesc);
+            try {
+                Constructor<? extends AnnotationVisitor> c = scannerClass.getConstructor(CommandAuthorizationInfo.class);
+                final AnnotationVisitor v = c.newInstance(authInfo);
+                return v;
+            } catch (Exception ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
     
     private class AnnoScanner extends AnnotationVisitor {
         
-        private final AtomicBoolean annoFlag;
+        private final CommandAuthorizationInfo authInfo;
         private final String descToProcess;
         
-        private AnnoScanner(final AtomicBoolean annoFlag, final String descToProcess) {
+        private AnnoScanner(final CommandAuthorizationInfo authInfo, final String descToProcess) {
             super(Opcodes.ASM4);
-            this.annoFlag = annoFlag;
+            this.authInfo = authInfo;
             this.descToProcess = descToProcess;
         }
 
@@ -538,7 +590,7 @@ public class TypeAnalyzer {
                 if (trace != null) {
                     trace.append(LINE_SEP).append("    Found anno name=").append(name).append(", desc=").append(desc);
                 }
-                annoFlag.set(true);
+                authInfo.hasCommandLevelAccessRequiredAnno.set(true);
             }
             return null;
         }
@@ -840,7 +892,7 @@ public class TypeAnalyzer {
         }
     }
     
-    private class MultiValuedAnnoVisitor extends AnnotationVisitor {
+    private static class MultiValuedAnnoVisitor extends AnnotationVisitor {
         
         private final Collection<String> values;
         

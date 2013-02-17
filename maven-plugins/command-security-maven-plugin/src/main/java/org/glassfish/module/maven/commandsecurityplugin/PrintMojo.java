@@ -49,6 +49,7 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.Mojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
@@ -70,37 +71,11 @@ import org.apache.maven.project.MavenProject;
  * @requiresProject
  * @requiresDependencyResolution compile+runtime
  */
-public class PrintMojo extends AbstractMojo {
+public class PrintMojo extends CommonMojo {
 
     private final static String OUTPUT_PROP_NAME = "org.glassfish.command.security.output";
     private final static String OUTPUT_INDENT_PROP_NAME = "org.glassfish.command.security.output.indent";
     private final static String IS_ANY_OUTPUT_NAME = "org.glassfish.command.security.isAnyOutput";
-    /**
-     * The maven project.
-     *
-     * @parameter expression="${project}"
-     * @required
-     * @readonly
-     */
-    protected MavenProject project;
-    
-    /** 
-     * The Maven Session Object 
-     * 
-     * @parameter expression="${session}" 
-     * @required 
-     * @readonly 
-     */ 
-    protected MavenSession session; 
-    
-    /**
-     * The list of reactor projects
-     * 
-     * @parameter expression="${reactorProjects}"
-     * @required
-     * @readonly
-     */
-    protected List reactorProjects;
     
     /**
      * Output type
@@ -316,6 +291,19 @@ public class PrintMojo extends AbstractMojo {
                     .append(project.getName()).append(sep)
                     .append(parentOfTopURI.relativize(project.getBasedir().toURI()).toASCIIString()).append(sep)
                     .append(authInfo.name()).append(sep);
+            
+            /*
+             * If this command delegates its authorization to another class
+             * then just report that class.
+             */
+            if (authInfo.delegate() != null) {
+                final StringBuilder sb = new StringBuilder(prefix)
+                        .append('?') /* resource */ .append(sep)
+                        .append('?') /* action */ .append(sep)
+                        .append("Delegates to ").append(authInfo.delegate().delegateInternalClassName().replace('/','.'))
+                        .append(sep);
+                pw.println(sb.toString());
+            }
             
             /*
              * If this is from a generated CRUD command, display the 
