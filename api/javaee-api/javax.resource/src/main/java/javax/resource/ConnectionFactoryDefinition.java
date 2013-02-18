@@ -76,7 +76,7 @@ public @interface ConnectionFactoryDefinition {
      *  created from. The resource adapter is required to be available at 
      *  deployment time.
      */
-    String resourceAdapterName();
+    String resourceAdapter();
 
     /**
      *  The fully qualified domain name of the connection factory interface 
@@ -109,7 +109,6 @@ public @interface ConnectionFactoryDefinition {
      */
     int minPoolSize() default -1;
     
-
     /**
      *  Properties of the Connection Factory.  These properties may be
      *  vendor-specific properties. Vendor-specific properties may be combined 

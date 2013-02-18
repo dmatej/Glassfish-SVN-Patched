@@ -75,7 +75,7 @@ public @interface AdministeredObjectDefinition {
      *  created from. The resource adapter is required to be available at 
      *  deployment time.
      */
-    String resourceAdapterName();
+    String resourceAdapter();
 
     /**
      *  Fully qualified package name of the administered object’s class
