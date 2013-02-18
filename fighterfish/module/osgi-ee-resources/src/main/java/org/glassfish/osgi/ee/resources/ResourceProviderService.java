@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -40,13 +40,18 @@
 
 package org.glassfish.osgi.ee.resources;
 
+import com.sun.appserv.connectors.internal.api.ConnectorsUtil;
 import com.sun.enterprise.config.serverbeans.*;
+import org.glassfish.connectors.config.ConnectorConnectionPool;
 import org.glassfish.internal.api.ServerContext;
+import org.glassfish.jdbc.config.JdbcConnectionPool;
 import org.jvnet.hk2.config.*;
 import org.osgi.framework.BundleContext;
 
 import java.beans.PropertyChangeEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -264,10 +269,59 @@ public class ResourceProviderService implements ConfigListener {
                                 unRegisterResource(bindableResource);
                             }
                         }
+                    } else {
+
+                        /*
+                        This block handles any change under resource configuration apart from enable/disable.
+                         */
+                        Object newValueObject = event.getNewValue();
+                        Object oldValueObject = event.getOldValue();
+                        String newValue = "";
+                        String oldValue = "";
+
+                        if(newValueObject!=null) {
+                            newValue = newValueObject.toString();
+                        }
+
+                        if(oldValueObject!=null) {
+                            oldValue = oldValueObject.toString();
+                        }
+
+                        if(!newValue.equals(oldValue)) {
+                            unRegisterResource(bindableResource);
+                            registerResource(bindableResource);
+                        }
+
+                    }
+                }
+            } else if (changedInstance instanceof JdbcConnectionPool ||
+                    changedInstance instanceof ConnectorConnectionPool) {
+                /*
+                This block handles any configuration change under connection pool,
+                it's re-registering all resources which uses that connection pool.
+                 */
+                String poolName = ((ResourcePool)changedInstance).getName();
+                Resources resources = habitat.getComponent(Domain.class).getResources();
+                Collection<BindableResource> bindableResources = ConnectorsUtil.getResourcesOfPool(resources,poolName);
+                reRegisterResource(bindableResources);
+            }
+            return null;
+        }
+
+        /**
+         * This method un-register and register resource again.
+         * @param bindableResources
+         */
+        private void reRegisterResource(Collection<BindableResource> bindableResources) {
+            for(BindableResource resource:bindableResources) {
+                if(Boolean.valueOf(resource.getEnabled())) {
+                    ResourceRef resRef = getResourceHelper().getResourceRef(resource.getJndiName());
+                    if(resRef!=null && Boolean.valueOf(resRef.getEnabled())) {
+                        unRegisterResource(resource);
+                        registerResource(resource);
                     }
                 }
             }
-            return null;
         }
 
         private void unRegisterResource(BindableResource bindableResource) {
