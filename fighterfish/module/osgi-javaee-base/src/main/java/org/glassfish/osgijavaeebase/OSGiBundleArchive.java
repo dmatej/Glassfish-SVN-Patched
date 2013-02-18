@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2012 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -334,7 +334,8 @@ public class OSGiBundleArchive extends AbstractReadableArchive implements URIabl
      * @return a Jar format InputStream for this bundle's content
      */
     public InputStream getInputStream() throws IOException {
-        if (uri != null) {
+    	 //[TangYong]fixing GLASSFISH-19662  
+        if (uri != null && !new File(uri).isDirectory()) {
             return uri.toURL().openStream();
         } else {
             // create a JarOutputStream on the fly from the bundle's content
