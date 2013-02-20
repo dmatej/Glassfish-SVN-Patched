@@ -140,6 +140,8 @@ public class GenerateBomPom extends AbstractAggregatorMojo {
             MavenUtils.writePom(model, outputFile);
         } catch (IOException ex) {
             throw new MojoExecutionException(ex.getMessage(), ex);
-        }        
+        }
+        
+        // TODO - should have a deployment option as this is a *new* artifact
     }
 }
