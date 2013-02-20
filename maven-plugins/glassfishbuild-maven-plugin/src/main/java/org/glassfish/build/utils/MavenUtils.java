@@ -39,6 +39,8 @@
  */
 package org.glassfish.build.utils;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
@@ -100,6 +102,20 @@ public class MavenUtils {
     public static Model readModel(File pom) throws MojoExecutionException{
         try {
            return new DefaultModelReader().read(pom, null);
+        } catch (IOException ex) {
+            throw new MojoExecutionException(ex.getMessage(),ex);
+        }
+    }
+    
+    /**
+     * Reads a given model
+     * @param pom the pom File
+     * @return an instance of Model
+     * @throws MojoExecutionException
+     */
+    public static Model readModel(String input) throws MojoExecutionException {
+        try {
+           return new DefaultModelReader().read(new ByteArrayInputStream(input.getBytes("UTF-8")), null);
         } catch (IOException ex) {
             throw new MojoExecutionException(ex.getMessage(),ex);
         }
@@ -377,7 +393,6 @@ public class MavenUtils {
                 dep.getClassifier());
     }
 
-    
     /**
      * Write the model to the buildDir/${project.build.finalName}.pom
      * @param m an instance of model
@@ -385,9 +400,40 @@ public class MavenUtils {
      * @throws IOException
      */
     public static void writePom(Model m, File buildDir) throws IOException {
-        File pomFile = new File(buildDir, m.getBuild().getFinalName() + ".pom");
+        writePom(m, buildDir, null);
+    }
+    
+    /**
+     * Write the model to the buildDir/${project.build.finalName}.pom
+     * @param m an instance of model
+     * @param buildDir the directory in which to write the pom
+     * @param pomFileName the name of the written pom
+     * @throws IOException
+     */
+    public static void writePom(Model m, File buildDir, String pomFileName) throws IOException {
+        if (pomFileName == null) {
+            if (m.getBuild() != null && m.getBuild().getFinalName() != null) {
+                pomFileName = m.getBuild().getFinalName() + ".pom";
+            } else {
+                pomFileName = "pom.xml";
+            }
+        }
+        File pomFile = new File(buildDir, pomFileName);
         new DefaultModelWriter().write(pomFile, null, m);
         m.setPomFile(pomFile);
+    }
+    
+    /**
+     * Write the model to the buildDir/${project.build.finalName}.pom
+     * @param m an instance of model
+     * @param buildDir the directory in which to write the pom
+     * @param pomFileName the name of the written pom
+     * @throws IOException
+     */
+    public static ByteArrayOutputStream writePomToOutputStream(Model m) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        new DefaultModelWriter().write(baos, null, m);
+        return baos;
     }
 
     /**

@@ -53,7 +53,7 @@ import org.glassfish.build.utils.MavenUtils;
 /**
  * Generates a pom from another pom
  *
- * @goal generate-pom
+ * @goal generate-bom-pom
  *
  * @author Romain Grecourt
  */

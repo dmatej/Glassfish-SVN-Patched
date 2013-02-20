@@ -40,9 +40,13 @@
 package org.glassfish.build;
 
 import edu.emory.mathcs.backport.java.util.Arrays;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.util.List;
+import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Developer;
 import org.apache.maven.model.IssueManagement;
@@ -56,6 +60,7 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
+import org.codehaus.mojo.versions.api.PomHelper;
 import org.glassfish.build.utils.MavenUtils;
 
 /**
@@ -74,9 +79,9 @@ public class GeneratePom extends AbstractMojo {
     protected MavenProject project;
  
     /**
-     * @parameter expression="${generate.pom.outputFile}" default-value="${project.build.directory}/pom.xml"
+     * @parameter expression="${generate.pom.outputDirectory}" default-value="${project.build.directory}"
      */
-    protected File outputFile;
+    protected File outputDirectory;
     
     /**
      * @parameter expression="${generate.pom.pomFile}" default-value="${project.file}"
@@ -100,7 +105,7 @@ public class GeneratePom extends AbstractMojo {
     protected String version;
     
     /**
-     * @parameter expression="${generate.pom.parent}" default-value="${project.parent}"
+     * @parameter expression="${generate.pom.parent}"
      */
     protected Parent parent;
     
@@ -149,9 +154,15 @@ public class GeneratePom extends AbstractMojo {
     
     /**
      *
-     * @parameter expression="${generate.pom.excludeDependencies}" default-value=""
+     * @parameter expression="${generate.pom.excludeDependencies}"
      */
     protected String excludeDependencies;
+    
+    /**
+     *
+     * @parameter expression="${generate.pom.excludeDependencyScope}" default-value="system,test"
+     */
+    protected String excludeDependencyScopes;
     
     /**
      *
@@ -163,15 +174,26 @@ public class GeneratePom extends AbstractMojo {
      *
      * @parameter expression="${generate.pom.skip}" default-value="false"
      */
-    protected Boolean skip;    
+    protected Boolean skip;
+    
+    /**
+     *
+     * @parameter expression="${generate.pom.attach}" default-value="false"
+     */
+    protected Boolean attach;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
         if(skip.booleanValue()){
             getLog().info("skipping...");
             return;
         }
-        
-        Model model = MavenUtils.readModel(pomFile);
+        String input;
+        try {
+             input = PomHelper.readXmlFile(pomFile).toString();
+        } catch (IOException ex) {
+            throw new MojoExecutionException(ex.getMessage(),ex);
+        }
+        Model model = MavenUtils.readModel(input);
         
         model.setDevelopers(devevelopers);
         model.setParent(parent);
@@ -182,22 +204,59 @@ public class GeneratePom extends AbstractMojo {
         model.setMailingLists(mailingLists);
         model.setLicenses(licenses);
         model.setOrganization(organization);
+        model.setBuild(new Build());
         
-        String[] exclusions = excludeDependencies.split(",");
-        if(exclusions != null){
-            List<String> exclusionList = Arrays.asList(exclusions);
-            for(Dependency d : (Dependency[])dependencies.toArray()){
-                if(exclusionList.contains(d.getArtifactId())){
-                    dependencies.remove(d);
+        if (excludeDependencies != null) {
+            
+            String[] artifactIdExclusions = excludeDependencies.split(",");
+            String[] scopeExclusions = excludeDependencyScopes.split(",");
+            if (artifactIdExclusions != null 
+                    && scopeExclusions != null) {
+                
+                List<String> ArtifactIdExclusionsList = Arrays.asList(artifactIdExclusions);
+                List<String> scopeExclusionsList = Arrays.asList(scopeExclusions);
+                
+                for (Object d : dependencies.toArray()) {
+                    if (ArtifactIdExclusionsList.contains(((Dependency)d).getArtifactId())
+                            || scopeExclusionsList.contains(((Dependency)d).getScope())) {
+                        dependencies.remove((Dependency)d);
+                    }
                 }
             }
+            model.setDependencies(dependencies);
         }
-        model.setDependencies(dependencies);
         
+        File newPomFile = new File(outputDirectory,"pom.xml");
+        newPomFile.getParentFile().mkdirs();
+        
+        FileWriter fw = null;
         try {
-            MavenUtils.writePom(model, outputFile);
+            // write comments from base pom
+            fw = new FileWriter(newPomFile);
+            String line;
+            BufferedReader br = new BufferedReader(new StringReader(input));
+            while((line = br.readLine()) !=null && !line.startsWith("<project")){
+                fw.write(line);
+                fw.write('\n');
+            }
+            
+            // write new pom and skip first line (xml header)
+            String pom = MavenUtils.writePomToOutputStream(model).toString();
+            int ind = pom.indexOf('\n');
+            fw.write(pom.substring(ind));
         } catch (IOException ex) {
-            throw new MojoExecutionException(ex.getMessage(), ex);
+            throw new MojoExecutionException(ex.getMessage(),ex);
+        } finally {
+            try {
+                if (fw != null) {
+                    fw.close();
+                }
+            } catch (Exception ex) {
+            }
+        }
+        
+        if(attach){
+            project.setFile(newPomFile);
         }
     }
 }
