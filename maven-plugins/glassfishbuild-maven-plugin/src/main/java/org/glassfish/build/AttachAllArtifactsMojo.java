@@ -93,13 +93,16 @@ public class AttachAllArtifactsMojo extends AbstractMojo {
         File targetPom = MavenUtils.getPomInTarget(project.getBuild().getDirectory());
         if(targetPom != null){
             pomFile = targetPom;
-        } else {
-            project.setFile(pomFile);
         }
         
         // if supplied pomFile is invalid, default to the project's pom
         if(pomFile == null || !pomFile.exists()){
             pomFile = project.getFile();
+        }
+        
+        if(!pomFile.exists()){
+            getLog().info("Skipping as there is no model to read from");
+            return;
         }
         
         // read the model manually
@@ -124,6 +127,9 @@ public class AttachAllArtifactsMojo extends AbstractMojo {
         
         // set main artifact
         project.setArtifact(artifact);
+        
+        // set model
+        project.setFile(pomFile);
 
         for (Iterator i = attachedArtifacts.iterator(); i.hasNext();) {
             project.addAttachedArtifact((Artifact) i.next());

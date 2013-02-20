@@ -195,6 +195,9 @@ public class GeneratePom extends AbstractMojo {
         }
         Model model = MavenUtils.readModel(input);
         
+        model.setGroupId(groupId);
+        model.setArtifactId(artifactId);
+        model.setVersion(version);
         model.setDevelopers(devevelopers);
         model.setParent(parent);
         model.setName(name);
