@@ -39,12 +39,12 @@
  */
 package org.glassfish.build;
 
-import edu.emory.mathcs.backport.java.util.Arrays;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
