@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -798,6 +798,51 @@ public class T2_Test extends AbstractTestObject {
             assertTrue("Uninstallation failed", bundle.getState() == bundle.UNINSTALLED);
         }
         finally {
+            tc.destroy();
+        }
+    }
+    
+    /**
+     * Regression test case for GLASSFISH_19662
+     *
+     * @throws GlassFishException
+     * @throws InterruptedException
+     * @throws BundleException
+     */
+    @Test
+    @Ignore //mark it @Ignore temply until when integrating the new version of osgi-javaee-base
+    public void test_GLASSFISH_19662() throws GlassFishException, InterruptedException, BundleException, IOException {
+        logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_19662", "ENTRY");
+        TestContext tc = TestContext.create(getClass());
+        try {
+        	//firstly, we install sample.uas.api bundle
+        	String location = "mvn:org.glassfish.fighterfish/sample.uas.api/1.0.0/jar";
+            Bundle bundle = tc.installBundle(location);
+            
+            //secondly, we install sample.uas.simplewabfragment bundle
+            location = "mvn:org.glassfish.fighterfish/sample.uas.simplewabfragment/1.0.0/jar";
+            bundle = tc.installBundle(location);
+            
+            //finally, we install host bundle called sample.uas.simplewab wab
+            location = "mvn:org.glassfish.fighterfish/sample.uas.simplewab/1.0.0/war";
+            bundle = tc.installBundle(location);
+            WebAppBundle wab = new WebAppBundle(ctx, bundle);
+            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
+            
+            //here, for simplicity, I have not installed UserAuthService
+            final String reportJspRequest = "/report.jsp";            
+            final String reportServletRequest = "/ReportServlet";
+            final String reportJspSuccessful ="Please click";
+            final String reportServletSuccessful ="Service is not yet available";
+            
+            String response = wab.getResponse(reportJspRequest);
+            logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_19662", "response = {0}", new Object[]{response});
+            assertThat(response, new StringPatternMatcher(reportJspSuccessful));
+            
+            response = wab.getResponse(reportServletRequest);
+            logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_19662", "response = {0}", new Object[]{response});
+            assertThat(response, new StringPatternMatcher(reportServletSuccessful));           
+        } finally {
             tc.destroy();
         }
     }
