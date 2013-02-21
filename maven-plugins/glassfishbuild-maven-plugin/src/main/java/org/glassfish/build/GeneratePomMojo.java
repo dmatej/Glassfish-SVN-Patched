@@ -70,7 +70,7 @@ import org.glassfish.build.utils.MavenUtils;
  *
  * @author Romain Grecourt
  */
-public class GeneratePom extends AbstractMojo {
+public class GeneratePomMojo extends AbstractMojo {
     /**
      * @parameter default-value="${project}"
      * @required

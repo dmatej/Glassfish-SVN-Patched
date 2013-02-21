@@ -57,7 +57,7 @@ import org.glassfish.build.utils.MavenUtils;
  *
  * @author Romain Grecourt
  */
-public class GenerateBomPom extends AbstractAggregatorMojo {
+public class GenerateBomPomMojo extends AbstractAggregatorMojo {
  
     /**
      * @parameter expression="${generate.bom.pom.outputFile}" default-value="${project.build.directory}/bom-pom.xml"

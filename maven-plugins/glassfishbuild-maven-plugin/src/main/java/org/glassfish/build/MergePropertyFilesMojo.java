@@ -56,7 +56,7 @@ import org.apache.maven.plugin.MojoFailureException;
  *
  * @author Romain Grecourt
  */
-public class MergePropertyFiles extends AbstractMojo {
+public class MergePropertyFilesMojo extends AbstractMojo {
 
  
     /**
