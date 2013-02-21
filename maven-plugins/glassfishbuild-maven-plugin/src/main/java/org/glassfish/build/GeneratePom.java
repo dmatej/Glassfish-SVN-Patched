@@ -187,6 +187,7 @@ public class GeneratePom extends AbstractMojo {
             getLog().info("skipping...");
             return;
         }
+        
         String input;
         try {
              input = PomHelper.readXmlFile(pomFile).toString();
