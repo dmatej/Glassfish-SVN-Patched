@@ -45,7 +45,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Developer;
@@ -210,25 +213,18 @@ public class GeneratePomMojo extends AbstractMojo {
         model.setOrganization(organization);
         model.setBuild(new Build());
         
-        if (excludeDependencies != null) {
-            
-            String[] artifactIdExclusions = excludeDependencies.split(",");
-            String[] scopeExclusions = excludeDependencyScopes.split(",");
-            if (artifactIdExclusions != null 
-                    && scopeExclusions != null) {
-                
-                List<String> ArtifactIdExclusionsList = Arrays.asList(artifactIdExclusions);
-                List<String> scopeExclusionsList = Arrays.asList(scopeExclusions);
-                
-                for (Object d : dependencies.toArray()) {
-                    if (ArtifactIdExclusionsList.contains(((Dependency)d).getArtifactId())
-                            || scopeExclusionsList.contains(((Dependency)d).getScope())) {
-                        dependencies.remove((Dependency)d);
-                    }
-                }
+        List<String> artifactIdExclusions = MavenUtils.getCommaSeparatedList(excludeDependencies);
+        List<String> scopeExclusions =  MavenUtils.getCommaSeparatedList(excludeDependencyScopes);
+
+        for (Object o : dependencies.toArray()) {
+            Dependency d = (Dependency)o;
+            if (artifactIdExclusions.contains(d.getArtifactId())
+                    || scopeExclusions.contains(d.getScope())) {
+                dependencies.remove(d);
             }
-            model.setDependencies(dependencies);
         }
+        
+        model.setDependencies(dependencies);
         
         File newPomFile = new File(outputDirectory,"pom.xml");
         newPomFile.getParentFile().mkdirs();

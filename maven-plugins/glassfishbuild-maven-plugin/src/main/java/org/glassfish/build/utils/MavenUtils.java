@@ -45,6 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -824,5 +825,15 @@ public class MavenUtils {
         } finally {
             IOUtil.close(writer);
         }
+    }
+    
+    public static List<String> getCommaSeparatedList(String list){
+        if (list != null) {
+            String[] listArray = list.split(",");
+            if (listArray != null) {
+                return Arrays.asList(listArray);
+            }
+        }
+        return Collections.EMPTY_LIST;
     }
 }
