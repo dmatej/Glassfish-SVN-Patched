@@ -51,7 +51,7 @@ import org.apache.maven.project.MavenProject;
 import org.glassfish.build.utils.MavenUtils;
 
 /**
- * Generates a pom from another pom
+ * Generates a bom pom from the reactor
  *
  * @goal generate-bom-pom
  *
