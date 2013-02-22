@@ -5,4 +5,3 @@ test: Contains dev tests.
 doc: Documentation directory.
 distro: Contains build scripts to build various distributions like zip-based, ips packages, sample-only, etc.
 scripts: Scripts used during build, test, release cycle.
-***test whether can commit some changes from Tang Yong***
