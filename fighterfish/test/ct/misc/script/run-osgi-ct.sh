@@ -89,4 +89,9 @@ reportfile=`pwd`/reports/${bndfilenamewithoutextension}.xml
 summaryfile=`dirname ${reportfile}`/summary.txt
 echo "Test results are kept in ${reportfile} and ${summaryfile}"
 scriptdir=`dirname $0`
-${scriptdir}/find-failed-ct-test.sh ${reportfile} | tee ${summaryfile}
+set +e
+${scriptdir}/find-failed-ct-test.sh ${reportfile} > ${summaryfile} 2>&1
+failed=$?
+cat ${summaryfile}
+exit ${failed}
+
