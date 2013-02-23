@@ -78,6 +78,8 @@ cthome=${2}
 ctname=${3}
 testclass=${4}
 
+echo Executing OSGi ${ctname} CT from ${cthome} against ${gfhome}
+
 scriptdir=`dirname $0`
 
 if [ -d reports ]
