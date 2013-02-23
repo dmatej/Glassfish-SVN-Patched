@@ -140,5 +140,7 @@ echo Executing the command: [java ${options}]
 java ${options} || true
 
 # Show results
-echo "Test results are kept in ${reportfile}"
-${scriptdir}/find-failed-ct-test.sh ${reportfile} | tee /tmp/failed
+summaryfile=`dirname ${reportfile}`/summary.txt
+echo "Test results are kept in ${reportfile} and ${summaryfile}"
+scriptdir=`dirname $0`
+${scriptdir}/find-failed-ct-test.sh ${reportfile} | tee ${summaryfile}

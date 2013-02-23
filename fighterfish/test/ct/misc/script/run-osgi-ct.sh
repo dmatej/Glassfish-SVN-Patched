@@ -86,6 +86,7 @@ java ${options}
 bndfilebasename=${bndfile##*/}
 bndfilenamewithoutextension=${bndfilebasename%.*}
 reportfile=`pwd`/reports/${bndfilenamewithoutextension}.xml
-echo Reports are available at ${reportfile}
+summaryfile=`dirname ${reportfile}`/summary.txt
+echo "Test results are kept in ${reportfile} and ${summaryfile}"
 scriptdir=`dirname $0`
-${scriptdir}/find-failed-ct-test.sh ${reportfile} | tee /tmp/failed
+${scriptdir}/find-failed-ct-test.sh ${reportfile} | tee ${summaryfile}
