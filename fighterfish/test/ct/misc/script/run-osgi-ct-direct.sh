@@ -58,6 +58,8 @@
 # Author: sanjeeb.sahoo@oracle.com
 # Date: 23 Feb 2013
 
+set -e
+
 print_usage() {
  echo "Usage: $0 <glassfish.home> <ct.home> <ct.name> [test.class]"
  echo "e.g.: $0 /tmp/gf $HOME/WS/osgi/r4v42-final transaction SimpleUserTransactionTest"
@@ -99,15 +101,10 @@ then
  extraopt="-test org.osgi.test.cases.${ctname}.${testclass}"
 fi
 
-if [ -f /tmp/aQute.runtime.jar ]
-then
- echo "Reusing existing /tmp/aQute.runtime.jar"
-else
- echo Downloading aQute.runtime.jar
- wget -O /tmp/aQute.runtime.jar https://repository.jboss.org/nexus/content/repositories/thirdparty-releases/biz/aQute/aQute.runtime/0.0.365.SP1/aQute.runtime-0.0.365.SP1.jar
-fi
+# Extract the bnd runtime jar from the uber bnd jar
+(cd /tmp; jar xvf ${cthome}/licensed/repo/biz.aQute.bnd/biz.aQute.bnd-latest.jar aQute/bnd/test/biz.aQute.runtime.jar)
 
-classpath=/tmp/aQute.runtime.jar:${gfhome}/osgi/felix/bin/felix.jar:${cthome}licensed/repo/com.springsource.junit/com.springsource.junit-3.8.2.jar:$JAVA_HOME/lib/tools.jar
+classpath=/tmp/aQute/bnd/test/biz.aQute.runtime.jar:${gfhome}/osgi/felix/bin/felix.jar:${cthome}licensed/repo/com.springsource.junit/com.springsource.junit-3.8.2.jar:$JAVA_HOME/lib/tools.jar
 debug="-Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=9009"
 
 # We set all the properties used for all test suites. That means a few extra proprties are set, but 
@@ -136,8 +133,8 @@ options="${debug} \
  ${extraopt}"
 
 echo Executing the command: [java ${options}]
-java ${options}
-echo "Test results are kept in ${reportfile}"
+java ${options} || true
 
 # Show results
+echo "Test results are kept in ${reportfile}"
 ${scriptdir}/find-failed-ct-test.sh ${reportfile} | tee /tmp/failed
