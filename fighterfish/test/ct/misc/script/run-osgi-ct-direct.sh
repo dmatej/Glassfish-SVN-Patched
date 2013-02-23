@@ -92,11 +92,13 @@ reportfile=`pwd`/reports/osgi-ct.xml
 
 # Make sure cthome ends with '/'
 # We get some strange errors if we have // in bundle path, so we do this magic here.
+set +e
 echo ${cthome} | grep '/$'
 if [ $? -ne 0 ]
 then
  cthome=${cthome}/
 fi
+set -e
 
 if [ "${testclass}" != "" ]
 then
