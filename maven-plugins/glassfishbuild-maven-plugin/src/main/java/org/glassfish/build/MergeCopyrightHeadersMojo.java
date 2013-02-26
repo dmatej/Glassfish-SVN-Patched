@@ -56,6 +56,7 @@ import org.apache.maven.plugin.MojoFailureException;
  * @goal merge-copyright-headers
  *
  * @author Romain Grecourt
+ * @author Sandeep Shrivastava
  */
 public class MergeCopyrightHeadersMojo extends AbstractMojo {
  
