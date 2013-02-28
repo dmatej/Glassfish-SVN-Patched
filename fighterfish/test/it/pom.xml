@@ -3,7 +3,7 @@
 
     DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
-    Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
+    Copyright (c) 2011-2013 Oracle and/or its affiliates. All rights reserved.
 
     The contents of this file are subject to the terms of either the GNU
     General Public License Version 2 only ("GPL") or the Common Development
@@ -386,6 +386,22 @@
                             <value>${maven.home}</value>
                         </property>
                     </systemProperties>
+                    <classpathDependencyExcludes>
+                        <!-- 
+                        Felix 4.2.0 uses newer version of APIs than what some of our dependencies use.
+                        If for some reason those older APIs are in classpath ahead of felix or equinox jar,
+                        then we will run into various linkage errors. So, it is better to not have any
+                        api jar in classpath. I am being lazy here and excluding all org.osgi jars from 
+                        classpath since those those jars are typically suppliers of APIs.
+                        -->
+                        <classpathDependencyExcludes>org.osgi</classpathDependencyExcludes>
+                        <!--
+                        These jax api jars are code less fake jars, so they can cause class loading 
+                        problems if they are available in runtime classpath.
+                        -->
+                        <classpathDependencyExcludes>javax:javaee-web-api</classpathDependencyExcludes>
+                        <classpathDependencyExcludes>javax:javaee-api</classpathDependencyExcludes>
+                    </classpathDependencyExcludes>
                 </configuration>
             </plugin>
         </plugins>
@@ -425,7 +441,8 @@
                 <dependency>
                     <groupId>org.apache.felix</groupId>
                     <artifactId>org.apache.felix.framework</artifactId>
-                    <scope>test</scope>
+                    <version>4.2.0</version>
+                    <scope>compile</scope>
                 </dependency>
             </dependencies>
             <properties>
@@ -538,7 +555,7 @@
     </profiles>
     
     <properties>
-        <glassfish.home>/home/ss141213/WS/gf/v3/appserver/distributions/glassfish/target/stage/glassfish3/glassfish</glassfish.home>
+        <glassfish.home>/home/ss141213/WS/gf/trunk/appserver/distributions/glassfish/target/stage/glassfish4/glassfish</glassfish.home>
         <!-- By default, we use in-memory Derby database so that we don't get "too many open files" error.
              Use the following value to use filesystem based database.
         <fighterfish.test.DerbyDBRootDir>${project.build.directory}/derby-databases</fighterfish.test.DerbyDBRootDir>
