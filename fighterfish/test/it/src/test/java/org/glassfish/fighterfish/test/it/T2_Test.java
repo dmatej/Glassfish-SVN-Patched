@@ -565,6 +565,7 @@ public class T2_Test extends AbstractTestObject {
     }
 
     @Test
+    @Ignore // This case is currently ignored until GLASSFISH-19738 has been fixed.
     public void testapp16() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.logp(Level.INFO, "T2_Test", "testapp16", "ENTRY");
         TestContext tc = TestContext.create(getClass());
