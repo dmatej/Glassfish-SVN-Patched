@@ -180,6 +180,10 @@ public class GeneratePomMojo extends AbstractMojo {
      * @parameter expression="${generate.pom.attach}" default-value="false"
      */
     protected Boolean attach;
+    
+    private static boolean validateString(String str){
+        return str != null && !str.isEmpty();
+    }
 
     public void execute() throws MojoExecutionException, MojoFailureException {
         if(skip.booleanValue()){
@@ -199,7 +203,16 @@ public class GeneratePomMojo extends AbstractMojo {
         model.setArtifactId(artifactId);
         model.setVersion(version);
         model.setDevelopers(devevelopers);
-        model.setParent(parent);
+        
+        if(parent != null 
+                && validateString(parent.getGroupId())
+                && validateString(parent.getArtifactId())
+                && validateString(parent.getVersion())){
+            model.setParent(parent);
+        } else {
+            model.setParent(null);
+        }
+        
         model.setName(name);
         model.setDescription(description);
         model.setScm(scm);
