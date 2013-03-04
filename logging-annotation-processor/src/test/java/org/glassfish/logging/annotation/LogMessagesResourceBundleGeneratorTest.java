@@ -138,7 +138,7 @@ public class LogMessagesResourceBundleGeneratorTest extends TestCase {
         String output = executeCompiler(f1);
         assertTrue(output.contains("Annotation processing finished successfully."));
         File[] resourceBundles = getResourceBundles();
-        assertEquals(resourceBundles.length,1);        
+        assertEquals(resourceBundles.length,2);        
     }
 
     @Test

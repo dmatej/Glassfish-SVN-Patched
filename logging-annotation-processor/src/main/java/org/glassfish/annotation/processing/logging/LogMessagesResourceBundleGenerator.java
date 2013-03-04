@@ -56,6 +56,8 @@ import org.glassfish.logging.annotation.LogMessagesResourceBundle;
 @SupportedAnnotationTypes({"org.glassfish.logging.annotation.LogMessageInfo","org.glassfish.logging.annotation.LogMessagesResourceBundle"})
 public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
 
+    private static final String DETAILS_SUFFIX = "_details";
+
     private static final String RESOURCE_BUNDLE_KEY = "resourceBundle";
 
     private static final String VALIDATE_LEVELS[] = {
@@ -80,7 +82,7 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
         if (!env.processingOver()) {
 
             LoggingMetadata logMessagesMap = new LoggingMetadata();
-            
+            LoggingMetadata logMessagesDetails = new LoggingMetadata();
             LoggingMetadata logMessagesMetada = new LoggingMetadata();
 
             Set<? extends Element> logMessageElements = env.getElementsAnnotatedWith(LogMessageInfo.class);
@@ -134,6 +136,7 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
             
             debug("Initial messages found so far: " + logMessagesMap);
             loadLogMessages(logMessagesMap, rbName);
+            loadLogMessages(logMessagesDetails, rbName + DETAILS_SUFFIX);
 
             while (it.hasNext()) {
                 Element elem = it.next();
@@ -156,9 +159,26 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
                     // Save the log message...
                     logMessagesMap.put(msgId, lmi.message());
                     // Save the message's comment if it has one...
-                    if (!lmi.comment().isEmpty()) {
-                        logMessagesMap.putComment(msgId, lmi.comment());
+                    String comment = lmi.comment();
+                    if (comment != null && !comment.isEmpty()) {
+                        logMessagesMap.putComment(msgId, comment);
+                        logMessagesDetails.put(msgId+".comment", comment);
                     }
+                    String cause = lmi.cause();
+                    if (cause == null) {
+                        cause = "";
+                    }
+                    String action = lmi.action();
+                    if (action == null) {
+                        action = "";
+                    }
+                    String level = lmi.level();
+                    if (level == null || level.isEmpty()) {
+                        level = "INFO";
+                    }
+                    logMessagesDetails.put(msgId+".cause", cause);
+                    logMessagesDetails.put(msgId+".action", action);
+                    logMessagesDetails.put(msgId+".level", level);
                     messageIds.add(msgId);
                 } else {
                     error("Duplicate use of message-id " + msgId);
@@ -166,6 +186,8 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
             }
             debug("Total Messages including ones found from disk so far: " + logMessagesMap);
             storeLogMessages(logMessagesMap, rbName);
+            storeLogMessages(logMessagesDetails, rbName + DETAILS_SUFFIX);
+            // Store the package name of the LogMessages resource
             logMessagesMetada.put(RESOURCE_BUNDLE_KEY, rbName);
             storeLogMessages(logMessagesMetada, LOG_MESSAGES_METADATA);
             info("Annotation processing finished successfully.");
