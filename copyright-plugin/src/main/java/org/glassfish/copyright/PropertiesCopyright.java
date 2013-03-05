@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2010-2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2010-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -192,8 +192,7 @@ public class PropertiesCopyright extends AbstractCopyright {
 
 	if (header.length() > 0)
 	    out.write(header.toString());
-	out.write(line);
-	out.write('\n');		// line terminator
+	out.write("#\n");       // start with an empty comment line
 	if (line.startsWith("#")) {
 	    boolean updated = false;
 	    do {
