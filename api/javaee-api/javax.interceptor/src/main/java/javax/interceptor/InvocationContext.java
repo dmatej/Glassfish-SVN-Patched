@@ -112,7 +112,7 @@ public interface InvocationContext {
      * 
      * @return the constructor, or a null value
      */
-    public Constructor getConstructor();
+    public Constructor<?> getConstructor();
 
     /**
      * Returns the parameter values that will be passed to the method or
