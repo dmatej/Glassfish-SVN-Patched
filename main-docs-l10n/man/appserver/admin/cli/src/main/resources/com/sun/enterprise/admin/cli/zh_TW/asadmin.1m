@@ -1,0 +1,576 @@
+ASADMIN(1M)                                                        ASADMIN(1M)
+
+參考名
+       asadmin - 執行 Oracle GlassFish Server 管理作業的公用程式。
+
+概要
+           asadmin [--host host]
+           [--port port]
+           [--user admin-user]
+           [--passwordfile filename]
+           [--terse={true|false}]
+           [--secure={false|true}]
+           [--echo={true|false}]
+           [--interactive={true|false}]
+           [--help]
+           [subcommand [options] [operands]]
+
+說明
+       使用 asadmin 公用程式來執行 Oracle GlassFish Server
+       的管理作業。您可以使用此公用程式來取代 管理主控台 介面。
+
+   asadmin 公用程式的子命令
+       子命令會識別您正在執行的作業或工作。子命令是區分大小寫的。每一個子命令不是本機子命令就是遠端子命令。
+
+       ·   本機子命令不需執行網域管理伺服器 (DAS)
+           便能執行。但是，若要執行子命令並擁有存取安裝目錄及網域目錄的權限，使用者必須先登入主控該網域的機器。
+
+       ·   至於遠端子命令，一定要先連接至 DAS 並在該處執行子命令。需要執行中的
+           DAS。
+
+   asadmin 公用程式選項及子命令選項
+       選項可以控制 asadmin 公用程式和子命令的行為。選項也區分大小寫。
+
+       asadmin 公用程式具有下列選項類型：
+
+       ·   asadmin 公用程式選項。這些選項可以控制 asadmin 公用程式
+           (而非子指令) 的行為。asadmin
+           公用程式選項可能在子命令之前或之後，不過在子命令之後使用 asadmin
+           公用程序選項已過時。所有 asadmin
+           公用程式選項都必須在子命令之前或之後。如果將 asadmin
+           公用程式選項同時指定在子命令之前和之後，便會發生錯誤。如需 asadmin
+           公用程式選項的說明，請參閱此說明資訊的「選項」一節。
+
+       ·   子指令選項。這些選項可以控制子指令 (而非 asadmin 公用程式)
+           的行為。子命令選項必須接在子命令後面。如需子命令選項的說明，請參閱子命令的說明資訊。
+
+       子命令選項可以與 asadmin 公用程式選項同名，但兩種選項的效用不同。
+
+       asadmin 公用程序選項及部分子命令選項均具有長形式和短形式。
+
+       ·   選項的長形式為兩個破折號 (--)，後面接著一個選項文字。
+
+       ·   選項的短形式為一個破折號 (-)，後面接著一個字元。
+
+       例如，用來指定 terse 輸出之選項的長形式和短形式如下：
+
+       ·   長形式：--terse
+
+       ·   短形式：-t
+
+       大部分選項都需要引數值，但布林值選項除外
+       (此類型選項可將功能「啟用」或「停用」)。
+
+   asadmin 子命令的運算元
+       運算元會指定要執行子命令的項目。運算元會跟在引數值後面，且兩者中間以空格、定位字元
+       (Tab) 或雙破折號 (--) 分隔。asadmin
+       公用程式會將子命令選項與選項值後面的任何項目視為運算元。
+
+   asadmin 公用程式選項中的逸出字元
+       下列字元類型的 asadmin 公用程式選項需要逸出字元：
+
+       ·   UNIX 作業系統中的中介字元。這些字元在 shell 中具有特殊意義。UNIX
+           作業系統中的中介字元包括：\/,.!$%^&*|{}[]"'`~;。
+
+           若要停用這些字元，請使用反斜線 (\)、逸出字元、或用單引號 (')
+           字元括住整個命令行引數。
+
+           下列範例說明逸出字元對 *
+           字元的效用。在這些範例中，目前的工作目錄為網域目錄。
+
+           ·   下列不含逸出字元的命令會回應目前目錄中的所有檔案。
+
+                   prompt% echo *
+                   domain1 domain2
+
+           ·   下列反斜線 (\) 逸出字元位於 * 字元前的命令會回應 * 字元：
+
+                   prompt% echo \*
+                   *
+
+           ·   下列由單引號 (') 字元括住 * 字元的命令會回應 * 字元：
+
+                   prompt% echo '*'
+                   *
+
+           逸出字元在 UNIX 作業系統及 Java 程式語言中也算是特殊字元。因此，在
+           UNIX
+           作業系統及多重模式中，您必須為命令行中的每個逸出字元再額外套用一個逸出字元。這個需求不
+           Windows 作業系統。
+
+           例如，選項引數 Test\Escape\Character 中的反斜線 (\) UNIX
+           作業系統中介字元在 UNIX 及 Windows 系統上會指定如下：
+
+           ·   在 UNIX 系統中，每一個反斜線必須以第二個反斜線逸出：
+
+                   Test\\Escape\\Character
+
+           ·   在 Windows 系統中，不需要任何逸出字元：
+
+                   Test\Escape\Character
+
+               注意
+               ┌───────────────────────────────────────────────────────────────────────────────┐
+               │注意 若 UNIX                                                                   │
+               │作業系統中的中介字元很明確，這些字元就不需要逸出字元。例如，在                 │
+               │set(1) 子命令中，要設定的值會指定為                                            │
+               │name=value。由於 name                                                          │
+               │永遠不會包含等號，因此不需使用逸出字元使等號失效。因此，等號字元後的所有字元是 │
+               │set 子命令依原狀使用的未解譯字串。                                             │
+               └───────────────────────────────────────────────────────────────────────────────┘
+
+       ·   空格。空格是命令行介面中的分隔符。為區別命令行引數中的空格和命令行介面中的分隔符，空格必須以下列方式逸出：
+
+           ·   在單一及多重模式的 UNIX
+               作業系統、及所有多重模式作業系統中，請使用反斜線 (\)
+               逸出字元或用單引號 (') 字元或雙引號 (")
+               字元括住整個命令行引數。
+
+           ·   在單一模式的 Windows 作業系統中，請使用雙引號 (")
+               字元括住整個命令行引數。
+
+       ·   選項分隔符號。
+            asadmin 公用程式使用冒號字元 (:)
+           作為部分選項的分隔符號。如果冒號出現在下列任一項目中，就需要加入反斜線
+           (\) 逸出字元：
+
+           ·   特性
+
+           ·   適用於 Java 平台的虛擬機器 (Java 虛擬機器或 JVM 機器)
+               選項專有名詞「Java 虛擬機器」和「JVM」表示適用於 Java
+               平台的虛擬機器。
+
+           例如，子命令 create-jvm-options(1) 的運算元會以下列格式指定 JVM
+           機器選項：
+
+               (jvm-option-name[=jvm-option-value])
+               [:jvm-option-name[=jvm-option-value]]*
+           子命令 create-jvm-options 運算元中的多個 JVM 機器選項會以冒號 (:)
+           分隔符號分開。如果 jvm-option-name 或 jvm-option-value
+           中包含冒號，就必須在冒號前加上反斜線 (\) 逸出字元。
+
+           在使用冒號做為分隔符號的選項中，單引號 (') 字元或雙引號 (")
+           字元之前也需要反斜線 (\) 逸出字元。
+
+           逸出字元若不與單引號 (')
+           字元一併使用，則會使命令行介面中的選項分隔符號失效。
+
+           在單一及多重模式的 UNIX
+           作業系統、及所有多重模式作業系統中，使用冒號做為分隔符號的選項中，冒號字元與反斜線字元必須以下列方式指定：
+
+           ·   若要將常值反斜線傳至子命令，就需要兩個反斜線。因此，必須用兩個反斜線
+               (\\) 來逸出冒號 (:)。
+
+           ·   若要避免子命令將反斜線視為特殊字元，就必須逸出反斜線。所以，必須將兩個常值反斜線
+               (\\) 傳至子命令。若要避免 shell
+               將這些反斜線視為特殊字元，就必須逸出每一個反斜線。因此，總共必須使用
+               4 個反斜線 (\\\\) 來指定反斜線。
+
+           在單一模式的 Windows
+           作業系統中，對於使用冒號做為分隔符號的選項，必須使用反斜線 (\)
+           來逸出冒號 (:) 與反斜線 (\)。
+
+       您也可以使用雙引號 (") 字元或單引號 (') 字元來取代反斜線 (\)。反斜線
+       (\) 字元上不同類型的引號字元效用如下：
+
+       ·   位於雙引號 (") 字元中間的反斜線 (\ ) 字元會視為一個特殊字元。
+
+       ·   位於單引號 (') 字元中間的反斜線 (\ ) 字元不
+
+   使用 --secure 選項的需求
+       使用 --secure 選項的需求如下：
+
+       ·   為了安全起見，必須組態您目前管理的網域。
+
+       ·   DAS 組態中 http-listener 元素的 security-enabled 屬性必須設為
+           true。
+
+           若要設定此屬性，請使用 set 子命令。
+
+   在建立或刪除後重新啟動伺服器
+       在使用 asadmin 子命令建立或刪除組態項目後，您必須重新啟動 DAS
+       才能讓變更生效。若要重新啟動 DAS，請使用 restart-domain(1) 子命令。
+
+   子命令與 asadmin 公用程式的說明資訊
+       若要取得 asadmin 公用程式子命令的說明資訊，請將相關子命令指定為 help
+       子命令的運算元。例如，若要取得 start-domain(1)
+       子命令的說明資訊，請輸入：
+
+           asadmin help start-domain
+
+       如果執行不含運算元的 help 子命令，系統將會顯示 asadmin
+       公用程式的此說明資訊。
+
+       若要取得可用 asadmin 子命令的清單，請使用 list-commands(1) 子命令。
+
+選項
+       --host, -H
+           正在執行 DAS 的機器名稱。預設值為 localhost。
+
+       --port, -p
+           用於管理的 HTTP 或 HTTPS
+           連接埠。此連接埠是您在網路瀏覽器中指定用來管理網域的 URL
+           連接埠。例如，URL http://localhost:4949 中的連接埠是 4949。
+
+           用於管理的預設連接埠號碼為 4848。
+
+       --user, -u
+           DAS 的授權管理使用者的使用者名稱。
+
+           若已使用 asadmin login
+           命令向網域認證，則針對此網域執行後續作業時，不需要指定 --user
+           選項。
+
+       --passwordfile, -W
+           指定包含特殊格式密碼項目的檔案名稱 (包括完整路徑)。
+
+           密碼項目必須以 AS_ADMIN_
+           為前綴，後面接著大寫字母的密碼名稱、等號及密碼。
+
+           由 asadmin 公用程式讀取的檔案項目如下：
+
+           ·   AS_ADMIN_PASSWORD=administration-password
+
+           ·   AS_ADMIN_MASTERPASSWORD=master-password
+
+           由子命令讀取的檔案項目如下：
+
+           ·   AS_ADMIN_NEWPASSWORD=new-administration-password (由
+               start-domain(1) 子命令讀取)
+
+           ·   AS_ADMIN_USERPASSWORD=user-password (由 create-file-user(1)
+               子命令讀取)
+
+           ·   AS_ADMIN_ALIASPASSWORD=alias-password (由
+               create-password-alias(1) 子命令讀取)
+
+           ·   AS_ADMIN_MAPPEDPASSWORD=mapped-password (由
+               create-connector-security-map(1) 子命令讀取)
+
+           ·   AS_ADMIN_WINDOWSPASSWORD=windows-password (由
+               create-node-dcom(1)、install-node-dcom(1) 與
+               update-node-dcom(1) 子命令讀取)
+
+           ·   AS_ADMIN_SSHPASSWORD=sshd-password (由
+               create-node-ssh(1)、install-node(1)、install-node-ssh(1) 與
+               update-node-ssh(1) 子命令讀取)
+
+           ·   AS_ADMIN_SSHKEYPASSPHRASE=sshd-passphrase (由
+               create-node-ssh(1)、install-node(1)、install-node-ssh(1) 與
+               update-node-ssh(1) 子命令讀取)
+
+           ·   AS_ADMIN_JMSDBPASSWORD= jdbc-user-password (由
+               configure-jms-cluster(1) 子命令讀取)
+
+           這些密碼項目會以純文字格式儲存在密碼檔案裡。若要提供更高安全性，可使用
+           create-password-alias
+           子命令來為遠端子命令使用的密碼建立別名。建立別名的密碼會以加密格式儲存。如果密碼有別名，便會如下所示在密碼項目中指定別名：
+
+               AS_ADMIN_password-name=${ALIAS=password-alias-name}
+           例如︰
+
+               AS_ADMIN_SSHPASSWORD=${ALIAS=ssh-password-alias}
+               AS_ADMIN_SSHKEYPASSPHRASE=${ALIAS=ssh-key-passphrase-alias}
+           在不允許未認證登入的網域中，所有遠端子命令均須指定管理密碼，才能向
+           DAS 進行認證。密碼可使用下列任一方法指定：
+
+           ·   使用 --passwordfile 選項
+
+           ·   使用 login(1) 子命令
+
+           ·   在命令提示字元中互動
+
+           login
+           子命令僅能用來指定管理密碼。如需指定遠端子命令所需的其他密碼，請使用
+           --passwordfile 選項或在命令提示字元中指定。
+
+           若已使用 asadmin login
+           命令向網域認證，則針對此網域執行後續作業時，不需要使用
+           --passwordfile 選項來指定管理密碼。不過，只有 AS_ADMIN_PASSWORD
+           選項才不需要。您還是必須提供其他密碼，例如在個別子命令如
+           update-file-user(1) 要求時，提供 AS_ADMIN_USERPASSWORD。
+
+           基於安全考量，asadmin 公用程式將不會讀取指定為環境變數的密碼。
+
+           您無法透過命令行或環境變數傳送主密碼，但可在 --passwordfile
+           選項所指定的檔案中指定。
+
+           AS_ADMIN_MASTERPASSWORD 的預設值為 changeit。
+
+       --terse, -t
+           如果為
+           true，輸出資料會非常簡潔，且使用程序檔最適合的格式，而不是適合使用者閱讀的格式。通常，輸出的資料也會省略描述性文字及詳細狀態訊息。預設值為
+           false。
+
+       --secure, -s
+           若設定為 true，將使用 SSL/TLS 與 DAS 通訊。
+
+           預設值為 false。
+
+       --echo, -e
+           若設定為 true，則命令行敘述會回應在標準輸出上。預設值為 false。
+
+       --interactive, -I
+           若設定為 true，將只提示必要選項。
+
+           預設值會依 asadmin 公用程式執行的方式而異：
+
+           ·   如果 asadmin 公用程式是從主控台視窗執行，則預設值為 true。
+
+           ·   如果 asadmin
+               公用程式不是從主控台視窗，而是從程序檔中執行，則預設值為
+               false。
+
+       --help, -?
+           顯示 asadmin 公用程式的說明文字。
+
+範例
+       範例 1, 在單一模式中執行 asadmin 公用程式子命令
+           此範例會在單一模式中執行 list-applications(1)
+           子命令。在此範例中，所有選項均使用預設值。
+
+           此範例會顯示建置在本機主機上的應用程式 hello。
+
+               asadmin list-applications
+               hello <web>
+
+               Command list-applications executed successfully.
+
+       範例 2, 指定 asadmin 公用程式選項搭配子命令
+           此範例在單一模式中指定 --host
+            asadmin 公用程式選項搭配 list-applications 子命令。在此範例中，DAS
+           執行於主機 srvr1.example.com 上。
+
+           此範例會顯示建置於主機 srvr1.example.com 上的應用程式
+           basic-ezcomp、scrumtoys、ejb31-war、automatic-timer-ejb。
+
+               asadmin --host srvr1.example.com list-applications
+               basic-ezcomp <web>
+               scrumtoys <web>
+               ejb31-war <ejb, web>
+               automatic-timer-ejb <ejb>
+
+               Command list-applications executed successfully.
+
+       範例 3, 指定 asadmin 公用程式選項及子命令選項
+           此範例在單一模式中指定 --host asadmin 公用程式選項及 --type
+           子命令選項並搭配 list-applications 子命令。在此範例中，DAS
+           執行於主機 srvr1.example.com 上，同時列出了 web
+           類型的應用程式清單。
+
+               asadmin --host srvr1.example.com list-applications --type web
+               basic-ezcomp <web>
+               scrumtoys <web>
+               ejb31-war <ejb, web>
+
+               Command list-applications executed successfully.
+
+       範例 4, 以單引號字元逸出命令行引數
+           此範例中的命令在特性值 c:\extras\pmdapp 中指定反斜線 (\) UNIX
+           作業系統中介字元以及冒號 (:) 選項分隔符號。
+
+           在單一及多重模式的 UNIX
+           作業系統、及所有多重模式作業系統中，必須使用反斜線 (\) 來逸出反斜線
+           (\) 中介字元及冒號 (:) 選項分隔符號。
+
+               asadmin deploy --property extras.home='c\:\\extras\\pmdapp' pmdapp.war
+               Application deployed with name pmdapp.
+               Command deploy executed successfully
+           在單一模式的 Windows 作業系統中，因為單引號 ( ')
+           字元的存在，因此不需要其他逸出字元：
+
+               asadmin deploy --property extras.home='c:\extras\pmdapp' pmdapp.war
+               Application deployed with name pmdapp.
+               Command deploy executed successfully
+
+       範例 5, 在選項中指定 UNIX 作業系統中介字元
+           範例中的命令在選項引數 Test\Escape\Character 中指定反斜線 (\) UNIX
+           作業系統中介字元。
+
+           在單一及多重模式的 UNIX
+           作業系統、及所有多重模式作業系統中，必須使用反斜線 (\) 來逸出反斜線
+           (\) 中介字元：
+
+               asadmin --user admin --passwordfile gfpass create-jdbc-connection-pool
+               --datasourceclassname sampleClassName
+               --description Test\\Escape\\Character
+               sampleJDBCConnectionPool
+           在單一模式的 Windows 作業系統中，不需要任何逸出字元：
+
+               asadmin --user admin --passwordfile gfpass create-jdbc-connection-pool
+               --datasourceclassname sampleClassName
+               --description Test\Escape\Character
+               sampleJDBCConnectionPool
+
+       範例 6, 指定包含空格的命令行引數
+           此範例中的命令會在運算元 C:\Documents and
+           Settings\gfuser\apps\hello.war 中指定空格。
+
+           在單一或多重模式的所有作業系統中，可使用雙引號 (")
+           字元括住整個運算元：
+
+               asadmin deploy "C:\Documents and Settings\gfuser\apps\hello.war"
+               Application deployed with name hello.
+               Command deploy executed successfully.
+           在單一及多重模式的 UNIX
+           作業系統、及所有多重模式作業系統中，可使用單引號 (')
+           字元括住整個命令行引數。
+
+               asadmin> deploy 'C:\Documents and Settings\gfuser\apps\hello.war'
+               Application deployed with name hello.
+               Command deploy executed successfully.
+           或者，在單一及多重模式的 UNIX
+           作業系統、及所有多重模式作業系統中，可在運算元的每個空格之前使用反斜線
+           (\) 逸出字元。在此情況下，必須在運算元中的每個反斜線之前使用反斜線
+           (\) 逸出字元：
+
+               asadmin> deploy C:\\Documents\ and\ Settings\\gfuser\\apps\\hello.war
+               Application deployed with name hello.
+               Command deploy executed successfully.
+
+       範例 7, 在特性中指定中介字元及選項分隔符號字元
+           範例中的命令在 create-jdbc-connection-pool(1) 子命令 --property
+           選項中，指定反斜線 (\) UNIX 作業系統中介字元及冒號 (:)
+           選項分隔符號字元。
+
+           --property 選項的名稱及值對如下：
+
+               user=dbuser
+               passwordfile=dbpasswordfile
+               DatabaseName=jdbc:derby
+               server=http://localhost:9092
+           在單一及多重模式的 UNIX
+           作業系統、及所有多重模式作業系統中，必須使用反斜線 (\) 來逸出冒號
+           (:) 及反斜線( \)：
+
+               asadmin --user admin --passwordfile gfpass create-jdbc-connection-pool
+               --datasourceclassname com.derby.jdbc.jdbcDataSource
+               --property user=dbuser:passwordfile=dbpasswordfile:
+               DatabaseName=jdbc\\:derby:server=http\\://localhost\\:9092 javadb-pool
+           或者，可以用單引號 (') 字元將整個 --property 選項的引數括起來：
+
+               asadmin --user admin --passwordfile gfpass create-jdbc-connection-pool
+               --datasourceclassname com.derby.jdbc.jdbcDataSource
+               --property 'user=dbuser:passwordfile=dbpasswordfile:
+               DatabaseName="jdbc:derby":server="http://localhost:9092"' javadb-pool
+           在單一模式的 Windows 作業系統中，必須使用反斜線 (\) 來逸出冒號 (:)
+           ，但不
+
+               asadmin --user admin --passwordfile gfpass create-jdbc-connection-pool
+               --datasourceclassname com.derby.jdbc.jdbcDataSource
+               --property user-dbuser:passwordfile-dbpasswordfile:
+               DatabaseName=jdbc\:derby:server=http\://localhost\:9092 javadb-pool
+           在所有作業系統中，只要用雙引號或單引號字元括住值，就不需要逸出值裡的冒號
+           (:)。
+
+               asadmin --user admin --passwordfile gfpass create-jdbc-connection-pool
+               --datasourceclassname com.derby.jdbc.jdbcDataSource
+               --property user=dbuser:passwordfile=dbpasswordfile:
+               DatabaseName=\"jdbc:derby\":server=\"http://localhost:9092\" javadb-pool
+
+       範例 8, 在 JVM 機器選項中指定選項分隔符號及逸出字元
+           範例中的命令在 -Dlocation=c:\sun\appserver JVM
+           機器選項中指定下列字元：
+
+           ·   冒號 (:) 選項分隔符號
+
+           ·   反斜線 (\) 逸出字元
+
+           在單一及多重模式的 UNIX
+           作業系統、及所有多重模式作業系統中，必須指定字元如下：
+
+           ·   若要將常值反斜線傳至子命令，就需要兩個反斜線。因此，必須用兩個反斜線
+               (\\) 來逸出冒號 (:)。
+
+           ·   若要避免子命令將反斜線視為特殊字元，就必須逸出反斜線。所以，必須將兩個常值反斜線
+               (\\) 傳至子命令。若要避免 shell
+               將這些反斜線視為特殊字元，就必須逸出每一個反斜線。因此，總共必須使用
+               4 個反斜線 (\\\\) 來指定反斜線。
+
+           最終的命令如下：
+
+               asadmin create-jvm-options --target test-server
+               -e -Dlocation=c\\:\\\\sun\\\\appserver
+           在單一模式的 Windows 作業系統中，必須使用反斜線 (\) 來逸出冒號 (:)
+           及反斜線 (\)：
+
+               asadmin create-jvm-options --target test-server
+               -e -Dlocation=c\:\\sun\\appserver
+
+       範例 9, 指定包含逸出字元的選項
+           範例中的命令在選項引數
+            "Hello\App"\authentication 中指定反斜線 (\) 字元及雙引號 (")
+           字元。
+
+           在單一及多重模式的 UNIX
+           作業系統、及所有多重模式作業系統中，必須使用反斜線 (\)
+           來逸出雙引號字元 (") 及反斜線 (\)：
+
+               asadmin set-web-env-entry --name="Hello User" --type=java.lang.String
+               --value=techscribe --description=\"Hello\\App\"\\authentication hello
+           在單一模式的 Windows 作業系統中，必須使用反斜線 (\) 來逸出雙引號
+           (")，但不
+
+               asadmin set-web-env-entry --name="Hello User" --type=java.lang.String
+               --value=techscribe --description=\"Hello\App\"\authentication hello
+
+環境變數
+       環境變數會修改 asadmin 公用程式選項的預設值，如下表所示。
+
+       ┌─────────────────────────────┬───────────────────────┐
+       │                             │                       │
+       │       環境變數              │        asadmin        │
+       │                             │        公用程式選項   │
+       ├─────────────────────────────┼───────────────────────┤
+       │                             │                       │
+       │       AS_ADMIN_TERSE        │        --terse        │
+       ├─────────────────────────────┼───────────────────────┤
+       │                             │                       │
+       │       AS_ADMIN_ECHO         │        --echo         │
+       ├─────────────────────────────┼───────────────────────┤
+       │                             │                       │
+       │       AS_ADMIN_INTERACTIVE  │        --interactive  │
+       ├─────────────────────────────┼───────────────────────┤
+       │                             │                       │
+       │       AS_ADMIN_HOST         │        --host         │
+       ├─────────────────────────────┼───────────────────────┤
+       │                             │                       │
+       │       AS_ADMIN_PORT         │        --port         │
+       ├─────────────────────────────┼───────────────────────┤
+       │                             │                       │
+       │       AS_ADMIN_SECURE       │        --secure       │
+       ├─────────────────────────────┼───────────────────────┤
+       │                             │                       │
+       │       AS_ADMIN_USER         │        --user         │
+       ├─────────────────────────────┼───────────────────────┤
+       │                             │                       │
+       │       AS_ADMIN_PASSWORDFILE │        --passwordfile │
+       ├─────────────────────────────┼───────────────────────┤
+       │                             │                       │
+       │       AS_ADMIN_HELP         │        --help         │
+       └─────────────────────────────┴───────────────────────┘
+
+屬性
+       如需下列屬性說明，請參閱 attributes(5)：
+
+       ┌──────────────────┬───────────────┐
+       │                  │               │
+       │       屬性類型   │        屬性值 │
+       ├──────────────────┼───────────────┤
+       │                  │               │
+       │       介面穩定性 │        不穩定 │
+       └──────────────────┴───────────────┘
+
+另請參閱
+       configure-jms-cluster(1), create-connector-security-map(1),
+       create-file-user(1), create-jdbc-connection-pool(1),
+       create-jvm-options(1), create-node-dcom(1), create-node-ssh(1),
+       create-password-alias(1), deploy(1), install-node(1),
+       install-node-dcom(1), install-node-ssh(1), list-applications(1),
+       list-commands(1), login(1), restart-domain(1), set(1),
+       set-web-env-entry(1), start-domain(1), update-file-user(1),
+       update-node-dcom(1), update-node-ssh(1)
+
+       attributes(5)
+
+                               2012 年 1 月 6 日                   ASADMIN(1M)
