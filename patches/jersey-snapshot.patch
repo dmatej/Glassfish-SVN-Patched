@@ -1,6 +1,225 @@
+Index: appserver/admingui/common/src/main/java/org/glassfish/admingui/common/security/AdminConsoleAuthModule.java
+===================================================================
+--- appserver/admingui/common/src/main/java/org/glassfish/admingui/common/security/AdminConsoleAuthModule.java	(revision 60212)
++++ appserver/admingui/common/src/main/java/org/glassfish/admingui/common/security/AdminConsoleAuthModule.java	(working copy)
+@@ -41,20 +41,18 @@
+ 
+ import java.net.MalformedURLException;
+ import java.net.URL;
+-import java.util.Enumeration;
+-import java.util.HashMap;
+ import java.util.Map;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
+ 
+ import javax.ws.rs.client.Client;
++import javax.ws.rs.client.ClientBuilder;
+ import javax.ws.rs.client.Entity;
+ import javax.ws.rs.client.WebTarget;
+ import javax.ws.rs.core.MediaType;
+ import javax.ws.rs.core.MultivaluedHashMap;
+ import javax.ws.rs.core.MultivaluedMap;
+ import javax.ws.rs.core.Response;
+-import javax.ws.rs.client.ClientBuilder;
+ 
+ import javax.security.auth.Subject;
+ import javax.security.auth.callback.Callback;
+@@ -70,12 +68,14 @@
+ import javax.servlet.http.HttpServletResponse;
+ import javax.servlet.http.HttpSession;
+ 
++import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
++
++import org.glassfish.hk2.api.ServiceLocator;
++
+ import org.glassfish.admingui.common.util.GuiUtil;
+ import org.glassfish.admingui.common.util.RestResponse;
+ import org.glassfish.admingui.common.util.RestUtil;
+ import org.glassfish.grizzly.config.dom.NetworkListener;
+-import org.glassfish.hk2.api.ServiceLocator;
+-import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
+ 
+ import com.sun.enterprise.config.serverbeans.Domain;
+ import com.sun.enterprise.config.serverbeans.SecureAdmin;
+@@ -235,7 +235,6 @@
+             session.setAttribute(ORIG_REQUEST_PATH, origPath);
+             RequestDispatcher rd = request.getRequestDispatcher(loginPage);
+             try {
+-                RestUtil.initialize(null);
+                 rd.forward(request, response);
+             } catch (Exception ex) {
+                 AuthException ae = new AuthException();
+@@ -253,8 +252,7 @@
+ 
+         // Make REST Request
+ 
+-        Client client2 = ClientBuilder.newClient();
+-        RestUtil.initialize(client2);
++        Client client2 = RestUtil.initialize(ClientBuilder.newBuilder()).build();
+         WebTarget target = client2.target(restURL);
+         target.register(new HttpBasicAuthFilter(username, password));
+         MultivaluedMap payLoad = new MultivaluedHashMap();
+Index: appserver/admingui/common/src/main/java/org/glassfish/admingui/common/util/RestUtil.java
+===================================================================
+--- appserver/admingui/common/src/main/java/org/glassfish/admingui/common/util/RestUtil.java	(revision 60212)
++++ appserver/admingui/common/src/main/java/org/glassfish/admingui/common/util/RestUtil.java	(working copy)
+@@ -67,6 +67,7 @@
+ 
+ import javax.faces.context.FacesContext;
+ import javax.net.ssl.HostnameVerifier;
++import javax.net.ssl.SSLContext;
+ import javax.net.ssl.SSLSession;
+ import javax.servlet.http.HttpServletRequest;
+ import javax.servlet.http.HttpServletResponse;
+@@ -76,7 +77,6 @@
+ import org.glassfish.admingui.common.security.AdminConsoleAuthModule;
+ import org.glassfish.api.ActionReport.ExitCode;
+ import org.glassfish.hk2.api.ServiceLocator;
+-import org.glassfish.jersey.client.ClientProperties;
+ import org.glassfish.jersey.client.filter.CsrfProtectionFilter;
+ import org.glassfish.jersey.jackson.JacksonFeature;
+ import org.w3c.dom.Document;
+@@ -91,7 +91,6 @@
+ import com.sun.jsftemplating.layout.descriptors.handler.HandlerContext;
+ import javax.ws.rs.client.ClientRequestContext;
+ import javax.ws.rs.client.ClientRequestFilter;
+-import org.glassfish.jersey.client.SslConfig;
+ 
+ /**
+  *
+@@ -108,9 +107,8 @@
+ 
+     public static Client getJerseyClient() {
+         if (JERSEY_CLIENT == null) {
+-            JERSEY_CLIENT = ClientBuilder.newClient();
+-            JERSEY_CLIENT.register(new CsrfProtectionFilter())
+-                    .register(new RequiredHeadersFilter())
++            JERSEY_CLIENT = initialize(ClientBuilder.newBuilder()).build();
++            JERSEY_CLIENT.register(new RequiredHeadersFilter())
+                     .register(new JacksonFeature());
+         }
+ 
+@@ -226,7 +224,6 @@
+                     response.sendRedirect("/");
+ 
+                     fc.responseComplete();
+-                    initialize(null);
+                     session.invalidate();
+                 } catch (Exception ex) {
+                     throw new RuntimeException(ex);
+@@ -918,17 +915,21 @@
+     // Jersey client methods
+     //******************************************************************************************************************
+ 
+-    public static void initialize(Client client) {
+-        if (client == null) {
+-            client = getJerseyClient();
+-        }
++    public static ClientBuilder initialize(ClientBuilder clientBuilder) {
+         try {
+             ServiceLocator habitat = SecurityServicesUtil.getInstance().getHabitat();
+             SecureAdmin secureAdmin = habitat.getService(SecureAdmin.class);
+-            client.property(ClientProperties.SSL_CONFIG, new SslConfig(new BasicHostnameVerifier(),
+-                                                                                          habitat.<SSLUtils>getService(SSLUtils.class).getAdminSSLContext(SecureAdmin.Util.DASAlias(secureAdmin), null)));
+-            client.register(CsrfProtectionFilter.class);
+ 
++            final SSLContext sslContext = habitat
++                    .<SSLUtils>getService(SSLUtils.class)
++                    .getAdminSSLContext(SecureAdmin.Util.DASAlias(secureAdmin), null);
++
++            // Instruct Jersey to use HostNameVerifier and SSLContext provided by us.
++            clientBuilder
++                    .hostnameVerifier(new BasicHostnameVerifier())
++                    .sslContext(sslContext)
++                    .register(CsrfProtectionFilter.class);
++
+         } catch (Exception ex) {
+             Throwable cause = ex;
+             int lcv = 0;
+@@ -943,6 +944,7 @@
+                 ex.printStackTrace();
+             }
+         }
++        return clientBuilder;
+     }
+ 
+     public static void postRestRequestFromServlet(HttpServletRequest request, String endpoint, Map<String, Object> attrs, boolean quiet, boolean throwException) {
+Index: nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/ProxyImpl.java
+===================================================================
+--- nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/ProxyImpl.java	(revision 60212)
++++ nucleus/admin/rest/rest-service/src/main/java/org/glassfish/admin/rest/utils/ProxyImpl.java	(working copy)
+@@ -40,7 +40,6 @@
+ 
+ package org.glassfish.admin.rest.utils;
+ 
+-
+ import java.net.MalformedURLException;
+ import java.net.URI;
+ import java.net.URL;
+@@ -49,6 +48,7 @@
+ 
+ import javax.ws.rs.WebApplicationException;
+ import javax.ws.rs.client.Client;
++import javax.ws.rs.client.ClientBuilder;
+ import javax.ws.rs.client.WebTarget;
+ import javax.ws.rs.core.MediaType;
+ import javax.ws.rs.core.Response;
+@@ -56,13 +56,13 @@
+ import javax.ws.rs.core.UriInfo;
+ 
+ import javax.net.ssl.HostnameVerifier;
++import javax.net.ssl.SSLContext;
+ import javax.net.ssl.SSLSession;
+ 
+-import org.glassfish.admin.rest.client.utils.MarshallingUtils;
+ import org.glassfish.hk2.api.ServiceLocator;
+-import org.glassfish.jersey.client.ClientProperties;
+-import org.glassfish.jersey.client.SslConfig;
+ 
++import org.glassfish.admin.rest.client.utils.MarshallingUtils;
++
+ import com.sun.enterprise.config.serverbeans.Domain;
+ import com.sun.enterprise.config.serverbeans.SecureAdmin;
+ import com.sun.enterprise.config.serverbeans.Server;
+@@ -83,8 +83,8 @@
+             if (forwardInstance != null) {
+                 UriBuilder forwardUriBuilder = constructForwardURLPath(sourceUriInfo);
+                 URI forwardURI = forwardUriBuilder.scheme("https").host(forwardInstance.getAdminHost()).port(forwardInstance.getAdminPort()).build(); //Host and Port are replaced to that of forwardInstanceName
++                client = addAuthenticationInfo(client, forwardInstance, habitat);
+                 WebTarget resourceBuilder = client.target(forwardURI);
+-                addAuthenticationInfo(client, resourceBuilder, forwardInstance, habitat);
+                 Response response = resourceBuilder.request(MediaType.APPLICATION_JSON).get(Response.class); //TODO if the target server is down, we get ClientResponseException. Need to handle it
+                 Response.Status status = Response.Status.fromStatusCode(response.getStatus());
+                 if (status.getFamily() == javax.ws.rs.core.Response.Status.Family.SUCCESSFUL) {
+@@ -134,11 +134,21 @@
+     /**
+      * Use SSL to authenticate
+      */
+-    private void addAuthenticationInfo(Client client, WebTarget resourceBuilder, Server server, ServiceLocator habitat) {
++    private Client addAuthenticationInfo(Client client, Server server, ServiceLocator habitat) {
+         SecureAdmin secureAdmin = habitat.getService(SecureAdmin.class);
+-        //Instruct Jersey to use HostNameVerifier and SSLContext provided by us.
+-        client.property(ClientProperties.SSL_CONFIG, new SslConfig(new BasicHostnameVerifier(server.getAdminHost()),
+-                habitat.<SSLUtils>getService(SSLUtils.class).getAdminSSLContext(SecureAdmin.Util.DASAlias(secureAdmin), "TLS" ))); //TODO need to get hardcoded "TLS" from corresponding ServerRemoteAdminCommand constant);
++
++        // TODO need to get hardcoded "TLS" from corresponding ServerRemoteAdminCommand constant);
++        final SSLContext sslContext = habitat
++                .<SSLUtils>getService(SSLUtils.class)
++                .getAdminSSLContext(SecureAdmin.Util.DASAlias(secureAdmin), "TLS");
++
++        // Instruct Jersey to use HostNameVerifier and SSLContext provided by us.
++        final ClientBuilder clientBuilder = ClientBuilder.newBuilder()
++                .replaceWith(client.getConfiguration())
++                .hostnameVerifier(new BasicHostnameVerifier(server.getAdminHost()))
++                .sslContext(sslContext);
++
++        return clientBuilder.build();
+     }
+ 
+     /**
 Index: nucleus/pom.xml
 ===================================================================
---- nucleus/pom.xml	(revision 60031)
+--- nucleus/pom.xml	(revision 60212)
 +++ nucleus/pom.xml	(working copy)
 @@ -114,10 +114,10 @@
          <gmbal.version>3.2.0-b003</gmbal.version>
