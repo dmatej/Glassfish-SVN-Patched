@@ -133,5 +133,51 @@
         <addedToClasspath>false</addedToClasspath>
       </configuration>
     </component>
+    <!--
+      Custom life-cycle for creating GlassFish module JAR
+    -->
+    <component>
+      <role>org.apache.maven.lifecycle.mapping.LifecycleMapping</role>
+      <role-hint>glassfish-jar</role-hint>
+      <implementation>org.apache.maven.lifecycle.mapping.DefaultLifecycleMapping</implementation>
+      <configuration>
+        <lifecycles>
+          <lifecycle>
+            <id>default</id>
+            <phases>
+              <generate-sources>org.glassfish.hk2:config-generator:generate-injectors</generate-sources>
+              <process-resources>org.apache.maven.plugins:maven-resources-plugin:resources</process-resources>
+              <compile>org.apache.maven.plugins:maven-compiler-plugin:compile</compile>
+              <process-classes>
+                  org.glassfish.hk2:osgiversion-maven-plugin:compute-osgi-version,
+                  org.glassfish.hk2:hk2-inhabitant-generator:generate-inhabitants,
+                  org.apache.felix:maven-bundle-plugin:manifest,
+                  org.glassfish.build:command-security-maven-plugin:check
+              </process-classes>
+              <generate-test-sources>org.glassfish.hk2:config-generator:generate-test-injectors</generate-test-sources>
+              <process-test-resources>org.apache.maven.plugins:maven-resources-plugin:testResources</process-test-resources>
+              <test-compile>org.apache.maven.plugins:maven-compiler-plugin:testCompile</test-compile>
+              <process-test-classes>org.glassfish.hk2:hk2-inhabitant-generator:generate-test-inhabitants</process-test-classes>
+              <test>org.apache.maven.plugins:maven-surefire-plugin:test</test>
+              <package>org.apache.maven.plugins:maven-jar-plugin:jar</package>
+              <install>org.apache.maven.plugins:maven-install-plugin:install</install>
+              <deploy>org.apache.maven.plugins:maven-deploy-plugin:deploy</deploy>
+            </phases>
+          </lifecycle>
+        </lifecycles>
+      </configuration>
+    </component>
+    <component>
+      <role>org.apache.maven.artifact.handler.ArtifactHandler</role>
+      <role-hint>glassfish-jar</role-hint>
+      <implementation>org.apache.maven.artifact.handler.DefaultArtifactHandler</implementation>
+      <configuration>
+        <extension>jar</extension>
+        <type>glassfish-jar</type>
+        <packaging>glassfish-jar</packaging>
+        <language>java</language>
+        <addedToClasspath>true</addedToClasspath>
+      </configuration>
+    </component>
   </components>
 </component-set>
