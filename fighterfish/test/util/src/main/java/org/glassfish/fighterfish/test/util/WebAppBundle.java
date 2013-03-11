@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -150,53 +150,6 @@ public class WebAppBundle {
         b.stop(Bundle.STOP_TRANSIENT);
     }
 
-    /**
-     * Make a request to the resource available at the path relative to this web app.
-     * @param relativePath
-     * @return
-     * @throws IOException
-     */
-    public String getResponse(String relativePath) throws IOException {
-        URL servlet = new URL("http", getHost(), getPort(), contextPath + relativePath);
-        URLConnection yc = servlet.openConnection();
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(
-                        yc.getInputStream()));
-
-        StringBuilder sb = new StringBuilder();
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            sb.append(inputLine);
-        }
-        in.close();
-        return sb.toString();
-    }
-
-    public String getHttpResponse(String relativePath) throws IOException {
-
-        HttpURLConnection connection = null;
-        URL serverAddress = null;
-
-        serverAddress = new URL("http", getHost(), getPort(), contextPath + relativePath);
-        System.getProperties().setProperty("sun.net.http.retryPost", "false" );
-        connection = (HttpURLConnection)serverAddress.openConnection();
-        connection.setRequestMethod("POST");
-        connection.setReadTimeout(60000);
-        connection.connect();
-
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(
-                        connection.getInputStream()));
-
-        StringBuilder sb = new StringBuilder();
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            sb.append(inputLine);
-        }
-        in.close();
-        return sb.toString();
-    }
-
     public ServletContext getServletContext() {
         return (ServletContext) context.getService(context.getServiceReference(ServletContext.class.getName()));
     }
@@ -211,5 +164,42 @@ public class WebAppBundle {
 
     public Bundle getBundle() {
         return b;
+    }
+    
+    //[TangYong]Implementing GLASSFISH-19794
+    //Adding a getHttpPostResponse for post request
+    public String getHttpPostResponse(String relativePath) throws IOException {
+    	return getHttpResponse(relativePath, "POST");
+    }
+    
+    //[TangYong]Implementing GLASSFISH-19794
+    //Adding a getHttpGetResponse for get request
+    public String getHttpGetResponse(String relativePath) throws IOException {
+        return getHttpResponse(relativePath, "GET");
+    }
+    
+    //[TangYong]Implementing GLASSFISH-19794
+    //Common handling logic
+    private String getHttpResponse(String relativePath, String mode) throws IOException{
+    	HttpURLConnection connection = null;
+        URL serverAddress = null;
+
+        serverAddress = new URL("http", getHost(), getPort(), contextPath + relativePath);
+        connection = (HttpURLConnection)serverAddress.openConnection();
+        connection.setRequestMethod(mode);
+        connection.setReadTimeout(60000);
+        connection.connect();
+
+        BufferedReader in = new BufferedReader(
+                new InputStreamReader(
+                        connection.getInputStream()));
+
+        StringBuilder sb = new StringBuilder();
+        String inputLine;
+        while ((inputLine = in.readLine()) != null) {
+            sb.append(inputLine);
+        }
+        in.close();
+        return sb.toString();
     }
 }

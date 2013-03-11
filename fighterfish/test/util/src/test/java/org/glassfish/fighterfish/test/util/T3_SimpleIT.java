@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -110,7 +110,7 @@ public class T3_SimpleIT {
             Bundle uas_api_b = tc.installBundle("mvn:org.glassfish.fighterfish/sample.uas.api/1.0.0");
             Bundle uas_simplewab_b = tc.installBundle("mvn:org.glassfish.fighterfish/sample.uas.simplewab/1.0.0/war");
             WebAppBundle uas_simple_webapp = tc.deployWebAppBundle(uas_simplewab_b);
-            String response = uas_simple_webapp.getResponse("/LoginServlet?name=foo&password=bar");
+            String response = uas_simple_webapp.getHttpGetResponse("/LoginServlet?name=foo&password=bar");
             System.out.println(response);
             assertThat(response, new StringPatternMatcher("Service is not yet available"));
         } finally {
