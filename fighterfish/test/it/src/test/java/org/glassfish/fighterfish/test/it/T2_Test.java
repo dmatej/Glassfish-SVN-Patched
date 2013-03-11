@@ -47,7 +47,6 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -100,7 +99,7 @@ public class T2_Test extends AbstractTestObject {
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = ""; // homepage
             final String expectedResponse = "Hello World";
-            String response = wab.getResponse(request);
+            String response = wab.getHttpGetResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp0", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
@@ -128,10 +127,10 @@ public class T2_Test extends AbstractTestObject {
             final String loginRequest = "/LoginServlet?name=foo&password=bar";
             final String registrationSuccessful = "Registered foo";
             final String loginSuccessful = "Welcome foo";
-            String response = wab.getHttpResponse(registrationRequest);
+            String response = wab.getHttpPostResponse(registrationRequest);
             logger.logp(Level.INFO, "T2_Test", "testapp1", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(registrationSuccessful));
-            response = wab.getResponse(loginRequest);
+            response = wab.getHttpGetResponse(loginRequest);
             logger.logp(Level.INFO, "T2_Test", "testapp1", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(loginSuccessful));
         } finally {
@@ -159,10 +158,10 @@ public class T2_Test extends AbstractTestObject {
             final String loginRequest = "/LoginServlet?name=foo&password=bar";
             final String registrationSuccessful = "Registered foo";
             final String loginSuccessful = "Welcome foo";
-            String response = wab.getHttpResponse(registrationRequest);
+            String response = wab.getHttpPostResponse(registrationRequest);
             logger.logp(Level.INFO, "T2_Test", "testapp1", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(registrationSuccessful));
-            response = wab.getResponse(loginRequest);
+            response = wab.getHttpGetResponse(loginRequest);
             logger.logp(Level.INFO, "T2_Test", "testapp1", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(loginSuccessful));
         } finally {
@@ -188,7 +187,7 @@ public class T2_Test extends AbstractTestObject {
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = "/";
             final String expectedResponse = "Hello from POJO!";
-            String response = wab.getResponse(request);
+            String response = wab.getHttpGetResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp3", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
@@ -214,7 +213,7 @@ public class T2_Test extends AbstractTestObject {
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = "/?username=superman";
             final String expectedResponse = "Hello, superman";
-            String response = wab.getResponse(request);
+            String response = wab.getHttpGetResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp4", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
@@ -240,7 +239,7 @@ public class T2_Test extends AbstractTestObject {
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = "/";
             final String expectedResponse = "My name is Duke.";
-            String response = wab.getResponse(request);
+            String response = wab.getHttpGetResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp5", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
@@ -329,7 +328,7 @@ public class T2_Test extends AbstractTestObject {
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = "/";
             final String expectedResponse = "Success";
-            String response = wab.getResponse(request);
+            String response = wab.getHttpGetResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp9", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
@@ -356,7 +355,7 @@ public class T2_Test extends AbstractTestObject {
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = "/";
             final String expectedResponse = "bean: bar";
-            String response = wab.getResponse(request);
+            String response = wab.getHttpGetResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp10", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
@@ -415,7 +414,7 @@ public class T2_Test extends AbstractTestObject {
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             String request = "/TestServlet";
             String expectedResponse = "HELLO WORLD";
-            String response = wab.getResponse(request);
+            String response = wab.getHttpGetResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp11_wab", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
@@ -480,12 +479,12 @@ public class T2_Test extends AbstractTestObject {
             String requestFragment = "/fragment.html";
             String expectedResponseHost = "Hello Host";
             String expectedResponseFragment = "Hello Fragment";
-            String response = wab.getResponse(requestHost);
+            String response = wab.getHttpGetResponse(requestHost);
             assertThat(response, new StringPatternMatcher(expectedResponseHost));
 
             // now request the fragment resource
             try {
-                wab.getResponse(requestFragment);
+                wab.getHttpGetResponse(requestFragment);
                 fail("Expected fragment to be not available");
             } catch (IOException e) {
                 Assert.assertTrue("Expected FileNotFoundException", e instanceof FileNotFoundException);
@@ -497,7 +496,7 @@ public class T2_Test extends AbstractTestObject {
             bundle_host.update();
             wab = new WebAppBundle(ctx, bundle_host);// TODO(Sahoo): because of some bug, we can't reuse earlier wab
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS); // deploy again
-            response = wab.getResponse(requestFragment);
+            response = wab.getHttpGetResponse(requestFragment);
             assertThat(response, new StringPatternMatcher(expectedResponseFragment));
 
         } finally {
@@ -593,7 +592,7 @@ public class T2_Test extends AbstractTestObject {
             // Note, bundle deployment happens in the same order as they are started
             // Since we are not waiting for mdb deployment, let's wait double time for this to deploy.
             wab.deploy(getTimeout() * 2, TimeUnit.MILLISECONDS);
-            String response = wab.getResponse(request);
+            String response = wab.getHttpGetResponse(request);
             assertThat(response, new StringPatternMatcher("Total number of messages: 0"));
             ConfigurationAdmin ca = OSGiUtil.getService(ctx, ConfigurationAdmin.class, getTimeout());
             final String pkgName = "org.glassfish.fighterfish.test.app16.msgproducer";
@@ -610,7 +609,7 @@ public class T2_Test extends AbstractTestObject {
             Thread.sleep(getTimeout()); // Allow the config changes to be propagated and msg to reach destination
             logger.logp(Level.INFO, "T2_Test", "testapp16",
                     "Waking up from sleep");
-            response = wab.getResponse(request);
+            response = wab.getHttpGetResponse(request);
             final int expectedNoOfMsgs = (noOfMsgs) * 2; // we have 2 MDBs
             logger.logp(Level.INFO, "T2_Test", "testapp16", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher("Total number of messages: " + expectedNoOfMsgs));
@@ -629,7 +628,7 @@ public class T2_Test extends AbstractTestObject {
             WebAppBundle wab = new WebAppBundle(ctx, bundle_wab);
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS); // deployment is sufficient to test this bundle
             String request = "/HelloWebServiceService?wsdl";
-            String response = wab.getResponse(request);
+            String response = wab.getHttpGetResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp17", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher("HelloWebServicePort"));
         } finally {
@@ -708,7 +707,7 @@ public class T2_Test extends AbstractTestObject {
             wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
             final String request = "/";
             final String expectedResponse = "GLASSFISH-18370 has been fixed!";
-            String response = wab.getResponse(request);
+            String response = wab.getHttpGetResponse(request);
             logger.logp(Level.INFO, "T2_Test", "testapp20", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(expectedResponse));
         } finally {
@@ -836,11 +835,11 @@ public class T2_Test extends AbstractTestObject {
             final String reportJspSuccessful ="Please click";
             final String reportServletSuccessful ="Service is not yet available";
             
-            String response = wab.getResponse(reportJspRequest);
+            String response = wab.getHttpGetResponse(reportJspRequest);
             logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_19662", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(reportJspSuccessful));
             
-            response = wab.getResponse(reportServletRequest);
+            response = wab.getHttpGetResponse(reportServletRequest);
             logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_19662", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(reportServletSuccessful));           
         } finally {
@@ -869,47 +868,47 @@ public class T2_Test extends AbstractTestObject {
         final String createdResponse = "Created ";
         final String readResponse = "Found ";
         final String deletedResponse = "Deleted ";
-        String response = wab.getResponse(request1);
+        String response = wab.getHttpPostResponse(request1);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(createdResponse));
 
-        response = wab.getResponse(request2);
+        response = wab.getHttpPostResponse(request2);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(createdResponse));
 
-        response = wab.getResponse(request3);
+        response = wab.getHttpPostResponse(request3);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(createdResponse));
 
-        response = wab.getResponse(request4);
+        response = wab.getHttpPostResponse(request4);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(createdResponse));
 
-        response = wab.getResponse(request5);
+        response = wab.getHttpGetResponse(request5);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(readResponse));
 
-        response = wab.getResponse(request6);
+        response = wab.getHttpGetResponse(request6);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(readResponse));
 
-        response = wab.getResponse(request6);
+        response = wab.getHttpGetResponse(request6);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(readResponse));
 
-        response = wab.getResponse(request7);
+        response = wab.getHttpPostResponse(request7);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(deletedResponse));
 
-        response = wab.getResponse(request8);
+        response = wab.getHttpPostResponse(request8);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(deletedResponse));
 
-        response = wab.getResponse(request9);
+        response = wab.getHttpPostResponse(request9);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(deletedResponse));
 
-        response = wab.getResponse(request10);
+        response = wab.getHttpPostResponse(request10);
         logger.logp(Level.INFO, "T2_Test", testMethodName, "response = {0}", new Object[]{response});
         assertThat(response, new StringPatternMatcher(deletedResponse));
     }

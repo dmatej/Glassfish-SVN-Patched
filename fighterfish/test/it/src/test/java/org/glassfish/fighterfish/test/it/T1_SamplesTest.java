@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -47,7 +47,6 @@ import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
@@ -123,27 +122,27 @@ public class T1_SamplesTest extends AbstractTestObject {
 
             {
                 // Scenario 1: no service
-                response = uas_simple_webapp.getResponse(loginRequest);
+                response = uas_simple_webapp.getHttpGetResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(serviceUnavailable));
             }
             {
                 // Scenario 2: dynamically adding a service bundle and retrying...
                 uas_simpleservice_b.start(START_TRANSIENT);
-                response = uas_simple_webapp.getResponse(loginRequest);
+                response = uas_simple_webapp.getHttpGetResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(loginFailed));
 
                 // now let's register a user and retry
-                response = uas_simple_webapp.getResponse(registrationRequest);
+                response = uas_simple_webapp.getHttpPostResponse(registrationRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulRegistration));
-                response = uas_simple_webapp.getResponse(loginRequest);
+                response = uas_simple_webapp.getHttpGetResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulLogin));
 
                 // unregister
-                response = uas_simple_webapp.getResponse(unregistrationRequest);
+                response = uas_simple_webapp.getHttpPostResponse(unregistrationRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulUnregistration));
             }
@@ -151,7 +150,7 @@ public class T1_SamplesTest extends AbstractTestObject {
             {
                 // Scenario #3: Dynamically switching the service by ejbservice
                 uas_simpleservice_b.stop();
-                response = uas_simple_webapp.getResponse(loginRequest);
+                response = uas_simple_webapp.getHttpGetResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(serviceUnavailable));
 
@@ -159,29 +158,29 @@ public class T1_SamplesTest extends AbstractTestObject {
                 Bundle uas_ejbservice_b = tc.installBundle(uas_ejbservice);
                 EjbBundle uas_ejbapp = new EjbBundle(ctx, uas_ejbservice_b, new String[]{uas_service_type});
                 uas_ejbapp.deploy(getTimeout(), TimeUnit.MILLISECONDS);
-                uas_simple_webapp.getResponse(unregistrationRequest); // unregister just in case there was a user by this name
-                response = uas_simple_webapp.getResponse(loginRequest);
+                uas_simple_webapp.getHttpPostResponse(unregistrationRequest); // unregister just in case there was a user by this name
+                response = uas_simple_webapp.getHttpGetResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(loginFailed));
 
                 // now let's register a user and retry
-                response = uas_simple_webapp.getResponse(registrationRequest);
+                response = uas_simple_webapp.getHttpPostResponse(registrationRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulRegistration));
 
-                response = uas_simple_webapp.getResponse(loginRequest);
+                response = uas_simple_webapp.getHttpGetResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulLogin));
 
                 // unregister
-                response = uas_simple_webapp.getResponse(unregistrationRequest);
+                response = uas_simple_webapp.getHttpPostResponse(unregistrationRequest);
 
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulUnregistration));
 
                 // stop the service bundle and retry to make sure we are failing to get the service
                 uas_ejbapp.undeploy();
-                response = uas_simple_webapp.getResponse(unregistrationRequest);
+                response = uas_simple_webapp.getHttpPostResponse(unregistrationRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(serviceUnavailable));
             }
@@ -192,15 +191,15 @@ public class T1_SamplesTest extends AbstractTestObject {
                 EntityBundle uas_entityapp = tc.deployEntityBundle(uas_entity_b);
                 Bundle uas_ejbservice2_b = tc.installBundle(uas_ejbservice2);
                 EjbBundle uas_ejbapp2 = tc.deployEjbBundle(uas_ejbservice2_b, new String[]{uas_service_type});
-                response = uas_simple_webapp.getResponse(registrationRequest);
+                response = uas_simple_webapp.getHttpPostResponse(registrationRequest);
                 assertThat(response, new StringPatternMatcher(successfulRegistration));
 
                 // login
-                response = uas_simple_webapp.getResponse(loginRequest);
+                response = uas_simple_webapp.getHttpGetResponse(loginRequest);
                 assertThat(response, new StringPatternMatcher(successfulLogin));
 
                 // unregister
-                response = uas_simple_webapp.getResponse(unregistrationRequest);
+                response = uas_simple_webapp.getHttpPostResponse(unregistrationRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulUnregistration));
             }
@@ -208,7 +207,7 @@ public class T1_SamplesTest extends AbstractTestObject {
             {
                 // WAB fragment test
                 try {
-                    uas_simple_webapp.getResponse(reportJspRequest);
+                    uas_simple_webapp.getHttpGetResponse(reportJspRequest);
                     fail("Expected fragment to be not available");
                 } catch (IOException e) {
                     Assert.assertTrue("Expected FileNotFoundException", e instanceof FileNotFoundException);
@@ -220,12 +219,12 @@ public class T1_SamplesTest extends AbstractTestObject {
                 uas_simplewab_b.update();
                 uas_simple_webapp = new WebAppBundle(ctx, uas_simplewab_b);// TODO(Sahoo): because of some bug, we can't reuse earlier wab
                 uas_simple_webapp.deploy(getTimeout(), TimeUnit.MILLISECONDS); // deploy again
-                response = uas_simple_webapp.getResponse(reportJspRequest);
+                response = uas_simple_webapp.getHttpGetResponse(reportJspRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher("to see the report."));
 
                 // now let's see if the servlet from the fragment can be used or not.
-                response = uas_simple_webapp.getResponse(reportServletRequest);
+                response = uas_simple_webapp.getHttpGetResponse(reportServletRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_sample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher("Login Attempt Report:"));
             }
@@ -318,11 +317,11 @@ public class T1_SamplesTest extends AbstractTestObject {
             String response = null;
             {
                 //  register a user
-                response = uas_simple_jaxwebapp.getResponse(registrationRequest);
+                response = uas_simple_jaxwebapp.getHttpPostResponse(registrationRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_jaxsample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulRegistration));
                 //  login the user
-                response = uas_simple_jaxwebapp.getResponse(loginRequest);
+                response = uas_simple_jaxwebapp.getHttpGetResponse(loginRequest);
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_jaxsample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulLogin));
             }
