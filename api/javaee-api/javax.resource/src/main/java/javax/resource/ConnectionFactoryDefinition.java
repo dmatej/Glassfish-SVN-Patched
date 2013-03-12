@@ -79,7 +79,7 @@ public @interface ConnectionFactoryDefinition {
     String resourceAdapter();
 
     /**
-     *  The fully qualified domain name of the connection factory interface 
+     *  The fully qualified name of the connection factory interface 
      *  class.
      */
     String className();

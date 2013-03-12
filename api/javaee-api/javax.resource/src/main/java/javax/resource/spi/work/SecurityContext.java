@@ -131,16 +131,14 @@ public abstract class SecurityContext implements WorkContext {
 	 * <li>GroupPrincipalCallback</li>
 	 * <li>PasswordValidationCallback</li>
 	 * </ul>
+     * <p>
 	 * The following <code>Callback</code>s may be supported by the container.
+     * <p>
 	 * <ul>
-	 * <li>CertStoreCallback
-	 * <li>
-	 * <li>PrivateKeyCallback
-	 * <li>
-	 * <li>SecretKeyCallback
-	 * <li>
-	 * <li>TrustStoreCallback
-	 * <li>
+	 * <li>CertStoreCallback</li>
+	 * <li>PrivateKeyCallback</li>
+	 * <li>SecretKeyCallback</li>
+	 * <li>TrustStoreCallback</li>
 	 * </ul>
 	 * <p>
 	 * 
@@ -174,7 +172,7 @@ public abstract class SecurityContext implements WorkContext {
 	 * the application server.
 	 * <p>
 	 * 
-	 * The serviceSubject argument must be non-null and it must not be
+	 * The serviceSubject argument may be null, and when it is not null it must not be
 	 * read-only. It represents the application server and it may be used by the
 	 * Work implementation to retrieve Principals and credentials necessary to
 	 * establish a connection to the EIS (in the cause of mutual-auth like

@@ -78,12 +78,12 @@ public @interface AdministeredObjectDefinition {
     String resourceAdapter();
 
     /**
-     *  Fully qualified package name of the administered object’s class
+     *  Fully qualified name of the administered object’s class
      */
     String className();
 
     /**
-     *  Fully qualified package name of the administered object’s interface 
+     *  Fully qualified name of the administered object’s interface 
      */
     String interfaceName() default "";
 
