@@ -51,7 +51,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -186,9 +185,16 @@ public class WebAppBundle {
 
         serverAddress = new URL("http", getHost(), getPort(), contextPath + relativePath);
         connection = (HttpURLConnection)serverAddress.openConnection();
-        connection.setRequestMethod(mode);
         connection.setReadTimeout(60000);
-        connection.connect();
+        
+        connection.setRequestMethod(mode);
+             
+        if ("POST".endsWith(mode)){
+        	connection.setDoOutput(true);
+        	connection.getOutputStream().close();
+        }else{
+        	connection.connect();
+        }
 
         BufferedReader in = new BufferedReader(
                 new InputStreamReader(
