@@ -50,7 +50,7 @@ import org.glassfish.nexus.client.beans.Repo;
  *
  * @author Romain Grecourt
  */
-public class DropMojo extends AbstractNexusMojo{
+public class DropMojo extends AbstractNexusStagingMojo{
     
    /**
      * @parameter expression="${force}" default-value="true"

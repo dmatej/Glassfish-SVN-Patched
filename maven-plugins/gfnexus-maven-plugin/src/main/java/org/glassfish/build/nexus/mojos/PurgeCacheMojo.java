@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -39,25 +39,60 @@
  */
 package org.glassfish.build.nexus.mojos;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.glassfish.nexus.client.NexusClientException;
 
 /**
  * Close a staging repository
  *
- * @goal close
- * @aggregator
+ * @goal purge-cache
  *
  * @author Romain Grecourt
  */
-public class CloseMojo extends AbstractNexusStagingMojo {
+public class PurgeCacheMojo extends AbstractNexusMojo {
     
-    @Override
-    public void nexusMojoExecute() throws NexusClientException, MojoFailureException {
-        if(stagingRepo.isOpen()){
-            stagingRepo.close();
-        } else {
-            throw new MojoFailureException("repository "+stagingRepo.getName()+" is already closed");
+    /**
+     * @required
+     * @parameter expression="${repositoryId}"
+     */
+    private String repositoryId;
+    
+    /**
+     * @required
+     * @parameter expression="${nexusCacheURL}"
+     */
+    private String nexusCacheURL;
+    
+    /**
+     * @required
+     * @parameter expression="${nexusCacheId}"
+     */
+    private String nexusCacheId;
+    
+    public void execute() throws MojoFailureException, MojoExecutionException {
+        try {
+            createNexusClient(new URL(nexusCacheURL),nexusCacheId,null,null);
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(project.getGroupId().replace(".", "/"));
+            sb.append('/');
+            sb.append(project.getArtifact());
+            sb.append('/');
+            sb.append(project.getVersion());
+
+            nexusClient.deleteContent(repositoryId, sb.toString());
+
+        } catch (NexusClientException ex) {
+            if (!ignoreFailures) {
+                throw ex;
+            }
+        } catch (MalformedURLException ex) {
+            if (!ignoreFailures) {
+                throw new MojoExecutionException(ex.getMessage(),ex);
+            }
         }
     }
 }

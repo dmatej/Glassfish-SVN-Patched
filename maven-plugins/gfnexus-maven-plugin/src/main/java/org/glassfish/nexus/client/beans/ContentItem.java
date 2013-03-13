@@ -87,4 +87,15 @@ final public class ContentItem {
     public void setSizeOnDisk(Integer sizeOnDisk) {
         this.sizeOnDisk = sizeOnDisk;
     }
+    
+    public boolean isValidArtifactFile() {
+        if (!getRelativePath().endsWith("metadata.xml")
+                && !getRelativePath().endsWith("archetype-catalog.xml")
+                && !getRelativePath().endsWith("asc")
+                && !getRelativePath().endsWith("sha1")
+                && !getRelativePath().endsWith("md5")) {
+            return true;
+        }
+        return false;
+    }
 }

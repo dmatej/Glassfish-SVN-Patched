@@ -50,7 +50,7 @@ import org.glassfish.nexus.client.NexusClientException;
  *
  * @author Romain Grecourt
  */
-public class PromoteMojo extends AbstractNexusMojo{
+public class PromoteMojo extends AbstractNexusStagingMojo{
 
    /**
      * @required

@@ -58,6 +58,15 @@ public interface NexusClient {
      * @throws NexusClientException if any issue occurred during the process
      */
     public Repo getStagingRepo(String stagingProfile,MavenArtifactInfo refArtifact) throws NexusClientException;
+    
+    /**
+     * delete all artifacts found under 
+     *
+     * @param repositoryId
+     * @return The staging repository or null if not found
+     * @throws NexusClientException if any issue occurred during the process
+     */
+    public void deleteContent(String repositoryId, String path) throws NexusClientException;
 
     /**
      * Search for a reference file in nexus
@@ -67,7 +76,7 @@ public interface NexusClient {
      * @throws NexusClientException if any issue occurred during the process
      * or if no staging repository has been found.
      */
-    public Repo getHostedRepo(File f) throws NexusClientException ;
+    public Repo getStagingRepo(File f) throws NexusClientException ;
 
     /**
      * Search coordinates in a repo group
@@ -78,4 +87,11 @@ public interface NexusClient {
      * @throws NexusClientException if any issue occurred during the process
      */
     public boolean existsInRepoGroup (String repoGroup, MavenArtifactInfo artifact) throws NexusClientException;
+    
+    /**
+     * Returns nexus URL
+     *
+     * @return The nexus URL
+     */   
+    public String getNexusURL();
 }

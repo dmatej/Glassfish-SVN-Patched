@@ -59,6 +59,7 @@ import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import org.apache.maven.artifact.Artifact;
 import org.glassfish.nexus.client.beans.ContentItem;
 import org.glassfish.nexus.client.beans.ContentItems;
 import org.glassfish.nexus.client.beans.Failures;
@@ -106,6 +107,10 @@ public class NexusClientImpl implements NexusClient {
         instance = new NexusClientImpl(restClient, nexusUrl);
 
         return instance;
+    }
+
+    public String getNexusURL() {
+        return nexusUrl;
     }
 
     private static enum Operation {
@@ -309,31 +314,37 @@ public class NexusClientImpl implements NexusClient {
                 + promotionProfile
                 + "\"");
     }
-
-    private void scrubRepo(String repoId, String path, Set<MavenArtifactInfo> artifacts)
-            throws NexusClientException {
-        
+    
+    private static StringBuilder getRepoContentURL(String repoId){
         StringBuilder sb = new StringBuilder(REPOSITORIES_PATH);
         sb.append('/');
         sb.append(repoId);
         sb.append('/');
         sb.append("content");
         sb.append('/');
-        String root = sb.toString();
+        return sb;
+    }
+    
+    private ContentItems getRepoContent(StringBuilder contentPath, String path){
         ContentItems content =
                 (ContentItems) handleResponse(
-                    request(sb.append(path).toString()).get()
+                    request(contentPath.append(path).toString()).get()
                     , ContentItems.class);
+        return content;
+    }
+
+    private void scrubRepo(String repoId, String path, Set<MavenArtifactInfo> artifacts)
+            throws NexusClientException {
+        
+        StringBuilder repoContentURL = getRepoContentURL(repoId);
+        String root = repoContentURL.toString();
+        ContentItems content = getRepoContent(repoContentURL, path);
 
         for(ContentItem item : content.getData()){
             // if file
             if(item.getLeaf().booleanValue()){
-                if(!item.getRelativePath().endsWith("metadata.xml")
-                        && !item.getRelativePath().endsWith("archetype-catalog.xml")
-                        && !item.getRelativePath().endsWith("asc")
-                        && !item.getRelativePath().endsWith("sha1")
-                        && !item.getRelativePath().endsWith("md5")){
-
+                if(item.isValidArtifactFile()){
+                    
                     MavenArtifactInfo artifact =
                             ((MavenInfo) handleResponse(
                                 target(root+"/"+item.getRelativePath())
@@ -374,7 +385,40 @@ public class NexusClientImpl implements NexusClient {
         scrubRepo(repoId, "", artifacts);
         return artifacts;
     }
-
+    
+    public Set<MavenArtifactInfo> getArtifactsInRepo(String repoId, String path) 
+            throws NexusClientException {
+        
+        logger.info(" ");
+        logger.log(Level.INFO
+                , "-- retrieving content of [{0}] in repository [{1}] --"
+                , new Object[]{repoId});
+        
+        Set<MavenArtifactInfo> artifacts = new HashSet<MavenArtifactInfo>();
+        scrubRepo(repoId, "", artifacts);
+        return artifacts;
+    }
+    
+    public void deleteContent(String repoId, String path) throws NexusClientException {
+        
+        logger.info(" ");
+        logger.log(Level.INFO
+                , "-- delete content of [{0}] in repository [{1}] --"
+                , new Object[]{repoId});
+        
+        StringBuilder repoContentURL = getRepoContentURL(repoId);
+        
+        for(ContentItem item : getRepoContent(repoContentURL, path).getData()){
+            if(item.getLeaf().booleanValue()){
+                
+                String itemPath = repoContentURL.append(item.getRelativePath()).toString();
+                handleResponse(target(itemPath).request().delete(),null);
+                
+                logger.log(Level.INFO, "deleted {0}", item.getRelativePath());
+            }
+        }
+    }    
+    
     public Repo getStagingRepo(String stagingProfile,MavenArtifactInfo refArtifact)
             throws NexusClientException {
 
@@ -432,7 +476,7 @@ public class NexusClientImpl implements NexusClient {
                 + "\"");
     }
     
-    public Repo getHostedRepo(File f) throws NexusClientException {
+    public Repo getStagingRepo(File f) throws NexusClientException {
 
         RepoDetail[] results = ((RepoDetails) handleResponse(
                 target(SEARCH_PATH)
@@ -449,7 +493,7 @@ public class NexusClientImpl implements NexusClient {
         }
         return null;
     }
-
+    
     public static void main (String[] args){
         NexusClient nexusClient = NexusClientImpl.init(
                 new RestClient(

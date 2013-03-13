@@ -42,14 +42,10 @@ package org.glassfish.build.nexus.mojos;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.handler.DefaultArtifactHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.maven.artifact.repository.ArtifactRepository;
-import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
-import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
-import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -61,8 +57,6 @@ import org.glassfish.nexus.client.NexusClient;
 import org.glassfish.nexus.client.NexusClientException;
 import org.glassfish.nexus.client.NexusClientImpl;
 import org.glassfish.nexus.client.RestClient;
-import org.glassfish.nexus.client.beans.MavenArtifactInfo;
-import org.glassfish.nexus.client.beans.Repo;
 import org.glassfish.nexus.client.logging.CustomHandler;
 
 /**
@@ -86,13 +80,13 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
      * @readonly
      * @required
      */
-    private Settings settings;
+    protected Settings settings;
 
     /**
      * @component
      * @readonly
      */
-    private ArtifactResolver artifactResolver;
+    protected ArtifactResolver artifactResolver;
 
     /**
      * @parameter expression="${localRepository}"
@@ -102,36 +96,13 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
     protected ArtifactRepository localRepository;
 
     /**
-     * Coordinates of the reference artifact used to verify repositories
-     * groupId:artifactId:version
-     *
-     * @required
-     * @parameter expression="${referenceCoordinates}"
-     */
-    private String referenceCoordinates;
-
-    /**
-     * Staging profile
-     *
-     * @required
-     * @parameter expression="${stagingProfile}"
-     */
-    private String stagingProfile;
-    
-   /**
      * @parameter expression="${ignoreFailures}" default-value="false"
      */
-    private boolean ignoreFailures;    
+    protected boolean ignoreFailures;    
 
     protected NexusClient nexusClient;
 
-    protected MavenArtifactInfo refArtifact;
-
-    protected Repo stagingRepo;
-
-    protected URL repoURL;
-
-    private class RestLoggerHandler extends CustomHandler {
+    protected class RestLoggerHandler extends CustomHandler {
 
         @Override
         public void info(String message) {
@@ -154,7 +125,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
         }
     }
 
-    private class NexusClientLoggerHandler extends CustomHandler {
+    protected class NexusClientLoggerHandler extends CustomHandler {
 
         @Override
         public void info(String message) {
@@ -177,37 +148,17 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
         }
     }
     
-    private static Artifact parseCoordinates(String coordinates,String projectVersion) throws MojoFailureException{
-        String[] referenceCoordinatesTokens = coordinates.split(":");
-
-        if(referenceCoordinatesTokens.length < 2){
-            throw new MojoFailureException("unable to parse referenceArtifact");
-        }
-
-        String version = projectVersion;
-        if(referenceCoordinatesTokens.length > 2){
-            version = referenceCoordinatesTokens[2];
-        }
-        
-        String packaging = "jar";
-        if(referenceCoordinatesTokens.length > 3){
-            packaging = referenceCoordinatesTokens[3];
-        }
-
-        return new DefaultArtifact(
-                referenceCoordinatesTokens[0],
-                referenceCoordinatesTokens[1],
-                VersionRange.createFromVersion(version),
-                "runtime",
-                packaging,
-                null,
-                new DefaultArtifactHandler(packaging));        
+    protected void createNexusClient() throws MojoFailureException, MojoExecutionException{
+        createNexusClient(null, null, null, null);
     }
     
-    private void createNexusClient() throws MojoFailureException, MojoExecutionException{
+    protected void createNexusClient(URL repoURL, String repoId, String username, String password) throws MojoFailureException, MojoExecutionException{
         try {
-            repoURL = new URL(
-                    project.getModel().getDistributionManagement().getRepository().getUrl().replaceAll("/service/local/staging/deploy/maven2", ""));
+            if(repoURL == null){
+                String distroURL = project.getModel().getDistributionManagement().getRepository().getUrl();
+                repoURL = new URL(distroURL.replaceAll("/service/local/staging/deploy/maven2", ""));
+            }            
+            
             String proxyHost = null;
             int proxyPort = 80;
             for (Proxy proxy : settings.getProxies()) {
@@ -225,13 +176,21 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
                     proxyPort = Integer.valueOf(proxyPortString);
                 }
             }
-            String repoId = project.getModel().getDistributionManagement().getRepository().getId();
-            Server server = settings.getServer(repoId);
+            
+            if(repoId == null){
+                repoId = project.getModel().getDistributionManagement().getRepository().getId();
+            }
+            
+            if(username == null && username == null){
+                Server server = settings.getServer(repoId);
+                username = server.getUsername();
+                password = server.getPassword();
+            }
 
             nexusClient = NexusClientImpl.init(
                     new RestClient(
                         proxyHost, proxyPort,
-                        server.getUsername(), server.getPassword(),
+                        username, password,
                         repoURL.getProtocol().equals("https"),
                         new RestLoggerHandler())
                     ,repoURL.toString()
@@ -239,45 +198,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
         } catch (NexusClientException ex){
             throw new MojoExecutionException(ex.getMessage(),ex);
         } catch (MalformedURLException ex) {
-            throw new MojoFailureException("error while initializing NexusClient", ex);
-        }        
-    }
-
-    @Override
-    public void execute() throws MojoExecutionException, MojoFailureException {
-
-        Artifact artifact = 
-                parseCoordinates (referenceCoordinates,project.getVersion());
-        
-        try {
-            artifactResolver.resolve(artifact,
-                    project.getRemoteArtifactRepositories(),
-                    localRepository);
-        } catch (ArtifactResolutionException ex) {
-            throw new MojoFailureException(ex.getMessage(), ex);
-        } catch (ArtifactNotFoundException ex) {
-            throw new MojoFailureException(ex.getMessage(), ex);
-        }
-
-        refArtifact = new MavenArtifactInfo(
-                artifact.getGroupId(),
-                artifact.getArtifactId(),
-                artifact.getVersion(),
-                artifact.getClassifier(),
-                artifact.getType(),
-                artifact.getFile());
-        
-        createNexusClient();
-        
-        try {
-            stagingRepo = nexusClient.getStagingRepo(stagingProfile, refArtifact);
-            nexusMojoExecute();
-        } catch (NexusClientException ex) {
-            if (!ignoreFailures) {
-                throw ex;
-            }
+            throw new MojoExecutionException(ex.getMessage(),ex);
         }
     }
-
-    public abstract void nexusMojoExecute() throws NexusClientException, MojoFailureException;
 }

@@ -66,7 +66,7 @@ import org.sonatype.aether.util.artifact.DefaultArtifact;
  *
  * @author Romain Grecourt
  */
-public class GlassFishPromoteMojo extends AbstractNexusMojo{
+public class GlassFishPromoteMojo extends AbstractNexusStagingMojo{
 
    /**
      * @required
@@ -158,7 +158,7 @@ public class GlassFishPromoteMojo extends AbstractNexusMojo{
         String repoGroup = null;
         for(RemoteRepository remoteRepo : projectRepos){
             if(remoteRepo.getId().equals(nexusPromotedRepoId)){
-                repoGroup = remoteRepo.getUrl().toString().replaceFirst(repoURL.toString()+"content/groups/","");
+                repoGroup = remoteRepo.getUrl().toString().replaceFirst(nexusClient.getNexusURL()+"content/groups/","");
             }
         }
         if(repoGroup == null){
@@ -209,7 +209,7 @@ public class GlassFishPromoteMojo extends AbstractNexusMojo{
                     getLog().info(artifactInfo
                             + " is available on "+nexusPromotedRepoId);
 
-                    Repo repo = nexusClient.getHostedRepo(artifact.getFile());
+                    Repo repo = nexusClient.getStagingRepo(artifact.getFile());
 
                     if(repo == null || repo.equals(stagingRepo)){
                         continue;
