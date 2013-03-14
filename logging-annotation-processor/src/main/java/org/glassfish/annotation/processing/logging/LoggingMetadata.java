@@ -123,11 +123,21 @@ class LoggingMetadata extends TreeMap<String,Object>{
 
             if (containsKey(key + COMMENT)) 
                 out.write(get(key + COMMENT) + "\n");
-            out.write(key + "=" + get(key) + "\n\n");
+            Object value = get(key);
+            if (value != null) {
+                value = escapeSpecialChars(value.toString());
+            } else {
+                value = "";
+            }
+            out.write(key + "=" + value + "\n\n");
         }
         out.flush();
 
         return true;
+    }
+
+    private String escapeSpecialChars(String str) {
+        return str.replaceAll("\\n", "\\\\n");
     }
 
     public void putComment(String key, String comment) {
