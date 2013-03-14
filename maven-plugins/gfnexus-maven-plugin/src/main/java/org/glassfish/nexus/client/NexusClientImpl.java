@@ -459,7 +459,7 @@ public class NexusClientImpl implements NexusClient {
                                 "found staging repository: [{0}]",
                                 new Object[]{repo.getRepositoryId()});
                     } else {
-                        logger.log(Level.INFO,
+                        logger.log(Level.WARNING,
                                 "[{0}] contains a different version of {1}",
                                 new Object[]{repo.getRepositoryId(), refArtifact});
                     }
