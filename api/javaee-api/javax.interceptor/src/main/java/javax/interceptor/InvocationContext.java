@@ -96,9 +96,10 @@ public interface InvocationContext {
 
     /**
      * Returns the method of the target class for which the interceptor
-     * was invoked.  For around-invoke and around-timeout method interceptors, 
-     * the method of the target class is returned. For lifecycle callback 
-     * interceptors, a null value is returned.
+     * was invoked. In a lifecycle callback interceptor for which there is no 
+     * corresponding lifecycle callback method on the target class or in the 
+     * {@link AroundConstruct} lifecycle callback interceptor method, 
+     * <code>getMethod</code> returns null.
      * 
      * @return the method, or a null value
      */

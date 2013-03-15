@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 1997-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -53,7 +53,7 @@ import java.lang.annotation.Target;
  * <pre>
  * &#064;Inherited 
  * &#064;InterceptorBinding 
- * &#064;Target({TYPE, METHOD}) 
+ * &#064;Target({TYPE, METHOD, CONSTRUCTOR}) 
  * &#064;Retention(RUNTIME) 
  * public &#064;interface Valid {}
  * </pre>
@@ -74,8 +74,8 @@ import java.lang.annotation.Target;
  * <p>An interceptor may specify multiple interceptor bindings.</p>
  * 
  * <p>An interceptor binding of a bean 
- * may be declared by annotating the bean class, or a method of the bean class, 
- * with the interceptor binding type.</p>
+ * may be declared by annotating the bean class, a method of the bean class, 
+ * or a constructor of the bean class with the interceptor binding type.</p>
  * 
  * <pre>
  * &#064;Valid
@@ -85,6 +85,11 @@ import java.lang.annotation.Target;
  * <pre>
  * &#064;Valid &#064;Secure
  * public void updateOrder(Order order) { ... }
+ * </pre>
+ * 
+ * <pre>
+ * &#064;Valid
+ * public Order(...) { ... }
  * </pre>
  * 
  * <p>A bean class or method of a bean class may declare multiple interceptor 

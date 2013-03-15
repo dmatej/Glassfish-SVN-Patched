@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 1997-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -47,8 +47,8 @@ import java.lang.annotation.Target;
 import java.lang.annotation.Retention;
 
 /**
- * <p>Declares an ordered list of interceptors for a target class or 
- * method of a target class.</p>
+ * <p>Declares an ordered list of interceptors for a target class, 
+ * a method or a constructor of a target class.</p>
  * 
  * <pre>
  * &#064;Interceptors(ValidationInterceptor.class)
@@ -60,15 +60,12 @@ import java.lang.annotation.Retention;
  * public void updateOrder(Order order) { ... }
  * </pre>
  * 
- * <p>Only method interception or timeout method interception may be specified 
- * by a method-level <tt>Interceptors</tt> declaration.</p>
- * 
  * @see javax.interceptor.ExcludeClassInterceptors
  * @see javax.interceptor.ExcludeDefaultInterceptors
  *
  * @since Interceptors 1.0
  */
-@Target({ElementType.TYPE, ElementType.METHOD})
+@Target({ElementType.TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Interceptors {
 
