@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -44,7 +44,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.logging.Handler;
-import java.util.logging.Level;
+import java.util.logging.Level; 
 import java.util.logging.LogRecord;
 import java.util.logging.SimpleFormatter;
 
@@ -52,8 +52,9 @@ import java.util.logging.SimpleFormatter;
  *
  * @author Romain Grecourt
  */
-public abstract class CustomHandler extends Handler {
-
+public class CustomHandler extends Handler {
+    private CustomPrinter printer = null;
+    
     public CustomHandler() {
         super();
         this.setFormatter(new SimpleFormatter() {
@@ -61,13 +62,23 @@ public abstract class CustomHandler extends Handler {
             public synchronized String format(LogRecord record) {
                 return formatMessage(record);
             }
-        });
+        });            
+    }
+    
+    public void setPrinter(CustomPrinter p){
+        printer = p;
+    }
+    
+    public CustomHandler(CustomPrinter p) {
+        this();
+        printer = p;
     }
 
     public void publish(LogRecord record) {
-        if (!isLoggable(record)) {
+        if (printer == null || !isLoggable(record)) {
             return;
         }
+        
         String msg = this.getFormatter().format(record);
 
         BufferedReader br =
@@ -76,37 +87,30 @@ public abstract class CustomHandler extends Handler {
         try {
             if (record.getLevel().equals(Level.INFO)) {
                 while ((line = br.readLine()) != null) {
-                    info(line);
+                    printer.info(line);
                 }
             } else if (record.getLevel().equals(Level.WARNING)) {
                 while ((line = br.readLine()) != null) {
-                    warning(line);
+                    printer.warning(line);
                 }
             } else if (record.getLevel().equals(Level.SEVERE)) {
                 while ((line = br.readLine()) != null) {
-                    error(line);
+                    printer.error(line);
                 }
             } else {
                 while ((line = br.readLine()) != null) {
-                    debug(line);
+                    printer.debug(line);
                 }
             }
         } catch (IOException ex) {
         }
     }
 
-    public abstract void info(String message);
-    public abstract void warning(String message);
-    public abstract void error(String message);
-    public abstract void debug(String message);
-
     @Override
     public void flush() {
-        System.out.flush();
     }
 
     @Override
-    public void close() throws SecurityException {
-        System.out.close();
+    public void close() {
     }
 }

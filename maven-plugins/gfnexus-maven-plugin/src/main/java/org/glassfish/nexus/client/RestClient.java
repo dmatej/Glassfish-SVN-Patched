@@ -61,6 +61,7 @@ import org.glassfish.jersey.client.filter.HttpBasicAuthFilter;
 import org.glassfish.jersey.filter.LoggingFilter;
 import org.glassfish.jersey.moxy.json.MoxyJsonFeature;
 import org.glassfish.nexus.client.logging.CustomHandler;
+import org.glassfish.nexus.client.logging.CustomPrinter;
 
 /**
  *
@@ -191,13 +192,13 @@ public class RestClient {
         initClient();
     }
 
-    public RestClient(String proxyHost, int proxyPort, String username, String password, boolean useSsl, CustomHandler handler) {
+    public RestClient(String proxyHost, int proxyPort, String username, String password, boolean useSsl, CustomPrinter logger) {
         this.proxyHost = proxyHost;
         this.proxyPort = proxyPort;
         this.username = username.toCharArray();
         this.password = password.toCharArray();
         this.useSsl = useSsl;
-        this.handler = handler;
+        this.handler = new CustomHandler(logger);
         initClient();
     }
 
@@ -209,12 +210,12 @@ public class RestClient {
         initClient();
     }
 
-    public RestClient(String proxyHost, int proxyPort, String username, String password, CustomHandler handler) {
+    public RestClient(String proxyHost, int proxyPort, String username, String password, CustomPrinter logger) {
         this.proxyHost = proxyHost;
         this.proxyPort = proxyPort;
         this.username = username.toCharArray();
         this.password = password.toCharArray();
-        this.handler = handler;
+        this.handler = new CustomHandler(logger);
         initClient();
     }
 }

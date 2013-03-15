@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -37,18 +37,13 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-
 package org.glassfish.nexus.client.logging;
 
 /**
  *
- * @author Romain Grecourt
+ * @author romano
  */
-public class DefaultNexusClientHandler extends CustomHandler {
-
-    public DefaultNexusClientHandler() {
-    }
-
+public class DefaultNexusClientPrinter implements CustomPrinter{
     @Override
     public void info(String message) {
         System.out.println("[INFO] "+message);

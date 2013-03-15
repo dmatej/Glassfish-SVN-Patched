@@ -59,7 +59,6 @@ import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import org.apache.maven.artifact.Artifact;
 import org.glassfish.nexus.client.beans.ContentItem;
 import org.glassfish.nexus.client.beans.ContentItems;
 import org.glassfish.nexus.client.beans.Failures;
@@ -76,8 +75,9 @@ import org.glassfish.nexus.client.beans.StagingProfileRepo;
 import org.glassfish.nexus.client.beans.StagingProfileRepos;
 import org.glassfish.nexus.client.beans.StagingProfiles;
 import org.glassfish.nexus.client.logging.CustomHandler;
-import org.glassfish.nexus.client.logging.DefaultNexusClientHandler;
-import org.glassfish.nexus.client.logging.DefaultRestHandler;
+import org.glassfish.nexus.client.logging.CustomPrinter;
+import org.glassfish.nexus.client.logging.DefaultNexusClientPrinter;
+import org.glassfish.nexus.client.logging.DefaultRestClientPrinter;
 
 /**
  *
@@ -96,16 +96,20 @@ public class NexusClientImpl implements NexusClient {
     private static final String SEARCH_PATH = "service/local/lucene/search";
 
     private static final Logger logger = Logger.getLogger(NexusClientImpl.class.getSimpleName());
+    private static final CustomHandler handler = new CustomHandler();
 
     private static NexusClientImpl instance;
-    private static List<StagingProfileRepo> stagingProfileRepositories;
+    private static List<StagingProfileRepo> stagingProfileRepositories = null;
     private static HashMap<String,StagingProfileRepo> stagingProfileRepositoriesMap;
+    
+    static {
+        logger.addHandler(handler);
+    }
 
-    public static NexusClient init(RestClient restClient, String nexusUrl, CustomHandler loggerHandler){
+    public static NexusClient init(RestClient restClient, String nexusUrl, CustomPrinter p){
         logger.setUseParentHandlers(false);
-        logger.addHandler(loggerHandler);
+        handler.setPrinter(p);
         instance = new NexusClientImpl(restClient, nexusUrl);
-
         return instance;
     }
 
@@ -124,7 +128,6 @@ public class NexusClientImpl implements NexusClient {
     private NexusClientImpl(RestClient restClient, String nexusUrl) {
         this.restClient = restClient;
         this.nexusUrl = nexusUrl;
-        refresh();
     }
     
     WebTarget target(String path){
@@ -144,7 +147,7 @@ public class NexusClientImpl implements NexusClient {
         }
     }
 
-    private void refresh() throws NexusClientException {
+    private void refreshStagingRepos() throws NexusClientException {
 
         stagingProfileRepositories = Arrays.asList(
                 ((StagingProfileRepos) handleResponse(
@@ -199,7 +202,7 @@ public class NexusClientImpl implements NexusClient {
                         Entity.entity(new StagingOperationRequestData(
                             new StagingOperationRequest(repoIds, profileGroup, op + " ..."))
                             ,MediaType.APPLICATION_JSON));
-            refresh();
+            refreshStagingRepos();
             return response;
         } catch (ClientException ex) {
             throw new NexusClientException(ex);
@@ -234,7 +237,10 @@ public class NexusClientImpl implements NexusClient {
     }
 
     public Repo getStagingRepo(String repoName) throws NexusClientException {
-        return ((Repos) handleResponse(get(REPOSITORIES_PATH+"/"+repoName),Repos.class)).getData();
+        if (stagingProfileRepositories == null) {
+            refreshStagingRepos();
+        }
+        return ((Repos) handleResponse(get(REPOSITORIES_PATH + "/" + repoName), Repos.class)).getData();
     }
 
     public Set<Repo> getGroupTree(String repoId){
@@ -399,25 +405,29 @@ public class NexusClientImpl implements NexusClient {
         return artifacts;
     }
     
-    public void deleteContent(String repoId, String path) throws NexusClientException {
-        
+    public void deleteContent(String repoId, String path) 
+            throws NexusClientException {
+
         logger.info(" ");
         logger.log(Level.INFO
-                , "-- delete content of [{0}] in repository [{1}] --"
-                , new Object[]{repoId});
-        
+                ,"-- deleting content of [{0}] in repository [{1}]] --"
+                , new Object[]{path, nexusUrl});
+
         StringBuilder repoContentURL = getRepoContentURL(repoId);
-        
-        for(ContentItem item : getRepoContent(repoContentURL, path).getData()){
-            if(item.getLeaf().booleanValue()){
-                
-                String itemPath = repoContentURL.append(item.getRelativePath()).toString();
-                handleResponse(target(itemPath).request().delete(),null);
-                
-                logger.log(Level.INFO, "deleted {0}", item.getRelativePath());
+
+        ContentItems repoContent = getRepoContent(repoContentURL, path);
+        if (repoContent != null && repoContent.getData() != null) {
+            for (ContentItem item : repoContent.getData()) {
+                if (item.getLeaf().booleanValue()) {
+
+                    String itemPath = item.getResourceURI().replace(nexusUrl, "");
+                    handleResponse(target(itemPath).request().delete(), null);
+
+                    logger.log(Level.INFO, "deleted {0}", item.getRelativePath());
+                }
             }
         }
-    }    
+    }
     
     public Repo getStagingRepo(String stagingProfile,MavenArtifactInfo refArtifact)
             throws NexusClientException {
@@ -494,15 +504,16 @@ public class NexusClientImpl implements NexusClient {
         return null;
     }
     
-    public static void main (String[] args){
+    public static void main(String[] args) {
+
         NexusClient nexusClient = NexusClientImpl.init(
                 new RestClient(
                     null, 0,
                     "user", "password",
                     true,
-                    new DefaultRestHandler())
+                    new DefaultRestClientPrinter())
                 ,"https://maven.java.net"
-                ,new DefaultNexusClientHandler());
+                , new DefaultNexusClientPrinter());
 
         Repo repo = nexusClient.getStagingRepo(
                 "org-glassfish",

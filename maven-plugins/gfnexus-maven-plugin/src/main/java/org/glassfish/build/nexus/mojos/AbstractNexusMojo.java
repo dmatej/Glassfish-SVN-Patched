@@ -42,8 +42,6 @@ package org.glassfish.build.nexus.mojos;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.plugin.AbstractMojo;
@@ -58,6 +56,7 @@ import org.glassfish.nexus.client.NexusClientException;
 import org.glassfish.nexus.client.NexusClientImpl;
 import org.glassfish.nexus.client.RestClient;
 import org.glassfish.nexus.client.logging.CustomHandler;
+import org.glassfish.nexus.client.logging.CustomPrinter;
 
 /**
  *
@@ -102,7 +101,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
 
     protected NexusClient nexusClient;
 
-    protected class RestLoggerHandler extends CustomHandler {
+    protected class RestLoggerHandler implements CustomPrinter {
 
         @Override
         public void info(String message) {
@@ -125,7 +124,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
         }
     }
 
-    protected class NexusClientLoggerHandler extends CustomHandler {
+    protected class NexusClientLoggerHandler implements CustomPrinter {
 
         @Override
         public void info(String message) {

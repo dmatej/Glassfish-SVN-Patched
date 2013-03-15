@@ -41,8 +41,6 @@ package org.glassfish.build.nexus.mojos;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;

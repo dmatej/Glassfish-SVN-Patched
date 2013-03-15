@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -37,35 +37,19 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-
 package org.glassfish.nexus.client.logging;
 
 /**
  *
- * @author Romain Grecourt
+ * @author romano
  */
-public class DefaultRestHandler extends CustomHandler {
+public interface CustomPrinter {
 
-    public DefaultRestHandler() {
-    }
+    public void info(String message);
 
-    @Override
-    public void info(String message) {
-        System.out.println("[DEBUG] "+message);
-    }
+    public void warning(String message);
 
-    @Override
-    public void warning(String message) {
-        System.out.println("[WARNING] "+message);
-    }
+    public void error(String message);
 
-    @Override
-    public void error(String message) {
-        System.out.println("[ERROR] "+message);
-    }
-
-    @Override
-    public void debug(String message) {
-        System.out.println("[DEBUG] "+message);
-    }
+    public void debug(String message);
 }

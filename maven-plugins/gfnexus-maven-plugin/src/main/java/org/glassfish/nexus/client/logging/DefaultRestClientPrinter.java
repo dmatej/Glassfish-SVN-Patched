@@ -37,66 +37,30 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package org.glassfish.build.nexus.mojos;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
-import org.glassfish.nexus.client.NexusClientException;
+package org.glassfish.nexus.client.logging;
 
 /**
- * Close a staging repository
  *
- * @goal purge-cache
- *
- * @author Romain Grecourt
+ * @author romano
  */
-public class PurgeCacheMojo extends AbstractNexusMojo {
-    
-    /**
-     * @required
-     * @parameter expression="${nexusCacheRepoId}"
-     */
-    private String nexusCacheRepoId;
-    
-    /**
-     * @required
-     * @parameter expression="${nexusCacheURL}"
-     */
-    private String nexusCacheURL;
-    
-    /**
-     * @required
-     * @parameter expression="${nexusCacheId}"
-     */
-    private String nexusCacheId;
-    
-    public void execute() throws MojoFailureException, MojoExecutionException {
-        try {
-            createNexusClient(new URL(nexusCacheURL),nexusCacheId,null,null);
+public class DefaultRestClientPrinter implements CustomPrinter{
+    @Override
+    public void info(String message) {
+        System.out.println("[DEBUG] "+message);
+    }
 
-            StringBuilder sb = new StringBuilder();
-            sb.append(project.getGroupId().replace(".", "/"));
-            sb.append('/');
-            sb.append(project.getArtifactId());
-            sb.append('/');
-            sb.append(project.getVersion());
+    @Override
+    public void warning(String message) {
+        System.out.println("[WARNING] "+message);
+    }
 
-            nexusClient.deleteContent(nexusCacheRepoId, sb.toString());
+    @Override
+    public void error(String message) {
+        System.out.println("[ERROR] "+message);
+    }
 
-        } catch (NexusClientException ex) {
-            if (!ignoreFailures) {
-                throw ex;
-            } else {
-                getLog().warn(ex.getMessage());
-            }
-        } catch (MalformedURLException ex) {
-            if (!ignoreFailures) {
-                throw new MojoExecutionException(ex.getMessage(),ex);
-            } else {
-                getLog().warn(ex.getMessage());
-            }
-        }
+    @Override
+    public void debug(String message) {
+        System.out.println("[DEBUG] "+message);
     }
 }
