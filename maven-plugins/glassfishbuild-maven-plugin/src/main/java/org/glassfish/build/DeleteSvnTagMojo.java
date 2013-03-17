@@ -119,8 +119,8 @@ public class DeleteSvnTagMojo extends AbstractMojo {
             getLog().info("deleting " + target.getPathOrUrlString());
             SvnRemoteDelete delete = svnOperationFactory.createRemoteDelete();
             delete.addTarget(target);
+            delete.setCommitMessage(commitPrefix + tagName);
             try {
-                delete.setCommitMessage(commitPrefix + tagName);
                 SVNCommitInfo commitInfo = delete.run();
                 getLog().debug("committed revision " + commitInfo.getNewRevision());
             } catch (SVNException ex) {

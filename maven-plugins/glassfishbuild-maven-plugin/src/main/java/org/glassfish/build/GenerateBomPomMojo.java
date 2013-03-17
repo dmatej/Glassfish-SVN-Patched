@@ -88,7 +88,7 @@ public class GenerateBomPomMojo extends AbstractAggregatorMojo {
     /**
      * @parameter expression="${generate.pom.description}"
      */
-    protected String description;    
+    protected String description;
     
     /**
      *
