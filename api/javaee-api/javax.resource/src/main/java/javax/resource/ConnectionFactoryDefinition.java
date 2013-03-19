@@ -82,7 +82,7 @@ public @interface ConnectionFactoryDefinition {
      *  The fully qualified name of the connection factory interface 
      *  class.
      */
-    String className();
+    String interfaceName();
     
     /**
      *  The level of transaction support the connection factory resource 

@@ -98,7 +98,8 @@ public interface MessageEndpointFactory {
     /**
      * This is used to find out whether message deliveries to a target method
      * on a message listener interface that is implemented by a message 
-     * endpoint will be transacted or not. 
+     * endpoint or a target method in the <code>Class</code> returned by the 
+     * <code>getBeanClass</code> method, will be transacted or not. 
      *
      * The message endpoint may indicate its transacted delivery preferences 
      * (at a per method level) through its deployment descriptor. The message 
@@ -139,4 +140,22 @@ public interface MessageEndpointFactory {
      */
     String getActivationName();
 
+    /**
+     * Return the <code>Class</code> object corresponding to the message
+     * endpoint class. For example, for a Message Driven Bean this is the 
+     * <code>Class</code> object corresponding to the application's MDB class.  
+     * 
+     * The resource adapter may use this to introspect the 
+     * message endpoint class to discover annotations, interfaces implemented, 
+     * etc. and modify the behavior of the resource adapter accordingly.
+     * 
+     * A return value of <code>null</code> indicates that the 
+     * <code>MessageEndpoint</code> doesn't implement the business methods of 
+     * underlying message endpoint class. 
+     * 
+     * @return A <code>Class</code> corresponding to the message endpoint class.
+     * 
+     * @since 1.7
+     */
+    public Class<?> getEndpointClass();
 }
