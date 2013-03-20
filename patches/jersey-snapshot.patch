@@ -1,6 +1,48 @@
+Index: appserver/packager/glassfish-web/pom.xml
+===================================================================
+--- appserver/packager/glassfish-web/pom.xml	(revision 60620)
++++ appserver/packager/glassfish-web/pom.xml	(working copy)
+@@ -141,6 +141,11 @@
+             <artifactId>jstl-connector</artifactId>
+ 	    <version>${project.version}</version>
+         </dependency>
++        <dependency>
++            <groupId>org.glassfish.main.web</groupId>
++            <artifactId>jersey-mvc-connector</artifactId>
++            <version>${project.version}</version>
++        </dependency>
+ 	<dependency>
+             <groupId>org.glassfish.main.common</groupId>
+             <artifactId>stats77</artifactId>
+Index: appserver/packager/jersey/pom.xml
+===================================================================
+--- appserver/packager/jersey/pom.xml	(revision 60620)
++++ appserver/packager/jersey/pom.xml	(working copy)
+@@ -138,6 +138,10 @@
+         </dependency>
+         <dependency>
+             <groupId>org.glassfish.jersey.containers.glassfish</groupId>
++            <artifactId>jersey-gf-cdi</artifactId>
++        </dependency>
++         <dependency>
++            <groupId>org.glassfish.jersey.containers.glassfish</groupId>
+             <artifactId>jersey-gf-ejb</artifactId>
+         </dependency>
+         <dependency>
+@@ -152,6 +156,10 @@
+             <groupId>org.glassfish.jersey.media</groupId>
+             <artifactId>jersey-media-json-processing</artifactId>
+         </dependency>
++        <dependency>
++            <groupId>org.glassfish.jersey.ext</groupId>
++            <artifactId>jersey-mvc-jsp</artifactId>
++        </dependency>
+     </dependencies>
+ </project>
+ 
 Index: appserver/web/pom.xml
 ===================================================================
---- appserver/web/pom.xml	(revision 60456)
+--- appserver/web/pom.xml	(revision 60620)
 +++ appserver/web/pom.xml	(working copy)
 @@ -59,6 +59,7 @@
          <module>web-core</module>
@@ -12,7 +54,7 @@ Index: appserver/web/pom.xml
          <module>gui-plugin-common</module>
 Index: appserver/web/webtier-all/pom.xml
 ===================================================================
---- appserver/web/webtier-all/pom.xml	(revision 60456)
+--- appserver/web/webtier-all/pom.xml	(revision 60620)
 +++ appserver/web/webtier-all/pom.xml	(working copy)
 @@ -3,7 +3,7 @@
  
@@ -35,330 +77,125 @@ Index: appserver/web/webtier-all/pom.xml
              <artifactId>jsf-connector</artifactId>
              <version>${project.version}</version>
          </dependency>
-Index: appserver/web/jersey-mvc-connector/src/main/java/org/glassfish/main/web/jersey/server/mvc/jsp/integration/JerseyMvcTldProvider.java
+Index: appserver/web/weld-integration/src/main/java/org/glassfish/cdi/hk2/HK2IntegrationExtension.java
 ===================================================================
---- appserver/web/jersey-mvc-connector/src/main/java/org/glassfish/main/web/jersey/server/mvc/jsp/integration/JerseyMvcTldProvider.java	(revision 0)
-+++ appserver/web/jersey-mvc-connector/src/main/java/org/glassfish/main/web/jersey/server/mvc/jsp/integration/JerseyMvcTldProvider.java	(revision 0)
-@@ -0,0 +1,146 @@
-+/*
-+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+--- appserver/web/weld-integration/src/main/java/org/glassfish/cdi/hk2/HK2IntegrationExtension.java	(revision 60620)
++++ appserver/web/weld-integration/src/main/java/org/glassfish/cdi/hk2/HK2IntegrationExtension.java	(working copy)
+@@ -63,88 +63,88 @@
+ 
+ /**
+  * The touch-point for hk2 integration with CDI
+- * 
 + *
-+ * Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
-+ *
-+ * The contents of this file are subject to the terms of either the GNU
-+ * General Public License Version 2 only ("GPL") or the Common Development
-+ * and Distribution License("CDDL") (collectively, the "License").  You
-+ * may not use this file except in compliance with the License.  You can
-+ * obtain a copy of the License at
-+ * https://glassfish.dev.java.net/public/CDDL+GPL_1_1.html
-+ * or packager/legal/LICENSE.txt.  See the License for the specific
-+ * language governing permissions and limitations under the License.
-+ *
-+ * When distributing the software, include this License Header Notice in each
-+ * file and include the License file at packager/legal/LICENSE.txt.
-+ *
-+ * GPL Classpath Exception:
-+ * Oracle designates this particular file as subject to the "Classpath"
-+ * exception as provided by Oracle in the GPL Version 2 section of the License
-+ * file that accompanied this code.
-+ *
-+ * Modifications:
-+ * If applicable, add the following below the License Header, with the fields
-+ * enclosed by brackets [] replaced by your own identifying information:
-+ * "Portions Copyright [year] [name of copyright owner]"
-+ *
-+ * Contributor(s):
-+ * If you wish your version of this file to be governed by only the CDDL or
-+ * only the GPL Version 2, indicate your decision by adding "[Contributor]
-+ * elects to include this software in this distribution under the [CDDL or GPL
-+ * Version 2] license."  If you don't indicate a single choice of license, a
-+ * recipient has the option to distribute your version of this file under
-+ * either the CDDL, the GPL Version 2 or to extend the choice of license to
-+ * its licensees as provided above.  However, if you add GPL Version 2 code
-+ * and therefore, elected the GPL Version 2 license, then the option applies
-+ * only if the new code is made subject to such option by the copyright
-+ * holder.
-+ */
+  * @author jwells
+  *
+  */
+ public class HK2IntegrationExtension implements Extension {
+     private final HashMap<Long, ActiveDescriptor<?>> foundWithHK2 = new HashMap<Long, ActiveDescriptor<?>>();
+     private final ServiceLocator locator = HK2IntegrationUtilities.getApplicationServiceLocator();
+-    
 +
-+package org.glassfish.main.web.jersey.server.mvc.jsp.integration;
+     /**
+      * Called by CDI, gathers up all of the injection points known to hk2
+-     * 
++     *
+      * @param pit The injection target even from CDI
+      */
+     @SuppressWarnings("unused")
+     private <T> void injectionTargetObserver(@Observes ProcessInjectionTarget<T> pit) {
+         if (locator == null) return;
+-        
 +
-+import java.net.URI;
-+import java.net.URISyntaxException;
-+import java.net.URL;
-+import java.net.URLClassLoader;
-+import java.text.MessageFormat;
-+import java.util.HashMap;
-+import java.util.List;
-+import java.util.Map;
-+import java.util.ResourceBundle;
-+import java.util.logging.Level;
-+import java.util.logging.Logger;
-+import java.util.regex.Pattern;
+         InjectionTarget<?> injectionTarget = pit.getInjectionTarget();
+         Set<InjectionPoint> injectionPoints = injectionTarget.getInjectionPoints();
+-        
 +
-+import javax.inject.Inject;
-+import javax.inject.Singleton;
+         for (InjectionPoint injectionPoint : injectionPoints) {
+             Injectee injectee = HK2IntegrationUtilities.convertInjectionPointToInjectee(injectionPoint);
+-            
 +
-+import org.glassfish.hk2.api.PostConstruct;
+             ActiveDescriptor<?> descriptor = locator.getInjecteeDescriptor(injectee);
+-            if (descriptor == null) continue;
+-            
++            if (descriptor == null || descriptor.getServiceId() == null) continue;
 +
-+import org.jvnet.hk2.annotations.Service;
+             // using a map removes duplicates
+             foundWithHK2.put(descriptor.getServiceId(), descriptor);
+         }
+     }
+-    
 +
-+import org.glassfish.api.web.TldProvider;
-+import org.glassfish.web.loader.WebappClassLoader;
+     /**
+      * Called by CDI after going through all of the injection points.  For each
+      * service known to hk2 adds a CDI bean
+-     * 
++     *
+      * @param abd This is used just to mark the type of the event
+      */
+     @SuppressWarnings({ "unused", "unchecked", "rawtypes" })
+     private void afterDiscoveryObserver(@Observes AfterBeanDiscovery abd) {
+         if (locator == null) return;
+-        
 +
-+import com.sun.enterprise.module.Module;
-+import com.sun.enterprise.module.ModulesRegistry;
-+import com.sun.enterprise.util.net.JarURIPattern;
+         HashSet<Class<? extends Annotation>> customScopes = new HashSet<Class<? extends Annotation>>();
+-        
 +
-+/**
-+ * {@link TldProvider TLD Provider} suited for Jersey MVC *.tld.
-+ * <br/>
-+ * Note: Copied from {@code jstl-connector}.
-+ *
-+ * @author Michal Gajdos (michal.gajdos at oracle.com)
-+ */
-+@Service(name = "jerseyMvcTld")
-+@Singleton
-+public class JerseyMvcTldProvider implements TldProvider, PostConstruct {
+         for (ActiveDescriptor<?> descriptor : foundWithHK2.values()) {
+             abd.addBean(new HK2CDIBean(locator, descriptor));
+-            
 +
-+    private static final Logger logger = WebappClassLoader.logger;
+             customScopes.add(descriptor.getScopeAnnotation());
+         }
+-        
 +
-+    private static final ResourceBundle rb = logger.getResourceBundle();
+         customScopes.remove(PerLookup.class);
+         customScopes.remove(Singleton.class);
+-        
 +
-+    @Inject
-+    private ModulesRegistry registry;
+         List<org.glassfish.hk2.api.Context> hk2Contexts = locator.getAllServices(org.glassfish.hk2.api.Context.class);
+-        
 +
-+    private Map<URI, List<String>> tldMap = new HashMap<URI, List<String>>();
+         for (org.glassfish.hk2.api.Context hk2Context : hk2Contexts) {
+             if (!customScopes.contains(hk2Context.getScope())) {
+                 continue;
+             }
+-            
 +
-+    public String getName() {
-+        return "jerseyMvcTld";
-+    }
+             abd.addContext(new HK2ContextBridge(hk2Context));
+         }
+-        
 +
-+    @SuppressWarnings("unchecked")
-+    public Map<URI, List<String>> getTldMap() {
-+        return (Map<URI, List<String>>) ((HashMap) tldMap).clone();
-+    }
+         foundWithHK2.clear();  // No need to keep these references around
+     }
+-    
 +
-+    public Map<URI, List<String>> getTldListenerMap() {
-+        return null;
-+    }
+     /**
+      * Called by CDI after it has been completely validated.  Will add the JIT resolver to HK2
+      * with the BeanManager
+-     * 
++     *
+      * @param event This is just to mark the type of the event
+      * @param manager The manager that will be used to get references
+      */
+     @SuppressWarnings("unused")
+     private void afterDeploymentValidation(@Observes AfterDeploymentValidation event) {
+         if (locator == null) return;
+-        
 +
-+    public void postConstruct() {
-+        final Class jerseyIncludeClass = org.glassfish.jersey.server.mvc.jsp.Include.class;
+         DynamicConfigurationService dcs = locator.getService(DynamicConfigurationService.class);
+         DynamicConfiguration config = dcs.createDynamicConfiguration();
+-        
 +
-+        URI[] uris = null;
-+        Module m = null;
-+        if (jerseyIncludeClass != null) {
-+            m = registry.find(jerseyIncludeClass);
-+        }
-+        if (m != null) {
-+            uris = m.getModuleDefinition().getLocations();
-+        } else {
-+            ClassLoader classLoader = getClass().getClassLoader();
-+            if (classLoader instanceof URLClassLoader) {
-+                URL[] urls = ((URLClassLoader) classLoader).getURLs();
-+                if (urls != null && urls.length > 0) {
-+                    uris = new URI[urls.length];
-+                    for (int i = 0; i < urls.length; i++) {
-+                        try {
-+                            uris[i] = urls[i].toURI();
-+                        } catch (URISyntaxException e) {
-+                            String msg = rb.getString(WebappClassLoader.TLD_PROVIDER_IGNORE_URL);
-+                            msg = MessageFormat.format(msg, urls[i]);
-+                            logger.log(Level.WARNING, msg, e);
-+                        }
-+                    }
-+                }
-+            } else {
-+                logger.log(Level.WARNING, WebappClassLoader.UNABLE_TO_DETERMINE_TLD_RESOURCES, new Object[]{
-+                        JerseyMvcTldProvider.class.getSimpleName(), classLoader, JerseyMvcTldProvider.class.getName()
-+                });
-+            }
-+        }
+         config.addActiveDescriptor(CDISecondChanceResolver.class);
+         config.addActiveDescriptor(CDIContextBridge.class);
+-        
 +
-+        if (uris != null && uris.length > 0) {
-+            Pattern pattern = Pattern.compile("META-INF/.*\\.tld");
-+            for (URI uri : uris) {
-+                List<String> entries = JarURIPattern.getJarEntries(uri, pattern);
-+                if (entries != null && entries.size() > 0) {
-+                    tldMap.put(uri, entries);
-+                }
-+            }
-+        }
-+    }
-+}
-Index: appserver/web/jersey-mvc-connector/osgi.bundle
-===================================================================
---- appserver/web/jersey-mvc-connector/osgi.bundle	(revision 0)
-+++ appserver/web/jersey-mvc-connector/osgi.bundle	(revision 0)
-@@ -0,0 +1,46 @@
-+#
-+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-+#
-+# Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
-+#
-+# The contents of this file are subject to the terms of either the GNU
-+# General Public License Version 2 only ("GPL") or the Common Development
-+# and Distribution License("CDDL") (collectively, the "License").  You
-+# may not use this file except in compliance with the License.  You can
-+# obtain a copy of the License at
-+# https://glassfish.dev.java.net/public/CDDL+GPL_1_1.html
-+# or packager/legal/LICENSE.txt.  See the License for the specific
-+# language governing permissions and limitations under the License.
-+#
-+# When distributing the software, include this License Header Notice in each
-+# file and include the License file at packager/legal/LICENSE.txt.
-+#
-+# GPL Classpath Exception:
-+# Oracle designates this particular file as subject to the "Classpath"
-+# exception as provided by Oracle in the GPL Version 2 section of the License
-+# file that accompanied this code.
-+#
-+# Modifications:
-+# If applicable, add the following below the License Header, with the fields
-+# enclosed by brackets [] replaced by your own identifying information:
-+# "Portions Copyright [year] [name of copyright owner]"
-+#
-+# Contributor(s):
-+# If you wish your version of this file to be governed by only the CDDL or
-+# only the GPL Version 2, indicate your decision by adding "[Contributor]
-+# elects to include this software in this distribution under the [CDDL or GPL
-+# Version 2] license."  If you don't indicate a single choice of license, a
-+# recipient has the option to distribute your version of this file under
-+# either the CDDL, the GPL Version 2 or to extend the choice of license to
-+# its licensees as provided above.  However, if you add GPL Version 2 code
-+# and therefore, elected the GPL Version 2 license, then the option applies
-+# only if the new code is made subject to such option by the copyright
-+# holder.
-+#
-+
-+-exportcontents:org.glassfish.main.web.jersey.server.mvc.jsp.integration.*; version=${project.osgi.version}
-+
-+Import-Package: \
-+                com.sun.logging.enterprise.system.container.web, \
-+                *
-+
-Index: appserver/web/jersey-mvc-connector/pom.xml
-===================================================================
---- appserver/web/jersey-mvc-connector/pom.xml	(revision 0)
-+++ appserver/web/jersey-mvc-connector/pom.xml	(revision 0)
-@@ -0,0 +1,83 @@
-+<?xml version="1.0" encoding="UTF-8"?>
-+<!--
-+
-+    DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
-+
-+    Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
-+
-+    The contents of this file are subject to the terms of either the GNU
-+    General Public License Version 2 only ("GPL") or the Common Development
-+    and Distribution License("CDDL") (collectively, the "License").  You
-+    may not use this file except in compliance with the License.  You can
-+    obtain a copy of the License at
-+    https://glassfish.dev.java.net/public/CDDL+GPL_1_1.html
-+    or packager/legal/LICENSE.txt.  See the License for the specific
-+    language governing permissions and limitations under the License.
-+
-+    When distributing the software, include this License Header Notice in each
-+    file and include the License file at packager/legal/LICENSE.txt.
-+
-+    GPL Classpath Exception:
-+    Oracle designates this particular file as subject to the "Classpath"
-+    exception as provided by Oracle in the GPL Version 2 section of the License
-+    file that accompanied this code.
-+
-+    Modifications:
-+    If applicable, add the following below the License Header, with the fields
-+    enclosed by brackets [] replaced by your own identifying information:
-+    "Portions Copyright [year] [name of copyright owner]"
-+
-+    Contributor(s):
-+    If you wish your version of this file to be governed by only the CDDL or
-+    only the GPL Version 2, indicate your decision by adding "[Contributor]
-+    elects to include this software in this distribution under the [CDDL or GPL
-+    Version 2] license."  If you don't indicate a single choice of license, a
-+    recipient has the option to distribute your version of this file under
-+    either the CDDL, the GPL Version 2 or to extend the choice of license to
-+    its licensees as provided above.  However, if you add GPL Version 2 code
-+    and therefore, elected the GPL Version 2 license, then the option applies
-+    only if the new code is made subject to such option by the copyright
-+    holder.
-+
-+-->
-+
-+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-+    <modelVersion>4.0.0</modelVersion>
-+    <parent>
-+        <groupId>org.glassfish.main.web</groupId>
-+        <artifactId>web</artifactId>
-+        <version>4.0-SNAPSHOT</version>
-+        <relativePath>../pom.xml</relativePath>
-+    </parent>    
-+    <artifactId>jersey-mvc-connector</artifactId>
-+    <packaging>glassfish-jar</packaging>
-+    
-+    <name>Jersey MVC TLD connector implementation module</name>
-+
-+    <dependencies>
-+        <dependency>
-+            <groupId>org.glassfish.hk2</groupId>
-+            <artifactId>core</artifactId>
-+        </dependency>
-+        <dependency>
-+            <groupId>org.glassfish.jersey.ext</groupId>
-+            <artifactId>jersey-mvc-jsp</artifactId>
-+        </dependency>
-+        <dependency>
-+            <groupId>org.glassfish.main.common</groupId>
-+            <artifactId>glassfish-api</artifactId>
-+            <version>${project.version}</version>
-+        </dependency>
-+        <dependency>
-+            <groupId>org.glassfish.main.common</groupId>
-+            <artifactId>common-util</artifactId>
-+            <version>${project.version}</version>
-+        </dependency>
-+         <dependency>
-+            <groupId>org.glassfish.main.web</groupId>
-+            <artifactId>war-util</artifactId>
-+            <version>${project.version}</version>
-+        </dependency>
-+    </dependencies>
-+</project>
-+
-Index: appserver/packager/glassfish-web/pom.xml
-===================================================================
---- appserver/packager/glassfish-web/pom.xml	(revision 60456)
-+++ appserver/packager/glassfish-web/pom.xml	(working copy)
-@@ -141,6 +141,11 @@
-             <artifactId>jstl-connector</artifactId>
- 	    <version>${project.version}</version>
-         </dependency>
-+        <dependency>
-+            <groupId>org.glassfish.main.web</groupId>
-+            <artifactId>jersey-mvc-connector</artifactId>
-+            <version>${project.version}</version>
-+        </dependency>
- 	<dependency>
-             <groupId>org.glassfish.main.common</groupId>
-             <artifactId>stats77</artifactId>
-Index: appserver/packager/jersey/pom.xml
-===================================================================
---- appserver/packager/jersey/pom.xml	(revision 60456)
-+++ appserver/packager/jersey/pom.xml	(working copy)
-@@ -152,6 +152,10 @@
-             <groupId>org.glassfish.jersey.media</groupId>
-             <artifactId>jersey-media-json-processing</artifactId>
-         </dependency>
-+        <dependency>
-+            <groupId>org.glassfish.jersey.ext</groupId>
-+            <artifactId>jersey-mvc-jsp</artifactId>
-+        </dependency>
-     </dependencies>
- </project>
+         config.commit();
+     }
  
 Index: appserver/admin/template/src/main/resources/config/default-web.xml
 ===================================================================
---- appserver/admin/template/src/main/resources/config/default-web.xml	(revision 60456)
+--- appserver/admin/template/src/main/resources/config/default-web.xml	(revision 60620)
 +++ appserver/admin/template/src/main/resources/config/default-web.xml	(working copy)
 @@ -338,9 +338,9 @@
          javax.security.jacc.jar
@@ -373,9 +210,18 @@ Index: appserver/admin/template/src/main/resources/config/default-web.xml
      <load-on-startup>3</load-on-startup>
 Index: nucleus/pom.xml
 ===================================================================
---- nucleus/pom.xml	(revision 60456)
+--- nucleus/pom.xml	(revision 60620)
 +++ nucleus/pom.xml	(working copy)
-@@ -114,7 +114,7 @@
+@@ -107,14 +107,14 @@
+         <servlet-api.version>3.1-b07</servlet-api.version>
+         <grizzly.version>2.3-rc6</grizzly.version>
+         <saaj-api.version>1.3.4</saaj-api.version>
+-        <hk2.version>2.1.72</hk2.version>
+-        <hk2.plugin.version>2.1.72</hk2.plugin.version>
++        <hk2.version>2.1.76</hk2.version>
++        <hk2.plugin.version>2.1.76</hk2.plugin.version>
+         <trilead-ssh2.version>build212-hudson-6</trilead-ssh2.version>
+         <pfl.version>3.2.0-b001</pfl.version>
          <gmbal.version>3.2.0-b003</gmbal.version>
          <woodstox.version>4.1.2</woodstox.version>
          <antlr.version>2.7.6</antlr.version>
@@ -386,7 +232,7 @@ Index: nucleus/pom.xml
          <guava.version>14.0</guava.version>
 Index: nucleus/packager/nucleus-jersey/pom.xml
 ===================================================================
---- nucleus/packager/nucleus-jersey/pom.xml	(revision 60456)
+--- nucleus/packager/nucleus-jersey/pom.xml	(revision 60620)
 +++ nucleus/packager/nucleus-jersey/pom.xml	(working copy)
 @@ -66,7 +66,7 @@
              <groupId>org.glassfish.jersey.containers</groupId>
