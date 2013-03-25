@@ -1,0 +1,225 @@
+start-local-instance(1) Sous-commandes de l'utilitaire start-local-instance(1)
+
+NOM
+       start-local-instance - démarre une instance GlassFish Server sur l'hôte
+       sur lequel la sous-commande est exécutée
+
+SYNTAXE
+           start-local-instance [--help]
+           [--nodedir node-dir] [--node node]
+           [--debug={false|true}] [--dry-run={false|true}] [--sync={normal|full|none}]
+           [--verbose={false|true}] [--watchdog={false|true}]
+           [instance-name]
+
+DESCRIPTION
+       La sous-commande start-local-instance démarre une instance GlassFish
+       Server sur l'hôte sur lequel la sous-commande est exécutée. Elle
+       n'exige pas que le protocole distant DCOM (Distributed Component Object
+       Model) ou que le protocole SSH (Secure Shell) soit configuré. Vous
+       devez exécuter cette commande à partir de l'hôte sur lequel l'instance
+       réside.
+
+       La sous-commande peut démarrer toutes les instances GlassFish Server,
+       quelle que soit la méthode utilisée pour les créer. Par exemple, cette
+       sous-commande peut démarrer une instance qui a été créée à l'aide de la
+       sous-commande create-instance(1).
+
+       La sous-commande start-local-instance ne contacte pas le serveur
+       d'administration de domaine (serveur DAS) pour déterminer le noeud sur
+       lequel l'instance réside. Pour cela, elle effectue une recherche dans
+       le répertoire qui contient les répertoires de noeud. S'il existe
+       plusieurs répertoires de noeud, le noeud doit être indiqué en tant
+       qu'option de la sous-commande.
+
+       Cette sous-commande est prise en charge en mode local. Cependant, pour
+       synchroniser l'instance avec le serveur DAS, cette sous-commande doit
+       être exécutée en mode distant.
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --nodedir
+           Cette option indique le répertoire contenant le répertoire de noeud
+           de l'instance. Les fichiers de l'instance sont stockés dans le
+           répertoire de noeud de l'instance. La valeur par défaut est
+           as-install/nodes.
+
+       --node
+           Cette option indique le noeud sur lequel réside l'instance. Vous ne
+           pouvez l'omettre que si le répertoire spécifié par l'option
+           --nodedir ne contient qu'un répertoire de noeud. Sinon, cette
+           option est obligatoire.
+
+       --debug
+           Indique si l'instance est démarrée avec le débogueur JPDA (Java
+           Platform Debugger Architecture)
+
+           activé.
+
+           Les valeurs possibles sont les suivantes :
+
+           true
+               L'instance est démarrée avec le débogage JPDA activé. Le numéro
+               de port pour le débogage JPDA est affiché.
+
+           false
+               L'instance est démarrée avec le débogage JPDA désactivé (par
+               défaut).
+
+       --dry-run, -n
+           Annule le démarrage effectif de l'instance. A la place,
+           start-local-instance affiche l'intégralité de la commande Java à
+           utiliser pour démarrer l'instance, avec toutes les options. Cette
+           commande s'avère utile pour confirmer les options JVM et lors de la
+           résolution des problèmes de démarrage.
+
+           La valeur par défaut est false.
+
+       --sync
+           Type de synchronisation entre le serveur DAS et les fichiers de
+           l'instance au démarrage de cette dernière.
+
+           Les valeurs possibles sont les suivantes :
+
+           none
+               Le serveur DAS ne synchronise pas les fichiers de l'instance
+               avec les modifications apportées. Ce type de synchronisation
+               permet de réduire le temps requis pour démarrer l'instance.
+
+           normal
+               Le serveur DAS synchronise l'instance avec les modifications
+               apportées depuis la dernière synchronisation, comme suit :
+
+               ·   Pour le répertoire config, le serveur DAS synchronise
+                   l'instance avec toutes les modifications apportées.
+
+               ·   Pour les répertoires applications et docroot, seule une
+                   modification apportée à un sous-répertoire de niveau
+                   supérieur entraîne la synchronisation de tous les fichiers
+                   situés en dessous de ce sous-répertoire par le serveur DAS.
+
+                   Si un fichier situé en dessous d'un sous-répertoire de
+                   niveau supérieur est modifié sans qu'aucun changement ne
+                   soit apporté au fichier du sous-répertoire de niveau
+                   supérieur, une synchronisation complète est requise. En
+                   mode de fonctionnement normal, les fichiers situés en
+                   dessous des sous-répertoires de niveau supérieur
+                   correspondant à ces répertoires ne sont pas modifiés. Si
+                   une application est déployée et que son déploiement est
+                   annulé, la synchronisation complète n'est pas nécessaire
+                   pour mettre à jour l'instance en fonction de la
+                   modification.
+
+               Il s'agit de la valeur par défaut.
+
+           full
+               Le serveur DAS synchronise l'instance avec tous les fichiers de
+               l'instance, que ceux-ci aient été modifiés ou non depuis la
+               dernière synchronisation. Ce type de synchronisation peut
+               retarder le démarrage de l'instance car le serveur DAS met à
+               jour tous les fichiers dans les répertoires de l'instance.
+
+                   Attention
+                   ┌────────────────────────────────────────┐
+                   │Attention Si le serveur DAS n'est pas   │
+                   │en cours d'exécution ou n'est pas       │
+                   │accessible à partir de l'hôte sur       │
+                   │lequel vous exécutez cette              │
+                   │sous-commande, ne définissez pas        │
+                   │l'option --sync sur full. Pour          │
+                   │effectuer une synchronisation complète, │
+                   │la sous-commande enlève le cache de     │
+                   │l'instance. Si le serveur DAS ne peut   │
+                   │pas être contacté pour remplacer le     │
+                   │cache, la sous-commande échoue et       │
+                   │l'instance ne peut pas être redémarrée  │
+                   │tant qu'elle n'est pas resynchronisée   │
+                   │avec le serveur DAS.                    │
+                   └────────────────────────────────────────┘
+
+       --verbose, -v
+           Indique si des informations détaillées sur l'instance sont
+           affichées dans la fenêtre de la console dans laquelle la
+           sous-commande est exécutée.
+
+           Les valeurs possibles sont les suivantes :
+
+           true
+               Des messages de démarrage détaillés et des messages de journal
+               relatifs à l'instance sont affichés dans la fenêtre de la
+               console dans laquelle la sous-commande est exécutée. Si
+               l'instance est redémarrée ultérieurement à l'aide de la
+               sous-commande restart-local-instance(1) à partir d'une autre
+               fenêtre de la console, les messages continuent à être affichés
+               dans la fenêtre d'origine de la console.
+
+               Vous pouvez arrêter le processus GlassFish Server en appuyant
+               sur les touches Ctrl+C dans la fenêtre de la console.
+
+               Vous pouvez arrêter le processus GlassFish Server et obtenir le
+               vidage des threads pour le serveur en appuyant sur l'une des
+               combinaisons de touches suivantes dans la fenêtre de la console
+               :
+
+               ·   Ctrl+\ sur les systèmes UNIX
+
+               ·   Ctrl+Pause sur les systèmes Windows
+
+           false
+               Les informations détaillées ne sont pas affichées (par défaut).
+
+       --watchdog, -w
+           Indique si des informations limitées sur l'instance sont affichées
+           dans la fenêtre de la console dans laquelle la sous-commande est
+           exécutée. L'option --watchdog est semblable à l'option --verbose,
+           mais elle n'affiche pas les messages de journal et de démarrage
+           détaillés. Cette option s'avère utile lorsque vous exécutez
+           l'utilitaire asadmin en arrière-plan ou sans console attachée.
+
+           Les valeurs possibles sont les suivantes :
+
+           true
+               Des informations limitées sont affichées dans la fenêtre de la
+               console.
+
+           false
+               Les informations limitées ne sont pas affichées dans la fenêtre
+               de la console (par défaut).
+
+OPÉRANDES
+       instance-name
+           Nom de l'instance à démarrer.
+
+EXEMPLES
+       Exemple 1, Démarrage d'une instance en local
+           Dans cet exemple, l'instance yml-i-sj01 est démarrée sur l'hôte sur
+           lequel la sous-commande est exécutée.
+
+               asadmin> start-local-instance --node sj01 yml-i-sj01
+               Waiting for the server to start .................................
+               Successfully started the instance: yml-i-sj01
+               instance Location: /export/glassfish3/glassfish/nodes/sj01/yml-i-sj01
+               Log File: /export/glassfish3/glassfish/nodes/sj01/yml-i-sj01/logs/server.log
+               Admin Port: 24849
+               Command start-local-instance executed successfully.
+
+STATUT DE SORTIE
+       0
+           commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la commande
+
+VOIR AUSSI
+       create-instance(1), create-local-instance(1), delete-instance(1),
+       delete-local-instance(1), restart-instance(1),
+       restart-local-instance(1), start-domain(1), start-instance(1),
+       stop-domain(1), stop-instance(1), stop-local-instance(1)
+
+       asadmin(1M)
+
+       Java Platform Debugger Architecture (JPDA)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                        13 fév. 2013          start-local-instance(1)

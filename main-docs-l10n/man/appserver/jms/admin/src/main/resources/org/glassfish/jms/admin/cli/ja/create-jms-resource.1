@@ -1,0 +1,138 @@
+create-jms-resource(1)asadminユーティリティのサブコマンド
+
+名前
+       create-jms-resource - JMSリソースを作成します
+
+概要
+           create-jms-resource [--help]
+           --restype type
+           [--target target]
+           [--enabled={true|false}]
+           [--description text]
+           [--property (name=value)[:name=value]*]
+           [--force[={false|true}]]
+           jndi_name
+
+説明
+       create-jms-resourceサブコマンドは、Java Message
+       Service(JMS)接続ファクトリ・リソースまたはJMS宛先リソースを作成します。
+
+       このサブコマンドは、リモート・モードでのみサポートされています。リモートのasadminサブコマンドを実行するには、ドメイン管理サーバー(DAS)が稼働している必要があります。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --restype
+           JMSリソース・タイプには、javax.jms.Topic、javax.jms.Queue、javax.jms.ConnectionFactory、javax.jms.TopicConnectionFactory、またはjavax.jms.QueueConnectionFactoryを指定できます。
+
+       --target
+           指定したターゲットにのみJMSリソースを作成します。有効な値は次のとおりです:
+
+               注記
+               ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+               │注意                                                                                                                                                                                                                           │
+               │リソースはドメイン全体に対して常に作成されますが、リソースの<resource-ref>要素は指定された--targetに対してのみ作成されます。つまり、リソースはドメイン・レベルで定義されますが、指定された--targetでのみアクティブになります。 │
+               └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+           server
+               デフォルトのサーバー・インスタンスにJMSリソースを作成します。この値がデフォルト値です。
+
+           domain
+               ドメインにJMSリソースを作成します。
+
+           cluster-name
+               指定したクラスタ内のすべてのサーバー・インスタンスにJMSリソースを作成します。
+
+           instance-name
+               指定したサーバー・インスタンスにJMSリソースを作成します。
+
+       --enabled
+           trueに設定した場合(デフォルト)、実行時にリソースが有効になります。
+
+       --description
+           JMSリソースの詳細を説明するテキスト。
+
+       --property
+           JMSリソースを構成するための属性名と値のペア(オプション)。
+
+           接続ファクトリ・リソースには次のプロパティを指定できます。
+
+           ClientId
+               永続的なサブスクライバが使用する接続ファクトリのクライアントID。
+
+           AddressList
+               メッセージ・キュー・アドレスのカンマ区切りリスト。アプリケーションが通信する1つまたは複数のメッセージ・ブローカ・インスタンスのホスト名(およびオプションでポート番号)を指定します。たとえば、値にはearthまたはearth:7677を指定できます。メッセージ・ブローカがデフォルト(7676)以外のポートで実行している場合は、ポート番号を指定します。
+               サーバーのJMSサービス構成で定義されたJMSホストから構成されるデフォルト値はlocalhostで、デフォルトのポート番号は7676です。クライアントは、ローカル・ホストのポート7676のブローカへの接続を試行します。
+
+           UserName
+               接続ファクトリのユーザー名。デフォルト値はguestです。
+
+           Password
+               接続ファクトリのパスワード。デフォルト値はguestです。
+
+           ReconnectEnabled
+               値をtrueに設定すると、接続が失われたときに、クライアント・ランタイムがメッセージ・サーバー(またはAddressListで指定したアドレスのリスト)に再接続を試みます。デフォルト値はfalseです。
+
+           ReconnectAttempts
+               クライアント・ランタイムがリストの次のアドレスを試行する前に、AddressListに指定した各アドレスへの接続(または再接続)を試行する回数。値-1は、再試行回数が無制限であることを示します。クライアント・ランタイムは、接続が成功するまで最初のアドレスへの接続を試みます。デフォルト値は6です。
+
+           ReconnectInterval
+               再接続を試行する間隔(ミリ秒単位)。これは、AddressListで指定した各アドレスおよびリストの次のアドレスへの試行に適用されます。間隔が短すぎると、ブローカがリカバリする時間がなくなります。長すぎると、再接続が受け入れられない遅延を示す場合があります。デフォルト値は30,000ミリ秒です。
+
+           AddressListBehavior
+               接続の試行をAddressListで指定したアドレスの順序(PRIORITY)で行うか、またはランダムな順序(RANDOM)で行うかを指定します。PRIORITYは、再接続が常にAddressListに指定した最初のサーバーのアドレスへの接続を試行し、最初のブローカが使用可能でない場合にのみ他のアドレスを使用することを意味します。同じ接続ファクトリを使用して接続を試行する多数のクライアントが存在する場合は、すべてのクライアントが同じアドレスに接続しないようにRANDOMを指定します。デフォルト値は、サーバーのJMSサービス構成のAddressListBehavior値です。
+
+           AddressListIterations
+               接続の確立(または再確立)のために、クライアント・ランタイムがAddressListを介して反復する回数。値-1は試行回数が無制限であることを示します。デフォルト値は-1です。
+
+           また、コネクタ・リソースのプロパティとしてconnector-connection-pool属性を指定できます。これらの属性のリストは、Oracle
+           GlassFish
+           Serverア
+
+           宛先リソースには次のプロパティを指定できます。
+
+           Name
+               リソースが参照する物理宛先の名前。物理宛先は、宛先リソースを使用するアプリケーションを実行するときに自動的に作成されます。また、create-jmsdestサブコマンドで物理宛先を作成することもできます。このプロパティを指定しない場合、JMSサービスは宛先リソースと同じ名前で物理宛先を作成します(JNDI名のスラッシュはアンダースコアに置換される)。
+
+           Description
+               物理宛先の説明。
+
+       --force
+           同じ名前の既存のJMSリソースをサブコマンドによって上書きするかどうかを指定します。デフォルト値はfalseです。
+
+オペランド
+       jndi_name
+           作成されるJMSリソースのJNDI名。
+
+例
+       例 1, 永続サブスクリプションのJMS接続ファクトリ・リソースの作成
+           次のサブコマンドは、JNDI名がjms/DurableConnectionFactoryのjavax.jms.ConnectionFactoryタイプの接続ファクトリ・リソースを作成します。ClientIdプロパティは、接続ファクトリのクライアントIDを設定し、接続ファクトリを永続サブスクリプションで使用できるようにします。JMSリソースのJNDI名には、慣習的にjms/のネーミング・サブコンテキストを含めます。
+
+               asadmin> create-jms-resource --restype javax.jms.ConnectionFactory
+               --description "connection factory for durable subscriptions"
+               --property ClientId=MyID jms/DurableConnectionFactory
+               Connector resource jms/DurableConnectionFactory created.
+               Command create-jms-resource executed successfully.
+
+       例 2, JMS宛先リソースの作成
+           次のサブコマンドは、JNDI名がjms/MyQueueの宛先リソースを作成します。Nameプロパティは、リソースが参照する物理宛先を指定します。
+
+               asadmin> create-jms-resource --restype javax.jms.Queue
+               --property Name=PhysicalQueue jms/MyQueue
+               Administered object jms/MyQueue created.
+               Command create-jms-resource executed successfully.
+
+終了ステータス
+       0
+           サブコマンドは正常に実行されました
+
+       1
+           サブコマンドの実行時にエラーが発生しました
+
+関連項目
+       delete-jms-resource(1), list-jms-resources(1)
+
+       asadmin(1M)
+
+Java EE 7                        2013年2月12日          create-jms-resource(1)

@@ -1,0 +1,221 @@
+create-node-ssh(1)      Sous-commandes de l'utilitaire      create-node-ssh(1)
+
+NOM
+       create-node-ssh - crée un noeud activé pour la communication via SSH
+
+SYNTAXE
+           create-node-ssh [--help]
+           --nodehost node-host
+           [--installdir as-install-parent] [--nodedir node-dir]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile]
+           [--force={false|true}]
+           [--install={false|true}] [--archive archive]
+           node-name
+
+DESCRIPTION
+       La sous-commande create-node-ssh crée un noeud activé pour la
+       communication via le protocole SSH (Secure Shell).
+
+       Un noeud représente un hôte sur lequel le logiciel GlassFish Server est
+       installé. Un noeud doit exister au niveau de chaque hôte sur lequel
+       résident des instances GlassFish Server.
+
+       Le serveur d'administration de domaine (DAS) contacte l'hôte d'un noeud
+       SSH via le connecteur SSH pour gérer les instances GlassFish Server qui
+       résident sur le noeud. Cependant, le serveur DAS n'utilise pas le
+       connecteur SSH pour contacter l'hôte sur lequel le serveur DAS est
+       exécuté, car celui-ci peut exécuter toutes les sous-commandes asadmin
+       localement.
+
+       Par défaut, si le serveur DAS ne peut pas contacter l'hôte du noeud via
+       SSH, la sous-commande échoue et le noeud n'est pas créé. Pour forcer la
+       création du noeud dans la configuration du serveur DAS même si l'hôte
+       est inaccessible via SSH, définissez l'option --force sur true.
+
+       Cette sous-commande est prise en charge en mode distant uniquement.
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --nodehost
+           Nom de l'hôte que le noeud représente. Le nom de l'hôte doit être
+           indiqué. Sinon, une erreur survient.
+
+       --installdir
+           Chemin d'accès complet au parent du répertoire d'installation de
+           base du logiciel GlassFish Server sur l'hôte (par exemple,
+           /export/glassfish3/). La valeur par défaut est le parent du
+           répertoire d'installation de base par défaut du logiciel GlassFish
+           Server pour le serveur DAS. Elle est utile uniquement si vous
+           installez GlassFish Server au même emplacement sur tous les hôtes.
+
+       --nodedir
+           Chemin d'accès complet au répertoire devant contenir les instances
+           de GlassFish Server créées sur le noeud. La valeur par défaut est
+           as-install/nodes, as-install représentant le répertoire
+           d'installation de base du logiciel GlassFish Server sur l'hôte.
+           Tout chemin relatif indiqué doit se baser sur le répertoire
+           as-install.
+
+       --sshport
+           Port à utiliser pour les connexions SSH à l'hôte de ce noeud. La
+           valeur par défaut est 22. Si l'option --nodehost a la valeur
+           localhost-domain, l'option --sshport est ignorée.
+
+       --sshuser
+           Utilisateur sur l'hôte de ce noeud qui doit exécuter le processus
+           de connexion à l'hôte via SSH. La valeur par défaut est
+           l'utilisateur qui exécute le processus DAS. Pour garantir que le
+           serveur DAS puisse lire le fichier de clés privées SSH de cet
+           utilisateur, indiquez l'utilisateur qui exécute le processus DAS.
+           Si l'option --nodehost a la valeur localhost-domain, l'option
+           --sshuser est ignorée.
+
+       --sshkeyfile
+           Chemin absolu du fichier de clés privées SSH pour l'utilisateur
+           indiqué par l'option --sshuser. Ce fichier est utilisé pour
+           l'authentification auprès du démon sshd sur l'hôte du noeud.
+
+               Note
+               ┌────────────────────────────────────────┐
+               │Remarque GlassFish Server prend         │
+               │également en charge l'authentification  │
+               │par mot de passe via l'entrée           │
+               │AS_ADMIN_SSHPASSWORD dans le fichier de │
+               │mots de passe. Le fichier de mots de    │
+               │passe est indiqué dans l'option         │
+               │--passwordfile de l'utilitaire          │
+               │asadmin(1M).                            │
+               └────────────────────────────────────────┘
+           Si le fichier de clés privées SSH est protégé par une phrase
+           secrète, le fichier de mots de passe doit contenir l'entrée
+           AS_ADMIN_SSHKEYPASSPHRASE.
+
+           Le serveur DAS doit disposer de droits d'accès et de lecture sur le
+           fichier de clés.
+
+           La valeur par défaut est le fichier de clés placé dans le
+           répertoire .ssh de l'utilisateur. Si plusieurs fichiers de clés
+           sont détectés, la sous-commande utilise l'ordre de préférence
+           suivant :
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --force
+           Cette option indique si le noeud est créé dans la configuration
+           DAS, même en cas d'échec de la validation des paramètres du noeud.
+           Pour valider les paramètres d'un noeud, le serveur DAS doit être
+           capable de contacter l'hôte du noeud via SSH. Les valeurs possibles
+           sont les suivantes :
+
+           false
+               Le noeud n'est pas créé en cas d'échec de la validation des
+               paramètres du noeud (valeur par défaut).
+
+           true
+               Le noeud est créé, même en cas d'échec de la validation des
+               paramètres du noeud.
+
+       --install
+           Cette option indique si la sous-commande doit installer le logiciel
+           GlassFish Server sur l'hôte que représente le noeud.
+
+           Les valeurs possibles sont les suivantes :
+
+           false
+               La sous-commande ne doit pas installer le logiciel GlassFish
+               Server sur l'hôte (par défaut).
+
+           true
+               La sous-commande doit installer le logiciel GlassFish Server
+               sur l'hôte.
+
+       --archive
+           Chemin absolu du fichier d'archive du logiciel GlassFish Server à
+           installer. Si cette option est omise et que l'option --install a la
+           valeur true, la sous-commande crée une archive ZIP du logiciel
+           GlassFish Server à partir de l'installation dans laquelle cette
+           sous-commande est exécutée. L'archive ne contient pas les
+           répertoires domains et nodes.
+
+OPÉRANDES
+       node-name
+           Nom du noeud.
+
+           Le nom doit respecter les exigences suivantes :
+
+           ·   Il ne peut contenir que des caractères ASCII.
+
+           ·   Il doit commencer par une lettre, un chiffre ou un trait de
+               soulignement.
+
+           ·   Il ne peut contenir que les caractères suivants :
+
+               ·   Lettres minuscules
+
+               ·   Lettres majuscules
+
+               ·   Chiffres
+
+               ·   Trait d'union
+
+               ·   Point
+
+               ·   Trait de soulignement
+
+           ·   Le nom du noeud doit être unique dans le domaine ; il ne doit
+               pas appartenir à un autre noeud, à une configuration nommée, à
+               un cluster ou à une instance de GlassFish Server.
+
+           ·   Le nom ne doit pas être domain, server ou tout autre mot-clé
+               réservé par GlassFish Server.
+
+EXEMPLES
+       Exemple 1, Création d'un noeud
+           Cet exemple montre comment créer le noeud adc pour l'hôte
+           adc.example.com. Par défaut, le parent du répertoire d'installation
+           de base du logiciel GlassFish Server est /export/glassfish3.
+
+               asadmin> create-node-ssh
+               --nodehost adc.example.com
+               --installdir /export/glassfish3 adc
+
+               Command create-node-ssh executed successfully.
+
+       Exemple 2, Création forcée d'un noeud
+           Cet exemple montre comment forcer la création du noeud eg1 pour
+           l'hôte eghost.example.com. Le noeud est créé malgré l'échec de la
+           communication entre le serveur DAS et l'hôte eghost.example.com
+           pour valider les paramètres du noeud.
+
+               asadmin> create-node-ssh --force --nodehost eghost.example.com eg1
+               Warning: some parameters appear to be invalid.
+               Could not connect to host eghost.example.com using SSH.
+               There was a problem while connecting to eghost.example.com:22
+               eghost.example.com
+               Continuing with node creation due to use of --force.
+
+               Command create-node-ssh executed successfully.
+
+STATUT DE SORTIE
+       0
+           commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la commande
+
+VOIR AUSSI
+       create-node-config(1), create-node-dcom(1), delete-node-ssh(1),
+       install-node(1), install-node-ssh(1), list-nodes(1), ping-node-ssh(1),
+       setup-ssh(1), uninstall-node(1), uninstall-node-ssh(1),
+       update-node-ssh(1)
+
+       asadmin(1M)
+
+Java EE 7                         5 jan 2012                create-node-ssh(1)

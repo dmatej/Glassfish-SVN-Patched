@@ -1,0 +1,226 @@
+setup-ssh(1)              asadmin 유틸리티 하위 명령              setup-ssh(1)
+
+제목
+       setup-ssh - 지정된 호스트에서 SSH 키 설정
+
+시놉시스
+           setup-ssh [--help]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile] [--sshpublickeyfile ssh-public-keyfile]
+           [--generatekey={false|true}]
+           host-list
+
+설명
+       setup-ssh 하위 명령은 하위 명령의 피연산자로 지정된 호스트에서 SSH(보안
+       셸) 키를 설정합니다. 이 키를 통해 GlassFish Server은(는) 원격
+       호스트에서 사용자의 SSH 로그인 인증에 공용 키 인증을 사용할 수
+       있습니다.
+
+       SSH는 여러 호스트에 걸쳐 있는 GlassFish Server 클러스터를 중앙에서
+       관리할 수 있도록 합니다. 사용자가 여러 호스트에 작용하는 클러스터
+       관리를 위한 하위 명령을 실행하면 하위 명령은 DAS(도메인 관리 서버)
+       호스트에서 원격 호스트로 전달됩니다. 실행 중이 아닌 GlassFish Server
+       인스턴스 또는 실행 중인 인스턴스가 없는 노드에 작용하는 하위 명령을
+       전달하기 위해 GlassFish Server은(는) SSH를 사용합니다. SSH는 DAS와 원격
+       호스트 간에 교환되는 데이터에 기밀성 및 보안을 제공합니다.
+
+       공용 키 인증은 다음 키를 포함하는 SSH 키 쌍을 사용합니다.
+
+       ·   전용 키. DAS 호스트의 안전한 위치에 저장되며 문장암호로 보호할 수
+           있습니다.
+
+       ·   공용 키. DAS가 통신하는 모든 원격 호스트에 저장됩니다.
+
+       하위 명령은 DAS로부터 아무런 구성 정보를 필요로 하지 않으며 DAS의
+       구성을 수정하지 않습니다.
+
+       이 하위 명령은 로컬 모드에서만 지원됩니다.
+
+   setup-ssh 하위 명령 사용을 위한 필요 조건
+       setup-ssh 하위 명령을 사용하려면 SSH 사용자는 SSH를 설정할 원격
+       호스트에 SSH를 사용하여 로그인할 수 있어야 합니다. 구체적으로 다음 필요
+       조건을 충족해야 합니다.
+
+       ·   ssh(1) 클라이언트가 DAS 호스트에 설치되어 있고 DAS 사용자의 경로를
+           통해 액세스할 수 있어야 합니다.
+
+       ·   sshd(1M) 데몬이 SSH 키를 설정할 모든 호스트에 설치되어 실행
+           중이어야 합니다.
+
+       ·   --sshuser 옵션이 지정하는 사용자가 SSH 키를 설정할 모든 호스트에
+           대해 SSH 로그인을 사용해야 합니다.
+
+       ·   ssh-keygen(1) 유틸리티가 기본 위치나 DAS 사용자의 경로에 정의되어
+           있는 위치에서 DAS 호스트에 설치되어 있어야 합니다.
+
+       ·   Windows 시스템의 경우, Cygwin
+
+           또는 MKS Software용 SSH 패키지
+
+           툴킷이 설치되어 있어야 합니다.
+
+   setup-ssh 하위 명령의 동작
+       하위 명령은 다음 작업을 자동화하여 DAS 호스트와 원격 호스트 간의 SSH
+       접속을 설정합니다.
+
+       ·   SSH 키 쌍 생성.  SSH 키 쌍이 존재하지 않는 경우 하위 명령은
+           기본적으로 사용자에게 SSH 키 쌍을 생성하도록 프롬프트를 표시합니다.
+           암호화 문장암호 없이 SSH 키 쌍이 생성됩니다. 문장암호로 보호되는 키
+           쌍이 필요할 경우 SSH commandssh-keygen(1)을 사용하여 수동으로 키
+           쌍을 생성해야 합니다.
+
+       ·   공용 키 배포.  하위 명령은 공용 키 파일의 콘텐츠를 각 원격 호스트의
+           user-home/.ssh/authorized_keys 파일에 추가합니다. 기본적으로 하위
+           명령은 하위 명령이 실행되는 호스트의 user-home/.ssh 디렉토리에서
+           공용 키 파일을 찾습니다. 호스트에 user-home/.ssh/authorized_keys
+           파일이 존재하지 않을 경우 하위 명령이 파일을 생성합니다.
+           user-home은 호스트에 있는 사용자의 홈 디렉토리입니다.
+
+           공용 키를 배포하려면 사용자의 SSH 로그인 인증이 필요합니다. 전용
+           키가 문장암호로 보호되는 경우 문장암호도 필요합니다. 기본적으로
+           하위 명령은 사용자에게 비밀번호 및 문장암호(필요한 경우)에 대한
+           프롬프트를 표시합니다. 프롬프트 표시 없이 공용 키를 배포하려면
+           다음과 같이 하위 명령을 실행합니다.
+
+           ·   asadmin(1M) 유틸리티의 --interactive 옵션을 false로 설정합니다.
+
+           ·   asadmin 유틸리티의 --passwordfile 옵션을 AS_ADMIN_SSHPASSWORD
+               항목이 지정된 호스트에 로그인하기 위해 SSH 사용자의 비밀번호를
+               지정하는 파일로 설정합니다.
+
+           ·   문장암호가 필요할 경우 asadmin 유틸리티의 --passwordfile
+               옵션에서 지정하는 파일에 AS_ADMIN_SSHKEYPASSPHRASE에 대한
+               항목이 포함되도록 합니다.
+
+           호스트에 이미 공용 키 인증이 설정된 경우 하위 명령은 사용자에게
+           공용 키 인증이 이미 설정되어 있어 키를 호스트에 배포하지 않는다고
+           알립니다.
+
+옵션
+       --help, -?
+           하위 명령에 대한 도움말 텍스트를 표시합니다.
+
+       --sshport
+           SSH를 설정할 호스트에 대한 SSH 접속에 사용할 포트입니다. 기본값은
+           22입니다.
+
+       --sshuser
+           원격 호스트에서 SSH를 설정하는 프로세스를 실행할 해당 호스트의 SSH
+           사용자입니다. 기본값은 이 하위 명령을 실행할 사용자입니다. DAS가 이
+           사용자의 SSH 전용 키 파일을 읽을 수 있도록 하려면 DAS 프로세스를
+           실행할 사용자를 지정합니다.
+
+       --sshkeyfile
+           --sshuser 옵션에서 지정하는 사용자에 대한 SSH 전용 키 파일의 절대
+           경로입니다. 이 파일은 호스트에서 sshd 데몬에 대한 인증에
+           사용됩니다.
+
+           이 하위 명령을 실행하는 사용자는 키 파일 경로에 액세스하여 해당 키
+           파일을 읽을 수 있어야 합니다.
+
+           기본값은 하위 명령이 실행되는 호스트에 있는 사용자의 .ssh
+           디렉토리에 있는 키 파일입니다. 여러 키 파일이 있는 경우 하위 명령은
+           다음 환경설정 순서를 사용합니다.
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --sshpublickeyfile
+           --sshuser 옵션에서 지정하는 사용자에 대한 SSH 공용 키 파일의 절대
+           경로입니다. 공용 키 파일 내용이 SSH를 설정할 각 호스트에 있는
+           사용자의 .ssh/authorized_keys 파일에 추가됩니다. 호스트에
+           .ssh/authorized_keys 파일이 존재하지 않을 경우 하위 명령이 파일을
+           생성합니다.
+
+           이 하위 명령을 실행하는 사용자는 키 파일 경로에 액세스하여 해당 키
+           파일을 읽을 수 있어야 합니다.
+
+           기본값은 하위 명령이 실행되는 호스트에 있는 사용자의 .ssh
+           디렉토리에 있는 키 파일입니다. 여러 키 파일이 있는 경우 하위 명령은
+           다음 환경설정 순서를 사용합니다.
+
+            1. id_rsa.pub
+
+            2. id_dsa.pub
+
+            3. identity.pub
+
+       --generatekey
+           하위 명령이 사용자에게 프롬프트를 표시하지 않고 SSH 키 파일을
+           생성하는지를 지정합니다.
+
+           가능한 값은 다음과 같습니다.
+
+           true
+               하위 명령이 사용자에게 프롬프트를 표시하지 않고 SSH 키 파일을
+               생성합니다.
+
+           false
+               하위 명령의 동작은 SSH 키 파일 존재 여부에 따라 다릅니다.
+
+               ·   SSH 키 파일이 존재하는 경우 하위 명령이 파일을 생성하지
+                   않습니다.
+
+               ·   SSH 키 파일이 존재하지 않을 경우 하위 명령의 동작은 asadmin
+                   유틸리티의 --interactive 옵션 값에 따라 다릅니다.
+
+                   ·   --interactive 옵션이 true이면 하위 명령이 사용자에게
+                       파일을 생성하라는 프롬프트를 표시합니다.
+
+                   ·   --interactive 옵션이 false이면 하위 명령이 실패합니다.
+
+               이 값은 기본값입니다.
+
+피연산자
+       host-list
+           SSH 키를 설정할 호스트 이름의 공백으로 구분된 목록입니다.
+
+예제
+       예 1, SSH 키 설정
+           이 예제는 호스트 sj03 및 sj04에서 사용자 gfuser에 대한 SSH 키를
+           설정합니다. 키 파일이 생성되지 않지만 하위 명령이 실행되는 호스트에
+           있는 사용자의 .ssh 디렉토리에서 복사됩니다.
+
+               asadmin> setup-ssh sj03 sj04
+               Enter SSH password for gfuser@sj03>
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj03
+               Successfully connected to gfuser@sj03 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj04
+               Successfully connected to gfuser@sj04 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+       예 2, SSH 키 생성 및 설정
+           이 예제는 호스트 sua01 및 sua02에서 사용자 gfuser에 대한 SSH 키를
+           생성 및 설정합니다.
+
+               asadmin> setup-ssh --generatekey=true sua01 sua02
+               Enter SSH password for gfuser@sua01>
+               Created directory /home/gfuser/.ssh
+               /usr/bin/ssh-keygen successfully generated the identification /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua01
+               Successfully connected to gfuser@sua01 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua02
+               Successfully connected to gfuser@sua02 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+종료 상태
+       0
+           명령이 성공적으로 실행됨
+
+       1
+           명령 실행 중 오류 발생
+
+참조
+       ssh(1), ssh-keygen(1)
+
+       asadmin(1M)
+
+       sshd(1M)
+
+       Cygwin 정보 및 설치(http://www.cygwin.com/), MKS
+       소프트웨어(http://www.mkssoftware.com/)
+
+Java EE 7                      2010년 12월 14일                   setup-ssh(1)

@@ -1,0 +1,175 @@
+create-jmsdest(1)           asadmin 公用程式子命令           create-jmsdest(1)
+
+參考名
+       create-jmsdest - 建立 JMS 實體目的地
+
+概要
+           create-jmsdest [--help]
+           --desttype dest_type
+           [--property (name=value)[:name=value]*]
+           [--target target]
+           [--force[={false|true}]]
+           dest_name
+
+描述
+       create-jmsdest 子命令會建立 Java 訊息服務 (JMS)
+       實體目的地。通常，您可以使用 create-jms-resource
+       子命令來建立具有指定實體目的地之 Name 特性的 JMS
+       目的地資源。當您執行使用目的地資源的應用程式時會自動建立實體目的地。如果您要以非預設特性設定建立實體目的地，請使用
+       create-jmsdest 子命令。
+
+       只有遠端模式支援這個子命令。遠端 asadmin
+       子命令需要使用執行中的網域管理伺服器 (DAS)。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --desttype
+           JMS 目的地的類型。有效值為 topic 和 queue。
+
+       --property
+           用於組態實體目的地的選擇性屬性名/值配對。您可以為實體目的地指定以下特性。
+
+           maxNumMsgs
+               目的地所允許的最大未使用訊息數目。值 -1
+               表示訊息的數目沒有限制。預設值為
+               -1。如果是停用的訊息佇列，預設值為 1000。
+
+               如果 limitBehavior 特性設為
+               FLOW_CONTROL，則可能會超出指定的訊息限制，因為代理程式的反應速度不足以停止內送訊息的流動。在這種情況下，針對
+               maxNumMsgs
+               伺服器所指定的值不過是對代理程式的提示，而非嚴格強制的限制。
+
+           maxBytesPerMsg
+               任何單一訊息的最大大小
+               (以位元組為單位)。若拒絕永久性訊息，會報告給產生訊息的從屬端，帶有異常；如果是非永久性訊息，不會傳送任何通知。
+
+               值可以使用下列字尾，以位元組、千位元組或百萬位元組表示：
+
+               b
+                   位元組
+
+               k
+                   千位元組 (1024 個位元組)
+
+               m
+                   百萬位元組 (1024 x 1024 = 1,048,576 個位元組)
+
+               沒有字尾的值會以位元組表示；值為 -1
+               表示訊息的大小沒有限制。預設值為 -1。
+
+           maxTotalMsgBytes
+               未使用訊息的最大記憶體總容量 (以位元組為單位)。預設值為
+               -1。語法與 maxBytesPerMsg
+               的語法相同。如果是停用的訊息佇列，預設值為 10m。
+
+           limitBehavior
+               訊息佇列代理程式，在達到記憶體限制臨界值時的運作方式。有效的值如下：
+
+               REJECT_NEWEST
+                   僅在訊息持續出現時，拒絕最新的訊息並丟出異常以通知產生訊息的從屬端。此為預設值。
+
+               FLOW_CONTROL
+                   減慢訊息產生器傳送訊息的速度。
+
+               REMOVE_OLDEST
+                   擲出最舊的訊息。
+
+               REMOVE_LOW_PRIORITY
+                   根據保留期限來擲出優先順序最低的訊息，不通知產生訊息的從屬端。
+
+               如果值為 REMOVE_OLDEST 或 REMOVE_LOW_PRIORITY，且 useDMQ
+               特性設為
+               true，則會將多餘的訊息移至停用的訊息佇列。如果是停用的訊息佇列本身，預設限制運作方式為
+               REMOVE_OLDEST，且值不可設為 FLOW_CONTROL。
+
+           maxNumProducers
+               目的地的最大訊息產生器數目。到達此限制時，則無法再建立新的產生器。值
+               -1 表示產生器的數目沒有限制。預設值為
+               100。此特性不適用於停用的訊息佇列。
+
+           consumerFlowLimit
+               可在單一批次中傳送給用戶的最大訊息數目。值 -1
+               表示訊息的數目沒有限制。預設值為
+               1000。從屬端執行階段可以藉由在連線工廠物件上指定較低的值，來置換此限制。
+
+               在負載平衡佇列傳送中，這是在負載平衡開始之前傳送給使用中用戶的初始佇列訊息數目。
+
+           useDMQ
+               如果設為 true，停用的訊息會移至停用的訊息佇列。如果設為
+               false，則會放棄停用的訊息。預設值為 true。
+
+           validateXMLSchemaEnabled
+               如果設為 true，會對目的地啟用 XML 綱要驗證。預設值為 false。
+
+               啟用 XML 驗證時，Message Queue 從屬端執行階段會嘗試根據指定的
+               XSD (若未指定任何 XSD，則根據 DTD) 驗證 XML
+               訊息，再傳送至代理程式。如果找不到指定的綱要或無法驗證訊息，則不會傳送訊息，並會丟出異常。
+
+               此特性應只在目的地為非使用中時設定：亦即沒有用戶及產生器，且目的地中沒有訊息時。否則，必須重新連接產生器。
+
+           XMLSchemaURIList
+               以空格分隔的 XML 綱要文件 (XSD) URI 字串清單。如果
+               validateXMLSchemaEnabled 設為 true，則 URI 會指向一個以上的 XSD
+               位置，以便用於 XML 綱要驗證。預設值為 null。
+
+               如果指定多個 URI，請使用雙引號括住此值：如下列範例所示：
+
+                   "http://foo/flap.xsd http://test.com/test.xsd"
+               若此特性未設定或為空
+               文件中指定的 DTD 執行 XML 驗證。若由於變更應用程式需求而變更了
+               XSD，則根據已變更之 XSD 來產生 XML
+               訊息的所有從屬端應用程式，均須重新連線至代理程式。
+
+           若要修改這些特性的值，可以使用 as-install/mq/bin/imqcmd
+           命令。請參閱 Oracle GlassFish Server Message Queue Administration
+           Guide 中的 Physical Destination Property Reference 以取得詳細資訊。
+
+       --target
+           僅為指定目標建立實體目的地。雖然 create-jmsdest
+           子命令與資源相關，但是會使用 JMS 服務 (JMS 代理程式)
+           來建立實體目的地，此為組態的一部分。JMS 代理程式組態於 domain.xml
+           的組態區段。有效的值如下：
+
+           server
+               建立預設伺服器執行處理的實體目的地。此為預設值。
+
+           configuration-name
+               在指定組態中建立實體目的地。
+
+           cluster-name
+               為指定叢集中的每個伺服器執行處理建立實體目的地。
+
+           instance-name
+               為指定伺服器執行處理建立實體目的地。
+
+       --force
+           指定子命令是否覆寫相同名稱的現有 JMS 實體目的地。預設值為 false。
+
+運算元
+       dest_name
+           要建立的 JMS 目的地之唯一識別碼。
+
+範例
+       範例 1, 建立 JMS 實體目的地
+           下列子命令會以非預設特性值建立名為 PhysicalQueue 的 JMS 實體佇列。
+
+               asadmin> create-jmsdest --desttype queue
+               --property maxNumMsgs=1000:maxBytesPerMsg=5k PhysicalQueue
+               Command create-jmsdest executed successfully.
+
+結束狀態
+       0
+           已成功執行子命令
+
+       1
+           執行子命令時發生錯誤
+
+另請參閱
+       create-jms-resource(1), delete-jmsdest(1), list-jmsdest(1),
+       flush-jmsdest(1)
+
+       asadmin(1M)
+
+Java EE 7                     2013 年 2 月 12 日             create-jmsdest(1)

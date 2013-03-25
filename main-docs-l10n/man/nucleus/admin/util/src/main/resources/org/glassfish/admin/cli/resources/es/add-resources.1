@@ -1,0 +1,154 @@
+add-resources(1)        Subcomandos de la Utilidad asa        add-resources(1)
+
+NOMBRE DE REFERENCIA
+       add-resources - Crea los recursos especificados en un archivo XML.
+
+SINOPSIS
+           add-resources [--help] [--target target]
+           [--upload={false|true}] xml-file-name
+
+DESCRIPCIÓN
+       El subcomando add-resources crea los recursos nombrados en el archivo
+       XML especificado. Los recursos que se pueden crear con este subcomando
+       se muestran en Consulte también en esta página de ayuda.
+
+       La opción --target especifica el destino para el que se van a crear los
+       recursos. Si esta opción especifica el dominio, los recursos se agregan
+       sólo a la configuración del servidor de administración de dominio
+       (DAS). Si esta opción especifica cualquier otro destino, los recursos
+       se agregan a la configuración del DAS y las referencias se agregan a
+       los recursos del destino especificado.
+
+       El operando xml-file-name es la ruta de acceso al archivo XML que
+       contiene los recursos que se van a crear.  DOCTYPE se debe especificar
+       como http://glassfish.org/dtds/glassfish-resources_1_5.dtd en el
+       archivo resources.xml.
+
+       Este subcomando sólo está soportado en modo remoto.
+
+OPCIONES
+       --help, -?
+           Muestra el texto de ayuda para el subcomando.
+
+       --target
+           Especifica el destino para el que se van a crear los recursos.
+
+           Los valores válidos son los siguientes:
+
+           server
+               Crea los recursos para la instancia de servidor por defecto
+               server y es el valor por defecto.
+
+           domain
+               Crea los recursos para el dominio.
+
+           cluster-name
+               Crea los recursos para todas las instancias de servidor del
+               cluster.
+
+           instance-name
+               Crea los recursos para una instancia de GlassFish Server
+               concreta.
+
+       --upload
+           Especifica si el subcomando carga el archivo en el DAS. En la
+           mayoría de las situaciones, esta opción se puede omitir.
+
+           Los valores válidos son los siguientes:
+
+           false
+               El subcomando no carga el archivo y trata de acceder a él a
+               través del nombre del archivo especificado. Si el DAS no puede
+               acceder al archivo, el subcomando falla.
+
+               Por ejemplo, el DAS puede ejecutarse como un usuario distinto
+               del usuario de administración y no tener acceso de lectura al
+               archivo. En esta situación, el subcomando falla si la opción
+               --upload es false.
+
+           true
+               El subcomando carga el archivo en el DAS a través de la
+               conexión de red.
+
+           El valor por defecto depende de si el DAS está en el host en el que
+           se ejecuta el subcomando o está en un host remoto.
+
+           ·   Si el DAS está en el host en el que se ejecuta el subcomando,
+               el valor por defecto es false.
+
+           ·   Si el DAS está en un host remoto, el valor por defecto es true.
+
+OPERANDOS
+       xml-file-name
+           La ruta de acceso al archivo XML contiene los recursos que se van a
+           crear. Puede especificar una ruta de acceso absoluta, sólo el
+           nombre del archivo o bien una ruta de acceso relativa.
+
+           ·   Si especifica una ruta de acceso absoluta, el archivo XML puede
+               estar en cualquier ubicación.
+
+           ·   Si sólo se especifica el nombre de archivo, el archivo XML debe
+               residir en el directorio domain-dir/config del host del DAS.
+               Este requisito se debe cumplir aunque ejecute el subcomando
+               desde otro host.
+
+           ·   Si especifica una ruta de acceso relativa, el archivo XML debe
+               estar en el directorio relativo.
+
+           A continuación se muestra un ejemplo de archivo XML.
+
+               <?xml version="1.0" encoding="UTF-8"?>
+               <!DOCTYPE resources PUBLIC
+                  "-//GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions //EN"
+                  "http://glassfish.org/dtds/glassfish-resources_1_5.dtd">
+               <resources>
+                <jdbc-connection-pool name="SPECjPool" steady-pool-size="100"
+                  max-pool-size="150" max-wait-time-in-millis="60000"
+                  pool-resize-quantity="2" idle-timeout-in-seconds="300"
+                  is-isolation-level-guaranteed="true"
+                  is-connection-validation-required="false"
+                  connection-validation-method="auto-commit"
+                  fail-all-connections="false"
+                  datasource-classname="oracle.jdbc.pool.OracleDataSource">
+                 <property name="URL"
+                   value="jdbc:oracle:thin:@iasperfsol12:1521:specdb"/>
+                 <property name="User" value="spec"/>
+                 <property name="Password" value="spec"/>
+                 <property name="MaxStatements" value="200"/>
+                 <property name="ImplicitCachingEnabled" value="true"/>
+                </jdbc-connection-pool>
+                <jdbc-resource enabled="true" pool-name="SPECjPool"
+                  jndi-name="jdbc/SPECjDB"/>
+               </resources>
+
+EJEMPLOS
+       Ejemplo 1, Adición de recursos
+           En este ejemplo se crean recursos que utilizan el contenido del
+           archivo XML resource.xml.
+
+               asadmin> add-resources resource.xml
+               Command : Connector connection pool jms/testQFactoryPool created.
+               Command : Administered object jms/testQ created.
+               Command : Connector resource jms/testQFactory created.
+               Command : Resource adapter config myResAdapterConfig created successfully
+               Command : JDBC connection pool DerbyPoolA created successfully.
+               Command : JDBC resource jdbc/__defaultA created successfully.
+               Command add-resources executed successfully.
+
+ESTADO DE SALIDA
+       0
+           Subcomando ejecutado correctamente
+
+       1
+           Error al ejecutar el subcomando
+
+CONSULTE TAMBIÉN
+       create-jdbc-connection-pool(1),create-jdbc-resource(1),
+       create-jms-resource(1), create-jndi-resource(1),
+       create-javamail-resource(1), create-custom-resource(1),
+       create-connector-resource(1), create-connector-work-security-map(1),
+       create-admin-object(1), create-resource-adapter-config(1)
+
+       asadmin(1M)
+
+Java EE 7                   23 de diciembre de 2010           add-resources(1)

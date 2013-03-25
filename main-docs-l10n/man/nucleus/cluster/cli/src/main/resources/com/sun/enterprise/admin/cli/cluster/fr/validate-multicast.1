@@ -1,0 +1,153 @@
+validate-multicast(1)   Sous-commandes de l'utilitaire   validate-multicast(1)
+
+NOM
+       validate-multicast - valide la disponibilité du transport
+       multidiffusion pour les clusters
+
+SYNTAXE
+           validate-multicast [--help] [--multicastport multicastport]
+           [--multicastaddress multicastaddress]
+           [--bindaddress bindaddress]
+           [--sendperiod sendperiod]
+           [--timeout timeout]
+           [--timetolive timetolive]
+           [--verbose={false|true}]
+
+DESCRIPTION
+       La sous-commande validate-multicast valide la disponibilité du
+       transport multidiffusion pour les clusters. Vous devez exécuter cette
+       sous-commande simultanément sur chacun des hôtes sur lesquels effectuer
+       la validation. Cette sous-commande est disponible en mode local.
+
+           Note
+           ┌────────────────────────────────────────┐
+           │Remarque                                │
+           │                                        │
+           │           N'exécutez pas la            │
+           │           sous-commande                │
+           │           validate-multicast à l'aide  │
+           │           du serveur DAS et des        │
+           │           valeurs de port et d'adresse │
+           │           de multidiffusion du cluster │
+           │           lorsque le serveur DAS et le │
+           │           cluster sont en cours        │
+           │           d'exécution. Cela entraîne   │
+           │           une erreur.                  │
+           │                                        │
+           │           La sous-commande             │
+           │           validate-multicast doit être │
+           │           exécutée simultanément sur   │
+           │           au moins deux ordinateurs    │
+           │           pour valider la réception    │
+           │           des messages de              │
+           │           multidiffusion entre les     │
+           │           ordinateurs.                 │
+           └────────────────────────────────────────┘
+
+       Tant que tous les ordinateurs "se voient", la multidiffusion est
+       validée comme fonctionnant correctement sur ces derniers. Si les
+       ordinateurs "ne se voient pas", définissez explicitement l'option
+       --bindaddress pour vous assurer qu'ils utilisent tous l'interface sur
+       le même sous-réseau ou augmentez la valeur de l'option --timetolive
+       au-delà de la valeur par défaut (à savoir 4). Si ces modifications ne
+       permettent pas de résoudre le problème de multidiffusion, demandez à
+       l'administrateur réseau de vérifier que le réseau est configuré de
+       sorte que les messages de multidiffusion puissent être "vus" entre tous
+       les ordinateurs utilisés pour l'exécution du cluster.
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --multicastport
+           Port du socket de multidiffusion sur lequel le service de gestion
+           de groupes (GMS) écoute les événements de groupe. Indiquez un
+           numéro de port UDP standard compris entre 2048 et 32000. La valeur
+           par défaut est 2048.
+
+       --multicastaddress
+           Adresse du socket de multidiffusion sur lequel le service GMS
+           écoute les événements de groupe. Indiquez une adresse IP de classe
+           D. Les adresses IP de classe D sont comprises dans la plage
+           224.0.0.0 à 239.255.255.255 (inclus). L'adresse 224.0.0.0 est
+           réservée et ne doit pas être utilisée. La valeur par défaut est
+           228.9.3.1.
+
+       --bindaddress
+           Interface locale de réception des paquets de datagramme de
+           multidiffusion du service GMS. Par défaut, toutes les interfaces de
+           liaison disponibles sont utilisées.
+
+           Sur un ordinateur multi-home (possédant plusieurs interfaces
+           réseau), cet attribut vous permet d'indiquer les interfaces réseau
+           utilisées pour le service GMS. Cette valeur doit correspondre à une
+           adresse IP d'interface réseau locale.
+
+       --sendperiod
+           Intervalle, en millisecondes, entre les messages de test envoyés
+           entre les noeuds. La valeur par défaut est 2000.
+
+       --timeout
+           Délai, en secondes, au-delà duquel la sous-commande expire et est
+           arrêtée. La valeur par défaut est 20. Vous pouvez également quitter
+           cette sous-commande en appuyant sur les touches Ctrl+C.
+
+       --timetolive
+           Durée de vie par défaut des paquets de multidiffusion envoyés sur
+           le socket de multidiffusion afin de contrôler la portée des
+           multidiffusions. La durée de vie doit être comprise entre 0 et 255
+           inclus. La valeur par défaut correspond à celle du kit JDK par
+           défaut ou à la valeur minimale définie par une constante dans le
+           sous-système GMS, la plus faible de ces valeurs étant utilisée.
+           Pour connaître la durée de vie en cours d'utilisation, utilisez
+           l'option --verbose.
+
+       --verbose
+           Si aucune valeur n'est spécifiée ou que cette option est définie
+           sur true, des informations de débogage supplémentaires sont
+           affichées. La valeur par défaut est false.
+
+EXEMPLES
+       Exemple 1, Validation du transport multidiffusion
+           Sous-commande exécutée à partir de l'hôte machine1 :
+
+               asadmin> validate-multicast
+               Will use port 2,048
+               Will use address 228.9.3.1
+               Will use bind address null
+               Will use wait period 2,000 (in milliseconds)
+
+               Listening for data...
+               Sending message with content "machine1" every 2,000 milliseconds
+               Received data from machine1 (loopback)
+               Received data from machine2
+               Exiting after 20 seconds. To change this timeout, use the --timeout command line option.
+               Command validate-multicast executed successfully
+           Sous-commande exécutée à partir de l'hôte machine2 :
+
+               asadmin> validate-multicast
+               Will use port 2,048
+               Will use address 228.9.3.1
+               Will use bind address null
+               Will use wait period 2,000 (in milliseconds)
+
+               Listening for data...
+               Sending message with content "machine2" every 2,000 milliseconds
+               Received data from machine2 (loopback)
+               Received data from machine1
+               Exiting after 20 seconds. To change this timeout, use the --timeout command line option.
+               Command validate-multicast executed successfully
+
+STATUT DE SORTIE
+       0
+           commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la commande
+
+VOIR AUSSI
+       get-health(1)
+
+       asadmin(1M)
+
+Java EE 7                         10 fév 2011            validate-multicast(1)

@@ -1,0 +1,217 @@
+create-service(1)     asadminユーティリティのサブコマンド    create-service(1)
+
+名前
+       create-service - 無人ブートでのDASまたはGlassFish
+       Serverインスタンスの起動を構成します
+
+概要
+           create-service [--help] [--name service-name]
+           [--serviceproperties service-properties]
+           [--dry-run={false|true}] [--force={false|true}]
+           [--serviceuser service-user]
+           [--domaindir domain-dir]
+           [--nodedir node-dir] [--node node]
+           [domain-or-instance-name]
+
+説明
+       create-serviceサブコマンドは、Windowsシステム、Linuxシステム、およびOracle
+       Solarisシステムの無人ブートについて、ドメイン管理サーバー(DAS)またはGlassFish
+       Serverインスタンスの起動を構成します。
+
+       オペランドを指定せず、ドメイン・ディレクトリに1つのドメインのみが含まれている場合、このサブコマンドはデフォルト・ドメインのDASの起動を構成します。オペランドを指定せず、ドメイン・ディレクトリに複数のドメインが含まれている場合は、エラーが発生します。
+
+       オペランドでインスタンスを指定した場合、create-serviceサブコマンドは、インスタンスが存在するノードを判断するためにドメイン管理サーバー(DAS)に問い合せることはありません。インスタンスが存在するノードを判断するために、サブコマンドによってノード・ディレクトリが含まれるディレクトリが検索されます。複数のノード・ディレクトリが存在する場合は、サブコマンドのオプションとしてノードを指定する必要があります。
+
+       このサブコマンドには、指定されたオペランドがDASであるかインスタンスであるかを判断する内部ロジックが含まれています。
+
+       このサブコマンドは、ローカル・モードでのみサポートされています。
+
+   Windowsシステムでのcreate-serviceの動作
+       Windowsシステムでは、create-serviceサブコマンドはDASまたはインスタンスを表すWindowsサービスを作成します。サービスは無効化された状態で作成されます。このサブコマンドでサービスを作成した後、Windows
+       Services ManagerまたはWindows Services
+       Wrapperを使用してサービスを起動、停止、アンインストール、またはインストールする必要があります。
+
+       Windowsシステムでは、OSレベルの管理者ユーザーとしてこのサブコマンドを実行する必要があります。
+
+       このサブコマンドは、domain-dir\binディレクトリまたはinstance-dir\binディレクトリ内のサービスについて、次のWindows
+       Services Wrapperファイルを作成します。
+
+       ·   構成ファイル: service-nameService.xml
+
+       ·   実行可能ファイル: service-nameService.exe
+
+       Windowsシステムの場合、このサブコマンドにはMicrosoft .NET
+       Frameworkが必要です . それ以外の場合、サブコマンドは失敗します。
+
+   Linuxシステムでのcreate-serviceの動作
+       Linuxシステムでは、create-serviceサブコマンドは、System-Vスタイルの初期化スクリプト/etc/init.d/GlassFish_domain-or-instance-nameを作成し、このスクリプトへのリンクを/etc/rc?.dディレクトリにインストールします。このサブコマンドでスクリプトを作成した後は、ドメインやインスタンスの起動、停止、および再起動にこのスクリプトを使用する必要があります。
+
+       Linuxシステムでは、OSレベルのrootユーザーとしてこのサブコマンドを実行する必要があります。
+
+   Oracle Solarisシステムでのcreate-serviceの動作
+       Oracle
+       Solarisシステムでは、create-serviceサブコマンドはDASまたはインスタンスを表すサービス管理機能(SMF)サービスを作成します。サービスは無効化された状態で作成されます。このサブコマンドでサービスを作成した後、SMFコマンドを使用してサービスの起動、有効化、無効化、削除、または停止を行う必要があります。SMFの詳細は、Oracle
+       Solarisオペレーティング・システムに関する次のドキュメントを参照してください。
+
+       ·   シ
+
+       ·   シ
+
+       Oracle
+       Solarisシステムでは、OSレベルのスーパーユーザー権限を持つユーザーとしてこのサブコマンドを実行する必要があります。DASまたはインスタンスの構成ファイルは、スーパーユーザーがアクセス権を持つディレクトリに格納する必要があります。ネットワーク・ファイル・システムには格納できません。作成されるサービスは、DASまたはインスタンスの構成が存在するディレクトリを所有するOSレベルのユーザーによって制御されます。
+
+       Oracle
+       Solarisシステムでは、次のディレクトリにマニフェスト・ファイルがデフォルトで作成されます。
+
+           /var/svc/manifest/application/GlassFish/domain-or-instance-name_domain-or-instance-root-dir
+
+       このサブコマンドを実行するには、solaris.smf.*認証が必要です。ユーザーに認可を付与する方法については、useradd(1M)およびusermod(1M)のマニュアル・ページを参照してください。
+
+       これらのコマンドをroot以外のユーザーとして実行するには、関連する認可を付与するようにシステム管理者に連絡する必要があります。また、次の条件が満たされていることを確認する必要もあります。
+
+       ·   これらのコマンドを実行できるように、svccfg(1M)、svcs(1)、auths(1)などのOracle
+           Solaris
+           10管理コマンドがPATH文を介して使用可能です。これを簡単に確認するには、シェルでwhich
+           svccfgコマンドを実行します。
+
+       ·   パス/var/svc/manifest/application/GlassFishに対する書込み権限が必要です。通常、スーパーユーザーにはこのパスへの書込み権限があります。
+
+       create-serviceサブコマンドを使用して作成したサービスを削除する場合は、マニフェスト・ファイルが含まれているディレクトリと、そのディレクトリの内容をすべて削除する必要があります。それ以外の場合、create-serviceサブコマンドを使用してサービスを再作成しようとした際に失敗します。Oracle
+       Solarisコマンドのsvccfgは、このディレクトリを削除し
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --name
+           (WindowsシステムおよびOracle Solarisシステムのみ)Oracle Solaris
+           SMFコマンドまたはWindowsオペレーティング・システムのサービス管理機能でサービスを管理する場合に使用するサービスの名前。デフォルトは、このサブコマンドのオペランドとして指定したドメインまたはインスタンスの名前です。
+
+       --serviceproperties
+           サービス固有の各種プロパティをコロン(:)区切りのリストで指定します。
+
+           Windowsサービス・リスト内のサービスの表示名をカスタマイズするには、DISPLAY_NAMEプロパティを必要な名前に設定します。
+
+           Oracle Solaris
+           10システムでは、net_privaddrを指定した場合、サービスのプロセスはプラットフォーム上の権限付きポート(1024未満)にバインドできます。ポートを1024未満にバインドできるのは、サービスの所有者がスーパーユーザーの場合のみです。それ以外の場合は許可されません。
+
+       --dry-run, -n
+           作成しようとするサービスをプレビューします。--dry-runオプションを使用せずにコマンドを実行した場合に発生する問題および結果を示します。実際には何も構成されません。デフォルトはfalseです。
+
+       --force
+           サービスの検証に失敗した場合でもサービスを作成するかを指定します。
+
+           使用可能な値は次のとおりです:
+
+           true
+               サービスの検証に失敗した場合でもサービスを作成します。
+
+           false
+               サービスを作成しません(デフォルト)。
+
+       --serviceuser
+           (Linuxシステムのみ)サービス起動時にGlassFish
+           Serverソフトウェアを実行するユーザー。デフォルトは、このサブコマンドを実行するユーザーです。root以外のユーザーがGlassFish
+           Serverソフトウェアを実行する場合は、このオプションを指定します。
+
+       --domaindir
+           ドメインの構成が含まれるディスク上のディレクトリの絶対パス。このオプションを指定した場合は、オペランドでドメインを指定する必要があります。
+
+       --nodedir
+           インスタンスのノード・ディレクトリが含まれるディレクトリを指定します。インスタンスのファイルは、インスタンスのノード・ディレクトリに保存されます。デフォルトはas-install/nodesです。このオプションを指定した場合は、オペランドでインスタンスを指定する必要があります。
+
+       --node
+           インスタンスが存在するノードを指定します。--nodedirオプションに指定したディレクトリに含まれるノード・ディレクトリが1つの場合のみ、このオプションを省略できます。それ以外の場合、このオプションは必須です。このオプションを指定した場合は、オペランドでインスタンスを指定する必要があります。
+
+オペランド
+       domain-or-instance-name
+           構成するドメインまたはインスタンスの名前。オペランドを指定しないと、デフォルトのドメインが使用されます。
+
+例
+       例 1, Windowsシステムでのサービスの作成
+           この例では、Windowsを実行するシステム上でデフォルトのドメインに対してサービスを作成します。
+
+               asadmin> create-service
+               Found the Windows Service and successfully uninstalled it.
+               The Windows Service was created successfully.  It is ready to be started.  Here are
+               the details:
+               ID of the service: domain1
+               Display Name of the service:domain1 GlassFish Server
+               Domain Directory: C:\glassfish3\glassfish\domains\domain1
+               Configuration file for Windows Services Wrapper: C:\glassfish3\glassfish\domains\
+               domain1\bin\domain1Service.xml
+               The service can be controlled using the Windows Services Manager or you can use the
+               Windows Services Wrapper instead:
+               Start Command:  C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe  start
+               Stop Command:   C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe  stop
+               Uninstall Command:  C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe
+               uninstall
+               Install Command:  C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe
+               install
+
+               This message is also available in a file named PlatformServices.log in the domain's
+               root directory
+               Command create-service executed successfully.
+
+       例 2, Linuxシステムでのサービスの作成
+           この例では、Linuxを実行するシステム上でデフォルトのドメインに対してサービスを作成します。
+
+               asadmin> create-service
+               Found the Linux Service and successfully uninstalled it.
+               The Service was created successfully. Here are the details:
+               Name of the service:domain1
+               Type of the service:Domain
+               Configuration location of the service:/etc/init.d/GlassFish_domain1
+               User account that will run the service: root
+               You have created the service but you need to start it yourself.
+               Here are the most typical Linux commands of interest:
+
+               * /etc/init.d/GlassFish_domain1 start
+               * /etc/init.d/GlassFish_domain1 stop
+               * /etc/init.d/GlassFish_domain1 restart
+
+               For your convenience this message has also been saved to this file:
+               /export/glassfish3/glassfish/domains/domain1/PlatformServices.log
+               Command create-service executed successfully.
+
+       例 3, Oracle Solarisシステムでのサービスの作成
+           この例では、Oracle
+           Solarisを実行するシステム上でデフォルトのドメインに対してサービスを作成します。
+
+               asadmin> create-service
+               The Service was created successfully. Here are the details:
+               Name of the service:application/GlassFish/domain1
+               Type of the service:Domain
+               Configuration location of the service:/home/gfuser/glassfish-installations
+               /glassfish3/glassfish/domains
+               Manifest file location on the system:/var/svc/manifest/application
+               /GlassFish/domain1_home_gfuser_glassfish-installations_glassfish3
+               _glassfish_domains/Domain-service-smf.xml.
+               You have created the service but you need to start it yourself.
+               Here are the most typical Solaris commands of interest:
+               * /usr/bin/svcs -a | grep domain1 // status
+               * /usr/sbin/svcadm enable domain1 // start
+               * /usr/sbin/svcadm disable domain1 // stop
+               * /usr/sbin/svccfg delete domain1 // uninstall
+               Command create-service executed successfully.
+
+終了ステータス
+       0
+           サブコマンドは正常に実行されました
+
+       1
+           サブコマンドの実行時にエラーが発生しました
+
+関連項目
+       asadmin(1M)
+
+       auths(1), svcs(1)
+
+       svccfg(1M), useradd(1M), usermod(1M)
+
+       シ
+       基
+
+       Microsoft .NET Framework (http://www.microsoft.com/net/)
+
+Java EE 7                        2011年12月8日               create-service(1)

@@ -1,0 +1,315 @@
+create-local-instance(1)    asadmin 实用程序子命令    create-local-instance(1)
+
+名称
+       create-local-instance - 在运行子命令的主机上创建 GlassFish Server 实例
+
+提要
+           create-local-instance [--help]
+           [--node node-name] [--nodedir node-dir]
+           [--config config-name | --cluster cluster-name]
+           [--lbenabled={true|false}]
+           [--portbase port-number] [--checkports={true|false}]
+           [--savemasterpassword={false|true}]
+           [--usemasterpassword={false|true}]
+           [--systemproperties (name=value)[:name=value]* ]
+           instance-name
+
+说明
+       create-local-instance 子命令在表示运行该子命令的主机的节点上创建
+       GlassFish Server 实例。此子命令不要求配置分布式组件对象模型 (DCOM)
+       远程协议或安全 shell (SSH)。
+
+       您必须从实例将要驻留的节点表示的主机上运行该子命令。要联系域管理服务器
+       (DAS)，该子命令需要运行 DAS
+       的主机名。如果使用非默认端口进行管理，则该子命令还需要端口号。如果是将第一个实例添加到节点，则必须通过
+       asadmin(1M) 实用程序的 --host 选项和 --port
+       选项提供该信息。对于第二个以及之后的实例，可从该节点的 DAS
+       属性中获取此信息。
+
+       GlassFish Server 实例是运行 GlassFish Server 的单个节点上适用于 Java
+       平台的单个虚拟机 (Java 虚拟机或 JVM 计算机)。节点定义了 GlassFish
+       Server 实例所在的主机。JVM 计算机必须与 Java Platform Enterprise
+       Edition (Java EE) 兼容。
+
+       GlassFish Server 实例需要对以下各项的引用：
+
+       ·   用来定义实例所在主机的节点。可在命令中指定要创建实例的节点，但仅当存储节点文件的目录中存在多个节点时，才需要指定节点。如果未指定节点，则该子命令的行为取决于存储节点的目录中的现有节点数：
+
+           ·   如果不存在任何节点，则该子命令将为实例创建一个节点。节点的名称是运行该子命令的主机名称。
+
+           ·   如果仅存在一个节点，则该子命令将为实例创建对现有节点的引用。
+
+           ·   如果存在两个或更多节点，将出现错误。
+
+       ·   用来定义实例配置的命名配置。可在命令中指定要创建实例的配置，但不是必需的。如果没有为未加入集群的实例指定配置，则此子命令会为该实例创建一个配置。正在加入集群的实例从其父集群接收配置。
+
+       每个 GlassFish Server 实例是以下类型的实例之一：
+
+       独立实例
+           独立实例不与任何其他实例或集群共享其配置。如果满足下列条件之一，将创建独立实例：
+
+           ·   未在命令中指定配置或集群来创建实例。
+
+           ·   在命令中指定了未由其他任何实例或集群引用的配置来创建实例。
+
+           未指定配置或集群时，将为实例创建 default-config
+           配置的副本。此配置的名称为 instance-name-config，其中 instance-name
+           表示非集群服务器实例的名称。
+
+       共享实例
+           共享实例与其他实例或集群共享其配置。如果在命令中指定了已由其他实例或集群引用的配置来创建实例，将创建共享实例。
+
+       集群实例
+           集群实例继承实例所属的集群的配置，并与集群中的其他实例共享其配置。如果在命令中指定了用于创建实例的集群，将创建集群实例。
+
+           任何不属于集群的实例均视为非集群服务器实例。因此，独立实例和共享实例都是非集群服务器实例。
+
+       默认情况下，该子命令会尝试为正在创建的实例解决可能的端口冲突。该子命令还将分配当前未使用且尚未分配给同一节点上其他实例的端口。此子命令根据其内部算法分配这些端口。使用
+       --systemproperties 选项可解决同一节点上其他实例的端口冲突。可以使用
+       create-system-properties(1) 子命令和 delete-system-property(1)
+       子命令来处理实例的系统属性。
+
+       创建实例时，子命令将检索与域管理服务器 (DAS)
+       进行安全同步所需的文件。实例在启动时与 DAS 同步
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --node
+           用来定义要在其中创建实例的主机的节点名称。只有当存储节点的目录中存在多个节点时，指定节点才是必需的。否则，可以省略节点。如果已指定节点，则此节点必须存在。
+
+           如果未指定节点，则该子命令的行为取决于存储节点的目录中的现有节点数：
+
+           ·   如果不存在任何节点，则该子命令将为实例创建一个节点。节点的名称是运行该子命令的主机名称。
+
+           ·   如果仅存在一个节点，则该子命令将为实例创建对现有节点的引用。
+
+           ·   如果存在两个或更多节点，将出现错误。
+
+       --nodedir
+           要用来存储实例节点文件的目录的路径。默认值为 as-install/nodes。
+
+       --config
+           指定实例引用的命名配置。该配置必须存在，且不能命名为 default-config
+           或 server-config。指定 --config 选项将创建共享实例。
+
+           --config 选项和 --cluster
+           选项互相排斥。如果忽略这两个选项，则会创建一个独立实例。
+
+       --cluster
+           指定实例继承其配置的集群。指定 --cluster 选项将创建集群实例。
+
+           --config 选项和 --cluster
+           选项互相排斥。如果忽略这两个选项，则会创建一个独立实例。
+
+       --lbenabled
+           指定是否为实例启用了负载平衡。可能的值如下：
+
+           真
+               为该实例启用了负载平衡 (默认值)。
+
+               为实例启用了负载平衡时，负载平衡器会向该实例发送请求。
+
+           假
+               为该实例禁用了负载平衡。
+
+               为实例禁用了负载平衡时，负载平衡器不会向该实例发送请求。
+
+       --portbase
+           确定端口分配的起始编号。每个实例均使用静态分配的特定数量的端口。portbase
+           值确定分配应开始的位置。端口值的计算方式如下：
+
+           ·   管理端口：portbase + 48
+
+           ·   HTTP 监听程序端口：portbase + 80
+
+           ·   HTTPS 监听程序端口：portbase + 81
+
+           ·   JMS 端口：portbase + 76
+
+           ·   IIOP 监听程序端口：portbase + 37
+
+           ·   安全 IIOP 监听程序端口：portbase + 38
+
+           ·   可相互验证的安全 IIOP 端口：portbase + 39
+
+           ·   JMX 端口：portbase + 86
+
+           ·   JPA 调试器端口：portbase + 9
+
+           ·   用于 OSGi 模块管理的 Felix shell 服务端口：portbase + 66
+
+           如果指定了 --portbase
+           选项，此子命令的输出包括所使用端口的完整列表。
+
+       --checkports
+           指定是否检查管理、HTTP、JMS、JMX 和 IIOP 端口的可用性。默认值为真
+
+       --savemasterpassword
+           通过将此选项设置为真
+           --usemasterpassword
+           选项也为“真”(不管命令行中指定的值为何)。因为将主口令写入文件系统的做法不安全，所以默认设置为假
+
+           实例的主口令文件保存在节点目录，而不是域目录。因此，仅在为域中的每个节点创建第一个实例时需要该选项。
+
+       --usemasterpassword
+           指定是用系统中内置的主口令还是用户定义的主口令来加密密钥库。
+
+           如果设置为假
+           (默认值)，则会用系统中内置的已知口令来加密密钥库。使用系统中内置的口令来加密密钥库不会提供额外的安全性。
+
+           如果设置为真
+           条目中获取主口令，或者提示输入主口令。口令文件在 asadmin(1M)
+           实用程序的 --passwordfile 选项中指定。
+
+           如果 --savemasterpassword
+           选项为真
+
+           对于域中的所有实例，主口令必须相同。
+
+       --systemproperties
+           定义实例的系统属性。这些属性将覆盖实例配置中端口设置的属性定义。例如，如果两个集群实例驻留在同一台主机上，则必须覆盖预定义的端口设置。在这种情况下，两个实例共享同一个配置，因此必须覆盖一个实例的端口设置。
+
+           以下属性可用：
+
+           ASADMIN_LISTENER_PORT
+               该属性指定 DAS 在连接到实例以管理实例时使用的 HTTP 端口或 HTTPS
+               端口的端口号。有效值为 1-65535。在 UNIX 上，创建用于监听 1 到
+               1024 端口的套接字需要超级用户权限。
+
+           HTTP_LISTENER_PORT
+               此属性可指定用于监听 HTTP 请求的端口的端口号。有效值为
+               1-65535。在 UNIX 上，创建用于监听 1 到 1024
+               端口的套接字需要超级用户权限。
+
+           HTTP_SSL_LISTENER_PORT
+               此属性可指定用于监听 HTTPS 请求的端口的端口号。有效值为
+               1-65535。在 UNIX 上，创建用于监听 1 到 1024
+               端口的套接字需要超级用户权限。
+
+           IIOP_LISTENER_PORT
+               此属性可指定用于 IIOP 连接的端口的端口号。有效值为 1-65535。在
+               UNIX 上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+           IIOP_SSL_LISTENER_PORT
+               此属性可指定用于安全 IIOP 连接的端口的端口号。有效值为
+               1-65535。在 UNIX 上，创建用于监听 1 到 1024
+               端口的套接字需要超级用户权限。
+
+           IIOP_SSL_MUTUALAUTH_PORT
+               此属性可指定用于带有客户机验证功能的安全 IIOP
+               连接的端口的端口号。有效值为 1-65535。在 UNIX 上，创建用于监听
+               1 到 1024 端口的套接字需要超级用户权限。
+
+           JAVA_DEBUGGER_PORT
+               此属性指定用于连接到 Java 平台调试器体系结构 (JPDA)
+               (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+               调试器的端口的端口号。有效值为 1-65535。在 UNIX
+               上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+           JMS_PROVIDER_PORT
+               此属性指定 Java 消息服务提供方的端口号。有效值为 1-65535。在
+               UNIX 上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+           JMX_SYSTEM_CONNECTOR_PORT
+               该属性指定 JMX 连接器监听的端口号。有效值为 1-65535。在 UNIX
+               上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+           OSGI_SHELL_TELNET_PORT
+               此属性指定用于连接到 Apache Felix Remote Shell
+               (http://felix.apache.org/site/apache-felix-remote-shell.html)
+               的端口的端口号。此 Shell 使用 Felix Shell 服务与 OSGi
+               模块管理子系统进行交互。有效值为 1-65535。在 UNIX
+               上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+操作数
+       instance-name
+           要创建的实例的名称。
+
+           名称必须满足以下要求：
+
+           ·   名称中只能包含 ASCII 字符。
+
+           ·   名称开头必须是字母、数字或下划线。
+
+           ·   名称只能包含以下字符：
+
+               ·   小写字母
+
+               ·   大写字母
+
+               ·   数字
+
+               ·   连字符
+
+               ·   句点
+
+               ·   下划线
+
+           ·   名称在域中必须是唯一的，不能是另一个 GlassFish Server
+               实例、集群、命名配置或节点的名称。
+
+           ·   名称不得是 domain、server 或 GlassFish Server
+               保留的任何其他关键字。
+
+示例
+       Example 1, 创建独立 GlassFish Server 实例
+           此示例在运行此命令的主机上创建独立实例 il3。DAS
+           在同一主机上运行。此实例仅引用现有节点。
+
+               asadmin> create-local-instance il3
+               Rendezvoused with DAS on localhost:4848.
+               Port Assignments for server instance il3:
+               JMX_SYSTEM_CONNECTOR_PORT=28686
+               JMS_PROVIDER_PORT=27676
+               HTTP_LISTENER_PORT=28080
+               ASADMIN_LISTENER_PORT=24848
+               JAVA_DEBUGGER_PORT=29009
+               IIOP_SSL_LISTENER_PORT=23820
+               IIOP_LISTENER_PORT=23700
+               OSGI_SHELL_TELNET_PORT=26666
+               HTTP_SSL_LISTENER_PORT=28181
+               IIOP_SSL_MUTUALAUTH_PORT=23920
+               Command create-local-instance executed successfully.
+
+       Example 2, 在特定节点上创建集群 GlassFish Server 实例
+           此示例在节点 sj02 上创建集群实例 ymli2。此实例是集群 ymlclust
+           的成员。
+
+           此命令在主机 sj02 上运行，该主机是由节点 sj02 表示的主机。DAS
+           在主机 sr04 上运行，并使用默认的 HTTP
+           端口进行管理。由于节点中不存在实例，因此通过 asadmin 实用程序的
+           --host 选项提供运行 DAS 的主机。
+
+               sj02# asadmin --host sr04 create-local-instance --cluster ymlclust --node sj02 ymli2
+               Rendezvoused with DAS on sr04:4848.
+               Port Assignments for server instance ymli2:
+               JMX_SYSTEM_CONNECTOR_PORT=28686
+               JMS_PROVIDER_PORT=27676
+               HTTP_LISTENER_PORT=28080
+               ASADMIN_LISTENER_PORT=24848
+               JAVA_DEBUGGER_PORT=29009
+               IIOP_SSL_LISTENER_PORT=23820
+               IIOP_LISTENER_PORT=23700
+               OSGI_SHELL_TELNET_PORT=26666
+               HTTP_SSL_LISTENER_PORT=28181
+               IIOP_SSL_MUTUALAUTH_PORT=23920
+               Command create-local-instance executed successfully.
+
+退出状态
+       0
+           已成功执行命令
+
+       1
+           执行命令时出现错误
+
+另请参阅
+       create-instance(1), create-node-config(1), create-node-dcom(1),
+       create-node-ssh(1), create-system-properties(1),
+       delete-local-instance(1), delete-system-property(1), list-instances(1),
+       start-local-instance(1), stop-local-instance(1)
+
+       asadmin(1M)
+
+Java EE 7                     2011 年 12 月 8 日      create-local-instance(1)

@@ -1,0 +1,298 @@
+create-auth-realm(1)    Sous-commandes de l'utilitaire    create-auth-realm(1)
+
+NOM
+       create-auth-realm - ajoute le domaine d'authentification nommé
+
+SYNTAXE
+           create-auth-realm --classname realm_class [--help] [--property(name=value)[:name=value]*]
+           [--target target_name] auth_realm_name
+
+DESCRIPTION
+       La sous-commande create-auth-realm ajoute le domaine d'authentification
+       nommé.
+
+       Cette sous-commande est prise en charge en mode distant uniquement.
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --target
+           Cette option indique la cible sur laquelle vous créez le domaine.
+           Les valeurs valides sont les suivantes :
+
+           server
+               Cette valeur crée le domaine sur l'instance de serveur par
+               défaut. Il s'agit de la valeur par défaut.
+
+           configuration_name
+               Cette valeur crée le domaine dans la configuration indiquée.
+
+           cluster_name
+               Cette valeur crée le domaine sur toutes les instances de
+               serveur dans le cluster indiqué.
+
+           instance_name
+               Cette valeur crée le domaine sur l'instance de serveur
+               indiquée.
+
+       --classname
+           Classe Java qui implémente ce domaine. Il s'agit notamment de
+           com.sun.enterprise.security.auth.realm.file.FileRealm,
+           com.sun.enterprise.security.auth.realm.certificate.CertificateRealm,
+           com.sun.enterprise.security.auth.realm.jdbc.JDBCRealm,
+           com.sun.enterprise.security.auth.realm.ldap.LDAPRealm,
+           com.sun.enterprise.security.auth.realm.ldap.PamRealm et
+           com.sun.enterprise.security.auth.realm.solaris.SolarisRealm ou d'un
+           domaine personnalisé.
+
+       --property
+           Paires nom/valeur d'attribut facultatives destinées à la
+           configuration du domaine d'authentification. Les domaines
+           d'authentification requièrent des propriétés propres au
+           fournisseur, lesquelles varient en fonction de l'implémentation.
+
+           Les propriétés suivantes sont communes à tous les domaines pris en
+           charge, dont FileRealm, CertificateRealm, JDBCRealm, LDAPRealm,
+           PamRealm et SolarisRealm.
+
+           jaas-context
+               Cette option indique le contexte JAAS (Java Authentication and
+               Authorization Service).
+
+           assign-groups
+               (Facultatif) Si cette propriété est définie, sa valeur est
+               prise pour une liste de noms de groupes séparés par une
+               virgule. Tous les clients présentant des certificats valides
+               sont affectés à ces groupes pour les décisions d'autorisation
+               dans les conteneurs Web et EJB.
+
+           En fonction de chaque domaine, vous pouvez spécifier les propriétés
+           suivantes.
+
+           ·   Vous pouvez indiquer les propriétés suivantes pour FileRealm :
+
+               file
+                   Cette option indique le fichier qui contient les noms
+                   utilisateur, les mots de passe et les noms de groupe. La
+                   valeur par défaut est domain-dir/config/keyfile.
+
+           ·   Vous pouvez indiquer les propriétés suivantes pour
+               CertificateRealm :
+
+               LoginModule
+                   Cette option indique le nom d'un élément LoginModule JAAS à
+                   utiliser pour effectuer l'authentification. Pour utiliser
+                   un élément LoginModule JAAS, vous devez d'abord créer une
+                   implémentation de l'interface
+                   javax.security.auth.spi.LoginModule, puis brancher le
+                   module à jaas-context. Pour plus d'informations,
+                   reportez-vous à Custom Authentication of Client Certificate
+                   in SSL Mutual Authentication dans le manuel Oracle
+                   GlassFish Server Security Guide.
+
+           ·   Vous pouvez indiquer les propriétés suivantes pour JDBCRealm :
+
+               datasource-jndi
+                   Cette option indique l'élément jndi-name de jdbc-resource
+                   pour cette base de données.
+
+               user-table
+                   Cette option indique le nom de la table d'utilisateurs dans
+                   la base de données.
+
+               user-name-column
+                   Cette option indique le nom de la colonne de noms
+                   utilisateur dans la table d'utilisateurs de la base de
+                   données.
+
+               password-column
+                   Cette option indique le nom de la colonne de mots de passe
+                   dans la table d'utilisateurs de la base de données.
+
+               group-table
+                   Cette option indique le nom de la table de groupes dans la
+                   base de données.
+
+               group-table
+                   Cette option indique la table de groupes pour un domaine
+                   d'authentification de la classe JDBCRealm.
+
+               group-name-column
+                   Cette option indique le nom de la colonne de nom de groupe
+                   dans la table de groupes de la base de données.
+
+               db-user
+                   (Facultatif) Cette option permet de spécifier le nom
+                   utilisateur de base de données dans le domaine plutôt que
+                   l'élément jdbc-connection-pool. Cela empêche d'autres
+                   applications de faire des recherches dans la base de
+                   données, d'obtenir une connexion et de parcourir la table
+                   des utilisateurs. Par défaut, la configuration
+                   jdbc-connection-pool est utilisée.
+
+               db-password
+                   (Facultatif) Cette option permet de spécifier le mot de
+                   passe de base de données dans le domaine plutôt que
+                   l'élément jdbc-connection-pool. Cela empêche d'autres
+                   applications de faire des recherches dans la base de
+                   données, d'obtenir une connexion et de parcourir la table
+                   des utilisateurs. Par défaut, la configuration
+                   jdbc-connection-pool est utilisée.
+
+               group-table
+                   Cette option indique le nom de la table de groupes dans la
+                   base de données.
+
+               digest-algorithm
+                   (Facultatif) Cette option indique l'algorithme condensé. La
+                   valeur par défaut est SHA-256. Vous pouvez utiliser tout
+                   algorithme pris en charge dans le JDK ou n'en utiliser
+                   aucun.
+
+                       Note
+                       ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
+                       │Remarque Dans les versions de GlassFish                                                               │
+                       │Server antérieures à 4.0, l'algorithme                                                                │
+                       │par défaut était MD5. Si vous disposez                                                                │
+                       │d'applications dépendant de                                                                           │
+                       │l'algorithme MD5, vous pouvez remplacer                                                               │
+                       │l'algorithme par défaut SHA-25 à l'aide                                                               │
+                       │de la sous-commande asadmin set :                                                                     │
+                       │                           asadmin> set server.security-service.property.default-digest-algorithm=MD5 │
+                       │                                                                                                      │
+                       │                                                                                                      │
+                       │                       Vous pouvez                                                                    │
+                       │                       lancer la                                                                      │
+                       │                       sous-commande                                                                  │
+                       │                       asadmin get pour                                                               │
+                       │                       déterminer                                                                     │
+                       │                       l'algorithme en                                                                │
+                       │                       cours                                                                          │
+                       │                       d'utilisation :                                                                │
+                       │                           asadmin> get server.security-service.property.default-digest-algorithm     │
+                       │                                                                                                      │
+                       │                                                                                                      │
+                       │                       Par ailleurs,                                                                  │
+                       │                       pour des raisons                                                               │
+                       │                       de compatibilité                                                               │
+                       │                       amont, si une                                                                  │
+                       │                       mise à niveau                                                                  │
+                       │                       est effectuée de                                                               │
+                       │                       GlassFish Server                                                               │
+                       │                       v2.x ou v3.0.x                                                                 │
+                       │                       vers GlassFish                                                                 │
+                       │                       Server 4.0,                                                                    │
+                       │                       l'algorithme par                                                               │
+                       │                       défaut est                                                                     │
+                       │                       automatiquement                                                                │
+                       │                       défini sur MD5                                                                 │
+                       │                       dans les cas où                                                                │
+                       │                       l'algorithme de                                                                │
+                       │                       synthèse                                                                       │
+                       │                       n'aurait pas été                                                               │
+                       │                       explicitement                                                                  │
+                       │                       défini dans                                                                    │
+                       │                       l'ancienne                                                                     │
+                       │                       version de                                                                     │
+                       │                       GlassFish                                                                      │
+                       │                       Server.                                                                        │
+                       └──────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+               digestrealm-password-enc-algorithm
+                   (Facultatif) Cette option indique l'algorithme de cryptage
+                   des mots de passe stockés dans la base de données.
+
+                       Note
+                       ┌───────────────────────────────────┐
+                       │Remarque Si vous ne spécifiez pas  │
+                       │d'algorithme de cryptage de mot de │
+                       │passe, vous encourez un risque de  │
+                       │sécurité.                          │
+                       └───────────────────────────────────┘
+
+               encoding
+                   (Facultatif) Cette option indique le codage. Les valeurs
+                   autorisées sont Hex et Base64. Si digest-algorithm est
+                   spécifié, la valeur par défaut est Hex. Si digest-algorithm
+                   n'est pas spécifié, par défaut aucun codage n'est indiqué.
+
+               charset
+                   (Facultatif) Cette option indique l'élément charset de
+                   l'algorithme condensé.
+
+           ·   Vous pouvez indiquer les propriétés suivantes pour LDAPRealm :
+
+               directory
+                   Cette option indique l'URL LDAP d'accès au serveur.
+
+               base-dn
+                   Cette option indique le nom distinctif de base LDAP pour
+                   l'emplacement des données utilisateur. Ce nom distinctif de
+                   base peut se trouver à n'importe quel niveau au-dessus des
+                   données utilisateur, puisque la recherche se fait sur
+                   l'arborescence. Plus l'arbre de recherche est réduit,
+                   meilleures sont les performances.
+
+               search-filter
+                   (Facultatif) Cette option indique le filtre de recherche à
+                   utiliser pour trouver l'utilisateur. La valeur par défaut
+                   est uid=%s (%s s'étend au nom du sujet).
+
+               group-base-dn
+                   (Facultatif) Cette option indique le nom distinctif de base
+                   pour l'emplacement des données de groupes. Par défaut, il
+                   est identique à base-dn, mais vous pouvez l'ajuster, si
+                   nécessaire.
+
+               group-search-filter
+                   (Facultatif) Cette option indique le filtre de recherche
+                   permettant de trouver les appartenances de l'utilisateur à
+                   des groupes. La valeur par défaut est uniquemember=%d (%d
+                   s'étend à l'utilisateur elementDN).
+
+               group-target
+                   (Facultatif) Cette option indique le nom d'attribut LDAP
+                   contenant les entrées des noms de groupes. La valeur par
+                   défaut est CN.
+
+               search-bind-dn
+                   (Facultatif) Cette option indique le nom distinctif
+                   facultatif utilisé lors de l'authentification auprès du
+                   répertoire d'exécution de la recherche search-filter. Elle
+                   est obligatoire uniquement pour les répertoires ne
+                   permettant pas de recherche anonyme.
+
+               search-bind-password
+                   (Facultatif) Cette option indique le mot de passe LDAP pour
+                   le nom distinctif donné dans search-bind-dn.
+
+OPÉRANDES
+       auth_realm_name
+           Nom abrégé du domaine. Ce nom sert de référence au domaine à partir
+           de web.xml, par exemple.
+
+EXEMPLES
+       Exemple 1, Création d'un domaine d'authentification
+           Cet exemple montre comment créer un domaine de fichiers.
+
+               asadmin> create-auth-realm
+               --classname com.sun.enterprise.security.auth.realm.file.FileRealm
+               --property file=${com.sun.aas.instanceRoot}/config/
+               admin-keyfile:jaas-context=fileRealm file
+               Command create-auth-realm executed successfully
+           file est le domaine d'authentification créé.
+
+STATUT DE SORTIE
+       0
+           sous-commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la sous-commande
+
+VOIR AUSSI
+       delete-auth-realm(1), list-auth-realms(1)
+
+       asadmin(1M)
+
+Java EE 7                         20 sep 2010             create-auth-realm(1)

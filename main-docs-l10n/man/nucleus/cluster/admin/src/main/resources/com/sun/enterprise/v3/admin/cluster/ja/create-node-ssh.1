@@ -1,0 +1,172 @@
+create-node-ssh(1)    asadminユーティリティのサブコマンド   create-node-ssh(1)
+
+名前
+       create-node-ssh - SSH経由の通信に対して有効なノードを作成します
+
+概要
+           create-node-ssh [--help]
+           --nodehost node-host
+           [--installdir as-install-parent] [--nodedir node-dir]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile]
+           [--force={false|true}]
+           [--install={false|true}] [--archive archive]
+           node-name
+
+説明
+       create-node-sshサブコマンドは、Secure
+       Shell(SSH)経由の通信に対して有効なノードを作成します。
+
+       ノードはGlassFish
+       Serverソフトウェアがインストールされたホストを表します。GlassFish
+       Serverインスタンスが存在するすべてのホストについてノードを作成する必要があります。
+
+       ドメイン管理サーバー(DAS)は、SSHコネクタ経由でSSHノードのホストにアクセスして、そのノードに存在するGlassFish
+       Serverインスタンスを管理します。ただし、DASはすべてのasadminサブコマンドをローカルで実行できるため、DASが稼働しているホストにアクセスする場合はSSHコネクタは使用されません。
+
+       DASがSSH経由でノードのホストにアクセスできない場合、デフォルトでは、このサブコマンドは失敗し、ノードは作成されません。SSH経由でホストにアクセスできない場合でもDAS構成で強制的にノードを作成するには、--forceオプションをtrueに設定します。
+
+       このサブコマンドは、リモート・モードでのみサポートされています。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --nodehost
+           ノードが表すホストの名前。ホスト名を指定する必要があります。それ以外の場合はエラーが発生します。
+
+       --installdir
+           ホスト上のGlassFish
+           Serverソフトウェアのベース・インストール・ディレクトリの親のフルパス(例:
+           /export/glassfish3/)。デフォルトは、DASのGlassFish
+           Serverソフトウェアのデフォルトのベース・インストール・ディレクトリの親です。このデフォルトを使用できるのは、GlassFish
+           Serverがすべてのホストで同じ場所にインストールされた場合のみです。
+
+       --nodedir
+           ノード上で作成されたGlassFish
+           Serverインスタンスを含めるディレクトリのパス。デフォルトはas-install/nodesです。as-installは、ホスト上のGlassFish
+           Serverソフトウェアのベース・インストール・ディレクトリです。相対パスを指定する場合、パスはas-installディレクトリに相対的になります。
+
+       --sshport
+           このノードのホストに対するSSH接続に使用するポート。デフォルトは22です。--nodehostオプションをlocalhost-domainに設定した場合、--sshportオプションは無視されます。
+
+       --sshuser
+           SSH経由でホストに接続するためのプロセスを実行する、このノードのホストのユーザー。デフォルトはDASプロセスを実行するユーザーです。DASがこのユーザーのSSH秘密鍵ファイルを読み取れるようにするには、DASプロセスを実行しているユーザーを指定します。--nodehostオプションをlocalhost-domainに設定した場合、--sshuserオプションは無視されます。
+
+       --sshkeyfile
+           --sshuserオプションで指定するユーザーのSSH秘密鍵ファイルの絶対パス。このファイルはノードのホスト上のsshdデーモンに対する認証に使用されます。
+
+               注記
+               ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+               │注意 GlassFish                                                                                                                                                                                       │
+               │Serverでは、パスワード・ファイルのAS_ADMIN_SSHPASSWORDエントリを使用したパスワード認証もサポートされます。パスワード・ファイルは、asadmin(1M)ユーティリティの--paswordfileオプションで指定されます。 │
+               └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+           SSH秘密鍵ファイルがパスフレーズで保護されている場合は、パスワード・ファイルにAS_ADMIN_SSHKEYPASSPHRASEエントリを含める必要があります。
+
+           鍵ファイルは、DASから到達可能なパスにあり、DASが読取り可能である必要があります。
+
+           デフォルトはユーザーの.sshディレクトリにある鍵ファイルです。複数の鍵ファイルが見つかった場合、サブコマンドは次の順序で使用します。
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --force
+           ノードのパラメータ検証に失敗した場合でもDAS構成でノードを作成するかを指定します。ノードのパラメータを検証するには、DASがSSH経由でノードのホストにアクセスできる必要があります。使用可能な値は次のとおりです:
+
+           false
+               ノードのパラメータ検証に失敗した場合、ノードは作成されません(デフォルト)。
+
+           true
+               ノードのパラメータ検証に失敗した場合でもノードが作成されます。
+
+       --install
+           このサブコマンドで、ノードが表すホストにGlassFish
+           Serverソフトウェアをインストールするかどうかを指定します。
+
+           使用可能な値は次のとおりです:
+
+           false
+               このサブコマンドは、ホストにGlassFish
+               Serverソフトウェアをインストールしません(デフォルト)。
+
+           true
+               このサブコマンドは、ホストにGlassFish
+               Serverソフトウェアをインストールします。
+
+       --archive
+           インストールするGlassFish
+           Serverソフトウェアのアーカイブ・ファイルの絶対パス。このオプションを省略して--installをtrueに設定した場合は、サブコマンドを実行するインストールからGlassFish
+           ServerソフトウェアのZIPアーカイブが作成されます。このアーカイブには、domainsディレクトリまたはnodesディレクトリは含まれません。
+
+オペランド
+       node-name
+           ノードの名前。
+
+           名前は次の要件を満たしてください。
+
+           ·   ASCII文字のみ使用します。
+
+           ·   名前は英数字またはアンダースコアで開始します。
+
+           ·   名前に含めることができるのは次の文字のみです。
+
+               ·   小文字
+
+               ·   大文字
+
+               ·   数値
+
+               ·   ハイフン
+
+               ·   ピリオド
+
+               ·   アンダースコア
+
+           ·   名前はドメイン内で一意にします。また、別のノード、クラスタ、名前付き構成、またはGlassFish
+               Serverインスタンスの名前にすることはできません。
+
+           ·   ド
+               Serverで予約されている他のキーワードを名前に使用しないでください。
+
+例
+       例 1, ノードの作成
+           この例では、ホストadc.example.comにノードadcを作成します。デフォルトでは、GlassFish
+           Serverソフトウェアのベース・インストール・ディレクトリの親は/export/glassfish3です。
+
+               asadmin> create-node-ssh
+               --nodehost adc.example.com
+               --installdir /export/glassfish3 adc
+
+               Command create-node-ssh executed successfully.
+
+       例 2, 強制的なノードの作成
+           この例では、ホストeghost.example.comにノードeg1を強制的に作成します。DASはホストeghost.example.comにアクセスしてノードのパラメータを検証できませんが、ノードは作成されます。
+
+               asadmin> create-node-ssh --force --nodehost eghost.example.com eg1
+               Warning: some parameters appear to be invalid.
+               Could not connect to host eghost.example.com using SSH.
+               There was a problem while connecting to eghost.example.com:22
+               eghost.example.com
+               Continuing with node creation due to use of --force.
+
+               Command create-node-ssh executed successfully.
+
+終了ステータス
+       0
+           コマンドは正常に実行されました
+
+       1
+           コマンドの実行時にエラーが発生しました
+
+関連項目
+       create-node-config(1), create-node-dcom(1), delete-node-ssh(1),
+       install-node(1), install-node-ssh(1), list-nodes(1), ping-node-ssh(1),
+       setup-ssh(1), uninstall-node(1), uninstall-node-ssh(1),
+       update-node-ssh(1)
+
+       asadmin(1M)
+
+Java EE 7                        2012年1月5日               create-node-ssh(1)

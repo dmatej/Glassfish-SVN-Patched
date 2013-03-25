@@ -1,0 +1,182 @@
+install-node-ssh(1)         asadmin 公用程式子命令         install-node-ssh(1)
+
+參考名
+       install-node-ssh - 在已啟用 SSH 的指定主機上安裝 GlassFish Server 軟體
+
+概要
+           install-node-ssh [--help]
+           [--archive archive]
+           [--create={false|true}] [--save[={false|true}]
+           [--installdir as-install-parent]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile]
+           [--force={false|true}]
+           host-list
+
+描述
+       install-node-ssh 子命令會在指定為子命令運算元的主機上安裝 GlassFish
+       Server 軟體。此子命令需要在執行子命令的主機和將要安裝 GlassFish Server
+       軟體的每台主機上組態安全 Shell (SSH)。
+
+           注意
+           ┌──────────────────────────────────────────────────┐
+           │備註                                              │
+           │                                                  │
+           │           此子命令相當於                         │
+           │           install-node(1)                        │
+           │           子命令。若要在使用「分散式元件物件模型 │
+           │           (DCOM)」遠端協定的主機上安裝           │
+           │           GlassFish Server                       │
+           │           軟體，請使用                           │
+           │           install-node-dcom(1)                   │
+           │           子命令。                               │
+           └──────────────────────────────────────────────────┘
+
+       如有必要，子命令會從執行此子命令的安裝來建立 GlassFish Server 軟體的
+       ZIP 存檔。存檔不包含 domains 目錄或 nodes
+       目錄。建立和啟動代表主機之節點上的執行處理時，這些目錄會從網域管理伺服器
+       (DAS) 進行同步。從指定主機上的存檔安裝 GlassFish Server
+       軟體之後，該子命令不會刪除存檔。
+
+       如果指定多台主機，則下列項目在所有主機上的組態都會相同：
+
+       ·   基底安裝目錄
+
+       ·   SSH 連接埠
+
+       ·   SSH 使用者
+
+       ·   SSH 金鑰檔案
+
+       如果將要安裝 GlassFish Server 軟體的主機上沒有 SSH
+       金鑰檔案，子命令就會以互動方式執行並提示您提供密碼。若不要讓子命令以互動方式執行，則必須滿足下列條件：
+
+       ·   asadmin(1M) 公用程式的 --interactive 選項必須是 false。
+
+       ·   asadmin 公用程式的 --passwordfile 選項必須指定密碼檔案。
+
+       ·   密碼檔案必須包含 AS_ADMIN_SSHPASSWORD 項目。
+
+       此子命令不會修改 DAS 組態。
+
+       只有本機模式支援這個子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --archive
+           要安裝之 GlassFish Server
+           軟體的存檔檔案絕對路徑。如果不指定存檔檔案，子命令就會從其中執行子命令的
+           GlassFish Server
+           軟體安裝來建立存檔。此存檔會在執行命令之使用者的主目錄中建立。
+
+       --create
+           指定子命令是否應該建立要安裝之 GlassFish Server 軟體的存檔檔案。
+
+           false
+               不建立存檔檔案。子命令會從 --archive 選項指定 (預設值)
+               的現有存檔檔案來安裝軟體。
+
+           true
+               子命令會從其中執行子命令的 GlassFish Server
+               軟體安裝來建立存檔檔案。
+
+       --save
+           指定是否在安裝之後儲存從中安裝軟體的存檔檔案。
+
+           false
+               不儲存存檔檔案。子命令會在安裝軟體之後刪除檔案 (預設值)。
+
+           true
+               儲存存檔檔案。
+
+       --installdir
+           每部主機上要安裝 GlassFish Server
+           軟體之基底安裝目錄的父系目錄的絕對路徑，例如
+           /export/glassfish3/。如果目錄不存在，子命令就會建立目錄。
+
+           執行此子命令的使用者必須擁有指定目錄的寫入存取權。否則，將發生錯誤。
+
+           若要覆寫 GlassFish Server 軟體的現有安裝，請將 --force 選項設為
+           true。如果目錄已經包含安裝，且 --force 選項是 false，則會發生錯誤。
+
+           預設值為 GlassFish Server
+           軟體在執行此子命令之主機上的基底安裝目錄的父系目錄。
+
+       --sshport
+           用於與要安裝 GlassFish Server 軟體之主機進行 SSH 連線的連接埠。
+           預設值為 22。
+
+       --sshuser
+           要安裝 GlassFish Server 軟體 (執行透過 SSH 連線到主機的處理作業)
+           之主機上的使用者。預設值為執行此子命令的使用者。若要確保 DAS
+           可以讀取此使用者的 SSH 私密金鑰檔案，請指定執行 DAS
+           處理作業的使用者。
+
+       --sshkeyfile
+           SSH 私密金鑰檔案的絕對路徑，該檔案屬於 --sshuser
+           選項指定的使用者。此檔案用於向主機上的 sshd 常駐程式認證。
+
+           執行此子命令的使用者必須能夠連線至金鑰檔案的路徑並讀取金鑰檔案。
+
+           預設值為使用者之 .ssh
+           目錄中的金鑰檔案。若有多個金鑰檔案，則子命令會依照以下優先順序加以使用：
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --force
+           指定子命令是否覆寫 --installdir 選項所指定之目錄中 GlassFish Server
+           軟體的現有安裝。可能值如下：
+
+           false
+               不覆寫現有安裝 (預設值)。
+
+           true
+               覆寫現有安裝。
+
+運算元
+       host-list
+           要安裝 GlassFish Server 軟體之主機的名稱清單 (以空格分隔)。
+
+範例
+       範例 1, 在預設位置安裝 GlassFish Server 軟體
+           此範例會將 GlassFish Server 軟體安裝在主機 sj03.example.com 和
+           sj04.example.com 上的預設位置。
+
+               asadmin> install-node-ssh sj03.example.com sj04.example.com
+               Created installation zip /home/gfuser/glassfish2339538623689073993.zip
+               Successfully connected to gfuser@sj03.example.com using keyfile /home/gfuser
+               /.ssh/id_rsa
+               Copying /home/gfuser/glassfish2339538623689073993.zip (81395008 bytes) to
+               sj03.example.com:/export/glassfish3
+               Installing glassfish2339538623689073993.zip into sj03.example.com:/export/glassfish3
+               Removing sj03.example.com:/export/glassfish3/glassfish2339538623689073993.zip
+               Fixing file permissions of all files under sj03.example.com:/export/glassfish3/bin
+               Successfully connected to gfuser@sj04.example.com using keyfile /home/gfuser
+               /.ssh/id_rsa
+               Copying /home/gfuser/glassfish2339538623689073993.zip (81395008 bytes) to
+               sj04.example.com:/export/glassfish3
+               Installing glassfish2339538623689073993.zip into sj04.example.com:/export/glassfish3
+               Removing sj04.example.com:/export/glassfish3/glassfish2339538623689073993.zip
+               Fixing file permissions of all files under sj04.example.com:/export/glassfish3/bin
+               Command install-node-ssh executed successfully
+
+結束狀態
+       0
+           命令執行成功
+
+       1
+           執行命令時發生錯誤
+
+另請參閱
+       install-node(1), install-node-dcom(1), uninstall-node(1),
+       uninstall-node-ssh(1)
+
+       asadmin(1M)
+
+Java EE 7                     2011 年 11 月 9 日           install-node-ssh(1)

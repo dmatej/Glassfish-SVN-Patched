@@ -1,0 +1,162 @@
+appclient(1M)                    公用程式命令                    appclient(1M)
+
+參考名
+       appclient - 啟動應用程式從屬端容器並呼叫通常封裝在應用程式 JAR
+       檔案中的從屬端應用程式。
+
+概要
+           appclient [client_application_classfile | -client client_application_jar]
+           [-mainclass main_class_name | -name display_name]
+           [-xml sun-acc.xml file] [-textauth]
+           [-targetserver host[:port][,host[:port]...]]
+           [-user username] [-passwordfile password_file]
+           [application-options]
+
+           appclient [jvm-options]
+           [-mainclass main_class_name | -name display_name]
+           [-xml client_config_xml_file] [-textauth]
+           [-targetserver host[:port][,host[:port]...]]
+           [-user username] [-passwordfile password_file]
+           class-selector [application-options]
+
+描述
+       使用 appclient 命令來啟動應用程式從屬端容器，並呼叫通常封裝於應用程式
+       JAR 檔案中的從屬端應用程式。應用程式從屬端 JAR 檔案，是在建置期間透過
+       管理主控台 或使用 asadmin deploy 命令加上 --retrieve
+       選項來指定並建立。您也可以使用 asadmin get-client-stubs
+       命令來擷取從屬端 JAR 檔案。
+
+       應用程式從屬端容器是 Java 類別、程式庫，加上在 Java 平台的虛擬機器 (JVM
+       機器) 上執行第一層應用程式從屬端程式所需的其他檔案的集合。
+       應用程式從屬端容器使用 RMI-IIOP 與伺服器進行通訊。
+
+       在建置應用程式之後擷取的從屬端 JAR 檔案，應該在執行 appclient
+       公用程式時，使用 -client 或 -jar 選項來傳遞。從屬端 JAR
+       檔案名稱的格式為 app-name Client.jar。針對單一 EAR
+       檔案中的多個應用程式從屬端，您必須使用 -mainclass 或 -name
+       選項來指定要呼叫的從屬端。
+
+       如果應用程式從屬端是獨立模組或是 EAR
+       檔案中唯一的從屬端，則應用程式從屬端容器不需使用 -mainclass 或 -name
+       選項就能找到該從屬端。如果您提供的 -mainclass 或 -name
+       值與從屬端中的值不相符，則應用程式從屬端容器仍會啟動從屬端，但是會發出警告，指出選擇與從屬端中的資訊不符。該警告也會顯示從屬端的實際主類別及名稱值為何。
+
+選項
+       jvm-options
+           選擇性；您可以為從屬端應用程式設定 JVM 選項。 這些可以是任何有效的
+           java 命令選項，但 -client 或 -jar 除外。只要 JVM 選項和其他的
+           appclient 命令選項同時出現在 class-selector
+           之前，這兩種類型的選項就可以混合使用。
+
+       client_application_classfile
+           選擇性；從屬端應用程式 .class
+           檔案的檔案系統路徑名稱。相對路徑名稱必須相對於目前的目錄。這個類別檔案必須包含將由應用程式從屬端容器呼叫的
+           main() 方法。
+
+           如果您使用
+           client_application_classfile，且此類別相依於其他使用者類別，您也必須設定類別路徑。您可以使用
+           appclient 命令中的 -classpath JVM 選項，或是設定 CLASSPATH
+           環境變數。如需有關設定類別路徑的詳細資訊，請參閱「設定類別路徑，Oracle
+           Solaris
+           版本」(http://download.oracle.com/javase/6/docs/technotes/tools/solaris/classpath.html)
+           或「設定類別路徑，Windows 版本」
+           (http://download.oracle.com/javase/6/docs/technotes/tools/windows/classpath.html)。
+
+       -client
+           選擇性；從屬端 JAR 檔案的名稱與位置。
+
+       -mainclass
+           選擇性；MANIFEST.MF 檔案中 Main-Class
+           項目所指定的主從屬端應用程式完整類別名稱。用於多個從屬端應用程式。根據預設，會使用
+           client jar 中所指定的類別。例如，com.example.test.AppClient。
+
+       -name
+           選擇性；從屬端應用程式的顯示名稱。用於多個從屬端應用程式。根據預設，顯示名稱會以
+           display-name 屬性識別在從屬端 jar application-client.xml
+           檔案中指定。
+
+       -xml
+           如果使用預設的網域、執行處理或名稱
+           (sun-acc.xml)，則為選擇性，否則為必要的選項；識別從屬端組態 XML
+           檔案的名稱及位置。如果未指定，則預設為 domain-dir/config 目錄中的
+           sun-acc.xml 檔案。
+
+       -textauth
+           選擇性；在需要認證時，用來指定使用文字格式認證。
+
+       -targetserver
+           選擇性；ORB
+           端點一或多個伺服器規格的逗號分隔清單。每個伺服器規格至少必須包含主機。或者，伺服器規格也會包含連接埠。如果伺服器規格省略了連接埠，主機便會使用預設值
+           3700。
+
+       -user
+           選擇性；獲授權可存取應用程式中特定保護元件 (例如 EJB 元件)
+           的應用程式使用者。
+
+       -passwordfile
+           選擇性；指定使用下列格式包含應用程式從屬端密碼的檔案名稱
+           (包括完整路徑)：
+
+               PASSWORD=appclient-password
+           如果省略此選項，則會在命令提示字元中以互動方式指定密碼。
+
+               注意
+               ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+               │注意                                                                                                 │
+               │請避免在命令提示字元中以互動方式指定密碼。使用者若能執行顯示執行中處理作業的命令或啟動處理作業的命令 │
+               │(像是 ps)，便能看到此類密碼。                                                                        │
+               └─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+           基於安全性考量，appclient 公用程式將不會讀取指定為環境變數的密碼。
+
+       class-selector
+           必要；您必須使用下列其中一個類別選取器，來指定從屬端應用程式。
+
+           -jar jar-file
+               從屬端 JAR 檔案的名稱和位置。 應用程式從屬端 JAR
+               檔案是在建置期間使用 asadmin deploy
+               命令來指定並建立的。如果已經指定，便會忽略 -classpath
+               設定，以遵循從屬端 JAR 檔案資訊清單中 Class-Path 的設定。
+
+           class-name
+               應用程式從屬端主類別的完全合格名稱。應用程式從屬端容器會呼叫此類別的
+               main 方法來啟動從屬端。例如，com.example.test.AppClient。
+
+               如果使用 class-name
+               作為類別選取器，則您也必須設定類別路徑。您可以使用 appclient
+               命令中的 -classpath JVM 選項，或是設定 CLASSPATH
+               環境變數。如需有關設定類別路徑的詳細資訊，請參閱「設定類別路徑，Oracle
+               Solaris
+               版本」(http://download.oracle.com/javase/6/docs/technotes/tools/solaris/classpath.html)
+               或「設定類別路徑，Windows 版本」
+               (http://download.oracle.com/javase/6/docs/technotes/tools/windows/classpath.html)。
+
+       application-options
+           選擇性；您可以設定從屬端應用程式引數。
+
+範例
+       範例 1, 使用 appclient 命令
+
+               appclient -xml sun-acc.xml -jar myclientapp.jar scott sample
+           其中：sun-acc.xml 為從屬端組態 XML 檔案的名稱，myclientapp.jar
+           為從屬端應用程式 .jar 檔案，而 scott 和 sample
+           則為傳送至應用程式的引數。如果 sun-acc.xml 和
+            myclientapp.jar
+           不在目前的目錄中，則您必須提供絕對路徑位置；不然就會使用相對路徑。該相對路徑相對於要執行命令的目錄。
+
+屬性
+       如需下列屬性說明，請參閱 attributes(5)：
+
+       ┌──────────────────┬───────────────┐
+       │                  │               │
+       │       屬性類型   │        屬性值 │
+       ├──────────────────┼───────────────┤
+       │                  │               │
+       │       介面穩定性 │        不穩定 │
+       └──────────────────┴───────────────┘
+
+另請參閱
+       get-client-stubs(1)
+
+       asadmin(1M), package-appclient(1M)
+
+Java EE 7                     2010 年 12 月 16 日                appclient(1M)

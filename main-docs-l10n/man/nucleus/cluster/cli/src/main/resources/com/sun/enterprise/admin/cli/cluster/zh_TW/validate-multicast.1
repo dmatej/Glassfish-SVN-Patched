@@ -1,0 +1,122 @@
+validate-multicast(1)       asadmin 公用程式子命令       validate-multicast(1)
+
+參考名
+       validate-multicast - 可驗證叢集是否可使用多重播送傳輸
+
+概要
+           validate-multicast [--help] [--multicastport multicastport]
+           [--multicastaddress multicastaddress]
+           [--bindaddress bindaddress]
+           [--sendperiod sendperiod]
+           [--timeout timeout]
+           [--timetolive timetolive]
+           [--verbose={false|true}]
+
+描述
+       validate-multicast
+       子命令會驗證叢集是否可使用多重播送傳輸。您應該在要驗證的每台主機上同時執行這個子命令。這個子命令適用於本機模式。
+
+           注意
+           ┌──────────────────────────────────────────────────────────────────────────────────────────────┐
+           │備註                                                                                          │
+           │                                                                                              │
+           │           當 DAS                                                                             │
+           │           和叢集正在執行時，請勿使用                                                         │
+           │           DAS                                                                                │
+           │           及叢集的多重傳送位址和連接埠值來執行                                               │
+           │           validate-multicast                                                                 │
+           │           子命令。這樣做會導致發生錯誤。                                                     │
+           │                                                                                              │
+           │           validate-multicast                                                                 │
+           │           子命令必須同時在兩部或多部機器上執行，才能驗證是否會在不同機器間接收多重傳送訊息。 │
+           └──────────────────────────────────────────────────────────────────────────────────────────────┘
+
+       只要所有機器能彼此識別，就能確定多重傳送可以跨機器正常運作。如果這些機器無法彼此識別，請明確設定
+       --bindaddress 選項，以確保所有機器均使用同一子網路上的介面，或者增加
+       --timetolive 選項的值 (預設值為
+       4)。如果這些變更均無法解決多重傳送問題，請聯絡網路管理員確認網路是否組態為在所有用於執行叢集的機器之間可以識別多重傳送訊息。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --multicastport
+           群組管理服務 (GMS)
+           用於監聽群組事件的多重播送通訊端上的連接埠。指定標準 UDP
+           連接埠號碼，範圍介於 2048-32000 之間。預設值為 2048。
+
+       --multicastaddress
+           GMS 用於監聽群組事件的多重播送通訊端位址。指定類別 D IP 位址。類別
+           D IP 位址的範圍是 224.0.0.0 到
+            239.255.255.255 (含)。位址 224.0.0.0
+           為保留位址，不可使用。預設值為 228.9.3.1。
+
+       --bindaddress
+           用來接收多重播送資料包封包給 GMS
+           的本機介面。預設值為使用所有可用的連結介面。
+
+           在多址機器 (擁有兩個以上的網路介面)
+           上，此屬性可讓您指出哪個網路介面要用於 GMS。此值必須是本機網路介面
+           IP 位址。
+
+       --sendperiod
+           節點間傳送測試訊息的毫秒數。預設值為 2000。
+
+       --timeout
+           子命令逾時並結束前的秒數。預設值為 20。您也可以使用 Ctrl-C
+           結束此子命令。
+
+       --timetolive
+           多重播送封包通訊端上傳出之多重播送封包的預設存留時間，用以控制多重播送的範圍。存留時間值必須介於
+           0 與 255 (含) 之間。預設值為 JDK 預設值或 GMS
+           子系統之常數所定義的下限，以較低者為準。若要查看使用的存留時間值，請使用
+           --verbose 選項。
+
+       --verbose
+           使用時如果不搭配值，或是設為 true，則請提供其他除錯資訊。預設值為
+           false。
+
+範例
+       範例 1, 驗證多重播送傳輸
+           從主機 machine1 執行：
+
+               asadmin> validate-multicast
+               Will use port 2,048
+               Will use address 228.9.3.1
+               Will use bind address null
+               Will use wait period 2,000 (in milliseconds)
+
+               Listening for data...
+               Sending message with content "machine1" every 2,000 milliseconds
+               Received data from machine1 (loopback)
+               Received data from machine2
+               Exiting after 20 seconds. To change this timeout, use the --timeout command line option.
+               Command validate-multicast executed successfully
+           從主機 machine2 執行：
+
+               asadmin> validate-multicast
+               Will use port 2,048
+               Will use address 228.9.3.1
+               Will use bind address null
+               Will use wait period 2,000 (in milliseconds)
+
+               Listening for data...
+               Sending message with content "machine2" every 2,000 milliseconds
+               Received data from machine2 (loopback)
+               Received data from machine1
+               Exiting after 20 seconds. To change this timeout, use the --timeout command line option.
+               Command validate-multicast executed successfully
+
+結束狀態
+       0
+           命令執行成功
+
+       1
+           執行命令時發生錯誤
+
+另請參閱
+       get-health(1)
+
+       asadmin(1M)
+
+Java EE 7                     2011 年 2 月 10 日         validate-multicast(1)

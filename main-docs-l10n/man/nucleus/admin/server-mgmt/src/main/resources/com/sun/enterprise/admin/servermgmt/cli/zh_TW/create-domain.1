@@ -1,0 +1,378 @@
+create-domain(1)            asadmin 公用程式子命令            create-domain(1)
+
+參考名
+       create-domain - 建立網域
+
+概要
+           create-domain [--help]
+           [--adminport adminport]
+           [--instanceport instanceport]
+           [--portbase portbase]
+           [--profile profile-name]
+           [--template template-name]
+           [--domaindir domaindir]
+           [--savemasterpassword={false|true}]
+           [--usemasterpassword={false|true}]
+           [--domainproperties (name=value)[:name=value]*]
+           [--keytooloptions (name=value)[:name=value]*]
+           [--savelogin={false|true}]
+           [--checkports={true|false}]
+           [--nopassword={false|true}]
+           domain-name
+
+描述
+       create-domain 子命令會建立 GlassFish Server 網域。GlassFish Server
+       中的網域是一個符合 Java Platform, Enterprise Edition (Java EE)
+       標準的管理名稱空間。每個網域都具有其組態，儲存在一組檔案中。您可以在指定的
+       GlassFish Server 安裝中建立任何數目的網域
+       (其中每個網域各自擁有不同的管理身份)。網域可獨立存在，不需依賴其他網域。
+
+       使用者只要可存取指定系統上的 asadmin
+       公用程式，即可建立網域並將其組態儲存在使用者所選的資料夾中。根據預設，網域組態會建立在網域的預設目錄中。您可以置換此位置，以將組態儲存在其他地方。
+
+       如果執行 create-domain 子命令時，在 as-install/modules 目錄下的 JAR
+       檔案中發現網域自訂程式，便會處理自訂程式。網域自訂程式為實行
+       DomainInitializer 介面的類別。
+
+       create-domain 子命令會建立一個網域，其具有由 asadmin 公用程式選項
+       --user 指定的單一管理使用者。如果未指定 --user 選項，且 --nopassword
+       選項設定為 true，則會使用預設的管理使用者 admin。如果 --nopassword
+       選項設定為 false
+       (預設值)，則需要使用者名稱。在這種情況下，如果您尚未使用 --user
+       選項來指定使用者名稱，系統將提示您執行這項作業。
+
+       請根據將在新網域中執行的應用程式，為網域選擇適當的設定檔。您可以要建立的網域選擇開發人員、叢集或企業設定檔。
+
+       只有本機模式支援這個子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --adminport
+           用於管理的 HTTP 或 HTTPS 連接埠。此連接埠是您在 Web
+           瀏覽器中指定用來管理網域的 URL 連接埠，例如
+           http://localhost:4949。--adminport 選項不能與 --portbase
+           選項一起使用。預設值為 4848。
+
+           --adminport 選項會置換 --domainproperties 選項的 domain.adminPort
+           特性。
+
+       --instanceport
+           網域會提供服務，以在建置時執行應用程式。這個 HTTP 連接埠會指定 Web
+           瀏覽器進行連接時，可用的 Web
+           應用程式環境根目錄的所在位置。這個連接埠是正整數，且必須可以在建立網域時使用。
+           --instanceport 選項不能與 --portbase 選項一起使用預設值為 8080。
+
+           --instanceport 選項會置換 --domainproperties 選項的
+           domain.instancePort 特性。
+
+       --portbase
+           決定應從哪個號碼開始指定連接埠。網域可使用一定數量的靜態指定連接埠。portbase
+           值可決定從何處開始指定。連接埠之值的計算方式如下：
+
+           ·   管理連接埠：portbase + 48
+
+           ·   HTTP 監聽程式連接埠：portbase + 80
+
+           ·   HTTPS 監聽程式連接埠：portbase + 81
+
+           ·   JMS 連接埠：portbase + 76
+
+           ·   IIOP 監聽程式連接埠：portbase + 37
+
+           ·   安全 IIOP 監聽程式連接埠：portbase + 38
+
+           ·   具有相互認證連接埠的安全 IIOP：portbase + 39
+
+           ·   JMX 連接埠：portbase + 86
+
+           ·   JPDA 除錯程式連接埠：portbase + 9
+
+           ·   OSGi 模組管理的 Felix Shell 服務連接埠：portbase + 66
+
+           指定 --portbase
+           選項時，這個子命令的輸出會包括使用過之連接埠的完整清單。
+
+           --portbase 選項不能與 --adminport、--instanceport 或
+           --domainproperties 選項一起使用。
+
+       --profile
+           請勿指定此選項。保留這個選項是為了兼顧與舊版本的相容性。如果您指定此選項，並不會發生語法錯誤。相反地，子命令會順利執行，並顯示已忽略該選項的警告訊息。
+
+       --template
+           用來建立網域之網域組態範本的檔案名稱，包括相對或絕對路徑。如果指定相對路徑，則子命令會將路徑附加至
+           as-install/lib/templates
+           目錄中，以找出該檔案。如果是絕對路徑名稱，則子命令會在指定路徑中找出該檔案。
+
+           此選項可供建立不同類型的網域，以及定義自訂網域範本。
+
+       --domaindir
+           要建立網域的目錄。如果已指定，則必須可在檔案系統中存取路徑。
+           如果未指定，則會在預設的網域目錄 as-install/domains 中建立網域。
+
+       --savemasterpassword
+           將此選項設定為 true 可讓主密碼寫入檔案系統。如果此選項為
+           true，則無論命令行所指定的值為何，--usemasterpassword 選項也會為
+           true。預設值為 false。
+
+           主密碼就是安全金鑰庫的密碼。網域設計旨在將自己的憑證
+           (於網域建立時所建立) 保存在組態位置的安全處。這種憑證被稱為網域的
+           SSL 伺服器憑證。如果 Web 瀏覽器透過安全通道 (HTTPS)
+           與網域進行聯繫，網域即會顯示此憑證。主密碼應該要保護包含此憑證的儲存
+           (檔案)。此檔案稱為
+           keystore.jks，建立在所建立網域的組態目錄中。但是，如果選擇了此選項，主密碼便會儲存在網域組態位置的硬碟上。主密碼會儲存在名稱為
+            master-password 的檔案中，也就是 Java JCEKS
+           類型金鑰存放區。之所以使用 --savemasterpassword
+           選項，是為了讓系統自動啟動。在這種情況下，會從檔案中擷取密碼，所以網域啟動時系統不會提示您輸入主密碼。
+
+           另外，因為 start-domain
+           子命令使用主密碼，所以建議您最好在建立網域時建立一個主密碼。為了安全起見，預設設定應該為
+           false；除非已正確設定檔案系統的權限，否則將主密碼儲存在硬碟上是非常危險的行為。如果您已儲存主密碼，start-domain
+           就不會再另行提示。主密碼為環境帶來絕佳安全性。
+
+       --usemasterpassword
+           指定要使用系統內建的主密碼還是使用者定義的主密碼來為金鑰庫加密。
+
+           若為 false
+           (預設)，則會使用眾所皆知的系統內建密碼來為金鑰存放區加密。使用系統內建密碼為金鑰存放區加密並不能提高安全性。
+
+           若為 true，則子命令會從密碼檔案的 AS_ADMIN_MASTERPASSWORD
+           項目中取得主密碼，或提示輸入主密碼。密碼檔案會在 asadmin(1M)
+           公用程式的 --passwordfile 選項中指定。
+
+           如果 --savemasterpassword 選項為
+           true，則無論命令行所指定的值為何，此選項也會為 true。
+
+       --domainproperties
+           設定選擇性名/值配對會置換所建立網域特性的預設值。清單必須以冒號 (:)
+           字元分隔。--portbase 選項不能與 --domainproperties
+           選項同時使用。提供的特性如下：
+
+           domain.adminPort
+               此特性會指定 HTTP 連接埠或 HTTPS
+               連接埠的連接埠號碼以進行管理。此連接埠是您在 Web
+               瀏覽器中指定用來管理執行處理的 URL 連接埠，例如
+               http://localhost:4949。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+               --adminport 選項會置換 domain.adminPort 特性。
+
+           domain.instancePort
+               此特性指定要用來監聽 HTTP 請求之連接埠的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+               --instanceport 選項會置換 domain.instancePort 特性。
+
+           domain.jmxPort
+               此特性會指定 JMX 連線器進行監聽的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           http.ssl.port
+               此特性指定要用來監聽 HTTPS 請求之連接埠的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           java.debugger.port
+               此特性可指定用來連線至 Java 平台除錯程式架構 (JPDA)
+               之連接埠的連接埠號碼
+
+               除錯程式。有效值為 1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           jms.port
+               此特性會指定 Java Message Service 提供者的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           orb.listener.port
+               此特性指定用於 IIOP 連線之連接埠的連接埠號碼。此特性指定用於
+               IIOP 連線之連接埠的連接埠號碼。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           orb.mutualauth.port
+               此特性指定用於與從屬端認證之安全 IIOP
+               連線之連接埠的連接埠號碼。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           orb.ssl.port
+               此特性指定用於安全 IIOP 連線之連接埠的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           osgi.shell.telnet.port
+               此特性會指定用來連線至 Apache Felix Remote Shell
+               之連接埠的連接埠號碼 。此 Shell 會使用 Felix Shell 服務來與
+               OSGi 模組管理子系統互動。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+       --keytooloptions
+           為自我簽署伺服器憑證指定一份金鑰工具選項的名/值配對選擇性清單。憑證是在建立網域期間產生。清單上的每一組都必須以冒號
+           (:) 字元分隔。
+
+           允許的選項如下：
+
+           CN
+               指定用於自我簽署憑證的主機通用名稱。此選項名稱不區分大小寫。
+
+               依預設，該名稱會是執行 create-domain
+               子命令之主機的完全合格名稱。
+
+       --savelogin
+           若設為 true，則此選項會儲存管理使用者名稱及密碼。預設值為
+           false。使用者名稱和密碼儲存在使用者主目錄的 .asadminpass
+           檔案中。網域只能在本機建立。因此，在使用 --savelogin 選項時，儲存於
+           .asadminpass 的主機名稱一律為
+           localhost。如果使用者建立網域時就有指定預設的管理連接埠，後續任何
+           asadmin 遠端命令就無須指定 --user、--passwordfile、--host 或
+           --port。這些值將會自動保留。
+
+               注意
+               ┌───────────────────────────────────────────────────────────────────────────────────────┐
+               │備註 當同一位使用者在相同或不同主機                                                    │
+               │(掛載 NFS 的主目錄)                                                                    │
+               │建立擁有相同管理連接埠號碼的多個網域時，子命令不會詢問是否要覆寫密碼。一律會覆寫密碼。 │
+               └───────────────────────────────────────────────────────────────────────────────────────┘
+
+       --checkports
+           指定是否要檢查管理、HTTP、JMS、JMX 和 IIOP 連接埠的可用性。預設值為
+           true。
+
+       --nopassword
+           指定管理使用者是否擁有密碼。如果為 false (預設值)，密碼會由 asadmin
+           密碼檔案中的 AS_ADMIN_PASSWORD 項目來指定 (使用 --passwordfile
+           選項來設定)。如果為 false 且未設定
+           AS_ADMIN_PASSWORD，則系統會提示您輸入密碼。
+
+           如果為 true，則會建立不需要密碼的管理使用者。如果未使用 --user
+           選項指定網域的使用者名稱，且 --nopassword 選項設定為
+           true，則會使用預設使用者名稱 admin。
+
+運算元
+       domain-name
+           要建立的網域名稱。該名稱只能包含 ASCII
+           字元，且必須是建立網域之主機的作業系統上的有效目錄名稱。
+
+範例
+       範例 1, 建立網域
+           此範例會建立名稱為 domain4 的網域。
+
+               asadmin>create-domain --adminport 4848 domain4
+               Enter admin user name [Enter to accept default "admin" / no password
+               ]>
+
+               Using port 4848 for Admin.
+               Using default port 8080 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Distinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=sr1-usca-22,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain domain4 created.
+               Domain domain4 admin port is 4848.
+               Domain domain4 allows admin login as user "admin" with no password.
+               Command create-domain executed successfully.
+
+       範例 2, 在替代目錄中建立網域
+           此範例會在 /home/someuser/domains 目錄中建立名稱為 sampleDomain
+           的網域。
+
+               asadmin> create-domain --domaindir /home/someuser/domains --adminport 7070
+               --instanceport 7071 sampleDomain
+               Enter admin user name [Enter to accept default "admin" / no password]>
+               Using port 7070 for Admin.
+               Using port 7071 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Enterprise ServiceDistinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=sr1-usca-22,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain sampleDomain created.
+               Domain sampleDomain admin port is 7070.
+               Domain sampleDomain allows admin login as user "admin" with no password.
+               Command create-domain executed successfully.
+
+       範例 3, 建立網域及儲存管理使用者名稱和密碼
+           此範例會建立名稱為 myDomain 的網域，並儲存管理使用者名稱和密碼。
+
+               asadmin> create-domain --adminport 8282 --savelogin=true myDomain
+               Enter the admin password [Enter to accept default of no password]>
+               Enter the master password [Enter to accept default password "changeit"]>
+               Using port 8282 for Admin.
+               Using default port 8080 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Enterprise ServiceDistinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=sr1-usca-22,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain myDomain created.
+               Domain myDomain admin port is 8282.
+               Domain myDomain allows admin login as user "admin" with no password.
+               Login information relevant to admin user name [admin]
+               for this domain [myDomain] stored at
+               [/home/someuser/.asadminpass] successfully.
+               Make sure that this file remains protected.
+               Information stored in this file will be used by
+               asadmin commands to manage this domain.
+               Command create-domain executed successfully.
+
+       範例 4, 建立網域並指定憑證主機
+           此範例會建立名稱為 domain5 的網域。用於自我簽署憑證的主機通用名稱為
+           trio。
+
+               asadmin> create-domain --adminport 9898 --keytooloptions CN=trio domain5
+               Enter the admin password [Enter to accept default of no password]>
+               Enter the master password [Enter to accept default password "changeit"]>
+               Using port 9898 for Admin.
+               Using default port 8080 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Distinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=trio,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain domain5 created.
+               Domain domain5 admin port is 9898.
+               Domain domain5 allows admin login as user "admin" with no password.
+               Command create-domain executed successfully.
+
+結束狀態
+       0
+           已成功執行子命令
+
+       1
+           執行子命令時發生錯誤
+
+另請參閱
+       login(1), delete-domain(1), start-domain(1), stop-domain(1),
+       list-domains(1)
+
+       asadmin(1M)
+
+       Apache Felix Remote Shell
+       (http://felix.apache.org/site/apache-felix-remote-shell.html)，Java
+       平台除錯程式架構 (JPDA)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                     2011 年 6 月 14 日              create-domain(1)

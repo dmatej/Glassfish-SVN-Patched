@@ -1,0 +1,185 @@
+create-http-lb-ref(1)   Comandi secondari della utilit   create-http-lb-ref(1)
+
+NOME
+       create-http-lb-ref - aggiunge un cluster o un'istanza server esistente
+       a una configurazione di load balancer o a un load balancer esistente
+
+SINTASSI
+           create-http-lb-ref [--help] --config config_name | --lbname load_balancer_name
+           [--lbpolicy round-robin] [--lbpolicymodule lb_policy_module]
+           [--healthcheckerurl url] [--healthcheckerinterval 10]
+           [--healthcheckertimeout 10] [--lbenableallinstances=true]
+           [--lbenableallapplications=true] [--lbweight instance=weight[:instance=weight]*]
+           target
+
+DESCRIZIONE
+       Utilizzare il comando secondario create-http-lb-ref per eseguire le
+       operazioni riportate di seguito.
+
+       ·   Aggiungere un cluster o un'istanza server esistente a una
+           configurazione di load balancer a un load balancer esistente. Il
+           load balancer inoltra le richieste alle istanze in cluster e
+           standalone a cui fa riferimento.
+
+       ·   Impostare il criterio di bilanciamento del carico su round-robin,
+           weighted-round-robin o user-defined.
+
+       ·   Configurare uno strumento di controllo stato per il load balancer.
+           Tutte le impostazioni relative a tale strumento definite qui si
+           applicano solo alla destinazione. Se non si crea uno strumento di
+           controllo stato con questo comando secondario, utilizzare
+           create-http-health-checker.
+
+       ·   Abilitare tutte le istanze nel cluster di destinazione per il
+           bilanciamento del carico oppure utilizzare enable-http-lb-server
+           per abilitarle singolarmente.
+
+       ·   Abilitare tutte le applicazioni distribuite alla destinazione per
+           il bilanciamento del carico oppure utilizzare
+           enable-http-lb-application per abilitarle singolarmente.
+
+           Nota
+           ┌───────────────────────────────────────┐
+           │Nota                                   │
+           │                                       │
+           │           Questo comando secondario è │
+           │           applicabile solo a Oracle   │
+           │           GlassFish Server. Questo    │
+           │           comando secondario non è    │
+           │           applicabile a GlassFish     │
+           │           Server Open Source Edition. │
+           └───────────────────────────────────────┘
+
+OPZIONI
+       --help, -?
+           Visualizza il testo della Guida per il comando secondario.
+
+       --config
+           Specifica la configurazione del load balancer a cui aggiungere i
+           cluster e le istanze server. Specificare una configurazione del
+           load balancer o un load balancer. Se vengono specificati entrambi
+           si verifica un errore.
+
+       --lbname
+           Specifica il load balancer a cui aggiungere i cluster e le istanze
+           server. Specificare una configurazione del load balancer o un load
+           balancer. Se vengono specificati entrambi si verifica un errore.
+
+       --lbpolicy
+           Criterio seguito dal load balancer. I valori validi sono
+           round-robin, weighted-round-robin e user-defined. Se si sceglie
+           user-defined, specificare un modulo del criterio del load balancer
+           con l'opzione lbpolicymodule. Se si sceglie weighted-round-robin,
+           assegnare fattori ponderali alle istanze server utilizzando il
+           comando secondario configure-lb-weight. Il valore predefinito è
+           round-robin.
+
+       --lbpolicymodule
+           Se il criterio del load balancer è user-defined, utilizzare questa
+           opzione per specificare il percorso completo e il nome della
+           libreria condivisa del modulo del criterio. La libreria condivisa
+           deve trovarsi in una posizione accessibile per il Web server.
+
+       --healthcheckerurl
+           L'URL verso cui eseguire il ping per determinare se l'istanza è
+           integra.
+
+       --healthcheckerinterval
+           L'intervallo di tempo, in secondi, durante il quale lo strumento di
+           controllo stato controlla un'istanza non integra per verificare se
+           il problema è stato risolto. Il valore predefinito è 30 secondi. Il
+           valore 0 disabilita lo strumento di controllo stato.
+
+       --healthcheckertimeout
+           L'intervallo di tempo, in secondi, durante il quale lo strumento di
+           controllo stato rimane in attesa di una risposta da un'istanza. Se
+           allo scadere dell'intervallo impostato lo strumento di controllo
+           stato non avrà ricevuto risposta, l'istanza verrà considerata come
+           non integra. Il valore predefinito è 10.
+
+       --lbenableallinstances
+           Abilita tutte le istanze del cluster di destinazione per il
+           bilanciamento del carico. Se la destinazione è un'istanza server,
+           abilita tale istanza per il bilanciamento del carico. Il valore
+           predefinito è true.
+
+       --lbenableallapplications
+           Abilita tutte le applicazioni distribuite nel cluster o
+           nell'istanza di destinazione per il bilanciamento del carico. Il
+           valore predefinito è true.
+
+       --lbweight
+           Il nome dell'istanza e il peso da assegnare all'istanza. Il peso
+           deve essere un numero intero. Le coppie di istanze e fattori
+           ponderali sono separate da due punti (:). Ad esempio,
+           instance1=1:instance2=4 significa che su cinque richieste elaborate
+           una viene inoltrata a instance1 e quattro vengono inoltrate a
+           instance2. Il peso predefinito è 1.
+
+OPERANDI
+       target
+           Specifica il cluster o l'istanza da aggiungere al load balancer. Di
+           seguito sono riportati i valori validi.
+
+           ·   cluster_name: specifica che le richieste per questo cluster
+               verranno gestite dal load balancer.
+
+           ·   stand-alone_instance_name: specifica che le richieste per
+               questa istanza standalone verranno gestite dal load balancer.
+
+ESEMPI
+       Esempio 1, Aggiunta di un riferimento cluster a una configurazione del
+       load balancer
+           In questo esempio viene aggiunto a una configurazione del load
+           balancer denominata mylbconfig un riferimento a un cluster
+           denominato cluster2.
+
+               asadmin> create-http-lb-ref --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Esempio 2, Aggiunta di un riferimento cluster a un load balancer
+           In questo esempio viene aggiunto a un load balancer denominato mylb
+           un riferimento a un cluster denominato cluster2.
+
+               asadmin> create-http-lb-ref --lbname mylb cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Esempio 3, Configurazione di uno strumento di controllo stato e di un
+       criterio del load balancer
+           In questo esempio vengono configurati uno strumento di controllo
+           stato e un criterio di bilanciamento del carico e viene abilitato
+           il load balancer per le istanze e le applicazioni.
+
+               asadmin> create-http-lb-ref --config mylbconfig --lbpolicy weighted-round-robin
+               --healthcheckerinterval 40 --healthcheckertimeout 20
+               --lbenableallinstances=true --lbenableallapplications=true cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Esempio 4, Impostazione di un criterio di bilanciamento del carico
+       definito dall'utente
+           In questo esempio viene impostato un criterio di bilanciamento del
+           carico definito dall'utente.
+
+               asadmin> create-http-lb-ref --lbpolicy user-defined --lbpolicymodule /user/modules/module.so
+               --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+STATO DI USCITA
+       0
+           esecuzione del comando secondario riuscita
+
+       1
+           errore durante l'esecuzione del comando secondario
+
+VEDERE ANCHE
+       delete-http-lb-ref(1), create-http-health-checker(1),
+       enable-http-lb-server(1), enable-http-lb-application(1),
+       list-http-lb-configs(1), list-http-lbs(1) configure-lb-weight(1)
+
+       asadmin(1M)
+
+Java EE 7                       25 agosto 2010           create-http-lb-ref(1)

@@ -1,0 +1,246 @@
+monitor(1)              Sous-commandes de l'utilitaire              monitor(1)
+
+NOM
+       monitor - affiche les données de surveillance des composants et des
+       services fréquemment utilisés
+
+SYNTAXE
+           monitor [--help]
+           --type type
+           [--filename filename]
+           [--interval interval]
+           [--filter filter]
+           instance-name
+
+DESCRIPTION
+       La sous-commande monitor affiche des statistiques sur les composants et
+       services de GlassFish Server les plus fréquemment utilisés. L'option
+       --type doit être utilisée pour spécifier l'objet dont les statistiques
+       doivent être affichées. Les données sont affichées en continu sous
+       forme de tableau ou elles peuvent être affichées à un intervalle
+       particulier à l'aide de l'option --interval.
+
+       Pour qu'un composant ou un service donné puisse être surveillé, la
+       surveillance doit être activée (elle doit être définie sur la valeur
+       HIGH ou LOW) pour le composant ou le service via la Console
+       d'administration, la sous-commande enable-monitoring ou la
+       sous-commande set.
+
+       La sous-commande monitor comporte des options pour le filtrage des
+       résultats et la capture de la sortie sous la forme d'un fichier CSV
+       (Comma Separated Values). La sortie apparaît au format tabulaire. Pour
+       visualiser la légende de l'en-tête de la table, saisissez h.
+
+       Cette sous-commande est prise en charge en mode local uniquement.
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --type
+           Composant ou service à surveiller. Cette option est obligatoire.
+           Aucune valeur par défaut n'est définie.
+
+           httplistener
+               Pour ce type, l'attribut
+               server.monitoring-service.module-monitoring-levels.http-service
+               doit avoir la valeur LOW ou HIGH.
+
+               Affiche les statistiques suivantes pour le service de processus
+               d'écoute HTTP :
+
+               ec
+                   Nombre total d'erreurs survenues lors du traitement des
+                   demandes HTTP.
+
+               mt
+                   Temps de réponse le plus long (en millisecondes) pour le
+                   traitement d'une seule demande HTTP.
+
+               pt
+                   Temps total (en millisecondes) nécessaire au service de
+                   processus d'écoute HTTP pour traiter les demandes HTTP.
+
+               rc
+                   Nombre total de demandes traitées par le service de
+                   processus d'écoute HTTP.
+
+           jvm
+               Pour ce type, l'attribut
+               server.server-config.monitoring-service.module-monitoring-levels.jvm
+               doit avoir la valeur LOW ou HIGH.
+
+               Affiche les statistiques suivantes pour la machine virtuelle de
+               la plate-forme Java (JVM) :Les termes "Java Virtual Machine" et
+               "JVM" désignent une machine virtuelle pour plate-forme Java.
+
+               UpTime
+                   Temps d'exécution (en millisecondes) de la JVM depuis son
+                   dernier démarrage.
+
+               min
+                   Quantité initiale de mémoire (en octets) que la JVM demande
+                   au système d'exploitation pour la gestion de la mémoire
+                   lors du démarrage.
+
+               max
+                   Quantité maximale de mémoire pouvant être utilisée pour la
+                   gestion de la mémoire.
+
+               low
+                   Option conservée pour assurer la compatibilité avec les
+                   autres versions.
+
+               high
+                   Option conservée pour assurer la compatibilité avec les
+                   autres versions.
+
+               count
+                   Quantité de mémoire (en octets) disponible garantie pour la
+                   JVM.
+
+           webmodule
+               Pour ce type, l'attribut
+               server.server-config.monitoring-service.module-monitoring-levels.web-container
+               doit avoir la valeur LOW ou HIGH.
+
+               Affiche les statistiques suivantes pour tous les modules Web
+               déployés :
+
+               asc
+                   Nombre de sessions actuellement actives.
+
+               ast
+                   Nombre total de sessions actuellement actives ou actives
+                   précédemment.
+
+               rst
+                   Nombre total de sessions rejetées.
+
+               st
+                   Nombre total de sessions créées.
+
+               ajlc
+                   Nombre de pages utilisant la technologie JavaServer Pages
+                   (JSP) actuellement chargées.
+
+               mjlc
+                   Nombre maximal de pages utilisant la technologie JSP
+                   actives simultanément.
+
+               tjlc
+                   Nombre total de pages utilisant la technologie JSP
+                   chargées.
+
+               aslc
+                   Nombre de servlets Java actuellement actifs chargés.
+
+               mslc
+                   Nombre maximal de servlets Java actifs simultanément.
+
+               tslc
+                   Nombre total de servlets Java chargés.
+
+       --filename
+           Ne spécifiez pas cette option. Elle est conservée pour assurer la
+           compatibilité avec les versions antérieures. Si vous spécifiez
+           cette option, aucune erreur de syntaxe ne survient. Au lieu de
+           cela, la sous-commande est exécutée et affiche un message
+           d'avertissement indiquant que l'option est ignorée.
+
+       --interval
+           Intervalle (en secondes) au-delà duquel les attributs de
+           surveillance sont capturés. Cet intervalle doit être supérieur à 0.
+           Les attributs de surveillance sont affichés sur stdout jusqu'à ce
+           que vous appuyiez sur les touches Ctrl+C ou q. La valeur par défaut
+           est 30.
+
+       --filter
+           Ne spécifiez pas cette option. Elle est conservée pour assurer la
+           compatibilité avec les versions antérieures. Si vous spécifiez
+           cette option, aucune erreur de syntaxe ne survient. Au lieu de
+           cela, la sous-commande est exécutée et affiche un message
+           d'avertissement indiquant que l'option est ignorée.
+
+OPÉRANDES
+       instance-name
+           Instance de serveur dont les données de surveillance doivent être
+           affichées. La valeur par défaut est server.
+
+EXEMPLES
+       Exemple 1, Affichage des statistiques de surveillance par intervalle
+           Dans cet exemple, les données de surveillance sont affichées pour
+           la JVM toutes les 2 000 secondes.
+
+               asadmin> monitor --type=jvm --interval 2000 server
+                                              JVM Monitoring
+               UpTime(ms)                          Heap and NonHeap Memory(bytes)
+               current                   min        max        low        high       count
+               957843                    29523968   188284928  0          0          60370944
+
+               q
+               Command monitor executed successfully.
+
+       Exemple 2, Filtrage des données de surveillance
+           Dans cet exemple, l'option de filtrage est utilisée pour afficher
+           les statistiques de http-listener-1.
+
+               asadmin> monitor --type httplistener --filter http-listener-1 server
+
+                                  HTTP Listener Monitoring: http-listener-1
+               br   bs   c200 c2xx c302 c304 c3xx c400 c401 c403 c404 c4xx c503 c5xx coc  co
+               ctc  ctb  ec   moc  mst  mt   mtm  mst  pt   rc
+               0    0    0    0    0    3    3    0    0    0    0    0    0    0    0    0
+               2    0    0    1    20   20   2    2    6    3
+           Pour visualiser la légende des en-têtes de la table, saisissez h.
+
+               ******************************************************************************************
+               * br   = Cumulative value of the Bytes received by each of the Request Processors        *
+               * bs   = Cumulative value of the Bytes sent by each of the Request Processors            *
+               * c200 = Number of responses with a status code equal to 200                             *
+               * c2xx = Number of responses with a status code in the 2xx range                         *
+               * c302 = Number of responses with a status code equal to 302                             *
+               * c304 = Number of responses with a status code equal to 304                             *
+               * c3xx = Number of responses with a status code in the 3xx range                         *
+               * c400 = Number of responses with a status code equal to 400                             *
+               * c401 = Number of responses with a status code equal to 401                             *
+               * c403 = Number of responses with a status code equal to 403                             *
+               * c404 = Number of responses with a status code equal to 404                             *
+               * c4xx = Number of responses with a status code equal to 4xx                             *
+               * c504 = Number of responses with a status code equal to 504                             *
+               * c5xx = Number of responses with a status code equal to 5xx                             *
+               * coc  = Number of open connections                                                      *
+               * co   = Number of responses with a status code outside the 2xx, 3xx, 4xx, and 5xx range *
+               * ctc  = Number of request processing threads currently in the listener thread pool      *
+               * ctb  = Number of request processing threads currently in use in the listener thread    *
+               *        pool serving requests                                                           *
+               * ec   = Number of responses with a status code equal to 400                             *
+               * moc  = Maximum number of open connections                                              *
+               * mst  = Minimum number of request processing threads that will be created at listener   *
+               *        startup time and maintained as spare threads above the current thread count     *
+               * mt   = Maximum number of request processing threads that are created by the listener   *
+               * mtm  = Provides the longest response time for a request - not a cumulative value, but  *
+               *        the largest response time from among the response times                         *
+               * pt   = Cumulative value of the times taken to process each request. The processing     *
+               *        time is the average of request processing times over the request count          *
+               * rc   = Cumulative number of the requests processed so far                              *
+               ******************************************************************************************
+
+STATUT DE SORTIE
+       0
+           sous-commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la sous-commande
+
+VOIR AUSSI
+       enable-monitoring(1), disable-monitoring(1), set(1)
+
+       surveillance(5ASC)
+
+       asadmin(1M)
+
+       Administering the Monitoring Service dans le manuel Oracle GlassFish
+       Server Administration Guide
+
+Java EE 7                         2 nov. 2009                       monitor(1)

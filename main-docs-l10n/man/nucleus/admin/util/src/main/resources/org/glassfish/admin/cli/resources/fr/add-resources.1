@@ -1,0 +1,159 @@
+add-resources(1)        Sous-commandes de l'utilitaire        add-resources(1)
+
+NOM
+       add-resources - crée les ressources indiquées dans un fichier XML
+
+SYNTAXE
+           add-resources [--help] [--target target]
+           [--upload={false|true}] xml-file-name
+
+DESCRIPTION
+       La sous-commande add-resources crée les ressources nommées dans le
+       fichier XML spécifié. Les ressources pouvant être créées à l'aide de
+       cette sous-commande sont répertoriées sous la rubrique Voir aussi de
+       cette page d'aide.
+
+       L'option --target indique la cible pour laquelle vous créez les
+       ressources. Si cette option indique le domaine, les ressources ne sont
+       ajoutées qu'à la configuration du serveur d'administration de domaine
+       (DAS). Si cette option indique toute autre cible, les ressources sont
+       ajoutées à la configuration du serveur DAS et les références sont
+       ajoutées aux ressources à partir de la cible indiquée.
+
+       L'opérande xml-file-name est le chemin d'accès au fichier XML contenant
+       les ressources à créer. Vous devez indiquer le paramètre DOCTYPE comme
+       http://glassfish.org/dtds/glassfish-resources_1_5.dtd dans le fichier
+       resources.xml.
+
+       Cette sous-commande est prise en charge en mode distant uniquement.
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --target
+           Cette option indique la cible pour laquelle vous créez les
+           ressources.
+
+           Les valeurs valides sont les suivantes :
+
+           server
+               Cette valeur crée les ressources pour l'instance de serveur par
+               défaut server et constitue la valeur par défaut.
+
+           domain
+               Cette valeur crée les ressources pour le domaine.
+
+           cluster-name
+               Cette valeur crée les ressources pour chaque instance de
+               serveur dans le cluster.
+
+           instance-name
+               Cette valeur crée les ressources pour une instance GlassFish
+               Server donnée.
+
+       --upload
+           Cette option indique si la sous-commande télécharge le fichier vers
+           le serveur DAS. Dans la plupart des cas, cette option peut être
+           omise.
+
+           Les valeurs valides sont les suivantes :
+
+           false
+               La sous-commande ne télécharge pas le fichier et tente d'y
+               accéder via le nom de fichier spécifié. Si le serveur DAS ne
+               peut pas accéder au fichier, la sous-commande échoue.
+
+               Par exemple, le serveur DAS peut être en cours d'exécution par
+               un utilisateur autre que l'administrateur qui n'a pas de droits
+               d'accès en lecture sur le fichier. Dans ce cas, la
+               sous-commande échoue si l'option --upload a la valeur false.
+
+           true
+               La sous-commande télécharge le fichier vers le serveur DAS sur
+               la connexion réseau.
+
+           La valeur par défaut varie selon que le serveur DAS se situe sur
+           l'hôte où la sous-commande est exécutée ou bien sur un hôte
+           distant.
+
+           ·   Si le serveur DAS se situe sur l'hôte où la sous-commande est
+               exécutée, la valeur par défaut est false.
+
+           ·   Si le serveur DAS se situe sur un hôte distant, la valeur par
+               défaut est true.
+
+OPÉRANDES
+       xml-file-name
+           Chemin d'accès au fichier XML contenant les ressources à créer.
+           Vous pouvez indiquer un chemin d'accès absolu, le nom de fichier
+           seulement ou un chemin relatif.
+
+           ·   Si vous spécifiez un chemin d'accès absolu, le fichier XML peut
+               se trouver à n'importe quel endroit.
+
+           ·   Si vous indiquez uniquement le nom de fichier, le fichier XML
+               doit résider dans le répertoire domain-dir/config sur l'hôte du
+               serveur DAS. Cette condition doit être respectée, même si vous
+               exécutez la sous-commande à partir d'un autre hôte.
+
+           ·   Si vous indiquez un chemin relatif, le fichier XML doit figurer
+               dans le répertoire relatif.
+
+           Vous trouverez ci-dessous un exemple de fichier XML.
+
+               <?xml version="1.0" encoding="UTF-8"?>
+               <!DOCTYPE resources PUBLIC
+                  "-//GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions //EN"
+                  "http://glassfish.org/dtds/glassfish-resources_1_5.dtd">
+               <resources>
+                <jdbc-connection-pool name="SPECjPool" steady-pool-size="100"
+                  max-pool-size="150" max-wait-time-in-millis="60000"
+                  pool-resize-quantity="2" idle-timeout-in-seconds="300"
+                  is-isolation-level-guaranteed="true"
+                  is-connection-validation-required="false"
+                  connection-validation-method="auto-commit"
+                  fail-all-connections="false"
+                  datasource-classname="oracle.jdbc.pool.OracleDataSource">
+                 <property name="URL"
+                   value="jdbc:oracle:thin:@iasperfsol12:1521:specdb"/>
+                 <property name="User" value="spec"/>
+                 <property name="Password" value="spec"/>
+                 <property name="MaxStatements" value="200"/>
+                 <property name="ImplicitCachingEnabled" value="true"/>
+                </jdbc-connection-pool>
+                <jdbc-resource enabled="true" pool-name="SPECjPool"
+                  jndi-name="jdbc/SPECjDB"/>
+               </resources>
+
+EXEMPLES
+       Exemple 1, Ajout de ressources
+           Cet exemple montre comment créer des ressources à l'aide du contenu
+           du fichier XML resource.xml.
+
+               asadmin> add-resources resource.xml
+               Command : Connector connection pool jms/testQFactoryPool created.
+               Command : Administered object jms/testQ created.
+               Command : Connector resource jms/testQFactory created.
+               Command : Resource adapter config myResAdapterConfig created successfully
+               Command : JDBC connection pool DerbyPoolA created successfully.
+               Command : JDBC resource jdbc/__defaultA created successfully.
+               Command add-resources executed successfully.
+
+STATUT DE SORTIE
+       0
+           sous-commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la sous-commande
+
+VOIR AUSSI
+       create-jdbc-connection-pool(1),create-jdbc-resource(1),
+       create-jms-resource(1), create-jndi-resource(1),
+       create-javamail-resource(1), create-custom-resource(1),
+       create-connector-resource(1), create-connector-work-security-map(1),
+       create-admin-object(1), create-resource-adapter-config(1)
+
+       asadmin(1M)
+
+Java EE 7                         23 déc 2010                 add-resources(1)

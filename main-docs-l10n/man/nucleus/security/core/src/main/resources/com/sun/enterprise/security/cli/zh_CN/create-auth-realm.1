@@ -1,0 +1,217 @@
+create-auth-realm(1)        asadmin 实用程序子命令        create-auth-realm(1)
+
+名称
+       create-auth-realm - 添加命名验证领域
+
+提要
+           create-auth-realm --classname realm_class [--help] [--property(name=value)[:name=value]*]
+           [--target target_name] auth_realm_name
+
+说明
+       create-auth-realm 子命令添加命名验证领域。
+
+       该子命令仅在远程模式下受支持。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --target
+           指定要创建领域的目标。有效值为
+
+           server
+               在默认服务器实例上创建领域。这是默认值。
+
+           configuration_name
+               在指定的配置中创建领域。
+
+           cluster_name
+               在指定集群中的所有服务器实例上创建领域。
+
+           instance_name
+               在指定服务器实例中创建领域。
+
+       --classname
+           用来实现该领域的 Java 类。这些类包括
+           com.sun.enterprise.security.auth.realm.file.FileRealm、com.sun.enterprise.security.auth.realm.certificate.CertificateRealm、com.sun.enterprise.security.auth.realm.jdbc.JDBCRealm、com.sun.enterprise.security.auth.realm.ldap.LDAPRealm、com.sun.enterprise.security.auth.realm.ldap.PamRealm
+           和
+           com.sun.enterprise.security.auth.realm.solaris.SolarisRealm，或定制领域。
+
+       --property
+           用于配置验证领域的可选属性名称/值对。验证领域需要使用特定于提供方的属性，这些属性会因实现的不同而有所不同。
+
+           以下属性对于所有受支持的领域 (包括
+           FileRealm、CertificateRealm、JDBCRealm、LDAPRealm、PamRealm 和
+           SolarisRealm) 都通用。
+
+           jaas-context
+               指定 Java 验证和授权服务 (JAAS) 上下文。
+
+           assign-groups
+               (可选)
+               如果设置了此属性，其值将呈现为以逗号分隔的组名列表。为了在 Web
+               和 EJB
+               容器中做出授权决定，应将这些组的成员资格分配给提供有效证书的所有客户机。
+
+           您可以指定下面的特定于每个领域的属性。
+
+           ·   您可以为 FileRealm 指定以下属性：
+
+               file
+                   指定用来存储用户名、口令和组名的文件。默认值为
+                   domain-dir/config/keyfile。
+
+           ·   您可以为 CertificateRealm 指定以下属性：
+
+               LoginModule
+                   指定 JAAS LoginModule 的名称，用于执行验证。要使用 JAAS
+                   LoginModule，您必须先创建
+                   javax.security.auth.spi.LoginModule
+                   接口的实现，然后将此模块插入
+                   jaas-context。有关详细信息，请参阅 Oracle GlassFish Server
+                   Security Guide 中的 Custom Authentication of Client
+                   Certificate in SSL Mutual Authentication。
+
+           ·   您可以为 JDBCRealm 指定以下属性：
+
+               datasource-jndi
+                   为数据库指定 jdbc-resource 的 jndi-name。
+
+               user-table
+                   指定数据库中用户表的名称。
+
+               user-name-column
+                   指定数据库用户表中用户名列的名称。
+
+               password-column
+                   指定数据库用户表中口令列的名称。
+
+               group-table
+                   指定数据库中组表的名称。
+
+               group-table
+                   指定类 JDBCRealm 的验证领域的组表。
+
+               group-name-column
+                   指定数据库组表中组名列的名称。
+
+               db-user
+                   (可选) 允许您在领域 (而非 jdbc-connection-pool)
+                   中指定数据库用户名。这样可以防止其他应用程序查询数据库、获取连接和浏览用户表。默认情况下，使用
+                   jdbc-connection-pool 配置。
+
+               db-password
+                   (可选) 允许您在领域 (而非 jdbc-connection-pool)
+                   中指定数据库口令。这样可以防止其他应用程序查询数据库、获取连接和浏览用户表。默认情况下，使用
+                   jdbc-connection-pool 配置。
+
+               group-table
+                   指定数据库中组表的名称。
+
+               digest-algorithm
+                   (可选) 指定摘要算法。默认值为 SHA-256。您可以使用 JDK
+                   中支持的任何算法，或者使用“无”。
+
+                       注意
+                       ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
+                       │注 在低于 4.0 的 GlassFish Server                                                                     │
+                       │版本中，默认算法为 MD5。如果有依赖于                                                                  │
+                       │MD5 算法的应用程序，可以通过使用                                                                      │
+                       │asadmin set 子命令覆盖默认 SHA-25                                                                     │
+                       │算法：                                                                                                │
+                       │                           asadmin> set server.security-service.property.default-digest-algorithm=MD5 │
+                       │                                                                                                      │
+                       │                                                                                                      │
+                       │                       可以使用 asadmin                                                               │
+                       │                       get                                                                            │
+                       │                       子命令来确定当前正在使用的算法：                                               │
+                       │                           asadmin> get server.security-service.property.default-digest-algorithm     │
+                       │                                                                                                      │
+                       │                                                                                                      │
+                       │                       另请注意，如果执行从                                                           │
+                       │                       GlassFish Server                                                               │
+                       │                       v2.x 或 v3.0.x                                                                 │
+                       │                       到 GlassFish                                                                   │
+                       │                       Server 4.0                                                                     │
+                       │                       的升级，在旧版                                                                 │
+                       │                       GlassFish Server                                                               │
+                       │                       未明确设置摘要算法的情况下，默认算法将自动设置为                               │
+                       │                       MD5，以保持向后兼容性。                                                        │
+                       └──────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+               digestrealm-password-enc-algorithm
+                   (可选) 指定用于对数据库中存储的口令进行加密的算法。
+
+                       注意
+                       ┌──────────────────────────────────────┐
+                       │注 不指定口令加密算法会带来安全风险。 │
+                       └──────────────────────────────────────┘
+
+               encoding
+                   (可选) 指定编码。允许的值为 Hex 和 Base64。如果指定了
+                   digest-algorithm，则默认值为 Hex。如果未指定
+                   digest-algorithm，则默认情况下不会指定任何编码。
+
+               charset
+                   (可选) 指定摘要算法的字
+
+           ·   您可以为 LDAPRealm 指定以下属性：
+
+               directory
+                   指定您的服务器的 LDAP URL。
+
+               base-dn
+                   指定用户数据位置的 LDAP 基础
+                   DN。由于将执行树范围查找，因此此基础 DN
+                   可以位于用户数据之上的任意级别。查找树越小，性能越高。
+
+               search-filter
+                   (可选) 指定用于查找用户的搜索过滤器。默认值为 uid=%s (%s
+                   扩展到主题名称)。
+
+               group-base-dn
+                   (可选) 指定组数据位置的基础 DN。默认情况下，它与 base-dn
+                   相同，但可根据需要进行优化。
+
+               group-search-filter
+                   (可选) 指定用于查找用户组成员资格的搜索过滤器。默认值为
+                   uniquemember=%d (%d 可扩展到用户 elementDN)。
+
+               group-target
+                   (可选) 指定包含组名条目的 LDAP 属性名称。默认值为 CN。
+
+               search-bind-dn
+                   (可选) 指定用于向目录验证以执行 search-filter 查找的可选
+                   DN。只有不允许匿名搜索的目录才需要此属性。
+
+               search-bind-password
+                   (可选) 指定 search-bind-dn 中给定 DN 的 LDAP 口令。
+
+操作数
+       auth_realm_name
+           领域的简短名称。例如，该名称用于从 web.xml 引用领域。
+
+示例
+       Example 1, 创建新的验证领域
+           此示例创建新的文件领域。
+
+               asadmin> create-auth-realm
+               --classname com.sun.enterprise.security.auth.realm.file.FileRealm
+               --property file=${com.sun.aas.instanceRoot}/config/
+               admin-keyfile:jaas-context=fileRealm file
+               Command create-auth-realm executed successfully
+           其中 file 为创建的验证领域。
+
+退出状态
+       0
+           已成功执行子命令
+
+       1
+           执行子命令时出现错误
+
+另请参阅
+       delete-auth-realm(1), list-auth-realms(1)
+
+       asadmin(1M)
+
+Java EE 7                     2010 年 9 月 20 日          create-auth-realm(1)

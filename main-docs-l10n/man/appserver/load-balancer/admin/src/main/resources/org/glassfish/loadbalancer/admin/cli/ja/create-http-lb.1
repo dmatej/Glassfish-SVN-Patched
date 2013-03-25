@@ -1,0 +1,123 @@
+create-http-lb(1)     asadminユーティリティのサブコマンド    create-http-lb(1)
+
+名前
+       create-http-lb - ロード・バランサを作成します
+
+概要
+           create-http-lb [--help] --devicehost device_host_or_IP_address --deviceport device_port
+           [--sslproxyhost proxy_host]
+           [--sslproxyport proxy_port] [--target target] [--lbpolicy lbpolicy] [--lbpolicymodule lb_policy_module] [--healthcheckerurl url]
+           [--healthcheckerinterval 10] [--healthcheckertimeout 10]
+           [--lbenableallinstances=true] [--lbenableallapplications=true] [--lbweight instance=weight[:instance=weight]*] [--responsetimeout 60] [--httpsrouting=false] [--reloadinterval60][--monitor=false][--routecookie=true]
+           [--property (name=value)[:name=value]*
+           ] load_balancer_name
+
+説明
+       create-http-lbサブコマンドを使用すると、ロード・バランサ構成、ターゲット参照、ヘルス・チェッカを含む、ロード・バランサを作成できます。ロード・バランサは、実際のロード・バランサ・デバイスを表すものであり、そのデバイス・ホストとポート情報によって定義されます。ロード・バランサを作成しておくと、export-http-lb-configを実行し、生成されたロード・バランサ構成ファイルをWebサーバー・インスタンスに手動でコピーしなくても、ロード・バランサ構成に加えられた変更を自動的に適用することができます。
+
+           注記
+           ┌───────────────────────────────────────────────────────────────────┐
+           │注意                                                               │
+           │                                                                   │
+           │           このサブコマンドは、Oracle                              │
+           │           GlassFish                                               │
+           │           Serverにのみ適用されます。このサブコマンドは、GlassFish │
+           │           Server Open Source                                      │
+           │           Editionには適用されません。                             │
+           └───────────────────────────────────────────────────────────────────┘
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --devicehost
+           ロード・バランシング・デバイスのデバイス・ホストまたはIPアドレス。このホストまたはIPに物理ロード・バランサが格納されます。
+
+       --deviceport
+           ロード・バランシング・デバイスとの通信に使用されるポート。SSLが有効である必要があります。
+
+       --sslproxyhost
+           アウトバウンドHTTPに使用するプロキシ・ホスト。
+
+       --sslproxyport
+           アウトバウンドHTTPに使用するプロキシ・ポート。
+
+       --target
+           ロード・バランサを適用するターゲットを指定します。
+
+           有効な値は次のとおりです:
+
+           ·   cluster_name-
+               このクラスタに対するリクエストがロード・バランサによって処理されるように指定します。
+
+           ·   stand-alone_instance_name-
+               このスタンドアロン・インスタンスに対するリクエストがロード・バランサによって処理されるように指定します。
+
+       --lbpolicy
+           ロード・バランサがクラスタ内のサーバー・インスタンスに負荷を分散させる場合に従うポリシー。有効な値はround-robin、weighted-round-robin、およびuser-definedです。user-definedを選択する場合は、lbpolicymoduleオプションを使用してロード・バランサ・ポリシー・モジュールを指定します。weighted-round-robinを選択する場合は、configure-lb-weightサブコマンドを使用して、サーバー・インスタンスに重みを割り当てます。デフォルトはround-robinです。
+
+       --lbpolicymodule
+           ターゲットがクラスタであり、ロード・バランサ・ポリシーがuser-definedである場合は、このオプションを使用して、ロード・バランシング・ポリシー・モジュールの共有ライブラリのフルパスと名前を指定します。共有ライブラリは、Webサーバーからアクセス可能な場所にある必要があります。
+
+       --healthcheckerurl
+           インスタンスが正常かどうかを確認するためにpingを送信するURL。
+
+       --healthcheckerinterval
+           正常でないインスタンスが正常になったかどうかを確認するために、ヘルス・チェッカがインスタンスをチェックする間隔(秒単位)。デフォルト値は10秒です。この値が0の場合は、ヘルス・チェッカが無効になります。
+
+       --healthcheckertimeout
+           ヘルス・チェッカがインスタンスからのレスポンスの受信を待機する間隔(秒単位)。ヘルス・チェッカがこの間隔の間にレスポンスを受信しなかった場合は、インスタンスが正常ではないと判断されます。デフォルト値は10秒です。
+
+       --lbenableallinstances
+           ロード・バランシング用のターゲット・クラスタのインスタンスをすべて有効にします。ターゲットがサーバー・インスタンスの場合は、そのインスタンスをロード・バランシング用に有効にします。
+
+       --lbenableallapplications
+           ロード・バランシング用にターゲット・クラスタまたはインスタンスにデプロイされたアプリケーションをすべて有効にします。
+
+       --lbweight
+           インスタンスの名前と、そのインスタンスに割り当てる重み。重みは整数にする必要があります。インスタンスと重みのペアは、コロンによって区切られています。たとえば、instance1=1:instance2=4の場合、5リクエストごとに、重み1がinstance1へ移動し、重み4がinstance2に移動します。重み1がデフォルトです。
+
+       --responsetimeout
+           サーバー・インスタンスがレスポンスを返すまでの秒数。タイムアウト時間内にレスポンスが着信しない場合、サーバーが正常でないと判断されます。この時間が正の数に設定され、リクエストが多重呼出し不変である場合、そのリクエストは再試行されます。リクエストが多重呼出し不変でない場合は、エラー・ページが返されます。0に設定された場合、タイムアウトは使用されません。デフォルトは60です。
+
+       --httpsrouting
+           trueに設定すると、ロード・バランサに対するHTTPSリクエストの結果が、サーバー・インスタンスに対するHTTPSリクエストになります。falseに設定すると、ロード・バランサに対するHTTPSリクエストの結果が、サーバー・インスタンスに対するHTTPリクエストになります。デフォルトはfalseです。
+
+       --reloadinterval
+           ロード・バランサが更新された構成を確認する時間間隔(秒単位)。検出されると、構成ファイルが再ロードされます。デフォルト値は60秒です。この値が0の場合は、再ロードが無効になります。
+
+       --monitor
+           trueに設定すると、ロード・バランサのモニターがオンになります。デフォルト値はfalseです。
+
+       --routecookie
+           このオプションは推奨されていません。値は常にtrueになります。
+
+       --property
+           ロード・バランサを構成するための属性名と値のペア(オプション)。
+
+オペランド
+       lb_name
+           新しいロード・バランサの名前。この名前は、ドメイン内の他のロード・バランサと競合しないようにする必要があります。
+
+例
+       例 1, ロード・バランサの作成
+           この例では、mylbという名前のロード・バランサを作成します。
+
+               asadmin> create-http-lb
+               --devicehost host1 --deviceport 5555 mylb
+
+               Command create-http-lb executed successfully.
+
+終了ステータス
+       0
+           サブコマンドは正常に実行されました
+
+       1
+           サブコマンドの実行時にエラーが発生しました
+
+関連項目
+       delete-http-lb(1), list-http-lbs(1), create-http-lb-config(1)
+
+       asadmin(1M)
+
+Java EE 7                        2010年8月25日               create-http-lb(1)

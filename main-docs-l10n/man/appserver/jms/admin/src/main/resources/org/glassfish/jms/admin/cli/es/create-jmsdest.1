@@ -1,0 +1,226 @@
+create-jmsdest(1)       Subcomandos de la Utilidad asa       create-jmsdest(1)
+
+NOMBRE DE REFERENCIA
+       create-jmsdest - Crea un destino físico JMS.
+
+SINOPSIS
+           create-jmsdest [--help]
+           --desttype dest_type
+           [--property (name=value)[:name=value]*]
+           [--target target]
+           [--force[={false|true}]]
+           dest_name
+
+DESCRIPCIÓN
+       El subcomando create-jmsdest crea un destino físico de Java Message
+       Service (JMS). El subcomando create-jms-resource se suele usar para
+       crear un recurso de destino de JMS con una propiedad Name que
+       especifica el destino físico. El destino físico se crea automáticamente
+       al ejecutar una aplicación que utiliza el recurso de destino. Utilice
+       el subcomando create-jmsdest si desea crear un destino físico con una
+       configuración de propiedades distinta a la configuración por defecto.
+
+       Este subcomando sólo está soportado en modo remoto. Los subcomandos
+       asadmin remotos necesitan un servidor de administración de dominio
+       (DAS) en ejecución.
+
+OPCIONES
+       --help, -?
+           Muestra el texto de ayuda para el subcomando.
+
+       --desttype
+           El tipo de destino de JMS. Los valores válidos son topic y queue.
+
+       --property
+           Pares de nombre/valor de atributo opcional para configurar el
+           destino físico. Se pueden especificar las siguientes propiedades
+           para un destino físico.
+
+           maxNumMsgs
+               El número máximo de mensajes no consumidos permitido para el
+               destino. Un valor de -1 indica un número ilimitado de mensajes.
+               El valor por defecto es -1. Para la cola de mensajes inactivos,
+               el valor por defecto es 1000.
+
+               Si la propiedad limitBehavior se define en FLOW_CONTROL, es
+               posible que se supere el límite de mensajes especificado,
+               debido a que el broker no puede responder lo bastante rápido
+               para parar el flujo de mensajes entrantes. En estos casos, el
+               valor especificado para maxNumMsgs sirve simplemente como valor
+               aproximado para el broker en lugar de forzar un límite
+               estricto.
+
+           maxBytesPerMsg
+               El tamaño máximo de un mensaje, en bytes. El rechazo de un
+               mensaje persistente se indica al cliente que lo ha generado
+               mediante una excepción; no se enviará una notificación en el
+               caso de mensajes no persistentes.
+
+               El valor se puede expresar en bytes, KB o MB, mediante los
+               siguientes sufijos:
+
+               b
+                   Bytes
+
+               k
+                   KB (1024 bytes)
+
+               m
+                   MB (1024 x 1024 = 1.048.576 bytes)
+
+               Un valor sin sufijo se expresa en bytes; el valor -1 denota
+               tamaño de mensaje ilimitado. El valor por defecto es -1.
+
+           maxTotalMsgBytes
+               El total máximo de memoria para mensajes no consumidos, en
+               bytes. El valor por defecto es -1. La sintaxis es la misma que
+               para maxBytesPerMsg . Para la cola de mensajes inactivos, el
+               valor por defecto es 10m.
+
+           limitBehavior
+               El comportamiento del broker de cola de mensajes cuando se
+               alcanza el límite de memoria. Los valores válidos son los
+               siguientes:
+
+               REJECT_NEWEST
+                   Rechaza los mensajes más recientes y notifica al cliente
+                   que los produce con una excepción sólo si el mensaje es
+                   persistente. Este es el valor por defecto.
+
+               FLOW_CONTROL
+                   Ralentiza la frecuencia con que los productores de mensajes
+                   los envían.
+
+               REMOVE_OLDEST
+                   Descarta los mensajes más antiguos.
+
+               REMOVE_LOW_PRIORITY
+                   Descarta los mensajes de menor prioridad según su
+                   antigüedad, sin enviar notificación al cliente productor
+                   del mensaje.
+
+               Si el valor es REMOVE_OLDEST o REMOVE_LOW_PRIORITY y la
+               propiedad useDMQ se define en true, los mensajes sobrantes se
+               mueven a la cola de mensajes inactivos. Para la cola de
+               mensajes inactivos, el comportamiento límite por defecto es
+               REMOVE_OLDEST, y el valor no se puede definir en FLOW_CONTROL.
+
+           maxNumProducers
+               El número máximo de productores de mensajes para el destino.
+               Cuando se alcanza este límite, no se pueden crear nuevos
+               productores. El valor -1 indica un número ilimitado de
+               productores. El valor por defecto es 100. Esta propiedad no se
+               aplica a la cola de mensajes inactivos.
+
+           consumerFlowLimit
+               El número máximo de mensajes que pueden entregarse a un
+               consumidor en un solo lote. Un valor de -1 indica un número
+               ilimitado de mensajes. El valor por defecto es 1.000. El tiempo
+               de ejecución del cliente puede anular este límite especificando
+               un valor inferior en el objeto de fábrica de conexiones.
+
+               En una entrega con equilibrio de carga desde una cola, es el
+               número inicial de mensajes en cola direccionados a consumidores
+               activos antes del inicio del equilibrio de carga.
+
+           useDMQ
+               Si se define en true, los mensajes inactivos van a la cola de
+               mensajes inactivos. Si se define en false, los mensajes
+               inactivos se descartan. El valor por defecto es true.
+
+           validateXMLSchemaEnabled
+               Si se define en true, la validación de esquema XML se activa
+               para el destino. El valor por defecto es false.
+
+               Al activar la validación XML, el tiempo de ejecución del
+               cliente de Cola de Mensajes intentará validar un mensaje XML
+               contra los XSD especificados (o contra el DTD, si no se
+               especifica el XSD) antes de enviarlo al broker. Si el esquema
+               especificado no se puede localizar o no es posible validar el
+               mensaje, éste último no se enviará y aparecerá una excepción.
+
+               Esta propiedad debe definirse cuando un destino está inactivo:
+               es decir, cuando no tiene consumidores ni productores y cuando
+               no hay mensajes en el destino. De lo contrario, el productor
+               debe volver a conectarse.
+
+           XMLSchemaURIList
+               Lista separada por espacios de cadenas URI de documento de
+               esquema XML (XSD). Los URI apuntan a la ubicación de uno o más
+               XSD para su uso en la validación de esquema XML, si
+               validateXMLSchemaEnabled se define en true. El valor por
+               defecto es null.
+
+               Escriba este valor entre comillas dobles si se especifican
+               varios URI, como en el siguiente ejemplo:
+
+                   "http://foo/flap.xsd http://test.com/test.xsd"
+               Si esta propiedad no está definida o su valor es null y la
+               validación XML está activada, la validación XML se realiza a
+               través de un DTD especificado en el documento XML. Si se
+               modifica un XSD, como resultado de la modificación de los
+               requisitos de la aplicación, todas las aplicaciones cliente que
+               produzcan mensajes XML basados en el XSD modificado deberán
+               reconectarse al broker.
+
+           Para modificar el valor de estas propiedades, puede utilizar el
+           comando as-install/mq/bin/imqcmd. Consulte la sección sobre la
+           referencia de la propiedad de destino física en Oracle GlassFish
+           Server Message Queue Administration Guide para obtener más
+           información.
+
+       --target
+           Crea el destino físico sólo para el destino especificado. Aunque el
+           subcomando create-jmsdest está relacionado con los recursos, el
+           destino físico se crea mediante el servicio JMS (broker JMS), que
+           es parte de la configuración. Se configura un broker JMS en la
+           sección config de domain.xml. Los valores válidos son los
+           siguientes:
+
+           server
+               Crea el destino físico para la instancia de servidor por
+               defecto. Este es el valor por defecto.
+
+           configuration-name
+               Crea el destino físico en la configuración especificada.
+
+           cluster-name
+               Crea el destino físico para todas las instancias de servidor
+               del cluster especificado.
+
+           instance-name
+               Crea el destino físico para la instancia de servidor
+               especificada.
+
+       --force
+           Especifica si el subcomando sobrescribe el destino físico de JMS
+           con el mismo nombre. El valor por defecto es false.
+
+OPERANDOS
+       dest_name
+           Un identificador único para el destino de JMS que se va a crear.
+
+EJEMPLOS
+       Ejemplo 1, Creación de un Destino Físico JMS
+           El siguiente subcomando crea una cola física JMS denominada
+           PhysicalQueue, con valores de propiedades distintos de los valores
+           por defecto.
+
+               asadmin> create-jmsdest --desttype queue
+               --property maxNumMsgs=1000:maxBytesPerMsg=5k PhysicalQueue
+               Command create-jmsdest executed successfully.
+
+ESTADO DE SALIDA
+       0
+           Subcomando ejecutado correctamente
+
+       1
+           Error al ejecutar el subcomando
+
+CONSULTE TAMBIÉN
+       create-jms-resource(1), delete-jmsdest(1), list-jmsdest(1),
+       flush-jmsdest(1)
+
+       asadmin(1M)
+
+Java EE 7                    12 de febrero de 2013           create-jmsdest(1)

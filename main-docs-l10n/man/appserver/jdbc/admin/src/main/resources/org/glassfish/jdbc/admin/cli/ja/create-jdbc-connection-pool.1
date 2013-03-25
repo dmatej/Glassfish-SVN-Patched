@@ -1,0 +1,358 @@
+create-jdbc-connectionasadminユーティリティのサブ
+
+名前
+       create-jdbc-connection-pool - JDBC接続プールを登録します
+
+概要
+           create-jdbc-connection-pool [--help]
+           [--datasourceclassname=datasourceclassname]
+           [--restype=resourcetype]
+           [--steadypoolsize=poolsize]
+           [--maxpoolsize=maxpoolsize]
+           [--maxwait=maxwaittime]
+           [--poolresize=poolresizelimit]
+           [--idletimeout=idletimeout]
+           [--initsql=initsqlstring]
+           [--isolationlevel=isolationlevel]
+           [--isisolationguaranteed={true|false}]
+           [--isconnectvalidatereq={false|true}]
+           [--validationmethod=validationmethod]
+           [--validationtable=validationtable]
+           [--failconnection={false|true}]
+           [--allownoncomponentcallers={false|true}]
+           [--nontransactionalconnections={false|true}]
+           [--validateatmostonceperiod=validationinterval]
+           [--leaktimeout=leaktimeout]
+           [--leakreclaim={false|true}]
+           [--statementleaktimeout=satementleaktimeout]
+           [--statmentleakreclaim={false|true}]
+           [--creationretryattempts=creationretryattempts]
+           [--creationretryinterval=creationretryinterval]
+           [--sqltracelisteners=sqltracelisteners[,sqltracelisteners]]
+           [--statementtimeout=statementtimeout]
+           [--lazyconnectionenlistment={false|true}]
+           [--lazyconnectionassociation={false|true}]
+           [--associatewiththread={false|true}]
+           [--driverclassname=jdbcdriverclassname]
+           [--matchconnections={false|true}]
+           [--maxconnectionusagecount=maxconnectionusagecount]
+           [--ping={false|true}]
+           [--pooling={false|true}]
+           [--statementcachesize=statementcachesize]
+           [--validationclassname=validationclassname]
+           [--wrapjdbcobjects={false|true}]
+           [--description description]
+           [--property name=value)[:name=value]*]
+           [--target=target]
+           connectionpoolid
+
+説明
+       create-jdbc-connection-poolサブコマンドは、新しいJava Database
+       Connectivity(JDBC)ソフトウェア接続プールを、指定したJDBC接続プール名で登録します。
+
+       認証されたJDBC接続プールは、--propertyオプションを使用してユーザー、パスワード、またはその他の接続情報を指定する方法か、XML記述子ファイルで接続情報を指定する方法のいずれかで作成できます。
+
+       このサブコマンドは、リモート・モードでのみサポートされています。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --datasourceclassname
+           ベンダーから提供されたJDBCデータソース・リソース・マネージャの名前。XA、またはグローバル・トランザクション対応のデータソース・クラスは、javax.sql.XADatasourceインタフェースを実装します。非XA、またはローカル・トランザクション専用のデータソースは、javax.sql.Datasourceインタフェースを実装します。
+
+       --restype,
+       データソース・クラスが複数のインタフェースを実装する場合(javax.sql.DataSource、javax.sql.XADataSource、またはjavax.sql.ConnectionPoolDataSource)、またはドライバ・クラス名を指定する必要がある場合は必須です。
+
+           ·   --restype =
+               java.sql.Driverの場合、--driverclassnameオプションは必須です。
+
+           ·   --restype =
+               javax.sql.DataSource、javax.sql.XADataSource、またはjavax.sql.ConnectionPoolDataSourceの場合、--datasourceclassnameオプションは必須です。
+
+           ·   --restypeが指定されていない場合は、--driverclassnameまたは--datasourceclassnameのいずれかのオプションを指定する必要がありますが、両方は指定できません。
+
+       --steadypoolsize
+           プールで維持する接続数の下限および初期値です。デフォルト値は8です。
+
+       --maxpoolsize
+           作成できる接続の最大数です。デフォルト値は32です。
+
+       --maxwait
+           接続タイムアウトが送信されるまでにコール側が待機する時間(ミリ秒単位)。デフォルトは60000(60秒)です。値が0の場合は、コール側は無期限に待機するように強制的に設定されます。
+
+       --poolresize
+           idle-timeout-in-secondsタイマーが有効期限切れになったときに除去される接続数。これは、プールが接続数をスケール・アップまたはスケール・ダウンする単位量です。スケール・アップ:
+           プールの接続に空きがない場合は、この量のプールがスケール・アップします。スケール・ダウン:
+           無効な接続とアイドル接続がすべて除去されます。この値より多くの量の接続が除去されることもあります。タイムアウトより長い時間アイドル状態になっていた接続が除去の候補です。Steadypoolsizeの量のプールは残されます。使用可能な値は0からMAX_INTEGERです。デフォルト値は2です。
+
+       --idletimeout
+           プール内でアイドル接続が許可される最大継続時間(秒)。この時間が経過すると、実装はこの接続をクローズできます。アプリケーション内で使用できない接続が増えていくことを防ぐために、このタイムアウト値はデータベース・サーバー側のタイムアウト値より短くする必要があります。デフォルト値は300です。
+
+       --initsql
+           プールから接続が作成されるたびに実行されるSQL文字列。既存の接続が再利用される場合は、この文字列は実行されません。タイムアウトより長い時間アイドル状態になっていた接続が除去の候補です。このオプションにはデフォルト値がありません。
+
+       --isolationlevel
+           プールされたデータベース接続のtransaction-isolation-level。このオプションにはデフォルト値はありません。指定しない場合は、プールはJDBCドライバのデフォルト遮断レベルで動作します。標準トランザクション遮断レベル(read-uncommitted、read-committed、repeatable-read、serializable)のいずれかを使用して、必要な遮断レベルを設定できます。プールされた接続の遮断レベルをアプリケーションで変更すると、プールが壊れる可能性があります。これによって、プログラム・エラーが発生する可能性があります。
+
+       --isisolationguaranteed
+           これは、transaction-isolation-levelに特定の遮断レベルが指定されているときにのみ適用できます。デフォルト値はtrueです。
+
+           このオプションによって、接続がプールから取得されるたびに遮断レベルが目的の値に設定されます。これによって、一部のJDBCドライバのパフォーマンスに多少影響することがあります。接続を返す前にアプリケーションが--isolationlevelを変更しないときは、管理者がこれをfalseに設定できます。
+
+       --isconnectvalidatereq
+           trueに設定した場合は、アプリケーションに接続が渡される前に、使用できる接続かどうかが検証または確認されます。デフォルト値はfalseです。
+
+       --validationmethod
+           is-connection-validation-requiredがtrueのときに実行される検証のタイプ。有効な設定は、auto-commit、meta-data、table、またはcustom-validationです。デフォルト値はtableです。
+
+       --validationtable
+           接続を検証する問合せを実行するために使用される検証表の名前。is-connection-validation-requiredがtrueに設定され、connection-validation-typeがtableに設定されている場合、このオプションは必須です。
+
+       --failconnection
+           trueに設定した場合は、1つの検証チェックに失敗したときにプール内のすべての接続をクローズする必要があります。デフォルト値はfalseです。失敗した接続の再確立が一度試みられます。
+
+       --allownoncomponentcallers
+           このプロパティがtrueに設定されているプールは、Java
+           EE以外のコンポーネント、つまりEJBまたはサーブレット以外のコンポーネントで使用できます。返された接続は、トランザクション・マネージャから取得したトランザクション・コンテキストで自動的に登録されます。コンポーネントのコール側以外によって取得された接続は、トランザクションの最後にコンテナによって自動的に削除されません。これらの接続はコール側によって明示的にクローズされる必要があります。
+
+       --nontransactionalconnections
+           このプロパティがtrueに設定されたプールは非トランザクション接続を返します。この接続は、トランザクション・マネージャに自動的に登録されません。
+
+       --validateatmostonceperiod
+           接続を検証するための連続したリクエストの時間間隔を秒単位で一度のみ指定します。この属性を適切な値に設定すると、接続ごとの確認リクエスト回数を最小にできます。デフォルト値は0です。この属性が無効であることを意味します。
+
+       --leaktimeout
+           接続プール内の接続リークを追跡する時間を秒単位で指定します。指定した期間内にアプリケーションによって接続がプールに返されないと、潜在的なリークであるとみなされ、コール側のスタック・トレースがログに記録されます。このオプションは、接続リークがあるかどうかを検出するのみです。connection-leak-reclaimがtrueに設定されている場合にのみ、接続を再利用できます。
+
+           接続リーク追跡を有効にすると、管理コンソールを使用してJDBC接続プールのモニターを有効にし、接続リーク数の統計を取得できます。デフォルト値は0で、接続リーク追跡は無効です。
+
+       --leakreclaim
+           リーク接続の追跡完了後に、リークした接続を接続プールに復元するかを指定します。使用可能な値は次のとおりです:
+
+           false
+               リークした接続は接続プールに復元さ
+
+           true
+               リークした接続は接続プールに復元されます。
+
+       --statementleaktimeout
+           アプリケーションでクローズされていない文が検出されるまでの時間を秒単位で指定します。文オブジェクトが適切にクローズされていない場合、アプリケーションがカーソルを見失う場合があります。このオプションは、文リークがあるかどうかを検出するのみです。statement-leak-reclaimがtrueに設定されている場合にのみ、文を再利用できます。リークした文は、再要求されたときにクローズされます。
+
+           文を作成するコール側のスタック・トレースは、文リークが検出されたときにログに記録されます。文リーク追跡を有効にすると、管理コンソールを使用してJDBC接続プールのモニターを有効にし、文リーク数の統計を取得できます。デフォルト値は0で、文リーク追跡は無効です。
+
+           文リークのタイムアウト値には次の制限が適用されます。
+
+           ·   接続のleak-timeoutに設定した値より小さい必要がある。
+
+           ·   statement-timeoutに設定した値より大きい必要がある。
+
+       --statementleakreclaim
+           リークした文を文リークの後に再要求するかどうかを指定します。使用可能な値は次のとおりです:
+
+           false
+               リークした文は再要求さ
+
+           true
+               リークした文は再要求されます。
+
+       --creationretryattempts
+           最初の試行が失敗した場合に、GlassFish
+           Serverが接続の作成を再試行する最大回数を指定します。デフォルト値は0で、GlassFish
+           Serverは接続の作成を再試行しない設定です。
+
+       --creationretryinterval
+           接続作成の試行の間隔を秒単位で指定します。
+
+           --creationretryattemptsが0の場合、--creationretryintervalオプションは無視されます。デフォルト値は10です。
+
+       --sqltracelisteners
+           データベース・アクティビティのカスタムのロギングを提供する1つ以上のカスタム・モジュールのリスト。各モジュールでは、org.glassfish.api.jdbc.SQLTraceListener公開インタフェースを実装する必要があります。適切な値に設定すると、アプリケーションで実行されるSQL文が追跡されます。このオプションにはデフォルト値がありません。
+
+       --statementtimeout
+           完了していない問合せを終了させるまでの時間の長さを秒単位で指定します。
+
+           問合せが長時間不完全なまま残っていると、問合せを送信したアプリケーションがハングアップする原因になる場合があります。この現象が起こらないように、このオプションを使用して、作成中の接続プールから作成されるすべての文に対してタイムアウトを設定します。文を作成するとき、GlassFish
+           Serverは、文のQueryTimeoutプロパティを指定された時間の長さに設定します。デフォルト値は-1で、不完全な問合せは終了しません。
+
+       --lazyconnectionenlistment
+           メソッドが実際にリソースを使用するときのみリソースをトランザクションに登録するかを指定します。使用可能な値は次のとおりです:
+
+           false
+               リソースは、メソッドが実際にリソースを使用するときのみではな
+
+           true
+               リソースは、メソッドが実際にリソースを使用するときにの
+
+       --lazyconnectionassociation
+           物理接続が使用されているときのみ物理接続を論理接続に関連付け、トランザクションが完了したときに関連付けを解除するかを指定します。このようなアソシエーションとアソシエーション解除により、物理接続の再利用が可能になります。使用可能な値は次のとおりです:
+
+           false
+               物理接続は、物理接続が使用される前から論理接続に関連付けられており、トランザクションが完了しても関連付けは解除さ
+
+           true
+               物理接続は、物理接続が使用されているときのみ論理接続に関連付けられ、トランザクションが完了すると関連付けは解除されます。--lazyconnectionenlistmentオプションもtrueに設定します。
+
+       --associatewiththread
+           接続をスレッドに関連付けて、スレッドが接続を再利用できるようにするかを指定します。接続がスレッドに関連付けられていない場合、スレッドは接続が必要になるたびにプールから接続を取得する必要があります。使用可能な値は次のとおりです:
+
+           false
+               接続はスレッドに関連付けられてい
+
+           true
+               接続はスレッドに関連付けられています。
+
+       --driverclassname
+           ベンダーから提供されたJDBCドライバ・クラスの名前。このドライバではjava.sql.Driverインタフェースを実装するようにしてください。
+
+       --matchconnections
+           プールから選択された接続とリソース・アダプタが一致する必要があるかどうかを指定します。プール内のすべての接続が同じタイプである場合は、プールから選択した接続とリソース・アダプタが一致する必要がないため、このオプションをfalseに設定できます。使用可能な値は次のとおりです:
+
+           false
+               接続はリソース・アダプタと一致する必要はあ
+
+           true
+               接続はリソース・アダプタと一致する必要があります。
+
+       --maxconnectionusagecount
+           接続を再利用できる最大回数を指定します。この制限に達すると接続がクローズします。接続を再利用できる最大回数を制限することで、文リークを回避できます。
+
+           デフォルト値は0で、接続を再利用できる回数は無制限であることを示します。
+
+       --ping
+           プール作成中または再構成中にプールにpingが実行され、属性に対する誤った値があればそれを識別して警告するようにするかを指定します。デフォルト値はfalseです。
+
+       --pooling
+           プールの接続プールを有効にするかを指定します。デフォルト値はtrueです。
+
+       --statementcachesize
+           デフォルトのキャッシング・メカニズム(最長時間未使用)を使用してキャッシュされるSQL文の数。デフォルト値は0で、文キャッシングは無効であることを示します。
+
+       --validationclassname
+           validationmethodの値がcustom-validationのときにカスタムの検証を提供するクラス名。このクラスは、org.glassfish.api.jdbc.ConnectionValidationインタフェースを実装する必要があり、さらにGlassFish
+           Serverにアクセスできるようにする必要があります。接続検証タイプがカスタムの検証に設定されている場合、このオプションは必須です。
+
+       --wrapjdbcobjects
+           プール・インフラストラクチャがラップされたJDBCオブジェクトをアプリケーションに提供するかを指定します。ラップされたJDBCオブジェクトを提供することにより、プール・インフラストラクチャは、アプリケーションが物理接続ではなく接続プールから論理接続を使用するようにして接続リークを防止します。論理接続を使用することで、接続はクローズされたときに接続プールに返されるようになります。ただし、ラップされたJDBCオブジェクトのプロビジョニングにより、アプリケーションのパフォーマンスは低下する場合があります。デフォルト値はtrueです。
+
+           プール・インフラストラクチャはJDBC
+           APIの次のインタフェースを実装するため、ラップされたオブジェクトを提供します。
+
+           ·   java.sql.CallableStatement
+
+           ·   java.sql.DatabaseMetaData
+
+           ·   java.sql.PreparedStatement
+
+           ·   java.sql.ResultSet
+
+           ·   java.sql.Statement
+
+           --wrapjdbcobjectsに使用可能な値は次のとおりです:
+
+           false
+               プール・インフラストラクチャがラップされたJDBCオブジェクトをアプリケーションに提供し
+               (デフォルト)。
+
+           true
+               プール・インフラストラクチャがラップされたJDBCオブジェクトをアプリケーションに提供します。
+
+       --description
+           指定されたJDBC接続プールの詳細を説明するテキスト。
+
+       --property
+           プールを構成するための属性名と値のペア(オプション)。次のプロパティが使用可能です:
+
+           user
+               データベースに接続する際のユーザー名を指定します。
+
+           password
+               データベースに接続する際のパスワードを指定します。
+
+           databaseName
+               この接続プールのデータベースを指定します。
+
+           serverName
+               この接続プールのデータベース・サーバーを指定します。
+
+           port
+               データベース・サーバーがリクエストをリスニングするポートを指定します。
+
+           networkProtocol
+               通信プロトコルを指定します。
+
+           roleName
+               初期SQLロール名を指定します。
+
+           datasourceName
+               ベースとなるXADataSource、または接続プールが実行された場合はConnectionPoolDataSourceを指定します。
+
+           description
+               テキストの説明を指定します。
+
+           url
+               この接続プールのURLを指定します。これは標準プロパティではありませんが、共通に使用されます。
+
+           dynamic-reconfiguration-wait-timeout-in-seconds
+               接続プールの動的再構成を、接続プールを使用中のアプリケーションに透過的に有効化するために使用されます。これにより、属性またはプロパティの変更がプールに反映されるようにするためにアプリケーションを再度有効にする必要はありません。処理中のトランザクションの接続リクエストは、タイムアウト期間内の接続リクエストであるかぎり、トランザクションを完了するために古いプール構成のまま実行することが許可されます。新しい接続リクエストはプールの再構成が完了するまで待機し、接続は変更されたプール構成を使用して取得されます。
+
+           LazyConnectionEnlistment
+               非推奨。同等の属性を使用します。デフォルト値はfalseです。
+
+           LazyConnectionAssociation
+               非推奨。同等の属性を使用します。デフォルト値はfalseです。
+
+           AssociateWithThread
+               非推奨。同等の属性を使用します。デフォルト値はfalseです。
+
+           MatchConnections
+               非推奨。同等の属性を使用します。デフォルト値はtrueです。
+
+           Prefer-Validate-Over-Recreate
+               アイドル接続を破棄して再作成する前にプール・リサイザが検証を行うかどうかを指定します。デフォルト値はtrueです。
+
+           time-to-keep-queries-in-minutes
+               頻繁に使用する問合せの計算に使用するためにキャッシュされる時間を分単位で指定します。JDBC接続プールのSQL追跡とモニターが有効になっている場合に、有効になります。デフォルト値は5分です。
+
+           number-of-top-queries-to-report
+               最もよく使用する上位の問合せをレポートするときにリストする問合せの数を指定します。JDBC接続プールのSQL追跡とモニターが有効になっている場合に、有効になります。デフォルト値は10の問合せです。
+
+               注記
+               ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+               │注意                                                                                                                                                                                                                                                                             │
+               │属性名または属性値にコロンが含まれる場合、そのコロンをエスケープするためにバックスラッシュ(\)を使用する必要があります。その他の文字もエスケープ文字が必要になる場合があります。コマンド・オプションのエスケープ文字の詳細は、asadmin(1M)のマニュアル・ページを参照してください。 │
+               └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+       --target
+           このオプションは指定しないでください。このオプションは、旧リリースとの互換性のために保持されています。このオプションを指定した場合、構文エラーは発生しません。かわりに、サブコマンドが正常に実行され、オプションが無視されたことを示す警告メッセージが表示されます。
+
+オペランド
+       connectionpoolid
+           作成されるJDBC接続プールの名前。
+
+例
+       例 1, JDBC接続プールの作成
+           この例では、sample_derby_poolという名前のJDBC接続プールを作成します。
+
+               asadmin> create-jdbc-connection-pool
+               --datasourceclassname org.apache.derby.jdbc.ClientDataSource
+               --restype javax.sql.XADataSource
+               --property portNumber=1527:password=APP:user=APP:serverName=
+               localhost:databaseName=sun-appserv-samples:connectionAttributes=\;
+               create\\=true sample_derby_pool
+               Command create-jdbc-connection-pool executed successfully
+           エスケープ文字のバックスラッシュ(\)を--propertyオプションで使用して、セミコロン(;)を識別します。2つのバックスラッシュ(\\)を使用して、等号(=)を識別します。
+
+終了ステータス
+       0
+           サブコマンドは正常に実行されました
+
+       1
+           サブコマンドの実行時にエラーが発生しました
+
+関連項目
+       delete-jdbc-connection-pool(1), list-jdbc-connection-pools(1)
+
+       asadmin(1M)
+
+Java EE 7                        2011年2月10日  create-jdbc-connection-pool(1)

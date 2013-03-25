@@ -1,0 +1,305 @@
+create-virtual-server(1)    asadmin 实用程序子命令;   create-virtual-server(1)
+
+名称
+       create-virtual-server - 创建命名的虚拟服务器
+
+提要
+           create-virtual-server [--help]
+           --hosts hosts
+           [--httplisteners http-listeners]
+           [--networklisteners network-listeners]
+           [--defaultwebmodule default-web-module]
+           [--state={on|off}]
+           [--logfile log-file]
+           [--property (name=value)[:name=value]*]
+           [--target target]
+           virtual-server-id
+
+说明
+       create-virtual-server 子命令创建命名的虚拟服务器。通过 GlassFish Server
+       中的虚拟功能，可以使单个监听多个主机地址的 HTTP 服务器进程处理多个 URL
+       域。如果在两个虚拟服务器上提供了该应用程序，则这两个服务器仍共享相同的物理资源池。
+
+       该子命令仅在远程模式下受支持。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --hosts
+           主机请求标头中允许值的以逗号分隔 (,)
+           的列表，用于选择当前虚拟服务器。配置到同一连接组的每台虚拟服务器必须具有用于该组的唯一主机。
+
+       --httplisteners
+           HTTP 监听程序 ID 的以逗号分隔 (,)
+           的列表。仅对非默认虚拟服务器是必需的。将 HTTP
+           监听程序转换为网络监听程序。此选项已过时，保留此选项是为了向后兼容。改用
+           --networklisteners。如果使用 --networklisteners，则忽略此选项。
+
+       --networklisteners
+           网络监听程序 ID 的以逗号分隔 (,)
+           的列表。仅对非默认虚拟服务器是必需的。
+
+       --defaultwebmodule
+           默认情况下与此虚拟服务器相关联的独立 Web 模块。
+
+       --state
+           确定虚拟服务器是处于活动状态 (on) 还是非活动状态 (off 或
+           disabled)。默认值为 on。处于非活动状态时，虚拟服务器不响应请求。
+
+       --logfile
+           将在其中写入此虚拟服务器的日志条目的文件名称。默认情况下，这是服务器日志。保存访问日志的文件和目录必须可由运行服务器时使用的用户帐户写入。
+
+       --property
+           用于配置虚拟服务器的可选属性名/值对。以下属性可用：
+
+           sso-max-inactive-seconds
+               指定如果未接收到任何客户机活动，在可以清除用户的单点登录记录之前等待的秒数。由于单点登录应用到同一台虚拟服务器上的多个应用程序，因此对其中任何一个应用程序的访问都可以使单点登录记录保持活动状态。默认值是
+               300 秒 (5
+               分钟)。较高的值为用户提供了较长的单点登录持久性，但会占用服务器的更多内存。
+
+           sso-reap-interval-seconds
+               指定清除到期的单点登录记录的时间间隔 (秒)。默认值为 60。
+
+           setCacheControl
+               指定 Cache-Control
+               响应指令的逗号分隔列表。有关有效指令的列表，请参阅位于
+               http://www.ietf.org/rfc/rfc2616.txt
+               (http://www.ietf.org/rfc/rfc2616.txt) 的文档的第 14.9 节。
+
+           allowLinking
+               如果此属性的值为真
+               应用程序提供符号链接资源。通过使用 sun-web.xml 文件中的
+               sun-web-app 元素的 allowLinking 属性，各个 Web
+               应用程序均可以覆盖此设置：
+
+                   <sun-web-app>
+                   <property name="allowLinking" value="[true|false]"/>
+                   </sun-web-app>
+               默认值为真
+
+           accessLogWriteInterval
+               指示将日志写入磁盘之前的秒数。缓冲区已满或超过时间间隔时写入访问日志。如果该值为
+               0
+               (零)，则即使缓冲区未满也始终写入日志。这意味着每次访问服务器时都将日志消息直接存储到该文件中。
+
+           accessLogBufferSize
+               指定存储访问日志调用的缓冲区的大小 (字节)。
+
+           allowRemoteAddress
+               这是用于比较远程客户机 IP
+               地址的正则表达式模式的逗号分隔列表。如果指定了此属性，则远程地址必须匹配，才会接受此请求。如果未指定此属性，则会接受所有请求，除非远程地址与
+               denyRemoteAddress 模式匹配。此属性的默认值为空值。
+
+           denyRemoteAddress
+               这是用于比较远程客户机 IP
+               地址的正则表达式模式的逗号分隔列表。如果指定了此属性，则远程地址必须不匹配，才会接受此请求。如果未指定此属性，将仅由
+               allowRemoteAddress
+               属性来控制是否接受请求。此属性的默认值为空值。
+
+           allowRemoteHost
+               这是用于比较远程客户机的主机名称 (由
+               java.net.Socket.getInetAddress().getHostName() 返回)
+               的正则表达式模式的逗号分隔列表。如果指定了此属性，则远程主机名必须匹配，才会接受此请求。如果未指定此属性，则会接受所有请求，除非远程主机名与
+               denyRemoteHost 模式匹配。此属性的默认值为空值。
+
+           denyRemoteHost
+               这是用于比较远程客户机的主机名称 (由
+               java.net.Socket.getInetAddress().getHostName() 返回)
+               的正则表达式模式的逗号分隔列表。如果指定了此属性，则远程主机名必须不匹配，才会接受此请求。如果未指定此属性，将仅由
+               allowRemoteHost 属性来控制是否接受请求。此属性的默认值为空值。
+
+           authRealm
+               指定 auth-realm 的 name
+               属性，该属性将覆盖已部署至此虚拟服务器的独立 Web
+               应用程序的服务器实例默认领域。在独立 Web 应用程序的 web.xml
+               文件中定义的领域会覆盖虚拟服务器的领域。
+
+           securePagesWithPragma
+               将此属性设置为假
+               Internet Explorer 中使用 SSL 正常进行文件下载操作。
+
+               可以为特定 Web 应用程序设置此属性。有关详细信息，请参阅 Oracle
+               GlassFish Server Application Deployment Guide 中的
+               glassfish-web-app。
+
+           contextXmlDefault
+               context.xml 文件 (如果使用的话) 相对于 domain-dir 的位置。有关
+               context.xml 文件的详细信息，请参阅 Oracle GlassFish Server
+               Application Development Guide 中的 Using a context.xml File
+               和“上下文容器”(http://tomcat.apache.org/tomcat-5.5-doc/config/context.html)。GlassFish
+               Server 支持 context.xml 中的上下文参数、环境条目和资源定义。
+
+           alternatedocroot_n
+               指定备用文档根目录 (docroot)，其中 n
+               为允许指定多个根目录的正整数。通过备用文档根目录，Web
+               应用程序可根据请求是否与一个 (或多个) Web
+               应用程序备用文档根目录的 URI
+               模式相匹配，来为自身文档根目录之外的某些资源的请求提供服务。
+
+               如果请求与一个备用文档根目录的 URI 模式匹配，则系统会通过将请求
+               URI (去掉 Web 应用程序的上下文根目录)
+               附加到备用文档根目录的物理位置 (目录)
+               来将请求映射到备用文档根目录。如果请求与多个 URI
+               模式匹配，则按照以下优先顺序来确定备用文档根目录：
+
+               ·   完全匹配
+
+               ·   最长路径匹配
+
+               ·   扩展名匹配
+
+               例如，以下属性指定了三个备用文档根目录。第一个备用文档根目录的
+               URI 模式使用完全匹配，而第二和第三个备用文档根目录的 URI
+               模式则分别使用扩展名匹配和最长路径前缀匹配。
+
+                   <property name="alternatedocroot_1"
+                      value="from=/my.jpg dir=/srv/images/jpg"/>
+                   <property name="alternatedocroot_2"
+                      value="from=*.jpg dir=/srv/images/jpg"/>
+                   <property name="alternatedocroot_3"
+                      value="from=/jpg/* dir=/src/images"/>
+               每个备用文档根目录的 value 均有两个组件：第一个组件 from
+               指定备用文档根目录的 URI 模式，而第二个组件 dir
+               则指定备用文档根目录的物理位置 (目录)。dir 组件中允许使用空格。
+
+               可以为特定 Web 应用程序设置此属性。有关详细信息，请参阅 Oracle
+               GlassFish Server Application Deployment Guide 中的
+               glassfish-web-app。
+
+           send-error_n
+               指定虚拟服务器的定制错误页映射，这些映射将由虚拟服务器上部署的所有
+               Web 应用程序继承。Web 应用程序可在其 web.xml
+               部署描述符中覆盖这些定制错误页映射。每个 send-error_n
+               属性的值均有三个组件，这些组件可按任意顺序指定：
+
+               第一个组件 code 指定响应中应返回的定制错误页的三位数 HTTP
+               响应状态代码。
+
+               第二个组件 path
+               指定定制错误页的绝对或相对文件系统路径。相对文件系统路径解释为相对于
+               domain-dir/config 目录。
+
+               第三个组件 reason 是可选的，它指定要返回的原因字符串文本 (例如
+               Unauthorized 或 Forbidden)。
+
+               例如：
+
+                   <property name="send-error_1"
+                      value="code=401 path=/myhost/401.html reason=MY-401-REASON"/>
+               此示例属性定义将会返回 /myhost/401.html 的内容、401
+               响应和以下响应行：
+
+                   HTTP/1.1 401 MY-401-REASON
+
+           redirect_n
+               指定将旧 URL 的请求处理成新 URL
+               的请求。这些属性将由虚拟服务器上部署的所有 Web
+               应用程序继承。每个 redirect_n
+               属性的值均有两个组件，这些组件可按任意顺序指定：
+
+               第一个组件 from 指定要匹配的请求 URI 前缀。
+
+               第二个组件 url-prefix 指定要返回给客户机的新 URL 前缀。此 URL
+               前缀将替换 from 前缀。
+
+               例如：
+
+                   <property name="redirect_1"
+                   value="from=/dummy url-prefix=http://etude"/>
+
+           valve_n
+               指定定制调节器的全限定类名，其中 n
+               为正整数，允许指定多个全限定类名。valve 类必须从 Tomcat
+               或早期发行版的 GlassFish Server 实现 org.apache.catalina.Valve
+               接口，或从当前 GlassFish Server 发行版实现
+               org.glassfish.web.valve.GlassFishValve 接口。例如：
+
+                   <property name="valve_1"
+                      value="org.glassfish.extension.Valve"/>
+               可以为特定 Web 应用程序设置此属性。有关详细信息，请参阅 Oracle
+               GlassFish Server Application Deployment Guide 中的
+               glassfish-web-app。
+
+           listener_n
+               指定定制 Catalina 监听程序的全限定类名，其中 n
+               为正整数，允许指定多个全限定类名。listener 类必须实现
+               org.apache.catalina.ContainerListener 或
+               org.apache.catalina.LifecycleListener 接口。例如：
+
+                   <property name="listener_1"
+                      value="org.glassfish.extension.MyLifecycleListener"/>
+               可以为特定 Web 应用程序设置此属性。有关详细信息，请参阅 Oracle
+               GlassFish Server Application Deployment Guide 中的
+               glassfish-web-app。
+
+           docroot
+               服务器根文档目录的绝对路径。已过时。使用 virtual-server 属性
+               docroot 替换，该属性可使用 get、set 和 list 子命令访问。
+
+           accesslog
+               服务器访问日志的绝对路径。已过时。使用 virtual-server 属性
+               access-log 替换，该属性可使用 get、set 和 list 子命令访问。
+
+           accessLoggingEnabled
+               如果为真
+               virtual-server 属性 access-logging-enabled 替换，该属性可使用
+               get、set 和 list 子命令访问。
+
+           sso-enabled
+               如果为真
+               应用程序启用单点登录。已过时。使用 virtual-server 属性
+               sso-enabled 替换，该属性可使用 get、set 和 list 子命令访问。
+
+           ssoCookieSecure
+               设置与部署到此虚拟服务器的 Web 应用程序关联的任何 JSESSIONIDSSO
+               cookie 的 Secure 属性。已过时。使用 virtual-server 属性
+               sso-cookie-secure 替换，该属性可使用 get、set 和 list
+               子命令访问。
+
+           errorReportValve
+               指定定制调节器的全限定类名，该调节器在此虚拟服务器上生成应用程序的默认错误页。指定空字符串可以禁用此虚拟服务器的默认错误页机制。
+
+       --target
+           仅在指定目标上创建虚拟服务器。有效值如下：
+
+           server
+               在默认服务器实例上创建虚拟服务器。这是默认值。
+
+           configuration-name
+               在指定配置中创建虚拟服务器。
+
+           cluster-name
+               在指定集群中的所有服务器实例上创建虚拟服务器。
+
+           standalone-instance-name
+               在指定的独立服务器实例上创建虚拟服务器。
+
+操作数
+       virtual-server-id
+           标识要创建的虚拟服务器的唯一 ID。此 ID 不能以数字开头。
+
+示例
+       Example 1, 创建虚拟服务器
+           以下命令将创建名为 sampleServer 的虚拟服务器：
+
+               asadmin> create-virtual-server --hosts pigeon,localhost
+               --property authRealm=ldap sampleServer
+               Command create-virtual-server executed successfully.
+
+退出状态
+       0
+           已成功执行命令
+
+       1
+           执行命令时出现错误
+
+另请参阅
+       delete-virtual-server(1), list-virtual-servers(1),
+       create-http-listener(1), create-network-listener(1)
+
+       get(1), list(1), set(1)
+
+       asadmin(1M)
+
+Java EE 7                     2011 年 2 月 11 日      create-virtual-server(1)

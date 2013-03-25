@@ -1,0 +1,227 @@
+start-local-instance(1) Comandi secondari della utilit start-local-instance(1)
+
+NOME
+       start-local-instance - avvia un'istanza di GlassFish Server sull'host
+       in cui viene eseguito il comando secondario
+
+SINTASSI
+           start-local-instance [--help]
+           [--nodedir node-dir] [--node node]
+           [--debug={false|true}] [--dry-run={false|true}] [--sync={normal|full|none}]
+           [--verbose={false|true}] [--watchdog={false|true}]
+           [instance-name]
+
+DESCRIZIONE
+       Il comando secondario start-local-instance consente di avviare
+       un'istanza di GlassFish Server nell'host in cui viene eseguito il
+       comando secondario. Questo comando secondario non richiede la
+       configurazione del protocollo remoto DCOM (Distributed Component Object
+       Model) o di SSH (Secure Shell). Questo comando deve essere eseguito
+       dall'host di residenza dell'istanza.
+
+       Il comando secondario consente di avviare qualsiasi istanza di
+       GlassFish Server, indipendentemente dalle modalità adottate per
+       crearla. Ad esempio, con questo comando secondario è possibile avviare
+       un'istanza creata con il comando secondario create-instance(1).
+
+       Il comando secondario start-local-instance non contatta il server di
+       amministrazione del dominio (DAS) per determinare il nodo in cui
+       risiede l'istanza. Per determinare in quale nodo risiede l'istanza, il
+       comando secondario esegue una ricerca nella directory che contiene le
+       directory dei nodi. Se esistono più directory dei nodi, è necessario
+       specificare il nodo come opzione del comando secondario.
+
+       Questo comando secondario è supportato in modalità locale. Tuttavia,
+       per la sincronizzazione dell'istanza con il server DAS, è necessario
+       eseguirlo in modalità remota.
+
+OPZIONI
+       --help, -?
+           Visualizza il testo della Guida per il comando secondario.
+
+       --nodedir
+           Specifica la directory che contiene la directory del nodo
+           dell'istanza. I file dell'istanza vengono memorizzati nella
+           directory del nodo dell'istanza. Il valore predefinito è
+           as-install/nodes.
+
+       --node
+           Specifica il nodo in cui risiede l'istanza. Questa opzione può
+           essere omessa solo se la directory specificata dall'opzione
+           --nodedir contiene una sola directory di nodo. In caso contrario,
+           questa opzione è obbligatoria.
+
+       --debug
+           Specifica se l'istanza viene avviata con la funzione di debug di
+           JPDA (Java Platform Debugger Architecture)
+
+           abilitata.
+
+           Di seguito sono riportati i valori possibili.
+
+           true
+               L'istanza viene avviata con la funzione di debug JPDA abilitata
+               e viene visualizzato il numero di porta per il debug JPDA.
+
+           false
+               L'istanza viene avviata con la funzione di debug JPDA
+               disabilitata (impostazione predefinita).
+
+       --dry-run, -n
+           Elimina l'avvio effettivo dell'istanza.  start-local-instance
+           visualizza il comando Java completo, con tutte le opzioni, che
+           verrebbe usato per avviare l'istanza. La revisione di questo
+           comando può risultare utile per confermare le opzioni JVM e per la
+           risoluzione dei problemi di avvio.
+
+           Il valore predefinito è false.
+
+       --sync
+           Il tipo di sincronizzazione tra il server DAS e i file dell'istanza
+           quando l'istanza viene avviata.
+
+           Di seguito sono riportati i valori possibili.
+
+           none
+               Il server DAS non sincronizza i file dell'istanza con alcuna
+               modifica. Questo tipo di sincronizzazione riduce il tempo
+               necessario all'avvio dell'istanza.
+
+           normal
+               Il server DAS sincronizza l'istanza con le modifiche apportate
+               dopo l'ultima sincronizzazione, come riportato di seguito.
+
+               ·   Per la directory config, il server DAS sincronizza
+                   l'istanza con tutte le modifiche.
+
+               ·   Per le directory applications e docroot, solo la modifica
+                   alla sottodirectory di livello superiore comporta la
+                   sincronizzazione di tutti i file nella sottodirectory
+                   indicata da parte del server DAS.
+
+                   Se un file inferiore alla sottodirectory di livello
+                   superiore viene modificato senza che venga eseguita la
+                   modifica a un file nella sottodirectory di livello
+                   superiore, è necessario eseguire una sincronizzazione
+                   completa. Il funzionamento normale prevede che i file
+                   inferiori alle sottodirectory di livello superiore di tali
+                   directory non vengano modificati. Se un'applicazione viene
+                   distribuita e successivamente ne viene annullata la
+                   distribuzione, non è necessario eseguire una
+                   sincronizzazione completa per aggiornare l'istanza con la
+                   modifica.
+
+               Questo è il valore predefinito.
+
+           full
+               Il server DAS sincronizza l'istanza con tutti i file
+               dell'istanza, indipendentemente dalle modifiche eseguite ai
+               file dall'ultima sincronizzazione. Questo tipo di
+               sincronizzazione potrebbe provocare il ritardo nell'avvio
+               dell'istanza mentre il server DAS aggiorna tutti i file nelle
+               directory dell'istanza.
+
+                   Attenzione
+                   ┌────────────────────────────────────────┐
+                   │Attenzione Se il server DAS non è in    │
+                   │esecuzione o non è raggiungibile        │
+                   │dall'host in cui viene eseguito questo  │
+                   │comando secondario, non impostare       │
+                   │l'opzione --sync su full. Per eseguire  │
+                   │una sincronizzazione completa, il       │
+                   │comando secondario rimuove la cache     │
+                   │dell'istanza. Se non è possibile        │
+                   │contattare il server DAS per sostituire │
+                   │la cache, il comando secondario non     │
+                   │riesce e l'istanza non può essere       │
+                   │riavviata finché non viene              │
+                   │sincronizzata nuovamente con il server  │
+                   │DAS.                                    │
+                   └────────────────────────────────────────┘
+
+       --verbose, -v
+           Specifica se vengono visualizzate informazioni dettagliate
+           sull'istanza nella finestra della console in cui viene eseguito il
+           comando secondario.
+
+           Di seguito sono riportati i valori possibili.
+
+           true
+               Nella finestra della console in cui viene eseguito il comando
+               secondario vengono visualizzati messaggi di avvio dettagliati e
+               messaggi di log relativi alla console. Se in seguito l'istanza
+               viene riavviata da una finestra della console diversa mediante
+               il comando secondario restart-local-instance(1), i messaggi
+               continuano a essere visualizzati nella finestra della console
+               originale.
+
+               È possibile terminare il processo di GlassFish Server digitando
+               CTRL-C nella finestra della console.
+
+               È possibile terminare il processo di GlassFish Server e
+               ottenere un dump di thread per il server digitando una delle
+               seguenti combinazioni di tasti nella finestra della console:
+
+               ·   CTRL-\ nei sistemi UNIX
+
+               ·   CTRL-Interr nei sistemi Windows
+
+           false
+               Le informazioni dettagliate non vengono visualizzate
+               (impostazione predefinita).
+
+       --watchdog, -w
+           Specifica se vengono visualizzate le informazioni limitate
+           sull'istanza nella finestra della console in cui viene eseguito il
+           comando secondario. L'opzione --watchdog è simile all'opzione
+           --verbose ma non visualizza i messaggi di avvio dettagliati e i
+           messaggi di log. Questa opzione è utile quando si esegue la utility
+           asadmin in background o quando non è disponibile una console
+           collegata.
+
+           Di seguito sono riportati i valori possibili.
+
+           true
+               Le informazioni limitate vengono visualizzate nella finestra
+               della console.
+
+           false
+               Le informazioni limitate non vengono visualizzate nella
+               finestra della console (impostazione predefinita).
+
+OPERANDI
+       instance-name
+           Il nome dell'istanza da avviare.
+
+ESEMPI
+       Esempio 1, Avvio locale di un'istanza
+           In questo esempio viene mostrato l'avvio dell'istanza yml-i-sj01
+           nell'host in cui viene eseguito il comando secondario.
+
+               asadmin> start-local-instance --node sj01 yml-i-sj01
+               Waiting for the server to start .................................
+               Successfully started the instance: yml-i-sj01
+               instance Location: /export/glassfish3/glassfish/nodes/sj01/yml-i-sj01
+               Log File: /export/glassfish3/glassfish/nodes/sj01/yml-i-sj01/logs/server.log
+               Admin Port: 24849
+               Command start-local-instance executed successfully.
+
+STATO DI USCITA
+       0
+           esecuzione del comando riuscita
+
+       1
+           errore durante l'esecuzione del comando
+
+VEDERE ANCHE
+       create-instance(1), create-local-instance(1), delete-instance(1),
+       delete-local-instance(1), restart-instance(1),
+       restart-local-instance(1), start-domain(1), start-instance(1),
+       stop-domain(1), stop-instance(1), stop-local-instance(1)
+
+       asadmin(1M)
+
+       JPDA (Java Platform Debugger Architecture)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                      13 febbraio 2013        start-local-instance(1)

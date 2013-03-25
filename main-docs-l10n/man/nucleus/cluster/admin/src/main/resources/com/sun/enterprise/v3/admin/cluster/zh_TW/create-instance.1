@@ -1,0 +1,324 @@
+create-instance(1)          asadmin 公用程式子命令          create-instance(1)
+
+參考名
+       create-instance - 建立 GlassFish Server 執行處理
+
+概要
+           create-instance [--help] --node node-name
+           [--config config-name | --cluster cluster-name]
+           [--lbenabled={true|false}]
+           [--portbase=port-number] [--checkports={true|false}]
+           [--systemproperties (name=value)[:name=value]* ]
+           instance-name
+
+描述
+       create-instance 子命令會建立 GlassFish Server
+       執行處理。這個子命令需要在執行網域管理伺服器 (DAS)
+       的主機上，以及由執行處理所在節點代表的主機上，組態分散式元件物件模型
+       (DCOM) 遠端協定或安全 Shell (SSH)。
+
+           注意
+           ┌──────────────────────────────────────────────────────────────────────┐
+           │備註                                                                  │
+           │                                                                      │
+           │           如果執行處理位於代表本機主機且類型為組
+           │           DCOM 或                                                    │
+           │           SSH。未啟用類型為組
+           │           DCOM 或 SSH 進行遠端通訊。                                 │
+           └──────────────────────────────────────────────────────────────────────┘
+
+       您可以從任何可連絡 DAS 的主機執行此命令。
+
+       GlassFish Server 執行處理為 Java 平台的單一虛擬機器 (Java 虛擬機器或
+       JVM 機器)，位於執行 GlassFish Server 的單一節點上。節點可定義 GlassFish
+       Server 執行處理所在的主機。JVM 機器必須與 Java Platform Enterprise
+       Edition (Java EE) 相容。
+
+       GlassFish Server 執行處理需要下列項目的參照：
+
+       ·   定義執行處理所在主機的節點。必須在建立執行處理的命令中指定該節點。
+
+       ·   定義執行處理組態的已命名組態。可以在建立執行處理的命令中指定此組態，但非必要。如果未對不結合叢集的執行處理指定任何組態，則子命令會建立執行處理的組態。結合叢集的執行處理會從其父系叢集接收其組態。
+
+       每個 GlassFish Server 執行處理都屬於下列其中一種執行處理類型：
+
+       獨立執行處理
+           獨立執行處理不會與任何其他執行處理或叢集共用其組態。如果不符合下列任一個條件，則會建立獨立執行處理：
+
+           ·   沒有在用來建立執行處理的命令中指定組態或叢集。
+
+           ·   在用來建立執行處理的命令中，指定任何其他執行處理或叢集均未參照的組態。
+
+           如果不指定組態或叢集，則會為執行處理建立 default-config
+           組態的複本。此組態的名稱為 instance-name-config，其中 instance-name
+           代表非叢集伺服器執行處理的名稱。
+
+       共用執行處理
+           共用執行處理會與其他執行處理或叢集共用其組態。如果在用來建立執行處理的命令中，指定其他執行處理或叢集參照的組態，則會建立共用執行處理。
+
+       叢集執行處理
+           叢集執行處理會從執行處理所屬的叢集繼承其組態，並與叢集中的其他執行處理共用其組態。如果在建立執行處理的命令中指定叢集，則會建立叢集執行處理。
+
+           任何不屬於叢集的執行處理皆會被視為非叢集伺服器執行處理。因此，獨立執行處理和共用執行處理都是非叢集伺服器執行處理。
+
+       依預設，這個子命令會嘗試為正在建立的執行處理解決可能的連接埠衝突。子命令也會指定目前沒有使用，且尚未指定給相同節點上其他執行處理的連接埠。子命令會根據子命令內部的演算法來指定這些連接埠。使用
+       --systemproperties
+       選項可為相同節點上的其他執行處理解決連接埠衝突。執行處理的系統特性可使用
+       create-system-properties(1) 子命令和 delete-system-property(1)
+       子命令加以處理。
+
+       只有遠端模式支援這個子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --node
+           定義要在其中建立執行處理之主機的節點名稱。節點必須已經存在。如果要在執行網域管理伺服器
+           (DAS) 的主機上建立執行處理，請使用預先定義的節點 localhost-domain。
+
+       --config
+           指定執行處理參照的已命名組態。該組態必須存在，且不得命名為
+           default-config 或 server-config。指定 --config
+           選項會建立共用執行處理。
+
+           --config 選項與 --cluster
+           選項互斥。如果同時省略這兩個選項，則會建立獨立執行處理。
+
+       --cluster
+           指定執行處理要繼承其組態的叢集。指定 --cluster
+           選項會建立叢集執行處理。
+
+           --config 選項與 --cluster
+           選項互斥。如果同時省略這兩個選項，則會建立獨立執行處理。
+
+       --lbenabled
+           指定執行處理是否啟用負載平衡。可能值如下：
+
+           true
+               執行處理啟用負載平衡 (預設)。
+
+               執行處理啟用負載平衡時，負載平衡程式會傳送請求至執行處理。
+
+           false
+               執行處理停用負載平衡。
+
+               執行處理停用負載平衡時，負載平衡程式不會傳送請求至執行處理。
+
+       --portbase
+           決定連接埠指定起始的數字。執行處理會使用若干個靜態指定的連接埠。portbase
+           值可決定從何處開始指定。連接埠之值的計算方式如下：
+
+           ·   管理連接埠：portbase + 48
+
+           ·   HTTP 監聽程式連接埠：portbase + 80
+
+           ·   HTTPS 監聽程式連接埠：portbase + 81
+
+           ·   JMS 連接埠：portbase + 76
+
+           ·   IIOP 監聽程式連接埠：portbase + 37
+
+           ·   安全 IIOP 監聽程式連接埠：portbase + 38
+
+           ·   具有相互認證連接埠的安全 IIOP：portbase + 39
+
+           ·   JMX 連接埠：portbase + 86
+
+           ·   JPA 除錯程式連接埠：portbase + 9
+
+           ·   OSGi 模組管理的 Felix Shell 服務連接埠：portbase + 66
+
+           指定 --portbase
+           選項時，這個子命令的輸出會包括使用過之連接埠的完整清單。
+
+       --checkports
+           指定是否要檢查管理、HTTP、JMS、JMX 和 IIOP 連接埠的可用性。預設值為
+           true。
+
+       --systemproperties
+           定義執行處理的系統特性。這些特性會置換執行處理組態中連接埠設定的特性定義。例如，如果出現兩個叢集執行處理位於相同主機的情況，則必須置換預先定義的連接埠設定。在此情況下，必須置換其中一個執行處理的連接埠設定，因為兩個執行處理會共用相同的組態。
+
+           提供的特性如下：
+
+           ASADMIN_LISTENER_PORT
+               此特性指定 HTTP 連接埠或 HTTPS 連接埠的連接埠號碼，DAS
+               透過該連接埠連線至執行處理以管理執行處理。有效值為 1-65535。在
+               UNIX 上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           HTTP_LISTENER_PORT
+               此特性指定要用來監聽 HTTP 請求之連接埠的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           HTTP_SSL_LISTENER_PORT
+               此特性指定要用來監聽 HTTPS 請求之連接埠的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           IIOP_LISTENER_PORT
+               此特性指定用於 IIOP 連線之連接埠的連接埠號碼。此特性指定用於
+               IIOP 連線之連接埠的連接埠號碼。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           IIOP_SSL_LISTENER_PORT
+               此特性指定用於安全 IIOP 連線之連接埠的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           IIOP_SSL_MUTUALAUTH_PORT
+               此特性指定用於與從屬端認證之安全 IIOP
+               連線之連接埠的連接埠號碼。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           JAVA_DEBUGGER_PORT
+               此特性指定用於 Java 平台除錯程式架構 (JPDA)
+               (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+               除錯程式連線之連接埠的連接埠號碼。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           JMS_PROVIDER_PORT
+               此特性會指定 Java Message Service 提供者的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           JMX_SYSTEM_CONNECTOR_PORT
+               此特性會指定 JMX 連線器進行監聽的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           OSGI_SHELL_TELNET_PORT
+               此特性指定用於 Apache Felix Remote Shell
+               (http://felix.apache.org/site/apache-felix-remote-shell.html)
+               連線之連接埠的連接埠號碼。此 Shell 會使用 Felix Shell 服務來與
+               OSGi 模組管理子系統互動。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+運算元
+       instance-name
+           要建立之執行處理的名稱。
+
+           名稱必須符合下列需求：
+
+           ·   名稱只能包含 ASCII 字元。
+
+           ·   名稱必須以字母、數字或底線為開頭。
+
+           ·   名稱只能包含下列字元：
+
+               ·   小寫字母
+
+               ·   大寫字母
+
+               ·   數字
+
+               ·   連字符
+
+               ·   小數點號
+
+               ·   底線
+
+           ·   名稱在網域中必須是唯一的，且不得為另一個 GlassFish Server
+               執行處理、叢集、已命名組態或節點的名稱。
+
+           ·   名稱不得為 domain、server 或 GlassFish Server
+               所保留的任何其他關鍵字。
+
+範例
+       範例 1, 建立獨立 GlassFish Server 執行處理
+           此範例會在本機主機上，針對網域 domain1 建立獨立 GlassFish Server
+           執行處理 pmdsainst。
+
+               asadmin> create-instance --node localhost-domain1 pmdsainst
+               Port Assignments for server instance pmdsainst:
+               JMX_SYSTEM_CONNECTOR_PORT=28688
+               JMS_PROVIDER_PORT=27678
+               ASADMIN_LISTENER_PORT=24850
+               HTTP_LISTENER_PORT=28082
+               IIOP_LISTENER_PORT=23702
+               IIOP_SSL_LISTENER_PORT=23822
+               HTTP_SSL_LISTENER_PORT=28183
+               IIOP_SSL_MUTUALAUTH_PORT=23922
+
+               Command create-instance executed successfully.
+
+       範例 2, 使用自訂連接埠指定建立獨立 GlassFish Server 執行處理
+           此範例會在本機主機上，針對網域 domain1 建立獨立 GlassFish Server
+           執行處理 pmdcpinst。自訂連接埠號碼會指定給下列連接埠：
+
+           ·   HTTP 監聽程式連接埠
+
+           ·   HTTPS 監聽程式連接埠
+
+           ·   IIOP 連線連接埠
+
+           ·   安全 IIOP 連線連接埠
+
+           ·   具有相互認證的安全 IIOP 連線連接埠
+
+           ·   JMX 連線器連接埠
+
+               asadmin> create-instance --node localhost-domain1
+               --systemproperties HTTP_LISTENER_PORT=58294:
+               HTTP_SSL_LISTENER_PORT=58297:
+               IIOP_LISTENER_PORT=58300:
+               IIOP_SSL_LISTENER_PORT=58303:
+               IIOP_SSL_MUTUALAUTH_PORT=58306:
+               JMX_SYSTEM_CONNECTOR_PORT=58309 pmdcpinst
+               Port Assignments for server instance pmdcpinst:
+               JMS_PROVIDER_PORT=27679
+               ASADMIN_LISTENER_PORT=24851
+
+               Command create-instance executed successfully.
+
+       範例 3, 建立共用 GlassFish Server 執行處理
+           此範例會在本機主機上，針對網域 domain1 建立共用 GlassFish Server
+           執行處理 pmdsharedinst1。此執行處理的共用組態是 pmdsharedconfig。
+
+               asadmin create-instance --node localhost-domain1 --config pmdsharedconfig
+               pmdsharedinst1
+               Port Assignments for server instance pmdsharedinst1:
+               JMX_SYSTEM_CONNECTOR_PORT=28687
+               JMS_PROVIDER_PORT=27677
+               ASADMIN_LISTENER_PORT=24849
+               HTTP_LISTENER_PORT=28081
+               IIOP_LISTENER_PORT=23701
+               IIOP_SSL_LISTENER_PORT=23821
+               HTTP_SSL_LISTENER_PORT=28182
+               IIOP_SSL_MUTUALAUTH_PORT=23921
+
+               Command create-instance executed successfully.
+
+       範例 4, 建立叢集 GlassFish Server 執行處理
+           此範例會在本機主機上，針對網域 domain1 建立叢集 GlassFish Server
+           執行處理 pmdinst1。此執行處理為叢集 pmdclust1 的成員。
+
+               asadmin> create-instance --node localhost-domain1 --cluster pmdclust pmdinst1
+               Port Assignments for server instance pmdinst1:
+               JMX_SYSTEM_CONNECTOR_PORT=28686
+               JMS_PROVIDER_PORT=27676
+               HTTP_LISTENER_PORT=28080
+               ASADMIN_LISTENER_PORT=24848
+               IIOP_SSL_LISTENER_PORT=23820
+               IIOP_LISTENER_PORT=23700
+               HTTP_SSL_LISTENER_PORT=28181
+               IIOP_SSL_MUTUALAUTH_PORT=23920
+
+               Command create-instance executed successfully.
+
+結束狀態
+       0
+           命令執行成功
+
+       1
+           執行命令時發生錯誤
+
+另請參閱
+       create-local-instance(1), create-node-config(1), create-node-dcom(1),
+       create-node-ssh(1), create-system-properties(1), delete-instance(1),
+       delete-system-property(1), list-instances(1), setup-ssh(1),
+       start-instance(1), stop-instance(1)
+
+       asadmin(1M)
+
+Java EE 7                     2011 年 12 月 8 日            create-instance(1)

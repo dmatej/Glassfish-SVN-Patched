@@ -1,0 +1,417 @@
+deploy(1)                   asadmin 实用程序子命令                   deploy(1)
+
+名称
+       deploy - 部署指定的组件
+
+提要
+           deploy [--help]
+           [--force={false|true}]
+           [--virtualservers virtual_servers]
+           [--contextroot context_root]
+           [--precompilejsp={false|true}]
+           [--verify={false|true}]
+           [--name component_name]
+           [--upload={true|false}]
+           [--retrieve local_dirpath]
+           [--dbvendorname dbvendorname]
+           [--createtables={true|false}|--dropandcreatetables={true|false}]
+           [--uniquetablenames={true|false}]
+           [--deploymentplan deployment_plan]
+           [--altdd alternate_deploymentdescriptor]
+           [--runtimealtdd runtime_alternate_deploymentdescriptor]
+           [--deploymentorder deployment_order]
+           [--enabled={true|false}]
+           [--generatermistubs={false|true}]
+           [--availabilityenabled={false|true}]
+           [--asyncreplication={true|false}]
+           [--lbenabled={true|false}]
+           [--keepstate={false|true}]
+           [--libraries jar_file[,jar_file]*]
+           [--target target]
+           [--type pkg-type]
+           [--properties(name=value)[:name=value]*]
+           [file_archive|filepath]
+
+说明
+       deploy 子命令将应用程序部署到服务器。应用程序可以是企业应用程序、Web
+       应用程序、Enterprise JavaBeans (EJB)
+       模块、连接器模块和应用程序客户机模块。如果组件已部署或已存在，则在
+       --force 选项设置为真
+
+       --createtables 和 --dropandcreatetables
+       选项是布尔标记，因此可采用“真”或“假”值。这些选项仅在部署尚未映射到数据库的
+       CMP Bean (也就是说，模块的 META-INF 目录中未提供任何
+       sun-cmp-mappings.xml 描述符) 的过程中使用。否则，将忽略这些选项。
+
+       --createtables 和 --dropandcreatetables
+       选项互相排斥；只能使用一个。如果删除和/或创建表失败，部署并不会失败；日志文件中会提供警告消息。
+
+       该子命令仅在远程模式下受支持。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --force
+           如果设置为真
+
+       --virtualservers
+           一个或多个虚拟服务器 ID。用逗号分隔多个 ID。
+
+       --contextroot
+           仅当档案为 Web
+           模块时，此选项才有效。对于其他档案类型，将忽略此选项；默认为不带扩展名的文件名。
+
+       --precompilejsp
+           默认情况下，此选项不允许在部署期间预编译 JSP。而是在运行时编译
+           JSP。默认值为假
+
+       --verify
+           如果设置为“真”，并且从 UpdateTool
+           安装必需的验证器程序包，则将验证部署描述符的语法和语义。默认值为假
+
+       --name
+           可部署组件的名称。
+
+           名称可包含可选的版本标识符，它跟在名称后面，并与名称以冒号 (:)
+           分隔。版本标识符必须以字母或数字开头。它可包含字母数字以及下划线
+           (_)、短划线 (-) 和句点 (.)
+           等字符。有关模块和应用程序版本的详细信息，请参阅 Oracle GlassFish
+           Server Application Deployment Guide 中的 Module and Application
+           Versions。
+
+       --upload
+           指定该子命令是否将文件上载到 DAS。多数情况下可以省略该选项。
+
+           有效值如下：
+
+           假
+               该子命令不上载文件，并尝试通过指定的文件名访问文件。如果 DAS
+               无法访问该文件，该子命令将会失败。
+
+               例如，DAS
+               可能正在以非管理用户的身份运行，并且对该文件没有读取访问权限。在此情况下，如果
+               --upload 选项为假
+
+           真
+               该子命令将通过网络连接将文件上载到 DAS。
+
+           默认值取决于 DAS 是位于运行该子命令的主机上，还是位于远程主机上。
+
+           ·   如果 DAS 位于运行该子命令的主机上，则默认值为假
+
+           ·   如果 DAS 位于远程主机上，则默认值为真
+
+           如果已指定 filepath 目录，将忽略该选项。
+
+       --retrieve
+           将客户机存根 JAR 文件从服务器计算机检索到本地目录。
+
+       --dbvendorname
+           指定要创建表的数据库供应商的名称。支持的值包括
+           db2、mssql、mysql、oracle、derby、javadb、postgresql 和
+           sybase。这些值不区分大小写。如果未指定，则使用
+           glassfish-ejb-jar.xml 中 database-vendor-name
+           属性的值。如果未指定任何值，则将与 glassfish-ejb-jar.xml 文件中
+           cmp-resource 元素的 jndi-name
+           子元素指定的资源建立连接，并读取数据库供应商名称。如果无法建立连接或无法识别值，则假定遵从
+           SQL-92 标准。
+
+       --createtables
+           如果指定为“真”，则在部署具有未映射的 CMP Bean
+           的应用程序时创建表。如果指定为“假”，则不创建表。如果未指定，则
+           glassfish-ejb-jar.xml 文件的 cmp-resource 元素中的
+           create-tables-at-deploy
+           条目的值将确定是否创建表。不为表创建任何唯一约束条件。
+
+       --dropandcreatetables
+           如果在重新部署组件时指定为“真”，则在创建新表之前删除由以前的部署创建的表。适用于具有未映射的
+           CMP Bean
+           的已部署应用程序。在应用程序的初始部署期间或在显式取消部署之后再次部署期间，将不会删除以前存在的表。如果指定为“假”，则既不会删除表又不会创建表。如果未指定，则在
+           glassfish-ejb-jar.xml 文件的 cmp-resource 元素中的
+           drop-tables-at-undeploy 条目设置为“真”的情况下删除表，在
+           glassfish-ejb-jar.xml 文件的 cmp-resource 元素中的
+           create-tables-at-deploy 条目设置为“真”的情况下创建新表。
+
+       --uniquetablenames
+           保证所有 Bean
+           具有唯一的表名并生成添加到表名的散列代码。这在您有应用程序使用区分大小写的
+           Bean 名称时很有用。适用于具有未映射的 CMP Bean 的应用程序。
+
+       --deploymentplan
+           执行对部署计划的部署，部署计划是包含 GlassFish Server 描述符的 JAR
+           文件。在部署纯 EAR 文件时指定此选项。纯 EAR 文件是不带 GlassFish
+           Server 描述符的 EAR。
+
+       --altdd
+           使用驻留在应用程序档案外部的 Java EE
+           标准部署描述符部署应用程序。指定备用部署描述符文件的绝对路径或相对路径。备用部署描述符将覆盖档案中打包的顶级部署描述符。例如，对于
+           EAR，--altdd 的使用将覆盖 application.xml。对于独立模块，--altdd
+           的使用将覆盖顶级模块描述符，例如 web.xml。
+
+       --runtimealtdd
+           使用驻留在应用程序档案外部的 GlassFish Server
+           运行时部署描述符部署应用程序。指定备用部署描述符文件的绝对路径或相对路径。备用部署描述符将覆盖档案中打包的顶级部署描述符。例如，对于
+           EAR，--runtimealtdd 的使用将覆盖
+           glassfish-application.xml。对于独立模块，--runtimealtdd
+           的使用将覆盖顶级模块描述符，例如 glassfish-web.xml。仅适用于
+           GlassFish Server 部署描述符
+           (glassfish-*.xml)；备用部署描述符文件的名称必须以 glassfish-
+           开头。不适用于 sun-*.xml 部署描述符 (已过时)。
+
+       --deploymentorder
+           指定应用程序的部署顺序。这对于应用程序具有相关性并且必须在服务器启动时以特定顺序加载的情况非常有用。将部署顺序指定为整数。默认值为
+           100。编号较低的应用程序在编号较高的应用程序之前加载。例如，部署顺序为
+           102 的应用程序在部署顺序为 110
+           的应用程序之前加载。如果未指定部署顺序，则分配默认值
+           100。如果两个应用程序的部署顺序相同，则第一个要部署的应用程序是服务器启动时要加载的第一个应用程序。
+
+           通常在第一次部署应用程序时指定部署顺序，但也可以在初始部署之后使用
+           set 子命令指定或更改部署顺序。可以使用 get
+           子命令查看应用程序的部署顺序。
+
+       --enabled
+           允许用户访问应用程序。如果设置为假
+           domain，则忽略此选项，原因是部署到域时不会部署到特定实例或集群。默认值为真
+
+       --generatermistubs
+           如果设置为真
+           client.jar。如果设置为假
+
+       --availabilityenabled
+           此选项控制是否为 Web 会话和有状态会话 Bean (SFSB)
+           检查点操作和潜在钝化启用高可用性。如果设置为“假”(默认值)，则对指定应用程序、Web
+           应用程序或 EJB 模块禁用所有 Web 会话保存和 SFSB
+           检查点操作。如果设置为“真”，则为指定的应用程序或模块启用高可用性。仅当在更高级别上
+           (例如服务器级别和容器级别)
+           配置和启用高可用性时，此选项才设置为“真”。
+
+       --asyncreplication
+           此选项控制是否首先缓冲启用了高可用性的 Web 会话和 SFSB
+           状态，然后再使用单独的异步线程复制它们。如果设置为“真”(默认值)，则性能会提高但可用性将降低。如果状态已缓冲但尚未复制的实例失败，则状态会丢失。如果设置为“假”，则性能会降低但可用性会得以保证。状态不缓冲，而是立即传输到集群中的其他实例。
+
+       --lbenabled
+           此选项控制已部署的应用程序是否可用于负载平衡。默认值为“真”。
+
+       --keepstate
+           此选项控制是否在重新部署期间保留 Web 会话、SFSB 实例和持久创建的
+           EJB 计时器。
+
+           默认值为“假”。只有名为 server
+           的默认服务器实支持此选项。任何其他目标都不支持此选项并予以忽略。
+
+           在两次重新部署期间对应用程序所做的某些更改会导致此功能无法正常工作。例如，不要更改
+           SFSB Bean 类中的实例变量集。
+
+           对于 Web 应用程序，仅当 glassfish-web-app.xml 文件中
+           session-manager 元素的 persistence-type 属性是 file
+           时，此功能才可用。
+
+           对于有状态会话 Bean 实例，在服务器中设置不支持高可用性的持久类型
+           (sfsb-persistence-type 属性) 且必须将它设置为
+           file，这是默认值，建议使用该值。
+
+           如果无法保留或还原任何活动 Web 会话、SFSB 实例或 EJB
+           计时器，则在重新部署完成时这些资源将无
+
+           为了保留活动状态数据，GlassFish Server
+           将对数据进行序列化，并将数据保存在内存中。为了还原这些数据，最近重新部署的应用程序的类加载器将对先前保存的数据进行反序列化。
+
+       --libraries
+           以逗号分隔的库 JAR 文件列表。按照相对或绝对路径指定库 JAR
+           文件。指定相对于 domain-dir/lib/applibs
+           的相对路径。这些库按指定顺序提供给应用程序使用。
+
+       --target
+           指定要执行部署的目标。有效值为：
+
+           server
+               将组件部署到默认的服务器实例 server，这是默认值。
+
+           domain
+               将组件部署到域。如果 domain
+               是初始部署的目标，则将应用程序部署到域，但服务器实例或集群都不引用该应用程序。如果
+               domain 是重新部署 (--force 选项设置为“真”)
+               的目标，并且已为引用该应用程序的集群或服务器实例启用动态重新配置，则引用集群或服务器实例都将自动获得应用程序的新版本。如果重新部署并且禁用动态配置，则在重新启动集群或独立服务器实例之前，引用集群或服务器实例不会获得应用程序的新版本。
+
+           cluster_name
+               将组件部署到集群中的每个服务器实例。
+
+           instance_name
+               将组件部署到特定的独立服务器实例。
+
+       --type
+           将要部署的组件的打包档案类型。可能的值如下：
+
+           car
+               将组件打包为 CAR 文件。
+
+           ear
+               将组件打包为 EAR 文件。
+
+           ejb
+               组件是打包为 JAR 文件的 EJB。
+
+           osgi
+               将组件打包为 OSGi 包。
+
+           rar
+               将组件打包为 RAR 文件。
+
+           war
+               将组件打包为 WAR 文件。
+
+       --properties 或 --property
+           用来指定其他部署属性的可选关键字/值对。可用属性取决于将要部署或重新部署的组件的实现。--properties
+           选项和 --property
+           选项等效。可以使用任一选项，而无需考虑指定的属性数量。
+
+           可以为部署指定以下属性：
+
+           jar-signing-alias
+               指定用来对应用程序客户机容器 JAR
+               文件进行签名的安全证书的别名。Java Web Start
+               将不会运行需要提升权限的代码，除非这样的代码位于 JAR
+               文件中而且该文件借助于用户系统信任的证书进行签名。为方便起见，GlassFish
+               Server 自动使用带有此别名 (来自域的密钥库) 的证书对 JAR
+               文件进行签名。然后，Java Web Start 询问用户是否信任该代码并显示
+               GlassFish Server 证书信息。要使用其他证书对此 JAR
+               文件进行签名，请将相应证书添加到域密钥库，然后使用此属性。例如，可以使用受信任的颁发机构颁发的证书
+               (可避免出现 Java Web Start 提示信息)，也可以使用自己公司的证书
+               (用户知道可以信任)。默认值为
+               s1as，这是为每个域创建的自签名证书的别名。
+
+           java-web-start-enabled
+               指定是否允许应用程序客户机模块访问 Java Web
+               Start。默认值为“真”。
+
+           compatibility
+               指定在应用程序的 JAR 可见性要求方面向后兼容的 GlassFish Server
+               发行版。唯一允许的值为 v2，它引用 Sun GlassFish 企业服务器 版本
+               2 或 Sun Java System 应用程序服务器 版本 9.1 或 9.1.1。Java EE
+               6 平台规范执行的要求比 Java EE 5 更为严格，在 Java EE 5 中，EAR
+               文件中的 JAR
+               文件对各种模块均可见。特别是，应用程序客户机不得访问 EJB JAR
+               文件或 EAR 文件中的其他 JAR 文件，除非引用使用标准 Java SE 机制
+               (例如扩展名) 或 Java EE 库目录机制。将此属性设置为 v2
+               将除去这些 Java EE 6 限制。
+
+           keepSessions={false|true}
+               由 --keepstate 选项替代。
+
+               如果将 --force
+               选项设置为真
+               Web 容器中的 HTTP 会话。默认值为假
+
+               假
+                   不
+
+               真
+                   保留并还原应用程序的活动会话。
+
+                   如果无法保留或还原应用程序的任何活动会话，则在重新部署完成时将无
+
+                   为了保留活动会话，GlassFish Server
+                   将对会话进行序列化，并将会话保存在内存中。为了还原这些会话，最近重新部署的应用程序的类加载器将对先前保存的所有会话进行反序列化。
+
+           preserveAppScopedResources
+               如果设置为真
+
+           其他可用属性取决于将要重新部署的组件的实现。
+
+操作数
+       file_archive|filepath
+           包含正在部署的应用程序的档案的路径。此路径可以是相对路径，也可以是绝对路径。
+
+           档案可以是以下任一格式：
+
+           ·   档案文件，例如 /export/JEE_apps/hello.war。
+
+               如果将 --upload
+               选项设置为真
+               --upload 选项设置为假
+
+           ·   包含分离格式的可部署档案的目录。这是服务器计算机上的目录路径。
+
+               如果指定目录，将忽略 --upload 选项。
+
+示例
+       Example 1, 部署企业应用程序
+           此示例将打包在 Cart.ear 文件中的企业应用程序部署到默认服务器实例
+           server。可以使用 --target 选项部署到其他服务器实例或集群。
+
+               asadmin> deploy Cart.ear
+               Application deployed successfully with name Cart.
+               Command deploy executed successfully
+
+       Example 2, 部署带有默认上下文根目录的 Web 应用程序
+           此示例将 hello.war 文件中的 Web 应用程序部署到默认服务器实例
+           server。可以使用 --target 选项部署到其他服务器实例或集群。
+
+               asadmin> deploy hello.war
+               Application deployed successfully with name hello.
+               Command deploy executed successfully
+
+       Example 3, 强制部署带有特定上下文根目录的 Web 应用程序
+           此示例强制部署 hello.war 文件中的 Web 应用程序。已部署 Web
+           应用程序的上下文根目录是
+           greetings。如果应用程序已部署，则重新部署它。
+
+               asadmin> deploy --force=true --contextroot greetings hello.war
+               Application deployed successfully with name hello.
+               Command deploy executed successfully
+
+       Example 4, 部署企业 Bean
+           此示例使用 CMP 部署基于 EJB 规范 (企业 Bean) 的组件并创建由该 Bean
+           使用的数据库表。
+
+           此示例使用 --target 选项。此示例中的目标是现有集群 cluster1。
+
+               asadmin> deploy --createtables=true --target cluster1 EmployeeEJB.jar
+               Application deployed successfully with name EmployeeEJB.
+               Command deploy executed successfully
+
+       Example 5, 部署连接器模块
+           此示例部署打包在 RAR 文件中的连接器模块。
+
+           此示例使用 --target
+           选项。此示例中的目标是一个不属于集群的现有独立服务器实例。
+
+               asadmin> deploy --target myinstance jdbcra.rar
+               Application deployed successfully with name jdbcra.
+               Command deploy executed successfully
+
+       Example 6, 指定应用程序的部署顺序
+           此示例指定两个应用程序的部署顺序。服务器启动时在 horse
+           应用程序之前加载 cart 应用程序。
+
+               asadmin> deploy --deploymentorder 102 --name cart cart.war
+               asadmin> deploy --deploymentorder 110 --name horse horse.war
+
+       Example 7, 使用备用 Java EE 7 部署描述符文件部署应用程序
+           此示例使用驻留在应用程序档案外部的 Java EE
+           标准部署描述符文件部署应用程序。
+
+               asadmin> deploy --altdd path_to_alternate_descriptor cart.ear
+
+       Example 8, 使用备用 GlassFish Server 部署描述符文件部署应用程序
+           此示例使用驻留在应用程序档案外部的 GlassFish Server
+           运行时部署描述符文件部署应用程序。
+
+               asadmin> deploy --runtimealtdd path_to_alternate_runtime_descriptor horse.ear
+
+退出状态
+       0
+           已成功执行子命令
+
+       1
+           执行子命令时出现错误
+
+另请参阅
+       redeploy(1), list-components(1), undeploy(1), get(1), set(1)
+
+       asadmin(1M)
+
+       Oracle GlassFish Server Application Deployment Guide
+
+Java EE 7                     2013 年 2 月 12 日                     deploy(1)

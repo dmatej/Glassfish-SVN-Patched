@@ -1,0 +1,214 @@
+create-jms-resource(1)  Comandi secondari della utilit  create-jms-resource(1)
+
+NOME
+       create-jms-resource - crea una risorsa JMS
+
+SINTASSI
+           create-jms-resource [--help]
+           --restype type
+           [--target target]
+           [--enabled={true|false}]
+           [--description text]
+           [--property (name=value)[:name=value]*]
+           [--force[={false|true}]]
+           jndi_name
+
+DESCRIZIONE
+       Il comando secondario create-jms-resource crea una risorsa Connection
+       Factory JMS (Java Message Service) o una risorsa di destinazione JMS.
+
+       Questo comando secondario è supportato solo in modalità remota. Per i
+       comandi secondari asadmin è necessario un server di amministrazione del
+       dominio (DAS) in esecuzione.
+
+OPZIONI
+       --help, -?
+           Visualizza il testo della Guida per il comando secondario.
+
+       --restype
+           Il tipo di risorsa JMS, che può essere javax.jms.Topic,
+           javax.jms.Queue, javax.jms.ConnectionFactory,
+           javax.jms.TopicConnectionFactory o
+           javax.jms.QueueConnectionFactory.
+
+       --target
+           Crea la risorsa JMS solo per la destinazione specificata. Di
+           seguito sono riportati i valori validi.
+
+               Nota
+               ┌────────────────────────────────────────┐
+               │Nota La risorsa viene sempre creata per │
+               │l'intero dominio, mentre l'elemento     │
+               │<resource-ref per la risorsa viene      │
+               │creato solo per l'elemento --target     │
+               │specificato. Ciò significa che la       │
+               │risorsa è attiva solo nell'elemento     │
+               │--target specificato benché sia         │
+               │definita a livello di dominio.          │
+               └────────────────────────────────────────┘
+
+           server
+               Crea la risorsa JMS per l'istanza server predefinita. Questo è
+               il valore predefinito.
+
+           domain
+               Crea la risorsa JMS per il dominio.
+
+           cluster-name
+               Crea la risorsa JMS per ogni istanza server nel cluster
+               specificato.
+
+           instance-name
+               Crea la risorsa JMS per l'istanza server specificata.
+
+       --enabled
+           Se si imposta true (valore predefinito), la risorsa è abilitata in
+           fase di esecuzione.
+
+       --description
+           Il testo in cui vengono forniti dettagli sulla risorsa JMS.
+
+       --property
+           Coppie nome-valore di attributo facoltative per la configurazione
+           della risorsa JMS.
+
+           Per una risorsa Connection Factory è possibile specificare le
+           proprietà riportate di seguito.
+
+           ClientId
+               ID client di un Connection Factory che verrà utilizzato da un
+               sottoscrittore permanente.
+
+           AddressList
+               Lista separata da virgole degli indirizzi delle code dei
+               messaggi che specificano i nomi degli host (e opzionalmente i
+               numeri di porta) di una o più istanze di broker dei messaggi
+               con cui comunicherà l'applicazione. Ad esempio, il valore può
+               essere earth o earth:7677. Specificare il numero di porta se il
+               broker dei messaggi è in esecuzione su una porta diversa da
+               quella predefinita (7676). Composto sulla base dagli host JMS
+               definiti nella configurazione del servizio JMS del server. Il
+               valore predefinito è localhost e il numero di porta predefinito
+               è 7676. Il client tenterà una connessione a un broker sulla
+               porta 7676 dell'host locale.
+
+           UserName
+               Il nome utente per il Connection Factory. Il valore predefinito
+               è guest.
+
+           Password
+               La password per il Connection Factory. Il valore predefinito è
+               guest.
+
+           ReconnectEnabled
+               Il valore true indica che il runtime del client tenta la
+               riconnessione a un server dei messaggi (o alla lista di
+               indirizzi specificati in AddressList) quando una connessione
+               viene persa. Il valore predefinito è false.
+
+           ReconnectAttempts
+               Il numero dei tentativi di connessione (o riconnessione)
+               consentiti per ogni indirizzo specificato in AddressList prima
+               che il runtime del client tenti con il successivo indirizzo
+               della lista. Il valore -1 indica un numero di tentativi di
+               riconnessione illimitato; il runtime del client tenta di
+               connettersi al primo indirizzo fino a quando il tentativo non
+               riesce. Il valore predefinito è 6.
+
+           ReconnectInterval
+               L'intervallo in millisecondi tra un tentativo di riconnessione
+               e l'altro. Si applica ai tentativi per ogni indirizzo
+               specificato in AddressList e per i successivi indirizzi della
+               lista. Se l'intervallo è troppo breve, il broker non riesce a
+               eseguire il recupero. Se l'intervallo è troppo lungo, si
+               potrebbe verificare un ritardo eccessivo per la riconnessione.
+               Il valore predefinito è 30.000 millisecondi.
+
+           AddressListBehavior
+               Specifica se i tentativi di connessione avvengono secondo
+               l'ordine degli indirizzi specificati in AddressList (PRIORITY)
+               o secondo un ordine casuale (RANDOM).  PRIORITY indica che
+               viene sempre tentata la riconnessione al primo indirizzo di
+               server specificato in AddressList e che viene utilizzato un
+               altro indirizzo solo se il primo broker non è disponibile. Se
+               vi sono numerosi client che tentano la connessione utilizzando
+               lo stesso Connection Factory, specificare RANDOM per impedire
+               che siano tutti connessi allo stesso indirizzo. Il valore
+               predefinito è il valore AddressListBehavior della
+               configurazione del servizio JMS del server.
+
+           AddressListIterations
+               Il numero di volte in cui il runtime del client itera gli
+               indirizzi specificati in AddressList nel tentativo di stabilire
+               o di ristabilire una connessione. Il valore -1 indica un numero
+               di tentativi illimitato. Il valore predefinito è -1.
+
+           È inoltre possibile specificare gli attributi
+           connector-connection-pool come proprietà di risorsa connettore. Per
+           la lista di questi attributi, vedere "connector-connection-pool" in
+           Oracle GlassFish Server Application Deployment Guide.
+
+           Per una risorsa di destinazione è possibile specificare le
+           proprietà riportate di seguito.
+
+           Name
+               Il nome della destinazione fisica a cui farà riferimento la
+               risorsa. La destinazione fisica viene creata automaticamente
+               quando si esegue un'applicazione che usa la risorsa di
+               destinazione. È anche possibile creare una destinazione fisica
+               con il comando secondario create-jmsdest. Se non si specifica
+               questa proprietà, il servizio JMS crea una destinazione fisica
+               con lo stesso nome della risorsa di destinazione (sostituendo
+               tutte le barre nel nome JNDI con un carattere di
+               sottolineatura).
+
+           Description
+               La descrizione della destinazione fisica.
+
+       --force
+           Specifica se il comando secondario sovrascrive la risorsa JMS
+           esistente che ha lo stesso nome. Il valore predefinito è false.
+
+OPERANDI
+       jndi_name
+           Il nome JNDI della risorsa JMS da creare.
+
+ESEMPI
+       Esempio 1, Creazione di una risorsa Connection Factory JMS per
+       sottoscrizioni permanenti
+           Il comando secondario riportato di seguito crea una risorsa
+           Connection Factory di tipo javax.jms.ConnectionFactory con il nome
+           JNDI jms/DurableConnectionFactory. La proprietà ClientId imposta un
+           ID client per il Connection Factory in modo che sia utilizzabile
+           per le sottoscrizioni permanenti. In genere, il nome JNDI per una
+           risorsa JMS include il contesto secondario di denominazione jms/.
+
+               asadmin> create-jms-resource --restype javax.jms.ConnectionFactory
+               --description "connection factory for durable subscriptions"
+               --property ClientId=MyID jms/DurableConnectionFactory
+               Connector resource jms/DurableConnectionFactory created.
+               Command create-jms-resource executed successfully.
+
+       Esempio 2, Creazione di una risorsa di destinazione JMS
+           Il comando secondario riportato di seguito crea una risorsa di
+           destinazione con il nome JNDI jms/MyQueue. La proprietà Name
+           specifica la destinazione fisica a cui fa riferimento la risorsa.
+
+               asadmin> create-jms-resource --restype javax.jms.Queue
+               --property Name=PhysicalQueue jms/MyQueue
+               Administered object jms/MyQueue created.
+               Command create-jms-resource executed successfully.
+
+STATO DI USCITA
+       0
+           esecuzione del comando secondario riuscita
+
+       1
+           errore durante l'esecuzione del comando secondario
+
+VEDERE ANCHE
+       delete-jms-resource(1), list-jms-resources(1)
+
+       asadmin(1M)
+
+Java EE 7                      12 febbraio 2013         create-jms-resource(1)

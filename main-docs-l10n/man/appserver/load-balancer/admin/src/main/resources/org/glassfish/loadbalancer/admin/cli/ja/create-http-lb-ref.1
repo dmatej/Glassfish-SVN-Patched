@@ -1,0 +1,128 @@
+create-http-lb-ref(1) asadminユーティリティのサブコマンドcreate-http-lb-ref(1)
+
+名前
+       create-http-lb-ref -
+       既存のクラスタまたはサーバー・インスタンスを既存のロード・バランサ構成またはロード・バランサに追加します
+
+概要
+           create-http-lb-ref [--help] --config config_name | --lbname load_balancer_name
+           [--lbpolicy round-robin] [--lbpolicymodule lb_policy_module]
+           [--healthcheckerurl url] [--healthcheckerinterval 10]
+           [--healthcheckertimeout 10] [--lbenableallinstances=true]
+           [--lbenableallapplications=true] [--lbweight instance=weight[:instance=weight]*]
+           target
+
+説明
+       create-http-lb-refサブコマンドを使用すると、次の処理を行うことができます。
+
+       ·   既存のクラスタまたはサーバー・インスタンスを既存のロード・バランサ構成またはロード・バランサに追加します。ロード・バランサは、参照対象のクラスタ化インスタンスおよびスタンドアロン・インスタンスにリクエストを転送します。
+
+       ·   ロード・バランシング・ポリシーをラウンドロビン、重み付きラウンドロビン、またはユーザー定義ポリシーに設定します。
+
+       ·   ロード・バランサに対するヘルス・チェッカを構成します。ここで定義したヘルス・チェッカの設定は、ターゲットにのみ適用されます。このサブコマンドでヘルス・チェッカを作成しない場合は、create-http-health-checkerを使用してください。
+
+       ·   ロード・バランシング用のターゲット・クラスタのインスタンスをすべて有効にします。または、enable-http-lb-serverを使用して、各インスタンスを個別に有効にします。
+
+       ·   ロード・バランシング用にターゲットにデプロイされたアプリケーションをすべて有効にします。または、enable-http-lb-applicationを使用して、各アプリケーションを個別に有効にします。
+
+           注記
+           ┌───────────────────────────────────────────────────────────────────┐
+           │注意                                                               │
+           │                                                                   │
+           │           このサブコマンドは、Oracle                              │
+           │           GlassFish                                               │
+           │           Serverにのみ適用されます。このサブコマンドは、GlassFish │
+           │           Server Open Source                                      │
+           │           Editionには適用されません。                             │
+           └───────────────────────────────────────────────────────────────────┘
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --config
+           クラスタおよびサーバー・インスタンスを追加するロード・バランサ構成を指定します。ロード・バランサ構成またはロード・バランサを指定します。両方を指定すると、エラーが発生します。
+
+       --lbname
+           クラスタおよびサーバー・インスタンスを追加するロード・バランサを指定します。ロード・バランサ構成またはロード・バランサを指定します。両方を指定すると、エラーが発生します。
+
+       --lbpolicy
+           ロード・バランサが従うポリシー。有効な値はround-robin、weighted-round-robin、およびuser-definedです。user-definedを選択する場合は、lbpolicymoduleオプションを使用してロード・バランサ・ポリシー・モジュールを指定します。weighted-round-robinを選択する場合は、configure-lb-weightサブコマンドを使用して、サーバー・インスタンスに重みを割り当てます。デフォルトはround-robinです。
+
+       --lbpolicymodule
+           ロード・バランサ・ポリシーがuser-definedである場合は、このオプションを使用して、ロード・バランシング・ポリシー・モジュールの共有ライブラリのフルパスと名前を指定します。共有ライブラリは、Webサーバーからアクセス可能な場所にある必要があります。
+
+       --healthcheckerurl
+           インスタンスが正常かどうかを確認するためにpingを送信するURL。
+
+       --healthcheckerinterval
+           正常でないインスタンスが正常になったかどうかを確認するために、ヘルス・チェッカがインスタンスをチェックする間隔(秒単位)。デフォルト値は30秒です。この値が0の場合は、ヘルス・チェッカが無効になります。
+
+       --healthcheckertimeout
+           ヘルス・チェッカがインスタンスからのレスポンスの受信を待機する間隔(秒単位)。ヘルス・チェッカがこの間隔の間にレスポンスを受信しなかった場合は、インスタンスが正常ではないと判断されます。デフォルトは10です。
+
+       --lbenableallinstances
+           ロード・バランシング用のターゲット・クラスタのインスタンスをすべて有効にします。ターゲットがサーバー・インスタンスの場合は、そのインスタンスをロード・バランシング用に有効にします。デフォルト値はtrueです。
+
+       --lbenableallapplications
+           ロード・バランシング用にターゲット・クラスタまたはインスタンスにデプロイされたアプリケーションをすべて有効にします。デフォルト値はtrueです。
+
+       --lbweight
+           インスタンスの名前と、そのインスタンスに割り当てる重み。重みは整数にする必要があります。インスタンスと重みのペアは、コロンによって区切られています。たとえば、instance1=1:instance2=4の場合、5リクエストごとに、重み1がinstance1へ移動し、重み4がinstance2に移動します。重み1がデフォルトです。
+
+オペランド
+       target
+           ロード・バランサに追加するクラスタまたはインスタンスを指定します。有効な値は次のとおりです:
+
+           ·   cluster_name-
+               このクラスタに対するリクエストがロード・バランサによって処理されるように指定します。
+
+           ·   stand-alone_instance_name-
+               このスタンドアロン・インスタンスに対するリクエストがロード・バランサによって処理されるように指定します。
+
+例
+       例 1, ロード・バランサ構成へのクラスタ参照の追加
+           この例では、cluster2という名前のクラスタへの参照を、mylbconfigという名前のロード・バランサ構成に追加します。
+
+               asadmin> create-http-lb-ref --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       例 2, ロード・バランサへのクラスタ参照の追加
+           この例では、cluster2という名前のクラスタへの参照を、mylbという名前のロード・バランサに追加します。
+
+               asadmin> create-http-lb-ref --lbname mylb cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       例 3, ヘルス・チェッカおよびロード・バランサ・ポリシーの構成
+           この例では、ヘルス・チェッカおよびロード・バランシング・ポリシーを構成して、インスタンスおよびアプリケーションのロード・バランサを有効にします。
+
+               asadmin> create-http-lb-ref --config mylbconfig --lbpolicy weighted-round-robin
+               --healthcheckerinterval 40 --healthcheckertimeout 20
+               --lbenableallinstances=true --lbenableallapplications=true cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       例 4, ユーザー定義のロード・バランシング・ポリシーの設定
+           この例では、ユーザー定義のロード・バランシング・ポリシーを設定します。
+
+               asadmin> create-http-lb-ref --lbpolicy user-defined --lbpolicymodule /user/modules/module.so
+               --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+終了ステータス
+       0
+           サブコマンドは正常に実行されました
+
+       1
+           サブコマンドの実行時にエラーが発生しました
+
+関連項目
+       delete-http-lb-ref(1)、create-http-health-checker(1)、enable-http-lb-server(1)、enable-http-lb-application(1)、list-http-lb-configs(1)、list-http-lbs(1)
+       configure-lb-weight(1)
+
+       asadmin(1M)
+
+Java EE 7                        2010年8月25日           create-http-lb-ref(1)

@@ -1,0 +1,119 @@
+validate-multicast(1)       asadmin 实用程序子命令       validate-multicast(1)
+
+名称
+       validate-multicast - 验证多点传送是否对集群可用。
+
+提要
+           validate-multicast [--help] [--multicastport multicastport]
+           [--multicastaddress multicastaddress]
+           [--bindaddress bindaddress]
+           [--sendperiod sendperiod]
+           [--timeout timeout]
+           [--timetolive timetolive]
+           [--verbose={false|true}]
+
+说明
+       validate-multicast
+       子命令验证多点传送传输是否可用于集群。应该在要验证的每台主机上同时运行该子命令。该子命令在本地模式下可用。
+
+           注意
+           ┌──────────────────────────────────────────────────────────────┐
+           │注                                                            │
+           │                                                              │
+           │           不要在 DAS                                         │
+           │           和集群正运行时使用 DAS                             │
+           │           和集群的多点传送地址和端口值运行                   │
+           │           validate-multicast                                 │
+           │           子命令。这样做会导致出现错误。                     │
+           │                                                              │
+           │           必须在两个或更多计算机上同时运行                   │
+           │           validate-multicast                                 │
+           │           子命令，以验证是否会接收计算机之间的多点传送消息。 │
+           └──────────────────────────────────────────────────────────────┘
+
+       只要所有计算机都能相互看见，即可证明多点传送可在计算机之间正确工作。如果计算机无法相互发现，请显式设置
+       --bindaddress 选项，以确保所有计算机都使用同一子网上的接口，或者增大
+       --timetolive 选项的默认值
+       4。如果这些更改无法解决多点传送问题，请询问网络管理员以确认网络已经过配置，从而使运行集群的所有计算机之间都可看到多点传送消息。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --multicastport
+           组管理服务 (GMS) 用于监听组事件的多点传送套接字端口。在 2048 到
+           32000 范围内指定标准 UDP 端口号。默认值为 2048。
+
+       --multicastaddress
+           GMS 监听组事件的多点传送套接字地址。指定 D 类 IP 地址。D 类 IP
+           地址在 224.0.0.0 和 239.255.255.255 的范围内 (包括两者)。地址
+           224.0.0.0 被保留，不应使用。默认值为 228.9.3.1。
+
+       --bindaddress
+           用于接收 GMS
+           多点传送数据报包的本地接口。默认设置为使用所有可用的绑定接口。
+
+           在多宿主计算机 (拥有两个或更多个网络接口)
+           上，使用该属性可以指定要为 GMS
+           使用哪个网络接口。该值必须是本地网络接口 IP 地址。
+
+       --sendperiod
+           节点间发送的测试消息之间间隔的毫秒数。默认值为 2000。
+
+       --timeout
+           子命令超时并退出前的秒数。默认值为 20。您还可以使用 Ctrl-C
+           退出此子命令。
+
+       --timetolive
+           为控制多点传送范围在多点传送套接字上发出的多点传送包的默认生存时间。生存时间值必须介于
+           0 和 255 之间 (包括边界值)。默认值为 JDK 默认值或者 GMS
+           子系统中某个常数定义的最小值，取两者中的较小值。要查看正使用的生存时间值，请使用
+           --verbose 选项。
+
+       --verbose
+           如果使用此选项但未指定值，或者将此选项设置为真
+
+示例
+       Example 1, 验证多点传送传输
+           从主机 machine1 运行：
+
+               asadmin> validate-multicast
+               Will use port 2,048
+               Will use address 228.9.3.1
+               Will use bind address null
+               Will use wait period 2,000 (in milliseconds)
+
+               Listening for data...
+               Sending message with content "machine1" every 2,000 milliseconds
+               Received data from machine1 (loopback)
+               Received data from machine2
+               Exiting after 20 seconds. To change this timeout, use the --timeout command line option.
+               Command validate-multicast executed successfully
+           从主机 machine2 运行：
+
+               asadmin> validate-multicast
+               Will use port 2,048
+               Will use address 228.9.3.1
+               Will use bind address null
+               Will use wait period 2,000 (in milliseconds)
+
+               Listening for data...
+               Sending message with content "machine2" every 2,000 milliseconds
+               Received data from machine2 (loopback)
+               Received data from machine1
+               Exiting after 20 seconds. To change this timeout, use the --timeout command line option.
+               Command validate-multicast executed successfully
+
+退出状态
+       0
+           已成功执行命令
+
+       1
+           执行命令时出现错误
+
+另请参阅
+       get-health(1)
+
+       asadmin(1M)
+
+Java EE 7                     2011 年 2 月 10 日         validate-multicast(1)

@@ -1,0 +1,170 @@
+start-local-instance(1)     asadmin 公用程式子命令     start-local-instance(1)
+
+參考名
+       start-local-instance - 在執行子命令的主機上啟動 GlassFish Server
+       執行處理
+
+概要
+           start-local-instance [--help]
+           [--nodedir node-dir] [--node node]
+           [--debug={false|true}] [--dry-run={false|true}] [--sync={normal|full|none}]
+           [--verbose={false|true}] [--watchdog={false|true}]
+           [instance-name]
+
+描述
+       start-local-instance 子命令可在執行子命令的主機上啟動 GlassFish Server
+       執行處理。這個子命令不需要組態分散式元件物件模型 (DCOM) 遠端協定或安全
+       Shell (SSH)。您必須從執行處理所在的主機執行此命令。
+
+       無論 GlassFish Server
+       執行處理的建立方式為何，這個子命令都能夠啟動任何執行處理。例如，這個子命令可以啟動使用
+       create-instance(1) 子命令所建立的執行處理。
+
+       start-local-instance 子命令不會連絡網域管理伺服器 (DAS)
+       來確定執行處理所在的節點。若要確定執行處理所在的節點，該子命令會搜尋包含節點目錄的目錄。如果存在多個節點目錄，則必須將此節點指定為子命令的選項。
+
+       本機模式支援這個子命令。不過，若要使執行處理與 DAS
+       同步，必須在遠端模式下執行此子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --nodedir
+           指定包含執行處理節點目錄的目錄。執行處理檔案儲存在執行處理的節點目錄中。預設值為
+           as-install/nodes。
+
+       --node
+           指定執行處理所在的節點。僅在 --nodedir
+           選項指定的目錄只包含一個節點目錄時，才可忽略此選項。否則，需要使用此選項。
+
+       --debug
+           指定執行處理是否以 Java 平台除錯程式架構 (JPDA) 啟動
+
+           已啟用除錯。
+
+           可能值如下：
+
+           true
+               啟動執行處理時，會啟用 JPDA 除錯並顯示 JPDA 除錯的連接埠號碼。
+
+           false
+               啟動執行處理時停用 JPDA 除錯 (預設值)。
+
+       --dry-run, -n
+           不真正啟動執行處理。start-local-instance
+           會改為顯示用來啟動網域的完整 Java
+           命令，包括所有選項。複查此命令可幫助確認 JVM 選項及解決啟動問題。
+
+           預設值為 false。
+
+       --sync
+           啟動執行處理時，DAS 和執行處理的檔案之間的同步化類型。
+
+           可能值如下：
+
+           none
+               DAS
+               不會以任何變更同步化執行處理的檔案。此同步化類型可將啟動執行處理所需的時間縮到最短。
+
+           normal
+               DAS 會以上次同步化之後進行的變更來同步化執行處理，如下所示：
+
+               ·   若為 config 目錄，DAS 會以所有變更同步化執行處理。
+
+               ·   若為 applications 目錄和 docroot
+                   目錄，只有在最上層子目錄進行變更，DAS
+                   才會同步化該子目錄下的所有檔案。
+
+                   如果是變更最上層子目錄之下的檔案，而不是變更最上層子目錄中的檔案，則需要完整同步化。一般作業並不會變更這些目錄的最上層子目錄之下的檔案。如果建置應用程式再取消建置，則利用變更來更新執行處理時不需要完整同步化。
+
+               此為預設值。
+
+           full
+               DAS
+               會以執行處理的所有檔案來同步化執行處理，無論這些檔案在上次同步化之後是否有變更。此同步化類型可能會延遲啟動執行處理，因為
+               DAS 會更新執行處理目錄中的所有檔案。
+
+                   注意
+                   ┌───────────────────────────────────────────────────────────────────┐
+                   │注意 如果 DAS                                                      │
+                   │未執行或無法從執行此命令的主機上連線至                             │
+                   │DAS，此時請勿
+                   │full。為了執行完整同步，子命令會移除執行處理的快取。如果無法連線至 │
+                   │DAS                                                                │
+                   │以取代快取，子命令會失敗，並且在執行處理與                         │
+                   │DAS                                                                │
+                   │同步之前，將無法重新啟動該執行處理。                               │
+                   └───────────────────────────────────────────────────────────────────┘
+
+       --verbose, -v
+           指定是否在執行子命令的主控台視窗中顯示執行處理的詳細資訊。
+
+           可能值如下：
+
+           true
+               執行處理的詳細啟動訊息和日誌訊息會顯示在執行子命令的主控台視窗中。如果稍後從不同的主控台視窗執行
+               restart-local-instance(1)
+               子命令來重新啟動執行處理，則原始主控台視窗會繼續顯示訊息。
+
+               您可以在主控台視窗鍵入 CTRL-C 結束 GlassFish Server 處理作業。
+
+               您可以在主控台視窗鍵入下列其中一個按鍵組合，來結束 GlassFish
+               Server 處理作業並取得伺服器的繫線傾印：
+
+               ·   UNIX 系統：CTRL-\
+
+               ·   Windows 系統：CTRL-Break
+
+           false
+               不顯示詳細資訊 (預設值)。
+
+       --watchdog, -w
+           指定是否在執行子命令的主控台視窗中限制顯示的執行處理資訊。--watchdog
+           選項類似於
+           --verbose，但不會顯示詳細的啟動訊息與日誌訊息。在背景中或在沒有連結主控台的情況下執行
+           asadmin 公用程式時，此選項會很實用。
+
+           可能值如下：
+
+           true
+               主控台視窗只會顯示有限資訊。
+
+           false
+               主控台視窗中不只會顯示有限資訊 (預設值)。
+
+運算元
+       instance-name
+           要啟動的執行處理名稱。
+
+範例
+       範例 1, 在本機啟動執行處理
+           此範例會在執行子命令的主機上啟動執行處理 yml-i-sj01。
+
+               asadmin> start-local-instance --node sj01 yml-i-sj01
+               Waiting for the server to start .................................
+               Successfully started the instance: yml-i-sj01
+               instance Location: /export/glassfish3/glassfish/nodes/sj01/yml-i-sj01
+               Log File: /export/glassfish3/glassfish/nodes/sj01/yml-i-sj01/logs/server.log
+               Admin Port: 24849
+               Command start-local-instance executed successfully.
+
+結束狀態
+       0
+           命令執行成功
+
+       1
+           執行命令時發生錯誤
+
+另請參閱
+       create-instance(1), create-local-instance(1), delete-instance(1),
+       delete-local-instance(1), restart-instance(1),
+       restart-local-instance(1), start-domain(1), start-instance(1),
+       stop-domain(1), stop-instance(1), stop-local-instance(1)
+
+       asadmin(1M)
+
+       Java 平台除錯程式架構 (JPDA)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                     2013 年 2 月 13 日       start-local-instance(1)

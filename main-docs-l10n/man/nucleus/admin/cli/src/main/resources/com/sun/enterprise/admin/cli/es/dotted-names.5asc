@@ -1,0 +1,209 @@
+dotted-names(5ASC)       Conceptos de GlassFish Server      dotted-names(5ASC)
+
+NOMBRE DE REFERENCIA
+       dotted-names - Sintaxis para utilizar puntos para separar elementos de
+       nombre.
+
+DESCRIPCIÓN
+       Un nombre punteado es un identificador para un determinado elemento de
+       GlassFish Server, como un objeto configurable o supervisable. Un nombre
+       punteado utiliza el carácter (.) como delimitador para separar las
+       partes del nombre de un elemento. El punto de un nombre punteado es
+       similar al carácter de barra (/) que delimita los niveles en la ruta de
+       acceso absoluta de un archivo en el sistema de archivos UNIX.
+
+       Los subcomandos de la utilidad asadmin utilizan los nombres punteados
+       de esta forma:
+
+       ·   El subcomando list proporciona los nombres de puntos totalmente
+           cualificados de los atributos de los componentes de administración.
+
+       ·   El subcomando get proporciona acceso a los atributos.
+
+       ·   El subcomando set permite modificar atributos configurables y
+           definir propiedades.
+
+       La jerarquía de configuración está vagamente basada en el documento de
+       esquema del dominio y los atributos se pueden modificar. Los atributos
+       de la jerarquía de supervisión son de sólo lectura.
+
+       El formato siguiente se utiliza para configurar nombres punteados (la
+       cursiva indica valores sustituibles):
+
+       config-name.config-element-name.primary-key.attribute-name |
+       instance-name.config-element-name.primary-key.attribute-name
+
+       El formato siguiente se utiliza para nombres punteados de recursos (la
+       cursiva indica valores sustituibles):
+
+       server-name.resource-name.primary-key.attribute-name |
+       domain.resources.resource-name.primary-key.attribute-name
+
+       Las reglas siguientes se aplican al formato de nombres punteados:
+
+       ·   El nivel superior es el nombre de la configuración, del servidor o
+           del dominio. Por ejemplo, server-config (configuración por
+           defecto), server (servidor por defecto) o domain1 (dominio por
+           defecto).
+
+       ·   El punto (.) siempre separa dos partes consecutivas del nombre.
+
+       ·   Una parte del nombre suele identificar un subsistema del servidor o
+           su instancia específica. Por ejemplo, web-container, log-service ,
+           thread-pool-1.
+
+       ·   Si alguna parte del propio nombre contiene un punto (.), el punto
+           debe ir precedido por el carácter de escape \ (barra invertida) de
+           manera que .  (punto) no actúe como delimitador. Para obtener más
+           información sobre caracteres de escape, consulte la página de ayuda
+           de asadmin(1M).
+
+       ·   Puede utilizar el carácter * (asterisco) en cualquier lugar del
+           nombre de puntos y actúa como carácter comodín en las expresiones
+           regulares. Además, un * puede reducir todas las partes del nombre
+           de puntos. Por ejemplo, un nombre de puntos largo como
+           this.is.really.long.hierarchy se puede abreviar a th*.hierarchy. El
+           carácter
+            .  (punto) siempre delimita las partes del nombre punteado.
+
+               Nota
+               ┌────────────────────────────────────────┐
+               │Nota Los caracteres que tienen un       │
+               │significado especial para el shell o el │
+               │intérprete de comandos, como el         │
+               │asterisco (*), se deben incluir entre   │
+               │comillas o deben estar precedidos por   │
+               │un carácter de escape, según el shell.  │
+               │En modo múltiple, las comillas sólo son │
+               │necesarias para argumentos que          │
+               │contengan espacios, comillas o una      │
+               │barra invertida.                        │
+               └────────────────────────────────────────┘
+
+       ·   La opción --monitor de los subcomandos get y list selecciona la
+           jerarquía de supervisión o de configuración. Si el subcomando
+           especifica --monitor=false (valor por defecto), se selecciona la
+           jerarquía de configuración. Si el subcomando especifica
+           --monitor=true, se selecciona la jerarquía de supervisión.
+
+       ·   Si conoce el nombre punteado completo y no necesita utilizar un
+           comodín, los subcomandos list, get y set tratan el nombre de forma
+           diferente:
+
+           ·   El subcomando list trata un nombre completo como el nombre de
+               un nodo principal de la jerarquía abstracta. Cuando se
+               especifica este nombre en el subcomando list, se devuelven los
+               nombres de secundarios inmediatos de ese nivel. Por ejemplo, el
+               comando siguiente muestra todos los módulos web desplegados en
+               el dominio o en el servidor por defecto:
+
+                   asadmin> list server.applications.web-module
+
+           ·   Los subcomandos get y set tratan un nombre punteado completo
+               como el nombre completo del atributo de un nodo (cuyo nombre
+               punteado es el nombre que se obtiene cuando se elimina la
+               última parte de este nombre punteado). Cuando se especifica
+               este nombre en los subcomandos get o set, estos actúan según el
+               valor de ese atributo, si el atributo existe. Este caso nunca
+               se presenta al principio porque, para averiguar los nombres de
+               los atributos de un nodo específico de la jerarquía, se debe
+               utilizar el carácter comodín *. Por ejemplo, el siguiente
+               nombre punteado devuelve la raíz de contexto de la aplicación
+               web desplegada en el dominio o en el servidor por defecto:
+
+                   server.applications.web-module.JSPWiki.context-root
+
+EJEMPLOS
+       Ejemplo 1, Lista de todos los elementos configurables
+           En este ejemplo se muestran todos los elementos configurables.
+
+               asadmin> list *
+           Se muestra una salida similar a la siguiente:
+
+               applications
+               configs
+               configs.config.server-config
+               configs.config.server-config.admin-service
+               configs.config.server-config.admin-service.das-config
+               configs.config.server-config.admin-service.jmx-connector.system
+               configs.config.server-config.admin-service.property.adminConsoleContextRoot
+               configs.config.server-config.admin-service.property.adminConsoleDownloadLocation
+               configs.config.server-config.admin-service.property.ipsRoot
+               configs.config.server-config.ejb-container
+               configs.config.server-config.ejb-container.ejb-timer-service
+               configs.config.server-config.http-service
+               configs.config.server-config.http-service.access-log
+               configs.config.server-config.http-service.virtual-server.__asadmin
+               configs.config.server-config.http-service.virtual-server.server
+               configs.config.server-config.iiop-service
+               configs.config.server-config.iiop-service.iiop-listener.SSL
+               configs.config.server-config.iiop-service.iiop-listener.SSL.ssl
+               configs.config.server-config.iiop-service.iiop-listener.SSL_MUTUALAUTH
+               configs.config.server-config.iiop-service.iiop-listener.SSL_MUTUALAUTH.ssl
+               configs.config.server-config.iiop-service.iiop-listener.orb-listener-1
+               configs.config.server-config.iiop-service.orb
+               configs.config.server-config.java-config
+               configs.config.server-config.jms-service
+               configs.config.server-config.jms-service.jms-host.default_JMS_host
+               configs.config.server-config.mdb-container
+               configs.config.server-config.monitoring-service
+               configs.config.server-config.monitoring-service.module-monitoring-levels
+               ...
+               property.administrative.domain.name
+               resources
+               resources.jdbc-connection-pool.DerbyPool
+               resources.jdbc-connection-pool.DerbyPool.property.DatabaseName
+               resources.jdbc-connection-pool.DerbyPool.property.Password
+               resources.jdbc-connection-pool.DerbyPool.property.PortNumber
+               resources.jdbc-connection-pool.DerbyPool.property.User
+               resources.jdbc-connection-pool.DerbyPool.property.connectionAttributes
+               resources.jdbc-connection-pool.DerbyPool.property.serverName
+               resources.jdbc-connection-pool.__TimerPool
+               resources.jdbc-connection-pool.__TimerPool.property.connectionAttributes
+               resources.jdbc-connection-pool.__TimerPool.property.databaseName
+               resources.jdbc-resource.jdbc/__TimerPool
+               resources.jdbc-resource.jdbc/__default
+               servers
+               servers.server.server
+               servers.server.server.resource-ref.jdbc/__TimerPool
+               servers.server.server.resource-ref.jdbc/__default
+               system-applications
+               Command list executed successfully.
+
+       Ejemplo 2, Lista de Todos los Objetos Supervisables
+           En el ejemplo siguiente se muestran todos los objetos
+           supervisables.
+
+               asadmin> list --monitor *
+           Se muestra una salida similar a la siguiente:
+
+               server
+               server.jvm
+               server.jvm.class-loading-system
+               server.jvm.compilation-system
+               server.jvm.garbage-collectors
+               server.jvm.garbage-collectors.Copy
+               server.jvm.garbage-collectors.MarkSweepCompact
+               server.jvm.memory
+               server.jvm.operating-system
+               server.jvm.runtime
+               server.network
+               server.network.admin-listener
+               server.network.admin-listener.connections
+               server.network.admin-listener.file-cache
+               server.network.admin-listener.keep-alive
+               server.network.admin-listener.thread-pool
+               server.network.http-listener-1
+               server.network.http-listener-1.connections
+               server.network.http-listener-1.file-cache
+               server.network.http-listener-1.keep-alive
+               server.network.http-listener-1.thread-pool
+               server.transaction-service
+               Command list executed successfully.
+
+CONSULTE TAMBIÉN
+       list(1), get(1), set(1)
+
+       asadmin(1M)
+
+Java EE 7                  14 de septiembre de 2009         dotted-names(5ASC)

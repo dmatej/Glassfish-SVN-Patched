@@ -1,0 +1,324 @@
+create-local-instance(1)    asadmin 公用程式子命令    create-local-instance(1)
+
+參考名
+       create-local-instance - 在執行子命令的主機上建立 GlassFish Server
+       執行處理
+
+概要
+           create-local-instance [--help]
+           [--node node-name] [--nodedir node-dir]
+           [--config config-name | --cluster cluster-name]
+           [--lbenabled={true|false}]
+           [--portbase port-number] [--checkports={true|false}]
+           [--savemasterpassword={false|true}]
+           [--usemasterpassword={false|true}]
+           [--systemproperties (name=value)[:name=value]* ]
+           instance-name
+
+描述
+       create-local-instance 子命令會在代表執行子命令之主機的節點上建立
+       GlassFish Server 執行處理。這個子命令不需要組態分散式元件物件模型
+       (DCOM) 遠端協定或安全 Shell (SSH)。
+
+       您必須從執行處理所在節點所代表的主機執行這個子命令。若要連絡網域管理伺服器
+       (DAS)，這個子命令需要執行 DAS
+       的主機名稱。如果針對管理使用非預設連接埠，則這個子命令也會需要連接埠號碼。如果您要在節點增加第一個執行處理，必須透過
+       asadmin(1M) 公用程式的 --host 選項和 --port
+       選項提供此資訊。若為第二個以後的執行處理，則會從節點的 DAS
+       特性中取得此資訊。
+
+       GlassFish Server 執行處理為 Java 平台的單一虛擬機器 (Java 虛擬機器或
+       JVM 機器)，位於執行 GlassFish Server 的單一節點上。節點可定義 GlassFish
+       Server 執行處理所在的主機。JVM 機器必須與 Java Platform Enterprise
+       Edition (Java EE) 相容。
+
+       GlassFish Server 執行處理需要下列項目的參照：
+
+       ·   定義執行處理所在主機的節點。可以在建立執行處理的命令中指定節點，但只有在儲存節點檔案的目錄中存有多個節點時才需要這麼做。如果未指定任何節點，則子命令的運作方式視節點儲存所在目錄中的現有節點數而定。
+
+           ·   如果沒有任何節點存在，此子命令會為執行處理建立節點。節點名稱為執行子命令的主機名稱。
+
+           ·   如果僅存在一個節點，此子命令會針對該執行處理建立現有節點的參照。
+
+           ·   如果存在兩個或多個節點，則會發生錯誤。
+
+       ·   定義執行處理組態的已命名組態。可以在建立執行處理的命令中指定此組態，但非必要。如果未對不結合叢集的執行處理指定任何組態，則子命令會建立執行處理的組態。結合叢集的執行處理會從其父系叢集接收其組態。
+
+       每個 GlassFish Server 執行處理都屬於下列其中一種執行處理類型：
+
+       獨立執行處理
+           獨立執行處理不會與任何其他執行處理或叢集共用其組態。如果不符合下列任一個條件，則會建立獨立執行處理：
+
+           ·   沒有在用來建立執行處理的命令中指定組態或叢集。
+
+           ·   在用來建立執行處理的命令中，指定任何其他執行處理或叢集均未參照的組態。
+
+           如果不指定組態或叢集，則會為執行處理建立 default-config
+           組態的複本。此組態的名稱為 instance-name-config，其中 instance-name
+           代表非叢集伺服器執行處理的名稱。
+
+       共用執行處理
+           共用執行處理會與其他執行處理或叢集共用其組態。如果在用來建立執行處理的命令中，指定其他執行處理或叢集參照的組態，則會建立共用執行處理。
+
+       叢集執行處理
+           叢集執行處理會從執行處理所屬的叢集繼承其組態，並與叢集中的其他執行處理共用其組態。如果在建立執行處理的命令中指定叢集，則會建立叢集執行處理。
+
+           任何不屬於叢集的執行處理皆會被視為非叢集伺服器執行處理。因此，獨立執行處理和共用執行處理都是非叢集伺服器執行處理。
+
+       依預設，這個子命令會嘗試為正在建立的執行處理解決可能的連接埠衝突。子命令也會指定目前沒有使用，且尚未指定給相同節點上其他執行處理的連接埠。子命令會根據子命令內部的演算法來指定這些連接埠。使用
+       --systemproperties
+       選項可為相同節點上的其他執行處理解決連接埠衝突。執行處理的系統特性可使用
+       create-system-properties(1) 子命令和 delete-system-property(1)
+       子命令加以處理。
+
+       建立執行處理時，子命令會擷取與網域管理伺服器 (DAS)
+       進行安全同步化所需的檔案。執行處理會在啟動時與 DAS 進行同步化
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --node
+           定義要在其中建立執行處理之主機的節點名稱。只要節點儲存所在的目錄中存在一個以上的節點時，才必須指定此節點。否則，可以省略此節點。如果指定某節點，該節點必須存在。
+
+           如果未指定任何節點，則子命令的運作方式視節點儲存所在目錄中的現有節點數而定。
+
+           ·   如果沒有任何節點存在，此子命令會為執行處理建立節點。節點名稱為執行子命令的主機名稱。
+
+           ·   如果僅存在一個節點，此子命令會針對該執行處理建立現有節點的參照。
+
+           ·   如果存在兩個或多個節點，則會發生錯誤。
+
+       --nodedir
+           在其中儲存執行處理節點之檔案的目錄路徑。預設值為 as-install/nodes。
+
+       --config
+           指定執行處理參照的已命名組態。該組態必須存在，且不得命名為
+           default-config 或 server-config。指定 --config
+           選項會建立共用執行處理。
+
+           --config 選項與 --cluster
+           選項互斥。如果同時省略這兩個選項，則會建立獨立執行處理。
+
+       --cluster
+           指定執行處理要繼承其組態的叢集。指定 --cluster
+           選項會建立叢集執行處理。
+
+           --config 選項與 --cluster
+           選項互斥。如果同時省略這兩個選項，則會建立獨立執行處理。
+
+       --lbenabled
+           指定執行處理是否啟用負載平衡。可能值如下：
+
+           true
+               執行處理啟用負載平衡 (預設)。
+
+               執行處理啟用負載平衡時，負載平衡程式會傳送請求至執行處理。
+
+           false
+               執行處理停用負載平衡。
+
+               執行處理停用負載平衡時，負載平衡程式不會傳送請求至執行處理。
+
+       --portbase
+           決定連接埠指定起始的數字。執行處理會使用若干個靜態指定的連接埠。portbase
+           值可決定從何處開始指定。連接埠之值的計算方式如下：
+
+           ·   管理連接埠：portbase + 48
+
+           ·   HTTP 監聽程式連接埠：portbase + 80
+
+           ·   HTTPS 監聽程式連接埠：portbase + 81
+
+           ·   JMS 連接埠：portbase + 76
+
+           ·   IIOP 監聽程式連接埠：portbase + 37
+
+           ·   安全 IIOP 監聽程式連接埠：portbase + 38
+
+           ·   具有相互認證連接埠的安全 IIOP：portbase + 39
+
+           ·   JMX 連接埠：portbase + 86
+
+           ·   JPA 除錯程式連接埠：portbase + 9
+
+           ·   OSGi 模組管理的 Felix Shell 服務連接埠：portbase + 66
+
+           指定 --portbase
+           選項時，這個子命令的輸出會包括使用過之連接埠的完整清單。
+
+       --checkports
+           指定是否要檢查管理、HTTP、JMS、JMX 和 IIOP 連接埠的可用性。預設值為
+           true。
+
+       --savemasterpassword
+           將此選項設定為 true
+           可讓主密碼寫入檔案系統。如果主密碼寫入檔案系統，可在無需提示輸入密碼下啟動執行處理。如果此選項為
+           true，則無論命令行所指定的值為何，--usemasterpassword 選項也會為
+           true。由於將主密碼寫入檔案系統是不安全的作法，因此預設值為 false。
+
+           執行處理的主密碼檔案會儲存在節點目錄中，而非網域目錄。因此，只有為網域中各節點建立第一個執行處理時才需要此選項。
+
+       --usemasterpassword
+           指定要使用系統內建的主密碼還是使用者定義的主密碼來為金鑰庫加密。
+
+           若為 false
+           (預設)，則會使用眾所皆知的系統內建密碼來為金鑰存放區加密。使用系統內建密碼為金鑰存放區加密並不能提高安全性。
+
+           若為 true，則子命令會從密碼檔案的 AS_ADMIN_MASTERPASSWORD
+           項目中取得主密碼，或提示輸入主密碼。密碼檔案會在 asadmin(1M)
+           公用程式的 --passwordfile 選項中指定。
+
+           如果 --savemasterpassword 選項為
+           true，則無論命令行所指定的值為何，此選項也會為 true。
+
+           網域中所有執行處理的主密碼必須相同。
+
+       --systemproperties
+           定義執行處理的系統特性。這些特性會置換執行處理組態中連接埠設定的特性定義。例如，如果出現兩個叢集執行處理位於相同主機的情況，則必須置換預先定義的連接埠設定。在此情況下，必須置換其中一個執行處理的連接埠設定，因為兩個執行處理會共用相同的組態。
+
+           提供的特性如下：
+
+           ASADMIN_LISTENER_PORT
+               此特性指定 HTTP 連接埠或 HTTPS 連接埠的連接埠號碼，DAS
+               透過該連接埠連線至執行處理以管理執行處理。有效值為 1-65535。在
+               UNIX 上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           HTTP_LISTENER_PORT
+               此特性指定要用來監聽 HTTP 請求之連接埠的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           HTTP_SSL_LISTENER_PORT
+               此特性指定要用來監聽 HTTPS 請求之連接埠的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           IIOP_LISTENER_PORT
+               此特性指定用於 IIOP 連線之連接埠的連接埠號碼。此特性指定用於
+               IIOP 連線之連接埠的連接埠號碼。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           IIOP_SSL_LISTENER_PORT
+               此特性指定用於安全 IIOP 連線之連接埠的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           IIOP_SSL_MUTUALAUTH_PORT
+               此特性指定用於與從屬端認證之安全 IIOP
+               連線之連接埠的連接埠號碼。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           JAVA_DEBUGGER_PORT
+               此特性指定用於 Java 平台除錯程式架構 (JPDA)
+               (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+               除錯程式連線之連接埠的連接埠號碼。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           JMS_PROVIDER_PORT
+               此特性會指定 Java Message Service 提供者的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           JMX_SYSTEM_CONNECTOR_PORT
+               此特性會指定 JMX 連線器進行監聽的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           OSGI_SHELL_TELNET_PORT
+               此特性指定用於 Apache Felix Remote Shell
+               (http://felix.apache.org/site/apache-felix-remote-shell.html)
+               連線之連接埠的連接埠號碼。此 Shell 會使用 Felix Shell 服務來與
+               OSGi 模組管理子系統互動。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+運算元
+       instance-name
+           要建立之執行處理的名稱。
+
+           名稱必須符合下列需求：
+
+           ·   名稱只能包含 ASCII 字元。
+
+           ·   名稱必須以字母、數字或底線為開頭。
+
+           ·   名稱只能包含下列字元：
+
+               ·   小寫字母
+
+               ·   大寫字母
+
+               ·   數字
+
+               ·   連字符
+
+               ·   小數點號
+
+               ·   底線
+
+           ·   名稱在網域中必須是唯一的，且不得為另一個 GlassFish Server
+               執行處理、叢集、已命名組態或節點的名稱。
+
+           ·   名稱不得為 domain、server 或 GlassFish Server
+               所保留的任何其他關鍵字。
+
+範例
+       範例 1, 建立獨立 GlassFish Server 執行處理
+           此範例會在執行命令的主機上建立獨立執行處理 il3。DAS
+           正在相同的主機上執行。此執行處理僅參照現有節點。
+
+               asadmin> create-local-instance il3
+               Rendezvoused with DAS on localhost:4848.
+               Port Assignments for server instance il3:
+               JMX_SYSTEM_CONNECTOR_PORT=28686
+               JMS_PROVIDER_PORT=27676
+               HTTP_LISTENER_PORT=28080
+               ASADMIN_LISTENER_PORT=24848
+               JAVA_DEBUGGER_PORT=29009
+               IIOP_SSL_LISTENER_PORT=23820
+               IIOP_LISTENER_PORT=23700
+               OSGI_SHELL_TELNET_PORT=26666
+               HTTP_SSL_LISTENER_PORT=28181
+               IIOP_SSL_MUTUALAUTH_PORT=23920
+               Command create-local-instance executed successfully.
+
+       範例 2, 在特定節點上建立叢集 GlassFish Server 執行處理
+           此範例會在節點 sj02 上建立叢集執行處理 ymli2。此執行處理為叢集
+           ymlclust 的成員。
+
+           命令會在主機 sj02 上執行，即節點 sj02 所代表的主機。DAS 正在主機
+           sr04 上執行，並使用預設的 HTTP
+           連接埠進行管理。因為節點上沒有任何執行處理存在，所以會透過 asadmin
+           公用程式的 -host 選項提供正在執行 DAS 的主機。
+
+               sj02# asadmin --host sr04 create-local-instance --cluster ymlclust --node sj02 ymli2
+               Rendezvoused with DAS on sr04:4848.
+               Port Assignments for server instance ymli2:
+               JMX_SYSTEM_CONNECTOR_PORT=28686
+               JMS_PROVIDER_PORT=27676
+               HTTP_LISTENER_PORT=28080
+               ASADMIN_LISTENER_PORT=24848
+               JAVA_DEBUGGER_PORT=29009
+               IIOP_SSL_LISTENER_PORT=23820
+               IIOP_LISTENER_PORT=23700
+               OSGI_SHELL_TELNET_PORT=26666
+               HTTP_SSL_LISTENER_PORT=28181
+               IIOP_SSL_MUTUALAUTH_PORT=23920
+               Command create-local-instance executed successfully.
+
+結束狀態
+       0
+           命令執行成功
+
+       1
+           執行命令時發生錯誤
+
+另請參閱
+       create-instance(1), create-node-config(1), create-node-dcom(1),
+       create-node-ssh(1), create-system-properties(1),
+       delete-local-instance(1), delete-system-property(1), list-instances(1),
+       start-local-instance(1), stop-local-instance(1)
+
+       asadmin(1M)
+
+Java EE 7                     2011 年 12 月 8 日      create-local-instance(1)

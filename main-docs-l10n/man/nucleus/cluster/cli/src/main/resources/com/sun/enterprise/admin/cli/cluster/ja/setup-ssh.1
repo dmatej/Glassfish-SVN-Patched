@@ -1,0 +1,169 @@
+setup-ssh(1)          asadminユーティリティのサブコマンド         setup-ssh(1)
+
+名前
+       setup-ssh - 指定されたホストのSSH鍵を設定します
+
+概要
+           setup-ssh [--help]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile] [--sshpublickeyfile ssh-public-keyfile]
+           [--generatekey={false|true}]
+           host-list
+
+説明
+       setup-sshサブコマンドは、サブコマンドのオペランドとして指定されたホストのセキュア・シェル(SSH)鍵を設定します。このキーにより、GlassFish
+       Serverで、リモート・ホストでのユーザーのSSHログインの認証に公開鍵認証を使用できるようになります。
+
+       SSHにより、複数のホストに広がるGlassFish
+       Serverクラスタを一元管理できるようになります。複数のホストに対して機能するクラスタ管理のためのサブコマンドをユーザーが実行すると、ドメイン管理サーバー(DAS)ホストからリモート・ホストにサブコマンドが伝播されます。実行されていないGlassFish
+       Serverインスタンスに対して、またはインスタンスが実行されていないノードに対して機能するサブコマンドを伝播するために、GlassFish
+       ServerではSSHを使用します。SSHは、DASとリモート・ホストの間で交換されるデータの信頼性と安全性を提供します。
+
+       公開鍵認証では、次の鍵からなるSSH鍵ペアを使用します。
+
+       ·   秘密鍵は、DASホスト上の安全な場所に保存され、パスフレーズで保護されることもあります
+
+       ·   公開鍵は、DASが通信するすべてのリモート・ホスト上に保存されます
+
+       このサブコマンドは、DASの構成情報を必要とせず、DAS構成を変更することもありません。
+
+       このサブコマンドは、ローカル・モードでのみサポートされています。
+
+   setup-sshサブコマンドを使用するための前提条件
+       setup-sshサブコマンドを使用するには、SSHユーザーは、SSHを設定するリモート・ホストにSSHを使用してログインできる必要があります。特に、次の前提条件を満たす必要があります。
+
+       ·   ssh(1)クライアントがDASホストにインストールされており、DASユーザーのパスを通してアクセスできる。
+
+       ·   sshd(1M)デーモンがインストールされており、SSH鍵を設定するすべてのホスト上で実行されている。
+
+       ·   --sshuserオプションで指定されているユーザーが、SSH鍵を設定するすべてのホストにSSHログインできる。
+
+       ·   ssh-keygen(1)ユーティリティが、デフォルトの場所またはDASユーザーのパスで定義されている場所にあるDASホストにインストールされている。
+
+       ·   Windowsシステムの場合は、CygwinのSSHパッケージ
+
+           またはMKS Software
+
+           SSHを提供するツールキットがインストールされていること。
+
+   setup-sshサブコマンドの動作
+       このサブコマンドは、次のタスクを自動化して、DASホストとリモート・ホストの間のSSH接続を設定します。
+
+       ·   SSH鍵ペアの生成。SSH鍵ペアが存在しない場合は、サブコマンドのデフォルトの動作により、ユーザーにSSH鍵ペアの生成が要求されます。SSH鍵ペアは暗号化パスフレーズなしで生成されます。パスフレーズで保護された鍵ペアが必要な場合は、SSHコマンドssh-keygen(1)を使用して、鍵ペアを手動で生成する必要があります。
+
+       ·   公開鍵の配布。このサブコマンドは、公開鍵ファイルの内容を、各リモート・ホストのuser-home/.ssh/authorized_keysファイルに追加します。デフォルトでは、サブコマンドを実行するホスト上のuser-home/.sshディレクトリにある公開鍵ファイルが使用されます。user-home/.ssh/authorized_keysファイルがホスト上に存在しない場合、サブコマンドによってファイルが作成されます。user-homeは、ホスト上にあるユーザーのホームディレクトリです。
+
+           公開鍵を配布するには、ユーザーのSSHログインの認証が必要です。秘密鍵がパスフレーズで保護されている場合は、パスフレーズも必要です。デフォルトでは、このサブコマンドはユーザーに対してパスワードを要求し、必要に応じてパスフレーズも要求します。確認なしに公開鍵を配布するには、次のようにサブコマンドを実行します。
+
+           ·   asadmin(1M)ユーティリティの--interactiveオプションをfalseに設定します。
+
+           ·   asadminユーティリティの--passwordfileオプションを、AS_ADMIN_SSHPASSWORDエントリが指定のホストにログインするためのSSHユーザー・パスワードを指定するファイルに設定します。
+
+           ·   パスフレーズが必要な場合は、asadminユーティリティの--passwordfileオプションで指定するファイルに、AS_ADMIN_SSHKEYPASSPHRASEのエントリも格納されていることを確認します。
+
+           ホストに対して公開鍵認証がすでに設定されている場合は、公開鍵認証がすでに設定されており、そのホストには鍵を配布しないことをユーザーに通知します。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --sshport
+           SSHを設定するホストへのSSH接続に使用するポート。デフォルトは22です。
+
+       --sshuser
+           SSHの設定プロセスを実行するリモート・ホスト上のSSHユーザー。デフォルトは、このサブコマンドを実行するユーザーです。DASがこのユーザーのSSH秘密鍵ファイルを読み取れるようにするには、DASプロセスを実行しているユーザーを指定します。
+
+       --sshkeyfile
+           --sshuserオプションで指定するユーザーのSSH秘密鍵ファイルの絶対パス。このファイルは、ホスト上のsshdデーモンに対する認証に使用されます。
+
+           このサブコマンドを実行するユーザーは、鍵ファイルへのパスに到達して鍵ファイルを読み取ることができる必要があります。
+
+           デフォルトは、サブコマンドを実行するホスト上にあるユーザーの.sshディレクトリの鍵ファイルです。複数の鍵ファイルが見つかった場合、サブコマンドは次の順序で使用します。
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --sshpublickeyfile
+           --sshuserオプションで指定するユーザーのSSH公開鍵ファイルの絶対パス。公開鍵ファイルの内容が、SSHを設定する各ホスト上のユーザーの.ssh/authorized_keysファイルに追加されます。.ssh/authorized_keysファイルがホスト上に存在しない場合、サブコマンドによってファイルが作成されます。
+
+           このサブコマンドを実行するユーザーは、鍵ファイルへのパスに到達して鍵ファイルを読み取ることができる必要があります。
+
+           デフォルトは、サブコマンドを実行するホスト上にあるユーザーの.sshディレクトリの鍵ファイルです。複数の鍵ファイルが見つかった場合、サブコマンドは次の順序で使用します。
+
+            1. id_rsa.pub
+
+            2. id_dsa.pub
+
+            3. identity.pub
+
+       --generatekey
+           サブコマンドでユーザーに確認することなくSSH鍵ファイルを生成するかを指定します。
+
+           使用可能な値は次のとおりです:
+
+           true
+               ユーザーに確認することなくSSH鍵ファイルを生成します。
+
+           false
+               サブコマンドの動作は、SSH鍵ファイルが存在するかによって異なります。
+
+               ·   SSH鍵ファイルが存在する場合、サブコマンドはファイルを生成しません。
+
+               ·   SSH鍵ファイルが存在しない場合、サブコマンドの動作はasadminユーティリティの--interactiveオプションの値に依存します。
+
+                   ·   --interactiveオプションがtrueの場合、ファイルを作成するようにユーザーに求めます。
+
+                   ·   --interactiveオプションがfalseの場合、サブコマンドは失敗します。
+
+               この値はデフォルトです。
+
+オペランド
+       host-list
+           SSH鍵を設定するホストの名前の空白区切りのリスト。
+
+例
+       例 1, SSH鍵の設定
+           この例では、ホストsj03およびsj04上のユーザーgfuserのSSH鍵を設定します。鍵ファイルは生成されませんが、サブコマンドを実行するホスト上にあるユーザーの.sshディレクトリからコピーされます。
+
+               asadmin> setup-ssh sj03 sj04
+               Enter SSH password for gfuser@sj03>
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj03
+               Successfully connected to gfuser@sj03 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj04
+               Successfully connected to gfuser@sj04 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+       例 2, SSH鍵の生成と設定
+           この例では、ホストsua01およびsua02上のユーザーgfuserのSSH鍵を生成および設定します。
+
+               asadmin> setup-ssh --generatekey=true sua01 sua02
+               Enter SSH password for gfuser@sua01>
+               Created directory /home/gfuser/.ssh
+               /usr/bin/ssh-keygen successfully generated the identification /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua01
+               Successfully connected to gfuser@sua01 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua02
+               Successfully connected to gfuser@sua02 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+終了ステータス
+       0
+           コマンドは正常に実行されました
+
+       1
+           コマンドの実行時にエラーが発生しました
+
+関連項目
+       ssh(1)、ssh-keygen(1)
+
+       asadmin(1M)
+
+       sshd(1M)
+
+       Cygwin Information and Installation (http://www.cygwin.com/), MKS
+       Software (http://www.mkssoftware.com/)
+
+Java EE 7                       2010年12月14日                    setup-ssh(1)

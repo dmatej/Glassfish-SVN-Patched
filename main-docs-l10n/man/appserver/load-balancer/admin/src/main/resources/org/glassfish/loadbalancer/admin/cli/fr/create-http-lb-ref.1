@@ -1,0 +1,191 @@
+create-http-lb-ref(1)   Sous-commandes de l'utilitaire   create-http-lb-ref(1)
+
+NOM
+       create-http-lb-ref - ajoute un cluster existant ou une instance de
+       serveur existante à une configuration d'équilibreur de charge existante
+       ou un équilibreur de charge existant
+
+SYNTAXE
+           create-http-lb-ref [--help] --config config_name | --lbname load_balancer_name
+           [--lbpolicy round-robin] [--lbpolicymodule lb_policy_module]
+           [--healthcheckerurl url] [--healthcheckerinterval 10]
+           [--healthcheckertimeout 10] [--lbenableallinstances=true]
+           [--lbenableallapplications=true] [--lbweight instance=weight[:instance=weight]*]
+           target
+
+DESCRIPTION
+       La sous-commande create-http-lb-ref permet d'effectuer les opérations
+       suivantes :
+
+       ·   Ajouter un cluster existant ou une instance de serveur existante à
+           une configuration d'équilibreur de charge existante ou un
+           équilibreur de charge existant. L'équilibreur de charge transmet
+           les demandes aux instances incluses dans un cluster et autonomes
+           auxquelles il fait référence.
+
+       ·   Définir la règle d'équilibrage de charge sur une règle circulaire,
+           une règle pondérée circulaire ou une règle définie par
+           l'utilisateur.
+
+       ·   Configurer un vérificateur de maintenance pour l'équilibreur de
+           charge. Tous les paramètres du vérificateur de maintenance définis
+           ici s'appliquent uniquement à la cible. Pour ne pas créer de
+           vérificateur de maintenance avec cette sous-commande, utilisez
+           create-http-health-checker.
+
+       ·   Activer toutes les instances du cluster cible pour l'équilibrage de
+           charge ou utiliser enable-http-lb-server pour les activer
+           séparément.
+
+       ·   Activer toutes les applications déployées sur la cible pour
+           l'équilibrage de charge ou utiliser enable-http-lb-application pour
+           les activer séparément.
+
+           Note
+           ┌───────────────────────────────────────┐
+           │Remarque                               │
+           │                                       │
+           │           Cette sous-commande         │
+           │           s'applique uniquement à     │
+           │           Oracle GlassFish Server.    │
+           │           Cette sous-commande n'est   │
+           │           pas applicable à GlassFish  │
+           │           Server Open Source Edition. │
+           └───────────────────────────────────────┘
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --config
+           Cette option indique la configuration d'équilibreur de charge à
+           laquelle ajouter les clusters et les instances de serveur.
+           Spécifiez une configuration d'équilibreur de charge ou un
+           équilibreur de charge. Le fait d'indiquer les deux entraîne une
+           erreur.
+
+       --lbname
+           Cette option indique l'équilibreur de charge auquel ajouter les
+           clusters et les instances de serveur. Spécifiez une configuration
+           d'équilibreur de charge ou un équilibreur de charge. Le fait
+           d'indiquer les deux entraîne une erreur.
+
+       --lbpolicy
+           Règle suivie par l'équilibreur de charge. Les valeurs valides sont
+           round-robin, weighted-round-robin et user-defined. Si vous
+           choisissez user-defined, indiquez un module de règle d'équilibrage
+           de charge à l'aide de l'option lbpolicymodule. Si vous choisissez
+           weighted-round-robin, affectez les pondérations aux instances de
+           serveur à l'aide de la sous-commande configure-lb-weight. La valeur
+           par défaut est round-robin.
+
+       --lbpolicymodule
+           Si la règle d'équilibrage de charge est user-defined, utilisez
+           cette option pour indiquer le chemin d'accès complet et le nom de
+           la bibliothèque partagée du module de règle d'équilibrage de
+           charge. La bibliothèque partagée doit se trouver à un emplacement
+           accessible par le serveur Web.
+
+       --healthcheckerurl
+           URL à laquelle envoyer le ping pour déterminer si l'instance est
+           fonctionnelle.
+
+       --healthcheckerinterval
+           Délai d'attente, en secondes, du vérificateur de maintenance entre
+           deux vérifications du bon fonctionnement d'une instance. La valeur
+           par défaut est de 30 secondes. La valeur 0 désactive le
+           vérificateur de maintenance.
+
+       --healthcheckertimeout
+           Délai d'attente, en secondes, du vérificateur de maintenance pour
+           recevoir une réponse d'une instance. Si le vérificateur de
+           maintenance ne reçoit aucune réponse dans ce délai, l'instance est
+           considérée comme non fonctionnelle. La valeur par défaut est 10.
+
+       --lbenableallinstances
+           Cette option active toutes les instances du cluster cible pour
+           l'équilibrage de charge. Si la cible est une instance de serveur,
+           elle active cette instance pour l'équilibrage de charge. La valeur
+           par défaut est True.
+
+       --lbenableallapplications
+           Cette option active toutes les applications déployées dans
+           l'instance ou le cluster cible pour l'équilibrage de charge. La
+           valeur par défaut est True.
+
+       --lbweight
+           Nom de l'instance et pondération que vous lui attribuez. La
+           pondération doit être un nombre entier. Les paires d'instances et
+           de pondérations sont séparées par le caractère deux-points. Par
+           exemple, instance1=1:instance2=4 signifie que, toutes les cinq
+           demandes, l'une passe à instance1 et quatre à instance2. La valeur
+           par défaut de la pondération est 1.
+
+OPÉRANDES
+       target
+           Cette option indique le cluster ou l'instance à ajouter à
+           l'équilibreur de charge. Les valeurs valides sont les suivantes :
+
+           ·   cluster_name : cette valeur indique que les demandes concernant
+               ce cluster seront traitées par l'équilibreur de charge.
+
+           ·   stand-alone_instance_name : cette valeur indique que les
+               demandes concernant cette instance autonome sont traitées par
+               l'équilibreur de charge.
+
+EXEMPLES
+       Exemple 1, Ajout d'une référence de cluster à une configuration
+       d'équilibreur de charge
+           Cet exemple montre comment ajouter une référence à un cluster nommé
+           cluster2 pour la configuration d'équilibreur de charge mylbconfig.
+
+               asadmin> create-http-lb-ref --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Exemple 2, Ajout d'une référence de cluster à un équilibreur de charge
+           Cet exemple montre comment ajouter une référence à un cluster nommé
+           cluster2 pour l'équilibreur de charge mylb.
+
+               asadmin> create-http-lb-ref --lbname mylb cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Exemple 3, Configuration d'un vérificateur de maintenance et de la
+       règle d'équilibrage de charge
+           Cet exemple montre comment configurer un vérificateur de
+           maintenance et une règle d'équilibrage de charge, et comment
+           activer l'équilibreur de charge pour les instances et les
+           applications.
+
+               asadmin> create-http-lb-ref --config mylbconfig --lbpolicy weighted-round-robin
+               --healthcheckerinterval 40 --healthcheckertimeout 20
+               --lbenableallinstances=true --lbenableallapplications=true cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Exemple 4, Définition d'une règle d'équilibrage de charge définie par
+       l'utilisateur
+           Cet exemple montre comment définir une règle d'équilibrage de
+           charge définie par l'utilisateur.
+
+               asadmin> create-http-lb-ref --lbpolicy user-defined --lbpolicymodule /user/modules/module.so
+               --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+STATUT DE SORTIE
+       0
+           sous-commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la sous-commande
+
+VOIR AUSSI
+       delete-http-lb-ref(1), create-http-health-checker(1),
+       enable-http-lb-server(1), enable-http-lb-application(1),
+       list-http-lb-configs(1), list-http-lbs(1) configure-lb-weight(1)
+
+       asadmin(1M)
+
+Java EE 7                         25 aoû 2010            create-http-lb-ref(1)

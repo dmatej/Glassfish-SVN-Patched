@@ -1,0 +1,137 @@
+set-web-env-entry(1)  asadminユーティリティのサブコマンド set-web-env-entry(1)
+
+名前
+       set-web-env-entry -
+       デプロイされたWebアプリケーションまたはモジュールの環境エントリを設定します
+
+概要
+           set-web-env-entry [--help]
+           --name=env-entry-name --type=env-entry-type
+           {--value=value|--ignoredescriptoritem={true|false}}
+           [--description=description] application-name[/module]
+
+説明
+       set-web-env-entryサブコマンドは、次に示すいずれかの項目の環境エントリを設定します。
+
+       ·   デプロイされたWebアプリケーション
+
+       ·   デプロイされたJavaプラットフォーム、Enterprise Edition (Java
+           EE)アプリケーションのWebモジュール
+
+       アプリケーションはデプロイ済である必要があります。それ以外の場合はエラーが発生します。
+
+       アプリケーションは、環境エントリの値を使用してその動作または体裁をカスタマイズします。
+
+       このサブコマンドではデプロイ済アプリケーションの構成を変更できますが、その際、そのアプリケーションのデプロイメント記述子を変更してアプリケーションの再パッケージ化と再デプロイを行う必要はありません。
+
+       このサブコマンドは、リモート・モードでのみサポートされています。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --name
+           設定する環境エントリの名前。名前はjava:comp/envコンテキストに相対的なJNDI名です。名前はデプロイメント・コンポーネント内で一意である必要があります。
+
+       --type
+           アプリケーションのコードで予期される環境エントリ値の完全修飾Javaタイプ。このtypeには、次のいずれかのJavaタイプを指定します。
+
+           ·   java.lang.Boolean
+
+           ·   java.lang.Byte
+
+           ·   java.lang.Character
+
+           ·   java.lang.Double
+
+           ·   java.lang.Float
+
+           ·   java.lang.Integer
+
+           ·   java.lang.Long
+
+           ·   java.lang.Short
+
+           ·   java.lang.String
+
+       --value
+           環境エントリに設定する値。--typeがjava.lang.Characterの場合、この値は1文字にする必要があります。それ以外の場合は、指定されたタイプのコンストラクタに有効な文字列を指定します。
+
+           --valueオプションまたは--ignoreDescriptorItemオプションのいずれかを設定する必要があります。
+
+       --ignoredescriptoritem
+           環境エントリがアプリケーションのデプロイメント記述子に設定されている場合にその環境エントリを無視するかを指定します。環境エントリを無視する場合、アプリケーションは、アプリケーションのデプロイメント記述子にエントリが設定されていないかのように動作します。この状況でのアプリケーションの動作は、各アプリケーションによって異なります。
+
+           使用可能な値は次のとおりです:
+
+           false
+               値は無視さ
+
+           true
+               値は無視されます。
+
+           --valueオプションまたは--ignoreDescriptorItemオプションのいずれかを設定する必要があります。
+
+               注記
+               ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+               │注意                                                                                                                                                                                                                            │
+               │set-web-env-entryサブコマンドを使用して事前に設定された環境エントリの設定を解除する場合は、--ignoredescriptoritemオプションを使用しないでください。かわりに、この目的ではunset-web-env-entry(1)サブコマンドを使用してください。 │
+               └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+       --description
+           設定対象の環境エントリの説明となるテキスト(オプション)。
+
+オペランド
+       application-name
+           アプリケーションの名前。この名前は、管理コンソールから、またはlist-applications(1)サブコマンドを使用して取得できます。
+
+           アプリケーションはデプロイ済である必要があります。それ以外の場合はエラーが発生します。
+
+       module
+           アプリケーションのエンタープライズ・アーカイブ(EAR)ファイル内のモジュールへの相対パス。モジュールへのパスは、アプリケーションのapplication.xmlファイルのmodule要素に指定されます。
+
+           moduleは、環境エントリがJava
+           EEアプリケーションのWebモジュールに適用される場合にのみ必要となります。指定する場合、moduleはapplication-nameの後にスラッシュ(/)で区切って指定する必要があります。
+
+           たとえば、myAppアプリケーションのapplication.xmlファイルには、次のWebモジュールが指定されます。
+
+               <module>
+                   <web>
+                       <web-uri>myWebModule.war</web-uri>
+                   </web>
+               </module>
+           モジュールは、このコマンドのオペランドとして指定され、myApp/myWebModule.warとなります。
+
+例
+       例 1, Webアプリケーションの環境エントリの設定
+           この例では、アプリケーションhelloの環境エントリHello
+           Userをtechscribeに設定します。このエントリのJavaタイプはjava.lang.Stringです。
+
+               asadmin> set-web-env-entry --name="Hello User"
+               --type=java.lang.String --value=techscribe
+               --description="User authentication for Hello appplication" hello
+
+               Command set-web-env-entry executed successfully.
+
+       例 2, デプロイメント記述子に定義されている環境エントリの無視
+           この例では、Webアプリケーションhelloの環境エントリHello
+           Portを無視します。
+
+               asadmin> set-web-env-entry --name="Hello Port"
+               --type=java.lang.Integer --ignoredescriptoritem=true hello
+
+               Command set-web-env-entry executed successfully.
+
+終了ステータス
+       0
+           コマンドは正常に実行されました
+
+       1
+           コマンドの実行時にエラーが発生しました
+
+関連項目
+       list-applications(1), list-web-env-entry(1), unset-web-env-entry(1)
+
+       asadmin(1M)
+
+Java EE 7                        2011年6月15日            set-web-env-entry(1)

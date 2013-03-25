@@ -1,0 +1,412 @@
+create-jdbc-connection-pool(asadmin 实用程序子命create-jdbc-connection-pool(1)
+
+名称
+       create-jdbc-connection-pool - 注册 JDBC 连接池
+
+提要
+           create-jdbc-connection-pool [--help]
+           [--datasourceclassname=datasourceclassname]
+           [--restype=resourcetype]
+           [--steadypoolsize=poolsize]
+           [--maxpoolsize=maxpoolsize]
+           [--maxwait=maxwaittime]
+           [--poolresize=poolresizelimit]
+           [--idletimeout=idletimeout]
+           [--initsql=initsqlstring]
+           [--isolationlevel=isolationlevel]
+           [--isisolationguaranteed={true|false}]
+           [--isconnectvalidatereq={false|true}]
+           [--validationmethod=validationmethod]
+           [--validationtable=validationtable]
+           [--failconnection={false|true}]
+           [--allownoncomponentcallers={false|true}]
+           [--nontransactionalconnections={false|true}]
+           [--validateatmostonceperiod=validationinterval]
+           [--leaktimeout=leaktimeout]
+           [--leakreclaim={false|true}]
+           [--statementleaktimeout=satementleaktimeout]
+           [--statmentleakreclaim={false|true}]
+           [--creationretryattempts=creationretryattempts]
+           [--creationretryinterval=creationretryinterval]
+           [--sqltracelisteners=sqltracelisteners[,sqltracelisteners]]
+           [--statementtimeout=statementtimeout]
+           [--lazyconnectionenlistment={false|true}]
+           [--lazyconnectionassociation={false|true}]
+           [--associatewiththread={false|true}]
+           [--driverclassname=jdbcdriverclassname]
+           [--matchconnections={false|true}]
+           [--maxconnectionusagecount=maxconnectionusagecount]
+           [--ping={false|true}]
+           [--pooling={false|true}]
+           [--statementcachesize=statementcachesize]
+           [--validationclassname=validationclassname]
+           [--wrapjdbcobjects={false|true}]
+           [--description description]
+           [--property name=value)[:name=value]*]
+           [--target=target]
+           connectionpoolid
+
+说明
+       create-jdbc-connection-pool 子命令可以使用指定的 Java 数据库连接
+       (“JDBC”) 连接池名称注册新的 JDBC 软件连接池。
+
+       可以通过使用 --property 选项指定用户、口令或其他连接信息，或者通过在
+       XML 描述符文件中指定连接信息来创建具有验证功能的 JDBC 连接池。
+
+       该子命令仅在远程模式下受支持。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --datasourceclassname
+           供应商提供的 JDBC 数据源资源管理器的名称。XA
+           或可处理全局事务处理的数据源类将实现 javax.sql.XADatasource
+           接口。非 XA 或专用本地事务处理数据源将实现 javax.sql.Datasource
+           接口。
+
+       --restype, 在以下情况下是必需的：在数据源类实现两个或更多接口
+       (javax.sql.DataSource、javax.sql.XADataSource 或
+       javax.sql.ConnectionPoolDataSource) 时或在必须提供驱动程序类名时。
+
+           ·   如果 --restype = java.sql.Driver，则 --driverclassname
+               选项是必需的。
+
+           ·   如果 --restype = javax.sql.DataSource、javax.sql.XADataSource
+               或 javax.sql.ConnectionPoolDataSource，则 --datasourceclassname
+               选项是必需的。
+
+           ·   如果没有指定 --restype，则必须指定 --driverclassname 或
+               --datasourceclassname 选项，但不能同时指定这两者。
+
+       --steadypoolsize
+           在池中维护的连接的最小和初始数量。默认值为 8。
+
+       --maxpoolsize
+           可以创建的连接的最大数量。默认值为 32。
+
+       --maxwait
+           在发送连接超时之前，调用方将等待的时间 (毫秒)。默认值为 60000 (60
+           秒)。如果值为 0，则强制调用方无限期等待。
+
+       --poolresize
+           在 idle-timeout-in-seconds
+           计时器到期时，将删除的连接数量。这是池将增加或减少连接数的数量。增加：当池没有空闲连接时，池将增加此数量的连接。减少：删除所有无效和空闲连接，有时会导致所删除的连接数量大于此值。处于空闲状态的时间大于超时时间的连接将列入待删除行列。这样可以确保
+           Steadypoolsize。可能的值为 0 到 MAX_INTEGER。默认值为 2。
+
+       --idletimeout
+           连接在池中保持空闲的最长时间
+           (秒)。在此时间以后，实现可以关闭此连接。此超时值必须小于数据库服务器端的超时值，以防止在应用程序中堆积不可用的连接。默认值为
+           300。
+
+       --initsql
+           无论何时从池中创建连接，都会执行的 SQL
+           字符串。如果重复使用现有连接，则不会执行此字符串。处于空闲状态的时间大于超时时间的连接将列入待删除行列。此选项没有默认值。
+
+       --isolationlevel
+           池中数据库连接的
+           transaction-isolation-level。此选项没有默认值。如果未指定，池将使用
+           JDBC
+           驱动程序提供的默认隔离级别运行。可以使用以下标准事务处理隔离级别之一设置所需的隔离级别：read-uncommitted、read-committed、repeatable-read、serializable。更改池中连接上隔离级别的应用程序会在编程上使池面临污染的风险。这可能会导致程序错误。
+
+       --isisolationguaranteed
+           只有在为 transaction-isolation-level
+           指定了特定隔离级别的情况下，此选项才适用。默认值为“真”。
+
+           此选项可确保每次从池中获取连接时，隔离级别都设置为所需的值。这可能会对某些
+           JDBC 驱动程序的性能造成一定影响。如果应用程序在返回连接之前不更改
+           --isolationlevel，管理员可以将此选项设置为“假”。
+
+       --isconnectvalidatereq
+           如果设置为“真”，则在向应用程序提供连接之前，将对连接进行验证或检查，以查看连接是否可用。默认值为“假”。
+
+       --validationmethod
+           在 is-connection-validation-required
+           为“真”时要执行的验证类型。有效设置包括：auto-commit、meta-data、table
+           或 custom-validation。默认值为 table。
+
+       --validationtable
+           用于执行连接验证查询的验证表的名称。如果
+           is-connection-validation-required 设置为“真”，并且
+           connection-validation-type 设置为 table，则此选项是必需的选项。
+
+       --failconnection
+           如果设置为“真”，则单次验证检查失败时，必须关闭池中的所有连接。默认值为“假”。会进行一次尝试，以重新建立之前失败的连接。
+
+       --allownoncomponentcallers
+           此属性设置为“真”的池可由非 Java EE 组件 (即除了 EJB 或 Servlet
+           以外的组件)
+           使用。返回的连接会自动登记到从事务处理管理器获取的事务处理上下文。在事务处理结束时，容器不会自动清除非组件调用方获取的连接。需要调用方显式关闭这些连接。
+
+       --nontransactionalconnections
+           此属性设置为“真”的池会返回非事务处理连接。此连接不会自动登记到事务处理管理器。
+
+       --validateatmostonceperiod
+           指定连续请求验证连接 (最多一次) 之间的时间间隔
+           (秒)。将该属性设置为适当的值可以最大程度减少连接的验证请求数。默认值为
+           0，表示未启用该属性。
+
+       --leaktimeout
+           指定跟踪连接池中的连接泄漏所需的时间量
+           (秒)。如果在指定的期间内应用程序未能将某个连接返回到池中，则认为可能存在泄漏，并将记录调用方的堆栈跟踪。此选项仅检测是否存在连接泄漏。仅在
+           connection-leak-reclaim 设置为“真”时才会回收连接。
+
+           如果启用了连接泄漏跟踪，您可以使用管理控制台启用对 JDBC
+           连接池的监视，以获得有关连接泄漏次数的统计信息。默认值为
+           0，这会禁用连接泄漏跟踪。
+
+       --leakreclaim
+           指定是否在完成泄漏连接跟踪后，泄漏的连接将还原到连接池中。可能的值如下：
+
+           假
+               泄漏的连接不
+
+           真
+               泄漏的连接会还原到连接池中。
+
+       --statementleaktimeout
+           以秒为单位指定时间段，在该时间段后，将检测应用程序未关闭的所有语句。如果语句对象未正确关闭，应用程序可能会运行异常。此选项仅检测是否存在语句泄漏。仅在
+           statement-leak-reclaim
+           设置为“真”时才会回收语句。泄漏的语句会在回收后关闭。
+
+           在检测到语句泄漏时，将记录创建此语句的调用方的堆栈跟踪。如果启用了语句泄漏跟踪，您可以使用管理控制台启用对
+           JDBC 连接池的监视，以获得有关语句泄漏次数的统计信息。默认值为
+           0，这会禁用语句泄漏跟踪。
+
+           以下限制适用于语句泄漏超时值：
+
+           ·   此值必须小于为 leak-timeout 连接设置的值。
+
+           ·   此值必须大于为 statement-timeout 设置的值。
+
+       --statementleakreclaim
+           指定语句泄漏后是否回收泄漏的语句。可能的值如下：
+
+           假
+               不
+
+           真
+               回收泄漏的语句。
+
+       --creationretryattempts
+           指定 GlassFish Server
+           在首次尝试创建连接失败后重试创建连接的最大次数。默认值为 0，这指定
+           GlassFish Server 不重试创建连接。
+
+       --creationretryinterval
+           指定连续尝试创建连接之间的时间间隔 (秒)。
+
+           如果 --creationretryattempts 为 0，则会忽略 --creationretryinterval
+           选项。默认值为 10。
+
+       --sqltracelisteners
+           对数据库活动进行定制日志记录的一个或多个定制模块的列表。每个模块必须实现
+           org.glassfish.api.jdbc.SQLTraceListener
+           公共接口。如果设置为适当的值，则会跟踪应用程序执行的 SQL
+           语句。此选项没有默认值。
+
+       --statementtimeout
+           以秒为单位指定时间长度，在该时间后，将终止未完成的查询。
+
+           长时间未完成的查询可能会导致提交此查询的应用程序挂起。为防止出现这种情况，请使用此选项为将从您要创建的连接池中创建的所有语句设置一个超时。创建语句之后，GlassFish
+           Server 会将此语句的 QueryTimeout 属性设置为指定的时间长度。默认值为
+           -1，这指定从不终止未完成的查询。
+
+       --lazyconnectionenlistment
+           指定是否仅在某一方法实际使用事务处理资源时才会登记该资源。可能的值如下：
+
+           假
+               事务处理的资源始终会登记，不
+               (默认值)。
+
+           真
+               只有在某一方法实际使用资源时才
+
+       --lazyconnectionassociation
+           指定是否仅在使用物理连接时，物理连接才应与逻辑连接关联，并在事务处理完成时取消关联。通过这种关联和取消关联操作，可重新使用物理连接。可能的值如下：
+
+           假
+               即使在使用物理连接之前，物理连接也可与逻辑连接关联，但在事务处理完成时，并不
+               (默认值)。
+
+           真
+               仅在使用物理连接时，物理连接才与逻辑连接关联，并在事务处理完成时取消关联。还必须将
+               --lazyconnectionenlistment 选项设置为真
+
+       --associatewiththread
+           指定某个连接是否与线程关联以允许此线程重新使用该连接。如果某个连接不与此线程关联，则每次此线程要求使用连接时，都必须从池中获取一个连接。可能的值如下：
+
+           假
+               连接与线程不
+
+           真
+               连接与线程关联。
+
+       --driverclassname
+           供应商提供的 JDBC 驱动程序类的名称。此驱动程序应该实现
+           java.sql.Driver 接口。
+
+       --matchconnections
+           指定从池中选择的连接是否应该与资源适配器匹配。如果池中的所有连接都是同构连接，则从池中选取的连接不需要与资源适配器匹配，这意味着，此选项可设置为“假”。可能的值如下：
+
+           假
+               连接不
+
+           真
+               连接应该与资源适配器匹配。
+
+       --maxconnectionusagecount
+           指定可以重新使用某个连接的最大次数。达到此限制后，会关闭连接。通过限制可重新使用某个连接的最大次数，可以避免出现语句泄漏。
+
+           默认值为 0，这指定对重新使用某个连接的次数无任何限制。
+
+       --ping
+           指定该池在创建或重新配置期间是否执行试通命令以识别并警告其属性的任何错误值。默认值为“假”。
+
+       --pooling
+           指定是否对池启用连接共享。默认值为“真”。
+
+       --statementcachesize
+           要使用默认高速缓存机制 (最近最少使用) 进行高速缓存的 SQL
+           语句数。默认值为 0，这指示没有启用语句高速缓存。
+
+       --validationclassname
+           在 validationmethod 值为 custom-validation
+           时提供定制验证功能的类的名称。此类必须实现
+           org.glassfish.api.jdbc.ConnectionValidation 接口，并且 GlassFish
+           Server
+           必须可访问该类。如果连接验证类型设置为定制验证，则此选项是必需的。
+
+       --wrapjdbcobjects
+           指定共享基础结构是否向应用程序提供包装的 JDBC 对象。通过提供包装的
+           JDBC 对象，并确保应用程序使用连接池中的逻辑连接
+           (而不是物理连接)，共享基础结构可防止出现连接泄漏。使用逻辑连接可确保这些连接在关闭时返回到连接池中。但是，预配包装的
+           JDBC 对象可能会影响应用程序的性能。默认值为“真”。
+
+           共享基础结构可提供包装对象以便在 JDBC API 中实现以下接口：
+
+           ·   java.sql.CallableStatement
+
+           ·   java.sql.DatabaseMetaData
+
+           ·   java.sql.PreparedStatement
+
+           ·   java.sql.ResultSet
+
+           ·   java.sql.Statement
+
+           可能的 --wrapjdbcobjects 值如下：
+
+           假
+               共享基础结构不
+
+           真
+               共享基础结构可向应用程序提供包装的 JDBC 对象。
+
+       --description
+           提供关于指定 JDBC 连接池的详细信息的文本。
+
+       --property
+           用于配置池的可选属性名称/值对。以下属性可用：
+
+           user
+               指定用于连接到数据库的用户名。
+
+           password
+               指定用于连接到数据库的口令。
+
+           databaseName
+               指定此连接池的数据库。
+
+           serverName
+               指定此连接池的数据库服务器。
+
+           port
+               指定数据库服务器监听请求的端口。
+
+           networkProtocol
+               指定通信协议。
+
+           roleName
+               指定初始 SQL 角色名。
+
+           datasourceName
+               指定基础 XADataSource；如果已完成连接共享操作，则指定
+               ConnectionPoolDataSource。
+
+           description
+               指定文本说明。
+
+           url
+               指定此连接池的 URL。虽然它不是标准属性，但却很常用。
+
+           dynamic-reconfiguration-wait-timeout-in-seconds
+               用于启用连接池到使用该池的应用程序的动态透明重新配置，这样，无需重新启用应用程序便可使池的属性更改生效。将允许使用旧的池配置完成任何进行中事务处理的连接请求
+               (只要连接请求在超时期内)，以便完成事务处理。新连接请求将等待池重新配置完成，并使用修改的池配置获取连接。
+
+           LazyConnectionEnlistment
+               已过时。使用等效属性。默认值为“假”。
+
+           LazyConnectionAssociation
+               已过时。使用等效属性。默认值为“假”。
+
+           AssociateWithThread
+               已过时。使用等效属性。默认值为“假”。
+
+           MatchConnections
+               已过时。使用等效属性。默认值为“真”。
+
+           Prefer-Validate-Over-Recreate
+               指定池大小调整器是否应该在销毁和重新创建空闲连接之前验证这些空闲连接。默认值为“真”。
+
+           time-to-keep-queries-in-minutes
+               指定用于计算常用查询而高速缓存的分钟数。在为 JDBC 连接池启用
+               SQL 跟踪和监视时生效。默认值为 5 分钟。
+
+           number-of-top-queries-to-report
+               指定报告最常用查询时要列出的查询数。在为 JDBC 连接池启用 SQL
+               跟踪和监视时生效。默认值为 10 个查询。
+
+               注意
+               ┌─────────────────────────────────────────────────────────────────────────────────────────────────────┐
+               │注                                                                                                   │
+               │如果属性名称或属性值包含冒号，则必须使用反斜杠                                                       │
+               │(\)                                                                                                  │
+               │对名称或值中的冒号进行转义。其他字符也可能要求使用转义字符。有关命令选项中的转义符的详细信息，请参阅 │
+               │asadmin(1M) 手册页。                                                                                 │
+               └─────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+       --target
+           不指定此选项。为了与早期发行版兼容而保留此选项。如果指定此选项，则不会出现语法错误。相反，子命令会成功运行，并显示忽略了此选项的警告消息。
+
+操作数
+       connectionpoolid
+           将要创建的 JDBC 连接池的名称。
+
+示例
+       Example 1, 创建 JDBC 连接池
+           此示例创建名为 sample_derby_pool 的 JDBC 连接池。
+
+               asadmin> create-jdbc-connection-pool
+               --datasourceclassname org.apache.derby.jdbc.ClientDataSource
+               --restype javax.sql.XADataSource
+               --property portNumber=1527:password=APP:user=APP:serverName=
+               localhost:databaseName=sun-appserv-samples:connectionAttributes=\;
+               create\\=true sample_derby_pool
+               Command create-jdbc-connection-pool executed successfully
+           在 --property 选项中使用转义符反斜杠 (\) 来区分分号
+           (;)。使用两条反斜杠 (\\) 来区分等号 (=)。
+
+退出状态
+       0
+           已成功执行子命令
+
+       1
+           执行子命令时出现错误
+
+另请参阅
+       delete-jdbc-connection-pool(1), list-jdbc-connection-pools(1)
+
+       asadmin(1M)
+
+Java EE 7                     2011 年 2 月 10 日create-jdbc-connection-pool(1)

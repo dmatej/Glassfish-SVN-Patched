@@ -1,0 +1,372 @@
+create-domain(1)            asadmin 实用程序子命令            create-domain(1)
+
+名称
+       create-domain - 创建域
+
+提要
+           create-domain [--help]
+           [--adminport adminport]
+           [--instanceport instanceport]
+           [--portbase portbase]
+           [--profile profile-name]
+           [--template template-name]
+           [--domaindir domaindir]
+           [--savemasterpassword={false|true}]
+           [--usemasterpassword={false|true}]
+           [--domainproperties (name=value)[:name=value]*]
+           [--keytooloptions (name=value)[:name=value]*]
+           [--savelogin={false|true}]
+           [--checkports={true|false}]
+           [--nopassword={false|true}]
+           domain-name
+
+说明
+       create-domain 子命令创建 GlassFish Server 域。GlassFish Server
+       中的域是符合 Java Platform Enterprise Edition (Java EE)
+       标准的管理名称空间。每个域都有一个配置，此配置存储在一组文件中。可以在给定的
+       &ProductName
+       安装中创建任意数量的域，每个域都有一个特定的管理身份。一个域可以独立于其他域存在。
+
+       任何有权访问给定系统上的 asadmin
+       实用程序的用户都可以创建域，并将其配置存储在用户所选的文件夹中。默认情况下，域配置是在域的默认目录中创建的。您可以覆盖此位置，将配置存储在其他位置。
+
+       如果运行 create-domain 子命令时，在 as-install/modules 目录的 JAR
+       文件中找到域定制器，则会处理该定制器。域定制程序是一个可实现
+       DomainInitializer 接口的类。
+
+       create-domain 子命令可使用 asadmin 实用程序选项 --user
+       指定的单一管理用户来创建域。如果没有指定 --user 选项，并且 --nopassword
+       选项设置为“真”，则会使用默认管理用户 admin。如果 --nopassword
+       选项设置为“假”(默认值)，则用户名是必需的。在这种情况下，如果您尚未使用
+       --user 选项指定用户名，则系统会提示您进行此操作。
+
+       根据要在新域上运行的应用程序，为该域选择一个合适的配置文件。可以为您创建的域选择开发人员、集群或企业配置文件。
+
+       该子命令仅在本地模式下受支持。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --adminport
+           用于管理的 HTTP 端口或 HTTPS 端口。此端口是您在 Web
+           浏览器中指定的用于管理域的 URL 中的端口，例如
+           http://localhost:4949。不能将 --adminport 选项与 --portbase
+           选项结合使用。默认值为 4848。
+
+           --adminport 选项会覆盖 --domainproperties 选项的 domain.adminPort
+           属性。
+
+       --instanceport
+           此域可提供一些服务，以便在部署后应用程序可以运行。此 HTTP 端口指定
+           Web 应用程序上下文根目录可用于要连接的 Web
+           浏览器的位置。此端口是一个正整数，必须在创建域时可用。不能将
+           --instanceport 选项与 --portbase 选项结合使用。默认值为 8080。
+
+           --instanceport 选项会覆盖 --domainproperties 选项的
+           domain.instancePort 属性。
+
+       --portbase
+           确定端口分配的起始编号。域可以使用静态分配的特定端口号。portbase
+           值确定分配应开始的位置。端口值的计算方式如下：
+
+           ·   管理端口：portbase + 48
+
+           ·   HTTP 监听程序端口：portbase + 80
+
+           ·   HTTPS 监听程序端口：portbase + 81
+
+           ·   JMS 端口：portbase + 76
+
+           ·   IIOP 监听程序端口：portbase + 37
+
+           ·   安全 IIOP 监听程序端口：portbase + 38
+
+           ·   可相互验证的安全 IIOP 端口：portbase + 39
+
+           ·   JMX 端口：portbase + 86
+
+           ·   JPDA 调试器端口：portbase + 9
+
+           ·   用于 OSGi 模块管理的 Felix shell 服务端口：portbase + 66
+
+           如果指定了 --portbase
+           选项，此子命令的输出包括所使用端口的完整列表。
+
+           不能将 --portbase 选项与 --adminport、--instanceport 或
+           --domainproperties 选项结合使用。
+
+       --profile
+           不指定此选项。为了与早期发行版兼容而保留此选项。如果指定此选项，则不会出现语法错误。相反，子命令会成功运行，并显示忽略了此选项的警告消息。
+
+       --template
+           用于创建域的域配置模板的文件名
+           (包括相对路径或绝对路径)。如果指定相对路径，则子命令会将该路径附加到
+           as-install/lib/templates
+           目录，以定位文件。如果它是绝对路径名，则子命令会在指定的路径中查找文件。
+
+           通过该选项可创建不同类型的域，并定义定制域模板。
+
+       --domaindir
+           要创建的域的目录。如果指定，该路径在文件系统中必须是可访问的。如果未指定，则会在默认域目录
+           as-install/domains 中创建域。
+
+       --savemasterpassword
+           通过将此选项设置为真
+           --usemasterpassword
+           选项也为“真”(不管命令行中指定的值为何)。默认值为假
+
+           主口令实际上是安全密钥库的口令。域设计为将自己的证书
+           (在创建域时创建) 保存在配置位置中的某个安全的地方。此证书称作域的
+           SSL 服务器证书。在 Web 浏览器通过安全通道 (HTTPS)
+           联系域时，此域会提供此证书。主口令的作用是保护包含此证书的存储库
+           (一个文件) 的安全。此文件的名称为
+           keystore.jks，是在所创建的域的配置目录中创建的。但是，如果选择此选项，主口令会保存在域配置位置中的磁盘上。主口令存储在名为
+           master-password 的文件中，该文件就是 Java JCEKS 类型的密钥库。使用
+           --savemasterpassword
+           选项的原因是用于无人值守的系统引导。在这种情况下，当域启动时，系统不会提示输入主口令，因为口令将会从此文件中提取出来。
+
+           最好在创建域时创建一个主口令，因为 start-domain
+           子命令会使用主口令。为了安全起见，默认设置应该为“假”，因为在磁盘上保存主口令并不安全，除非正确设置了文件系统权限。如果保存主口令，则
+           start-domain 不会提示输入它。主口令为环境提供了更高级别的安全性。
+
+       --usemasterpassword
+           指定是用系统中内置的主口令还是用户定义的主口令来加密密钥库。
+
+           如果设置为假
+           (默认值)，则会用系统中内置的已知口令来加密密钥库。使用系统中内置的口令来加密密钥库不会提供额外的安全性。
+
+           如果设置为真
+           条目中获取主口令，或者提示输入主口令。口令文件在 asadmin(1M)
+           实用程序的 --passwordfile 选项中指定。
+
+           如果 --savemasterpassword
+           选项为真
+
+       --domainproperties
+           设置可选的名称/值对会覆盖要创建的域的属性默认值。此列表必须用冒号
+           (:) 字符分隔。不能将 --portbase 选项与 --domainproperties
+           选项结合使用。以下属性可用：
+
+           domain.adminPort
+               此属性指定用于管理的 HTTP 端口或 HTTPS
+               端口的端口号。此端口是您在 Web 浏览器中指定的用于管理实例的 URL
+               中的端口，例如 http://localhost:4949。有效值为 1-65535。在 UNIX
+               上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+               domain.adminPort 属性由 --adminport 选项覆盖。
+
+           domain.instancePort
+               此属性可指定用于监听 HTTP 请求的端口的端口号。有效值为
+               1-65535。在 UNIX 上，创建用于监听 1 到 1024
+               端口的套接字需要超级用户权限。
+
+               domain.instancePort 属性由 --instanceport 选项覆盖。
+
+           domain.jmxPort
+               该属性指定 JMX 连接器监听的端口号。有效值为 1-65535。在 UNIX
+               上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+           http.ssl.port
+               此属性可指定用于监听 HTTPS 请求的端口的端口号。有效值为
+               1-65535。在 UNIX 上，创建用于监听 1 到 1024
+               端口的套接字需要超级用户权限。
+
+           java.debugger.port
+               此属性指定用于连接到 Java 平台调试器体系结构 (JPDA)
+               的端口的端口号
+
+               调试器。有效值为 1-65535。在 UNIX 上，创建用于监听 1 到 1024
+               端口的套接字需要超级用户权限。
+
+           jms.port
+               此属性指定 Java 消息服务提供方的端口号。有效值为 1-65535。在
+               UNIX 上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+           orb.listener.port
+               此属性可指定用于 IIOP 连接的端口的端口号。有效值为 1-65535。在
+               UNIX 上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+           orb.mutualauth.port
+               此属性可指定用于带有客户机验证功能的安全 IIOP
+               连接的端口的端口号。有效值为 1-65535。在 UNIX 上，创建用于监听
+               1 到 1024 端口的套接字需要超级用户权限。
+
+           orb.ssl.port
+               此属性可指定用于安全 IIOP 连接的端口的端口号。有效值为
+               1-65535。在 UNIX 上，创建用于监听 1 到 1024
+               端口的套接字需要超级用户权限。
+
+           osgi.shell.telnet.port
+               此属性指定用于连接到 Apache Felix Remote Shell 的端口的端口号
+               。此 Shell 使用 Felix Shell 服务与 OSGi
+               模块管理子系统进行交互。有效值为 1-65535。在 UNIX
+               上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+       --keytooloptions
+           为自签名服务器证书指定密钥工具选项的名称/值对的可选列表。此证书是在创建域期间生成的。此列表中的每个名称/值对必须用冒号
+           (:) 字符分隔。
+
+           允许的选项如下：
+
+           CN
+               指定将用于自签名证书的主机公用名称。此选项名称不区分大小写。
+
+               默认情况下，此名称是运行 create-domain
+               子命令的主机的全限定名称。
+
+       --savelogin
+           如果设置为“真”，则此选项会保存管理用户名和口令。默认值为“假”。用户名和口令存储在用户主目录下的
+           .asadminpass 文件中。只能在本地创建域。因此，在使用 --savelogin
+           选项时，保存在 .asadminpass 中的主机名始终为
+           localhost。如果用户在创建域时指定了默认管理端口，则不需要在任何后续的
+           asadmin 远程命令中指定 user、--passwordfile、--host 或
+           --port。将会自动获取这些值。
+
+               注意
+               ┌───────────────────────────────────────────────────────────────────────────┐
+               │注                                                                         │
+               │如果同一用户创建多个域，而这些域在相同或不同的主机                         │
+               │(其中的主目录装载了 NFS)                                                   │
+               │上具有相同的管理端口号，则此子命令不会询问是否应覆写口令。将始终覆写口令。 │
+               └───────────────────────────────────────────────────────────────────────────┘
+
+       --checkports
+           指定是否检查管理、HTTP、JMS、JMX 和 IIOP
+           端口的可用性。默认值为“真”。
+
+       --nopassword
+           指定管理用户是否具有口令。如果设置为“假”(默认值)，则口令由 asadmin
+           口令文件 (使用 --passwordfile 选项设置) 中的 AS_ADMIN_PASSWORD
+           条目指定。如果设置为“假”并且未设置
+           AS_ADMIN_PASSWORD，则系统会提示您输入口令。
+
+           如果设置为“真”，则会创建管理用户，但不使用口令。如果没有使用 --user
+           选项指定域的用户名，并且 --nopassword
+           选项设置为“真”，则使用默认用户名 admin。
+
+操作数
+       domain-name
+           要创建的域的名称。此名称只能包含 ASCII
+           字符，且必须是创建域的主机中操作系统的有效目录名称。
+
+示例
+       Example 1, 创建域
+           此示例可创建一个名为 domain4 的域。
+
+               asadmin>create-domain --adminport 4848 domain4
+               Enter admin user name [Enter to accept default "admin" / no password
+               ]>
+
+               Using port 4848 for Admin.
+               Using default port 8080 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Distinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=sr1-usca-22,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain domain4 created.
+               Domain domain4 admin port is 4848.
+               Domain domain4 allows admin login as user "admin" with no password.
+               Command create-domain executed successfully.
+
+       Example 2, 在备用目录中创建域
+           此示例在 /home/someuser/domains 目录中创建名为 sampleDomain 的域。
+
+               asadmin> create-domain --domaindir /home/someuser/domains --adminport 7070
+               --instanceport 7071 sampleDomain
+               Enter admin user name [Enter to accept default "admin" / no password]>
+               Using port 7070 for Admin.
+               Using port 7071 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Enterprise ServiceDistinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=sr1-usca-22,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain sampleDomain created.
+               Domain sampleDomain admin port is 7070.
+               Domain sampleDomain allows admin login as user "admin" with no password.
+               Command create-domain executed successfully.
+
+       Example 3, 创建域并保存管理用户名和口令
+           此示例可创建一个名为 myDomain 的域，并保存管理用户名和口令。
+
+               asadmin> create-domain --adminport 8282 --savelogin=true myDomain
+               Enter the admin password [Enter to accept default of no password]>
+               Enter the master password [Enter to accept default password "changeit"]>
+               Using port 8282 for Admin.
+               Using default port 8080 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Enterprise ServiceDistinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=sr1-usca-22,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain myDomain created.
+               Domain myDomain admin port is 8282.
+               Domain myDomain allows admin login as user "admin" with no password.
+               Login information relevant to admin user name [admin]
+               for this domain [myDomain] stored at
+               [/home/someuser/.asadminpass] successfully.
+               Make sure that this file remains protected.
+               Information stored in this file will be used by
+               asadmin commands to manage this domain.
+               Command create-domain executed successfully.
+
+       Example 4, 创建域并指定证书主机
+           此示例可创建一个名为 domain5
+           的域。将用于自签名证书的主机的公用名称为 trio。
+
+               asadmin> create-domain --adminport 9898 --keytooloptions CN=trio domain5
+               Enter the admin password [Enter to accept default of no password]>
+               Enter the master password [Enter to accept default password "changeit"]>
+               Using port 9898 for Admin.
+               Using default port 8080 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Distinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=trio,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain domain5 created.
+               Domain domain5 admin port is 9898.
+               Domain domain5 allows admin login as user "admin" with no password.
+               Command create-domain executed successfully.
+
+退出状态
+       0
+           已成功执行子命令
+
+       1
+           执行子命令时出现错误
+
+另请参阅
+       login(1), delete-domain(1), start-domain(1), stop-domain(1),
+       list-domains(1)
+
+       asadmin(1M)
+
+       Apache Felix Remote Shell
+       (http://felix.apache.org/site/apache-felix-remote-shell.html)、Java
+       平台调试器体系结构 (JPDA)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                     2011 年 6 月 14 日              create-domain(1)

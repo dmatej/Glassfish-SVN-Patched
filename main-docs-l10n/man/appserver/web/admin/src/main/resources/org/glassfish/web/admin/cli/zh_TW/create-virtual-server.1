@@ -1,0 +1,312 @@
+create-virtual-server(1)    asadmin 公用程式子命令;   create-virtual-server(1)
+
+參考名
+       create-virtual-server - 建立指定的虛擬伺服器
+
+概要
+           create-virtual-server [--help]
+           --hosts hosts
+           [--httplisteners http-listeners]
+           [--networklisteners network-listeners]
+           [--defaultwebmodule default-web-module]
+           [--state={on|off}]
+           [--logfile log-file]
+           [--property (name=value)[:name=value]*]
+           [--target target]
+           virtual-server-id
+
+描述
+       create-virtual-server 子命令會建立指定的虛擬伺服器。GlassFish Server
+       中的虛擬功能可讓在多個主機位址上進行監聽的單一 HTTP
+       伺服器處理作業服務多個 URL
+       網域。若兩部虛擬伺服器提供相同的應用程式，它們還會共用相同的實體資源集區。
+
+       只有遠端模式支援這個子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --hosts
+           主機請求標頭中允許的值之逗號 (,)
+           分隔清單，用於選取目前虛擬伺服器。組態給相同連線群組的每部虛擬伺服器必須具有該群組的唯一主機。
+
+       --httplisteners
+           逗號 (,) 分隔的 HTTP 監聽程式 ID
+           清單。只有不是預設虛擬伺服器的虛擬伺服器才需要此選項。HTTP
+           監聽程式會轉換為網路監聽程式。此選項已停用，保留它的目的是為了提供回溯相容性。請改用
+           --networklisteners。如果使用了 --networklisteners，便會忽略此選項。
+
+       --networklisteners
+           逗號 (,) 分隔的網路監聽程式 ID
+           清單。只有不是預設虛擬伺服器的虛擬伺服器才需要此選項。
+
+       --defaultwebmodule
+           依預設與此虛擬伺服器相關聯的獨立 Web 模組。
+
+       --state
+           決定虛擬伺服器是處於使用中狀態 (on) 還是非使用中狀態 (off 或
+           disabled)。預設值為
+           on。處於非使用中狀態時，虛擬伺服器不會處理請求。
+
+       --logfile
+           要在其中寫入此虛擬伺服器日誌項目的檔案名稱。依預設，此為伺服器日誌。伺服器執行時所處的使用者帳號，必須可以寫入保存存取日誌的檔案與目錄。
+
+       --property
+           用於組態虛擬伺服器的選擇性特性名/值配對。提供的特性如下：
+
+           sso-max-inactive-seconds
+               指定在未接收到任何從屬端作業的情形下，可以清除使用者 Single
+               Sign-On 記錄之前等待的秒數。由於 Single Sign-On
+               套用於同一個虛擬伺服器上的多個應用程式，因此對其中任何一個應用程式的存取均會使
+               Single Sign-On 記錄保持使用中狀態。預設值為 300 秒 (5
+               分鐘)。較高的值可延長使用者的 Single Sign-On
+               持續時間，但會佔用較多的伺服器記憶體。
+
+           sso-reap-interval-seconds
+               指定兩次清除過期的 Single Sign-On 記錄的間隔秒數。預設值為 60。
+
+           setCacheControl
+               指定以逗號分隔 Cache-Control
+               回應指令的清單。如需有效指令的清單，請參閱以下文件的第 14.9
+               節：http://www.ietf.org/rfc/rfc2616.txt
+               (http://www.ietf.org/rfc/rfc2616.txt)。
+
+           allowLinking
+               如果此特性的值為 true，則會為在此虛擬伺服器上建置的所有 Web
+               應用程式提供符號連結資源。在 sun-web.xml 檔案中的 sun-web-app
+               元素下使用 allowLinking 特性，可讓個別 web 應用程式置換此設定：
+
+                   <sun-web-app>
+                   <property name="allowLinking" value="[true|false]"/>
+                   </sun-web-app>
+               預設值為 true。
+
+           accessLogWriteInterval
+               表示將日誌寫入磁碟之前經過的秒數。當緩衝區已滿或間隔過期時，存取日誌會被寫入。若此值為
+               0
+               (零)，則即使緩衝區未滿，也會一直寫入緩衝區。這意味著每次存取伺服器時，會將日誌訊息直接儲存至檔案中。
+
+           accessLogBufferSize
+               指定儲存存取日誌呼叫的緩衝區大小 (以位元組為單位)。
+
+           allowRemoteAddress
+               這是以逗號分隔的正規表示式樣式清單，遠端從屬端的 IP
+               位址會以這些樣式為比對依據。如果指定此特性，則遠端位址必須符合，才能接受此請求。如果未指定此特性，則會接受所有請求，除非遠端位址符合
+               denyRemoteAddress 樣式。此特性的預設值為空值。
+
+           denyRemoteAddress
+               這是以逗號分隔的正規表示式樣式清單，遠端從屬端的 IP
+               位址會以這些樣式為比對依據。如果指定此特性，則遠端位址必須不符合，才能使這個請求被接受。如果未指定此特性，則是否接受請求完全由
+               allowRemoteAddress 特性控制。此特性的預設值為空值。
+
+           allowRemoteHost
+               這是以逗號分隔的正規表示式樣式清單，遠端從屬端的主機名稱 (由
+               java.net.Socket.getInetAddress().getHostName() 傳回)
+               會以這些樣式為比對依據。如果指定此特性，則遠端主機名稱必須符合，才能使接受此請求。如果未指定此特性，則會接受所有請求，除非遠端主機名稱符合
+               denyRemoteHost 樣式。此特性的預設值為空值。
+
+           denyRemoteHost
+               這是以逗號分隔的正規表示式樣式清單，遠端從屬端的主機名稱 (由
+               java.net.Socket.getInetAddress().getHostName() 傳回)
+               會以這些樣式為比對依據。如果指定此特性，則遠端主機名稱必須不符合，才能使接受此請求。如果未指定此特性，則是否接受請求完全由
+               allowRemoteHost 特性控制。此特性的預設值為空值。
+
+           authRealm
+               指定 auth-realm 的 name
+               屬性，其將會置換伺服器執行處理針對已建置至此虛擬伺服器之獨立
+               Web 應用程式的預設範圍。獨立 Web 應用程式的 web.xml
+               檔案中定義的範圍，會置換虛擬伺服器的範圍。
+
+           securePagesWithPragma
+               將此特性設定為 false，可確保對於此虛擬伺服器上的所有 Web
+               應用程式而言，使用 SSL 的檔案下載在 Internet Explorer
+               中可正確執行。
+
+               您可以為特定的 Web 應用程式設定此特性。如需詳細資訊，請參閱
+               Oracle GlassFish Server Application Deployment Guide 中的
+               glassfish-web-app。
+
+           contextXmlDefault
+               context.xml 檔案 (如有使用) 相對於 domain-dir 的位置。如需
+               context.xml 檔案的詳細資訊，請參閱 Oracle GlassFish Server
+               Application Development Guide 中的 Using a context.xml File 與
+               Context Container
+               (http://tomcat.apache.org/tomcat-5.5-doc/config/context.html)。GlassFish
+               Server 支援 context.xml 中的環境參數、環境項目及資源定義。
+
+           alternatedocroot_n
+               指定替代文件根 (文件根)，其中 n
+               是一個正整數，允許指定為一個以上。替代文件根可讓 Web
+               應用程式根據請求是否符合 Web 應用程式替代文件根的一個 (或多個)
+               URI 樣式，處理自身文件根以外的特定資源請求。
+
+               如果請求符合一個替代文件根的 URI 樣式，便會將請求 URI (減去 Web
+               應用程式的環境根目錄) 附加至替代文件根的實體位置
+               (目錄)，藉此方式將請求對應至替代文件根。如果請求符合多個 URI
+               樣式，則會根據下列優先順序來決定替代文件根：
+
+               ·   完全符合
+
+               ·   最長路徑符合
+
+               ·   副檔名符合
+
+               例如，以下特性會指定三個替代文件根。第一個替代文件根的 URI
+               樣式使用了完全符合，而第二個和第三個替代文件根的 URI
+               樣式則分別使用副檔名和最長路徑字首符合。
+
+                   <property name="alternatedocroot_1"
+                      value="from=/my.jpg dir=/srv/images/jpg"/>
+                   <property name="alternatedocroot_2"
+                      value="from=*.jpg dir=/srv/images/jpg"/>
+                   <property name="alternatedocroot_3"
+                      value="from=/jpg/* dir=/src/images"/>
+               每個替代文件根的 value 都有兩個部分：第一個部分 from
+               指定替代文件根的 URI 樣式，第二個部分 dir
+               指定替代文件根的實體位置 (目錄)。dir 部分允許使用空格。
+
+               您可以為特定的 Web 應用程式設定此特性。如需詳細資訊，請參閱
+               Oracle GlassFish Server Application Deployment Guide 中的
+               glassfish-web-app。
+
+           send-error_n
+               指定虛擬伺服器的自訂錯誤頁面對應，已在虛擬伺服器上建置的所有
+               Web 應用程式會繼承這些對應。Web 應用程式可在其 web.xml
+               建置描述元中置換這些自訂錯誤頁面對應。每個 send-error_n
+               特性的值都有三個可依任何順序指定的元件：
+
+               第一個部分 code 指定自訂錯誤頁面應該在回應中傳回的三位數 HTTP
+               回應狀態代碼。
+
+               第二個部分 path
+               指定自訂錯誤頁面的絕對或相對檔案系統路徑。相對檔案系統路徑會以相對於
+               domain-dir/config 目錄的方式解譯。
+
+               第三個部分 reason 是選擇性項目，用於指定將傳回之原因字串文字
+               (例如 Unauthorized 或 Forbidden)。
+
+               例如︰
+
+                   <property name="send-error_1"
+                      value="code=401 path=/myhost/401.html reason=MY-401-REASON"/>
+               此範例特性定義會使 /myhost/401.html 的內容連同 401
+               回應一起傳回，另外還有以下回應行：
+
+                   HTTP/1.1 401 MY-401-REASON
+
+           redirect_n
+               指定將舊 URL 的請求視為新 URL
+               的請求。已在虛擬伺服器上建置的所有 Web
+               應用程式都會繼承這些特性。每個 redirect_n
+               特性的值都有兩個可依任何順序指定的元件：
+
+               第一個部分 from 指定要符合之請求的 URI 字首。
+
+               第二個部分 url-prefix 指定要傳回給從屬端的新 URL 字首。此 URL
+               字首會直接取代 from 字首。
+
+               例如︰
+
+                   <property name="redirect_1"
+                   value="from=/dummy url-prefix=http://etude"/>
+
+           valve_n
+               指定完全合格的自訂閾值類別名稱，其中 n
+               為正整數，表示允許多個規格。值類別必須從 Tomcat 或之前的
+               GlassFish Server 發行版本實行 org.apache.catalina.Valve
+               介面，或從目前的 GlassFish Server 發行版本實行
+               org.glassfish.web.valve.GlassFishValve 介面。例如︰
+
+                   <property name="valve_1"
+                      value="org.glassfish.extension.Valve"/>
+               您可以為特定的 Web 應用程式設定此特性。如需詳細資訊，請參閱
+               Oracle GlassFish Server Application Deployment Guide 中的
+               glassfish-web-app。
+
+           listener_n
+               指定完全合格的自訂 Catalina 監聽程式類別名稱，其中 n
+               為指定一個以上規格的正整數。監聽程式類別必須實行
+               org.apache.catalina.ContainerListener 或
+               org.apache.catalina.LifecycleListener 介面。例如︰
+
+                   <property name="listener_1"
+                      value="org.glassfish.extension.MyLifecycleListener"/>
+               您可以為特定的 Web 應用程式設定此特性。如需詳細資訊，請參閱
+               Oracle GlassFish Server Application Deployment Guide 中的
+               glassfish-web-app。
+
+           docroot
+               伺服器文件根目錄的絕對路徑。 不贊成使用。已取代為
+               virtual-server 屬性 docroot，此屬性可以使用 get、set 及 list
+               子命令進行存取。
+
+           accesslog
+               伺服器存取日誌的絕對路徑。不贊成使用。已取代為 virtual-server
+               屬性 access-log，此屬性可以使用 get、set 及 list
+               子命令進行存取。
+
+           accessLoggingEnabled
+               若為 true，則會為此虛擬伺服器啟用存取日誌。不贊成使用。已取代為
+               virtual-server 屬性 access-logging-enabled，此屬性可以使用
+               get、set 及 list 子命令進行存取。
+
+           sso-enabled
+               若為 true，則會針對在此虛擬伺服器上為相同範圍組態的 web
+               應用程式啟用 Single Sign-On 。不贊成使用。已取代為
+               virtual-server 屬性 sso-enabled，此屬性可以使用 get、set 及
+               list 子命令進行存取。
+
+           ssoCookieSecure
+               設定與建置到此虛擬伺服器的 Web 應用程式關聯的任何 JSESSIONIDSSO
+               cookie 的 Secure 屬性。不贊成使用。已取代為 virtual-server 屬性
+               sso-cookie-secure，此屬性可以使用 get、set 及 list
+               子命令進行存取。
+
+           errorReportValve
+               指定自訂值的完全合格類別名稱，該值用來為此虛擬伺服器上的應用程式產生錯誤頁。
+               指定空白字串以停用此虛擬伺服器的錯誤頁機制。
+
+       --target
+           僅在指定目標上建立虛擬伺服器。有效的值如下：
+
+           server
+               在預設伺服器執行處理上建立虛擬伺服器。此為預設值。
+
+           configuration-name
+               在指定組態中建立虛擬伺服器。
+
+           cluster-name
+               在指定叢集內的所有伺服器執行處理上建立虛擬伺服器。
+
+           standalone-instance-name
+               在指定的獨立伺服器執行處理上建立虛擬伺服器。
+
+運算元
+       virtual-server-id
+           識別要建立的虛擬伺服器的唯一 ID。此 ID 不能以數字開頭。
+
+範例
+       範例 1, 建立虛擬伺服器
+           下列命令會建立名為 sampleServer 的虛擬伺服器：
+
+               asadmin> create-virtual-server --hosts pigeon,localhost
+               --property authRealm=ldap sampleServer
+               Command create-virtual-server executed successfully.
+
+結束狀態
+       0
+           命令執行成功
+
+       1
+           執行命令時發生錯誤
+
+另請參閱
+       delete-virtual-server(1), list-virtual-servers(1),
+       create-http-listener(1), create-network-listener(1)
+
+       get(1), list(1), set(1)
+
+       asadmin(1M)
+
+Java EE 7                     2011 年 2 月 11 日      create-virtual-server(1)

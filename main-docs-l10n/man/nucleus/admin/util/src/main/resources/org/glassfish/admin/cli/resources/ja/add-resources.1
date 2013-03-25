@@ -1,0 +1,125 @@
+add-resources(1)      asadminユーティリティのサブコマンド     add-resources(1)
+
+名前
+       add-resources - XMLファイル内に指定されたリソースを作成します
+
+概要
+           add-resources [--help] [--target target]
+           [--upload={false|true}] xml-file-name
+
+説明
+       add-resourcesサブコマンドは、指定されたXMLファイル内に名前付きのリソースを作成します。このサブコマンドで作成できるリソースのリストについては、このヘルプ・ページの「関連項目」を参照してください。
+
+       --targetオプションは、リソースを作成するターゲットを指定します。このオプションでドメインが指定された場合、リソースはドメイン管理サーバー(DAS)の構成にのみ追加されます。このオプションでその他のターゲットが指定された場合、リソースはDASの構成に追加され、指定されたターゲットからリソースに参照が追加されます。
+
+       xml-file-nameオペランドは、作成されたリソースを格納するXMLファイルへのパスです。DOCTYPEは、resources.xmlファイルにhttp://glassfish.org/dtds/glassfish-resources_1_5.dtdとして指定する必要があります。
+
+       このサブコマンドは、リモート・モードでのみサポートされています。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --target
+           リソースを作成するターゲットを指定します。
+
+           有効な値は次のとおりです:
+
+           server
+               デフォルトのサーバー・インスタンスserverのリソースを作成します。これはデフォルト値です。
+
+           domain
+               ドメインにリソースを作成します。
+
+           cluster-name
+               クラスタ内のすべてのサーバー・インスタンスにリソースを作成します。
+
+           instance-name
+               特定のGlassFish Serverインスタンスにリソースを作成します。
+
+       --upload
+           サブコマンドでファイルをDASにアップロードするかを指定します。ほとんどの場合、このオプションは省略できます。
+
+           有効な値は次のとおりです:
+
+           false
+               サブコマンドは、ファイルのアップロードを行わず、指定されたファイル名を使用してファイルへのアクセスが試行されます。DASがファイルにアクセスできない場合、このサブコマンドは失敗します。
+
+               たとえば、DASが管理ユーザーとは異なるユーザーとして稼働している可能性があり、DASにファイルに対する読取りアクセス権がない場合があります。この状況では、--uploadオプションをfalseに設定すると、サブコマンドは失敗します。
+
+           true
+               サブコマンドは、ネットワーク接続経由でファイルをDASにアップロードします。
+
+           デフォルト値は、サブコマンドを実行するホスト上のDASであるかリモート・ホスト上のDASであるかによって異なります。
+
+           ·   サブコマンドを実行するホスト上のDASの場合、デフォルトはfalseです。
+
+           ·   リモート・ホスト上のDASの場合、デフォルトはtrueです。
+
+オペランド
+       xml-file-name
+           作成されるリソースを格納するXMLファイルへのパスです。絶対パス、ファイル名のみ、または相対パスを指定できます。
+
+           ·   絶対パスを指定する場合、XMLファイルはどこに配置してもかまいません。
+
+           ·   ファイル名のみを指定する場合、XMLファイルはDASホストのdomain-dir/configディレクトリにある必要があります。別のホストからサブコマンドを実行する場合でもこの要件を満たす必要があります。
+
+           ·   相対パスを指定する場合、XMLファイルは相対ディレクトリ内に配置してください。
+
+           次にXMLファイルの例を示します。
+
+               <?xml version="1.0" encoding="UTF-8"?>
+               <!DOCTYPE resources PUBLIC
+                  "-//GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions //EN"
+                  "http://glassfish.org/dtds/glassfish-resources_1_5.dtd">
+               <resources>
+                <jdbc-connection-pool name="SPECjPool" steady-pool-size="100"
+                  max-pool-size="150" max-wait-time-in-millis="60000"
+                  pool-resize-quantity="2" idle-timeout-in-seconds="300"
+                  is-isolation-level-guaranteed="true"
+                  is-connection-validation-required="false"
+                  connection-validation-method="auto-commit"
+                  fail-all-connections="false"
+                  datasource-classname="oracle.jdbc.pool.OracleDataSource">
+                 <property name="URL"
+                   value="jdbc:oracle:thin:@iasperfsol12:1521:specdb"/>
+                 <property name="User" value="spec"/>
+                 <property name="Password" value="spec"/>
+                 <property name="MaxStatements" value="200"/>
+                 <property name="ImplicitCachingEnabled" value="true"/>
+                </jdbc-connection-pool>
+                <jdbc-resource enabled="true" pool-name="SPECjPool"
+                  jndi-name="jdbc/SPECjDB"/>
+               </resources>
+
+例
+       例 1, リソースの追加
+           この例では、XMLファイル
+           resource.xmlの内容を使用してリソースを作成します。
+
+               asadmin> add-resources resource.xml
+               Command : Connector connection pool jms/testQFactoryPool created.
+               Command : Administered object jms/testQ created.
+               Command : Connector resource jms/testQFactory created.
+               Command : Resource adapter config myResAdapterConfig created successfully
+               Command : JDBC connection pool DerbyPoolA created successfully.
+               Command : JDBC resource jdbc/__defaultA created successfully.
+               Command add-resources executed successfully.
+
+終了ステータス
+       0
+           サブコマンドは正常に実行されました
+
+       1
+           サブコマンドの実行時にエラーが発生しました
+
+関連項目
+       create-jdbc-connection-pool(1),create-jdbc-resource(1),
+       create-jms-resource(1), create-jndi-resource(1),
+       create-javamail-resource(1), create-custom-resource(1),
+       create-connector-resource(1), create-connector-work-security-map(1),
+       create-admin-object(1), create-resource-adapter-config(1)
+
+       asadmin(1M)
+
+Java EE 7                       2010年12月23日                add-resources(1)

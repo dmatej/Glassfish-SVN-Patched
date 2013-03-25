@@ -1,0 +1,185 @@
+create-jvm-options(1)       asadmin 公用程式子命令       create-jvm-options(1)
+
+參考名
+       create-jvm-options - 為 Java 應用程式啟動程式建立選項
+
+概要
+           create-jvm-options [--help] [--target target] [--profiler={true|false}]
+           (jvm-option-name=jvm-option-value) [:jvm-option-name=jvm-option-value*]
+
+描述
+       create-jvm-options 子命令會在 GlassFish Server 啟動時建立傳送給 Java
+       應用程式啟動程式的命令行選項。此子命令會建立 GlassFish Server
+       預設選項之外的選項。Java 應用程式的啟動程式選項儲存在 domain.xml 檔案的
+       Java 組態 java—config 元素或效能評測器 profiler
+       元素中。這些選項會按照它們出現在 domain.xml 檔案之 java—config
+       元素或效能評測器 profiler 元素中的順序傳送至命令行。
+
+       效能評測器選項，用於記錄啟動特定效能評測器所需的設定。效能評測器必須已存在。必要時，請使用
+       create-profiler(1) 子命令來建立效能評測器。
+
+       這個子命令會用於建立下列類型的選項：
+
+       ·   Java 系統特性。這些選項會透過 Java 應用程式啟動程式的 -D
+           選項來設定。例如︰
+
+           -Djava.security.manager
+
+           -Denvironment=Production
+
+       ·   Java 應用程式啟動程式的啟動參數。這些選項前面會加上破折號字元
+           (-)。例如︰
+
+           --XX:PermSize=size
+
+           -Xmx1024m
+
+           -d64
+
+       如果子命令指定的選項已存在，則命令不會重新建立該選項。
+
+           注意
+           ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+           │備註                                                                                                                │
+           │                                                                                                                    │
+           │           請確定您建立的任何選項都是有效的。此子命令會允許您建立無效的選項，但是這類的無效選項可能會導致啟動失敗。 │
+           └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+       您可以藉由在 GlassFish Server 啟動之後檢查伺服器日誌來驗證選項。Java
+       應用程式啟動程式的選項會在 GlassFish Server 啟動時，寫入 server.log
+       檔中的任何其他資訊之前。
+
+       增加某些選項時，需要伺服器重新啟動，變更才會生效。其他選項會在網域管理伺服器
+       (DAS)
+       的環境中立即設定，但是不需要重新啟動。需要重新啟動與否視選項的類型而定。
+
+       ·   名稱開頭不
+           系統特性不需重新啟動。例如，下列的 Java 系統特性不
+
+           -Denvironment=Production
+
+       ·   下列選項需要重新啟動：
+
+           ·   名稱開頭為 -Djava.  或 -Djavax.  的 Java 系統特性
+               (包含尾隨的點號)。例如︰
+
+               -Djava.security.manager
+
+           ·   Java 應用程式啟動程式的啟動參數。例如︰
+
+               -client
+
+               -Xmx1024m
+
+               -d64
+
+       若要重新啟動 DAS，請使用 restart-domain(1) 命令。
+
+       只有遠端模式支援這個子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --target
+           指定您要在其上建立 Java 應用程式啟動程式選項的目標。
+
+           有效的值如下：
+
+           server
+               指定 DAS (預設)。
+
+           instance-name
+               指定 GlassFish Server 執行處理。
+
+           cluster-name
+               指定叢集。
+
+           configuration-name
+               指定已命名組態。
+
+       --profiler
+           指定 Java
+           應用程式啟動程式選項是否要用於效能評測器。該效能評測器必須存在，此選項才會為
+           true。預設值為 false。
+
+運算元
+       jvm-option-name
+           一個或多個選項會以冒號 (:) 分隔。選項的格式視下列各項而定：
+
+           ·   如果選項具有名稱和值，則格式為 option-name=value。
+
+           ·   如果選項只有名稱，則格式為 option-name。例如，-Xmx2048m。
+
+           ·   如果會將第一個選項名稱錯誤解譯為一或多個 asadmin
+               短選項，則格式為 -- option-name。例如，以下命令中的 -server
+               會錯誤解譯為 -se，即 --secure 及 --echo 的 asadmin 短形式：
+
+                   create-jvm-options -server
+               若要建立 JVM 選項 -server，則改用此命令：
+
+                   create-jvm-options -- -server
+
+               注意
+               ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
+               │備註                                                                                           │
+               │如果選項名稱或選項值包含冒號，則必須使用反斜線                                                 │
+               │(\)                                                                                            │
+               │來逸出名稱或值中的冒號。其他字元可能也需要退出字元。如需子命令選項中逸出字元的詳細資訊，請參閱 │
+               │asadmin(1M) 線上手冊。                                                                         │
+               └───────────────────────────────────────────────────────────────────────────────────────────────┘
+
+範例
+       範例 1, 設定 Java 系統特性
+           此範例會設定多個 Java 系統特性。
+
+               asadmin> create-jvm-options -Dunixlocation=/root/example:
+               -Dvariable=\$HOME:-Dwindowslocation=d\:\\sun\\appserver:-Doption1=-value1
+               created 4 option(s)
+               Command create-jvm-options executed successfully.
+
+       範例 2, 設定 Java 應用程式啟動程式的啟動參數
+           此範例會將最大可用堆疊大小設定為 1024。
+
+               asadmin> create-jvm-options -Xmx1024m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+       範例 3, 設定 Java 應用程式啟動程式的多個啟動參數
+           此範例會將最大可用堆疊大小設定為 1024，並請求記憶體回收的詳細資訊。
+
+               asadmin> create-jvm-options "-Xmx1024m:-XX\:+PrintGCDetails"
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+           在這種情況下，兩個參數的其中一個已存在，因此子命令報告僅設定一個選項。
+
+       範例 4, 設定效能評測器的 JVM 啟動參數
+           此範例會設定效能評測器的 JVM 啟動參數。
+
+               asadmin> create-jvm-options --profiler=true -XX\:MaxPermSize=192m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+結束狀態
+       0
+           已成功執行子命令
+
+       1
+           執行子命令時發生錯誤
+
+另請參閱
+       delete-jvm-options(1), list-jvm-options(1), create-profiler(1),
+       restart-domain(1)
+
+       asadmin(1M)
+
+       如需有關 Java
+       應用程式啟動程式的詳細資訊，請參閱您使用之作業系統的參照頁面：
+
+       ·   Oracle Solaris 與 Linux：java - Java 應用程式啟動程式
+           (http://java.sun.com/javase/6/docs/technotes/tools/solaris/java.html)
+
+       ·   Windows：java - Java 應用程式啟動程式
+           (http://java.sun.com/javase/6/docs/technotes/tools/windows/java.html)
+
+Java EE 7                     2010 年 11 月 29 日        create-jvm-options(1)

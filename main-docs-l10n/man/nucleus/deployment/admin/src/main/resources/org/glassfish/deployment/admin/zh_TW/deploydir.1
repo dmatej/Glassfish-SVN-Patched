@@ -1,0 +1,355 @@
+deploydir(1)                asadmin 公用程式子命令                deploydir(1)
+
+參考名
+       deploydir - 建置應用程式存檔的展開格式
+
+概要
+           deploydir [--help]
+           [--force={false|true}]
+           [--virtualservers virtual_servers]
+           [--contextroot context_root]
+           [--verify={false|true}]
+           [--precompilejsp={false|true}]
+           [--name component-name]
+           [--retrieve local_dirpath]
+           [--uniquetablenames={true|false}]
+           [--dbvendorname dbvendorname]
+           [--createtables={false|true}|--dropandcreatetables={false|true}]
+           [--deploymentplan deployment_plan]
+           [--altdd alternate_deploymentdescriptor]
+           [--runtimealtdd runtime_alternate_deploymentdescriptor]
+           [--deploymentorder deployment_order]
+           [--enabled={true|false}]
+           [--generatermistubs={false|true}]
+           [--availabilityenabled={false|true}]
+           [--asyncreplication={true|false}]
+           [--lbenabled={true|false}]
+           [--keepstate={false|true}]
+           [--libraries jar_file[,jar_file]*]
+           [--target target]
+           [--type pkg-type]
+           [--properties(name=value)[:name=value]*]
+           dirpath
+
+描述
+           注意
+           ┌───────────────────────────────────────┐
+           │備註                                   │
+           │                                       │
+           │           deploydir                   │
+           │           子命令已停用。請使用 deploy │
+           │           子命令。                    │
+           └───────────────────────────────────────┘
+
+       deploydir 子命令會直接從開發目錄建置應用程式。建置目錄中必須有符合 Java
+       EE 規格的適當目錄階層與建置描述元。
+
+       目錄建置僅適用於進階的開發人員。請勿在生產環境中使用 deploydir。請使用
+       deploy 子命令。僅在 localhost
+       上支援目錄建置，也就是說，從屬端和伺服器必須常駐在相同機器上。基於此原因，--host
+       選項的只能使用下列值：
+
+       ·   localhost
+
+       ·   $HOSTNAME 環境變數的值
+
+       ·   機器的 IP 位址
+
+       如果未指定 --uniquetablenames、--createtables 和 --dropandcreatetables
+       選項，將使用建置描述元中的項目。
+
+       即使指定元件已建置或已存在，--force 選項仍可確保強制 (重新)
+       建置元件。對於初始建置，請將 --force 選項設定為
+       false。如果指定應用程式在執行中，並將 --force 選項設定為
+       false，則子命令會失敗。
+
+       只有遠端模式支援這個子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --force
+           如果設定為
+           true，即使指定元件已建置或已存在，仍將重新建置該元件。預設值為
+           false。
+
+       --virtualservers
+           一或多個虛擬伺服器 ID。 以逗號分隔多個 ID。
+
+       --contextroot
+           只有在存檔為 Web 模組時有效。
+           在其他存檔類型時忽略；預設值為沒有副檔名的檔案名稱。
+
+       --precompilejsp
+           依預設，此選項不允許在建置期間對 JSP 先行編譯。而是要在執行階段編譯
+           JSP。預設值為 false。
+
+       --verify
+           如果設定為 true
+           並已從「更新工具」安裝必要的檢驗器套件，則會檢驗建置描述元的語法和語義。預設值為
+           false。
+
+       --name
+           可建置元件的名稱。
+
+           名稱中可以包含一個選擇性的版本識別碼，後面接著名稱，兩者間用冒號
+           (:) 隔開。
+           版本識別碼必須以字母或數字開頭。當中可以包含英數字元，也可以加上底線
+           (_)、破折號 (-) 以及句號 (.)
+           字元。如需有關模組與應用程式版本的更多資訊，請參閱 Oracle GlassFish
+           Server Application Deployment Guide 中的 Module and Application
+           Versions。
+
+       --retrieve
+           將從屬端 stub JAR 檔案從伺服器機器擷取至本機目錄。
+
+       --dbvendorname
+           指定要為其建立表格的資料庫供應商名稱。支援的值包含
+           db2、mssql、mysql、oracle、derby、javadb、postgresql 及
+           sybase。這些值不區分大小寫。如果未指定，則會使用
+           glassfish-ejb-jar.xml 中 database-vendor-name
+           屬性的值。如果未指定值，將與由 glassfish-ejb-jar.xml 檔案中
+           cmp-resource 元素的 jndi-name
+           子元素指定的資源建立連線，並且讀取該資料庫供應商的名稱。如果無法建立連線或如果無法識別值，則採用
+           SQL-92 規範。
+
+       --createtables
+           如果指定為 true，在建置應用程式時將使用未對應的 CMP Bean
+           建立資料表。如果指定為 false，將不建立資料表。如果未指定，則
+           glassfish-ejb-jar.xml 檔案的 cmp-resource 元素中的
+           create-tables-at-deploy
+           項目值會決定是否建立此表格。不會針對表格建立唯一限制。
+
+       --dropandcreatetables
+           如果在重新建置元件時指定為
+           true，將在建立新資料表之前捨棄由之前建置建立的資料表。套用至具有未對應的
+           CMP Bean
+           的已建置應用程式。在應用程式的初始建置或隨後明確要取消建置的建置中，將不會捨棄預先存在的表格。如果指定為
+           false，將不捨棄也不建立資料表。如果未指定，則在
+           glassfish-ejb-jar.xml 檔案的 cmp-resource 元素中的
+           drop-tables-at-undeploy 項目設為 true 時捨棄表格，並在
+           glassfish-ejb-jar.xml 檔案的 cmp-resource 元素中的
+           create-tables-at-deploy 項目設為 true 時建立新表格。
+
+       --uniquetablenames
+           保證所有 Bean
+           具有唯一的資料表名稱，並且產生增加至資料表名稱的雜湊程式碼。這在您擁有的應用程式具有區分大小寫的
+           Bean 名稱時有用。套用至具有未對應的 CMP Bean 的應用程式。
+
+       --deploymentplan
+           建置指定建置計劃，即為包含 GlassFish Server 描述元的 JAR
+           檔案。在建置純 EAR 檔案時指定此選項。純 EAR 檔案是不含 GlassFish
+           Server 描述元的 EAR。
+
+       --altdd
+           建置使用位於應用程式存檔外部之 Java EE
+           標準建置描述元的應用程式。指定替代建置描述元檔案的絕對路徑或相對路徑。替代建置描述元會置換存檔中封裝的最上層建置描述元。例如，如果是
+           EAR，使用 --altdd 會置換 application.xml。如果是獨立模組，使用
+           --altdd 會置換最上層模組描述元，例如 web.xml。
+
+       --runtimealtdd
+           建置使用位於應用程式存檔外部之 GlassFish Server
+           執行階段建置描述元的應用程式。指定替代建置描述元檔案的絕對路徑或相對路徑。替代建置描述元會置換存檔中封裝的最上層建置描述元。例如，如果是
+           EAR，使用 --runtimealtdd 會置換
+           glassfish-application.xml。如果是獨立模組，使用 --runtimealtdd
+           會置換最上層模組描述元，例如 glassfish-web.xml。只套用至 GlassFish
+           Server 建置描述元 (glassfish-*.xml)；替代建置描述元檔案的名稱必須以
+           glassfish- 為開頭。請勿套用至已不再使用的 sun-*.xml 建置描述元。
+
+       --deploymentorder
+           指定應用程式的建置順序。如果應用程式具有相依性，且必須在伺服器啟動時以特定順序載入，則此命令非常實用。請以整數指定建置順序。預設值為
+           100。會先載入數字較小的應用程式，再載入數字較大的應用程式。例如，會先載入建置順序為
+           102 的應用程式，再載入建置順序為 110
+           的應用程式。如果未指定建置順序，則會指派預設值
+           100。如果兩個應用程式的建置順序相同，則建置的第一個應用程式是伺服器啟動時載入的第一個應用程式。
+
+           通常會在第一次建置應用程式時指定建置順序，但也可以在初始建置之後使用
+           set 子命令指定或變更順序。您可以使用 get
+           子命令檢視應用程式的建置順序
+
+       --enabled
+           允許使用者存取應用程式。如果設定為
+           false，使用者將無法存取應用程式。此選項會啟用指定目標執行處理或叢集上的應用程式。如果建置至目標
+           domain，將忽略此選項，因為建置至網域不會建置至特定執行處理或叢集。預設值為
+           true。
+
+       --generatermistubs
+           如果設定為 true，將產生靜態 RMI-IIOP stub 並且放入
+           client.jar。如果設定為 false，將不產生 stub。預設值為 false。
+
+       --availabilityenabled
+           此選項控制是否對 Web 階段作業和對有狀態階段作業 Bean (SFSB)
+           檢查點及潛在的鈍化啟用高可用性。如果設定為 false
+           (預設值)，將對指定的應用程式、Web 應用程式或 EJB 模組停用所有 Web
+           階段作業儲存及 SFSB 檢查點。如果設定為
+           true，將啟用指定的應用程式或模組以獲得高可用性。僅在較高層級
+           (例如伺服器和容器層級) 組態和啟用高可用性時才可將此選項設定為
+           true。
+
+       --asyncreplication
+           此選項控制是否首先緩衝啟用高可用性的 Web 階段作業和 SFSB
+           狀態，然後使用單獨的非同步繫線進行複製。如果設定為 true
+           (預設值)，效能將提高，但可用性降低。如果緩衝了狀態但尚未複製的執行處理失敗，則會遺失狀態。如果設定為
+           false，效能將降低，但可用性得到保證。狀態不緩衝，而是立即傳送到叢集中的其他執行處理。
+
+       --lbenabled
+           此選項控制建置的應用程式是否對於負載平衡可用。預設值為 true。
+
+       --keepstate
+           此選項控制是否在重新建置之間保留 Web 階段作業、SFSB
+           執行處理及連續建立的 EJB 計時器。
+
+           預設值為 false。只有名為 server
+           的預設伺服器執行處理才支援此選項。任何其他目標均不支援，並會忽略此選項。
+
+           在重新建置之間對應用程式進行的某些變更，會讓此功能無法正常運作。例如，請勿變更
+           SFSB Bean 類別中的該組執行處理變數。
+
+           對於 Web 應用程式，唯有當 glassfish-web-app.xml 檔案中
+           session-manager 元素的 persistence-type 屬性為 file
+           時，此功能才適用。
+
+           若為有狀態的階段作業 Bean
+           執行處理，在伺服器中會設定不具有高可用性的持續性類型
+           (sfsb-persistence-type 屬性)，且必須設為 file，此即預設值及建議值。
+
+           如果任何使用中的 Web 階段作業、SFSB 執行處理或 EJB
+           計時器無法保留或復原，則這些項目在重新建置完成時將無
+
+           若要保留使用中的狀態資料，GlassFish Server
+           會串列化資料並將之儲存到記憶體中。若要復原資料，新重新建置之應用程式的類別載入器會取消串列化任何先前儲存的資料。
+
+       --libraries
+           以逗號分隔的程式庫 JAR 檔案清單。依相對或絕對路徑指定程式庫 JAR
+           檔案。指定相對於 domain-dir/lib/applibs
+           的相對路徑。程式庫會以指定順序供應用程式使用。
+
+       --target
+           指定您要建置到的目標。有效值包括
+
+           server
+               建置元件至預設伺服器執行處理 server，並且為預設值。
+
+           domain
+               建置元件至網域。如果 domain
+               是初始建置的目標，則應用程式將建置至該網域，但沒有伺服器執行處理或叢集參照此應用程式。如果
+               domain 是重新建置的目標 (--force 選項設定為
+               true)，並且對參照應用程式的叢集或伺服器執行處理啟用動態重新組態，則參照叢集或伺服器執行處理會自動取得新版應用程式。如果重新建置和動態組態停用，則在重新啟動叢集或獨立伺服器執行處理之前，參照叢集或伺服器執行處理無法取得新版應用程式。
+
+           cluster_name
+               建置元件至叢集中的每個伺服器執行處理。
+
+           instance_name
+               將元件建置至特定的獨立伺服器執行處理。
+
+       --type
+           要建置之元件的封裝存檔類型。可能值如下：
+
+           car
+               元件封裝為 CAR 檔案。
+
+           ear
+               元件封裝為 EAR 檔案。
+
+           ejb
+               元件為封裝為 JAR 檔案的 EJB。
+
+           osgi
+               元件封裝為 OSGi 組合。
+
+           rar
+               元件封裝為 RAR 檔案。
+
+           war
+               元件封裝為 WAR 檔案。
+
+       --properties 或 --property
+           選擇性關鍵字/值配對，指定建置的其他特性。可用的特性由要建置或重新建置的元件實行確定。--properties
+           選項與 --property
+           選項等效。無論您指定的特性數目是多少，均可使用其中任一選項。
+
+           您可以為建置指定下列特性：
+
+           jar-signing-alias
+               指定安全性憑證的別名，應用程式從屬端容器 JAR
+               檔案使用此別名簽署。除非 Java Web Start
+               常駐在使用使用者系統信任的憑證簽署的 JAR
+               檔案中，否則它將無法執行需要更高權限的程式碼。為了使用方便，GlassFish
+               Server 會使用網域金鑰存放區中具有此別名的憑證自動簽署 JAR
+               檔案。然後 Java Web Start 會詢問使用者是否信任程式碼並顯示
+               GlassFish Server 憑證資訊。若要使用其他憑證簽署此 JAR
+               檔案，請將此憑證增加至網域金鑰存放區，然後使用此特性。例如，您可以使用信任單位的憑證，這可避免出現
+               Java Web Start
+               提示，或使用您自己公司的憑證，使用者知道他們可以信任。預設值為
+               s1as，此為對每個網域建立的自我簽署憑證的別名。
+
+           java-web-start-enabled
+               指定是否允許應用程式從屬端模組的 Java Web Start 存取。預設值為
+               true。
+
+           compatibility
+               指定要向後與應用程式的 JAR 可視性要求相容的 GlassFish Server
+               版本。唯一允許的值為 v2，其代表 Sun GlassFish Enterprise Server
+               版本 2或 Sun Java System Application Server 版本 9.1 或
+               9.1.1。Java EE 6 平台規格會強加比 Java EE 5 更嚴格的需求，以對
+               EAR 檔案內的各種模組顯示 JAR 檔案。尤其是應用程式從屬端不得存取
+               EJB JAR 檔案或其他 EAR 檔案中的 JAR 檔案，除非參照使用標準 Java
+               SE 機制 (例如，副檔名) 或 Java EE
+               程式庫目錄機制。將此特性設定為 v2 會移除這些 Java EE 6 限制。
+
+           keepSessions={false|true}
+               使用 --keepstate 選項取代。
+
+               如果將 --force 選項設定為
+               true，此特性可用於指定是否保留正在重新建置的應用程式的使用中階段作業，然後在重新建置完成時復原。套用至
+               Web 容器中的 HTTP 階段作業。預設值為 false。
+
+               false
+                   不
+
+               true
+                   保留和復原應用程式的使用中階段作業。
+
+                   如果應用程式有任何使用中的階段作業無法保留或復原，完成重新建置之後將無
+
+                   若要保留使用中的階段作業，GlassFish Server
+                   會串列化階段作業並將之儲存到記憶體中。若要復原階段作業，新重新建置之應用程式的類別載入器會取消串列化任何先前儲存的階段作業。
+
+           preserveAppScopedResources
+               如果設定為
+               true，保留任何應用程式範圍的資源並在重新建置期間還原它們。預設值為
+               false。
+
+           其他可用的特性由要重新建置的元件實行確定。
+
+運算元
+       dirpath
+           內含可建置存檔的展開格式的目錄路徑。此為伺服器機器上的目錄路徑。
+
+範例
+       範例 1, 從目錄建置應用程式
+           在此範例中，要建置的展開應用程式位於 /home/temp/sampleApp
+           目錄。因為 --force 選項設定為
+           true，因此如果已存在該名稱的應用程式，則該應用程式將重新建置。
+
+               asadmin> deploydir --force=true --precompilejsp=true /home/temp/sampleApp
+               Application deployed successfully with name sampleApp.
+               WARNING : deploydir command deprecated. Please use deploy command instead.
+               Command deploydir executed successfully
+
+結束狀態
+       0
+           已成功執行子命令
+
+       1
+           執行子命令時發生錯誤
+
+另請參閱
+       deploy(1), , redeploy(1), undeploy(1), get(1), set(1)
+
+       asadmin(1M)
+
+       Oracle GlassFish Server Application Deployment Guide
+
+Java EE 7                     2013 年 2 月 12 日                  deploydir(1)

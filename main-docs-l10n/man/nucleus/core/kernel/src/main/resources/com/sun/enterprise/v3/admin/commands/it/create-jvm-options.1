@@ -1,0 +1,227 @@
+create-jvm-options(1)   Comandi secondari della utilit   create-jvm-options(1)
+
+NOME
+       create-jvm-options - consente di creare opzioni per il launcher
+       dell'applicazione Java
+
+SINTASSI
+           create-jvm-options [--help] [--target target] [--profiler={true|false}]
+           (jvm-option-name=jvm-option-value) [:jvm-option-name=jvm-option-value*]
+
+DESCRIZIONE
+       Il comando secondario create-jvm-options consente di creare opzioni
+       della riga di comando che vengono passate al launcher dell'applicazione
+       Java all'avvio di GlassFish Server. Le opzioni create mediante questo
+       comando secondario si aggiungono a quelle preimpostate con GlassFish
+       Server. Le opzioni del launcher dell'applicazione Java vengono
+       memorizzate nell'elemento java—config della configurazione Java oppure
+       nell'elemento profiler del file domain.xml. Le opzioni vengono inviate
+       alla riga di comando nell'ordine in cui appaiono nell'elemento java—
+       config o nell'elemento profiler del file domain.xml.
+
+       Le opzioni del profiler vengono usate per registrare le impostazioni
+       necessarie per avviare un profiler particolare. Il profiler deve
+       esistere già. Se necessario, utilizzare il comando secondario
+       create-profiler(1) per creare il profiler.
+
+       Questo comando secondario può essere usato per creare i tipi di opzioni
+       riportati di seguito.
+
+       ·   Proprietà di sistema Java.  Queste opzioni vengono impostate
+           tramite l'opzione -D del launcher dell'applicazione Java. Ad
+           esempio:
+
+           -Djava.security.manager
+
+           -Denvironment=Production
+
+       ·   I parametri di avvio per il launcher dell'applicazione Java.
+           Queste opzioni sono preceduti dal carattere lineetta (-). Ad
+           esempio:
+
+           --XX:PermSize=size
+
+           -Xmx1024m
+
+           -d64
+
+       Se il comando secondario specifica un'opzione già esistente, l'opzione
+       non viene ricreata.
+
+           Nota
+           ┌────────────────────────────────────────┐
+           │Nota                                    │
+           │                                        │
+           │           Assicurarsi che ogni opzione │
+           │           creata sia valida. È         │
+           │           possibile che il comando     │
+           │           secondario consenta di       │
+           │           creare un'opzione non        │
+           │           valida, ma l'opzione può     │
+           │           impedire che l'avvio venga   │
+           │           eseguito correttamente.      │
+           └────────────────────────────────────────┘
+
+       Un'opzione può essere verificata esaminando il log del server dopo
+       l'avvio di GlassFish Server. Le opzioni per il launcher
+       dell'applicazione Java vengono scritte nel file server.log prima di
+       qualsiasi altra informazione all'avvio di GlassFish Server.
+
+       Se si aggiungono opzioni, perché le modifiche abbiano effetto è
+       necessario riavviare il server. Le altre opzioni vengono impostate
+       immediatamente nell'ambiente del server di amministrazione del dominio
+       (DAS) e non richiedono il riavvio. La necessità di riavviare dipende
+       dal tipo di opzione.
+
+       ·   Il riavvio non è necessario per le proprietà di sistema Java i cui
+           nomi non iniziano con -Djava.  o -Djavax.  (punto finale compreso).
+           Ad esempio, il riavvio non è richiesto per le proprietà di sistema
+           Java seguenti:
+
+           -Denvironment=Production
+
+       ·   Il riavvio è richiesto per le opzioni seguenti:
+
+           ·   Proprietà di sistema Java i cui nomi iniziano con -Djava.  o
+               -Djavax.  (punto finale compreso). Ad esempio:
+
+               -Djava.security.manager
+
+           ·   I parametri di avvio per il launcher dell'applicazione Java. Ad
+               esempio:
+
+               -client
+
+               -Xmx1024m
+
+               -d64
+
+       Per riavviare il server DAS, usare il comando restart-domain(1).
+
+       Questo comando secondario è supportato solo in modalità remota.
+
+OPZIONI
+       --help, -?
+           Visualizza il testo della Guida per il comando secondario.
+
+       --target
+           Specifica la destinazione in cui vengono create le opzioni del
+           launcher dell'applicazione Java.
+
+           Di seguito sono riportati i valori validi.
+
+           server
+               Specifica il server DAS (predefinito).
+
+           instance-name
+               Specifica un'istanza di GlassFish Server.
+
+           cluster-name
+               Specifica un cluster.
+
+           configuration-name
+               Specifica una configurazione denominata.
+
+       --profiler
+           Indica se le opzioni del launcher dell'applicazione Java sono per
+           il profiler. Affinché l'opzione sia true il profiler deve esistere
+           già. Il valore predefinito è false.
+
+OPERANDI
+       jvm-option-name
+           Una o più opzioni delimitate da due punti (:). Il formato di
+           un'opzione dipende dagli elementi seguenti:
+
+           ·   Se l'opzione dispone di un nome e di un valore, il formato è
+               opzione-nome=valore.
+
+           ·   Se l'opzione dispone solo di un nome, il formato è
+               opzione-nome. Ad esempio, -Xmx2048m.
+
+           ·   Se il primo nome opzione può essere interpretato in modo errato
+               come una o più opzioni brevi asadmin, il formato sarà --
+               opzione-nome. Ad esempio, l'opzione -server nel comando
+               seguente potrebbe essere interpretata in modo errato come -se,
+               ovvero la forma breve di asadmin per --secure e --echo:
+
+                   create-jvm-options -server
+               Per creare l'opzione JVM -server, usare quindi questo comando:
+
+                   create-jvm-options -- -server
+
+               Nota
+               ┌────────────────────────────────────────┐
+               │Nota Se il nome o il valore di          │
+               │un'opzione contiene un carattere due    │
+               │punti (:), è necessario utilizzare la   │
+               │barra rovesciata (\) per rendere        │
+               │letterali i due punti nel nome o nel    │
+               │valore. Il carattere di escape potrebbe │
+               │essere necessario anche per altri       │
+               │caratteri. Per ulteriori informazioni   │
+               │sui caratteri di escape nelle opzioni   │
+               │dei comandi secondari, vedere la pagina │
+               │man asadmin(1M).                        │
+               └────────────────────────────────────────┘
+
+ESEMPI
+       Esempio 1, Impostazione delle proprietà di sistema Java
+           In questo esempio vengono impostate più proprietà di sistema Java.
+
+               asadmin> create-jvm-options -Dunixlocation=/root/example:
+               -Dvariable=\$HOME:-Dwindowslocation=d\:\\sun\\appserver:-Doption1=-value1
+               created 4 option(s)
+               Command create-jvm-options executed successfully.
+
+       Esempio 2, Impostazione di un parametro di avvio per il launcher
+       dell'applicazione Java
+           In questo esempio la dimensione massima dell'heap disponibile viene
+           impostata su 1024.
+
+               asadmin> create-jvm-options -Xmx1024m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+       Esempio 3, Impostazione di più parametri di avvio per il launcher
+       dell'applicazione Java
+           In questo esempio la dimensione massima dell'heap disponibile viene
+           impostata su 1024 e vengono richiesti dettagli sulla garbage
+           collection.
+
+               asadmin> create-jvm-options "-Xmx1024m:-XX\:+PrintGCDetails"
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+           In questo caso, uno dei due parametri è già esistente, pertanto il
+           comando secondario segnala che è stata impostata una sola opzione.
+
+       Esempio 4, Impostazione di un parametro di avvio JVM per il profiler
+           In questo esempio viene impostato un parametro di avvio JVM per il
+           profiler.
+
+               asadmin> create-jvm-options --profiler=true -XX\:MaxPermSize=192m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+STATO DI USCITA
+       0
+           esecuzione del comando secondario riuscita
+
+       1
+           errore durante l'esecuzione del comando secondario
+
+VEDERE ANCHE
+       delete-jvm-options(1), list-jvm-options(1), create-profiler(1),
+       restart-domain(1)
+
+       asadmin(1M)
+
+       Per ulteriori informazioni sul launcher dell'applicazione Java, vedere
+       la pagina di riferimento per il sistema operativo in uso:
+
+       ·   Oracle Solaris e Linux: java - launcher dell'applicazione Java
+           (http://java.sun.com/javase/6/docs/technotes/tools/solaris/java.html)
+
+       ·   Windows: java - launcher dell'applicazione Java
+           (http://java.sun.com/javase/6/docs/technotes/tools/windows/java.html)
+
+Java EE 7                      29 novembre 2010          create-jvm-options(1)

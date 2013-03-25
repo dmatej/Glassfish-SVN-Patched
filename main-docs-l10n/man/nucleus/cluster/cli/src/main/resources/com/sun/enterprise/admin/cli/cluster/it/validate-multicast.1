@@ -1,0 +1,153 @@
+validate-multicast(1)   Comandi secondari della utilit   validate-multicast(1)
+
+NOME
+       validate-multicast - verifica che il trasporto multicast sia
+       disponibile per i cluster
+
+SINTASSI
+           validate-multicast [--help] [--multicastport multicastport]
+           [--multicastaddress multicastaddress]
+           [--bindaddress bindaddress]
+           [--sendperiod sendperiod]
+           [--timeout timeout]
+           [--timetolive timetolive]
+           [--verbose={false|true}]
+
+DESCRIZIONE
+       Il comando secondario validate-multicast verifica che il trasporto
+       multicast sia disponibile per i cluster. È necessario eseguire questo
+       comando secondario contemporaneamente su ogni host da convalidare.
+       Questo comando secondario è disponibile in modalità locale.
+
+           Nota
+           ┌────────────────────────────────────────┐
+           │Nota                                    │
+           │                                        │
+           │           Non eseguire il comando      │
+           │           secondario                   │
+           │           validate-multicast           │
+           │           utilizzando l'indirizzo      │
+           │           multicast e i valori delle   │
+           │           porte del server DAS e del   │
+           │           cluster mentre questi sono   │
+           │           in esecuzione. Questa        │
+           │           operazione provoca un        │
+           │           errore.                      │
+           │                                        │
+           │           Il comando secondario        │
+           │           validate-multicast deve      │
+           │           essere eseguito              │
+           │           contemporaneamente su due o  │
+           │           più computer, per verificare │
+           │           se i messaggi multicast      │
+           │           vengono scambiati            │
+           │           correttamente tra i          │
+           │           computer.                    │
+           └────────────────────────────────────────┘
+
+       Se i computer si riconoscono a vicenda, viene convalidato il
+       funzionamento corretto del multicast tra i computer. Se invece i
+       computer non si riconoscono a vicenda, impostare l'opzione
+       --bindaddress in modo esplicito per garantire che tutti i computer
+       utilizzino un'interfaccia della stessa sottorete o incrementare il
+       valore predefinito dell'opzione --timetolive (4). Se con queste
+       modifiche non si risolvono i problemi di multicast, chiedere
+       all'amministratore di rete di verificare che la rete sia configurata in
+       modo che i messaggi multicast siano visibili tra tutti i computer
+       utilizzati per la gestione del cluster.
+
+OPZIONI
+       --help, -?
+           Visualizza il testo della Guida per il comando secondario.
+
+       --multicastport
+           La porta per il socket multicast in cui il servizio GMS (Group
+           Management Service) resta in attesa di eventi del gruppo.
+           Specificare un numero di porta UDP standard nell'intervallo
+           compreso tra 2048 e 32000. Il valore predefinito è 2048.
+
+       --multicastaddress
+           L'indirizzo per il socket multicast in cui il servizio GMS resta in
+           attesa di eventi del gruppo. Specificare un indirizzo IP di classe
+           D. Gli indirizzi IP di classe D rientrano nell'intervallo compreso
+           tra 224.0.0.0 e 239.255.255.255 inclusi. L'indirizzo 224.0.0.0 è
+           riservato e non deve essere utilizzato. Il valore predefinito è
+           228.9.3.1.
+
+       --bindaddress
+           L'interfaccia locale per la ricezione di pacchetti datagram
+           multicast per GMS. L'impostazione predefinita prevede l'utilizzo di
+           tutte le interfacce di associazione disponibili.
+
+           In un computer dotato di più home, ovvero dotato di due o più
+           interfacce di rete, questo attributo consente di indicare quale
+           interfaccia di rete utilizzare per il servizio GMS. Il valore deve
+           essere un indirizzo IP di interfaccia di rete locale.
+
+       --sendperiod
+           Il numero di millisecondi che intercorrono tra i messaggi di test
+           inviati tra i nodi. Il valore predefinito è 2000.
+
+       --timeout
+           Il numero di millisecondi che devono trascorrere prima che si
+           verifichi il timeout e il comando secondario venga terminato. Il
+           valore predefinito è 20. È inoltre possibile terminare il comando
+           secondario utilizzando Ctrl-C.
+
+       --timetolive
+           Il valore time-to-live predefinito per i pacchetti multicast
+           inviati nel socket multicast per controllare l'ambito dei
+           multicast. Il valore time-to-live deve essere compreso tra zero e
+           255 inclusi. Il valore predefinito è il valore minore tra il valore
+           predefinito del kit JDK e un valore minimo definito da una costante
+           nel sottosistema GMS. Per visualizzare il valore time-to-live
+           utilizzato, utilizzare l'opzione --verbose.
+
+       --verbose
+           Se utilizzato senza un valore o se impostato su true, fornisce
+           ulteriori informazioni di debug. Il valore predefinito è false.
+
+ESEMPI
+       Esempio 1, Convalida del trasporto multicast
+           Esecuzione dall'host machine1:
+
+               asadmin> validate-multicast
+               Will use port 2,048
+               Will use address 228.9.3.1
+               Will use bind address null
+               Will use wait period 2,000 (in milliseconds)
+
+               Listening for data...
+               Sending message with content "machine1" every 2,000 milliseconds
+               Received data from machine1 (loopback)
+               Received data from machine2
+               Exiting after 20 seconds. To change this timeout, use the --timeout command line option.
+               Command validate-multicast executed successfully
+           Esecuzione dall'host machine2:
+
+               asadmin> validate-multicast
+               Will use port 2,048
+               Will use address 228.9.3.1
+               Will use bind address null
+               Will use wait period 2,000 (in milliseconds)
+
+               Listening for data...
+               Sending message with content "machine2" every 2,000 milliseconds
+               Received data from machine2 (loopback)
+               Received data from machine1
+               Exiting after 20 seconds. To change this timeout, use the --timeout command line option.
+               Command validate-multicast executed successfully
+
+STATO DI USCITA
+       0
+           esecuzione del comando riuscita
+
+       1
+           errore durante l'esecuzione del comando
+
+VEDERE ANCHE
+       get-health(1)
+
+       asadmin(1M)
+
+Java EE 7                      10 febbraio 2011          validate-multicast(1)

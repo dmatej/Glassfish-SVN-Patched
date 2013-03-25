@@ -1,0 +1,174 @@
+create-jmsdest(1)           asadmin 实用程序子命令           create-jmsdest(1)
+
+名称
+       create-jmsdest - 创建 JMS 物理目标
+
+提要
+           create-jmsdest [--help]
+           --desttype dest_type
+           [--property (name=value)[:name=value]*]
+           [--target target]
+           [--force[={false|true}]]
+           dest_name
+
+说明
+       create-jmsdest 子命令创建 Java 消息服务 (JMS) 物理目标。通常，可以使用
+       create-jms-resource 子命令创建 JMS 目标资源，此资源具有指定物理目标的
+       Name
+       属性。物理目标是在运行使用目标资源的应用程序时自动创建的。如果要使用非默认属性设置创建物理目标，请使用
+       create-jmsdest 子命令。
+
+       该子命令仅在远程模式下受支持。远程 asadmin
+       子命令需要一个正在运行的域管理服务器 (DAS)。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --desttype
+           JMS 目标类型。有效值有 topic 和 queue。
+
+       --property
+           用于配置物理目标的可选属性名称/值对。您可以为物理目标指定以下属性。
+
+           maxNumMsgs
+               目标允许的未使用消息的最大数量。如果值为
+               -1，则表示不限制消息的数量。默认值为
+               -1。对于停用消息队列，默认值为 1000。
+
+               如果 limitBehavior 属性设置为
+               FLOW_CONTROL，则可能会超过指定的消息限制，因为中介反应速度不够快，无法停止传入消息流。在此类情况下，为
+               maxNumMsgs 指定的值仅作为此中介的提示，而非严格执行的限制。
+
+           maxBytesPerMsg
+               任一消息的最大长度
+               (字节)。如果持久消息被拒绝，会向生成消息的客户机报告，并显示异常；对于非持久消息，则不发送任何通知。
+
+               可以使用以下后缀以字节、千字节或兆字节为单位来表示该值：
+
+               b
+                   字节
+
+               k
+                   千字节 (1024 字节)
+
+               m
+                   兆字节 (1024 x 1024 = 1,048,576 字节)
+
+               不带后缀的值以字节为单位表示；值为 -1
+               表示不限制消息大小。默认值为 -1。
+
+           maxTotalMsgBytes
+               未使用消息的最大内存总量 (字节)。默认值为 -1。其语法与
+               maxBytesPerMsg 的语法相同。对于停用消息队列，默认值为 10m。
+
+           limitBehavior
+               在达到内存限制阈值时消息队列中介的行为。有效值如下。
+
+               REJECT_NEWEST
+                   拒绝最新的消息，并通知生成消息的客户机
+                   (消息为持久消息的情况除外)。这是默认值。
+
+               FLOW_CONTROL
+                   降低消息生成器发送消息的速率。
+
+               REMOVE_OLDEST
+                   丢弃最旧的消息。
+
+               REMOVE_LOW_PRIORITY
+                   根据消息存在的时间丢弃优先级最低的消息，并且不通知生成消息的客户机。
+
+               如果值为 REMOVE_OLDEST 或 REMOVE_LOW_PRIORITY，并且 useDMQ
+               属性设置为真
+               REMOVE_OLDEST，并且不能将此值设置为 FLOW_CONTROL。
+
+           maxNumProducers
+               目标的消息生成器的最大数量。达到此限制后，将无法创建新的生成器。如果值为
+               -1，则表示不限制生成器的数量。默认值为
+               100。此属性不适用于停用消息队列。
+
+           consumerFlowLimit
+               可以向使用者一次性传送的最大消息数量。如果值为
+               -1，则表示不限制消息的数量。默认值是
+               1000。客户机运行时环境可通过在连接工厂对象上指定较低的值来覆盖此限制。
+
+               在负载平衡队列传送中，该值为负载平衡开始之前路由至活动使用者的队列消息的初始数量。
+
+           useDMQ
+               如果设置为真
+
+           validateXMLSchemaEnabled
+               如果设置为真
+
+               在启用 XML 验证后，消息队列 客户机运行时环境将尝试针对指定的
+               XSD (如果未指定 XSD，则针对 DTD) 验证 XML
+               消息，然后将消息发送至中介。如果无法找到指定的方案或无法验证消息，则不发送消息并抛出异常错误。
+
+               应该在目标处于非活动状态时
+               (即，在它没有使用者或生成器时和目标中没有任何消息时)
+               设置此属性。否则，必须重新连接生成器。
+
+           XMLSchemaURIList
+               一个以空格分隔的 XML 方案文档 (XSD) URI 字符串列表。如果
+               validateXMLSchemaEnabled 设置为真
+               XML 方案验证的 XSD 的位置。默认值为空
+
+               如果指定了多个 URI，应使用双引号将该值引起来，如以下示例所示：
+
+                   "http://foo/flap.xsd http://test.com/test.xsd"
+               如果未设置此属性或将它设置为空
+               XML 文档中指定的 DTD 来执行 XML
+               验证。如果由于变更应用程序要求而更改了 XSD，则必须将基于更改的
+               XSD 生成 XML 消息的所有客户机应用程序重新连接到中介。
+
+           要修改这些属性的值，可以使用 as-install/mq/bin/imqcmd
+           命令。有关详细信息，请参阅 Oracle GlassFish Server Message Queue
+           Administration Guide 中的 Physical Destination Property Reference。
+
+       --target
+           仅为指定的目标创建物理目标。虽然 create-jmsdest
+           子命令与资源相关，但可使用属于此配置的 JMS 服务 (JMS 中介)
+           创建物理目标。JMS 中介是在 domain.xml 的 config
+           部分中配置的。有效值如下：
+
+           server
+               为默认服务器实例创建物理目标。这是默认值。
+
+           configuration-name
+               在指定的配置中创建物理目标。
+
+           cluster-name
+               为指定集群中的每个服务器实例创建物理目标。
+
+           instance-name
+               为指定的服务器实例创建物理目标。
+
+       --force
+           指定该子命令是否覆写同名的现有 JMS 物理目标。默认值为假
+
+操作数
+       dest_name
+           要创建的 JMS 目标的唯一标识符。
+
+示例
+       Example 1, 创建 JMS 物理目标
+           以下子命令使用非默认属性值创建名为 PhysicalQueue 的 JMS 物理队列。
+
+               asadmin> create-jmsdest --desttype queue
+               --property maxNumMsgs=1000:maxBytesPerMsg=5k PhysicalQueue
+               Command create-jmsdest executed successfully.
+
+退出状态
+       0
+           已成功执行子命令
+
+       1
+           执行子命令时出现错误
+
+另请参阅
+       create-jms-resource(1), delete-jmsdest(1), list-jmsdest(1),
+       flush-jmsdest(1)
+
+       asadmin(1M)
+
+Java EE 7                     2013 年 2 月 12 日             create-jmsdest(1)

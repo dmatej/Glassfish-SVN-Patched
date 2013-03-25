@@ -1,0 +1,166 @@
+validate-dcom(1)        Comandi secondari della utilit        validate-dcom(1)
+
+NOME
+       validate-dcom - esegue il test della connessione mediante il protocollo
+       DCOM a un host remoto
+
+SINTASSI
+           validate-dcom [--help]
+           [--windowsuser windows-user] [--windowsdomain windows-domain]
+           [--remotetestdir remote-test-directory]
+           [--verbose={false|true}] host-name
+
+DESCRIZIONE
+       Il comando secondario validate-dcom esegue il test della connessione
+       mediante il protocollo remoto DCOM (Distributed Component Object Model)
+       all'host remoto specificato come operando del comando secondario. Il
+       protocollo DCOM è disponibile solo nei sistemi Windows.
+
+       Di seguito sono riportati i prerequisiti per eseguire questo comando
+       secondario.
+
+       ·   Il protocollo DCOM deve essere configurato sull'host in cui è in
+           esecuzione il server di amministrazione del dominio (DAS) e
+           sull'host remoto specificato come operando del comando secondario.
+
+       ·   Sull'host remoto devono essere aperte le porte seguenti:
+
+           ·   Porta DCOM 135 o 139
+
+           ·   Porta Windows Shares 445
+
+       ·   Il servizio Windows per il server è abilitato sull'host remoto.
+
+       Questo comando secondario verifica se sono soddisfatti i prerequisiti
+       per creare un nodo DCOM o un'istanza di GlassFish Server su un nodo
+       DCOM. Se questo comando secondario non riesce, i tentativi di creare un
+       nodo DCOM o un'istanza su un nodo DCOM non riusciranno.
+
+       È possibile eseguire il comando da qualsiasi computer in grado di
+       contattare il server DAS.
+
+       Il comando secondario esegue il test della connessione su DCOM all'host
+       remoto effettuando le seguenti operazioni sull'host remoto.
+
+       ·   Risoluzione del nome host
+
+       ·   Connessione a DCOM mediante la porta 135 o 139
+
+       ·   Connessione a Windows Shares mediante la porta 445
+
+       ·   Copia di uno script denominato delete_me.bat nella cartella
+           specificata dall'opzione --remotetestdir
+
+       ·   Esecuzione dello script per ottenere un elenco della cartella in
+           cui è stato scritto il file delete_me.bat
+
+       Per impostazione predefinita, il comando secondario non visualizza
+       informazioni sulle operazioni effettuate per eseguire il test della
+       connessione all'host remoto. Per visualizzare informazioni su queste
+       operazioni, impostare l'opzione --verbose su true.
+
+       Questo comando secondario è supportato solo in modalità remota.
+
+OPZIONI
+       --help, -?
+           Visualizza il testo della Guida per il comando secondario.
+
+       --windowsuser, -w
+           L'utente nell'host remoto che deve eseguire il processo per la
+           connessione all'host tramite DCOM. Il valore predefinito è
+           costituito dall'utente che esegue il processo DAS.
+
+       --windowsdomain, -d
+           Il nome del dominio Windows che contiene l'utente specificato
+           dall'opzione --windowsuser. Il valore predefinito è il nome
+           dell'host in cui viene eseguito il comando secondario.
+
+       --remotetestdir
+           Specifica la cartella sull'host remoto nella quale il comando
+           secondario crea il file delete_me.bat. L'utente specificato
+           dall'opzione --windowsuser deve disporre dell'accesso in scrittura
+           alla cartella. In caso contrario, si verifica un errore. Il valore
+           predefinito è C:\
+
+       --verbose, -v
+           Specifica se il comando secondario visualizza le informazioni sulle
+           operazioni effettuate per eseguire il test della connessione
+           all'host remoto.
+
+           Di seguito sono riportati i valori possibili.
+
+           false
+               Le informazioni sulle operazioni effettuate per eseguire il
+               test della connessione all'host remoto non vengono visualizzate
+               (impostazione predefinita).
+
+           true
+               Il comando secondario visualizza le informazioni sulle
+               operazioni effettuate per eseguire il test della connessione.
+
+               Se l'opzione --verbose è impostata su true e la variabile di
+               ambiente AS_DEBUG è impostata, il comando secondario visualizza
+               anche la riga di comando per ogni processo in esecuzione
+               sull'host remoto.
+
+OPERANDI
+       host-name
+           Il nome dell'host per il quale eseguire il test della connessione
+           su DCOM.
+
+ESEMPI
+       Esempio 1, Test della connessione su DCOM a un host remoto
+           In questo esempio viene eseguito il test della connessione su DCOM
+           all'host wpmdl2.
+
+               asadmin> validate-dcom --wpmdl2
+               Command validate-dcom executed successfully.
+
+       Esempio 2, Test in modalità descrittiva della connessione su DCOM a un
+       host remoto
+           In questo esempio viene eseguito il test della connessione su DCOM
+           all'host wpmdl2 e vengono visualizzate le informazioni sulle
+           operazioni effettuate per eseguire il test della connessione
+           all'host remoto.
+
+               asadmin> validate-dcom --verbose wpmdl2
+
+               Successfully resolved host name to: wpmdl2/192.168.122.106
+               Successfully connected to DCOM Port at port 135 on host wpmdl2.
+               Successfully connected to NetBIOS Session Service at port 139 on host wpmdl2.
+               Successfully connected to Windows Shares at port 445 on host wpmdl2.
+               Successfully accessed C: on wpmdl2 using DCOM.
+               Successfully wrote delete_me.bat to C: on wpmdl2 using DCOM.
+               Successfully accessed WMI (Windows Management Interface) on wpmdl2. There are 40
+               processes running on wpmdl2.
+               Successfully ran the test script on wpmdl2 using DCOM.
+               The script simply ran the DIR command. Here are the first few lines from the
+               output of the dir command on the remote machine:
+
+               C:\Windows\system32>dir C:\
+                Volume in drive C has no label.
+                Volume Serial Number is XXXX-XXX
+
+                Directory of C:\
+
+               12/05/2011  10:21 AM                63 .asadminpass
+               02/15/2011  01:08 PM    <DIR>          aroot
+               12/05/2011  04:43 PM                 8 delete_me.bat
+               03/03/2011  10:36 AM    <DIR>          export
+
+               Command validate-dcom executed successfully.
+
+STATO DI USCITA
+       0
+           esecuzione del comando riuscita
+
+       1
+           errore durante l'esecuzione del comando
+
+VEDERE ANCHE
+       create-node-dcom(1), delete-node-dcom(1), list-nodes(1),
+       ping-node-dcom(1), update-node-dcom(1)
+
+       asadmin(1M)
+
+Java EE 7                       5 gennaio 2012                validate-dcom(1)

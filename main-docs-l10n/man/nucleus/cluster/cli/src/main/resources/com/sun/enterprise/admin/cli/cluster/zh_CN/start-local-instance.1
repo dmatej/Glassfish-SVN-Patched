@@ -1,0 +1,168 @@
+start-local-instance(1)     asadmin 实用程序子命令     start-local-instance(1)
+
+名称
+       start-local-instance - 在运行该子命令的主机上启动 GlassFish Server 实例
+
+提要
+           start-local-instance [--help]
+           [--nodedir node-dir] [--node node]
+           [--debug={false|true}] [--dry-run={false|true}] [--sync={normal|full|none}]
+           [--verbose={false|true}] [--watchdog={false|true}]
+           [instance-name]
+
+说明
+       start-local-instance 子命令在运行它的主机上启动 GlassFish Server
+       实例。此子命令不要求配置分布式组件对象模型 (DCOM) 远程协议或安全 shell
+       (SSH)。必须从实例所在的主机运行此命令。
+
+       此子命令可启动任何 GlassFish Server
+       实例，而不考虑实例的创建方式。例如，该子命令可启动使用
+       create-instance(1) 子命令创建的实例。
+
+       start-local-instance 子命令不会联系域管理服务器 (DAS)
+       来确定该实例所在的节点。为了确定该实例所在的节点，该子命令将搜索包含节点目录的目录。如果存在多个节点目录，必须将相应节点指定为该子命令的一个选项。
+
+       该子命令仅在本地模式下受支持。但是，要使实例与 DAS
+       同步，必须在远程模式下运行该子命令。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --nodedir
+           指定包含该实例的节点目录的目录。该实例的文件存储在实例的节点目录中。默认值为
+           as-install/nodes。
+
+       --node
+           指定该实例所在的节点。只有当 --nodedir
+           选项指定的目录仅包含一个节点目录时，才能忽略此选项。否则，该选项是必需的。
+
+       --debug
+           指定是否使用 Java 平台调试器体系结构 (JPDA) 启动实例
+
+           调试已启用。
+
+           可能的值如下：
+
+           真
+               在启用 JPDA 调试的情况下启动实例，并显示用于 JPDA
+               调试的端口号。
+
+           假
+               在禁用 JPDA 调试的情况下启动实例 (默认值)。
+
+       --dry-run, -n
+           取消显示实例的实际启动。而 start-local-instance
+           会显示将用于启动实例的完整 java 命令，包括所有选项。确认 JVM
+           选项和解决启动问题时，复查该命令会非常有用。
+
+           默认值为假
+
+       --sync
+           启动实例时 DAS 和实例文件之间的同步类型。
+
+           可能的值如下：
+
+           none
+               DAS
+               不会将实例文件与任何更改同步。该同步类型可以将启动实例所需的时间减到最少。
+
+           normal
+               DAS 按以下方式将实例与自上次同步以来发生的更改同步：
+
+               ·   对于 config 目录，DAS 会使用所有更改同步该实例。
+
+               ·   对于 applications 目录和 docroot
+                   目录，只有顶层子目录发生更改时，DAS
+                   才会同步该子目录下面的所有文件。
+
+                   如果顶层子目录下面的文件发生了更改，但顶层子目录中的文件未发生更改，则需要进行完全同步。在正常操作中，这些目录的顶层子目录下面的文件不发生更改。部署然后取消部署某个应用程序后，无需完全同步即可使用更改来更新实例。
+
+               该值为默认值。
+
+           full
+               DAS
+               会将实例与该实例的所有文件同步，不管这些文件自上次同步以来是否发生更改。该同步类型可能会延长实例的启动时间，因为
+               DAS 需要更新实例目录中的所有文件。
+
+                   小心
+                   ┌───────────────────────────────────────────────────────────────────┐
+                   │注意 如果 DAS                                                      │
+                   │没有运行或者无法从运行该子命令的主机访问，则不
+                   │--sync 选项设置为                                                  │
+                   │full。为了执行完全同步，该子命令将删除实例的高速缓存。如果无法联系 │
+                   │DAS                                                                │
+                   │以替换高速缓存，该子命令将失败，且在实例与                         │
+                   │DAS 重新同步之前无法重新启动实例。                                 │
+                   └───────────────────────────────────────────────────────────────────┘
+
+       --verbose, -v
+           指定是否在运行该子命令的控制台窗口中显示有关实例的详细信息。
+
+           可能的值如下：
+
+           真
+               在运行该子命令的控制台窗口中显示有关实例的详细启动消息和日志消息。如果以后通过在另一个控制台窗口运行
+               restart-local-instance(1)
+               子命令来重新启动该实例，则消息将继续显示在原始控制台窗口中。
+
+               在控制台窗口中按 Ctrl-C 可以中止 GlassFish Server 进程。
+
+               在控制台窗口中按下列组合键之一可以中止 GlassFish Server
+               进程并获取服务器的线程转储：
+
+               ·   CTRL-\ (在 UNIX 系统上)
+
+               ·   Windows 系统上的 CTRL-Break
+
+           假
+               不显示详细信息 (默认值)。
+
+       --watchdog, -w
+           指定是否在运行该子命令的控制台窗口中显示有关实例的有限信息。--watchdog
+           选项类似于 --verbose，但不显示详细的启动消息和日志消息。在后台运行
+           asadmin 实用程序或未附加控制台时，此选项非常有用。
+
+           可能的值如下：
+
+           真
+               在控制台窗口中显示有限信息。
+
+           假
+               不在控制台窗口中显示有限信息 (默认值)。
+
+操作数
+       instance-name
+           要启动的实例的名称。
+
+示例
+       Example 1, 本地启动实例
+           该示例将启动运行该子命令的主机上的 yml-i-sj01 实例。
+
+               asadmin> start-local-instance --node sj01 yml-i-sj01
+               Waiting for the server to start .................................
+               Successfully started the instance: yml-i-sj01
+               instance Location: /export/glassfish3/glassfish/nodes/sj01/yml-i-sj01
+               Log File: /export/glassfish3/glassfish/nodes/sj01/yml-i-sj01/logs/server.log
+               Admin Port: 24849
+               Command start-local-instance executed successfully.
+
+退出状态
+       0
+           已成功执行命令
+
+       1
+           执行命令时出现错误
+
+另请参阅
+       create-instance(1), create-local-instance(1), delete-instance(1),
+       delete-local-instance(1), restart-instance(1),
+       restart-local-instance(1), start-domain(1), start-instance(1),
+       stop-domain(1), stop-instance(1), stop-local-instance(1)
+
+       asadmin(1M)
+
+       Java 平台调试器体系结构 (JPDA)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                     2013 年 2 月 13 日       start-local-instance(1)

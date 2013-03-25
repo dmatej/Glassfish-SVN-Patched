@@ -1,0 +1,404 @@
+create-virtual-server(1)Comandi secondari della utilitcreate-virtual-server(1)
+
+NOME
+       create-virtual-server - crea il server virtuale specificato
+
+SINTASSI
+           create-virtual-server [--help]
+           --hosts hosts
+           [--httplisteners http-listeners]
+           [--networklisteners network-listeners]
+           [--defaultwebmodule default-web-module]
+           [--state={on|off}]
+           [--logfile log-file]
+           [--property (name=value)[:name=value]*]
+           [--target target]
+           virtual-server-id
+
+DESCRIZIONE
+       Il comando secondario create-virtual-server crea il server virtuale
+       specificato. La funzione di virtualizzazione di GlassFish Server
+       consente di servire più domini URL da un unico processo server HTTP che
+       resta in ascolto su più indirizzi host. Se l'applicazione è disponibile
+       in due server virtuali, questi condividono comunque gli stessi pool di
+       risorse fisiche.
+
+       Questo comando secondario è supportato solo in modalità remota.
+
+OPZIONI
+       --help, -?
+           Visualizza il testo della Guida per il comando secondario.
+
+       --hosts
+           La lista separata da virgole (,) dei valori consentiti
+           nell'intestazione della richiesta host per selezionare il server
+           virtuale corrente. Ogni server virtuale configurato per lo stesso
+           gruppo di connessione deve disporre di un host univoco per tale
+           gruppo.
+
+       --httplisteners
+           La lista separata da virgole (,) degli ID dei listener HTTP. È
+           necessaria solo per un server virtuale diverso da quello
+           predefinito. I listener HTTP vengono convertiti in listener di
+           rete. Questa opzione non è più valida, ma viene conservata per
+           garantire la compatibilità con le versioni precedenti. Utilizzare
+           --networklisteners. Se si utilizza --networklisteners, questa
+           opzione viene ignorata.
+
+       --networklisteners
+           La lista separata da virgole (,) degli ID dei listener di rete. È
+           necessaria solo per un server virtuale diverso da quello
+           predefinito.
+
+       --defaultwebmodule
+           Il modulo Web standalone associato al server virtuale per
+           impostazione predefinita.
+
+       --state
+           Determina se un server virtuale è attivo (on) o non attivo (off
+           oppure disabilitato). Il valore predefinito è on. Quando non è
+           attivo, il server virtuale non gestisce le richieste.
+
+       --logfile
+           Il nome del file in cui devono essere scritte le voci di log per il
+           server virtuale. Per impostazione predefinita, è il log del server.
+           L'account utente utilizzato per eseguire il server deve poter
+           scrivere nel file e nella directory in cui viene conservato il log
+           degli accessi.
+
+       --property
+           Coppie nome-valore di proprietà per la configurazione del server
+           virtuale. Sono disponibili le proprietà riportate di seguito.
+
+           sso-max-inactive-seconds
+               Specifica il numero di secondi trascorsi i quali il record SSO
+               di un utente può essere rimosso se non viene ricevuta alcuna
+               attività client. Poiché Single Sign-On viene utilizzato tra più
+               applicazioni sullo stesso server virtuale, l'accesso a una
+               qualsiasi delle applicazioni mantiene attivo il record SSO. Il
+               valore predefinito è 300 secondi (5 minuti). Valori più elevati
+               estendono la persistenza del record SSO, ma richiedono un
+               maggiore utilizzo della memoria del server.
+
+           sso-reap-interval-seconds
+               Specifica il numero di secondi che intercorrono tra le
+               eliminazioni di record SSO scaduti. Il valore predefinito è 60.
+
+           setCacheControl
+               Specifica una lista separata da virgole di direttive di
+               risposta Cache-Control. Per la lista delle direttive valide,
+               vedere la Sezione 14.9 del documento disponibile all'indirizzo
+               http://www.ietf.org/rfc/rfc2616.txt
+               (http://www.ietf.org/rfc/rfc2616.txt).
+
+           allowLinking
+               Se il valore di questa proprietà è true, le risorse che
+               corrispondono a collegamenti simbolici vengono servite per
+               tutte le applicazioni Web distribuite nel server virtuale. Le
+               singole applicazioni Web possono sostituire tale impostazione
+               utilizzando la proprietà allowLinking sotto l'elemento
+               sun-web-app nel file sun-web.xml:
+
+                   <sun-web-app>
+                   <property name="allowLinking" value="[true|false]"/>
+                   </sun-web-app>
+               Il valore predefinito è true.
+
+           accessLogWriteInterval
+               Indica il numero di secondi trascorsi i quali il log viene
+               scritto sul disco. Il log degli accessi viene scritto quando il
+               buffer è pieno o quando scade l'intervallo di tempo previsto.
+               Se il valore è 0 (zero), il buffer viene scritto sempre, anche
+               se non è pieno. Ciò significa che i messaggi del log vengono
+               memorizzati direttamente nel file ogni volta che si accede al
+               server.
+
+           accessLogBufferSize
+               Specifica la dimensione in byte del buffer in cui vengono
+               memorizzate le chiamate del log degli accessi.
+
+           allowRemoteAddress
+               Lista separata da virgole di pattern di espressioni regolari
+               con cui viene confrontato l'indirizzo IP del client remoto. Se
+               si specifica questa proprietà, l'indirizzo remoto deve
+               corrispondere perché la richiesta venga accettata. Se non si
+               specifica questa proprietà, vengono accettate tutte le
+               richieste, a meno che l'indirizzo remoto non corrisponda a un
+               pattern denyRemoteAddress. Il valore predefinito per questa
+               proprietà è il valore nullo.
+
+           denyRemoteAddress
+               Lista separata da virgole di pattern di espressioni regolari
+               con cui viene confrontato l'indirizzo IP del client remoto. Se
+               si specifica questa proprietà, l'indirizzo remoto non deve
+               corrispondere perché la richiesta venga accettata. Se questa
+               proprietà non viene specificata, l'accettazione della richiesta
+               viene controllata esclusivamente dalla proprietà
+               allowRemoteAddress. Il valore predefinito per questa proprietà
+               è il valore nullo.
+
+           allowRemoteHost
+               Lista separata da virgole di pattern di espressioni regolari
+               con cui viene confrontato il nome host del client remoto (come
+               restituito da java.net.Socket.getInetAddress().getHostName() ).
+               Se si specifica questa proprietà, il nome dell'host remoto deve
+               corrispondere perché la richiesta venga accettata. Se non si
+               specifica questa proprietà, vengono accettate tutte le
+               richieste, a meno che il nome dell'host remoto non corrisponda
+               a un pattern denyRemoteHost. Il valore predefinito per questa
+               proprietà è il valore nullo.
+
+           denyRemoteHost
+               Lista separata da virgole di pattern di espressioni regolari
+               con cui viene confrontato il nome host del client remoto (come
+               restituito da java.net.Socket.getInetAddress().getHostName() ).
+               Se si specifica questa proprietà, il nome dell'host remoto non
+               deve corrispondere perché la richiesta venga accettata. Se
+               questa proprietà non viene specificata, l'accettazione della
+               richiesta viene controllata esclusivamente dalla proprietà
+               allowRemoteHost. Il valore predefinito per questa proprietà è
+               il valore nullo.
+
+           authRealm
+               Specifica l'attributo name di un elemento auth-realm, il quale
+               sostituisce il realm di autenticazione predefinito dell'istanza
+               server per le applicazioni Web standalone distribuite al server
+               virtuale. Un realm definito nel file web.xml di un'applicazione
+               Web standalone sostituisce il realm del server virtuale.
+
+           securePagesWithPragma
+               Impostare questa proprietà su false per garantire che i
+               download di file tramite SSL funzionino correttamente in
+               Internet Explorer per tutte le applicazioni Web su questo
+               server virtuale.
+
+               È possibile impostare questa proprietà per un'applicazione Web
+               specifica. Per i dettagli, vedere "glassfish-web-app" in Oracle
+               GlassFish Server Application Deployment Guide.
+
+           contextXmlDefault
+               domain-dir del file context.xml per questo server virtuale, se
+               utilizzato. Per ulteriori informazioni sul file context.xml,
+               vedere "Using a context.xml File" in Oracle GlassFish Server
+               Application Development Guide e The Context Container
+               (http://tomcat.apache.org/tomcat-5.5-doc/config/context.html).
+               I parametri di contesto, le voci di ambiente e le definizioni
+               delle risorse in context.xml sono supportati in GlassFish
+               Server.
+
+           alternatedocroot_n
+               Specifica una radice di documenti (docroot) alternativa, dove n
+               è un numero intero positivo che consente di specificarne più di
+               una. Le docroot alternative consentono alle applicazioni Web di
+               eseguire richieste per determinate risorse dall'esterno della
+               rispettiva docroot, sulla base della eventuale corrispondenza
+               tra tali richieste e uno o più pattern URI delle docroot
+               alternative dell'applicazione Web.
+
+               Se una richiesta corrisponde a un pattern URI della docroot
+               alternativa, questa viene mappata alla docroot alternativa
+               mediante l'aggiunta dell'URI della richiesta (senza la radice
+               contesto dell'applicazione Web) alla posizione fisica della
+               docroot alternativa (directory). Se una richiesta corrisponde a
+               più pattern URI, la docroot alternativa viene determinata in
+               base al seguente ordine di priorità:
+
+               ·   Corrispondenza esatta
+
+               ·   Corrispondenza tra percorsi di lunghezza massima
+
+               ·   Corrispondenza tra estensioni
+
+               Ad esempio, le seguenti proprietà definiscono tre docroot
+               alternative. Il pattern URI della prima docroot alternativa
+               utilizza una corrispondenza esatta, mentre i pattern URI della
+               seconda e della terza docroot alternativa utilizzano
+               rispettivamente corrispondenze tra estensioni e prefissi di
+               percorsi di lunghezza massima.
+
+                   <property name="alternatedocroot_1"
+                      value="from=/my.jpg dir=/srv/images/jpg"/>
+                   <property name="alternatedocroot_2"
+                      value="from=*.jpg dir=/srv/images/jpg"/>
+                   <property name="alternatedocroot_3"
+                      value="from=/jpg/* dir=/src/images"/>
+               Il value di ogni docroot alternativa è costituito da due
+               componenti, from, che specifica il pattern URI della docroot
+               alternativa, e dir, che specifica la posizione fisica della
+               docroot alternativa (directory). Nel componente dir è
+               consentito l'uso di spazi.
+
+               È possibile impostare questa proprietà per un'applicazione Web
+               specifica. Per i dettagli, vedere "glassfish-web-app" in Oracle
+               GlassFish Server Application Deployment Guide.
+
+           send-error_n
+               Specifica i mapping di pagine di errore personalizzate per il
+               server virtuale, che sono ereditati da tutte le applicazioni
+               Web distribuite nel server virtuale. Un'applicazione Web può
+               sostituire questi mapping di pagine di errore personalizzate
+               nel rispettivo descrittore di distribuzione web.xml. Il valore
+               di ogni proprietà send-error_n è costituito da tre componenti,
+               che possono essere specificati in qualsiasi ordine.
+
+               Il primo componente, code, specifica il codice dello stato di
+               risposta HTTP a tre cifre in base al quale la pagina di errore
+               personalizzata dovrebbe essere restituita nella risposta.
+
+               Il secondo componente, path, specifica il percorso del file
+               system completo o relativo della pagina di errore
+               personalizzata. Un percorso di file system relativo viene
+               interpretato come relativo rispetto alla directory
+               domain-dir/config.
+
+               Il terzo componente, reason, è facoltativo e specifica il testo
+               della stringa esplicativa (quale Unauthorized o Forbidden) da
+               restituire.
+
+               Ad esempio:
+
+                   <property name="send-error_1"
+                      value="code=401 path=/myhost/401.html reason=MY-401-REASON"/>
+               Questa definizione di proprietà di esempio comporta la
+               restituzione del contenuto di /myhost/401.html con le risposte
+               401 insieme alla riga di risposta seguente:
+
+                   HTTP/1.1 401 MY-401-REASON
+
+           redirect_n
+               Specifica di considerare la richiesta indirizzata a un URL
+               precedente come una richiesta per un nuovo URL. Queste
+               proprietà sono ereditate da tutte le applicazioni Web
+               distribuite nel server virtuale. Il valore di ogni proprietà
+               redirect_n è costituito da due componenti, che possono essere
+               specificati in qualsiasi ordine.
+
+               Il primo componente, from, specifica il prefisso dell'URI
+               richiesto per il quale individuare corrispondenze.
+
+               Il secondo componente, url-prefix, specifica il nuovo prefisso
+               URL da restituire al client. Il prefisso from viene
+               semplicemente sostituito da questo prefisso URL.
+
+               Ad esempio:
+
+                   <property name="redirect_1"
+                   value="from=/dummy url-prefix=http://etude"/>
+
+           valve_n
+               Specifica il nome completamente qualificato di una classe Valve
+               personalizzata, dove n è un numero intero positivo che consente
+               di specificarne più di una. La classe Valve deve implementare
+               l'interfaccia org.apache.catalina.Valve di Tomcat o di release
+               precedenti di GlassFish Server oppure l'interfaccia
+               org.glassfish.web.valve.GlassFishValve della release corrente
+               di GlassFish Server. Ad esempio:
+
+                   <property name="valve_1"
+                      value="org.glassfish.extension.Valve"/>
+               È possibile impostare questa proprietà per un'applicazione Web
+               specifica. Per i dettagli, vedere "glassfish-web-app" in Oracle
+               GlassFish Server Application Deployment Guide.
+
+           listener_n
+               Specifica il nome classe completamente qualificato di un
+               listener Catalina personalizzato, dove n è un numero intero
+               positivo che consente di specificarne più di uno. La classe
+               listener deve implementare l'interfaccia
+               org.apache.catalina.ContainerListener o
+               org.apache.catalina.LifecycleListener. Ad esempio:
+
+                   <property name="listener_1"
+                      value="org.glassfish.extension.MyLifecycleListener"/>
+               È possibile impostare questa proprietà per un'applicazione Web
+               specifica. Per i dettagli, vedere "glassfish-web-app" in Oracle
+               GlassFish Server Application Deployment Guide.
+
+           docroot
+               Il percorso assoluto della directory della radice del documento
+               per il server. Non più valida. Sostituita da un attributo
+               virtual-server, docroot, a cui è possibile accedere utilizzando
+               i comandi secondari get, set e list.
+
+           accesslog
+               Il percorso assoluto dei log degli accessi del server. Non più
+               valida. Sostituita da un attributo virtual-server, access-log,
+               a cui è possibile accedere utilizzando i comandi secondari get,
+               set e list.
+
+           accessLoggingEnabled
+               Se si imposta true, il log degli accessi viene abilitato per il
+               server virtuale. Non più valida. Sostituita da un attributo
+               virtual-server, access-logging-enabled, a cui è possibile
+               accedere utilizzando i comandi secondari get, set e list.
+
+           sso-enabled
+               Se si imposta true, la connessione SSO viene abilitata per le
+               applicazioni Web nel server virtuale configurate per lo stesso
+               realm di autenticazione. Non più valida. Sostituita da un
+               attributo virtual-server, sso-enabled, a cui è possibile
+               accedere utilizzando i comandi secondari get, set e list.
+
+           ssoCookieSecure
+               Imposta l'attributo Secure di qualsiasi cookie JSESSIONIDSSO
+               associato alle applicazioni Web distribuite in questo server
+               virtuale. Non più valida. Sostituita da un attributo
+               virtual-server, sso-cookie-secure, a cui è possibile accedere
+               utilizzando i comandi secondari get, set e list.
+
+           errorReportValve
+               Specifica il nome completamente qualificato di una classe Valve
+               personalizzata che elabora pagine di errore predefinite per
+               applicazioni in questo server virtuale. Specificare una stringa
+               vuota per disabilitare la modalità di elaborazione di pagine di
+               errore predefinite per questo server virtuale.
+
+       --target
+           Crea il server virtuale solo nella destinazione specificata. Di
+           seguito sono riportati i valori validi.
+
+           server
+               Crea il server virtuale per l'istanza server predefinita.
+               Questo è il valore predefinito.
+
+           configuration-name
+               Crea il server virtuale nella configurazione specifica.
+
+           cluster-name
+               Crea il server virtuale di tutte le istanze server nel cluster
+               specificato.
+
+           standalone-instance-name
+               Crea il server virtuale per l'istanza server standalone
+               predefinita.
+
+OPERANDI
+       virtual-server-id
+           Indica l'ID univoco del server virtuale da creare. L'ID non può
+           iniziare con un numero.
+
+ESEMPI
+       Esempio 1, Creazione di un server virtuale
+           Il comando seguente crea il server virtuale denominato
+           sampleServer:
+
+               asadmin> create-virtual-server --hosts pigeon,localhost
+               --property authRealm=ldap sampleServer
+               Command create-virtual-server executed successfully.
+
+STATO DI USCITA
+       0
+           esecuzione del comando riuscita
+
+       1
+           errore durante l'esecuzione del comando
+
+VEDERE ANCHE
+       delete-virtual-server(1), list-virtual-servers(1),
+       create-http-listener(1), create-network-listener(1)
+
+       get(1), list(1), set(1)
+
+       asadmin(1M)
+
+Java EE 7                      11 febbraio 2011       create-virtual-server(1)

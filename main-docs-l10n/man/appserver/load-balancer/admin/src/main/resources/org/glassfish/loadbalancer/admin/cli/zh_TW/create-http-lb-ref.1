@@ -1,0 +1,146 @@
+create-http-lb-ref(1)       asadmin 公用程式子命令       create-http-lb-ref(1)
+
+參考名
+       create-http-lb-ref -
+       將現有的叢集或伺服器執行處理，新增至現有的負載平衡程式組態或負載平衡程式
+
+概要
+           create-http-lb-ref [--help] --config config_name | --lbname load_balancer_name
+           [--lbpolicy round-robin] [--lbpolicymodule lb_policy_module]
+           [--healthcheckerurl url] [--healthcheckerinterval 10]
+           [--healthcheckertimeout 10] [--lbenableallinstances=true]
+           [--lbenableallapplications=true] [--lbweight instance=weight[:instance=weight]*]
+           target
+
+描述
+       使用 create-http-lb-ref 子命令來：
+
+       ·   將現有的叢集或伺服器執行處理，新增至現有的負載平衡程式組態或負載平衡程式。負載平衡程式會將請求轉寄至其參照的叢集執行處理和獨立執行處理。
+
+       ·   將負載平衡原則設定為循環、加權循環或使用者定義的原則。
+
+       ·   為負載平衡程式組態運作狀態檢查程式。任何在這裡定義的運作狀態檢查程式設定都只會套用至目標。如果您不使用這個子命令來建立運作狀態檢查程式，請使用
+           create-http-health-checker。
+
+       ·   啟用目標叢集中的所有執行處理以進行負載平衡，或使用
+           enable-http-lb-server 來個別啟用它們。
+
+       ·   啟用所有建置至目標的應用程式以進行負載平衡，或使用
+           enable-http-lb-application 來個別啟用它們。
+
+           注意
+           ┌────────────────────────────────────────┐
+           │備註                                    │
+           │                                        │
+           │           此子命令僅適用於 Oracle      │
+           │           GlassFish                    │
+           │           Server。此子命令不適用於     │
+           │           GlassFish Server Open Source │
+           │           Edition。                    │
+           └────────────────────────────────────────┘
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --config
+           指定叢集和伺服器執行處理要新增到哪一個負載平衡程式組態。指定負載平衡程式組態或負載平衡程式。同時指定兩者會導致錯誤。
+
+       --lbname
+           指定叢集和伺服器執行處理要新增到的負載平衡程式。指定負載平衡程式組態或負載平衡程式。同時指定兩者會導致錯誤。
+
+       --lbpolicy
+           負載平衡程式遵循的原則。有效值為 round-robin、weighted-round-robin
+           和 user-defined。如果您選擇 user-defined，請使用 lbpolicymodule
+           選項指定負載平衡程式原則模組。如果您選擇
+           weighted-round-robin，請使用 configure-lb-weight
+           子命令將加權指定給伺服器執行處理。預設值為 round-robin。
+
+       --lbpolicymodule
+           如果負載平衡程式原則為
+           user-defined，請使用此選項來指定負載平衡程式原則模組之共用程式庫的完整路徑和名稱。共用程式庫必須在
+           Web 伺服器可以存取的位置中。
+
+       --healthcheckerurl
+           以 ping 偵測的 URL 決定執行處理的運作狀態是否正常。
+
+       --healthcheckerinterval
+           運作狀態檢查程式等待檢查運作異常的執行處理，以瞭解其是否變為正常之間的間隔
+           (以秒為單位)。預設值為 30 秒。值為 0 會停用運作狀態檢查程式。
+
+       --healthcheckertimeout
+           運作狀態檢查程式等待接收來自執行處理之回應的間隔
+           (以秒為單位)。如果運作狀態檢查程式在該間隔內未收到回應，則認為執行處理的運作出現問題。預設值為
+           10。
+
+       --lbenableallinstances
+           啟用目標叢集中的所有執行處理，以進行負載平衡。如果目標為伺服器執行處理，請啟用該執行處理以進行負載平衡。預設值為
+           true。
+
+       --lbenableallapplications
+           啟用所有建置至目標叢集或執行處理的應用程式，以進行負載平衡。預設值為
+           true。
+
+       --lbweight
+           執行處理名稱及您所指派的加權。加權必須是整數。執行處理和加權組由冒號分隔。例如，instance1=1:instance2=4
+           代表在每 5 項請求中，其中 1 個請求傳送到 instance1，而其他 4
+           個則傳送到 instance2。比重權值 1 是預設值。
+
+運算元
+       target
+           指定哪個叢集或執行處理要新增至負載平衡程式。有效值包括
+
+           ·   cluster_name - 指定此叢集的請求將由負載平衡程式處理。
+
+           ·   stand-alone_instance_name -
+               指定此獨立執行處理的請求將由負載平衡程式處理。
+
+範例
+       範例 1, 將叢集參照增加至負載平衡程式組態
+           此範例會將名稱為 cluster2 之叢集的參照新增至名為 mylbconfig
+           的負載平衡程式組態。
+
+               asadmin> create-http-lb-ref --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       範例 2, 將叢集參照增加至負載平衡程式
+           此範例會將名稱為 cluster2 之叢集的參照新增至名為 mylb
+           的負載平衡程式。
+
+               asadmin> create-http-lb-ref --lbname mylb cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       範例 3, 組態運作狀態檢查程式和負載平衡程式策略
+           此範例會組態運作狀態檢查程式和負載平衡原則，並針對執行處理和應用程式啟用負載平衡程式。
+
+               asadmin> create-http-lb-ref --config mylbconfig --lbpolicy weighted-round-robin
+               --healthcheckerinterval 40 --healthcheckertimeout 20
+               --lbenableallinstances=true --lbenableallapplications=true cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       範例 4, 設定使用者定義的負載平衡策略
+           此範例會設定使用者定義的負載平衡原則。
+
+               asadmin> create-http-lb-ref --lbpolicy user-defined --lbpolicymodule /user/modules/module.so
+               --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+結束狀態
+       0
+           已成功執行子命令
+
+       1
+           執行子命令時發生錯誤
+
+另請參閱
+       delete-http-lb-ref(1), create-http-health-checker(1),
+       enable-http-lb-server(1), enable-http-lb-application(1),
+       list-http-lb-configs(1), list-http-lbs(1) configure-lb-weight(1)
+
+       asadmin(1M)
+
+Java EE 7                     2010 年 8 月 25 日         create-http-lb-ref(1)

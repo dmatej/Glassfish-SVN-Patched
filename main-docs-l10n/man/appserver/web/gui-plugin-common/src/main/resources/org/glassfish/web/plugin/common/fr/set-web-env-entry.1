@@ -1,0 +1,172 @@
+set-web-env-entry(1)    Sous-commandes de l'utilitaire    set-web-env-entry(1)
+
+NOM
+       set-web-env-entry - définit une entrée d'environnement pour une
+       application Web ou un module Web déployé
+
+SYNTAXE
+           set-web-env-entry [--help]
+           --name=env-entry-name --type=env-entry-type
+           {--value=value|--ignoredescriptoritem={true|false}}
+           [--description=description] application-name[/module]
+
+DESCRIPTION
+       La sous-commande set-web-env-entry définit une entrée d'environnement
+       de l'un des éléments suivants :
+
+       ·   Une application Web déployée
+
+       ·   Un module Web dans une application Java Platform, Enterprise
+           Edition (Java EE) déployée
+
+       L'application doit déjà être déployée. Sinon, une erreur survient.
+
+       Une application utilise les valeurs des entrées d'environnement pour
+       personnaliser son comportement ou sa présentation.
+
+       Cette sous-commande permet de modifier la configuration d'une
+       application déployée, sans qu'il soit nécessaire de modifier les
+       descripteurs de déploiement de l'application ni de repackager et
+       redéployer l'application.
+
+       Cette sous-commande est prise en charge en mode distant uniquement.
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --name
+           Nom de l'entrée d'environnement à définir. Il s'agit d'un nom JNDI
+           relatif au contexte java:comp/env. Il doit être unique au sein d'un
+           composant de déploiement.
+
+       --type
+           Type Java qualifié complet de la valeur d'entrée d'environnement
+           qui est attendue par le code de l'application. Il doit s'agir de
+           l'un des types Java suivants :
+
+           ·   java.lang.Boolean
+
+           ·   java.lang.Byte
+
+           ·   java.lang.Character
+
+           ·   java.lang.Double
+
+           ·   java.lang.Float
+
+           ·   java.lang.Integer
+
+           ·   java.lang.Long
+
+           ·   java.lang.Short
+
+           ·   java.lang.String
+
+       --value
+           Valeur à attribuer à l'entrée d'environnement. Si l'option --type
+           est définie sur java.lang.Character, la valeur doit être un
+           caractère unique. Sinon, la valeur doit être une chaîne valide pour
+           le constructeur du type spécifié.
+
+           Vous devez définir l'option --value ou l'option
+           --ignoredescriptoritem.
+
+       --ignoredescriptoritem
+           Indique si l'entrée d'environnement est ignorée lorsqu'elle est
+           définie dans le descripteur de déploiement de l'application.
+           Lorsqu'une entrée d'environnement est ignorée, l'application se
+           comporte comme si l'entrée n'avait jamais été définie dans le
+           descripteur de déploiement de l'application. Le comportement d'une
+           application dans cette situation dépend de l'application elle-même.
+
+           Les valeurs possibles sont les suivantes :
+
+           false
+               La valeur n'est pas ignorée (par défaut).
+
+           true
+               La valeur est ignorée.
+
+           Vous devez définir l'option --value ou l'option
+           --ignoredescriptoritem.
+
+               Note
+               ┌────────────────────────────────────────┐
+               │Remarque N'utilisez pas l'option        │
+               │--ignoredescriptoritem pour annuler la  │
+               │définition d'une entrée d'environnement │
+               │qui a déjà été configurée à l'aide de   │
+               │la sous-commande set-web-env-entry.     │
+               │Utilisez plutôt la sous-commande        │
+               │unset-web-env-entry(1) à cette fin.     │
+               └────────────────────────────────────────┘
+
+       --description
+           Description facultative de l'entrée d'environnement à définir.
+
+OPÉRANDES
+       application-name
+           Nom de l'application. Ce nom peut être obtenu à partir de la
+           Console d'administration ou à l'aide de la sous-commande
+           list-applications(1).
+
+           L'application doit déjà être déployée. Sinon, une erreur survient.
+
+       module
+           Chemin relatif du module dans le fichier EAR de l'application. Le
+           chemin du module est spécifié dans l'élément module du fichier
+           application.xml de l'application.
+
+           L'élément module est requis uniquement si l'entrée d'environnement
+           s'applique à un module Web d'une application Java EE. S'il est
+           spécifié, l'élément module doit suivre application-name et en être
+           séparé par une barre oblique (/).
+
+           Par exemple, le fichier application.xml de l'application myApp peut
+           spécifier le module Web suivant :
+
+               <module>
+                   <web>
+                       <web-uri>myWebModule.war</web-uri>
+                   </web>
+               </module>
+           Le module doit être spécifié en tant qu'opérande de cette commande
+           comme myApp/myWebModule.war.
+
+EXEMPLES
+       Exemple 1, Définition d'une entrée d'environnement pour une application
+       Web
+           Dans cet exemple, l'entrée d'environnement Hello User de
+           l'application hello est définie sur techscribe. Le type Java de
+           cette entrée est java.lang.String.
+
+               asadmin> set-web-env-entry --name="Hello User"
+               --type=java.lang.String --value=techscribe
+               --description="User authentication for Hello appplication" hello
+
+               Command set-web-env-entry executed successfully.
+
+       Exemple 2, Non-prise en compte d'une entrée d'environnement définie
+       dans un descripteur de déploiement
+           Dans cet exemple, l'entrée d'environnement Hello Port de
+           l'application Web hello est ignorée.
+
+               asadmin> set-web-env-entry --name="Hello Port"
+               --type=java.lang.Integer --ignoredescriptoritem=true hello
+
+               Command set-web-env-entry executed successfully.
+
+STATUT DE SORTIE
+       0
+           commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la commande
+
+VOIR AUSSI
+       list-applications(1), list-web-env-entry(1), unset-web-env-entry(1)
+
+       asadmin(1M)
+
+Java EE 7                        15 juin 2011             set-web-env-entry(1)

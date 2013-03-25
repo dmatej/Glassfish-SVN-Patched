@@ -1,0 +1,240 @@
+create-service(1)           asadmin 实用程序子命令           create-service(1)
+
+名称
+       create-service - 配置在无人值守引导时启动 DAS 或 GlassFish Server 实例
+
+提要
+           create-service [--help] [--name service-name]
+           [--serviceproperties service-properties]
+           [--dry-run={false|true}] [--force={false|true}]
+           [--serviceuser service-user]
+           [--domaindir domain-dir]
+           [--nodedir node-dir] [--node node]
+           [domain-or-instance-name]
+
+说明
+       create-service 子命令配置在 Windows、Linux 和 Oracle Solaris
+       系统中无人参与引导时启动域管理服务器 (DAS) 或 GlassFish Server 实例。
+
+       如果未指定操作数且域目录仅包含一个域，该子命令将配置启动默认域的
+       DAS。如果未指定操作数且域目录包含多个域，将会出现错误。
+
+       如果操作数指定一个实例，则 create-service 子命令不会联系域管理服务器
+       (DAS)
+       来确定该实例所在的节点。为了确定该实例所在的节点，该子命令将搜索包含节点目录的目录。如果存在多个节点目录，必须将相应节点指定为该子命令的一个选项。
+
+       该子命令包含内部逻辑，用以确定提供的操作数是 DAS 还是实例。
+
+       该子命令仅在本地模式下受支持。
+
+   Windows 系统中 create-service 的行为
+       在 Windows 系统中，create-service 子命令创建一个代表 DAS 或实例的
+       Windows
+       服务。该服务在创建后处于禁用状态。在此子命令创建该服务后，您必须使用
+       Windows 服务管理器或 Windows Services Wrapper
+       启动、停止、卸载或安装该服务。
+
+       在 Windows 系统中，必须以操作系统级管理员用户身份运行该子命令。
+
+       此子命令在 domain-dir\bin 目录或 instance-dir\bin
+       目录中为该服务创建下列 Windows Services Wrapper 文件：
+
+       ·   配置文件：service-nameService.xml
+
+       ·   可执行文件：service-nameService.exe
+
+       在 Windows 系统中，该子命令需要 Microsoft .NET Framework
+       。否则，该子命令将失败。
+
+   Linux 系统中 create-service 的行为
+       在 Linux 系统上，create-service 子命令创建系统 V 样式的初始化脚本
+       /etc/init.d/GlassFish_domain-or-instance-name，并在 /etc/rc?.d
+       目录中安装该脚本的链接。在此子命令创建该脚本后，您必须使用该脚本启动、停止或重新启动域或实例。
+
+       在 Linux 系统中，必须以操作系统级 root 用户身份运行该子命令。
+
+   Oracle Solaris 系统中 create-service 的行为
+       在 Oracle Solaris 系统中，create-service 子命令创建一个代表 DAS
+       或实例的服务管理工具 (SMF)
+       服务。该服务在创建后处于禁用状态。在此子命令创建该服务后，您必须使用
+       SMF 命令启动、启用、禁用、删除或停止该服务。有关 SMF 的详细信息，请参阅
+       Oracle Solaris 操作系统的以下文档：
+
+       ·   System Administration Guide: Basic Administration 中的 Managing
+           Services (Overview)
+
+       ·   System Administration Guide: Basic Administration 中的 Managing
+           Services (Tasks)
+
+       在 Oracle Solaris
+       系统中，必须以具有超级用户权限的操作系统级用户身份运行该子命令。DAS
+       或实例的配置文件必须存储在超级用户有权访问的目录中，不能存储在网络文件系统中。创建的服务由拥有
+       DAS 或实例配置所在目录的操作系统级用户控制。
+
+       在 Oracle Solaris 系统上，默认情况下将在以下目录中创建清单文件：
+
+           /var/svc/manifest/application/GlassFish/domain-or-instance-name_domain-or-instance-root-dir
+
+       要运行此子命令，您必须具有 solaris.smf.*
+       授权。有关如何授予用户权限的信息，请参阅 useradd(1M) 和 usermod(1M)
+       手册页。
+
+       要以非 root
+       用户身份运行这些命令，必须联系系统管理员，以便获得相关授权。还必须确保满足下列条件：
+
+       ·   通过 PATH 语句可使用 Oracle Solaris 10 管理命令 (例如
+           svccfg(1M)、svcs(1) 和
+           auths(1))，因此可以执行这些命令。为此，可以进行一项简单的测试，即在
+           shell 中运行命令 which svccfg。
+
+       ·   您必须具有对路径 /var/svc/manifest/application/GlassFish
+           的写权限。通常，超级用户对该路径具有写权限。
+
+       如果您删除使用 create-service
+       子命令创建的服务，您必须删除包含清单文件的目录以及该目录的全部内容。否则，尝试使用
+       create-service 子命令重新创建该服务将失败。Oracle Solaris 命令 svccfg
+       不
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --name
+           (仅限 Windows 和 Oracle Solaris 系统) 通过 Oracle Solaris SMF
+           命令或 Windows
+           操作系统的服务管理功能管理服务时将使用的服务名称。默认值是指定为此子命令的操作数的域或实例名称。
+
+       --serviceproperties
+           指定特定于服务的各种属性的冒号 (:) 分隔列表。
+
+           要定制 Windows 服务列表中服务的显示名，请将 DISPLAY_NAME
+           属性设置为所需名称。
+
+           对于 Oracle Solaris 10 系统，如果指定
+           net_privaddr，服务的进程将可以绑定到平台上的授权端口
+           (<1024)。仅当服务的所有者是超级用户时，才可以绑定到端口
+           <1024，否则不允许此操作。
+
+       --dry-run, -n
+           预览您尝试创建的服务。指示如果不使用 --dry-run
+           选项运行此命令将出现的问题和结果。实际上未配置任何内容。默认值为“假”。
+
+       --force
+           指定即使服务验证失败，是否仍创建服务。
+
+           可能的值如下：
+
+           真
+               即使服务验证失败，仍创建服务。
+
+           假
+               不创建服务 (默认值)。
+
+       --serviceuser
+           (仅限 Linux 系统) 启动服务时运行 GlassFish Server
+           软件的用户。默认值为正在运行该子命令的用户。如果 GlassFish Server
+           软件由 root 用户之外的用户运行，请指定此选项。
+
+       --domaindir
+           包含域配置的目录在磁盘中的绝对路径。如果指定该选项，则操作数必须指定一个域。
+
+       --nodedir
+           指定包含该实例的节点目录的目录。该实例的文件存储在实例的节点目录中。默认值为
+           as-install/nodes。如果指定该选项，则操作数必须指定一个实例。
+
+       --node
+           指定该实例所在的节点。只有当 --nodedir
+           选项指定的目录仅包含一个节点目录时，才能忽略此选项。否则，该选项是必需的。如果指定该选项，则操作数必须指定一个实例。
+
+操作数
+       domain-or-instance-name
+           要配置的域或实例的名称。如果未指定任何操作数，则使用默认域。
+
+示例
+       Example 1, 在 Windows 系统中创建服务
+           此示例为运行 Windows 的系统中的默认域创建服务。
+
+               asadmin> create-service
+               Found the Windows Service and successfully uninstalled it.
+               The Windows Service was created successfully.  It is ready to be started.  Here are
+               the details:
+               ID of the service: domain1
+               Display Name of the service:domain1 GlassFish Server
+               Domain Directory: C:\glassfish3\glassfish\domains\domain1
+               Configuration file for Windows Services Wrapper: C:\glassfish3\glassfish\domains\
+               domain1\bin\domain1Service.xml
+               The service can be controlled using the Windows Services Manager or you can use the
+               Windows Services Wrapper instead:
+               Start Command:  C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe  start
+               Stop Command:   C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe  stop
+               Uninstall Command:  C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe
+               uninstall
+               Install Command:  C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe
+               install
+
+               This message is also available in a file named PlatformServices.log in the domain's
+               root directory
+               Command create-service executed successfully.
+
+       Example 2, 在 Linux 系统中创建服务
+           此示例为运行 Linux 的系统中的默认域创建服务。
+
+               asadmin> create-service
+               Found the Linux Service and successfully uninstalled it.
+               The Service was created successfully. Here are the details:
+               Name of the service:domain1
+               Type of the service:Domain
+               Configuration location of the service:/etc/init.d/GlassFish_domain1
+               User account that will run the service: root
+               You have created the service but you need to start it yourself.
+               Here are the most typical Linux commands of interest:
+
+               * /etc/init.d/GlassFish_domain1 start
+               * /etc/init.d/GlassFish_domain1 stop
+               * /etc/init.d/GlassFish_domain1 restart
+
+               For your convenience this message has also been saved to this file:
+               /export/glassfish3/glassfish/domains/domain1/PlatformServices.log
+               Command create-service executed successfully.
+
+       Example 3, 在 Oracle Solaris 系统中创建服务
+           此示例为运行 Oracle Solaris 的系统中的默认域创建服务。
+
+               asadmin> create-service
+               The Service was created successfully. Here are the details:
+               Name of the service:application/GlassFish/domain1
+               Type of the service:Domain
+               Configuration location of the service:/home/gfuser/glassfish-installations
+               /glassfish3/glassfish/domains
+               Manifest file location on the system:/var/svc/manifest/application
+               /GlassFish/domain1_home_gfuser_glassfish-installations_glassfish3
+               _glassfish_domains/Domain-service-smf.xml.
+               You have created the service but you need to start it yourself.
+               Here are the most typical Solaris commands of interest:
+               * /usr/bin/svcs -a | grep domain1 // status
+               * /usr/sbin/svcadm enable domain1 // start
+               * /usr/sbin/svcadm disable domain1 // stop
+               * /usr/sbin/svccfg delete domain1 // uninstall
+               Command create-service executed successfully.
+
+退出状态
+       0
+           已成功执行子命令
+
+       1
+           执行子命令时出现错误
+
+另请参阅
+       asadmin(1M)
+
+       auths(1)、svcs(1)
+
+       svccfg(1M)、useradd(1M)、usermod(1M)
+
+       System Administration Guide: Basic Administration 中的 Managing
+       Services (Overview)、System Administration Guide: Basic Administration
+       中的 Managing Services (Tasks)
+
+       Microsoft .NET Framework (http://www.microsoft.com/net/)
+
+Java EE 7                     2011 年 12 月 8 日             create-service(1)

@@ -1,0 +1,196 @@
+update-node-ssh(1)      Subcomandos de la Utilidad asa      update-node-ssh(1)
+
+NOMBRE DE REFERENCIA
+       update-node-ssh - actualiza los datos de configuración de un nodo.
+
+SINOPSIS
+           update-node-ssh [--help]
+           [--nodehost node-host]
+           [--installdir as-install-parent] [--nodedir node-dir]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile]
+           [--force={false|true}]
+           node-name
+
+DESCRIPCIÓN
+       El subcomando update-node-ssh actualiza los datos de configuración de
+       un nodo. Este subcomando requiere que se configure Secure Shell (SSH)
+       en el equipo en el que se ejecuta el servidor de administración de
+       dominio (DAS) y en los equipos en los que reside el nodo. Puede
+       ejecutar este subcomando desde cualquier máquina que pueda establecer
+       contacto con el DAS.
+
+       Este subcomando puede actualizar cualquier nodo, con independencia de
+       si está activado o no para comunicación remota. Si el nodo no está
+       activado para comunicación remota, el subcomando le activa una
+       comunicación SSH y actualiza cualquier otro dato de configuración
+       especificado.
+
+       Las opciones de este subcomando sirven para especificar los nuevos
+       valores de los datos de configuración del nodo. El valor por defecto
+       para la mayoría de las opciones es dejar el valor existente sin
+       cambios. Sin embargo, si este subcomando se ejecuta para activar la
+       comunicación SSH de un nodo, los valores por defecto se aplican si se
+       omite cualquiera de las siguientes opciones:
+
+       ·   --sshport
+
+       ·   --sshuser
+
+       ·   --sshkeyfile
+
+       Por defecto, el subcomando da error y el nodo no se actualiza si el DAS
+       no puede ponerse en contacto con el host del nodo a través de SSH. Para
+       forzar la actualización del nodo incluso si no es posible establecer
+       contacto con él mediante SSH, defina la opción --force como true.
+
+       Este subcomando sólo está soportado en modo remoto.
+
+OPCIONES
+       --help, -?
+           Muestra el texto de ayuda para el subcomando.
+
+       --nodehost
+           Nombre del host que va a representar el nodo después de
+           actualizarse.
+
+       --installdir
+           La ruta de acceso completa al principal del directorio base de
+           instalación del software GlassFish Server en el host, por ejemplo
+           /export/glassfish3/.
+
+       --nodedir
+           Ruta de acceso al directorio que va a contener las instancias de
+           GlassFish Server que se crean en el nodo. Si se especifica una ruta
+           de acceso relativa, la ruta de acceso es relativa con respecto al
+           directorio as-install, donde as-install es el directorio base de
+           instalación del software GlassFish Server en el host.
+
+       --sshport
+           Puerto que se usará para las conexiones SSH con el host de este
+           nodo. El valor por defecto depende de si este subcomando se ejecuta
+           para activar la comunicación SSH del nodo:
+
+           ·   Si el nodo ya tiene activada la comunicación a través de SSH,
+               el valor por defecto es dejar el puerto sin cambios.
+
+           ·   Si este subcomando se ejecuta para activar la comunicación SSH
+               del nodo, el puerto por defecto es 22.
+
+           Si la opción --nodehost se define como localhost, se hace caso
+           omiso de la opción --sshport.
+
+       --sshuser
+           Usuario del host de este nodo que va a ejecutar el proceso para
+           conectarse al host a través de SSH. El valor por defecto depende de
+           si este subcomando se ejecuta para activar la comunicación SSH del
+           nodo:
+
+           ·   Si el nodo ya tiene activada la comunicación a través de SSH,
+               el valor por defecto es no hacer cambios en el usuario.
+
+           ·   Si este subcomando se ejecuta para activar la comunicación SSH
+               del nodo, el valor por defecto es el usuario que está
+               ejecutando el proceso del DAS.
+
+           Si la opción --nodehost se define como localhost, se hace caso
+           omiso de la opción --sshuser.
+
+       --sshkeyfile
+           Ruta de acceso absoluta al archivo de claves privadas SSH para el
+           usuario especificado en la opción --sshuser. Este archivo se
+           utiliza para la autenticación en el daemon
+            sshd en el host del nodo.
+
+               Nota
+               ┌───────────────────────────────────────┐
+               │Nota GlassFish Server también soporta  │
+               │la autenticación con contraseña a      │
+               │través de la entrada                   │
+               │AS_ADMIN_SSHPASSWORD en el archivo de  │
+               │contraseñas. El archivo de contraseñas │
+               │se especifica en la opción             │
+               │--paswordfile de la utilidad           │
+               │asadmin(1M).                           │
+               └───────────────────────────────────────┘
+           Si el archivo de claves privadas SSH se protege con una contraseña,
+           el archivo de contraseñas debe contener la entrada
+           AS_ADMIN_SSHKEYPASSPHRASE.
+
+           La ruta de acceso al archivo de claves debe ser accesible al DAS y
+           el archivo de claves debe ser legible para el DAS.
+
+           El valor por defecto depende de si este subcomando se ejecuta para
+           activar la comunicación SSH del nodo:
+
+           ·   Si el nodo ya tiene activada la comunicación a través de SSH,
+               el valor por defecto es dejar el archivo clave sin cambios.
+
+           ·   Si este subcomando se ejecuta para activar la comunicación SSH
+               del nodo, el valor por defecto es un archivo de claves del
+               directorio .ssh del usuario. Si se encuentran varios archivos
+               de claves, el subcomando utiliza el siguiente orden de
+               preferencia:
+
+                1. id_rsa
+
+                2. id_dsa
+
+                3. identity
+
+       --force
+           Especifica si el nodo se actualiza, incluso si falla la validación
+           de los parámetros del nodo. Para validar los parámetros de un nodo,
+           DAS debe poder establecer contacto con el host del nodo a través de
+           SSH. Los valores posibles son los siguientes:
+
+           false
+               El nodo no se actualiza en caso de error en la validación de
+               los parámetros del nodo (valor por defecto).
+
+           true
+               El nodo se actualiza, aunque haya un error en la validación de
+               los parámetros.
+
+OPERANDOS
+       node-name
+           El nombre del nodo a actualizar. El nodo debe existir. De lo
+           contrario, se produce un error.
+
+EJEMPLOS
+       Ejemplo 1, Cómo Actualizar el Host que Representa un Nodo
+           En este ejemplo se actualiza el host que representa el nodo lssh a
+           sj04.
+
+               asadmin> update-node-ssh --nodehost sj04 lssh
+               Command update-node-ssh executed successfully.
+
+       Ejemplo 2, Actualización Forzada de un Nodo
+           En este ejemplo, se fuerza la actualización del nodo sj01 para
+           activarlo para la comunicación a través de SSH.
+
+               asadmin> update-node-ssh --force sj01
+               Warning: some parameters appear to be invalid.
+               Could not connect to host sj01 using SSH.
+               Could not authenticate. Tried authenticating with specified key at
+               /home/gfuser/.ssh/id_rsa
+               Continuing with node update due to use of --force.
+               Command update-node-ssh executed successfully.
+
+ESTADO DE SALIDA
+       0
+           Comando ejecutado correctamente
+
+       1
+           Error al ejecutar el comando
+
+CONSULTE TAMBIÉN
+       create-node-dcom(1), create-node-config(1), create-node-ssh(1),
+       delete-node-config(1), delete-node-dcom(1), delete-node-ssh(1),
+       install-node(1), install-node-dcom(1), install-node-ssh(1),
+       list-nodes(1), uninstall-node(1), uninstall-node-dcom(1),
+       uninstall-node-ssh(1), update-node-config(1), update-node-dcom(1)
+
+       asadmin(1M)
+
+Java EE 7                   8 de diciembre de 2011          update-node-ssh(1)

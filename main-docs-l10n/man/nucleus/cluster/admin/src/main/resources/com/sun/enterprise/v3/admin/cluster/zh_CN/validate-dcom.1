@@ -1,0 +1,140 @@
+validate-dcom(1)            asadmin 实用程序子命令            validate-dcom(1)
+
+名称
+       validate-dcom - 测试通过 DCOM 与远程主机的连接
+
+提要
+           validate-dcom [--help]
+           [--windowsuser windows-user] [--windowsdomain windows-domain]
+           [--remotetestdir remote-test-directory]
+           [--verbose={false|true}] host-name
+
+说明
+       validate-dcom 子命令可测试通过分布式组件对象模型 (DCOM)
+       远程协议与指定为子命令操作数的远程主机的连接。DCOM 协议仅在 Windows
+       系统上可用。
+
+       运行该子命令的先决条件如下所示：
+
+       ·   必须在运行域管理服务器 (DAS)
+           的主机以及指定为子命令操作数的远程主机上配置 DCOM。
+
+       ·   远程主机上的以下端口必须打开：
+
+           ·   DCOM 端口 135 或 139
+
+           ·   Windows Shares 端口 445
+
+       ·   远程主机上启用了服务器 Windows 服务。
+
+       此子命令将验证是否满足创建 DCOM 节点或在 DCOM 节点上创建 GlassFish
+       Server 实例的先决条件。如果此子命令失败，任何创建 DCOM 节点或在 DCOM
+       节点上创建实例的尝试也将失败。
+
+       可以从任何可联系 DAS 的计算机运行此命令。
+
+       该子命令通过在远程主机上执行以下操作来测试通过 DCOM 与远程主机的连接：
+
+       ·   解析主机名
+
+       ·   通过端口 135 或 139 连接到 DCOM
+
+       ·   通过端口 445 连接到 Windows Shares
+
+       ·   复制由 --remotetestdir 选项指定的文件夹中名为 delete_me.bat 的脚本
+
+       ·   运行脚本以获取写入了 delete_me.bat 的文件夹列表
+
+       默认情况下，此子命令不显示有关对远程主机连接所执行测试的操作信息。要显示有关这些操作的信息，请将
+       --verbose 选项设置为真
+
+       该子命令仅在远程模式下受支持。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --windowsuser, -w
+           远程主机上将运行该进程以通过 DCOM
+           连接到此主机的用户。默认值为正在运行 DAS 进程的用户。
+
+       --windowsdomain, -d
+           包含 --windowsuser 选项所指定用户的 Windows
+           域的名称。默认为运行此子命令的主机的名称。
+
+       --remotetestdir
+           指定远程主机上子命令将在其中创建 delete_me.bat
+           文件的文件夹。--windowsuser
+           选项指定的用户必须具有对此文件夹的写权限。否则，会出现错误。默认值为
+           C:\
+
+       --verbose, -v
+           指定此子命令是否显示有关对远程主机连接所执行测试的操作信息。
+
+           可能的值如下：
+
+           假
+               不显示有关对连接所执行测试的操作信息 (默认值)。
+
+           真
+               此子命令显示有关对连接所执行测试的操作信息。
+
+               如果 --verbose 选项设置为“真”且设置了 AS_DEBUG
+               环境变量，则此子命令还将显示远程主机上正在运行的每个进程的命令行。
+
+操作数
+       host-name
+           测试通过 DCOM 进行连接的主机的名称。
+
+示例
+       Example 1, 测试通过 DCOM 与远程主机的连接
+           该示例测试通过 DCOM 与主机 wpmdl2 的连接。
+
+               asadmin> validate-dcom --wpmdl2
+               Command validate-dcom executed successfully.
+
+       Example 2, 详细测试通过 DCOM 与远程主机的连接
+           此示例测试通过 DCOM 与主机 wpmdl2
+           的连接，并将显示对远程主机连接所执行测试的操作信息。
+
+               asadmin> validate-dcom --verbose wpmdl2
+
+               Successfully resolved host name to: wpmdl2/192.168.122.106
+               Successfully connected to DCOM Port at port 135 on host wpmdl2.
+               Successfully connected to NetBIOS Session Service at port 139 on host wpmdl2.
+               Successfully connected to Windows Shares at port 445 on host wpmdl2.
+               Successfully accessed C: on wpmdl2 using DCOM.
+               Successfully wrote delete_me.bat to C: on wpmdl2 using DCOM.
+               Successfully accessed WMI (Windows Management Interface) on wpmdl2. There are 40
+               processes running on wpmdl2.
+               Successfully ran the test script on wpmdl2 using DCOM.
+               The script simply ran the DIR command. Here are the first few lines from the
+               output of the dir command on the remote machine:
+
+               C:\Windows\system32>dir C:\
+                Volume in drive C has no label.
+                Volume Serial Number is XXXX-XXX
+
+                Directory of C:\
+
+               12/05/2011  10:21 AM                63 .asadminpass
+               02/15/2011  01:08 PM    <DIR>          aroot
+               12/05/2011  04:43 PM                 8 delete_me.bat
+               03/03/2011  10:36 AM    <DIR>          export
+
+               Command validate-dcom executed successfully.
+
+退出状态
+       0
+           已成功执行命令
+
+       1
+           执行命令时出现错误
+
+另请参阅
+       create-node-dcom(1), delete-node-dcom(1), list-nodes(1),
+       ping-node-dcom(1), update-node-dcom(1)
+
+       asadmin(1M)
+
+Java EE 7                      2012 年 1 月 5 日              validate-dcom(1)

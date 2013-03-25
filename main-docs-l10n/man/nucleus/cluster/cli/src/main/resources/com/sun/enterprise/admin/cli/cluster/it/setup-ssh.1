@@ -1,0 +1,253 @@
+setup-ssh(1)            Comandi secondari della utilit            setup-ssh(1)
+
+NOME
+       setup-ssh - imposta una chiave SSH sugli host specificati
+
+SINTASSI
+           setup-ssh [--help]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile] [--sshpublickeyfile ssh-public-keyfile]
+           [--generatekey={false|true}]
+           host-list
+
+DESCRIZIONE
+       Il comando secondario setup-ssh imposta una chiave Secure Shell (SSH)
+       sugli host specificati come operandi del comando secondario. Questa
+       chiave consente a GlassFish Server di utilizzare l'autenticazione di
+       chiave pubblica per l'autenticazione del login SSH dell'utente sugli
+       host remoti.
+
+       SSH garantisce che i cluster di GlassFish Server che gestiscono più
+       host possano essere amministrati centralmente. Quando un utente esegue
+       un comando secondario per l'amministrazione cluster che agisce su più
+       host, il comando secondario viene propagato dall'host del server di
+       amministrazione del dominio (DAS) agli host remoti. Per propagare i
+       comandi secondari che agiscono su un'istanza di GlassFish Server non in
+       esecuzione o su un nodo in cui non sono in esecuzione istanze,
+       GlassFish Server utilizza SSH. SSH fornisce riservatezza e sicurezza
+       per dati scambiati tra il server DAS e gli host remoti.
+
+       L'autenticazione di chiave pubblica utilizza una coppia di chiavi SSH
+       che comprende le seguenti chiavi:
+
+       ·   una chiave privata, immagazzinata in una posizione sicura nell'host
+           DAS e che può essere protetta da una passphrase;
+
+       ·   la chiave pubblica, immagazzinata in tutti gli host remoti con i
+           quali il server DAS comunica.
+
+       Il comando secondario non richiede informazioni di configurazione al
+       server DAS e non modifica la configurazione del server DAS.
+
+       Questo comando secondario è supportato solo in modalità locale.
+
+   Prerequisiti per l'uso del comando secondario setup-ssh
+       Per usare il comando secondario setup-ssh, l'utente SSH deve essere in
+       grado di utilizzare SSH per eseguire il login agli host remoti in cui è
+       necessario impostare SSH. In particolare, è necessario soddisfare i
+       prerequisiti riportati di seguito.
+
+       ·   Il client ssh1 è installato nell'host DAS ed è accessibile tramite
+           il percorso dell'utente del server DAS.
+
+       ·   Il daemon sshd1M è installato e viene eseguito su tutti gli host in
+           cui è necessario impostare una chiave SSH.
+
+       ·   L'utente specificato dall'opzione --sshuser dispone di un login SSH
+           su tutti gli host in cui è necessario impostare una chiave SSH.
+
+       ·   La utility ssh-keygen1 è installata nell'host DAS sia in una
+           posizione predefinita che in una definita nel percorso utente DAS.
+
+       ·   Nei sistemi Windows è installato il package SSH per Cygwin
+
+           o un toolkit MKS Software
+
+           che fornisce la funzionalità SSH.
+
+   Funzionamento del comando secondario setup-ssh
+       Il comando secondario imposta la connettività SSH tra l'host DAS e gli
+       host remoti automatizzando i task riportati di seguito.
+
+       ·   Generazione di una coppia di chiavi SSH.  Se non esiste una coppia
+           di chiavi SSH, il funzionamento predefinito del sottocomando
+           consiste nel chiedere all'utente di generare una coppia di chiavi
+           SSH. La coppia di chiavi SSH viene generata senza una passphrase di
+           cifratura. Se è richiesta una coppia di chiavi protette da
+           passphrase, è necessario che venga generata manualmente tramite il
+           comando SSH ssh-keygen(1).
+
+       ·   Distribuzione della chiave pubblica.  Il comando secondario
+           aggiunge il contenuto del file della chiave pubblica al file home
+           utente/.ssh/authorized_keys per ogni host remoto. Per impostazione
+           predefinita, il comando secondario individua il file di chiave
+           pubblica nella directory home utente/.ssh nell'host in cui è in
+           esecuzione il comando secondario. Se il file home
+           utente/.ssh/authorized_keys non esiste in un host, il comando
+           secondario lo crea.  home utente è la directory iniziale
+           dell'utente in un host.
+
+           Per distribuire la chiave pubblica, è necessaria l'autenticazione
+           del login SSH dell'utente. Se la chiave privata è protetta da una
+           passphrase, anche quest'ultima è necessaria. Per impostazione
+           predefinita, il comando secondario richiede all'utente la password
+           e, se necessario, la passphrase. Per distribuire la chiave pubblica
+           senza ricevere la richiesta, eseguire il comando secondario
+           riportato di seguito.
+
+           ·   Impostare l'opzione --interactive della utility asadmin(1M) su
+               false.
+
+           ·   Impostare l'opzione --passwordfile della utility asadmin in un
+               file in cui la voce AS_ADMIN_SSHPASSWORD consente di
+               specificare la password SSH dell'utente per il login agli host
+               specificati.
+
+           ·   Se è richiesta una passphrase, assicurarsi che il file
+               specificato dall'opzione --passwordfile della utility asadmin
+               contenga inoltre una voce per AS_ADMIN_SSHKEYPASSPHRASE.
+
+           Se l'autenticazione di chiave pubblica in un host è già impostata,
+           il comando secondario informa l'utente che tale autenticazione è
+           già impostata e non distribuisce la chiave all'host.
+
+OPZIONI
+       --help, -?
+           Visualizza il testo della Guida per il comando secondario.
+
+       --sshport
+           La porta da utilizzare per le connessioni SSH nell'host in cui è
+           stato impostato SSH. Il valore predefinito è 22.
+
+       --sshuser
+           L'utente SSH nell'host remoto che deve eseguire il processo per
+           l'impostazione di SSH su tale host. Il valore predefinito è
+           l'utente che esegue questo comando secondario. Per garantire che il
+           server DAS possa leggere il file della chiave privata SSH di questo
+           utente, specificare l'utente che esegue il processo DAS.
+
+       --sshkeyfile
+           Il percorso assoluto del file della chiave privata SSH per l'utente
+           specificato dall'opzione --sshuser. Questo file viene usato per
+           l'autenticazione al daemon sshd nell'host.
+
+           L'utente che esegue questo comando secondario deve essere in grado
+           di raggiungere il percorso del file della chiave e di leggere il
+           file.
+
+           Il valore predefinito è un file di chiave nella directory .ssh
+           dell'utente nell'host in cui viene eseguito il comando secondario.
+           Se vengono rilevati più file di chiave, il comando secondario
+           utilizza il seguente ordine di preferenza:
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --sshpublickeyfile
+           Il percorso assoluto del file della chiave pubblica SSH per
+           l'utente specificato dall'opzione --sshuser. Il contenuto del file
+           della chiave pubblica viene aggiunto al file .ssh/authorized/keys
+           dell'utente in ciascun host in cui è stato impostato SSH. Se il
+           file .ssh/authorized_keys non esiste in un host, il comando
+           secondario consente di creare il file.
+
+           L'utente che esegue questo comando secondario deve essere in grado
+           di raggiungere il percorso del file della chiave e di leggere il
+           file.
+
+           Il valore predefinito è un file di chiave nella directory .ssh
+           dell'utente nell'host in cui viene eseguito il comando secondario.
+           Se vengono rilevati più file di chiave, il comando secondario
+           utilizza il seguente ordine di preferenza:
+
+            1. id_rsa.pub
+
+            2. id_dsa.pub
+
+            3. identity.pub
+
+       --generatekey
+           Specifica se il comando secondario consente di generare i file
+           della chiave SSH senza richiedere conferma all'utente.
+
+           Di seguito sono riportati i valori possibili.
+
+           true
+               Il comando secondario genera i file della chiave SSH senza
+               richiedere conferma all'utente.
+
+           false
+               Il funzionamento del comando secondario dipende dall'esistenza
+               dei file della chiave SSH.
+
+               ·   Se i file della chiave SSH esistono, il comando secondario
+                   non li genera.
+
+               ·   Se i file della chiave SSH non esistono, il funzionamento
+                   del comando secondario dipende dal valore dell'opzione
+                   --interactive della utility asadmin.
+
+                   ·   Se l'opzione --interactive è impostata su true, il
+                       comando secondario richiede all'utente di creare i
+                       file.
+
+                   ·   Se l'opzione --interactive è impostata su false, il
+                       comando secondario rileva un errore.
+
+               Questo è il valore predefinito.
+
+OPERANDI
+       host-list
+           Una lista separata da spazi dei nomi degli host in cui è necessario
+           impostare la chiave SSH.
+
+ESEMPI
+       Esempio 1, Impostazione di una chiave SSH
+           In questo esempio viene impostata una chiave SSH per l'utente
+           gfuser negli host sj03 e sj04. Il file della chiave non è generato
+           ma copiato dalla directory .ssh dell'utente nell'host in cui viene
+           eseguito il comando secondario.
+
+               asadmin> setup-ssh sj03 sj04
+               Enter SSH password for gfuser@sj03>
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj03
+               Successfully connected to gfuser@sj03 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj04
+               Successfully connected to gfuser@sj04 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+       Esempio 2, Generazione e impostazione di una chiave SSH
+           In questo esempio viene generata e impostata una chiave SSH per
+           l'utente gfuser negli host sua01 e sua02.
+
+               asadmin> setup-ssh --generatekey=true sua01 sua02
+               Enter SSH password for gfuser@sua01>
+               Created directory /home/gfuser/.ssh
+               /usr/bin/ssh-keygen successfully generated the identification /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua01
+               Successfully connected to gfuser@sua01 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua02
+               Successfully connected to gfuser@sua02 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+STATO DI USCITA
+       0
+           esecuzione del comando riuscita
+
+       1
+           errore durante l'esecuzione del comando
+
+VEDERE ANCHE
+       ssh(1), ssh-keygen(1)
+
+       asadmin(1M)
+
+       sshd(1M)
+
+       Informazioni su Cygwin e installazione (http://www.cygwin.com/), MKS
+       Software (http://www.mkssoftware.com/)
+
+Java EE 7                      14 dicembre 2010                   setup-ssh(1)

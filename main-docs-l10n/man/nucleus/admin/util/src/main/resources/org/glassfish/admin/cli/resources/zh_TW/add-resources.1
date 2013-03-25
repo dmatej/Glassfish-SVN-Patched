@@ -1,0 +1,136 @@
+add-resources(1)            asadmin 公用程式子命令            add-resources(1)
+
+參考名
+       add-resources - 建立 XML 檔案中指定的資源
+
+概要
+           add-resources [--help] [--target target]
+           [--upload={false|true}] xml-file-name
+
+描述
+       add-resources 子命令會建立指定 XML
+       檔案中所提及的資源。此說明頁面的「另請參閱」會列出可使用這個子命令建立的資源。
+
+       --target
+       選項指定您要為其建立資源的目標。如果此選項指定網域，則資源只會增加至網域管理伺服器
+       (DAS) 的組態中。如果此選項指定任何其他目標，則資源會增加至 DAS
+       的組態中，而參照則會從指定目標增加至資源中。
+
+       xml-file-name 運算元為 XML
+       檔案的路徑，該檔案中包含要建立的資源。DOCTYPE 必須在 resources.xml
+       檔案中指定為 http://glassfish.org/dtds/glassfish-resources_1_5.dtd。
+
+       只有遠端模式支援這個子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --target
+           指定您要用來建立資源的目標。
+
+           有效的值如下：
+
+           server
+               建立預設伺服器執行處理 server 的資源，此為預設值。
+
+           domain
+               建立網域的資源。
+
+           cluster-name
+               建立叢集中每個伺服器執行處理的資源。
+
+           instance-name
+               建立特定 GlassFish Server 執行處理的資源。
+
+       --upload
+           指定子命令是否將檔案上傳到 DAS。在大部分情況下，可以省略此選項。
+
+           有效的值如下：
+
+           false
+               子命令不會上傳檔案，但會嘗試透過指定的檔案名稱來存取檔案。如果
+               DAS 無法存取檔案，子命令就會失敗。
+
+               例如，DAS
+               可能是以非管理使用者的其他使用者身分執行，所以無權讀取檔案。在此狀況下，如果
+               --upload 選項是 false，子命令就會失敗。
+
+           true
+               子命令會透過網路連線，將檔案上傳到 DAS。
+
+           預設值取決於 DAS 是位於執行子命令的主機，或是位於遠端主機。
+
+           ·   如果 DAS 位於執行子命令的主機上，則預設值為 false。
+
+           ·   如果 DAS 位於遠端主機上，則預設值為 true。
+
+運算元
+       xml-file-name
+           包含要建立之資源的 XML
+           檔案所在的路徑。您可以指定絕對路徑、僅指定檔案名稱或指定相對路徑。
+
+           ·   如果指定絕對路徑，XML 檔案可以是任何位置。
+
+           ·   如果僅指定檔案名稱，則 XML 檔案必須位於 DAS 主機上的
+               domain-dir/config
+               目錄中。即使您是從其他主機執行這個子命令，也務必遵照此項要求。
+
+           ·   如果指定相對路徑，則 XML 檔案必須位於相對目錄中。
+
+           XML 檔案的範例如下。
+
+               <?xml version="1.0" encoding="UTF-8"?>
+               <!DOCTYPE resources PUBLIC
+                  "-//GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions //EN"
+                  "http://glassfish.org/dtds/glassfish-resources_1_5.dtd">
+               <resources>
+                <jdbc-connection-pool name="SPECjPool" steady-pool-size="100"
+                  max-pool-size="150" max-wait-time-in-millis="60000"
+                  pool-resize-quantity="2" idle-timeout-in-seconds="300"
+                  is-isolation-level-guaranteed="true"
+                  is-connection-validation-required="false"
+                  connection-validation-method="auto-commit"
+                  fail-all-connections="false"
+                  datasource-classname="oracle.jdbc.pool.OracleDataSource">
+                 <property name="URL"
+                   value="jdbc:oracle:thin:@iasperfsol12:1521:specdb"/>
+                 <property name="User" value="spec"/>
+                 <property name="Password" value="spec"/>
+                 <property name="MaxStatements" value="200"/>
+                 <property name="ImplicitCachingEnabled" value="true"/>
+                </jdbc-connection-pool>
+                <jdbc-resource enabled="true" pool-name="SPECjPool"
+                  jndi-name="jdbc/SPECjDB"/>
+               </resources>
+
+範例
+       範例 1, 增加資源
+           此範例使用 XML 檔 resource.xml 的內容來建立資源。
+
+               asadmin> add-resources resource.xml
+               Command : Connector connection pool jms/testQFactoryPool created.
+               Command : Administered object jms/testQ created.
+               Command : Connector resource jms/testQFactory created.
+               Command : Resource adapter config myResAdapterConfig created successfully
+               Command : JDBC connection pool DerbyPoolA created successfully.
+               Command : JDBC resource jdbc/__defaultA created successfully.
+               Command add-resources executed successfully.
+
+結束狀態
+       0
+           已成功執行子命令
+
+       1
+           執行子命令時發生錯誤
+
+另請參閱
+       create-jdbc-connection-pool(1),create-jdbc-resource(1),
+       create-jms-resource(1), create-jndi-resource(1),
+       create-javamail-resource(1), create-custom-resource(1),
+       create-connector-resource(1), create-connector-work-security-map(1),
+       create-admin-object(1), create-resource-adapter-config(1)
+
+       asadmin(1M)
+
+Java EE 7                     2010 年 12 月 23 日             add-resources(1)

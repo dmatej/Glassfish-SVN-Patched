@@ -1,0 +1,233 @@
+create-jmsdest(1)       Sous-commandes de l'utilitaire       create-jmsdest(1)
+
+NOM
+       create-jmsdest - crée une destination physique JMS
+
+SYNTAXE
+           create-jmsdest [--help]
+           --desttype dest_type
+           [--property (name=value)[:name=value]*]
+           [--target target]
+           [--force[={false|true}]]
+           dest_name
+
+DESCRIPTION
+       La sous-commande create-jmsdest crée une destination physique JMS (Java
+       Message Service). En général, vous utilisez la sous-commande
+       create-jms-resource pour créer une ressource de destination JMS qui
+       possède une propriété Name indiquant la destination physique. La
+       destination physique est créée automatiquement lorsque vous lancez une
+       application qui utilise la ressource de destination. La sous-commande
+       create-jmsdest permet de créer une destination physique avec des
+       paramètres de propriété autres que ceux par défaut.
+
+       Cette sous-commande est prise en charge en mode distant uniquement. Les
+       sous-commandes asadmin distantes requièrent l'exécution d'un serveur
+       d'administration de domaine (DAS).
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --desttype
+           Type de la destination JMS. Les valeurs valides sont topic et
+           queue.
+
+       --property
+           Paires nom/valeur d'attribut facultatives pour la configuration de
+           la destination physique. Vous pouvez indiquer les propriétés
+           suivantes pour une destination physique.
+
+           maxNumMsgs
+               Nombre maximal autorisé de messages non distribués pour la
+               destination. La valeur -1 indique un nombre illimité de
+               messages. La valeur par défaut est -1. Pour la file d'attente
+               des messages bloqués, la valeur par défaut est 1 000.
+
+               Si la propriété limitBehavior a la valeur FLOW_CONTROL, il se
+               peut que le nombre de messages dépasse la limite car le broker
+               ne peut pas réagir assez rapidement pour arrêter le flux de
+               messages entrants. Dans ce cas, la valeur indiquée pour
+               maxNumMsgs sert simplement d'indication au broker plutôt que de
+               limite à appliquer de manière stricte.
+
+           maxBytesPerMsg
+               Taille maximale d'un message, en octets. Le rejet d'un message
+               persistant est signalé au client émetteur avec une exception.
+               Aucune notification n'est envoyée pour les messages non
+               persistants.
+
+               La valeur peut être exprimée en octets, en kilo-octets ou en
+               mégaoctets, à l'aide des suffixes suivants :
+
+               b
+                   Octets
+
+               k
+                   Kilo-octets (1 024 octets)
+
+               m
+                   Méga-octets (1 024 x 1 024 = 1 048 576 octets)
+
+               Une valeur sans suffixe est exprimée en octets ; la valeur -1
+               indique une taille de message illimitée. La valeur par défaut
+               est -1.
+
+           maxTotalMsgBytes
+               Mémoire totale maximale, en octets, pour les messages non
+               distribués. La valeur par défaut est -1. La syntaxe est la même
+               que pour maxBytesPerMsg. Pour la file d'attente des messages
+               bloqués, la valeur par défaut est 10m.
+
+           limitBehavior
+               Comportement du broker de file d'attente des messages lorsque
+               le seuil de limite de mémoire est atteint. Les valeurs valides
+               sont les suivantes.
+
+               REJECT_NEWEST
+                   Cette valeur rejette les messages les plus récents et
+                   informe le client émetteur à l'aide d'une exception
+                   uniquement si le message est persistant. Il s'agit de la
+                   valeur par défaut.
+
+               FLOW_CONTROL
+                   Cette valeur ralentit l'envoi des messages des émetteurs.
+
+               REMOVE_OLDEST
+                   Cette valeur supprime les messages les plus anciens.
+
+               REMOVE_LOW_PRIORITY
+                   Cette valeur supprime les messages de faible priorité en
+                   fonction de l'âge, sans aucune notification pour le client
+                   émetteur.
+
+               Si la valeur est REMOVE_OLDEST ou REMOVE_LOW_PRIORITY et que la
+               propriété useDMQ a la valeur true, les messages en trop sont
+               déplacés vers la file d'attente des messages bloqués. Pour la
+               file d'attente des messages bloqués en elle-même, le
+               comportement de limite par défaut est REMOVE_OLDEST, et la
+               valeur ne peut pas être FLOW_CONTROL.
+
+           maxNumProducers
+               Nombre maximal d'émetteurs de messages pour la destination.
+               Lorsque cette limite est atteinte, aucun émetteur
+               supplémentaire ne peut être créé. La valeur -1 indique un
+               nombre illimité d'émetteurs. La valeur par défaut est 100.
+               Cette propriété ne s'applique pas à la file d'attente des
+               messages bloqués.
+
+           consumerFlowLimit
+               Nombre maximal de messages pouvant être transmis à un
+               destinataire en un seul batch. La valeur -1 indique un nombre
+               illimité de messages. La valeur par défaut est 1 000.
+               L'exécution du client peut passer outre cette limite en
+               indiquant une valeur inférieure sur l'objet de fabrique de
+               connexions.
+
+               Dans la distribution de file d'attente à charge équilibrée, il
+               s'agit du nombre initial de messages en file d'attente
+               acheminés vers les destinataires actifs avant le début de
+               l'équilibrage de charge.
+
+           useDMQ
+               Si la valeur est true, les messages bloqués vont dans la file
+               d'attente des messages bloqués. Si la valeur est false, les
+               messages bloqués sont rejetés. La valeur par défaut est true.
+
+           validateXMLSchemaEnabled
+               Si la valeur est true, la validation du schéma XML est activée
+               pour la destination. La valeur par défaut est false.
+
+               Lorsque la validation XML est activée, l'exécution du client
+               Message Queue tentera de valider le message XML par rapport aux
+               XSD indiqués (ou par rapport à la DTD, si aucun XSD n'est
+               spécifié) avant de l'envoyer au broker. Si le schéma indiqué
+               est introuvable ou qu'il est impossible de valider le message,
+               ce dernier n'est pas envoyé et une exception est générée.
+
+               Cette propriété doit être définie lorsqu'une destination est
+               inactive, c'est-à-dire lorsqu'il n'y a ni destinataire, ni
+               émetteur, et lorsque la destination ne contient aucun message.
+               Sinon, l'émetteur doit se reconnecter.
+
+           XMLSchemaURIList
+               Liste des chaînes d'URI du document XSD (séparées par des
+               espaces). Les URI pointent vers l'emplacement des XSD à
+               utiliser pour la validation de schéma XML, si
+               validateXMLSchemaEnabled a la valeur true. La valeur par défaut
+               est null.
+
+               Placez cette valeur entre guillemets si plusieurs URI sont
+               indiqués, comme l'illustre l'exemple suivant :
+
+                   "http://foo/flap.xsd http://test.com/test.xsd"
+               Si cette propriété n'est pas définie ou si elle a la valeur
+               null et que la validation XML est activée, cette dernière est
+               effectuée à l'aide d'une DTD spécifiée dans le document XML. Si
+               un XSD est modifié à la suite d'un changement de la
+               configuration requise d'application, toutes les applications
+               client émettant des messages XML sur la base du XSD modifié
+               doivent se reconnecter au broker.
+
+           Pour modifier la valeur de ces propriétés, vous pouvez utiliser la
+           commande as-install/mq/bin/imqcmd. Pour plus d'informations,
+           reportez-vous à Physical Destination Property Reference dans le
+           manuel Oracle GlassFish Server Message Queue Administration Guide.
+
+       --target
+           Cette option crée la destination physique uniquement pour la cible
+           indiquée. Bien que la sous-commande create-jmsdest soit liée aux
+           ressources, une destination physique est créée à l'aide du service
+           JMS (broker JMS), qui fait partie de la configuration. Un broker
+           JMS est configuré dans la section config du fichier domain.xml. Les
+           valeurs valides sont les suivantes :
+
+           server
+               Cette valeur crée la destination physique pour l'instance de
+               serveur par défaut. Il s'agit de la valeur par défaut.
+
+           configuration-name
+               Cette valeur crée la destination physique dans la configuration
+               indiquée.
+
+           cluster-name
+               Cette valeur crée la destination physique pour chaque instance
+               de serveur du cluster indiqué.
+
+           instance-name
+               Cette valeur crée la destination physique pour l'instance de
+               serveur indiquée.
+
+       --force
+           Cette option indique si la sous-commande écrase la destination
+           physique JMS existante qui porte le même nom. La valeur par défaut
+           est false.
+
+OPÉRANDES
+       dest_name
+           Identificateur unique de la destination JMS à créer.
+
+EXEMPLES
+       Exemple 1, Création d'une destination physique JMS
+           La sous-commande suivante crée une file d'attente physique JMS
+           nommée PhysicalQueue avec des valeurs de propriété qui ne sont pas
+           celles par défaut.
+
+               asadmin> create-jmsdest --desttype queue
+               --property maxNumMsgs=1000:maxBytesPerMsg=5k PhysicalQueue
+               Command create-jmsdest executed successfully.
+
+STATUT DE SORTIE
+       0
+           sous-commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la sous-commande
+
+VOIR AUSSI
+       create-jms-resource(1), delete-jmsdest(1), list-jmsdest(1),
+       flush-jmsdest(1)
+
+       asadmin(1M)
+
+Java EE 7                         12 fév 2013                create-jmsdest(1)

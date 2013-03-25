@@ -1,0 +1,175 @@
+create-jms-resource(1)      asadmin 公用程式子命令      create-jms-resource(1)
+
+參考名
+       create-jms-resource - 建立 JMS 資源
+
+概要
+           create-jms-resource [--help]
+           --restype type
+           [--target target]
+           [--enabled={true|false}]
+           [--description text]
+           [--property (name=value)[:name=value]*]
+           [--force[={false|true}]]
+           jndi_name
+
+描述
+       create-jms-resource 子命令會建立 Java 訊息服務 (JMS) 連線工廠資源或 JMS
+       目的地資源。
+
+       只有遠端模式支援這個子命令。遠端 asadmin
+       子命令需要使用執行中的網域管理伺服器 (DAS)。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --restype
+           JMS 資源類型可以是
+           javax.jms.Topic、javax.jms.Queue、javax.jms.ConnectionFactory、
+           javax.jms.TopicConnectionFactory 或
+           javax.jms.QueueConnectionFactory。
+
+       --target
+           僅為指定目標建立 JMS 資源。有效的值如下：
+
+               注意
+               ┌───────────────────────────────────────────────────────┐
+               │備註                                                   │
+               │資源皆是為整個網域所建立，但只會為指定的               │
+               │--target 建立資源的 <resource-ref>                     │
+               │元素。這表示雖然資源定義於網域層級，但只適用於所指定的 │
+               │--target 中。                                          │
+               └───────────────────────────────────────────────────────┘
+
+           server
+               為預設伺服器執行處理建立 JMS 資源。此為預設值。
+
+           domain
+               為網域建立 JMS 資源。
+
+           cluster-name
+               為指定叢集中的每個伺服器執行處理建立 JMS 資源。
+
+           instance-name
+               為指定伺服器執行處理建立 JMS 資源。
+
+       --enabled
+           如果設為 true (預設值)，則會在執行階段啟用資源。
+
+       --description
+           提供有關 JMS 資源之詳細資訊的文字。
+
+       --property
+           用於設定 JMS 資源的選擇性屬性名/值配對。
+
+           您可以為連線工廠資源指定以下特性：
+
+           ClientId
+               長期訂閱者將要使用的連線工廠之從屬端 ID。
+
+           AddressList
+               訊息佇列位址清單
+               (以逗號分隔)，其指定要與應用程式通訊的訊息代理程式執行處理的名稱
+               (也可以是連接埠號)。例如，該值可能為 earth 或
+               earth:7677。當訊息代理程式在預設連接埠 (7676)
+               以外的連接埠上執行時，請指定連接埠號。 由伺服器的 JMS
+               服務組態中定義的 JMS 主機組成。預設值為
+               localhost，而預設連接埠號碼為
+               7676。從屬端將嘗試連線至位於本地主機連接埠 7676 上的代理程式。
+
+           UserName
+               連線工廠的使用者名稱。預設值為 guest。
+
+           Password
+               連線工廠的密碼。預設值為 guest。
+
+           ReconnectEnabled
+               值為 true
+               表示從屬端執行階段在遺失連線時，嘗試重新連線至訊息伺服器 (或
+               AddressList 中的位址清單)。預設值為 false。
+
+           ReconnectAttempts
+               從屬端執行階段嘗試連線 (或重新連線) AddressList
+               中每個位址的次數。到達這個值後，從屬端執行階段將嘗試連線清單中的下一個位址。值
+               -1 表示重新連線嘗試次數沒有限制
+               (從屬端執行階段將一直嘗試連線至第一個位址，直到連線成功)。預設值為
+               6。
+
+           ReconnectInterval
+               兩次重新連線嘗試之間的間隔毫秒數。該特性適用於對 AddressList
+               中每個位址的重新連線嘗試，及對該清單中連續位址的重新連線嘗試。如果間隔太短，代理程式便沒有時間復原。如果該間隔太長，則重新連線會變得遲緩，以至於讓人無法接受。預設值為
+               30,000 毫秒。
+
+           AddressListBehavior
+               指定是按 AddressList 中的位址順序 (PRIORITY) 還是按隨機順序
+               (RANDOM) 嘗試連線。PRIORITY 表示重新連線時始終嘗試連線至
+               AddressList
+               中的第一個伺服器位址，而僅在第一個代理程式不可用時才使用其他位址。如果您有許多從屬端嘗試使用同一個連線工廠來進行連線，請指定
+               RANDOM 以防止這些從屬端全部連線至同一個位址。預設值為伺服器之
+               JMS 服務組態的
+                AddressListBehavior 值。
+
+           AddressListIterations
+               從屬端執行階段建立 (或重新建立) 連線時，在 AddressList
+               中反覆運算的次數。值 -1 表示嘗試次數沒有限制。預設值為 -1。
+
+           此外，您可以將 connector-connection-pool
+           屬性指定為連線器資源特性。如需這些屬性的清單，請參閱 Oracle
+           GlassFish Server Application Deployment Guide 中的
+           connector-connection-pool。
+
+           您可以為目的地資源指定以下特性：
+
+           Name
+               資源將參照的實體目的地之名稱。當您執行使用目的地資源的應用程式時會自動建立實體目的地。您也可以利用
+               create-jmsdest 子命令建立實體目的地。如果您不指定此特性，JMS
+               服務會建立與目的地資源同名的實體目的地 (將 JNDI
+               名稱中的所有正斜線取代為底線)。
+
+           Description
+               實體目的地的描述。
+
+       --force
+           指定子命令是否覆寫相同名稱的現有 JMS 資源。預設值為 false。
+
+運算元
+       jndi_name
+           將要建立的 JMS 資源的 JNDI 名稱。
+
+範例
+       範例 1, 為長期訂閱建立 JMS 連線工廠資源
+           下列子命令會建立類型為 javax.jms.ConnectionFactory
+           的連線工廠資源，其 JNDI 名稱為
+           jms/DurableConnectionFactory。ClientId 特性會在連線工廠上設定從屬端
+           ID，讓它可用於長期訂閱。JMS 資源的 JNDI 名稱通常包含 jms/
+           命名子環境。
+
+               asadmin> create-jms-resource --restype javax.jms.ConnectionFactory
+               --description "connection factory for durable subscriptions"
+               --property ClientId=MyID jms/DurableConnectionFactory
+               Connector resource jms/DurableConnectionFactory created.
+               Command create-jms-resource executed successfully.
+
+       範例 2, 建立 JMS 目的地資源
+           下列子命令會建立其 JNDI 名稱為 jms/MyQueue 的目的地資源。Name
+           特性指定資源將參照的實體目的地。
+
+               asadmin> create-jms-resource --restype javax.jms.Queue
+               --property Name=PhysicalQueue jms/MyQueue
+               Administered object jms/MyQueue created.
+               Command create-jms-resource executed successfully.
+
+結束狀態
+       0
+           已成功執行子命令
+
+       1
+           執行子命令時發生錯誤
+
+另請參閱
+       delete-jms-resource(1), list-jms-resources(1)
+
+       asadmin(1M)
+
+Java EE 7                     2013 年 2 月 12 日        create-jms-resource(1)

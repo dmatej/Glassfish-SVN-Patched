@@ -1,0 +1,222 @@
+create-auth-realm(1)        asadmin 公用程式子命令        create-auth-realm(1)
+
+參考名
+       create-auth-realm - 新增已命名的認證範圍
+
+概要
+           create-auth-realm --classname realm_class [--help] [--property(name=value)[:name=value]*]
+           [--target target_name] auth_realm_name
+
+描述
+       create-auth-realm 子命令會新增已命名的認證範圍。
+
+       只有遠端模式支援這個子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --target
+           指定您要建立範圍的目標。有效值包括
+
+           server
+               在預設伺服器執行處理上建立範圍。此為預設值。
+
+           configuration_name
+               在指定組態中建立範圍。
+
+           cluster_name
+               在指定叢集內的所有伺服器執行處理上建立範圍。
+
+           instance_name
+               在指定伺服器執行處理上建立範圍。
+
+       --classname
+           實行此範圍的 Java 類別。其包括
+            com.sun.enterprise.security.auth.realm.file.FileRealm、com.sun.enterprise.security.auth.realm.certificate.CertificateRealm
+           、com.sun.enterprise.security.auth.realm.jdbc.JDBCRealm、
+           com.sun.enterprise.security.auth.realm.ldap.LDAPRealm、com.sun.enterprise.security.auth.realm.ldap.PamRealm
+           和 com.sun.enterprise.security.auth.realm.solaris.SolarisRealm
+           或自訂範圍。
+
+       --property
+           用於組態認證範圍的選擇性屬性名/值配對。認證範圍需要提供者特有的特性，這些特性會因實行而有所不同。
+
+           下列特性通用於所有支援的範圍，包括
+           FileRealm、CertificateRealm、JDBCRealm、LDAPRealm、PamRealm 和
+           SolarisRealm。
+
+           jaas-context
+               指定 Java Authentication and Authorization Service (JAAS)
+               環境。
+
+           assign-groups
+               (選擇性)
+               如果已設定此特性，則特性值會變成逗號分隔的群組名稱清單。為了在網頁上及
+               EJB
+               容器中進行授權決策，所有出示有效憑證的從屬端都被指定了這些群組的成員資格。
+
+           您可以針對每個特定範圍指定下列特性。
+
+           ·   您可以為 FileRealm 指定下列特性：
+
+               file
+                   指定儲存使用者名稱、密碼、群組名稱的檔案。預設值為
+                   domain-dir/config/keyfile。
+
+           ·   您可以為 CertificateRealm 指定下列特性：
+
+               LoginModule
+                   指定用來執行認證的 JAAS LoginModule 名稱。若想使用 JAAS
+                   LoginModule，您必須先建立一個
+                   javax.security.auth.spi.LoginModule
+                   介面實行，然後再將模組外掛到
+                   jaas-context。如需詳細資訊，請參閱 Oracle GlassFish Server
+                   Security Guide 中的 Custom Authentication of Client
+                   Certificate in SSL Mutual Authentication。
+
+           ·   您可以為 JDBCRealm 指定下列特性：
+
+               datasource-jndi
+                   為資料庫指定 jdbc-resource 的 jndi-name。
+
+               user-table
+                   指定資料庫中使用者表格的名稱。
+
+               user-name-column
+                   指定資料庫使用者表格中使用者名稱欄的名稱。
+
+               password-column
+                   指定資料庫使用者表格中密碼欄的名稱。
+
+               group-table
+                   指定資料庫中群組表格的名稱。
+
+               group-table
+                   為類別 JDBCRealm 的認證範圍指定群組表格。
+
+               group-name-column
+                   指定資料庫群組表格中群組名稱欄的名稱。
+
+               db-user
+                   (選擇性) 允許您在範圍 (而不是在 jdbc-connection-pool)
+                   內指定資料庫使用者名稱。這可防止其他應用程式查找資料庫、取得連線，以及瀏覽使用者表格。依預設，會使用
+                   jdbc-connection-pool 組態。
+
+               db-password
+                   (選擇性) 允許您在範圍 (而不是在 jdbc-connection-pool)
+                   內指定資料庫密碼。這可防止其他應用程式查找資料庫、取得連線，以及瀏覽使用者表格。依預設，會使用
+                   jdbc-connection-pool 組態。
+
+               group-table
+                   指定資料庫中群組表格的名稱。
+
+               digest-algorithm
+                   (選擇性) 指定摘要演算法。預設值為 SHA-256。您可以使用 JDK
+                   所支援的任何演算法，或是使用 none。
+
+                       注意
+                       ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
+                       │備註 在 GlassFish Server 4.0                                                                          │
+                       │之前的版本中，預設演算法為                                                                            │
+                       │MD5。如果有依賴 MD5                                                                                   │
+                       │演算法的應用程式，您可以使用 asadmin                                                                  │
+                       │set 子命令，置換預設的 SHA-25 演算法：                                                                │
+                       │                           asadmin> set server.security-service.property.default-digest-algorithm=MD5 │
+                       │                                                                                                      │
+                       │                                                                                                      │
+                       │                       您可以使用                                                                     │
+                       │                       asadmin get                                                                    │
+                       │                       子命令，來判斷目前使用的演算法：                                               │
+                       │                           asadmin> get server.security-service.property.default-digest-algorithm     │
+                       │                                                                                                      │
+                       │                                                                                                      │
+                       │                       另請注意，為了保留回溯相容性，若從                                             │
+                       │                       GlassFish Server                                                               │
+                       │                       v2.x 或 v3.0.x                                                                 │
+                       │                       升級至 GlassFish                                                               │
+                       │                       Server                                                                         │
+                       │                       4.0，而舊版                                                                    │
+                       │                       GlassFish Server                                                               │
+                       │                       中未明確設定摘要演算法，則預設演算法就會自動設定為                             │
+                       │                       MD5。                                                                          │
+                       └──────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+               digestrealm-password-enc-algorithm
+                   (選擇性) 指定儲存在資料庫中密碼的加密演算法。
+
+                       注意
+                       ┌─────────────────────────────────────┐
+                       │備註                                 │
+                       │不指定密碼加密演算法，會有安全風險。 │
+                       └─────────────────────────────────────┘
+
+               encoding
+                   (選擇性) 指定編碼。允許的值為 Hex 和 Base64。如果指定了
+                   digest-algorithm，則預設值為 Hex。如果未指定
+                   digest-algorithm，則預設不指定任何編碼。
+
+               charset
+                   (選擇性) 為摘要演算法指定 charset。
+
+           ·   您可以為 LDAPRealm 指定下列特性：
+
+               directory
+                   指定指向伺服器的 LDAP URL。
+
+               base-dn
+                   指定使用者資料位置的 LDAP 基底
+                   DN。由於已執行樹狀結構範圍搜尋，因此這個基底 DN
+                   可以位於使用者資料上方的任何層級。搜尋樹狀結構越小，效能越佳。
+
+               search-filter
+                   (選擇性) 指定用於尋找使用者的搜尋篩選器。預設值為 uid=%s
+                   (%s 會延伸至主體名稱)。
+
+               group-base-dn
+                   (選擇性) 指定群組資料位置的 基底 DN。依預設，會與 base-dn
+                   相同，不過可視需要予以調整。
+
+               group-search-filter
+                   (選擇性) 用於尋找使用者之群組成員身份的搜尋篩選器。預設值為
+                   uniquemember=%d (%d 會延伸至使用者 elementDN)。
+
+               group-target
+                   (選擇性) 指定包含群組名稱項目的 LDAP 屬性名稱。預設值為
+                   CN。
+
+               search-bind-dn
+                   (選擇性) 指定用於向目錄認證以執行 search-filter
+                   查找的選擇性 DN。只有不允許匿名搜尋的目錄才需要此特性。
+
+               search-bind-password
+                   (選擇性) 指定 search-bind-dn 中提供之 DN 的 LDAP 密碼。
+
+運算元
+       auth_realm_name
+           範圍的簡稱。 此名稱用於參考範圍，例如：web.xml。
+
+範例
+       範例 1, 建立新認證範圍
+           此範例會建立新檔案範圍。
+
+               asadmin> create-auth-realm
+               --classname com.sun.enterprise.security.auth.realm.file.FileRealm
+               --property file=${com.sun.aas.instanceRoot}/config/
+               admin-keyfile:jaas-context=fileRealm file
+               Command create-auth-realm executed successfully
+           其中 file 是所建立的認證範圍。
+
+結束狀態
+       0
+           已成功執行子命令
+
+       1
+           執行子命令時發生錯誤
+
+另請參閱
+       delete-auth-realm(1), list-auth-realms(1)
+
+       asadmin(1M)
+
+Java EE 7                     2010 年 9 月 20 日          create-auth-realm(1)

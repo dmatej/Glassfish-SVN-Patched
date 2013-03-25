@@ -1,0 +1,483 @@
+create-domain(1)        Sous-commandes de l'utilitaire        create-domain(1)
+
+NOM
+       create-domain - crée un domaine
+
+SYNTAXE
+           create-domain [--help]
+           [--adminport adminport]
+           [--instanceport instanceport]
+           [--portbase portbase]
+           [--profile profile-name]
+           [--template template-name]
+           [--domaindir domaindir]
+           [--savemasterpassword={false|true}]
+           [--usemasterpassword={false|true}]
+           [--domainproperties (name=value)[:name=value]*]
+           [--keytooloptions (name=value)[:name=value]*]
+           [--savelogin={false|true}]
+           [--checkports={true|false}]
+           [--nopassword={false|true}]
+           domain-name
+
+DESCRIPTION
+       La sous-commande create-domain crée un domaine de GlassFish Server. Un
+       domaine de GlassFish Server est un espace de noms administratif
+       conforme à la norme Java Platform, Enterprise Edition (Java EE). A
+       chaque domaine est associée une configuration enregistrée dans un
+       ensemble de fichiers. Vous pouvez créer un nombre illimité de domaines,
+       chacun doté d'une identité administrative distincte, dans une
+       installation donnée de GlassFish Server. Un domaine peut exister
+       indépendamment des autres domaines.
+
+       Tout utilisateur qui a accès à l'utilitaire asadmin sur un système
+       donné peut créer un domaine et enregistrer sa configuration dans un
+       dossier de son choix. Par défaut, la configuration du domaine est créée
+       dans le répertoire par défaut des domaines. Vous pouvez remplacer cet
+       emplacement et stocker la configuration ailleurs.
+
+       Si des programmes de personnalisation de domaines sont détectés dans
+       les fichiers JAR du répertoire as-install/modules et que la commande
+       create-domain est en cours d'exécution, ces programmes de
+       personnalisation sont traités. Un programme de personnalisation de
+       domaine est une classe qui implémente l'interface DomainInitializer.
+
+       La sous-commande create-domain crée un domaine comportant un
+       administrateur unique spécifié par l'utilitaire asadmin, option --user.
+       Si l'option --user n'est pas indiquée et que l'option --nopassword a la
+       valeur True, l'administrateur par défaut, admin, est utilisé. Si
+       l'option --nopassword a la valeur False (par défaut), vous devez
+       spécifier un nom utilisateur. Dans ce cas, si vous n'avez pas indiqué
+       le nom utilisateur à l'aide de l'option --user, vous êtes invité à le
+       faire.
+
+       Vous devez choisir un profil approprié pour le domaine en fonction des
+       applications à exécuter sur le nouveau domaine. Vous pouvez choisir le
+       profil développeur, cluster ou entreprise pour le domaine que vous
+       créez.
+
+       Cette sous-commande est prise en charge en mode local uniquement.
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --adminport
+           Port HTTP ou HTTPS d'administration. Il s'agit du port de l'URL
+           indiquée dans le navigateur Web pour gérer le domaine
+           (http://localhost:4949, par exemple). L'option --adminport ne peut
+           pas être utilisée avec l'option --portbase. La valeur par défaut
+           est 4848.
+
+           L'option --adminport remplace la propriété domain.adminPort de
+           l'option --domainproperties.
+
+       --instanceport
+           Le domaine fournit des services afin de garantir l'exécution des
+           applications après leur déploiement. Ce port HTTP indique
+           l'emplacement où les racines de contexte d'application Web sont
+           disponibles pour qu'un navigateur Web puisse s'y connecter. Il doit
+           s'agir d'un entier positif et ce port doit être disponible au
+           moment de la création du domaine. L'option --instanceport ne peut
+           pas être utilisée avec l'option --portbase. La valeur par défaut
+           est 8080.
+
+           L'option --instanceport passe outre la propriété
+           domain.instancePort de l'option --domainproperties.
+
+       --portbase
+           Cette option détermine le numéro par lequel les affectations de
+           port doivent commencer. Un domaine utilise un certain nombre de
+           ports affectés de façon statique. La valeur portbase détermine où
+           l'affectation doit commencer. La valeur des ports est calculée
+           comme suit :
+
+           ·   Port d'administration : portbase + 48
+
+           ·   Port du processus d'écoute HTTP : portbase + 80
+
+           ·   Port du processus d'écoute HTTPS : portbase + 81
+
+           ·   Port JMS : portbase + 76
+
+           ·   Port du processus d'écoute IIOP : portbase + 37
+
+           ·   Port du processus d'écoute IIOP sécurisé : portbase + 38
+
+           ·   Port IIOP sécurisé avec authentification mutuelle : portbase +
+               39
+
+           ·   Port JMX : portbase + 86
+
+           ·   Port de débogage JPDA : portbase + 9
+
+           ·   Port de service shell Felix pour la gestion de module OSGi :
+               portbase + 66
+
+           Lorsque l'option --portbase est indiquée, la sortie de cette
+           sous-commande présente une liste complète des ports utilisés.
+
+           L'option --portbase ne peut pas être utilisée avec l'option
+           --adminport, --instanceport ou --domainproperties.
+
+       --profile
+           Ne spécifiez pas cette option. Elle est conservée pour assurer la
+           compatibilité avec les versions antérieures. Si vous spécifiez
+           cette option, aucune erreur de syntaxe ne survient. Au lieu de
+           cela, la sous-commande est exécutée et affiche un message
+           d'avertissement indiquant que l'option est ignorée.
+
+       --template
+           Nom de fichier, y compris le chemin d'accès relatif ou absolu, d'un
+           modèle de configuration de domaine à utiliser pour la création du
+           domaine. Si vous indiquez un chemin relatif, la sous-commande
+           ajoute ce chemin au répertoire as-install/lib/templates afin de
+           localiser le fichier. S'il s'agit d'un nom de chemin d'accès
+           absolu, la sous-commande localise le fichier via le chemin d'accès
+           indiqué.
+
+           Cette option permet de créer des domaines de divers types et de
+           définir des modèles de domaines personnalisés.
+
+       --domaindir
+           Répertoire où le domaine doit être créé. S'il est spécifié, le
+           chemin doit être accessible depuis le système de fichiers. Sinon,
+           le domaine est créé dans le répertoire par défaut,
+           as-install/domains.
+
+       --savemasterpassword
+           Le paramétrage de cette option sur true permet d'écrire le mot de
+           passe maître dans le système de fichiers. Si cette option a la
+           valeur true, l'option --usemasterpassword a également la valeur
+           true, quelle que soit celle indiquée dans la ligne de commande. La
+           valeur par défaut est false.
+
+           Un mot de passe maître est un véritable mot de passe pour le
+           keystore sécurisé. Un domaine est conçu pour conserver son propre
+           certificat (créé au moment de la création du domaine) en lieu sûr
+           sous l'emplacement de configuration. Ce certificat est appelé le
+           certificat de serveur SSL du domaine. Lorsqu'un navigateur Web
+           contacte le domaine sur un canal sécurisé (HTTPS), ce certificat
+           est présenté par le domaine. Le mot de passe maître est censé
+           protéger le stockage (un fichier) contenant ce certificat. Ce
+           fichier s'appelle keystore.jks et il est créé dans le répertoire de
+           configuration du domaine créé. En revanche, si vous choisissez
+           cette option, le mot de passe maître est enregistré sur le disque à
+           l'emplacement de la configuration du domaine. Le mot de passe
+           maître est stocké dans un fichier appelé master-password, keystore
+           de type Java JCEKS. L'option --savemasterpassword est utilisée pour
+           les amorces de système sans l'intervention d'un opérateur. Dans ce
+           cas, le mot de passe maître n'est pas demandé au démarrage du
+           domaine, car il est extrait de ce fichier.
+
+           Il est préférable de créer un mot de passe maître lors de la
+           création d'un domaine, car ce mot de passe maître est utilisé par
+           la sous-commande start-domain. Pour des raisons de sécurité, le
+           paramètre par défaut doit avoir la valeur False, car
+           l'enregistrement du mot de passe maître sur le disque est une
+           pratique non sécurisée, à moins que les autorisations du système de
+           fichiers soient correctement configurées. Si le mot de passe maître
+           est enregistré, start-domain ne le demande pas. Le mot de passe
+           maître offre un meilleur niveau de sécurité à l'environnement.
+
+       --usemasterpassword
+           Cette option indique si le keystore est crypté par un mot de passe
+           maître intégré au système ou par un mot de passe maître défini par
+           l'utilisateur.
+
+           Si la valeur est false (par défaut), le keystore est crypté par un
+           mot de passe connu intégré au système. Le cryptage du keystore par
+           un mot de passe intégré au système n'offre pas de sécurité
+           supplémentaire.
+
+           Si la valeur est true, la sous-commande permet d'obtenir le mot de
+           passe maître à partir de l'entrée AS_ADMIN_MASTERPASSWORD dans le
+           fichier de mots de passe ou vous invite à entrer le mot de passe
+           maître. Le fichier de mots de passe est indiqué dans l'option
+           --paswordfile de l'utilitaire asadmin(1M).
+
+           Si l'option --savemasterpassword a la valeur true, cette option a
+           également la valeur true, quelle que soit celle indiquée dans la
+           ligne de commande.
+
+       --domainproperties
+           La définition des paires facultatives nom/valeur passe outre les
+           valeurs par défaut des propriétés du domaine à créer. La liste doit
+           être séparée par le caractère deux-points (:). Les options
+           --portbase ne peuvent pas être utilisées avec l'option
+           --domainproperties. Les propriétés disponibles sont les suivantes :
+
+           domain.adminPort
+               Cette propriété indique le numéro du port HTTP ou HTTPS pour
+               l'administration. Il s'agit du port de l'URL que vous spécifiez
+               dans le navigateur Web pour gérer l'instance
+               (http://localhost:4949, par exemple). Les valeurs valides sont
+               comprises entre 1 et 65535. Sous les systèmes UNIX, la création
+               de sockets qui écoutent sur les ports 1 à 1024 nécessite des
+               privilèges de superutilisateur.
+
+               La propriété domain.adminPort est remplacée par l'option
+               --adminport.
+
+           domain.instancePort
+               Cette propriété spécifie le numéro du port utilisé pour
+               l'écoute des demandes HTTP. Les valeurs valides sont comprises
+               entre 1 et 65535. Sous les systèmes UNIX, la création de
+               sockets qui écoutent sur les ports 1 à 1024 nécessite des
+               privilèges de superutilisateur.
+
+               La propriété domain.instancePort est remplacée par l'option
+               --instanceport.
+
+           domain.jmxPort
+               Cette propriété spécifie le numéro du port d'écoute du
+               connecteur JMX. Les valeurs valides sont comprises entre 1 et
+               65535. Sous les systèmes UNIX, la création de sockets qui
+               écoutent sur les ports 1 à 1024 nécessite des privilèges de
+               superutilisateur.
+
+           http.ssl.port
+               Cette propriété spécifie le numéro du port utilisé pour
+               l'écoute des demandes HTTPS. Les valeurs valides sont comprises
+               entre 1 et 65535. Sous les systèmes UNIX, la création de
+               sockets qui écoutent sur les ports 1 à 1024 nécessite des
+               privilèges de superutilisateur.
+
+           java.debugger.port
+               Cette propriété spécifie le numéro du port utilisé pour les
+               connexions au débogueur Java Platform Debugger Architecture
+               (JPDA)
+
+               . Les valeurs valides sont comprises entre 1 et 65535. Sous les
+               systèmes UNIX, la création de sockets qui écoutent sur les
+               ports 1 à 1024 nécessite des privilèges de superutilisateur.
+
+           jms.port
+               Cette propriété spécifie le numéro de port pour le fournisseur
+               Java Message Service. Les valeurs valides sont comprises entre
+               1 et 65535. Sous les systèmes UNIX, la création de sockets qui
+               écoutent sur les ports 1 à 1024 nécessite des privilèges de
+               superutilisateur.
+
+           orb.listener.port
+               Cette propriété spécifie le numéro du port utilisé pour les
+               connexions IIOP. Les valeurs valides sont comprises entre 1 et
+               65535. Sous les systèmes UNIX, la création de sockets qui
+               écoutent sur les ports 1 à 1024 nécessite des privilèges de
+               superutilisateur.
+
+           orb.mutualauth.port
+               Cette propriété spécifie le numéro du port utilisé pour les
+               connexions IIOP sécurisées avec authentification client. Les
+               valeurs valides sont comprises entre 1 et 65535. Sous les
+               systèmes UNIX, la création de sockets qui écoutent sur les
+               ports 1 à 1024 nécessite des privilèges de superutilisateur.
+
+           orb.ssl.port
+               Cette propriété spécifie le numéro du port utilisé pour les
+               connexions IIOP sécurisées. Les valeurs valides sont comprises
+               entre 1 et 65535. Sous les systèmes UNIX, la création de
+               sockets qui écoutent sur les ports 1 à 1024 nécessite des
+               privilèges de superutilisateur.
+
+           osgi.shell.telnet.port
+               Cette propriété spécifie le numéro du port utilisé pour les
+               connexions au shell Apache Felix Remote Shell . Ce shell
+               utilise le service shell Felix pour interagir avec le
+               sous-système de gestion du module OSGi. Les valeurs valides
+               sont comprises entre 1 et 65535. Sous les systèmes UNIX, la
+               création de sockets qui écoutent sur les ports 1 à 1024
+               nécessite des privilèges de superutilisateur.
+
+       --keytooloptions
+           Cette option indique une liste facultative de paires nom/valeur
+           pour les options keytool d'un certificat de serveur autosigné. Le
+           certificat est généré au cours de la création du domaine. Chaque
+           paire de la liste doit être séparée par le caractère deux-points
+           (:).
+
+           Les options autorisées sont les suivantes :
+
+           CN
+               Cette option indique le nom usuel de l'hôte à utiliser pour le
+               certificat auto-signé. Elle ne distingue pas les majuscules et
+               les minuscules.
+
+               Le nom par défaut est le nom qualifié complet de l'hôte sur
+               lequel la sous-commande create-domain est exécutée.
+
+       --savelogin
+           Si la valeur est True, cette option enregistre le nom utilisateur
+           d'administration et le mot de passe. La valeur par défaut est
+           False. Le nom utilisateur et le mot de passe sont stockés dans le
+           fichier .asadminpass du répertoire d'origine Oracle Home de
+           l'utilisateur. Vous ne pouvez créer un domaine qu'au niveau local.
+           Par conséquent, lors de l'utilisation de l'option --savelogin, le
+           nom d'hôte enregistré dans le fichier .asadminpass est toujours
+           localhost. Si l'utilisateur a indiqué le port d'administration par
+           défaut lors de la création du domaine, il est inutile de spécifier
+           --user, --passwordfile, --host ou --port dans les commandes à
+           distance asadmin suivantes. Ces valeurs seront obtenues
+           automatiquement.
+
+               Note
+               ┌────────────────────────────────────────┐
+               │Remarque Lorsqu'un utilisateur crée     │
+               │plusieurs domaines dotés d'un numéro de │
+               │port d'administration identique sur le  │
+               │même hôte ou sur un hôte différent      │
+               │(avec un répertoire d'origine Oracle    │
+               │Home NFS), la sous-commande ne demande  │
+               │pas si le mot de passe doit être        │
+               │écrasé. Le mot de passe sera toujours   │
+               │écrasé.                                 │
+               └────────────────────────────────────────┘
+
+       --checkports
+           Cette option indique si la disponibilité des ports
+           d'administration, HTTP, JMS, JMX et IIOP doit être vérifiée. La
+           valeur par défaut est True.
+
+       --nopassword
+           Cette option indique si l'administrateur aura un mot de passe. Si
+           elle a la valeur False (par défaut), ce mot de passe est spécifié
+           par l'entrée AS_ADMIN_PASSWORD dans le fichier de mots de passe
+           asadmin (défini à l'aide de l'option --passwordfile). Si l'option a
+           la valeur False et que AS_ADMIN_PASSWORD n'est pas défini, le
+           système vous invite à saisir le mot de passe.
+
+           Si cette option a la valeur true, l'administrateur est créé sans
+           mot de passe. Si aucun nom utilisateur n'est indiqué pour le
+           domaine à l'aide de l'option --user et que l'option --nopassword a
+           la valeur True, le nom utilisateur par défaut, admin, est utilisé.
+
+OPÉRANDES
+       domain-name
+           Nom du domaine à créer. Ce nom ne peut contenir que des caractères
+           ASCII et il doit s'agir d'un nom de répertoire valide pour le
+           système d'exploitation de l'hôte sur lequel le domaine est créé.
+
+EXEMPLES
+       Exemple 1, Création d'un domaine
+           Cet exemple montre comment créer un domaine appelé domain4.
+
+               asadmin>create-domain --adminport 4848 domain4
+               Enter admin user name [Enter to accept default "admin" / no password
+               ]>
+
+               Using port 4848 for Admin.
+               Using default port 8080 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Distinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=sr1-usca-22,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain domain4 created.
+               Domain domain4 admin port is 4848.
+               Domain domain4 allows admin login as user "admin" with no password.
+               Command create-domain executed successfully.
+
+       Exemple 2, Création d'un domaine dans un répertoire alternatif
+           Cet exemple montre comment créer un domaine appelé sampleDomain
+           dans le répertoire /home/someuser/domains.
+
+               asadmin> create-domain --domaindir /home/someuser/domains --adminport 7070
+               --instanceport 7071 sampleDomain
+               Enter admin user name [Enter to accept default "admin" / no password]>
+               Using port 7070 for Admin.
+               Using port 7071 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Enterprise ServiceDistinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=sr1-usca-22,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain sampleDomain created.
+               Domain sampleDomain admin port is 7070.
+               Domain sampleDomain allows admin login as user "admin" with no password.
+               Command create-domain executed successfully.
+
+       Exemple 3, Création d'un domaine et enregistrement du nom utilisateur
+       d'administration et du mot de passe
+           Cet exemple montre comment créer un domaine appelé myDomain et
+           enregistrer le nom utilisateur d'administration et le mot de passe.
+
+               asadmin> create-domain --adminport 8282 --savelogin=true myDomain
+               Enter the admin password [Enter to accept default of no password]>
+               Enter the master password [Enter to accept default password "changeit"]>
+               Using port 8282 for Admin.
+               Using default port 8080 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Enterprise ServiceDistinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=sr1-usca-22,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain myDomain created.
+               Domain myDomain admin port is 8282.
+               Domain myDomain allows admin login as user "admin" with no password.
+               Login information relevant to admin user name [admin]
+               for this domain [myDomain] stored at
+               [/home/someuser/.asadminpass] successfully.
+               Make sure that this file remains protected.
+               Information stored in this file will be used by
+               asadmin commands to manage this domain.
+               Command create-domain executed successfully.
+
+       Exemple 4, Création d'un domaine et désignation de l'hôte des
+       certificats
+           Cet exemple montre comment créer un domaine appelé domain5. Le nom
+           usuel de l'hôte à utiliser pour le certificat auto-signé est trio.
+
+               asadmin> create-domain --adminport 9898 --keytooloptions CN=trio domain5
+               Enter the admin password [Enter to accept default of no password]>
+               Enter the master password [Enter to accept default password "changeit"]>
+               Using port 9898 for Admin.
+               Using default port 8080 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Distinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=trio,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain domain5 created.
+               Domain domain5 admin port is 9898.
+               Domain domain5 allows admin login as user "admin" with no password.
+               Command create-domain executed successfully.
+
+STATUT DE SORTIE
+       0
+           sous-commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la sous-commande
+
+VOIR AUSSI
+       login(1), delete-domain(1), start-domain(1), stop-domain(1),
+       list-domains(1)
+
+       asadmin(1M)
+
+       Apache Felix Remote Shell
+       (http://felix.apache.org/site/apache-felix-remote-shell.html), Java
+       Platform Debugger Architecture (JPDA)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                         14 jui 2011                 create-domain(1)

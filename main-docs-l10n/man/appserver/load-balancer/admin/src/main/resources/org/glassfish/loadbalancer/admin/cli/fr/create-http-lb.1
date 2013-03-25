@@ -1,0 +1,183 @@
+create-http-lb(1)       Sous-commandes de l'utilitaire       create-http-lb(1)
+
+NOM
+       create-http-lb - crée un équilibreur de charge
+
+SYNTAXE
+           create-http-lb [--help] --devicehost device_host_or_IP_address --deviceport device_port
+           [--sslproxyhost proxy_host]
+           [--sslproxyport proxy_port] [--target target] [--lbpolicy lbpolicy] [--lbpolicymodule lb_policy_module] [--healthcheckerurl url]
+           [--healthcheckerinterval 10] [--healthcheckertimeout 10]
+           [--lbenableallinstances=true] [--lbenableallapplications=true] [--lbweight instance=weight[:instance=weight]*] [--responsetimeout 60] [--httpsrouting=false] [--reloadinterval60][--monitor=false][--routecookie=true]
+           [--property (name=value)[:name=value]*
+           ] load_balancer_name
+
+DESCRIPTION
+       La sous-commande create-http-lb permet de créer un équilibreur de
+       charge, y compris sa configuration, la référence de la cible et le
+       vérificateur de maintenance. Un équilibreur de charge est une
+       représentation du périphérique d'équilibrage de charge réel, définie
+       par son hôte et les informations relatives au port. Lorsque vous avez
+       créé l'équilibreur de charge, vous pouvez appliquer automatiquement les
+       modifications apportées à sa configuration sans exécuter
+       export-http-lb-config et sans copier manuellement le fichier de
+       configuration de l'équilibreur de charge généré sur l'instance du
+       serveur Web.
+
+           Note
+           ┌───────────────────────────────────────┐
+           │Remarque                               │
+           │                                       │
+           │           Cette sous-commande         │
+           │           s'applique uniquement à     │
+           │           Oracle GlassFish Server.    │
+           │           Cette sous-commande n'est   │
+           │           pas applicable à GlassFish  │
+           │           Server Open Source Edition. │
+           └───────────────────────────────────────┘
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --devicehost
+           Hôte ou adresse IP du périphérique d'équilibrage de charge. Cet
+           hôte ou cette adresse IP indique l'emplacement de l'équilibreur de
+           charge physique.
+
+       --deviceport
+           Port utilisé pour communiquer avec le périphérique d’équilibrage de
+           charge. SSL doit être activé.
+
+       --sslproxyhost
+           Hôte proxy utilisé pour le trafic HTTP sortant.
+
+       --sslproxyport
+           Port proxy utilisé pour le trafic HTTP sortant.
+
+       --target
+           Cette option indique la cible à laquelle s'applique l'équilibreur
+           de charge.
+
+           Les valeurs valides sont les suivantes :
+
+           ·   cluster_name : cette valeur indique que les demandes concernant
+               ce cluster seront traitées par l'équilibreur de charge.
+
+           ·   stand-alone_instance_name : cette valeur indique que les
+               demandes concernant cette instance autonome sont traitées par
+               l'équilibreur de charge.
+
+       --lbpolicy
+           Règle suivie par l'équilibreur de charge pour distribuer la charge
+           aux instances de serveur d'un cluster. Les valeurs valides sont
+           round-robin, weighted-round-robin et user-defined. Si vous
+           choisissez user-defined, indiquez un module de règle d'équilibrage
+           de charge à l'aide de l'option lbpolicymodule. Si vous choisissez
+           weighted-round-robin, affectez les pondérations aux instances de
+           serveur à l'aide de la sous-commande configure-lb-weight. La valeur
+           par défaut est round-robin.
+
+       --lbpolicymodule
+           Si la cible est un cluster et que la règle d'équilibrage de charge
+           est user-defined, utilisez cette option pour indiquer le chemin
+           d'accès complet et le nom de la bibliothèque partagée du module de
+           règle d'équilibrage de charge. La bibliothèque partagée doit se
+           trouver à un emplacement accessible par le serveur Web.
+
+       --healthcheckerurl
+           URL à laquelle envoyer le ping pour déterminer si l'instance est
+           fonctionnelle.
+
+       --healthcheckerinterval
+           Délai d'attente, en secondes, du vérificateur de maintenance entre
+           deux vérifications du bon fonctionnement d'une instance. La valeur
+           par défaut est de 10 secondes. La valeur 0 désactive le
+           vérificateur de maintenance.
+
+       --healthcheckertimeout
+           Délai d'attente, en secondes, du vérificateur de maintenance pour
+           recevoir une réponse d'une instance. Si le vérificateur de
+           maintenance ne reçoit aucune réponse dans ce délai, l'instance est
+           considérée comme non fonctionnelle. La valeur par défaut est de 10
+           secondes.
+
+       --lbenableallinstances
+           Cette option active toutes les instances du cluster cible pour
+           l'équilibrage de charge. Si la cible est une instance de serveur,
+           elle active cette instance pour l'équilibrage de charge.
+
+       --lbenableallapplications
+           Cette option active toutes les applications déployées dans
+           l'instance ou le cluster cible pour l'équilibrage de charge.
+
+       --lbweight
+           Nom de l'instance et pondération que vous lui attribuez. La
+           pondération doit être un nombre entier. Les paires d'instances et
+           de pondérations sont séparées par le caractère deux-points. Par
+           exemple, instance1=1:instance2=4 signifie que, toutes les cinq
+           demandes, l'une passe à instance1 et quatre à instance2. La valeur
+           par défaut de la pondération est 1.
+
+       --responsetimeout
+           Délai, en secondes, au cours duquel une instance de serveur doit
+           renvoyer une réponse. En l'absence de réponse dans ce délai, le
+           serveur est considéré comme non fonctionnel. Si la valeur indiquée
+           est un nombre positif et que la demande est idempotente, cette
+           dernière est exécutée à nouveau. Si la demande n'est pas
+           idempotente, une page d'erreur est renvoyée. Si la valeur est 0, il
+           n'y a pas d'expiration. La valeur par défaut est 60.
+
+       --httpsrouting
+           Si l'option a la valeur true, les demandes HTTPS adressées à
+           l'équilibreur de charge se transforment en demandes HTTPS destinées
+           à l'instance de serveur. Si l'option a la valeur false, les
+           demandes HTTPS adressées à l'équilibreur de charge se transforment
+           en demandes HTTP destinées à l'instance de serveur. La valeur par
+           défaut est false.
+
+       --reloadinterval
+           Durée, en secondes, nécessaire à l'équilibreur de charge pour
+           vérifier une configuration mise à jour. Une fois détecté, le
+           fichier de configuration est rechargé. La valeur par défaut est de
+           60 secondes. La valeur 0 désactive le rechargement.
+
+       --monitor
+           Si l'option a la valeur true, la surveillance de l'équilibreur de
+           charge est activée. La valeur par défaut est false.
+
+       --routecookie
+           Cette option est en phase d'abandon. La valeur est toujours True.
+
+       --property
+           Paires nom/valeur d'attribut facultatives pour la configuration de
+           l'équilibreur de charge.
+
+OPÉRANDES
+       lb_name
+           Nom du nouvel équilibreur de charge. Ce nom ne doit pas être en
+           conflit avec les autres équilibreurs de charge du domaine.
+
+EXEMPLES
+       Exemple 1, Création d'un équilibreur de charge
+           Cet exemple montre comment créer un équilibreur de charge nommé
+           mylb.
+
+               asadmin> create-http-lb
+               --devicehost host1 --deviceport 5555 mylb
+
+               Command create-http-lb executed successfully.
+
+STATUT DE SORTIE
+       0
+           sous-commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la sous-commande
+
+VOIR AUSSI
+       delete-http-lb(1), list-http-lbs(1), create-http-lb-config(1)
+
+       asadmin(1M)
+
+Java EE 7                         25 aoû 2010                create-http-lb(1)

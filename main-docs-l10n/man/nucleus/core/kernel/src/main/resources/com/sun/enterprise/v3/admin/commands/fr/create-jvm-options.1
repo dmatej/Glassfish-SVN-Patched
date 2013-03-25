@@ -1,0 +1,232 @@
+create-jvm-options(1)   Sous-commandes de l'utilitaire   create-jvm-options(1)
+
+NOM
+       create-jvm-options - crée des options pour le lanceur d'application
+       Java
+
+SYNTAXE
+           create-jvm-options [--help] [--target target] [--profiler={true|false}]
+           (jvm-option-name=jvm-option-value) [:jvm-option-name=jvm-option-value*]
+
+DESCRIPTION
+       La sous-commande create-jvm-options crée des options de ligne de
+       commande qui sont transmises au lanceur d'application Java lorsque
+       GlassFish Server démarre. Les options que crée cette sous-commande
+       s'ajoutent à celles prédéfinies dans GlassFish Server. Les options du
+       lanceur d'application Java sont stockées dans l'élément de
+       configuration Java java—config ou dans l'élément d'analyseur de
+       performances profiler du fichier domain.xml. Les options sont envoyées
+       à la ligne de commande dans l'ordre dans lequel elles apparaissent dans
+       l'élément java—config ou dans l'élément d'analyseur de performances
+       profiler du fichier domain.xml.
+
+       Les options d'analyseur de performances sont utilisées pour enregistrer
+       les paramètres nécessaires au démarrage d'un analyseur particulier.
+       L'analyseur de performances doit déjà exister. Si nécessaire, utilisez
+       la sous-commande create-profiler(1) pour créer l'analyseur de
+       performances.
+
+       Cette sous-commande permet de créer les types d'option suivants :
+
+       ·   Propriétés système Java.  Ces options sont paramétrées par le biais
+           de l'option -D du lanceur d'applications Java. Exemple :
+
+           -Djava.security.manager
+
+           -Denvironment=Production
+
+       ·   Paramètres de démarrage du lanceur d'application Java.  Ces options
+           sont précédées d'un tiret (-). Exemple :
+
+           --XX:PermSize=size
+
+           -Xmx1024m
+
+           -d64
+
+       Si la sous-commande indique une option qui existe déjà, la commande ne
+       recrée pas l'option.
+
+           Note
+           ┌────────────────────────────────────────┐
+           │Remarque                                │
+           │                                        │
+           │           Assurez-vous que les options │
+           │           que vous créez sont valides. │
+           │           La sous-commande peut        │
+           │           éventuellement créer une     │
+           │           option non valide, mais une  │
+           │           telle option risque de       │
+           │           provoquer l'échec du         │
+           │           démarrage.                   │
+           └────────────────────────────────────────┘
+
+       Pour vérifier une option, examinez le journal du serveur une fois
+       GlassFish Server démarré. Les options du lanceur d'application Java
+       sont écrites dans le fichier server.log avant toute autre information
+       lorsque GlassFish Server démarre.
+
+       L'ajout de certaines options nécessite le redémarrage du serveur pour
+       appliquer les modifications. D'autres options sont immédiatement
+       définies dans l'environnement du serveur d'administration de domaine
+       (DAS) et ne requièrent pas de redémarrage. La nécessité de redémarrer
+       le serveur dépend du type d'option.
+
+       ·   Le redémarrage n'est pas obligatoire pour les propriétés système
+           Java dont le nom ne commence pas par -Djava.  ou -Djavax.  (point
+           final inclus). Par exemple, le redémarrage n'est pas obligatoire
+           pour les propriétés système Java suivantes :
+
+           -Denvironment=Production
+
+       ·   Le redémarrage est obligatoire pour les options suivantes :
+
+           ·   Propriétés système Java dont le nom commence par -Djava.  ou
+               -Djavax.  (point final inclus). Exemple :
+
+               -Djava.security.manager
+
+           ·   Paramètres de démarrage du lanceur d'application Java. Exemple
+               :
+
+               -client
+
+               -Xmx1024m
+
+               -d64
+
+       Pour redémarrer le serveur DAS, utilisez la commande restart-domain(1).
+
+       Cette sous-commande est prise en charge en mode distant uniquement.
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --target
+           Cette option indique la cible sur laquelle vous créez les options
+           du lanceur d'application Java.
+
+           Les valeurs valides sont les suivantes :
+
+           server
+               Cette valeur indique le serveur DAS (par défaut).
+
+           instance-name
+               Cette valeur indique une instance GlassFish Server.
+
+           cluster-name
+               Cette valeur indique un cluster.
+
+           configuration-name
+               Cette valeur indique une configuration nommée.
+
+       --profiler
+           Cette option indique si les options du lanceur d'application Java
+           correspondent à l'analyseur de performances. L'analyseur de
+           performances doit exister pour que cette option ait la valeur True.
+           La valeur par défaut est False.
+
+OPÉRANDES
+       jvm-option-name
+           Options délimitées par le signe deux-points (:). Le format d'une
+           option dépend des conditions suivantes :
+
+           ·   Si l'option possède un nom et une valeur, le format est
+               option-name=value.
+
+           ·   Si l'option ne possède qu'un nom, le format est option-name.
+               Par exemple, -Xmx2048m.
+
+           ·   Si le nom de la première option peut être interprété à tort
+               comme plusieurs options courtes asadmin, le format est --
+               option-name. Par exemple, dans la commande suivante, -server
+               peut être interprété comme -se, la forme courte dans asadmin
+               pour --secure et --echo :
+
+                   create-jvm-options -server
+               Pour créer l'option JVM -server, utilisez plutôt la commande
+               suivante à la place :
+
+                   create-jvm-options -- -server
+
+               Note
+               ┌────────────────────────────────────────┐
+               │Remarque Si un nom ou une valeur        │
+               │d'option contient un signe deux-points, │
+               │la barre oblique inverse (\) doit être  │
+               │utilisée comme caractère d'échappement  │
+               │pour le signe deux-points dans le nom   │
+               │ou la valeur. D'autres caractères       │
+               │peuvent également nécessiter un         │
+               │caractère d'échappement. Pour plus      │
+               │d'informations sur les caractères       │
+               │d'échappement dans les options de       │
+               │sous-commande, reportez-vous à          │
+               │asadmin(1M).                            │
+               └────────────────────────────────────────┘
+
+EXEMPLES
+       Exemple 1, Définition des propriétés système Java
+           Cet exemple montre comment définir plusieurs propriétés système
+           Java.
+
+               asadmin> create-jvm-options -Dunixlocation=/root/example:
+               -Dvariable=\$HOME:-Dwindowslocation=d\:\\sun\\appserver:-Doption1=-value1
+               created 4 option(s)
+               Command create-jvm-options executed successfully.
+
+       Exemple 2, Définition d'un paramètre de démarrage pour le lanceur
+       d'application Java
+           Cet exemple montre comme définir la taille de portion de mémoire
+           maximale disponible sur 1 024.
+
+               asadmin> create-jvm-options -Xmx1024m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+       Exemple 3, Définition de plusieurs paramètres de démarrage pour le
+       lanceur d'application Java
+           Cet exemple montre comment définir la taille de portion de mémoire
+           maximale disponible sur 1 024 et demander des détails sur le
+           nettoyage de la mémoire.
+
+               asadmin> create-jvm-options "-Xmx1024m:-XX\:+PrintGCDetails"
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+           Dans ce cas, l'un des deux paramètres existe déjà, donc la
+           sous-commande signale qu'une seule option a été définie.
+
+       Exemple 4, Définition d'un paramètre de démarrage JVM pour l'analyseur
+       de performances
+           Cet exemple montre comment définir un paramètre de démarrage JVM
+           pour l'analyseur de performances.
+
+               asadmin> create-jvm-options --profiler=true -XX\:MaxPermSize=192m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+STATUT DE SORTIE
+       0
+           sous-commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la sous-commande
+
+VOIR AUSSI
+       delete-jvm-options(1), list-jvm-options(1), create-profiler(1),
+       restart-domain(1)
+
+       asadmin(1M)
+
+       Pour plus d'informations sur le lanceur d'application Java,
+       reportez-vous à la page de référence pour le système d'exploitation que
+       vous utilisez :
+
+       ·   Oracle Solaris et Linux : java - the Java application launcher
+           (http://java.sun.com/javase/6/docs/technotes/tools/solaris/java.html)
+
+       ·   Windows : java - the Java application launcher
+           (http://java.sun.com/javase/6/docs/technotes/tools/windows/java.html)
+
+Java EE 7                         29 nov 2010            create-jvm-options(1)

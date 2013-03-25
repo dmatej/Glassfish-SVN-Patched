@@ -1,0 +1,187 @@
+create-http-lb-ref(1)   Subcomandos de la Utilidad asa   create-http-lb-ref(1)
+
+NOMBRE DE REFERENCIA
+       create-http-lb-ref - Agrega un cluster o instancia de servidor
+       existente a un equilibrador de carga o configuración de equilibrador de
+       carga existente.
+
+SINOPSIS
+           create-http-lb-ref [--help] --config config_name | --lbname load_balancer_name
+           [--lbpolicy round-robin] [--lbpolicymodule lb_policy_module]
+           [--healthcheckerurl url] [--healthcheckerinterval 10]
+           [--healthcheckertimeout 10] [--lbenableallinstances=true]
+           [--lbenableallapplications=true] [--lbweight instance=weight[:instance=weight]*]
+           target
+
+DESCRIPCIÓN
+       Utilice el subcomando create-http-lb-ref para:
+
+       ·   Agregar un cluster o instancia de servidor existente a un
+           equilibrador de carga o configuración de equilibrador de carga
+           existente. El equilibrador de carga reenvía las solicitudes a las
+           instancias en clúster y autónomas a las que hace referencia.
+
+       ·   Definir la política de equilibrio de carga en asignación en rueda
+           (round-robin), asignación en rueda (round-robin) ponderada o una
+           política definida por el usuario.
+
+       ·   Configurar un comprobador del sistema del equilibrador de carga. La
+           configuración del comprobador del sistema definida aquí sólo se
+           aplica al destino. Si no crea un comprobador del sistema con este
+           subcomando, utilice create-http-health-checker.
+
+       ·   Activar todas las instancias en el cluster de destino para
+           equilibrio de carga o utilizar enable-http-lb-server para
+           activarlas individualmente.
+
+       ·   Activar todas las aplicaciones desplegadas en el destino para el
+           equilibrio de carga o usar enable-http-lb-aplication para
+           activarlas individualmente.
+
+           Nota
+           ┌──────────────────────────────────────┐
+           │Nota                                  │
+           │                                      │
+           │           Este subcomando sólo se    │
+           │           puede aplicar a Oracle     │
+           │           GlassFish Server. Este     │
+           │           subcomando no se puede     │
+           │           aplicar a GlassFish Server │
+           │           Open Source Edition.       │
+           └──────────────────────────────────────┘
+
+OPCIONES
+       --help, -?
+           Muestra el texto de ayuda para el subcomando.
+
+       --config
+           Especifica a qué configuración del equilibrador de carga se deben
+           agregar clusters e instancias de servidor. Especifique una
+           configuración de equilibrador de carga o bien un equilibrador de
+           carga. Si especifica ambos se produce un error.
+
+       --lbname
+           Especifica el equilibrador de carga al que se deben agregar los
+           clusters e instancias de servidor. Especifique una configuración de
+           equilibrador de carga o bien un equilibrador de carga. Si
+           especifica ambos se produce un error.
+
+       --lbpolicy
+           Política que sigue el equilibrador de carga. Los valores válidos
+           son round-robin,
+            weighted-round-robin y user-defined. Si elige user-defined
+           (definido por el usuario), especifique un módulo de política del
+           equilibrador de carga con la opción lbpolicymodule. Si elige
+           weighted-round-robin, asigne las medias ponderadas a las instancias
+           del servidor mediante el subcomando configure-lb-weight . El valor
+           por defecto es round-robin.
+
+       --lbpolicymodule
+           Si la política del equilibrador de carga es user-defined, utilice
+           esta opción para especificar la ruta de acceso completa y el nombre
+           de la biblioteca compartida del módulo de política de equilibrio de
+           carga. La biblioteca compartida debe estar en una ubicación
+           accesible para el servidor web.
+
+       --healthcheckerurl
+           URL a la que se debe hacer ping para determinar si la instancia
+           está en buen estado.
+
+       --healthcheckerinterval
+           Intervalo en segundos que el comprobador del sistema debe esperar
+           entre una comprobación y otra de una instancia dañada para ver si
+           ya está en buen estado. El valor por defecto es 30 segundos. El
+           valor 0 desactiva el comprobador del sistema.
+
+       --healthcheckertimeout
+           Intervalo en segundos que el comprobador del sistema debe esperar
+           para recibir una respuesta de una instancia. Si el comprobador del
+           sistema no recibe una respuesta antes de que se agote el intervalo,
+           se considerará que la instancia tiene un problema. El valor por
+           defecto es 10.
+
+       --lbenableallinstances
+           Activa el equilibrio de carga en todas las instancias en el cluster
+           de destino. Si el destino es una instancia de servidor, activa el
+           equilibrio de carga en la instancia. El valor por defecto es true.
+
+       --lbenableallapplications
+           Activa el equilibrio de carga en todas las aplicaciones desplegadas
+           en el cluster o instancia de destino. El valor por defecto es true.
+
+       --lbweight
+           Nombre de la instancia y media ponderada que le asigna. La media
+           ponderada debe ser un número entero. Los pares de instancias y
+           medias ponderadas están separados por dos puntos. Por ejemplo,
+           instance1=1:instance2=4 significa que, de cada 5 solicitudes, una
+           vaya a instance1 y cuatro vayan a instance2. 1 es el valor de media
+           ponderada por defecto.
+
+OPERANDOS
+       target
+           Especifica qué cluster o instancia se debe agregar al equilibrador
+           de carga. Los valores válidos son:
+
+           ·   cluster_name: especifica que las solicitudes para este cluster
+               las maneje el equilibrador de carga.
+
+           ·   stand-alone_instance_name: especifica que las solicitudes para
+               esta instancia autónoma las manejará el equilibrador de carga.
+
+EJEMPLOS
+       Ejemplo 1, Adición de una Referencia de Cluster a una Configuración de
+       Equilibrador de Carga
+           En este ejemplo, se agrega una referencia a un cluster denominado
+           cluster2 a una configuración del equilibrador de carga denominada
+           mylbconfig.
+
+               asadmin> create-http-lb-ref --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Ejemplo 2, Adición de una referencia de cluster a un equilibrador de
+       carga
+           En este ejemplo, se agrega una referencia a un cluster denominado
+           cluster2 a un equilibrador de carga denominado mylb.
+
+               asadmin> create-http-lb-ref --lbname mylb cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Ejemplo 3, Configuración de un Comprobador del Sistema y la Política de
+       Equilibrador de Carga
+           En este ejemplo se configura un comprobador del sistema y una
+           política de equilibrio de carga, y se activa el equilibrador de
+           carga para instancias y aplicaciones.
+
+               asadmin> create-http-lb-ref --config mylbconfig --lbpolicy weighted-round-robin
+               --healthcheckerinterval 40 --healthcheckertimeout 20
+               --lbenableallinstances=true --lbenableallapplications=true cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Ejemplo 4, Definición de una Política de Equilibrio de Carga Definida
+       por el Usuario
+           En este ejemplo se define una política de equilibrio de carga
+           definida por el usuario.
+
+               asadmin> create-http-lb-ref --lbpolicy user-defined --lbpolicymodule /user/modules/module.so
+               --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+ESTADO DE SALIDA
+       0
+           Subcomando ejecutado correctamente
+
+       1
+           Error al ejecutar el subcomando
+
+CONSULTE TAMBIÉN
+       delete-http-lb-ref(1), create-http-health-checker(1),
+       enable-http-lb-server(1), enable-http-lb-application(1),
+       list-http-lb-configs(1), list-http-lbs(1) configure-lb-weight(1)
+
+       asadmin(1M)
+
+Java EE 7                    25 de agosto de 2010        create-http-lb-ref(1)

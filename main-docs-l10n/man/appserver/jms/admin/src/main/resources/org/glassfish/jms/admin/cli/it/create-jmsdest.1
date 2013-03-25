@@ -1,0 +1,227 @@
+create-jmsdest(1)       Comandi secondari della utilit       create-jmsdest(1)
+
+NOME
+       create-jmsdest - crea una destinazione fisica JMS
+
+SINTASSI
+           create-jmsdest [--help]
+           --desttype dest_type
+           [--property (name=value)[:name=value]*]
+           [--target target]
+           [--force[={false|true}]]
+           dest_name
+
+DESCRIZIONE
+       Il comando secondario create-jmsdest crea una destinazione fisica JMS
+       (Java Message Service). In genere si utilizza il comando secondario
+       create-jms-resource per creare una risorsa di destinazione JMS con la
+       proprietà Name che specifica la destinazione fisica. La destinazione
+       fisica viene creata automaticamente quando si esegue un'applicazione
+       che usa la risorsa di destinazione. Usare il comando secondario
+       create-jmsdest se si desidera creare una destinazione fisica con
+       impostazioni delle proprietà non predefinite.
+
+       Questo comando secondario è supportato solo in modalità remota. Per i
+       comandi secondari asadmin è necessario un server di amministrazione del
+       dominio (DAS) in esecuzione.
+
+OPZIONI
+       --help, -?
+           Visualizza il testo della Guida per il comando secondario.
+
+       --desttype
+           Il tipo della destinazione JMS. I valori validi sono topic e queue.
+
+       --property
+           Coppie nome-valore di attributo facoltative per la configurazione
+           della destinazione fisica. Per una destinazione fisica è possibile
+           specificare le proprietà riportate di seguito.
+
+           maxNumMsgs
+               Il numero massimo di messaggi non utilizzati consentiti per la
+               destinazione. Il valore -1 indica un numero illimitato di
+               messaggi. Il valore predefinito è -1. Per la coda dei messaggi
+               bloccati, il valore predefinito è 1000.
+
+               Se la proprietà limitBehavior è impostata su FLOW_CONTROL, è
+               possibile che il limite specificato per i messaggi venga
+               superato, poiché il broker non è in grado di reagire con
+               sufficiente rapidità per interrompere il flusso dei messaggi in
+               entrata. In questi casi, il valore specificato per maxNumMsgs
+               viene utilizzato come semplice suggerimento per il broker
+               anziché come limite applicato rigorosamente.
+
+           maxBytesPerMsg
+               La dimensione massima, in byte, di ogni singolo messaggio. Il
+               rifiuto di un messaggio persistente viene segnalato al client
+               di produzione con un'eccezione. Per i messaggi non persistenti
+               non viene inviata alcuna notifica.
+
+               Il valore può essere espresso in byte, kilobyte o megabyte
+               utilizzando i seguenti suffissi:
+
+               b
+                   Byte
+
+               k
+                   Kilobyte (1024 byte)
+
+               m
+                   Megabyte (1024 x 1024 = 1.048.576 byte)
+
+               Un valore senza suffisso è espresso in byte, mentre il valore
+               -1 indica che non è previsto alcun limite per la dimensione dei
+               messaggi. Il valore predefinito è -1.
+
+           maxTotalMsgBytes
+               La memoria totale massima, in byte, per messaggi non
+               utilizzati. Il valore predefinito è -1. La sintassi è uguale a
+               quella per maxBytesPerMsg . Per la coda dei messaggi bloccati,
+               il valore predefinito è 10m.
+
+           limitBehavior
+               Il funzionamento del broker della coda dei messaggi quando
+               viene raggiunta la soglia relativa al limite di memoria. Di
+               seguito sono riportati i valori validi.
+
+               REJECT_NEWEST
+                   I messaggi più recenti vengono rifiutati e il rifiuto viene
+                   notificato al client di produzione con un'eccezione solo se
+                   il messaggio è persistente. Questo è il valore predefinito.
+
+               FLOW_CONTROL
+                   Consente di ridurre la velocità alla quale i producer
+                   inviano i messaggi.
+
+               REMOVE_OLDEST
+                   I messaggi meno recenti vengono rimossi.
+
+               REMOVE_LOW_PRIORITY
+                   I messaggi con la priorità più bassa vengono rimossi in
+                   base alla data senza che venga inviata alcuna notifica al
+                   client di produzione.
+
+               If the value is REMOVE_OLDEST or REMOVE_LOW_PRIORITY and the
+               useDMQ property is set to true, excess messages are moved to
+               the dead message queue. Per la coda dei messaggi bloccati, il
+               funzionamento predefinito in caso di raggiungimento del limite
+               è REMOVE_OLDEST e il valore non può essere impostato su
+               FLOW_CONTROL.
+
+           maxNumProducers
+               Il numero massimo di producer di messaggi per la destinazione.
+               Una volta raggiunto il limite, non è possibile creare nuovi
+               producer. Il valore -1 indica un numero illimitato di producer.
+               Il valore predefinito è 100. Questa proprietà non si applica
+               alla coda dei messaggi bloccati.
+
+           consumerFlowLimit
+               Il numero massimo di messaggi che possono essere consegnati a
+               un consumer in un singolo batch. Il valore -1 indica un numero
+               illimitato di messaggi. Il valore predefinito è 1000. Il
+               runtime del client può sostituire tale limite specificando un
+               valore inferiore per l'oggetto Connection Factory.
+
+               Per la consegna con bilanciamento del carico da una coda,
+               questo è il numero iniziale di messaggi in coda instradati a
+               consumer attivi prima che inizi il bilanciamento del carico.
+
+           useDMQ
+               Se si imposta true, i messaggi bloccati vengono inseriti nella
+               relativa coda. Se si imposta false, i messaggi bloccati vengono
+               eliminati. Il valore predefinito è true.
+
+           validateXMLSchemaEnabled
+               Se si imposta true, la convalida dello schema XML è abilitata
+               per la destinazione. Il valore predefinito è false.
+
+               Quando la convalida XML è abilitata, il runtime del client
+               Message Queue tenta di convalidare un messaggio XML in base
+               agli XSD specificati (o in base al DTD se non è stato impostato
+               alcun XSD) prima di inviarlo al broker. Se non è possibile
+               individuare lo schema specificato o convalidare il messaggio,
+               quest'ultimo non viene inviato e viene restituita un'eccezione.
+
+               Questa proprietà deve essere impostata quando una destinazione
+               non è attiva, ovvero quando non dispone di consumer o producer
+               e non contiene alcun messaggio. In caso contrario, è necessario
+               riconnettere il producer.
+
+           XMLSchemaURIList
+               Lista separata da spazi delle stringhe URI degli XSD (XML
+               Schema Document). Gli URI puntano alla posizione di uno o più
+               XSD da utilizzare per la convalida dello schema XML se si
+               imposta validateXMLSchemaEnabled su true. Il valore predefinito
+               è null.
+
+               Se vengono specificati più URI, utilizzare le virgolette per
+               delimitare tale valore, come nell'esempio seguente:
+
+                   "http://foo/flap.xsd http://test.com/test.xsd"
+               Se questa proprietà non viene impostata oppure è null e la
+               convalida XML è abilitata, la convalida viene eseguita
+               utilizzando un DTD specificato nel documento XML. Se un XSD
+               viene modificato a seguito della modifica dei requisiti delle
+               applicazioni, tutte le applicazioni client che producono
+               messaggi XML basati sull'XSD modificato devono riconnettersi al
+               broker.
+
+           Per modificare il valore di queste proprietà, è possibile
+           utilizzare il comando as-install/mq/bin/imqcmd. Per ulteriori
+           informazioni, vedere "Physical Destination Property Reference" in
+           Oracle GlassFish Server Message Queue Administration Guide.
+
+       --target
+           Crea la destinazione fisica soltanto per la destinazione
+           specificata. Benché il comando secondario create-jmsdest sia
+           correlato alle risorse, viene creata una destinazione fisica
+           utilizzando il servizio JMS (broker JMS), che fa parte della
+           configurazione. Un broker JMS è configurato nella sezione config
+           del file domain.xml. Di seguito sono riportati i valori validi.
+
+           server
+               Crea la destinazione fisica per l'istanza server predefinita.
+               Questo è il valore predefinito.
+
+           configuration-name
+               Crea la destinazione fisica nella configurazione specificata.
+
+           cluster-name
+               Crea la destinazione fisica per tutte le istanze server nel
+               cluster specificato.
+
+           instance-name
+               Crea la destinazione fisica per l'istanza server specificata.
+
+       --force
+           Specifica se il comando secondario sovrascrive la destinazione
+           fisica JMS esistente che ha lo stesso nome. Il valore predefinito è
+           false.
+
+OPERANDI
+       dest_name
+           L'identificativo univoco per la destinazione JMS da creare.
+
+ESEMPI
+       Esempio 1, Creazione di una destinazione fisica JMS
+           Il comando secondario seguente crea una coda fisica JMS denominata
+           PhysicalQueue con valori delle proprietà non predefiniti.
+
+               asadmin> create-jmsdest --desttype queue
+               --property maxNumMsgs=1000:maxBytesPerMsg=5k PhysicalQueue
+               Command create-jmsdest executed successfully.
+
+STATO DI USCITA
+       0
+           esecuzione del comando secondario riuscita
+
+       1
+           errore durante l'esecuzione del comando secondario
+
+VEDERE ANCHE
+       create-jms-resource(1), delete-jmsdest(1), list-jmsdest(1),
+       flush-jmsdest(1)
+
+       asadmin(1M)
+
+Java EE 7                      12 febbraio 2013              create-jmsdest(1)

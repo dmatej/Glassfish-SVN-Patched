@@ -1,0 +1,210 @@
+monitor(1)                  asadmin 实用程序子命令                  monitor(1)
+
+名称
+       monitor - 显示常用组件和服务的监视数据
+
+提要
+           monitor [--help]
+           --type type
+           [--filename filename]
+           [--interval interval]
+           [--filter filter]
+           instance-name
+
+说明
+       monitor 子命令显示通常被监视的 GlassFish Server
+       组件和服务的统计信息。必须使用 --type
+       选项指定要显示其统计信息的对象。数据以表格形式持续显示，或者可使用
+       --interval 选项以特定时间间隔显示数据。
+
+       监视给定组件或服务前，必须通过使用管理控制台、enable-monitoring
+       子命令或 set 子命令为组件或服务启用监视 (设为 HIGH 或 LOW)。
+
+       monitor 子命令的选项可用于过滤结果以及以逗号分隔值 (CSV)
+       文件的形式捕获输出。输出以表格形式显示。要查看表标题的图例，请键入 h。
+
+       该子命令仅在本地模式下受支持。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --type
+           要监视的组件或服务。该选项是必需的。未定义默认值。
+
+           httplistener
+               对于这种类型，属性
+               server.monitoring-service.module-monitoring-levels.http-service
+               必须设置为 LOW 或 HIGH。
+
+               显示 HTTP 监听程序服务的以下统计信息：
+
+               ec
+                   处理 HTTP 请求时出现总数错误。
+
+               mt
+                   处理一个 HTTP 请求的最长响应时间 (毫秒)。
+
+               pt
+                   HTTP 监听程序服务处理 HTTP 请求所用的总时间 (毫秒)。
+
+               rc
+                   HTTP 监听程序服务已处理的请求总数。
+
+           jvm
+               对于这种类型，属性
+               server.server-config.monitoring-service.module-monitoring-levels.jvm
+               必须设置为 LOW 或 HIGH。
+
+               显示 Java 平台的虚拟机 (Java 虚拟机或 JVM 计算机)
+               的以下统计信息：术语“Java 虚拟机”和“JVM”表示用于 Java
+               平台的虚拟机。
+
+               UpTime
+                   JVM 计算机自上一次启动以来运行的毫秒数。
+
+               min
+                   JVM
+                   计算机在启动期间从操作系统请求的用于内存管理的初始内存量
+                   (字节)。
+
+               max
+                   可用于内存管理的最大内存量。
+
+               low
+                   为了与其他发行版兼容而保留。
+
+               high
+                   为了与其他发行版兼容而保留。
+
+               count
+                   保证可以供 JVM 计算机使用的内存量 (字节)。
+
+           webmodule
+               对于这种类型，属性
+               server.server-config.monitoring-service.module-monitoring-levels.web-container
+               必须设置为 LOW 或 HIGH。
+
+               显示所有已部署 Web 模块的以下统计信息：
+
+               asc
+                   当前处于活动状态的会话的数量。
+
+               ast
+                   当前处于活动状态的或以前处于活动状态的会话的总数。
+
+               rst
+                   已拒绝的会话的总数。
+
+               st
+                   已创建的会话的总数。
+
+               ajlc
+                   已加载的当前处于活动状态的 JavaServer Pages (JSP)
+                   技术页数。
+
+               mjlc
+                   可在任何时候同时处于活动状态的最大 JSP 技术页数。
+
+               tjlc
+                   已加载的 JSP 技术页的总数。
+
+               aslc
+                   已加载的当前处于活动状态的 Java Servlet 数。
+
+               mslc
+                   可在任何时候同时处于活动状态的最大 Java Servlet 数。
+
+               tslc
+                   已加载的 Java Servlet 的总数。
+
+       --filename
+           不指定此选项。为了与早期发行版兼容而保留此选项。如果指定此选项，则不会出现语法错误。相反，子命令会成功运行，并显示忽略了此选项的警告消息。
+
+       --interval
+           捕获所监视属性之前的时间间隔 (秒)。时间间隔必须大于
+           0。所监视属性将显示在 stdout 上，直到您键入 Control-C 或
+           q。默认值为 30。
+
+       --filter
+           不指定此选项。为了与早期发行版兼容而保留此选项。如果指定此选项，则不会出现语法错误。相反，子命令会成功运行，并显示忽略了此选项的警告消息。
+
+操作数
+       instance-name
+           要查看其监视数据的服务器实例。默认值为 server。
+
+示例
+       Example 1, 以时间间隔显示监视统计信息
+           此示例每隔 2000 秒显示一次 JVM 计算机的监视数据。
+
+               asadmin> monitor --type=jvm --interval 2000 server
+                                              JVM Monitoring
+               UpTime(ms)                          Heap and NonHeap Memory(bytes)
+               current                   min        max        low        high       count
+               957843                    29523968   188284928  0          0          60370944
+
+               q
+               Command monitor executed successfully.
+
+       Example 2, 过滤监视数据
+           此示例使用 filter 选项显示 http-listener-1 统计信息。
+
+               asadmin> monitor --type httplistener --filter http-listener-1 server
+
+                                  HTTP Listener Monitoring: http-listener-1
+               br   bs   c200 c2xx c302 c304 c3xx c400 c401 c403 c404 c4xx c503 c5xx coc  co
+               ctc  ctb  ec   moc  mst  mt   mtm  mst  pt   rc
+               0    0    0    0    0    3    3    0    0    0    0    0    0    0    0    0
+               2    0    0    1    20   20   2    2    6    3
+           要查看表标题的图例，请键入 h。
+
+               ******************************************************************************************
+               * br   = Cumulative value of the Bytes received by each of the Request Processors        *
+               * bs   = Cumulative value of the Bytes sent by each of the Request Processors            *
+               * c200 = Number of responses with a status code equal to 200                             *
+               * c2xx = Number of responses with a status code in the 2xx range                         *
+               * c302 = Number of responses with a status code equal to 302                             *
+               * c304 = Number of responses with a status code equal to 304                             *
+               * c3xx = Number of responses with a status code in the 3xx range                         *
+               * c400 = Number of responses with a status code equal to 400                             *
+               * c401 = Number of responses with a status code equal to 401                             *
+               * c403 = Number of responses with a status code equal to 403                             *
+               * c404 = Number of responses with a status code equal to 404                             *
+               * c4xx = Number of responses with a status code equal to 4xx                             *
+               * c504 = Number of responses with a status code equal to 504                             *
+               * c5xx = Number of responses with a status code equal to 5xx                             *
+               * coc  = Number of open connections                                                      *
+               * co   = Number of responses with a status code outside the 2xx, 3xx, 4xx, and 5xx range *
+               * ctc  = Number of request processing threads currently in the listener thread pool      *
+               * ctb  = Number of request processing threads currently in use in the listener thread    *
+               *        pool serving requests                                                           *
+               * ec   = Number of responses with a status code equal to 400                             *
+               * moc  = Maximum number of open connections                                              *
+               * mst  = Minimum number of request processing threads that will be created at listener   *
+               *        startup time and maintained as spare threads above the current thread count     *
+               * mt   = Maximum number of request processing threads that are created by the listener   *
+               * mtm  = Provides the longest response time for a request - not a cumulative value, but  *
+               *        the largest response time from among the response times                         *
+               * pt   = Cumulative value of the times taken to process each request. The processing     *
+               *        time is the average of request processing times over the request count          *
+               * rc   = Cumulative number of the requests processed so far                              *
+               ******************************************************************************************
+
+退出状态
+       0
+           已成功执行子命令
+
+       1
+           执行子命令时出现错误
+
+另请参阅
+       enable-monitoring(1), disable-monitoring(1), set(1)
+
+       monitoring(5ASC)
+
+       asadmin(1M)
+
+       Oracle GlassFish Server Administration Guide 中的 Administering the
+       Monitoring Service
+
+Java EE 7                     2009 年 11 月 2 日                    monitor(1)

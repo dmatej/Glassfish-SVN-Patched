@@ -1,0 +1,204 @@
+appclient(1M)               Comandos de Utilidades               appclient(1M)
+
+NOMBRE DE REFERENCIA
+       appclient - Inicia el contenedor de cliente de aplicación y llama a la
+       aplicación cliente que suele estar empaquetada en el archivo JAR de la
+       aplicación.
+
+SINOPSIS
+           appclient [client_application_classfile | -client client_application_jar]
+           [-mainclass main_class_name | -name display_name]
+           [-xml sun-acc.xml file] [-textauth]
+           [-targetserver host[:port][,host[:port]...]]
+           [-user username] [-passwordfile password_file]
+           [application-options]
+
+           appclient [jvm-options]
+           [-mainclass main_class_name | -name display_name]
+           [-xml client_config_xml_file] [-textauth]
+           [-targetserver host[:port][,host[:port]...]]
+           [-user username] [-passwordfile password_file]
+           class-selector [application-options]
+
+DESCRIPCIÓN
+       Utilice el comando appclient para iniciar el contenedor de cliente de
+       aplicación y llamar a una aplicación cliente que suele estar
+       empaquetada en un archivo JAR de la aplicación. El archivo JAR del
+       cliente de aplicación se ha especificado y creado durante el despliegue
+       mediante Consola de Administración o el comando asadmin deploy con la
+       opción --retrieve. También puede recuperar el archivo JAR del cliente
+       mediante el comando asadmin get-client-stubs.
+
+       El contenedor de cliente de aplicación es un juego de clases Java,
+       bibliotecas y otros archivos necesarios para ejecutar un programa del
+       cliente de aplicación de primer nivel en una máquina virtual para la
+       plataforma Java (máquina JVM). El contenedor de cliente de aplicación
+       se comunica con el servidor mediante RMI-IIOP.
+
+       El archivo JAR de cliente que se recupera después de desplegar una
+       aplicación se debe transferir con la opción -client o -jar al ejecutar
+       la utilidad appclient. El nombre del archivo JAR de cliente tiene el
+       formato app-nameClient.jar. Si hay varios clientes de aplicación en un
+       archivo EAR, deberá utilizar las opciones -mainclass o -name para
+       especificar qué cliente se debe llamar.
+
+       Si el cliente de aplicación es un módulo autónomo o el único cliente en
+       un archivo EAR, el contenedor de cliente de aplicación puede encontrar
+       el cliente sin necesidad de utilizar las opciones -mainclass o -name.
+       Si especifica para -mainclass o -name un valor que no coincida con el
+       contenido del cliente, el contenedor de cliente de aplicación inicia el
+       cliente de todos modos, pero emite una advertencia que indica que la
+       selección no coincide con la información en el cliente. La advertencia
+       también muestra los valores reales de la clase principal y el nombre
+       del cliente.
+
+OPCIONES
+       jvm-options
+           Opcional; puede definir las opciones de JVM para la aplicación
+           cliente. Éstas pueden ser cualquier opción válida del comando java,
+           excepto -client o -jar. Las opciones de JVM se pueden combinar con
+           otras opciones del comando appclient mientras ambos tipos de
+           opciones aparezcan antes de class-selector.
+
+       client_application_classfile
+           Opcional; ruta de acceso al sistema de archivos del archivo .class
+           de la aplicación cliente. Una ruta de acceso relativa debe ser
+           relativa al directorio actual. Este archivo de clase debe contener
+           el método main() que debe llamar el contenedor de cliente de
+           aplicación.
+
+           Si utiliza client_application_classfile y la clase depende de otras
+           clases de usuario, deberá definir también la classpath. Puede
+           utilizar la opción de JVM -classpath en el comando appclient o
+           definir la variable de entorno CLASSPATH. Para obtener más
+           información sobre cómo definir una classpath, consulte la sección
+           sobre la definición de classpath, versión Oracle Solaris
+           (http://download.oracle.com/javase/6/docs/technotes/tools/solaris/classpath.html)
+           o versión Windows
+           (http://download.oracle.com/javase/6/docs/technotes/tools/windows/classpath.html).
+
+       -client
+           Opcional; nombre y ubicación del archivo JAR del cliente.
+
+       -mainclass
+           Opcional; nombre de clase completo de la aplicación cliente
+           principal, como se especifica en la entrada Main-Class en el
+           archivo MANIFEST.MF. Utilizado para aplicaciones con varios
+           clientes. Por defecto, utiliza la clase especificada en el jar del
+           cliente. Por ejemplo, com.example.test.AppClient.
+
+       -name
+           Opcional; nombre mostrado para la aplicación cliente. Utilizado
+           para aplicaciones con varios clientes. Por defecto, el nombre
+           mostrado se especifica en el archivo jar del cliente
+           application-client.xml que se identifica con el atributo
+           display-name.
+
+       -xml
+           Opcional si se utiliza el dominio, instancia y nombre (sun-acc.xml)
+           por defecto; de lo contrario, es necesario; identifica el nombre y
+           la ubicación del archivo XML de configuración del cliente. Si no se
+           especifica ninguno, el valor por defecto es el archivo sun-acc.xml
+           en el directorio domain-dir/config.
+
+       -textauth
+           Opcional; se utiliza para especificar la autenticación con formato
+           de texto cuando ésta sea necesaria.
+
+       -targetserver
+           Opcional; lista, separada por comas, de una o más especificaciones
+           de servidor para puntos finales de ORB. Cada especificación de
+           servidor debe contener al menos el host. Si lo desea, una
+           especificación del servidor puede incluir también el puerto. Si el
+           puerto se omite en una especificación de servidor, se utiliza para
+           ese host el valor por defecto, 3700.
+
+       -user
+           Opcional; usuario de la aplicación que está autorizado para tener
+           acceso a determinados componentes protegidos en la aplicación, como
+           los componentes de EJB.
+
+       -passwordfile
+           Opcional; especifica el nombre, incluida la ruta de acceso
+           completa, de un archivo que contiene la contraseña para clientes de
+           aplicaciones en el siguiente formato:
+
+               PASSWORD=appclient-password
+           Si esta opción se omite, la contraseña se especifica de forma
+           interactiva en el símbolo del sistema.
+
+               Atención
+               ┌────────────────────────────────────────┐
+               │Atención Evite especificar una          │
+               │contraseña de forma interactiva en el   │
+               │símbolo del sistema. Esta contraseña la │
+               │pueden ver los usuarios que pueden      │
+               │ejecutar comandos para mostrar los      │
+               │procesos en ejecución y los comandos    │
+               │para iniciarlos, tales como ps.         │
+               └────────────────────────────────────────┘
+           Por razones de seguridad, la utilidad appclient no lee las
+           contraseñas especificadas como variable de entorno.
+
+       class-selector
+           Necesario; debe especificar la clase de la aplicación cliente
+           mediante uno de los siguientes selectores de clase.
+
+           -jar jar-file
+               Nombre y ubicación del archivo JAR del cliente. El archivo JAR
+               del cliente de aplicación se especifica y crea durante el
+               despliegue mediante el comando asadmin deploy. Si se
+               especifica, el valor -classpath se ignora en favor del valor
+               Class-Path del manifiesto del archivo JAR del cliente.
+
+           class-name
+               Nombre totalmente cualificado de la clase principal del cliente
+               de la aplicación. El contenedor de cliente de aplicación llama
+               al método main de esta clase para iniciar el cliente. Por
+               ejemplo, com.example.test.AppClient.
+
+               Si utiliza class-name como selector de clase, se debe definir
+               también la classpath. Puede utilizar la opción de JVM
+               -classpath en el comando appclient o definir la variable de
+               entorno CLASSPATH. Para obtener más información sobre cómo
+               definir una classpath, consulte la sección sobre la definición
+               de classpath, versión Oracle Solaris
+               (http://download.oracle.com/javase/6/docs/technotes/tools/solaris/classpath.html)
+               o versión Windows
+               (http://download.oracle.com/javase/6/docs/technotes/tools/windows/classpath.html).
+
+       application-options
+           Opcional; puede definir argumentos para la aplicación cliente.
+
+EJEMPLOS
+       Ejemplo 1, Uso del comando appclient
+
+               appclient -xml sun-acc.xml -jar myclientapp.jar scott sample
+           Donde: sun-acc.xml es el nombre del archivo XML de configuración
+           del cliente, myclientapp.jar es el archivo .jar de la aplicación
+           cliente y scott y sample son argumentos que pasar a la aplicación.
+           Si sun-acc.xml y myclientapp.jar no están en el directorio actual,
+           debe proporcionar las ubicaciones de ruta de acceso absoluta; de lo
+           contrario, se utilizarán las rutas de acceso relativas. La ruta de
+           acceso relativa lo es respecto al directorio donde se ejecuta el
+           comando.
+
+ATRIBUTOS
+       Consulte atributos(5) para obtener descripciones de los atributos
+       siguientes:
+
+       ┌────────────────────────┬──────────────────────────┐
+       │                        │                          │
+       │       TIPO DE ATRIBUTO │        VALOR DE ATRIBUTO │
+       ├────────────────────────┼──────────────────────────┤
+       │                        │                          │
+       │       Estabilidad de   │        Inestable         │
+       │       interfaz         │                          │
+       └────────────────────────┴──────────────────────────┘
+
+CONSULTE TAMBIÉN
+       get-client-stubs(1)
+
+       asadmin(1M), package-appclient(1M)
+
+Java EE 7                   16 de diciembre de 2010              appclient(1M)

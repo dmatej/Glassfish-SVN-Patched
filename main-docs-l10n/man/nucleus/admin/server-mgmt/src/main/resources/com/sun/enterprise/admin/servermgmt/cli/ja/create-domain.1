@@ -1,0 +1,303 @@
+create-domain(1)      asadminユーティリティのサブコマンド     create-domain(1)
+
+名前
+       create-domain - ドメインを作成します
+
+概要
+           create-domain [--help]
+           [--adminport adminport]
+           [--instanceport instanceport]
+           [--portbase portbase]
+           [--profile profile-name]
+           [--template template-name]
+           [--domaindir domaindir]
+           [--savemasterpassword={false|true}]
+           [--usemasterpassword={false|true}]
+           [--domainproperties (name=value)[:name=value]*]
+           [--keytooloptions (name=value)[:name=value]*]
+           [--savelogin={false|true}]
+           [--checkports={true|false}]
+           [--nopassword={false|true}]
+           domain-name
+
+説明
+       create-domainサブコマンドは、GlassFish
+       Serverドメインを作成します。GlassFish Serverのドメインは、Java
+       Platform, Enterprise Edition(Java
+       EE)標準に準拠した、管理用の名前空間です。どのドメインにも構成があり、その構成は一連のファイルに格納されます。GlassFish
+       Serverの所定のインストールでは、任意の数のドメインを作成できます。それぞれのドメインには個別の管理アイデンティティが与えられます。ドメインは、1つずつ独立して存在しています。
+
+       所定のシステムのasadminユーティリティに対してアクセス権を持つユーザーは、ドメインを作成し、自分の選択するフォルダにその構成を格納できます。デフォルトでは、ドメイン構成はドメインのデフォルト・ディレクトリに作成されます。この場所をオーバーライドして、別の場所に構成を格納することもできます。
+
+       create-domainサブコマンドの実行時に、as-install/modulesディレクトリのJARファイル内でドメイン・カスタマイザが検出された場合は、そのカスタマイザが処理されます。ドメイン・カスタマイザは、DomainInitializerインタフェースを実装するクラスです。
+
+       create-domainサブコマンドでドメインを作成する際には、asadminユーティリティの--userオプションで管理ユーザーを1人指定することができます。--userオプションが指定されておらず、--nopasswordオプションがtrueに設定されている場合は、デフォルトの管理ユーザーであるadminが使用されます。--nopasswordオプションがfalse(デフォルト)に設定されている場合は、ユーザー名が必須です。この場合に、--userオプションを使用してユーザー名が指定されていないと、ユーザー名を指定するように要求されます。
+
+       新しいドメインで実行するアプリケーションに応じて、ドメインの適切なプロファイルを選択します。作成するドメインに応じて、開発者プロファイル、クラスタ・プロファイル、またはエンタープライズ・プロファイルを選択できます。
+
+       このサブコマンドは、ローカル・モードでのみサポートされています。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --adminport
+           管理用のHTTPポートまたはHTTPSポート。このポートは、ドメインを管理するためにWebブラウザで指定するURL内のポートです(例:
+           http://localhost:4949)。--adminportオプションは、--portbaseオプションと併用できません。デフォルト値は4848です。
+
+           --adminportオプションは、--domainpropertiesオプションのdomain.adminPortプロパティをオーバーライドします。
+
+       --instanceport
+           ドメインは、アプリケーションがデプロイされたときに実行できるよう、サービスを提供します。このHTTPポートには、WebブラウザでWebアプリケーション・コンテキスト・ルートに接続できるポートを指定します。このポートは正の整数で指定し、ドメインの作成時に使用できる必要があります。--instanceportオプションは、--portbaseオプションと併用できません。デフォルト値は8080です。
+
+           --instanceportオプションは、--domainpropertiesオプションのdomain.instancePortプロパティをオーバーライドします。
+
+       --portbase
+           ポート割当てを開始する番号を指定します。ドメインは、静的に割り当てられたポートの特定の番号を使用します。このportbaseの値によって、どこから割当てを開始するかが決まります。ポートの値は次のように計算されます。
+
+           ·   管理ポート: portbase + 48
+
+           ·   HTTPリスナー・ポート: portbase + 80
+
+           ·   HTTPSリスナー・ポート: portbase + 81
+
+           ·   JMSポート: portbase + 76
+
+           ·   IIOPリスナー・ポート: portbase + 37
+
+           ·   セキュリティ保護されたIIOPリスナー・ポート: portbase + 38
+
+           ·   セキュリティ保護されたIIOP相互認証ポート: portbase + 39
+
+           ·   JMXポート: portbase + 86
+
+           ·   JPDAデバッガ・ポート: portbase + 9
+
+           ·   OSGiモジュール管理用Felixシェル・サービス・ポート: portbase +
+               66
+
+           --portbaseオプションが指定されると、このサブコマンドの出力には使用されるポートの完全なリストが含まれます。
+
+           --portbaseオプションは、--adminport、--instanceport、または--domainpropertiesオプションと併用できません。
+
+       --profile
+           このオプションは指定しないでください。このオプションは、旧リリースとの互換性のために保持されています。このオプションを指定した場合、構文エラーは発生しません。かわりに、サブコマンドが正常に実行され、オプションが無視されたことを示す警告メッセージが表示されます。
+
+       --template
+           ドメインの作成に使用するドメイン構成テンプレートの、相対パスまたは絶対パスを含むファイル名。相対パスを指定した場合、そのファイルの場所を特定するため、サブコマンドによってas-install/lib/templatesディレクトリへのパスが追加されます。絶対パス名の場合、サブコマンドによって、指定されたパスにあるファイルが特定されます。
+
+           このオプションを使用すると、様々なタイプのドメインを作成したり、カスタム・ドメイン・テンプレートを定義できます。
+
+       --domaindir
+           ドメインを作成するディレクトリ。指定した場合、ファイル・システム内でこのパスにアクセスできる必要があります。指定しない場合は、デフォルトのドメイン・ディレクトリであるas-install/domainsにドメインが作成されます。
+
+       --savemasterpassword
+           このオプションをtrueに設定した場合、ファイル・システムにマスター・パスワードを書き込むことができます。このオプションがtrueの場合は、コマンドラインで指定した値に関係なく、--usemasterpasswordオプションもtrueになります。デフォルト値はfalseです。
+
+           マスター・パスワードは、実際は、キーストアをセキュリティ保護するためのパスワードです。ドメインは、自身の証明書(ドメインの作成時に作成される)を構成場所内の安全な場所に保持するように設計されています。この証明書は、ドメインのSSLサーバー証明書と呼ばれています。セキュリティで保護されたチャネル(HTTPS)を介してWebブラウザからドメインに接続した場合、ドメインではこの証明書が提示されます。この証明書が格納されているストア(ファイル)は、マスター・パスワードで保護されます。このファイルはkeystore.jksと呼ばれ、作成されたドメインの構成ディレクトリ内に作成されます。ただし、このオプションを選択した場合、マスター・パスワードはドメインの構成場所内のディスクに保存されます。マスター・パスワードは、master-passwordというファイル(Java
+           JCEKSタイプのキーストア)に格納されます。--savemasterpasswordオプションを使用する理由は、無人でシステムをブートするためです。この場合、パスワードがこのファイルから抽出されるため、ドメインの起動時にマスター・パスワードの入力が要求されることはありません。
+
+           マスター・パスワードはstart-domainサブコマンドで使用されるため、ドメインの作成時にマスター・パスワードを作成しておくことをお薦めします。セキュリティ上の目的から、デフォルト設定はfalseになっています。これは、ファイル・システム権限が適切に設定されていないかぎり、マスター・パスワードをディスクに保存することが安全ではないためです。マスター・パスワードが保存されている場合、start-domainでマスター・パスワードの入力は要求されません。マスター・パスワードを使用すると、環境に対するセキュリティ・レベルが向上します。
+
+       --usemasterpassword
+           システムに組み込まれているマスター・パスワード、またはユーザー定義のマスター・パスワードの、どちらを使用してキーストアを暗号化するかを指定します。
+
+           false(デフォルト)に設定した場合、システムに組み込まれている既知のパスワードでキーストアが暗号化されます。システムに組み込まれているパスワードでキーストアを暗号化しても、セキュリティは強化されません。
+
+           trueの場合、サブコマンドによって、パスワード・ファイルのAS_ADMIN_MASTERPASSWORDエントリからマスター・パスワードが取得されるか、マスター・パスワードの入力が要求されます。パスワード・ファイルは、asadmin(1M)ユーティリティの--passwordfileオプションで指定されます。
+
+           --savemasterpasswordオプションがtrueの場合は、コマンドラインで指定した値に関係なく、このオプションもtrueになります。
+
+       --domainproperties
+           オプションの名前と値のペアを設定すると、作成されるドメインのプロパティのデフォルト値がオーバーライドされます。リストはコロン(:)で区切る必要があります。--portbaseオプションは、--domainpropertiesオプションと併用できません。次のプロパティが使用可能です:
+
+           domain.adminPort
+               このプロパティは、管理用のHTTPポートまたはHTTPSポートのポート番号を指定します。このポートは、インスタンスを管理するためにWebブラウザで指定するURL内のポートです(例:
+               http://localhost:4949)。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+               domain.adminPortプロパティは、--adminportオプションによってオーバーライドされます。
+
+           domain.instancePort
+               このプロパティは、HTTPリクエストのリスニングに使用するポートのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+               domain.instancePortプロパティは、--instanceportオプションによってオーバーライドされます。
+
+           domain.jmxPort
+               このプロパティでは、JMXコネクタがリスニングするポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           http.ssl.port
+               このプロパティは、HTTPSリクエストのリスニングに使用するポートのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           java.debugger.port
+               このプロパティは、Java Platform Debugger
+               Architecture(JPDA)への接続に使用するポートのポート番号を指定します
+
+               デバッガ。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           jms.port
+               このプロパティは、Java Message
+               Serviceプロバイダのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           orb.listener.port
+               このプロパティは、IIOP接続に使用するポートのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           orb.mutualauth.port
+               このプロパティは、クライアント認証でセキュリティ保護されたIIOP接続に使用するポートのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           orb.ssl.port
+               このプロパティは、セキュリティ保護されたIIOP接続に使用するポートのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           osgi.shell.telnet.port
+               このプロパティは、Apache Felix Remote
+               Shellへの接続に使用するポートのポート番号を指定します
+               。このシェルは、Felixシェル・サービスを使用してOSGiモジュール管理サブシステムと相互作用します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+       --keytooloptions
+           自己署名付きサーバー証明書用のkeytoolオプションの名前と値のペアのオプション・リストを指定します。証明書は、ドメインの作成中に生成されます。リスト内の各ペアは、コロン(:)で区切る必要があります。
+
+           使用できるオプションは次のとおりです。
+
+           CN
+               自己署名付き証明書用に使用されるホストの共通名を指定します。このオプションの名前では、大文字と小文字が区別されません。
+
+               この名前のデフォルト値は、create-domainサブコマンドが実行されるホストの完全修飾名です。
+
+       --savelogin
+           trueに設定すると、このオプションによって管理ユーザー名とパスワードが保存されます。デフォルト値はfalseです。ユーザー名とパスワードは、ユーザーのホーム・ディレクトリ内の.asadminpassファイルに格納されます。ドメインはローカルにしか作成できません。そのため、--saveloginオプションを使用する場合、.asadminpassに保存するホスト名には必ずlocalhostを指定します。ユーザーがドメインの作成時にデフォルトの管理ポートを指定した場合、後続のasadminリモート・コマンドで--user、--passwordfile、--host、または--portを指定する必要はありません。これらの値は自動的に取得されます。
+
+               注記
+               ┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+               │注意                                                                                                                                                                                                                                   │
+               │ホーム・ディレクトリがNFSマウントされている同一または別々のホスト上に、同じ管理ポート番号のドメインを1人のユーザーが複数作成した場合、サブコマンドの実行時にパスワードを上書きするかは尋ねられません。パスワードは常に上書きされます。 │
+               └───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+       --checkports
+           管理ポート、HTTPポート、JMSポート、JMXポート、およびIIOPポートの可用性を確認するかを指定します。デフォルト値はtrueです。
+
+       --nopassword
+           管理ユーザーのパスワードを設定するかを指定します。false(デフォルト)に設定すると、パスワードはasadminパスワード・ファイルのAS_ADMIN_PASSWORDエントリで指定されます(--passwordfileオプションを使用して設定)。AS_ADMIN_PASSWORDが設定されていない場合にfalseに設定すると、パスワードの入力が要求されます。
+
+           trueの場合、パスワードなしで管理ユーザーが作成されます。ドメインのユーザー名が--userオプションを使用して指定されていない場合に、--nopasswordオプションをtrueに設定すると、デフォルトのユーザー名であるadminが使用されます。
+
+オペランド
+       domain-name
+           作成されるドメインの名前。名前に含めることができるのはASCII文字のみであり、ドメインを作成するホストのオペレーティング・システムに対して有効なディレクトリ名にする必要があります。
+
+例
+       例 1, ドメインの作成
+           この例では、domain4という名前のドメインを作成します。
+
+               asadmin>create-domain --adminport 4848 domain4
+               Enter admin user name [Enter to accept default "admin" / no password
+               ]>
+
+               Using port 4848 for Admin.
+               Using default port 8080 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Distinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=sr1-usca-22,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain domain4 created.
+               Domain domain4 admin port is 4848.
+               Domain domain4 allows admin login as user "admin" with no password.
+               Command create-domain executed successfully.
+
+       例 2, 別のディレクトリへのドメインの作成
+           この例では、/home/someuser/domainsディレクトリにsampleDomainという名前のドメインを作成します。
+
+               asadmin> create-domain --domaindir /home/someuser/domains --adminport 7070
+               --instanceport 7071 sampleDomain
+               Enter admin user name [Enter to accept default "admin" / no password]>
+               Using port 7070 for Admin.
+               Using port 7071 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Enterprise ServiceDistinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=sr1-usca-22,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain sampleDomain created.
+               Domain sampleDomain admin port is 7070.
+               Domain sampleDomain allows admin login as user "admin" with no password.
+               Command create-domain executed successfully.
+
+       例 3, ドメインの作成、および管理ユーザー名とパスワードの保存
+           この例では、myDomainという名前のドメインを作成して、管理ユーザー名とパスワードを保存します。
+
+               asadmin> create-domain --adminport 8282 --savelogin=true myDomain
+               Enter the admin password [Enter to accept default of no password]>
+               Enter the master password [Enter to accept default password "changeit"]>
+               Using port 8282 for Admin.
+               Using default port 8080 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Enterprise ServiceDistinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=sr1-usca-22,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain myDomain created.
+               Domain myDomain admin port is 8282.
+               Domain myDomain allows admin login as user "admin" with no password.
+               Login information relevant to admin user name [admin]
+               for this domain [myDomain] stored at
+               [/home/someuser/.asadminpass] successfully.
+               Make sure that this file remains protected.
+               Information stored in this file will be used by
+               asadmin commands to manage this domain.
+               Command create-domain executed successfully.
+
+       例 4, ドメインの作成、および証明書ホストの指定
+           この例では、domain5という名前のドメインを作成します。自己署名付き証明書用に使用されるホストの共通名はtrioです。
+
+               asadmin> create-domain --adminport 9898 --keytooloptions CN=trio domain5
+               Enter the admin password [Enter to accept default of no password]>
+               Enter the master password [Enter to accept default password "changeit"]>
+               Using port 9898 for Admin.
+               Using default port 8080 for HTTP Instance.
+               Using default port 7676 for JMS.
+               Using default port 3700 for IIOP.
+               Using default port 8181 for HTTP_SSL.
+               Using default port 3820 for IIOP_SSL.
+               Using default port 3920 for IIOP_MUTUALAUTH.
+               Using default port 8686 for JMX_ADMIN.
+               Using default port 6666 for OSGI_SHELL.
+               Distinguished Name of the self-signed X.509 Server Certificate is:
+               [CN=trio,OU=GlassFish,O=Oracle Corp.,L=Redwood Shores,ST=California,C=US]
+               No domain initializers found, bypassing customization step
+               Domain domain5 created.
+               Domain domain5 admin port is 9898.
+               Domain domain5 allows admin login as user "admin" with no password.
+               Command create-domain executed successfully.
+
+終了ステータス
+       0
+           サブコマンドは正常に実行されました
+
+       1
+           サブコマンドの実行時にエラーが発生しました
+
+関連項目
+       login(1)、delete-domain(1)、start-domain(1)、stop-domain(1)、list-domains(1)
+
+       asadmin(1M)
+
+       Apache Felix Remote
+       Shell(http://felix.apache.org/site/apache-felix-remote-shell.html)、Java
+       Platform Debugger
+       Architecture(JPDA)(http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                        2011年6月14日                create-domain(1)

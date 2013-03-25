@@ -1,0 +1,128 @@
+validate-dcom(1)      asadminユーティリティのサブコマンド     validate-dcom(1)
+
+名前
+       validate-dcom - リモート・ホストへのDCOM経由の接続をテストします
+
+概要
+           validate-dcom [--help]
+           [--windowsuser windows-user] [--windowsdomain windows-domain]
+           [--remotetestdir remote-test-directory]
+           [--verbose={false|true}] host-name
+
+説明
+       validate-dcomサブコマンドは、サブコマンドのオペランドとして指定されているリモート・ホストに対する、分散コンポーネント・オブジェクト・モデル(DCOM)リモート・プロトコル経由の接続をテストします。DCOMプロトコルは、Windowsシステムでのみ使用可能です。
+
+       このサブコマンドを実行するための前提条件は、次のとおりです。
+
+       ·   ドメイン管理サーバー(DAS)が動作しているホストおよびサブコマンドのオペランドとして指定されるリモート・ホストで、DCOMを構成する必要があります。
+
+       ·   リモート・ホストで次のポートを開く必要があります。
+
+           ·   DCOMポート135または139
+
+           ·   Windows Sharesポート445
+
+       ·   サーバーのWindowsサービスがリモート・ホストに対して有効になります。
+
+       このサブコマンドは、DCOMノードの作成またはDCOMノードでのGlassFish
+       Serverインスタンスの作成に関する前提条件が満たされているかどうかを確認します。このサブコマンドが失敗すると、DCOMノードの作成またはDCOMノードでのインスタンスの作成も失敗します。
+
+       このコマンドは、DASにアクセス可能なマシンから実行できます。
+
+       サブコマンドは、次の操作をリモート・ホストで実行することにより、リモート・ホストへのDCOM経由の接続をテストします。
+
+       ·   ホスト名の解決
+
+       ·   ポート135または139を介したDCOMへの接続
+
+       ·   ポート445を介したWindows Sharesへの接続
+
+       ·   --remotetestdirオプションによって指定されたフォルダにあるdelete_me.batというスクリプトのコピー
+
+       ·   delete_me.batが書き込まれたフォルダのリスニングを取得するスクリプトの実行
+
+       デフォルトでは、このサブコマンドで、リモート・ホストへの接続をテストするために実行する操作に関する情報は表示されません。これらの操作に関する情報を表示するには、--verboseオプションをtrueに設定します。
+
+       このサブコマンドは、リモート・モードでのみサポートされています。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --windowsuser, -w
+           DCOM経由でホストに接続する処理を実行するリモート・ホストのユーザー。デフォルトはDASプロセスを実行するユーザーです。
+
+       --windowsdomain, -d
+           --windowsuserオプションで指定したユーザーが含まれているWindowsドメインの名前。デフォルトは、サブコマンドを実行するホストの名前です。
+
+       --remotetestdir
+           サブコマンドでdelete_me.batファイルを作成するリモート・ホスト上のフォルダを指定します。--windowsuserオプションで指定するユーザーには、このフォルダに対する書込みアクセス権が必要です。そうでない場合はエラーが発生します。デフォルトはC:\です
+
+       --verbose, -v
+           このサブコマンドで、リモート・ホストへの接続をテストするために実行する操作に関する情報を表示するかどうかを指定します。
+
+           使用可能な値は次のとおりです:
+
+           false
+               接続をテストするために実行する操作に関する情報は表示されません(デフォルト)。
+
+           true
+               このサブコマンドで、接続をテストするために実行する操作に関する情報を表示します。
+
+               --verboseオプションがtrueでAS_DEBUG環境変数が設定されている場合、このサブコマンドでは、リモート・ホストで実行されている各プロセスのコマンド行も表示されます。
+
+オペランド
+       host-name
+           DCOM経由の接続をテストするホストの名前。
+
+例
+       例 1, リモート・ホストへのDCOM経由の接続のテスト
+           この例では、ホストwpmdl2へのDCOM経由の接続をテストします。
+
+               asadmin> validate-dcom --wpmdl2
+               Command validate-dcom executed successfully.
+
+       例 2, リモート・ホストへのDCOM経由の接続の冗長テスト
+           この例では、ホストwpmdl2へのDCOM経由の接続をテストして、リモート・ホストへの接続をテストするために実行する操作に関する情報を表示します。
+
+               asadmin> validate-dcom --verbose wpmdl2
+
+               Successfully resolved host name to: wpmdl2/192.168.122.106
+               Successfully connected to DCOM Port at port 135 on host wpmdl2.
+               Successfully connected to NetBIOS Session Service at port 139 on host wpmdl2.
+               Successfully connected to Windows Shares at port 445 on host wpmdl2.
+               Successfully accessed C: on wpmdl2 using DCOM.
+               Successfully wrote delete_me.bat to C: on wpmdl2 using DCOM.
+               Successfully accessed WMI (Windows Management Interface) on wpmdl2. There are 40
+               processes running on wpmdl2.
+               Successfully ran the test script on wpmdl2 using DCOM.
+               The script simply ran the DIR command. Here are the first few lines from the
+               output of the dir command on the remote machine:
+
+               C:\Windows\system32>dir C:\
+                Volume in drive C has no label.
+                Volume Serial Number is XXXX-XXX
+
+                Directory of C:\
+
+               12/05/2011  10:21 AM                63 .asadminpass
+               02/15/2011  01:08 PM    <DIR>          aroot
+               12/05/2011  04:43 PM                 8 delete_me.bat
+               03/03/2011  10:36 AM    <DIR>          export
+
+               Command validate-dcom executed successfully.
+
+終了ステータス
+       0
+           コマンドは正常に実行されました
+
+       1
+           コマンドの実行時にエラーが発生しました
+
+関連項目
+       create-node-dcom(1), delete-node-dcom(1), list-nodes(1),
+       ping-node-dcom(1), update-node-dcom(1)
+
+       asadmin(1M)
+
+Java EE 7                        2012年1月5日                 validate-dcom(1)

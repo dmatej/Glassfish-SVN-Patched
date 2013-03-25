@@ -1,0 +1,417 @@
+create-cluster(1)           asadmin 公用程式子命令           create-cluster(1)
+
+參考名
+       create-cluster - 建立 GlassFish Server 叢集
+
+概要
+           create-cluster [--help] [--config config-name]
+           [--systemproperties (name=value)[:name=value]*]
+           [--properties (name=value)[:name=value]*]
+           [--gmsenabled={true|false}]
+           [--multicastport multicast-port]
+           [--multicastaddress multicast-address]
+           [--bindaddress bind-address]
+           [--hosts hadb-host-list]
+           [--haagentport port-number]
+           [--haadminpassword password]
+           [--haadminpasswordfile file-name] [--devicesize devicesize ]
+           [--haproperty (name=value)[:name=value]*]
+           [--autohadb=false] [--portbase port-number]
+           cluster-name
+
+描述
+       create-cluster 子命令會建立 GlassFish Server 叢集。叢集最初並未包含任何
+       GlassFish Server 執行處理、應用程式或資源。
+
+       叢集需要參照至已命名的組態，該組態會定義增加至該叢集之所有執行處理的組態。可以在建立叢集的命令中指定該組態，但非必要。如果未指定組態，則子命令會為叢集建立名稱為
+       cluster-name-config
+       的組態。所建立的叢集會是獨立叢集，因為叢集的組態未與其他任何叢集或獨立執行處理共用。
+
+       若要將執行處理新增至叢集，在使用以下任一子命令時，請將 --cluster
+       選項設為該叢集的名稱：
+
+       ·   create-instance(1)
+
+       ·   create-local-instance(1)
+
+       若要隨時從該叢集刪除伺服器執行處理，請使用以下其中一項子命令：
+
+       ·   delete-instance(1)
+
+       ·   delete-local-instance(1)
+
+       若要將應用程式及資源與叢集中所有執行處理產生關聯，請在執行以下作業時，將
+       --target 選項設為該叢集的名稱：
+
+       ·   使用 deploy(1) 子命令建置應用程式
+
+       ·   使用 create-jdbc-resource(1) 等子命令建立資源
+
+       ·   使用 create-application-ref(1)
+           子命令，來建立已建置在其他目標中之應用程式的參照
+
+       ·   使用 create-resource-ref(1)
+           子命令，來建立已建立在其他目標中之資源的參照
+
+       只有遠端模式支援這個子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --config
+           指定叢集參照的已命名組態。該組態必須存在，且不得命名為
+           default-config 或 server-config。指定 --config
+           選項會建立共用叢集。如果忽略此選項，將建立獨立叢集。
+
+       --systemproperties
+           定義為叢集建立之組態的系統特性。這些特性會置換 default-config
+           組態中的特性值。提供的特性如下：
+
+           ASADMIN_LISTENER_PORT
+               此特性指定 HTTP 連接埠或 HTTPS 連接埠的連接埠號碼，DAS
+               透過該連接埠連線至執行處理以管理執行處理。有效值為 1-65535。在
+               UNIX 上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           HTTP_LISTENER_PORT
+               此特性指定要用來監聽 HTTP 請求之連接埠的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           HTTP_SSL_LISTENER_PORT
+               此特性指定要用來監聽 HTTPS 請求之連接埠的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           IIOP_LISTENER_PORT
+               此特性指定用於 IIOP 連線之連接埠的連接埠號碼。此特性指定用於
+               IIOP 連線之連接埠的連接埠號碼。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           IIOP_SSL_LISTENER_PORT
+               此特性指定用於安全 IIOP 連線之連接埠的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           IIOP_SSL_MUTUALAUTH_PORT
+               此特性指定用於與從屬端認證之安全 IIOP
+               連線之連接埠的連接埠號碼。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+           JAVA_DEBUGGER_PORT
+               此特性可指定用來連線至 Java 平台除錯程式架構 (JPDA)
+               之連接埠的連接埠號碼
+
+               除錯程式。有效值為 1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           JMS_PROVIDER_PORT
+               此特性會指定 Java Message Service 提供者的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           JMX_SYSTEM_CONNECTOR_PORT
+               此特性會指定 JMX 連線器進行監聽的連接埠號碼。有效值為
+               1-65535。在 UNIX 上，建立監聽連接埠 1-1024
+               的通訊端需要超級使用者權限。
+
+           OSGI_SHELL_TELNET_PORT
+               此特性會指定用來連線至 Apache Felix Remote Shell
+               之連接埠的連接埠號碼 。此 Shell 會使用 Felix Shell 服務來與
+               OSGi 模組管理子系統互動。有效值為 1-65535。在 UNIX
+               上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。
+
+       --properties
+           定義叢集的特性。提供的特性如下：
+
+           GMS_DISCOVERY_URI_LIST
+               叢集中的 GlassFish Server
+               執行處理位置，用於探索叢集。只有當群組管理服務 (GMS)
+               未使用多重播送來廣播訊息時，才需要此特性。
+
+               此特性的有效值如下：
+
+               ·   統一資源識別碼 (URI) 的逗號分隔清單。 每個 URI 必須定位一個
+                   GlassFish Server 執行處理或 DAS。如果在相同主機上執行多個
+                   GlassFish Server 執行處理，則需要此格式。
+
+                   清單中每個 URI 的格式如下：
+
+                   scheme://host-name-or -IP-address:port
+
+                   ·   scheme 為 URI 方案，它為 tcp。
+
+                   ·   host-name-or -IP-address 為執行處理所在主機的主機名稱或
+                       IP 位址。
+
+                   ·   port 為執行處理監聽 GMS
+                       訊息所用連接埠的連接埠號碼。必須為執行處理設定系統特性
+                       GMS_LISTENER_PORT-clustername。如需如何設定執行處理的這個系統特性的資訊，請參閱
+                       Oracle GlassFish Server High Availability
+                       Administration Guide 中的 Discovering a Cluster When
+                       Multicast Transport Is Unavailable。
+
+               ·   執行 DAS 或執行處理所在的 IP
+                   位址或主機名稱的逗號分隔清單。此清單可以同時包含 IP
+                   位址和主機名稱。叢集的執行處理正在每個主機上執行時，才能使用此格式。GMS_LISTENER_PORT
+                   特性值在網域的每個叢集中必須是唯一的。
+
+               ·   關鍵字
+                   generate。唯有每部主機上均有一個執行中的叢集執行處理，且
+                   DAS
+                   在另一部主機上執行時，才可使用此格式。相同主機上的多個執行處理不能是相同叢集的成員。GMS_LISTENER_PORT
+                   特性值在網域的每個叢集中必須是唯一的。
+
+           GMS_LISTENER_PORT
+               叢集監聽來自 GMS 訊息所用之連接埠的連接埠號碼。
+
+               預設值為對 GMS_LISTENER_PORT-cluster-name
+               系統特性的參照。依預設，不會設定此系統特性。在此情況下，GMS
+               會從特性 GMS_TCPSTARTPORT 與 GMS_TCPENDPORT
+               定義的範圍內選取可用的連接埠。依預設，此範圍是
+               9090-9200。大多數情況下，使用預設值即可。
+
+               不過，如果 GMS 未使用多重播送來廣播訊息，GMS_LISTENER_PORT
+               特性必須指定對於叢集中所有 GlassFish Server
+               執行處理皆有效的連接埠號碼。若要使用預設值來達成此需求，請使用系統特性為每個執行處理個別設定連接埠號碼。
+
+               例如，使用 create-system-properties 子命令可建立 DAS 的系統特性
+               GMS_LISTENER_PORT-cluster-name。之後，針對叢集中的每個執行處理，將
+               GMS_LISTENER_PORT-cluster-name 系統特性設為執行處理監聽 GMS
+               訊息的連接埠號碼。叢集的 GMS_LISTENER_PORT
+               特性預設值會參照此系統特性。
+
+           GMS_LOOPBACK
+               指定執行處理是否會收到其本身的應用程式層級訊息
+               (由執行處理廣播到叢集)。
+
+               可能值如下：
+
+               false
+                   執行處理不
+
+               true
+                   執行處理可以收到其本身的訊息。使用此設定，可在執行處理是叢集中的唯一執行處理時測試該執行處理。
+
+           GMS_MULTICAST_TIME_TO_LIVE
+               在捨棄訊息之前，下列事件類型的多重播送訊息可經歷的重複運算或傳輸數目上限：
+
+               ·   群組探索
+
+               ·   成員活動訊號
+
+               ·   成員身份變更
+
+               為了符合建置 DAS
+               與叢集執行處理所在之網路的組態，請儘可能將此值設低。若要判斷系統可行的最低值，請使用
+               validate-multicast(1) 子命令。
+
+               值為 0 時可確保多重播送訊息絕對不會離開廣播它們的主機。
+
+               值為 1
+               時可避免在透過交換器或路由器連線之相同子網路上的主機之間廣播訊息。
+
+               預設值為
+               4，可確保在主機是透過交換器或路由器連線的網路中，將訊息成功廣播到所有叢集成員。
+
+           GMS_TCPENDPORT
+               如果未設定 GMS_LISTENER_PORT-cluster-name
+               系統特性，則會是連接埠範圍中 GMS
+               可選取的最大連接埠號碼。預設值為 9200。
+
+           GMS_TCPSTARTPORT
+               如果未設定 GMS_LISTENER_PORT-cluster-name
+               系統特性，則會是連接埠範圍中 GMS
+               可選取的最小連接埠號碼。預設值為 9090。
+
+       --gmsenabled
+           指定是否啟用叢集的 GMS。
+
+           可能值如下：
+
+           true
+               啟用叢集的 GMS (預設)。
+
+               啟用叢集的 GMS 時，叢集及 DAS 中的每項伺服器執行處理均會啟動
+               GMS。DAS 會參與此選項設為 true 的每一個叢集。
+
+           false
+               停用叢集的 GMS。
+
+       --multicastaddress
+           GMS 監聽群組事件的位址。此選項必須指定多重播送位址，範圍介於
+           224.0.0.0 至 239.255.255.255 之間。預設值是 228.9.XX.YY，其中 XX 與
+           YY 是自動產生的獨立值 (介於 0 至 255 之間)。
+
+       --multicastport
+           GMS
+           監聽群組事件之通訊埠的連接埠號碼。此選項必須指定有效的連接埠號碼，範圍介於
+           2048-49151 之間。預設值為自動產生的值 (介於此範圍內)。
+
+       --bindaddress
+           GMS 所連結之網路介面的網際網路協定 (IP)
+           位址。此選項必須指定本機網路介面的 IP
+           位址。預設值為所有公用網路介面位址。
+
+           在多址機器上，此選項會組態用於 GMS
+           的網路介面。多址機器擁有兩個或兩個以上的網路介面。
+
+           若要指定叢集中所有 GlassFish Server
+           執行處理的有效位址，請使用系統特性來為每個執行處理個別設定位址。
+
+           例如，使用 create-system-properties 子命令來建立系統特性
+           GMS-BIND-INTERFACE-ADDRESS-cluster-name。然後將這個子命令的
+           --bindaddress 選項設為 ${GMS-BIND-INTERFACE-ADDRESS-cluster-name}
+           以指定系統特性。最後，針對叢集中的每個執行處理，將
+           GMS-BIND-INTERFACE-ADDRESS-cluster-name
+           系統特性設定為執行處理機器上所需的網路介面位址。
+
+       --hosts
+           請勿指定此選項。保留這個選項是為了兼顧與舊版本的相容性。如果您指定此選項，並不會發生語法錯誤。相反地，子命令會順利執行，並顯示已忽略該選項的警告訊息。
+
+       --haagentport
+           請勿指定此選項。保留這個選項是為了兼顧與舊版本的相容性。如果您指定此選項，並不會發生語法錯誤。相反地，子命令會順利執行，並顯示已忽略該選項的警告訊息。
+
+       --haadminpassword
+           請勿指定此選項。保留這個選項是為了兼顧與舊版本的相容性。如果您指定此選項，並不會發生語法錯誤。相反地，子命令會順利執行，並顯示已忽略該選項的警告訊息。
+
+       --haadminpasswordfile
+           請勿指定此選項。保留這個選項是為了兼顧與舊版本的相容性。如果您指定此選項，並不會發生語法錯誤。相反地，子命令會順利執行，並顯示已忽略該選項的警告訊息。
+
+       --devicesize
+           請勿指定此選項。保留這個選項是為了兼顧與舊版本的相容性。如果您指定此選項，並不會發生語法錯誤。相反地，子命令會順利執行，並顯示已忽略該選項的警告訊息。
+
+       --haproperty
+           請勿指定此選項。保留這個選項是為了兼顧與舊版本的相容性。如果您指定此選項，並不會發生語法錯誤。相反地，子命令會順利執行，並顯示已忽略該選項的警告訊息。
+
+       --autohadb
+           請勿指定此選項。保留這個選項是為了兼顧與舊版本的相容性。如果您指定此選項，並不會發生語法錯誤。相反地，子命令會順利執行，並顯示已忽略該選項的警告訊息。
+
+       --portbase
+           請勿指定此選項。保留這個選項是為了兼顧與舊版本的相容性。如果您指定此選項，並不會發生語法錯誤。相反地，子命令會順利執行，並顯示已忽略該選項的警告訊息。
+
+運算元
+       cluster-name
+           叢集的名稱。
+
+           名稱必須符合下列需求：
+
+           ·   名稱只能包含 ASCII 字元。
+
+           ·   名稱必須以字母、數字或底線為開頭。
+
+           ·   名稱只能包含下列字元：
+
+               ·   小寫字母
+
+               ·   大寫字母
+
+               ·   數字
+
+               ·   連字符
+
+               ·   小數點號
+
+               ·   底線
+
+           ·   該名稱在網域中必須是唯一，且不得是另一個叢集、已命名組態、GlassFish
+               Server 執行處理或節點的名稱。
+
+           ·   名稱不得為 domain、server 或 GlassFish Server
+               所保留的任何其他關鍵字。
+
+           如果要用 configure-jms-cluster(1)
+           子命令將「訊息佇列」叢集設定為提供 JMS 服務給 GlassFish Server
+           叢集，則 GlassFish Server 叢集名稱的長度可能會有限制：
+
+           ·   如果 configure-jms-cluster(1) 子命令中的 clustertype 設為
+               enhanced，則名稱長度不可超過 n–21 個字元，其中 n
+               是資料庫允許的表格名稱長度上限。
+
+           ·   如果 configure-jms-cluster(1) 子命令中的 configstoretype 設為
+               shareddb，則名稱長度不可超過 n–19 個字元，其中 n
+               是資料庫允許的表格名稱長度上限。
+
+範例
+       範例 1, 建立叢集
+           此範例會建立名為 ltscluster 的叢集，其連接埠 1169 會用於安全 IIOP
+           連線。由於未指定 --config 選項，所以叢集會參照已命名組態
+           default-config 的副本，名稱為 ltscluster-config。
+
+               asadmin> create-cluster
+               --systemproperties IIOP_SSL_LISTENER_PORT=1169
+               ltscluster
+               Command create-cluster executed successfully.
+
+       範例 2, 建立含有 URI 清單的叢集以便探索叢集
+           此範例會建立名稱為 tcpcluster 的叢集。在此範例中，GMS
+           未使用多重播送來廣播訊息，並且有多個執行處理位於相同的主機。因此，GMS_DISCOVERY_URI_LIST
+           特性會設為 GlassFish Server
+           執行處理的位置，以便探索叢集。這些執行處理位於 IP 位址為
+           10.152.23.224，而且會在連接埠 9090、9091 與 9092 監聽 GMS
+           事件的主機。
+
+           為了區別 URI 中的冒號 (:) 字元與特性清單中的分隔符，URI
+           中的冒號使用單引號字元 (') 與反斜線 (\) 字元逸出。如需 asadmin
+           公用程式選項逸出字元的詳細資訊，請參閱 asadmin(1M) 說明頁面。
+
+           此範例假設每個執行處理監聽 GMS 訊息的連接埠，是由
+           GMS_LISTENER_PORT-tcpcluster
+           系統特性執行處理獨立設定。如需如何設定執行處理監聽 GMS
+           訊息所用連接埠的資訊，請參閱 Oracle GlassFish Server High
+           Availability Administration Guide 中的 Discovering a Cluster When
+           Multicast Transport Is Unavailable。
+
+               asadmin> create-cluster --properties GMS_DISCOVERY_URI_LIST=
+               tcp'\\:'//10.152.23.224'\\:'9090,
+               tcp'\\:'//10.152.23.224'\\:'9091,
+               tcp'\\:'//10.152.23.224'\\:'9092 tcpcluster
+               Command create-cluster executed successfully.
+
+       範例 3, 建立含有 IP 位址清單的叢集以便探索叢集
+           此範例會建立名稱為 ipcluster 的叢集。在此範例中，GMS
+           未使用多重播送來廣播訊息，並且每個主機上只有一個叢集執行處理。因此，GMS_DISCOVERY_URI_LIST
+           特性會設為執行探索叢集之執行處理所在主機的 IP 位址。叢集會在連接埠
+           9090 上監聽來自 GMS 的訊息。
+
+               asadmin> create-cluster --properties 'GMS_DISCOVERY_URI_LIST=
+               10.152.23.225,10.152.23.226,10.152.23.227,10.152.23.228:
+               GMS_LISTENER_PORT=9090' ipcluster
+               Command create-cluster executed successfully.
+
+       範例 4, 建立含有產生之執行處理清單的叢集以便探索叢集
+           此範例會建立名稱為 gencluster 的叢集。在此範例中，GMS
+           未使用多重播送來廣播訊息，每部主機上都有一個執行中的執行處理，而且
+           DAS 在另一部主機執行。因此，GMS_DISCOVERY_URI_LIST 特性會設為關鍵字
+           generate，以產生用於探索叢集的執行處理清單。叢集會在連接埠 9090
+           上監聽來自 GMS 的訊息。
+
+               asadmin> create-cluster --properties 'GMS_DISCOVERY_URI_LIST=generate:
+               GMS_LISTENER_PORT=9090' gencluster
+               Command create-cluster executed successfully.
+
+結束狀態
+       0
+           命令執行成功
+
+       1
+           執行命令時發生錯誤
+
+另請參閱
+       create-application-ref(1), create-instance(1), create-jdbc-resource(1),
+       create-local-instance(1), create-resource-ref(1), delete-cluster(1),
+       delete-instance(1), delete-local-instance(1), deploy(1),
+       list-clusters(1), start-cluster(1), stop-cluster(1),
+       validate-multicast(1)
+
+       asadmin(1M)
+
+       Oracle GlassFish Server High Availability Administration Guide 中的
+       Discovering a Cluster When Multicast Transport Is Unavailable
+
+       Apache Felix Remote Shell
+       (http://felix.apache.org/site/apache-felix-remote-shell.html)，Java
+       平台除錯程式架構 (JPDA)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                      2012 年 1 月 4 日             create-cluster(1)

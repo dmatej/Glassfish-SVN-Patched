@@ -1,0 +1,102 @@
+validate-multicast(1) asadminユーティリティのサブコマンドvalidate-multicast(1)
+
+名前
+       validate-multicast -
+       クラスタに対してマルチキャスト・トランスポートが使用可能かどうかを検証します
+
+概要
+           validate-multicast [--help] [--multicastport multicastport]
+           [--multicastaddress multicastaddress]
+           [--bindaddress bindaddress]
+           [--sendperiod sendperiod]
+           [--timeout timeout]
+           [--timetolive timetolive]
+           [--verbose={false|true}]
+
+説明
+       validate-multicastサブコマンドは、クラスタに対してマルチキャスト・トランスポートが使用可能かどうかを検証します。検証を行うそれぞれのホストで同時にこのサブコマンドを実行する必要があります。このサブコマンドはローカル・モードで使用できます。
+
+           注記
+           ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+           │注意                                                                                                                                                                                            │
+           │                                                                                                                                                                                                │
+           │           DASおよびクラスタの実行中は、DASおよびクラスタのマルチキャスト・アドレスとポートの値を使用してvalidate-multicastサブコマンドを実行しないでください。実行すると、エラーが発生します。 │
+           │                                                                                                                                                                                                │
+           │           マルチキャスト・メッセージが複数のマシンで受信されているかどうかを確認するには、2台以上のマシンで同時にvalidate-multicastサブコマンドを実行する必要があります。                      │
+           └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+       すべてのマシンが相互に確認できるかぎり、複数のマシンでマルチキャストが正常に動作していることが検証されます。マシンが相互に確認できない場合は、--bindaddressオプションを明示的に設定してすべてのマシンが同じサブネット上のインタフェースを使用していることを確認するか、--timetoliveオプションの値をデフォルトの4から増やします。これらの変更を行ってもマルチキャストに関する問題が解決しない場合は、クラスタの実行に使用されているすべてのマシンでマルチキャスト・メッセージを受信できるようにネットワークが構成されているかどうか、ネットワーク管理者に確認してください。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --multicastport
+           グループ管理サービス(GMS)がグループ・イベントをリスニングするマルチキャスト・ソケットのポート。2048から32000の間の標準のUDPポート番号を指定します。デフォルトは2048です。
+
+       --multicastaddress
+           GMSがグループ・イベントをリスニングするマルチキャスト・ソケットのアドレス。クラスD
+           IPアドレスを指定します。クラスD
+           IPアドレスの範囲は、239.255.255.255から224.0.0.0までです。アドレス224.0.0.0は予約済のため使用できません。デフォルトは228.9.3.1です。
+
+       --bindaddress
+           GMSのマルチキャスト・データグラム・パケットを受信するローカル・インタフェース。デフォルトでは、すべての使用可能な結合インタフェースが使用されます。
+
+           複数のネットワーク・インタフェースがあるマルチホーム・マシンでは、この属性を使用してGMSに使用するネットワーク・インタフェースを指定できます。この値は、ローカル・ネットワーク・インタフェースのIPアドレスにする必要があります。
+
+       --sendperiod
+           ノード間でテスト・メッセージを送信する時間間隔(ミリ秒)。デフォルトは2000です。
+
+       --timeout
+           サブコマンドがタイムアウトにより終了するまでの秒数。デフォルトは20です。このサブコマンドは、[Ctrl]を押しながら[C]を使用して終了することもできます。
+
+       --timetolive
+           マルチキャストのスコープを制御するために、マルチキャスト・ソケットから送信されるマルチキャスト・パケットのデフォルトの生存期間。生存期間の値は、0から255までの範囲にする必要があります。デフォルトは、JDKのデフォルト、またはGMSサブシステムの定数で定義されている最小値のいずれか小さい方になります。使用される生存期間の値を確認するには、--verboseオプションを使用します。
+
+       --verbose
+           値なしで使用するか、trueに設定すると、追加のデバッグ情報が示されます。デフォルトはfalseです。
+
+例
+       例 1, マルチキャスト・トランスポートの確認
+           ホストmachine1から実行:
+
+               asadmin> validate-multicast
+               Will use port 2,048
+               Will use address 228.9.3.1
+               Will use bind address null
+               Will use wait period 2,000 (in milliseconds)
+
+               Listening for data...
+               Sending message with content "machine1" every 2,000 milliseconds
+               Received data from machine1 (loopback)
+               Received data from machine2
+               Exiting after 20 seconds. To change this timeout, use the --timeout command line option.
+               Command validate-multicast executed successfully
+           ホストmachine2から実行:
+
+               asadmin> validate-multicast
+               Will use port 2,048
+               Will use address 228.9.3.1
+               Will use bind address null
+               Will use wait period 2,000 (in milliseconds)
+
+               Listening for data...
+               Sending message with content "machine2" every 2,000 milliseconds
+               Received data from machine2 (loopback)
+               Received data from machine1
+               Exiting after 20 seconds. To change this timeout, use the --timeout command line option.
+               Command validate-multicast executed successfully
+
+終了ステータス
+       0
+           コマンドは正常に実行されました
+
+       1
+           コマンドの実行時にエラーが発生しました
+
+関連項目
+       get-health(1)
+
+       asadmin(1M)
+
+Java EE 7                        2011年2月10日           validate-multicast(1)

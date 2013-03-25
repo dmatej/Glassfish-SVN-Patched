@@ -1,0 +1,164 @@
+create-node-dcom(1)         asadmin 实用程序子命令         create-node-dcom(1)
+
+名称
+       create-node-dcom - 创建允许通过 DCOM 进行通信的节点
+
+提要
+           create-node-dcom [--help]
+           --nodehost node-host
+           [--installdir as-install-parent] [--nodedir node-dir]
+           [--windowsuser windows-user] [--windowsdomain windows-domain]
+           [--force={false|true}]
+           [--install={false|true}] [--archive archive]
+           node-name
+
+说明
+       create-node-dcom 子命令可创建一个允许通过分布式组件对象模型 (DCOM)
+       远程协议进行通信的节点。DCOM 协议仅在 Windows 系统上可用。
+
+       节点代表装有 GlassFish Server 软件的主机。对于 GlassFish Server
+       实例驻留的每个主机，必须存在一个对应的节点。
+
+       在启用 DCOM 的网络中，域管理服务器 (DAS) 通过 DCOM
+       连接器联系节点的主机，以管理位于此节点上的 GlassFish Server 实例。DCOM
+       仅用于主机之间的通信。DCOM 从不用于单个主机内的通信。
+
+       默认情况下，如果 DAS 无法通过 DCOM
+       联系节点的主机，则子命令将失败，无法创建节点。如果即使无法通过 DCOM
+       联系主机也要强制在 DAS 配置中创建节点，请将 --force 选项设置为真
+
+       create-node-dcom
+       子命令不能创建代表本地主机的节点，即运行此子命令的主机。无论如何指定本地主机
+       (例如，使用关键字 localhost、主机的 Internet 协议 (IP)
+       地址或主机名)，此子命令都将失败。
+
+       该子命令仅在远程模式下受支持。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --nodehost
+           节点代表的主机的名称。必须指定主机名称。否则，会出现错误。
+
+       --installdir
+           主机上 GlassFish Server 软件的基安装目录的父目录的完整路径，例如
+           C:\glassfish3。默认值是 DAS 的 GlassFish Server
+           软件的默认基础安装目录的父目录。仅当 GlassFish Server
+           安装在所有主机上的同一个位置时，此默认值才有用。
+
+       --nodedir
+           用于包含节点上创建的 GlassFish Server 实例的目录路径。默认值为
+           as-install\nodes，其中 as-install 是主机上 GlassFish Server
+           软件的基安装目录。如果指定相对路径，则该路径相对于as-install 目录。
+
+       --windowsuser, -w
+           该节点主机上要运行通过 DCOM
+           连接到主机的进程的用户。默认值为正在运行 DAS 进程的用户。如果将
+           --nodehost 选项设置为 localhost-domain，则会忽略 --windowsuser 选项
+
+       --windowsdomain, -d
+           包含 --windowsuser 选项所指定用户的 Windows
+           域的名称。默认为运行此子命令的主机的名称。
+
+       --force
+           指定是否在 DAS 配置中创建节点
+           (即使节点的参数验证失败也要创建)。要验证节点的参数，DAS 必须能通过
+           DCOM 连接到节点的主机。可能的值如下：
+
+           假
+               如果节点的参数验证失败，则不创建节点 (默认值)。
+
+           真
+               即使节点的参数的验证失败，也创建节点。
+
+       --install
+           指定子命令是否应在节点代表的主机上安装 GlassFish Server 软件。
+
+           可能的值如下：
+
+           假
+               子命令不应在主机上安装 GlassFish Server 软件 (默认值)。
+
+           真
+               子命令应在主机上安装 GlassFish Server 软件。
+
+       --archive
+           要安装的 GlassFish Server
+           软件的档案文件的绝对路径。如果省略此选项且将 --install
+           设置为真
+           软件的 ZIP 档案文件。档案不包含 domains 目录或 nodes 目录。
+
+操作数
+       node-name
+           节点的名称。
+
+           名称必须满足以下要求：
+
+           ·   名称中只能包含 ASCII 字符。
+
+           ·   名称开头必须是字母、数字或下划线。
+
+           ·   名称只能包含以下字符：
+
+               ·   小写字母
+
+               ·   大写字母
+
+               ·   数字
+
+               ·   连字符
+
+               ·   句点
+
+               ·   下划线
+
+           ·   该名称在域中必须是唯一的，不能是另一个节点、集群、命名配置或
+               GlassFish Server 实例的名称。
+
+           ·   名称不得是 domain、server 或 GlassFish Server
+               保留的任何其他关键字。
+
+示例
+       Example 1, 创建节点
+           此示例为主机 wpmdl1.example.com 创建节点
+           wpmdl1。默认情况下，GlassFish Server 软件基安装目录的父目录是
+           C:\glassfish3。
+
+               asadmin> create-node-dcom
+               --nodehost wpmdl1.example.com wpmdl1
+               Command create-node-dcom executed successfully.
+
+       Example 2, 创建具有特定的安装目录的节点
+           此示例将为主机 wyml1.example.com 创建节点 wyml1。GlassFish Server
+           软件在此主机上的基安装目录的父目录是 C:\middleware\glassfish3。
+
+               asadmin> create-node-dcom --installdir C:\middleware\glassfish3
+               --nodehost wyml1.example.com wyml1
+               Command create-node-dcom executed successfully.
+
+       Example 3, 强制创建节点
+           此示例强制为主机 xkyd.example.com 创建节点 xkyd。尽管 DAS
+           无法联系主机 xkyd.example.com 来验证节点的参数，仍创建节点。
+
+               asadmin> create-node-dcom --force --nodehost xkyd.example.com xkyd
+               Warning: some parameters appear to be invalid.
+               com.sun.enterprise.universal.process.WindowsException: Connection in error
+               Continuing with node creation due to use of --force.
+               Command create-node-dcom executed successfully.
+
+退出状态
+       0
+           已成功执行命令
+
+       1
+           执行命令时出现错误
+
+另请参阅
+       create-node-config(1), create-node-ssh(1), delete-node-dcom(1),
+       install-node-dcom(1), list-nodes(1), uninstall-node-dcom(1),
+       update-node-dcom(1)
+
+       asadmin(1M)
+
+Java EE 7                      2012 年 1 月 5 日           create-node-dcom(1)

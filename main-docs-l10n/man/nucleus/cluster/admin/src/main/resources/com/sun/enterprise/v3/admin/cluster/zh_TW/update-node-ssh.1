@@ -1,0 +1,158 @@
+update-node-ssh(1)          asadmin 公用程式子命令          update-node-ssh(1)
+
+參考名
+       update-node-ssh - 可更新節點的組態資料
+
+概要
+           update-node-ssh [--help]
+           [--nodehost node-host]
+           [--installdir as-install-parent] [--nodedir node-dir]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile]
+           [--force={false|true}]
+           node-name
+
+描述
+       update-node-ssh
+       子命令可更新節點的組態資料。這個子命令需要在執行網域管理伺服器 (DAS)
+       的機器和節點所在的機器上設定安全 Shell (SSH)。您可以從任何能夠連絡 DAS
+       的機器執行這個子命令。
+
+       這個子命令可以更新任何節點，無論節點是否啟用遠端通訊。如果節點未啟用遠端通訊，子命令就會為節點啟用
+       SSH 通訊，並更新任何其他指定的組態資料。
+
+       這個子命令的選項可指定節點組態資料的新值。大部分選項的預設值為保留現有值不變更。不過，如果這個子命令是為了啟用節點的
+       SSH 通訊而執行，則省略下列任一選項時，會套用預設值：
+
+       ·   --sshport
+
+       ·   --sshuser
+
+       ·   --sshkeyfile
+
+       依預設，如果 DAS 無法透過 SSH
+       連絡節點的主機，則子命令會失敗且不會更新節點。若即使無法透過 SSH
+       連絡主機，仍要強制更新節點，請將 --force 選項設為 true。
+
+       只有遠端模式支援這個子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --nodehost
+           更新節點之後，節點所代表的主機名稱。
+
+       --installdir
+           主機上 GlassFish Server
+           軟體的基底安裝目錄之父系目錄的完整路徑，例如 /export/glassfish3。
+
+       --nodedir
+           要包含在節點上所建立的 GlassFish Server
+           執行處理之目錄的路徑。如果指定相對路徑，則該路徑會相對於as-install
+           目錄，其中as-install 是主機上 GlassFish Server 軟體的基底安裝目錄。
+
+       --sshport
+           用於與此節點主機連線之 SSH
+           的連接埠。預設值取決於這個子命令是否為了啟用節點的 SSH 通訊而執行：
+
+           ·   如果節點已啟用透過 SSH 通訊，則預設值為保留連接埠不變更。
+
+           ·   如果這個子命令是為了啟用節點的 SSH 通訊而執行，則預設連接埠是
+               22。
+
+           如果 --nodehost 設為 localhost ，則會忽略 --sshport 選項。
+
+       --sshuser
+           在此節點之主機上的使用者，會執行透過 SSH
+           連線至主機的處理作業。預設值取決於這個子命令是否為了啟用節點的 SSH
+           通訊而執行：
+
+           ·   如果節點已啟用透過 SSH 通訊，則預設值為保留使用者不變更。
+
+           ·   如果這個子命令是為了啟用節點的 SSH 通訊而執行，則預設值為執行
+               DAS 處理作業的使用者。
+
+           如果 --nodehost 選項設為 localhost，便會忽略 --sshuser 選項。
+
+       --sshkeyfile
+           SSH 私密金鑰檔案的絕對路徑，該檔案屬於 --sshuser
+           選項指定的使用者。這個檔案用於向節點主機上的 sshd 常駐程式認證。
+
+               注意
+               ┌─────────────────────────────────────┐
+               │備註 GlassFish Server                │
+               │也支援透過密碼檔案中的               │
+               │AS_ADMIN_SSHPASSWORD                 │
+               │項目進行密碼認證。密碼檔案是在       │
+               │asadmin(1M) 公用程式的 --paswordfile │
+               │選項中指定。                         │
+               └─────────────────────────────────────┘
+           如果 SSH 私密金鑰檔案受到密碼詞組保護，則密碼檔案必須包含
+           AS_ADMIN_SSHKEYPASSPHRASE 項目。
+
+           DAS 必須可以存取金鑰檔案的路徑，且 DAS 必須可以讀取金鑰檔案。
+
+           預設值取決於這個子命令是否為了啟用節點的 SSH 通訊而執行：
+
+           ·   如果節點已啟用透過 SSH 通訊，則預設值為保留金鑰檔案不變更。
+
+           ·   如果這個子命令是為了啟用節點的 SSH 通訊而執行，則預設值為使用者
+               .ssh
+               目錄中的金鑰檔案。若有多個金鑰檔案，則子命令會依照以下優先順序加以使用：
+
+                1. id_rsa
+
+                2. id_dsa
+
+                3. identity
+
+       --force
+           指定是否即使節點的參數驗證失敗仍要更新節點。若要驗證節點的參數，DAS
+           必須能夠透過 SSH 連絡節點的主機。可能值如下：
+
+           false
+               如果節點參數驗證失敗，則不更新節點 (預設值)。
+
+           true
+               即使節點參數驗證失敗，仍會更新節點。
+
+運算元
+       node-name
+           要更新的節點名稱。節點必須存在。否則，將發生錯誤。
+
+範例
+       範例 1, 更新節點代表的主機
+           此範例會將節點 lssh 代表的主機更新為 sj04。
+
+               asadmin> update-node-ssh --nodehost sj04 lssh
+               Command update-node-ssh executed successfully.
+
+       範例 2, 強制更新節點
+           此範例會強制更新節點 sj01，讓節點可透過 SSH 通訊。
+
+               asadmin> update-node-ssh --force sj01
+               Warning: some parameters appear to be invalid.
+               Could not connect to host sj01 using SSH.
+               Could not authenticate. Tried authenticating with specified key at
+               /home/gfuser/.ssh/id_rsa
+               Continuing with node update due to use of --force.
+               Command update-node-ssh executed successfully.
+
+結束狀態
+       0
+           命令執行成功
+
+       1
+           執行命令時發生錯誤
+
+另請參閱
+       create-node-dcom(1), create-node-config(1), create-node-ssh(1),
+       delete-node-config(1), delete-node-dcom(1), delete-node-ssh(1),
+       install-node(1), install-node-dcom(1), install-node-ssh(1),
+       list-nodes(1), uninstall-node(1), uninstall-node-dcom(1),
+       uninstall-node-ssh(1), update-node-config(1), update-node-dcom(1)
+
+       asadmin(1M)
+
+Java EE 7                     2011 年 12 月 8 日            update-node-ssh(1)

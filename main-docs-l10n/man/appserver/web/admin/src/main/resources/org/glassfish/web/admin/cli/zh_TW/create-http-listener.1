@@ -1,0 +1,131 @@
+create-http-listener(1)     asadmin 公用程式子命令     create-http-listener(1)
+
+參考名
+       create-http-listener - 新增 HTTP 網路監聽程式通訊端
+
+概要
+           create-http-listener [--help] --listeneraddress address
+           --listenerport listener-port
+           {--default-virtual-server | --defaultvs} virtual-server
+           [--servername server-name]
+           [--acceptorthreads acceptor-threads]
+           [--xpowered={true|false}]
+           [--redirectport redirect-port]
+           [--securityenabled={false|true}]
+           [--enabled={true|false}]
+           [--target target]
+           listener-id
+
+描述
+       create-http-listener 子命令會建立 HTTP
+       網路監聽程式。只有遠端模式支援這個子命令。
+
+           注意
+           ┌──────────────────────────────────────────────────────────────────────┐
+           │備註                                                                  │
+           │                                                                      │
+           │           如果您編輯名稱為                                           │
+           │           admin-listener 的特定 HTTP                                 │
+           │           網路監聽程式，必須重新啟動伺服器才能使變更生效。管理主控台 │
+           │           不會告知在此情形下必須重新啟動。                           │
+           └──────────────────────────────────────────────────────────────────────┘
+
+           注意
+           ┌────────────────────────────────────────────────────────────────────────────────────────────────┐
+           │備註                                                                                            │
+           │                                                                                                │
+           │           這個子命令是為了與舊版相容而提供，並作為建立使用                                     │
+           │           HTTP                                                                                 │
+           │           協定之網路監聽程式的捷徑。這個子命令會在幕後建立網路監聽程式以及其關聯的協定、傳輸和 │
+           │           HTTP 組態。                                                                          │
+           └────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --listeneraddress
+           IP 位址或主機名稱 (可用 DNS 解析)。
+
+       --listenerport
+           要在其上建立監聽程式通訊端的連接埠號碼。有效值為 1 - 65535。在 UNIX
+           上，建立監聽連接埠 1-1024 的通訊端需要超級使用者權限。建議將 SSL
+           監聽程式通訊端組態為在連接埠 443 上進行監聽。
+
+       --default-virtual-server, --defaultvs
+           此監聽程式之預設虛擬伺服器的 ID 屬性。已停用 --defaultvs 選項。
+
+       --servername
+           告知伺服器，要在其傳送至從屬端的所有 URL
+           之主機名稱區段中設定的值。此值會影響伺服器自動產生的
+           URL；但不會影響儲存在伺服器中目錄和檔案的
+           URL。如果伺服器使用別名，則此名稱應為伺服器別名。如果附加冒號和連接埠號碼，則會在伺服器傳送至從屬端的
+           URL 中使用此連接埠。
+
+       --acceptorthreads
+           監聽程式通訊端的接收器繫線數目。建議值為機器中的處理器數目。預設值為
+           1。
+
+       --xpowered
+           如果設定為 true，請將 X-Powered-By: Servlet/3.0 和 X-Powered-By:
+           JSP/2.0 標頭新增至適當的回應。Servlet 3.0 規格定義 X-Powered-By:
+           Servlet/3.0 標頭，其容器可以新增至 Servlet 產生的回應。同樣地，JSP
+           2.0 規格定義 X-Powered-By: JSP/2.0 標頭，其容器可以新增至使用 JSP
+           技術的回應。這些標頭的目標是協助收集有關使用 Servlet 和 JSP
+           技術的統計資料。預設值為 true。
+
+       --redirectport
+           請勿指定此選項。保留這個選項是為了兼顧與舊版本的相容性。如果您指定此選項，並不會發生語法錯誤。相反地，子命令會順利執行，並顯示已忽略該選項的警告訊息。
+
+       --securityenabled
+           如果設定為 true，則 HTTP 監聽程式會執行 SSL。您可以開啟或關閉 SSL2
+           或 SSL3，並使用 SSL
+           元素設定密碼。安全性設定藉由使憑證可供伺服器執行處理使用來全域啟用或停用
+           SSL。預設值為 false。
+
+       --enabled
+           如果設定為 true，則會在執行階段啟用監聽程式。預設值為 true。
+
+       --target
+           僅在指定目標上建立 HTTP 監聽程式。有效的值如下：
+
+           server
+               在預設伺服器執行處理上建立 HTTP 監聽程式。此為預設值。
+
+           configuration-name
+               在指定組態中建立 HTTP 監聽程式。
+
+           cluster-name
+               在指定叢集內的所有伺服器執行處理上建立 HTTP 監聽程式。
+
+           standalone-instance-name
+               在指定的獨立伺服器執行處理上建立 HTTP 監聽程式。
+
+運算元
+       listener-id
+           HTTP 網路監聽程式的監聽程式 ID。
+
+範例
+       範例 1, 建立 HTTP 網路監聽程式
+           下列命令會建立名稱為 sampleListener 的 HTTP
+           網路監聽程式，其使用非預設數目的接收器繫線，且不會在執行階段啟用：
+
+               asadmin> create-http-listener --listeneraddress 0.0.0.0 --listenerport 7272
+               --defaultvs server --servername host1.sun.com --acceptorthreads 100
+               --securityenabled=false --enabled=false sampleListener
+               Command create-http-listener executed successfully.
+
+結束狀態
+       0
+           命令執行成功
+
+       1
+           執行命令時發生錯誤
+
+另請參閱
+       delete-http-listener(1), list-http-listeners(1),
+       create-virtual-server(1), create-ssl(1), create-network-listener(1)
+
+       asadmin(1M)
+
+Java EE 7                     2010 年 10 月 8 日       create-http-listener(1)

@@ -1,0 +1,234 @@
+create-virtual-serverasadminユーティリティのサブコマンcreate-virtual-server(1)
+
+名前
+       create-virtual-server - 名前付き仮想サーバーを作成します
+
+概要
+           create-virtual-server [--help]
+           --hosts hosts
+           [--httplisteners http-listeners]
+           [--networklisteners network-listeners]
+           [--defaultwebmodule default-web-module]
+           [--state={on|off}]
+           [--logfile log-file]
+           [--property (name=value)[:name=value]*]
+           [--target target]
+           virtual-server-id
+
+説明
+       create-virtual-serverサブコマンドは、名前付き仮想サーバーを作成します。GlassFish
+       Serverで仮想化を行うことで、複数のホスト・アドレス上でリスニングしている単一のHTTPサーバー・プロセスによって、複数のURLドメインを処理できるようになります。アプリケーションを2つの仮想サーバーで使用できる場合は、同じ物理リソース・プールを共有します。
+
+       このサブコマンドは、リモート・モードでのみサポートされています。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --hosts
+           現在の仮想サーバーを選択するためにホスト・リクエスト・ヘッダーで許可されている値のカンマ(,)区切りのリスト。同じ接続グループに対して構成された各仮想サーバーは、そのグループについて一意のホストを持つ必要があります。
+
+       --httplisteners
+           HTTPリスナーIDのカンマ(,)区切りのリスト。デフォルトの仮想サーバー以外の仮想サーバーでのみ必須です。HTTPリスナーはネットワーク・リスナーに変換されます。このオプションは下位互換性のために保持されていますが、使用は推奨されません。かわりに、--networklistenersを使用してください。--networklistenersを使用した場合、このオプションは無視されます。
+
+       --networklisteners
+           ネットワーク・リスナーIDのカンマ(,)区切りのリスト。デフォルトの仮想サーバー以外の仮想サーバーでのみ必須です。
+
+       --defaultwebmodule
+           デフォルトでこの仮想サーバーに関連付けられたスタンドアロンWebモジュール。
+
+       --state
+           仮想サーバーがアクティブ(on)か非アクティブ(off、無効)かを指定します。デフォルトはonです。非アクティブの場合、仮想サーバーはリクエストを処理しません。
+
+       --logfile
+           この仮想サーバーのログ・エントリが書き込まれるファイルの名前。デフォルトではサーバー・ログです。アクセス・ログが保存されるファイルおよびディレクトリは、サーバーの実行に使用されるユーザー・アカウントにより書込み可能である必要があります。
+
+       --property
+           仮想サーバーを構成するための属性名と値のペア(オプション)。次のプロパティが使用可能です:
+
+           sso-max-inactive-seconds
+               クライアントが活動を停止後、何秒後にユーザーのシングル・サインオンの記録を削除可能にするかを指定します。シングル・サインオンは同一仮想サーバー上の複数のアプリケーションに適用されるので、これらのアプリケーションのいずれかにアクセスすることでシングル・サインオンの記録はアクティブなまま保持されます。デフォルト値は300秒(5分)です。値を大きくするとユーザーのシングル・サインオンの永続性は長くなりますが、サーバー上のメモリー消費量も増加します。
+
+           sso-reap-interval-seconds
+               有効期限が切れたシングル・サインオンの記録の削除を行う間隔を秒単位で指定します。デフォルト値は60です。
+
+           setCacheControl
+               Cache-Controlレスポンス・ディレクティブのカンマ区切りリストを指定します。有効なディレクティブのリストは、http://www.ietf.org/rfc/rfc2616.txt(http://www.ietf.org/rfc/rfc2616.txt)にあるドキュメントの第14.9項を参照してください。
+
+           allowLinking
+               このプロパティの値がtrueの場合、この仮想サーバー上にデプロイされているすべてのWebアプリケーションに対し、シンボリック・リンクのリソースが提供されます。個々のWebアプリケーションでこの設定をオーバーライドするには、sun-web.xmlファイルのsun-web-app要素のプロパティallowLinkingを使用します。
+
+                   <sun-web-app>
+                   <property name="allowLinking" value="[true|false]"/>
+                   </sun-web-app>
+               デフォルト値はtrueです。
+
+           accessLogWriteInterval
+               ログがディスクに書き込まれるまでの秒数を示します。アクセス・ログは、バッファがフルになるか、指定した時間が経過すると書き込まれます。値が0
+               (ゼロ)の場合、バッファがフルでなくても常に書き込まれます。つまり、サーバー・アクセスがあるたびに、ログ・メッセージはファイルに直接格納されます。
+
+           accessLogBufferSize
+               アクセス・ログのコールが格納されるバッファのサイズをバイト単位で指定します。
+
+           allowRemoteAddress
+               リモート・クライアントのIPアドレスを比較する、正規表現パターンのカンマ区切りリストです。このプロパティが指定されている場合、リクエストを受け入れるためにはリモート・アドレスが一致している必要があります。このプロパティが指定されていない場合、リモート・アドレスがdenyRemoteAddressパターンと一致していないかぎり、すべてのリクエストが受け入れられます。このプロパティのデフォルト値はnullです。
+
+           denyRemoteAddress
+               リモート・クライアントのIPアドレスを比較する、正規表現パターンのカンマ区切りリストです。このプロパティが指定されている場合、リクエストを受け入れるためにはリモート・アドレスが一致していない必要があります。このプロパティが指定されていない場合、リクエストの受入れはallowRemoteAddressプロパティのみで制御されます。このプロパティのデフォルト値はnullです。
+
+           allowRemoteHost
+               リモート・クライアントのホスト名(java.net.Socket.getInetAddress().getHostName()で返される)を比較する、正規表現パターンのカンマ区切りリストです。このプロパティが指定されている場合、リクエストを受け入れるためにはリモート・ホスト名が一致している必要があります。このプロパティが指定されていない場合、リモート・ホスト名がdenyRemoteHostパターンと一致していないかぎり、すべてのリクエストが受け入れられます。このプロパティのデフォルト値はnullです。
+
+           denyRemoteHost
+               リモート・クライアントのホスト名(java.net.Socket.getInetAddress().getHostName()で返される)を比較する、正規表現パターンのカンマ区切りリストです。このプロパティが指定されている場合、リクエストを受け入れるためにはリモート・ホスト名が一致していない必要があります。このプロパティが指定されていない場合、リクエストの受入れはallowRemoteHostプロパティのみで制御されます。このプロパティのデフォルト値はnullです。
+
+           authRealm
+               auth-realmのname属性を指定します。これは、この仮想サーバーにデプロイされているスタンドアロンのWebアプリケーションについて、サーバー・インスタンスのデフォルト・レルムをオーバーライドします。スタンドアロンのWebアプリケーションのweb.xmlファイルに定義されているレルムは、仮想サーバーのレルムをオーバーライドします。
+
+           securePagesWithPragma
+               このプロパティをfalseに設定すると、この仮想サーバー上のすべてのWebアプリケーションで、SSLを使用したファイルのダウンロードがInternet
+               Explorerで必ず正しく機能します。
+
+               このプロパティは、特定のWebアプリケーションに対して設定できます。詳細は、Oracle
+               GlassFish
+               Serverア
+
+           contextXmlDefault
+
+           alternatedocroot_n
+               代替ドキュメント・ルート(docroot)を指定します。ここで、nは正の整数で複数の指定が可能になります。代替docrootにより、Webアプリケーションは特定のリソースに対するそれぞれのdocroot以外からのリクエストに対応できます。これは、それらのリクエストがWebアプリケーションの代替docrootのURIパターンの1つ(または複数)に一致するかに基づきます。
+
+               リクエストが代替docrootのURIパターンと一致する場合、リクエストのURI(Webアプリケーションのコンテキスト・ルートをマイナスしたもの)を代替docrootの物理的な位置(ディレクトリ)に付加することによって、リクエストを代替docrootにマップします。リクエストが複数のURIパターンに一致する場合、代替docrootは次の優先順位で判断されます。
+
+               ·   完全一致
+
+               ·   最長パス一致
+
+               ·   拡張一致
+
+               たとえば、次のプロパティは3つの代替docrootを指定します。最初の代替docrootのURIパターンは完全一致を使用し、2番目と3番目の代替docrootのURIパターンは拡張および最長パス接頭辞一致をそれぞれ使用しています。
+
+                   <property name="alternatedocroot_1"
+                      value="from=/my.jpg dir=/srv/images/jpg"/>
+                   <property name="alternatedocroot_2"
+                      value="from=*.jpg dir=/srv/images/jpg"/>
+                   <property name="alternatedocroot_3"
+                      value="from=/jpg/* dir=/src/images"/>
+               各代替docrootのvalueには2つのコンポーネントがあります。最初のコンポーネントのfromは代替docrootのURIパターンを指定し、2番目のコンポーネントのdirは代替docrootの物理的な位置(ディレクトリ)を指定します。dirコンポーネントにはスペースが許容されています。
+
+               このプロパティは、特定のWebアプリケーションに対して設定できます。詳細は、Oracle
+               GlassFish
+               Serverア
+
+           send-error_n
+               仮想サーバー上にデプロイされているすべてのWebアプリケーションで継承する、仮想サーバーのカスタム・エラー・ページのマッピングを指定します。Webアプリケーションは、web.xmlデプロイメント記述子のこれらカスタム・エラー・ページのマッピングをオーバーライドできます。各send-error_nプロパティの値には3つのコンポーネントがあり、任意の順番で指定できます。
+
+               最初のコンポーネントのcodeは、レスポンスでカスタム・エラー・ページを返す必要がある3桁のHTTPレスポンス・ステータス・コードを指定します。
+
+               2番目のコンポーネントのpathは、カスタム・エラー・ページの絶対、または相対ファイル・システム・パスを指定します。相対ファイル・システム・パスは、domain-dir/configディレクトリに相対的なものとして解釈されます。
+
+               3番目のコンポーネントのreasonはオプションで、返される理由文字列のテキスト(Unauthorizedまたは
+               Forbidden)を指定します。
+
+               例:
+
+                   <property name="send-error_1"
+                      value="code=401 path=/myhost/401.html reason=MY-401-REASON"/>
+               この例のプロパティ定義では、/myhost/401.htmlの内容が401レスポンスで返されるとともに、次のレスポンス行が返されます。
+
+                   HTTP/1.1 401 MY-401-REASON
+
+           redirect_n
+               古いURLに対するリクエストを新しいURLに対するリクエストとして処理するように指定します。これらのプロパティは、仮想サーバー上にデプロイされているすべてのWebアプリケーションで継承されます。各redirect_nプロパティの値には2つのコンポーネントがあり、任意の順番で指定できます。
+
+               最初のコンポーネントのfromは、照合するリクエストされたURIの接頭辞を指定します。
+
+               2番目のコンポーネントのurl-prefixはクライアントに返す新しいURL接頭辞を指定します。from接頭辞は、このURL接頭辞で単純に置き換えられます。
+
+               例:
+
+                   <property name="redirect_1"
+                   value="from=/dummy url-prefix=http://etude"/>
+
+           valve_n
+               カスタム値の完全修飾クラス名を指定します。nは正の整数で、複数の指定が可能です。valveクラスは、Tomcatまたは以前のGlassFish
+               Serverリリースのorg.apache.catalina.Valveインタフェースか、現在のGlassFish
+               Serverリリースのorg.glassfish.web.valve.GlassFishValveインタフェースを実装する必要があります。例:
+
+                   <property name="valve_1"
+                      value="org.glassfish.extension.Valve"/>
+               このプロパティは、特定のWebアプリケーションに対して設定できます。詳細は、Oracle
+               GlassFish
+               Serverア
+
+           listener_n
+               カスタムCatalinaリスナーの完全修飾クラス名を指定します。nは正の整数で、複数の指定が可能です。リスナー・クラスは、org.apache.catalina.ContainerListenerまたはorg.apache.catalina.LifecycleListenerインタフェースを実装する必要があります。例:
+
+                   <property name="listener_1"
+                      value="org.glassfish.extension.MyLifecycleListener"/>
+               このプロパティは、特定のWebアプリケーションに対して設定できます。詳細は、Oracle
+               GlassFish
+               Serverア
+
+           docroot
+               サーバーのルート・ドキュメント・ディレクトリへの絶対パス。非推奨。virtual-server属性のdocrootに置き換えられました。get、set、およびlistの各サブコマンドを使用してアクセスできます。
+
+           accesslog
+               サーバー・アクセス・ログへの絶対パス。非推奨。virtual-server属性のaccess-logに置き換えられました。get、set、およびlistの各サブコマンドを使用してアクセスできます。
+
+           accessLoggingEnabled
+               trueの場合、この仮想サーバーに対するアクセス・ロギングが有効になります。非推奨。virtual-server属性のaccess-logging-enabledに置き換えられました。get、set、およびlistの各サブコマンドを使用してアクセスできます。
+
+           sso-enabled
+               trueの場合、この仮想サーバー上の同じレルムで構成されたWebアプリケーションに対してシングル・サインオンが有効になります。非推奨。virtual-server属性のsso-enabledに置き換えられました。get、set、およびlistの各サブコマンドを使用してアクセスできます。
+
+           ssoCookieSecure
+               この仮想サーバーにデプロイされたWebアプリケーションに関連付けられた、JSESSIONIDSSO
+               cookieのSecure属性を設定します。非推奨。virtual-server属性のsso-cookie-secureに置き換えられました。get、set、およびlistの各サブコマンドを使用してアクセスできます。
+
+           errorReportValve
+               この仮想サーバー上で、アプリケーションのデフォルトのエラー・ページを生成するカスタム値の完全修飾クラス名を指定します。この仮想サーバーのデフォルトのエラー・ページ・メカニズムを無効にするには、空の文字列を指定します。
+
+       --target
+           指定したターゲットにのみ仮想サーバーを作成します。有効な値は次のとおりです:
+
+           server
+               デフォルトのサーバー・インスタンスに仮想サーバーを作成します。この値がデフォルト値です。
+
+           configuration-name
+               指定した構成の仮想サーバーを作成します。
+
+           cluster-name
+               指定したクラスタ内のすべてのサーバー・インスタンスに仮想サーバーを作成します。
+
+           standalone-instance-name
+               指定したスタンドアロン・サーバー・インスタンスに仮想サーバーを作成します。
+
+オペランド
+       virtual-server-id
+           作成される仮想サーバーの一意のIDを識別します。このIDの最初の文字に数字は使用できません。
+
+例
+       例 1, 仮想サーバーの作成
+           次のコマンドは、sampleServerという名前の仮想サーバーを作成します。
+
+               asadmin> create-virtual-server --hosts pigeon,localhost
+               --property authRealm=ldap sampleServer
+               Command create-virtual-server executed successfully.
+
+終了ステータス
+       0
+           コマンドは正常に実行されました
+
+       1
+           コマンドの実行時にエラーが発生しました
+
+関連項目
+       delete-virtual-server(1), list-virtual-servers(1),
+       create-http-listener(1), create-network-listener(1)
+
+       get(1), list(1), set(1)
+
+       asadmin(1M)
+
+Java EE 7                        2011年2月11日        create-virtual-server(1)

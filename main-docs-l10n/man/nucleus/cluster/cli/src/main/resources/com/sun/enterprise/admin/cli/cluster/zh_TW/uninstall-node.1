@@ -1,0 +1,164 @@
+uninstall-node(1)           asadmin 公用程式子命令           uninstall-node(1)
+
+參考名
+       uninstall-node - 從指定的主機解除安裝 GlassFish Server 軟體
+
+概要
+           uninstall-node [--help]
+           [--installdir as-install-parent]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile]
+           [--force={false|true}]
+           host-list
+
+描述
+       uninstall-node 子命令可從指定為子命令運算元的主機解除安裝 GlassFish
+       Server 軟體。這個子命令需要在執行子命令的主機和解除安裝 GlassFish
+       Server 軟體的每台主機上組態安全 Shell (SSH)。
+
+           注意
+           ┌──────────────────────────────────────────────────────┐
+           │備註                                                  │
+           │                                                      │
+           │           此子命令相當於                             │
+           │           uninstall-node-ssh(1)                      │
+           │           子命令。若要解除安裝使用分散式元件物件模型 │
+           │           (DCOM) 遠端協定之主機上的                  │
+           │           GlassFish Server                           │
+           │           軟體，請使用                               │
+           │           uninstall-node-dcom(1)                     │
+           │           子命令。                                   │
+           └──────────────────────────────────────────────────────┘
+
+       依預設，如果要解除安裝 GlassFish Server 軟體的任何主機上有預先定義節點
+       localhost-domain
+       以外的任何節點，此子命令便會失敗。若要解除安裝使用者定義之節點所在主機上的
+       GlassFish Server 軟體，請將 --force 選項設為 true。如果 --force 選項為
+       true，則子命令會移除基底安裝目錄之父系目錄的所有內容。
+
+       如果基底安裝目錄之父系目錄底下的檔案是開啟狀態，子命令就會失敗。
+
+       如果指定多台主機，則下列項目在所有主機上的組態都必須相同：
+
+       ·   GlassFish Server 軟體之基底安裝目錄的父系目錄
+
+       ·   SSH 連接埠
+
+       ·   SSH 使用者
+
+       ·   SSH 金鑰檔案
+
+       子命令不會修改網域管理伺服器 (DAS) 的組態。
+
+       只有本機模式支援這個子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --installdir
+           GlassFish Server
+           軟體安裝在每台主機上基底安裝目錄之父系目錄的絕對路徑，例如
+           /export/glassfish3/。
+
+           執行此子命令的使用者必須擁有指定目錄的寫入存取權。否則，將發生錯誤。
+
+           指定的目錄必須包含主機上的 GlassFish Server
+           軟體安裝。否則，將發生錯誤。
+
+           預設值為 GlassFish Server
+           軟體在執行此子命令之主機上的基底安裝目錄的父系目錄。
+
+       --sshport
+           用於與要解除安裝 GlassFish Server 軟體之主機進行 SSH
+           連線的連接埠。預設值為 22。
+
+       --sshuser
+           要解除安裝 GlassFish Server 軟體 (執行透過 SSH
+           連線到主機的處理作業)
+           之主機上的使用者。預設值為執行此子命令的使用者。若要確保 DAS
+           可以讀取此使用者的 SSH 私密金鑰檔案，請指定執行 DAS
+           處理作業的使用者。
+
+       --sshkeyfile
+           SSH 私密金鑰檔案的絕對路徑，該檔案屬於 --sshuser
+           選項指定的使用者。此檔案用於向主機上的 sshd 常駐程式認證。
+
+           執行此子命令的使用者必須能夠連線至金鑰檔案的路徑並讀取金鑰檔案。
+
+           預設值為使用者之 .ssh
+           目錄中的金鑰檔案。若有多個金鑰檔案，則子命令會依照以下優先順序加以使用：
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --force
+           指定子命令是否從主機解除安裝 GlassFish Server 軟體
+           (即使使用者定義的節點常駐於主機上)。可能值如下：
+
+           false
+               如果主機上有使用者定義的節點，則不會解除安裝該軟體，且子命令會失敗
+               (預設值)。
+
+               如果 --force 選項為 false，子命令只會移除 GlassFish Server
+               軟體檔案。不會移除基底安裝目錄之父系目錄的其他內容，例如組態檔案。
+
+           true
+               即使主機上有使用者定義的節點，該子命令仍會解除安裝 GlassFish
+               Server 軟體。
+
+               如果 --force 選項為
+               true，則子命令會移除基底安裝目錄之父系目錄的所有內容。
+
+運算元
+       host-list
+           要解除安裝 GlassFish Server 軟體之主機的名稱清單 (以空格分隔)。
+
+範例
+       範例 1, 從預設位置解除安裝 GlassFish Server 軟體
+           此範例會在預設位置，解除安裝主機 sj03.example.com 和
+           sj04.example.com 上的 GlassFish Server 軟體。
+
+               asadmin> uninstall-node sj03 sj04
+               Successfully connected to gfuser@sj03.example.com using keyfile /home/gfuser
+               /.ssh/id_rsa
+               Successfully connected to gfuser@sj04.example.com using keyfile /home/gfuser
+               /.ssh/id_rsa
+               Command uninstall-node executed successfully.
+
+       範例 2, 強制解除安裝 GlassFish Server 軟體
+           此範例會解除安裝主機 sj02.example.com 上的 GlassFish Server 軟體。
+
+           即使使用者定義的節點常駐於主機上，也會解除安裝軟體。會移除
+           /export/glassfish3 目錄的整個內容。
+
+           為提高可讀性，此範例將省略一些輸出行。
+
+               asadmin> uninstall-node --force --installdir /export/glassfish3 sj02.example.com
+               Successfully connected to gfuser@sj02.example.com using keyfile /home/gfuser
+               /.ssh/id_rsa
+               Force removing file /export/glassfish3/mq/lib/help/en/add_overrides.htm
+               Force removing file /export/glassfish3/mq/lib/help/en/add_connfact.htm
+               ...
+               Force removing directory /export/glassfish3/glassfish/lib/appclient
+               Force removing directory /export/glassfish3/glassfish/lib
+               Force removing directory /export/glassfish3/glassfish
+               Command uninstall-node executed successfully.
+
+結束狀態
+       0
+           命令執行成功
+
+       1
+           執行命令時發生錯誤
+
+另請參閱
+       install-node(1), install-node-dcom(1), install-node-ssh(1),
+       uninstall-node-dcom(1), uninstall-node-ssh(1)
+
+       asadmin(1M)
+
+Java EE 7                      2012 年 1 月 5 日             uninstall-node(1)

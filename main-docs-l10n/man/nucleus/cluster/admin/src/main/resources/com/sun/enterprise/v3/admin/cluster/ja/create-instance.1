@@ -1,0 +1,288 @@
+create-instance(1)    asadminユーティリティのサブコマンド   create-instance(1)
+
+名前
+       create-instance - GlassFish Serverインスタンスを作成します
+
+概要
+           create-instance [--help] --node node-name
+           [--config config-name | --cluster cluster-name]
+           [--lbenabled={true|false}]
+           [--portbase=port-number] [--checkports={true|false}]
+           [--systemproperties (name=value)[:name=value]* ]
+           instance-name
+
+説明
+       create-instanceサブコマンドは、GlassFish
+       Serverインスタンスを作成します。このサブコマンドを使用する場合は、ドメイン管理サーバー(DAS)が稼働しているホスト上およびインスタンスが配置されるノードで表されるホスト上に、分散コンポーネント・オブジェクト・モデル(DCOM)リモート・プロトコルまたはSecure
+       Shell(SSH)を構成する必要があります。
+
+           注記
+           ┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+           │注意                                                                                                                                                                                            │
+           │                                                                                                                                                                                                │
+           │           ローカル・ホストを表すタイプCONFIGのノードにインスタンスが配置される場合、DCOMまたはSSHは不要です。タイプCONFIGのノードは、DCOMまたはSSH経由のリモート通信に対して有効になりません。 │
+           └────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+       このコマンドは、DASにアクセス可能な任意のホストから実行できます。
+
+       GlassFish Serverインスタンスは、GlassFish
+       Serverを実行している単一ノードに1つのJavaプラットフォームの仮想マシン(Java仮想マシンまたはJVMマシン)です。ノードは、GlassFish
+       Serverインスタンスが存在するホストを定義します。JVMマシンは、Java
+       Platform, Enterprise Edition(Java EE)と互換性がある必要があります。
+
+       GlassFish Serverインスタンスには、次の項目への参照が必要です。
+
+       ·   インスタンスが存在するホストを定義するノード。このノードはインスタンスを作成するコマンドで指定する必要があります。
+
+       ·   インスタンスの構成を定義する名前付き構成。コマンドで構成を指定してインスタンスを作成することができますが、必須ではありません。クラスタに参加していないインスタンスに構成が指定されていない場合は、サブコマンドによってインスタンスの構成が作成されます。クラスタに参加しているインスタンスは、親クラスタから構成を受け取ります。
+
+       各GlassFish
+       Serverインスタンスは、次のタイプのインスタンスのいずれかです。
+
+       スタンドアロン・インスタンス
+           スタンドアロン・インスタンスは、他のインスタンスやクラスタと構成を共有しません。次のいずれかの条件が満たされると、スタンドアロン・インスタンスが作成されます。
+
+           ·   インスタンスを作成するコマンドで、構成またはクラスタが指定されていません。
+
+           ·   インスタンスを作成するコマンドで、他のすべてのインスタンスまたはクラスタが参照しない構成が指定されていません。
+
+           構成またはクラスタが指定されていない場合、default-config構成のコピーがインスタンスに対して作成されます。この構成の名前はinstance-name-configで、instance-nameはクラスタ化されていないサーバー・インスタンスの名前を表します。
+
+       共有インスタンス
+           共有インスタンスは、他のインスタンスやクラスタと構成を共有します。インスタンスを作成するコマンドで、他のインスタンスまたはクラスタによって参照される構成が指定されている場合、共有インスタンスが作成されます。
+
+       クラスタ化されたインスタンス
+           クラスタ化されたインスタンスは、インスタンスが属するクラスタから構成を継承し、クラスタ内の他のインスタンスと構成を共有します。インスタンスを作成するコマンドでクラスタが指定された場合、クラスタ化されたインスタンスが作成されます。
+
+           クラスタに属していないインスタンスは、クラスタ化されていないサーバー・インスタンスとみなされます。したがって、スタンドアロン・インスタンスと共有インスタンスは、クラスタ化されていないサーバー・インスタンスです。
+
+       デフォルトでは、このサブコマンドは作成中のインスタンスで予測されるポートの競合の解決を試みます。また、サブコマンドは、現在使用されておらず、同じノード上の他のインスタンスに割り当てられていないポートを割り当てます。サブコマンドは、サブコマンド内部のアルゴリズムに基づいてこれらのポートを割り当てます。--systempropertiesオプションを使用して、同じノードの追加のインスタンスでのポートの競合を解決します。インスタンスのシステム・プロパティは、create-system-properties(1)サブコマンドおよびdelete-system-property(1)サブコマンドを使用して操作できます。
+
+       このサブコマンドは、リモート・モードでのみサポートされています。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --node
+           インスタンスが作成されるホストを定義するノードの名前。ノードはすでに存在している必要があります。ドメイン管理サーバー(DAS)が稼働しているホストにインスタンスを作成する場合は、事前定義済のノードlocalhost-domainを使用します。
+
+       --config
+           インスタンスが参照する名前付き構成を指定します。構成が存在していて、その名前がdefault-configまたはserver-configでないことが必要です。--configオプションを指定すると、共有インスタンスが作成されます。
+
+           --configオプションと--clusterオプションは、同時に指定できません。両方のオプションを省略すると、スタンドアロン・インスタンスが作成されます。
+
+       --cluster
+           インスタンスが構成を継承するクラスタを指定します。--clusterオプションを指定すると、クラスタ化されたインスタンスが作成されます。
+
+           --configオプションと--clusterオプションは、同時に指定できません。両方のオプションを省略すると、スタンドアロン・インスタンスが作成されます。
+
+       --lbenabled
+           インスタンスでロード・バランシングを有効にするかを指定します。使用可能な値は次のとおりです:
+
+           true
+               インスタンスでロード・バランシングが有効になります(デフォルト)。
+
+               インスタンスでロード・バランシングが有効になっている場合、ロード・バランサはインスタンスにリクエストを送信します。
+
+           false
+               インスタンスでロード・バランシングが無効になります。
+
+               インスタンスでロード・バランシングが無効になっている場合、ロード・バランサはインスタンスにリクエストを送信しません。
+
+       --portbase
+           ポート割当てを開始する番号を指定します。インスタンスは、静的に割り当てられたポートの特定の番号を使用します。このportbaseの値によって、どこから割当てを開始するかが決まります。ポートの値は次のように計算されます。
+
+           ·   管理ポート: portbase + 48
+
+           ·   HTTPリスナー・ポート: portbase + 80
+
+           ·   HTTPSリスナー・ポート: portbase + 81
+
+           ·   JMSポート: portbase + 76
+
+           ·   IIOPリスナー・ポート: portbase + 37
+
+           ·   セキュリティ保護されたIIOPリスナー・ポート: portbase + 38
+
+           ·   セキュリティ保護されたIIOP相互認証ポート: portbase + 39
+
+           ·   JMXポート: portbase + 86
+
+           ·   JPAデバッガ・ポート: portbase + 9
+
+           ·   OSGiモジュール管理用Felixシェル・サービス・ポート: portbase +
+               66
+
+           --portbaseオプションが指定されると、このサブコマンドの出力には使用されるポートの完全なリストが含まれます。
+
+       --checkports
+           管理ポート、HTTPポート、JMSポート、JMXポート、およびIIOPポートの可用性を確認するかを指定します。デフォルト値はtrueです。
+
+       --systemproperties
+           インスタンスのシステム・プロパティを定義します。これらのプロパティは、インスタンスの構成にあるポート設定のプロパティ定義をオーバーライドします。2つのクラスタ化されたインスタンスが同じホスト上に存在する場合などでは、定義済のポート設定はオーバーライドされます。この状況では、両方のインスタンスが同じ構成を共有するため、一方のインスタンスのポート設定はオーバーライドされる必要があります。
+
+           次のプロパティが使用可能です:
+
+           ASADMIN_LISTENER_PORT
+               このプロパティは、DASがインスタンスを管理するためにインスタンスにアクセスするHTTPポートまたはHTTPSポートのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           HTTP_LISTENER_PORT
+               このプロパティは、HTTPリクエストのリスニングに使用するポートのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           HTTP_SSL_LISTENER_PORT
+               このプロパティは、HTTPSリクエストのリスニングに使用するポートのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           IIOP_LISTENER_PORT
+               このプロパティは、IIOP接続に使用するポートのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           IIOP_SSL_LISTENER_PORT
+               このプロパティは、セキュリティ保護されたIIOP接続に使用するポートのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           IIOP_SSL_MUTUALAUTH_PORT
+               このプロパティは、クライアント認証でセキュリティ保護されたIIOP接続に使用するポートのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           JAVA_DEBUGGER_PORT
+               このプロパティは、Java Platform Debugger Architecture (JPDA)
+               (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)デバッガへの接続に使用するポートのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           JMS_PROVIDER_PORT
+               このプロパティは、Java Message
+               Serviceプロバイダのポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           JMX_SYSTEM_CONNECTOR_PORT
+               このプロパティでは、JMXコネクタがリスニングするポート番号を指定します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+           OSGI_SHELL_TELNET_PORT
+               このプロパティは、Apache Felix Remote
+               Shell(http://felix.apache.org/site/apache-felix-remote-shell.html)への接続に使用するポートのポート番号を指定します。このシェルは、Felixシェル・サービスを使用してOSGiモジュール管理サブシステムと相互作用します。有効な値は1から65535です。UNIXでは、ポート1から1024でリスニングするソケットを作成するには、スーパーユーザー権限が必要です。
+
+オペランド
+       instance-name
+           作成されるインスタンスの名前。
+
+           名前は次の要件を満たしてください。
+
+           ·   ASCII文字のみ使用します。
+
+           ·   名前は英数字またはアンダースコアで開始します。
+
+           ·   名前に含めることができるのは次の文字のみです。
+
+               ·   小文字
+
+               ·   大文字
+
+               ·   数値
+
+               ·   ハイフン
+
+               ·   ピリオド
+
+               ·   アンダースコア
+
+           ·   名前はドメイン内で一意にします。また、別のGlassFish
+               Serverインスタンス、クラスタ、名前付き構成、またはノードの名前にすることはできません。
+
+           ·   ド
+               Serverで予約されている他のキーワードを名前に使用しないでください。
+
+例
+       例 1, スタンドアロンGlassFish Serverインスタンスの作成
+           この例では、ローカル・ホストのドメインdomain1にスタンドアロンGlassFish
+           Serverインスタンスpmdsainstを作成します。
+
+               asadmin> create-instance --node localhost-domain1 pmdsainst
+               Port Assignments for server instance pmdsainst:
+               JMX_SYSTEM_CONNECTOR_PORT=28688
+               JMS_PROVIDER_PORT=27678
+               ASADMIN_LISTENER_PORT=24850
+               HTTP_LISTENER_PORT=28082
+               IIOP_LISTENER_PORT=23702
+               IIOP_SSL_LISTENER_PORT=23822
+               HTTP_SSL_LISTENER_PORT=28183
+               IIOP_SSL_MUTUALAUTH_PORT=23922
+
+               Command create-instance executed successfully.
+
+       例 2, カスタム・ポート割当てを使用したスタンドアロンGlassFish
+       Serverインスタンスの作成
+           この例では、ローカル・ホストのドメインdomain1にスタンドアロンGlassFish
+           Serverインスタンスpmdcpinstを作成します。カスタム・ポート番号が次のポートに割り当てられます。
+
+           ·   HTTPリスナー・ポート
+
+           ·   HTTPSリスナー・ポート
+
+           ·   IIOP接続ポート
+
+           ·   セキュリティ保護されたIIOP接続ポート
+
+           ·   相互認証を使用する安全なIIOP接続ポート
+
+           ·   JMXコネクタ・ポート
+
+               asadmin> create-instance --node localhost-domain1
+               --systemproperties HTTP_LISTENER_PORT=58294:
+               HTTP_SSL_LISTENER_PORT=58297:
+               IIOP_LISTENER_PORT=58300:
+               IIOP_SSL_LISTENER_PORT=58303:
+               IIOP_SSL_MUTUALAUTH_PORT=58306:
+               JMX_SYSTEM_CONNECTOR_PORT=58309 pmdcpinst
+               Port Assignments for server instance pmdcpinst:
+               JMS_PROVIDER_PORT=27679
+               ASADMIN_LISTENER_PORT=24851
+
+               Command create-instance executed successfully.
+
+       例 3, 共有GlassFish Serverインスタンスの作成
+           この例では、ローカル・ホストのドメインdomain1に共有GlassFish
+           Serverインスタンスpmdsharedinst1を作成します。このインスタンスの共有構成は、pmdsharedconfigです。
+
+               asadmin create-instance --node localhost-domain1 --config pmdsharedconfig
+               pmdsharedinst1
+               Port Assignments for server instance pmdsharedinst1:
+               JMX_SYSTEM_CONNECTOR_PORT=28687
+               JMS_PROVIDER_PORT=27677
+               ASADMIN_LISTENER_PORT=24849
+               HTTP_LISTENER_PORT=28081
+               IIOP_LISTENER_PORT=23701
+               IIOP_SSL_LISTENER_PORT=23821
+               HTTP_SSL_LISTENER_PORT=28182
+               IIOP_SSL_MUTUALAUTH_PORT=23921
+
+               Command create-instance executed successfully.
+
+       例 4, クラスタ化されたGlassFish Serverインスタンスの作成
+           この例では、ローカル・ホストのドメインdomain1にクラスタ化されたGlassFish
+           Serverインスタンスpmdinst1を作成します。このインスタンスは、クラスタpmdclust1のメンバーです。
+
+               asadmin> create-instance --node localhost-domain1 --cluster pmdclust pmdinst1
+               Port Assignments for server instance pmdinst1:
+               JMX_SYSTEM_CONNECTOR_PORT=28686
+               JMS_PROVIDER_PORT=27676
+               HTTP_LISTENER_PORT=28080
+               ASADMIN_LISTENER_PORT=24848
+               IIOP_SSL_LISTENER_PORT=23820
+               IIOP_LISTENER_PORT=23700
+               HTTP_SSL_LISTENER_PORT=28181
+               IIOP_SSL_MUTUALAUTH_PORT=23920
+
+               Command create-instance executed successfully.
+
+終了ステータス
+       0
+           コマンドは正常に実行されました
+
+       1
+           コマンドの実行時にエラーが発生しました
+
+関連項目
+       create-local-instance(1), create-node-config(1), create-node-dcom(1),
+       create-node-ssh(1), create-system-properties(1), delete-instance(1),
+       delete-system-property(1), list-instances(1), setup-ssh(1),
+       start-instance(1), stop-instance(1)
+
+       asadmin(1M)
+
+Java EE 7                        2011年12月8日              create-instance(1)

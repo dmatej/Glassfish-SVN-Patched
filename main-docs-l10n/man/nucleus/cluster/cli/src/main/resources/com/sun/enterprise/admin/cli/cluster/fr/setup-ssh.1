@@ -1,0 +1,254 @@
+setup-ssh(1)            Sous-commandes de l'utilitaire            setup-ssh(1)
+
+NOM
+       setup-ssh - configure une clé SSH sur les hôtes spécifiés
+
+SYNTAXE
+           setup-ssh [--help]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile] [--sshpublickeyfile ssh-public-keyfile]
+           [--generatekey={false|true}]
+           host-list
+
+DESCRIPTION
+       La sous-commande setup-ssh configure une clé SSH (Secure Shell) sur les
+       hôtes spécifiés comme opérande de la sous-commande. Cette clé permet à
+       GlassFish Server d'utiliser l'authentification par clé publique pour
+       l'authentification de la connexion SSH de l'utilisateur sur les hôtes
+       distants.
+
+       Le protocole SSH garantit que les clusters de GlassFish Server qui
+       s'étendent sur plusieurs hôtes peuvent être administrés de manière
+       centralisée. Lorsqu'un utilisateur exécute une sous-commande pour
+       l'administration de cluster qui agit sur plusieurs hôtes, la
+       sous-commande est propagée à partir de l'hôte du serveur
+       d'administration de domaine (serveur DAS) vers les hôtes distants. Pour
+       propager les sous-commandes qui agissent sur une instance GlassFish
+       Server qui n'est pas en cours d'exécution, ou sur un noeud sur lequel
+       aucune instance n'est en cours d'exécution, GlassFish Server utilise
+       SSH. SSH assure la confidentialité et la sécurité des données échangées
+       entre le serveur DAS et les hôtes distants.
+
+       L'authentification par clé publique utilise une paire de clés SSH
+       comprenant les clés suivantes :
+
+       ·   Une clé privée, stockée dans un emplacement sécurisé sur l'hôte du
+           serveur DAS et pouvant être protégée par une phrase secrète
+
+       ·   Une clé publique stockée sur tous les hôtes distants avec lesquels
+           le serveur DAS communique
+
+       La sous-commande n'exige aucune information de configuration du serveur
+       DAS et ne modifie pas la configuration de ce dernier.
+
+       Cette sous-commande est prise en charge en mode local uniquement.
+
+   Conditions préalables à l'utilisation de la sous-commande setup-ssh
+       Pour utiliser la sous-commande setup-ssh, l'utilisateur SSH doit être
+       en mesure d'utiliser SSH pour se connecter à des hôtes distants sur
+       lesquels SSH doit être configuré. Plus précisément, les conditions
+       suivantes doivent être respectées :
+
+       ·   Le client ssh(1) est installé sur l'hôte du serveur DAS et est
+           accessible via le chemin du serveur DAS de l'utilisateur.
+
+       ·   Le démon sshd(1M) est installé et est en cours d'exécution sur tous
+           les hôtes sur lesquels une clé SSH doit être configurée.
+
+       ·   L'utilisateur spécifié par l'option --sshuser dispose d'une
+           connexion SSH sur tous les hôtes sur lesquels une clé SSH doit être
+           configurée.
+
+       ·   L'utilitaire ssh-keygen(1) est installé sur l'hôte du serveur DAS
+           soit à l'emplacement par défaut, soit dans un emplacement défini
+           dans le chemin du serveur DAS de l'utilisateur.
+
+       ·   Sous les systèmes Windows, le package SSH pour Cygwin
+
+           ou un toolkit MKS Software
+
+           qui fournit SSH est installé.
+
+   Comportement de la sous-commande setup-ssh
+       La sous-commande configure la connectivité SSH entre l'hôte du serveur
+       DAS et les hôtes distants en automatisant les tâches suivantes :
+
+       ·   Génération d'une paire de clés SSH.  S'il n'existe aucune paire de
+           clés SSH, la sous-commande invite par défaut l'utilisateur à en
+           générer une. La paire de clés SSH est générée sans phrase secrète
+           de cryptage. Si une paire de clés protégée par une phrase secrète
+           est requise, elle doit être générée manuellement à l'aide de la
+           commande SSH ssh-keygen(1).
+
+       ·   Distribution de la clé publique.  La sous-commande ajoute le
+           contenu du fichier de clés publiques au fichier
+           user-home/.ssh/authorized_keys sur chaque hôte distant. Par défaut,
+           la sous-commande localise le fichier de clés publiques dans le
+           répertoire user-home/.ssh sur l'hôte sur lequel la sous-commande
+           est exécutée. Si le fichier user-home/.ssh/authorized_keys n'existe
+           pas sur l'hôte, la sous-commande le crée.  user-home est le
+           répertoire d'origine Oracle Home de l'utilisateur sur un hôte.
+
+           Pour la distribution de la clé publique, l'authentification de la
+           connexion SSH de l'utilisateur est requise. Si la clé privée est
+           protégée par une phrase secrète, cette dernière est également
+           requise. Par défaut, la sous-commande invite l'utilisateur à saisir
+           le mot de passe et, si nécessaire, la phrase secrète. Pour
+           distribuer la clé publique sans y être invité, exécutez la
+           sous-commande comme suit :
+
+           ·   Définissez l'option --interactive de l'utilitaire asadmin(1M)
+               sur false.
+
+           ·   Définissez l'option --passwordfile de l'utilitaire asadmin sur
+               un fichier dans lequel l'entrée AS_ADMIN_SSHPASSWORD spécifie
+               le mot de passe de l'utilisateur SSH pour la connexion sur les
+               hôtes spécifiés.
+
+           ·   Si une phrase secrète est requise, assurez-vous que le fichier
+               spécifié par l'option --passwordfile de l'utilitaire asadmin
+               contient également une entrée pour AS_ADMIN_SSHKEYPASSPHRASE.
+
+           Si l'authentification par clé publique est déjà configurée sur un
+           hôte, la sous-commande informe l'utilisateur que l'authentification
+           par clé publique est déjà configurée et ne distribue pas la clé à
+           l'hôte.
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --sshport
+           Port à utiliser pour les connexions SSH sur l'hôte sur lequel le
+           protocole SSH doit être configuré. La valeur par défaut est 22.
+
+       --sshuser
+           Utilisateur SSH sur l'hôte distant devant exécuter le processus de
+           configuration du protocole SSH sur cet hôte. Par défaut, il s'agit
+           de l'utilisateur qui exécute cette sous-commande. Pour garantir que
+           le serveur DAS puisse lire le fichier de clés privées SSH de cet
+           utilisateur, indiquez l'utilisateur qui exécute le processus DAS.
+
+       --sshkeyfile
+           Chemin absolu du fichier de clés privées SSH pour l'utilisateur
+           indiqué par l'option --sshuser. Ce fichier est utilisé pour
+           l'authentification du démon sshd sur l'hôte.
+
+           L'utilisateur qui exécute cette sous-commande doit être en mesure
+           d'accéder au chemin du fichier de clés et de lire ce dernier.
+
+           La valeur par défaut correspond à un fichier de clés dans le
+           répertoire .ssh de l'utilisateur sur l'hôte sur lequel la
+           sous-commande est exécutée. Si plusieurs fichiers de clés sont
+           détectés, la sous-commande utilise l'ordre de préférence suivant :
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --sshpublickeyfile
+           Chemin absolu du fichier de clés publiques SSH de l'utilisateur
+           spécifié par l'option --sshuser. Le contenu du fichier de clés
+           publiques est ajouté au fichier .ssh/authorized_keys de
+           l'utilisateur sur chaque hôte sur lequel le protocole SSH doit être
+           configuré. Si le fichier .ssh/authorized_keys n'existe pas sur un
+           hôte, la sous-commande le crée.
+
+           L'utilisateur qui exécute cette sous-commande doit être en mesure
+           d'accéder au chemin du fichier de clés et de lire ce dernier.
+
+           La valeur par défaut correspond à un fichier de clés dans le
+           répertoire .ssh de l'utilisateur sur l'hôte sur lequel la
+           sous-commande est exécutée. Si plusieurs fichiers de clés sont
+           détectés, la sous-commande utilise l'ordre de préférence suivant :
+
+            1. id_rsa.pub
+
+            2. id_dsa.pub
+
+            3. identity.pub
+
+       --generatekey
+           Indique si la sous-commande génère les fichiers de clés SSH sans
+           inviter l'utilisateur à confirmer l'opération.
+
+           Les valeurs possibles sont les suivantes :
+
+           true
+               La sous-commande génère les fichiers de clés SSH sans inviter
+               l'utilisateur à confirmer l'opération.
+
+           false
+               Le comportement de la sous-commande dépend de l'existence ou
+               non des fichiers de clés SSH :
+
+               ·   Si les fichiers de clés SSH existent, la sous-commande ne
+                   génère pas les fichiers.
+
+               ·   Si les fichiers de clés SSH n'existent pas, le comportement
+                   de la sous-commande dépend de la valeur de l'option
+                   --interactive de l'utilitaire asadmin :
+
+                   ·   Si l'option --interactive a la valeur true, la
+                       sous-commande invite l'utilisateur à créer les
+                       fichiers.
+
+                   ·   Si l'option --interactive a la valeur false, la
+                       sous-commande échoue.
+
+               Il s'agit de la valeur par défaut.
+
+OPÉRANDES
+       host-list
+           Liste des noms des hôtes sur lesquels une clé SSH doit être
+           configurée, séparés par des espaces.
+
+EXEMPLES
+       Exemple 1, Configuration d'une clé SSH
+           Dans cet exemple, une clé SSH est configurée pour l'utilisateur
+           gfuser sur les hôtes sj03 et sj04. Le fichier de clés n'est pas
+           généré, mais il est copié à partir du répertoire .ssh de
+           l'utilisateur sur l'hôte sur lequel la sous-commande est exécutée.
+
+               asadmin> setup-ssh sj03 sj04
+               Enter SSH password for gfuser@sj03>
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj03
+               Successfully connected to gfuser@sj03 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj04
+               Successfully connected to gfuser@sj04 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+       Exemple 2, Génération et configuration d'une clé SSH
+           Dans cet exemple, une clé SSH est générée et configurée pour
+           l'utilisateur gfuser sur les hôtes sua01 et sua02.
+
+               asadmin> setup-ssh --generatekey=true sua01 sua02
+               Enter SSH password for gfuser@sua01>
+               Created directory /home/gfuser/.ssh
+               /usr/bin/ssh-keygen successfully generated the identification /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua01
+               Successfully connected to gfuser@sua01 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua02
+               Successfully connected to gfuser@sua02 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+STATUT DE SORTIE
+       0
+           commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la commande
+
+VOIR AUSSI
+       ssh(1), ssh-keygen(1)
+
+       asadmin(1M)
+
+       sshd(1M)
+
+       Informations et installation Cygwin (http://www.cygwin.com/), MKS
+       Software (http://www.mkssoftware.com/)
+
+Java EE 7                        14 déc. 2010                     setup-ssh(1)

@@ -1,0 +1,187 @@
+create-auth-realm(1)  asadminユーティリティのサブコマンド create-auth-realm(1)
+
+名前
+       create-auth-realm - 名前付き認証レルムを追加します
+
+概要
+           create-auth-realm --classname realm_class [--help] [--property(name=value)[:name=value]*]
+           [--target target_name] auth_realm_name
+
+説明
+       create-auth-realmサブコマンドは、名前付き認証レルムを追加します。
+
+       このサブコマンドは、リモート・モードでのみサポートされています。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --target
+           レルムを作成するターゲットを指定します。有効な値は次のとおりです
+
+           server
+               デフォルトのサーバー・インスタンスにレルムを作成します。この値がデフォルト値です。
+
+           configuration_name
+               指定した構成にレルムを作成します。
+
+           cluster_name
+               指定したクラスタ内のすべてのサーバー・インスタンスにレルムを作成します。
+
+           instance_name
+               指定したサーバー・インスタンスにレルムを作成します。
+
+       --classname
+           このレルムを実装するJavaクラス。これらのクラスには、com.sun.enterprise.security.auth.realm.file.FileRealm、com.sun.enterprise.security.auth.realm.certificate.CertificateRealm、com.sun.enterprise.security.auth.realm.jdbc.JDBCRealm、com.sun.enterprise.security.auth.realm.ldap.LDAPRealm、com.sun.enterprise.security.auth.realm.ldap.PamRealm、およびcom.sun.enterprise.security.auth.realm.solaris.SolarisRealm、またはカスタムのレルムが含まれます。
+
+       --property
+           認証レルムを構成するための属性名と値のペア(オプション)。認証レルムには、プロバイダ固有のプロパティが必要です。このプロパティは実装によって異なります。
+
+           次のプロパティはサポートされるすべてのレルム(FileRealm、CertificateRealm、JDBCRealm、LDAPRealm、PamRealm、およびSolarisRealmを含む)に共通です。
+
+           jaas-context
+               Java Authentication and Authorization Service
+               (JAAS)コンテキストを指定します。
+
+           assign-groups
+               (オプション)このプロパティを設定すると、その値が取得されてグループ名のカンマ区切りリストになります。有効な証明書を提示するすべてのクライアントには、WebおよびEJBコンテナでの認証デシジョンの目的で、これらのグループに対するメンバーシップが割り当てられます。
+
+           レルムごとに、次のプロパティを指定できます。
+
+           ·   FileRealmには次のプロパティを指定できます。
+
+               file
+                   ユーザー名、パスワード、およびグループ名を保存するファイルを指定します。デフォルトはdomain-dir/config/keyfileです。
+
+           ·   CertificateRealmには次のプロパティを指定できます。
+
+               LoginModule
+                   認証の実行に使用するJAAS
+                   LoginModuleの名前を指定します。JAAS
+                   LoginModuleを使用するには、最初にjavax.security.auth.spi.LoginModuleインタフェースの実装を作成してから、モジュールをjaas-contextにプラグインする必要があります。詳細は、Oracle
+                   GlassFish
+                   Serverセ
+
+           ·   JDBCRealmには次のプロパティを指定できます。
+
+               datasource-jndi
+                   データベースのjdbc-resourceのjndi-nameを指定します。
+
+               user-table
+                   データベース内のユーザー表の名前を指定します。
+
+               user-name-column
+                   データベースのユーザー表内のユーザー名列の名前を指定します。
+
+               password-column
+                   データベースのユーザー表内のパスワード列の名前を指定します。
+
+               group-table
+                   データベース内のグループ表の名前を指定します。
+
+               group-table
+                   クラスJDBCRealmの認証レルムのグループ表を指定します。
+
+               group-name-column
+                   データベースのグループ表内のグループ名列の名前を指定します。
+
+               db-user
+                   (オプション)jdbc-connection-poolのかわりに、レルムにデータベース・ユーザー名を指定できます。これにより、他のアプリケーションによるデータベースの検索、接続取得、ユーザー表のブラウズを回避できます。デフォルトでは、jdbc-connection-pool構成が使用されます。
+
+               db-password
+                   (オプション)jdbc-connection-poolのかわりに、レルムにデータベース・パスワードを指定できます。これにより、他のアプリケーションによるデータベースの検索、接続取得、ユーザー表のブラウズを回避できます。デフォルトでは、jdbc-connection-pool構成が使用されます。
+
+               group-table
+                   データベース内のグループ表の名前を指定します。
+
+               digest-algorithm
+                   (オプション)ダイジェスト・アルゴリズムを指定します。デフォルトはSHA-256です。JDKでサポートされているアルゴリズム、またはnoneを使用できます。
+
+                       注記
+                       ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+                       │注意 4.0よりも前のGlassFish                                                                                                                                                          │
+                       │Serverバージョンでは、デフォルト・アルゴリズムはMD5でした。アプリケーションがMD5アルゴリズムに依存している場合は、asadmin                                                            │
+                       │setサブコマンドを使用してデフォルトのSHA-25アルゴリズムをオーバーライドできます。                                                                                                    │
+                       │                           asadmin> set server.security-service.property.default-digest-algorithm=MD5                                                                                │
+                       │                                                                                                                                                                                     │
+                       │                                                                                                                                                                                     │
+                       │                       asadmin                                                                                                                                                       │
+                       │                       getサブコマンドを使用して、どのアルゴリズムが現在使用されているか確認できます。                                                                               │
+                       │                           asadmin> get server.security-service.property.default-digest-algorithm                                                                                    │
+                       │                                                                                                                                                                                     │
+                       │                                                                                                                                                                                     │
+                       │                       GlassFish                                                                                                                                                     │
+                       │                       Serverv2.xまたはv3.0.xからGlassFish                                                                                                                           │
+                       │                       Server4.0にアップグレードする場合は、古いGlassFish                                                                                                            │
+                       │                       Serverバージョンでダイジェスト・アルゴリズムが明示的に設定されていないかぎり、下位互換性を保つ処置としてデフォルト・アルゴリズムが自動的にMD5に設定されます。 │
+                       └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+               digestrealm-password-enc-algorithm
+                   (オプション)データベースに格納されたパスワードを暗号化するためのアルゴリズムを指定します。
+
+                       注記
+                       ┌─────────────────────────────────────────────────────────────────────────────────┐
+                       │注意                                                                             │
+                       │パスワード暗号化アルゴリズムを指定しないと、セキュリティ上のリスクが発生します。 │
+                       └─────────────────────────────────────────────────────────────────────────────────┘
+
+               encoding
+                   (オプション)エンコーディングを指定します。HexとBase64を使用できます。digest-algorithmが指定されている場合、デフォルトはHexです。digest-algorithmが指定されていない場合、デフォルトではエンコーディングが指定されません。
+
+               charset
+                   (オプション)ダイジェスト・アルゴリズムのcharsetを指定します。
+
+           ·   LDAPRealmには次のプロパティを指定できます。
+
+               directory
+                   サーバーに対するLDAP URLを指定します。
+
+               base-dn
+                   ユーザー・データの位置のLDAPベースDNを指定します。ツリー範囲検索が実行されるため、このベースDNはユーザー・データより上の任意のレベルになります。検索ツリーが小さくなるほど、パフォーマンスが向上します。
+
+               search-filter
+                   (オプション)ユーザーの検索に使用する検索フィルタを指定します。デフォルトはuid=%sです(%sはサブジェクト名に展開されます)。
+
+               group-base-dn
+                   (オプション)グループ・データの位置のベースDNを指定します。デフォルトではbase-dnと同じですが、必要に応じて調整できます。
+
+               group-search-filter
+                   (オプション)ユーザーのグループ・メンバーシップを検索する検索フィルタを指定します。デフォルトはuniquemember=%dです(%dはユーザーの要
+
+               group-target
+                   (オプション)グループ名のエントリを含むLDAP属性名を指定します。デフォルトはCNです。
+
+               search-bind-dn
+                   (オプション)search-filter検索を実行する際にディレクトリの認証で使用するオプションのDNを指定します。匿名検索を許可しないディレクトリにのみ必要です。
+
+               search-bind-password
+                   (オプション)search-bind-dnで指定されたDNのLDAPパスワードを指定します。
+
+オペランド
+       auth_realm_name
+           レルムの短縮名。この名前は、web.xmlなどからレルムを参照する場合に使用されます。
+
+例
+       例 1, 新規の認証レルムの作成
+           この例では、新しいファイル・レルムを作成します。
+
+               asadmin> create-auth-realm
+               --classname com.sun.enterprise.security.auth.realm.file.FileRealm
+               --property file=${com.sun.aas.instanceRoot}/config/
+               admin-keyfile:jaas-context=fileRealm file
+               Command create-auth-realm executed successfully
+           fileは、作成される認証レルムです。
+
+終了ステータス
+       0
+           サブコマンドは正常に実行されました
+
+       1
+           サブコマンドの実行時にエラーが発生しました
+
+関連項目
+       delete-auth-realm(1), list-auth-realms(1)
+
+       asadmin(1M)
+
+Java EE 7                        2010年9月20日            create-auth-realm(1)

@@ -1,0 +1,226 @@
+create-jvm-options(1)   Subcomandos de la Utilidad asa   create-jvm-options(1)
+
+NOMBRE DE REFERENCIA
+       create-jvm-options - Crea opciones para el iniciador de aplicaciones
+       Java.
+
+SINOPSIS
+           create-jvm-options [--help] [--target target] [--profiler={true|false}]
+           (jvm-option-name=jvm-option-value) [:jvm-option-name=jvm-option-value*]
+
+DESCRIPCIÓN
+       El subcomando create-jvm-options crea opciones de línea de comandos que
+       se pasan al iniciador de aplicaciones Java cuando se inicia GlassFish
+       Server. Las opciones que este subcomando crea son aparte de los
+       opciones que están predefinidas con GlassFish Server. Las opciones del
+       iniciador de aplicaciones Java se guardan en el elemento de
+       configuración Java java—config o el elemento analizador de perfiles
+       profiler del archivo domain.xml. Las opciones se envían a la línea de
+       comandos en el orden en que aparecen en el elemento java—config o el
+       analizador de perfiles profiler del archivo domain.xml.
+
+       Las opciones de analizador de perfiles se utilizan para registrar la
+       configuración necesaria para iniciar un analizador de perfiles
+       específico. El analizador de perfiles ya debe existir. Si fuera
+       necesario, utilice el subcomando create-profiler(1) para crear el
+       analizador de perfiles.
+
+       Este subcomando se puede utilizar para crear los siguientes tipos de
+       opciones:
+
+       ·   Propiedades del sistema Java.  Estas opciones se definen a través
+           de la opción -D del iniciador de aplicaciones Java. Por ejemplo:
+
+           -Djava.security.manager
+
+           -Denvironment=Production
+
+       ·   Parámetros de inicio del iniciador de aplicaciones Java.  Estas
+           opciones están precedidas por el carácter de guión (-). Por
+           ejemplo:
+
+           --XX:PermSize=size
+
+           -Xmx1024m
+
+           -d64
+
+       Si el subcomando especifica una opción que ya existe, el comando no
+       volverá a crear la opción.
+
+           Nota
+           ┌────────────────────────────────────────┐
+           │Nota                                    │
+           │                                        │
+           │           Asegúrese de que todas las   │
+           │           opciones que cree sean       │
+           │           válidas. El subcomando       │
+           │           podría permitirle crear una  │
+           │           opción no válida, pero dicha │
+           │           opción puede provocar que el │
+           │           inicio falle.                │
+           └────────────────────────────────────────┘
+
+       Una opción se puede verificar examinando el log de servidor después de
+       iniciar GlassFish Server. Las opciones del iniciador de aplicaciones
+       Java se escriben en el archivo server.log antes de cualquier otra
+       información cuando se inicia GlassFish Server.
+
+       La adición de algunas opciones requiere reiniciar el servidor para que
+       los cambios surtan efecto. Otras opciones se definen inmediatamente en
+       el entorno del servidor de administración de dominio (DAS) y no
+       necesitan reinicio. La necesidad de reiniciar depende del tipo de
+       opción.
+
+       ·   No es necesario reiniciar para las propiedades del sistema de Java
+           cuyos nombres no comiencen por -Djava.  o Djavax.  (incluido el
+           punto final). Por ejemplo, reiniciar no es necesario para la
+           siguiente propiedad del sistema de Java:
+
+           -Denvironment=Production
+
+       ·   Sí es necesario reiniciar para las siguientes opciones:
+
+           ·   Propiedades del sistema de Java cuyos nombres comiencen por
+               -Djava.  o -Djavax.  (incluyendo el punto final). Por ejemplo:
+
+               -Djava.security.manager
+
+           ·   Parámetros de inicio del iniciador de aplicaciones Java. Por
+               ejemplo:
+
+               -client
+
+               -Xmx1024m
+
+               -d64
+
+       Para reiniciar DAS, utilice el comando restart-domain(1).
+
+       Este subcomando sólo está soportado en modo remoto.
+
+OPCIONES
+       --help, -?
+           Muestra el texto de ayuda para el subcomando.
+
+       --target
+           Especifica el destino en el que va a crear las opciones del
+           iniciador de aplicaciones Java.
+
+           Los valores válidos son los siguientes:
+
+           server
+               Especifica el DAS (por defecto).
+
+           instance-name
+               Especifica una instancia de GlassFish Server.
+
+           cluster-name
+               Especifica un cluster.
+
+           configuration-name
+               Especifica una configuración con nombre.
+
+       --profiler
+           Indica si las opciones del iniciador de aplicaciones Java son para
+           el analizador de perfiles. El analizador de perfiles debe existir
+           para que esta opción pueda ser true. El valor por defecto es false.
+
+OPERANDOS
+       jvm-option-name
+           Una o más opciones delimitadas por dos puntos (:). El formato de
+           una opción depende de lo siguiente:
+
+           ·   Si la opción tiene un nombre y un valor, el formato es
+               option-name=value.
+
+           ·   Si la opción sólo tiene un nombre, el formato es option-name.
+               Por ejemplo, -Xmx2048m.
+
+           ·   Si el primer nombre de opción pudiera malinterpretarse como una
+               o más opciones breves de asadmin, el formato será --
+               option-name. Por ejemplo, -server en el siguiente comando
+               podría malinterpretarse como -se, las formas breves de asadmin
+               para --secure y --echo:
+
+                   create-jvm-options -server
+               Para crear la opción de JVM -server, utilice el comando:
+
+                   create-jvm-options -- -server
+
+               Nota
+               ┌────────────────────────────────────────┐
+               │Nota Si un nombre de opción o valor de  │
+               │opción contiene un signo de dos puntos, │
+               │se debe utilizar la barra invertida (\) │
+               │como carácter de escape para los dos    │
+               │puntos del nombre o valor. Otros        │
+               │caracteres pueden también precisar de   │
+               │un carácter de escape. Para obtener más │
+               │información sobre caracteres de escape  │
+               │en opciones de subcomandos, consulte la │
+               │página de comando man de asadmin(1M).   │
+               └────────────────────────────────────────┘
+
+EJEMPLOS
+       Ejemplo 1, Definición de las propiedades del sistema Java
+           En este ejemplo se definen varias propiedades del sistema Java.
+
+               asadmin> create-jvm-options -Dunixlocation=/root/example:
+               -Dvariable=\$HOME:-Dwindowslocation=d\:\\sun\\appserver:-Doption1=-value1
+               created 4 option(s)
+               Command create-jvm-options executed successfully.
+
+       Ejemplo 2, Definición de un parámetro de inicio para el iniciador de
+       aplicaciones Java
+           En este ejemplo se define el tamaño máximo de pila disponible en
+           1024.
+
+               asadmin> create-jvm-options -Xmx1024m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+       Ejemplo 3, Definición de varios parámetros de inicio para el iniciador
+       de aplicaciones Java
+           En este ejemplo se define el tamaño máximo de pila disponible en
+           1024 y se solicitan detalles sobre la recolección de basura.
+
+               asadmin> create-jvm-options "-Xmx1024m:-XX\:+PrintGCDetails"
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+           En este caso, uno de los dos parámetros ya existe, de manera que el
+           subcomando informa de que sólo se ha definido una opción.
+
+       Ejemplo 4, Definición de un Parámetro de Inicio de JVM para el
+       Analizador de Perfiles
+           En este ejemplo se define un parámetro de inicio de JVM para el
+           analizador de perfiles.
+
+               asadmin> create-jvm-options --profiler=true -XX\:MaxPermSize=192m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+ESTADO DE SALIDA
+       0
+           Subcomando ejecutado correctamente
+
+       1
+           Error al ejecutar el subcomando
+
+CONSULTE TAMBIÉN
+       delete-jvm-options(1), list-jvm-options(1), create-profiler(1),
+       restart-domain(1)
+
+       asadmin(1M)
+
+       Para obtener más información sobre el iniciador de aplicaciones Java,
+       consulte la página de referencia correspondiente al sistema operativo
+       que utilice:
+
+       ·   Oracle Solaris y Linux: java - el iniciador de aplicaciones Java
+           (http://java.sun.com/javase/6/docs/technotes/tools/solaris/java.html)
+
+       ·   Windows: java - el iniciador de aplicaciones Java
+           (http://java.sun.com/javase/6/docs/technotes/tools/windows/java.html)
+
+Java EE 7                   29 de noviembre de 2010      create-jvm-options(1)

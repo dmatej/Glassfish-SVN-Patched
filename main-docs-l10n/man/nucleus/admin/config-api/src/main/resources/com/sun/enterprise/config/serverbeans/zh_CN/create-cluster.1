@@ -1,0 +1,409 @@
+create-cluster(1)           asadmin 实用程序子命令           create-cluster(1)
+
+名称
+       create-cluster - 创建 GlassFish Server 集群
+
+提要
+           create-cluster [--help] [--config config-name]
+           [--systemproperties (name=value)[:name=value]*]
+           [--properties (name=value)[:name=value]*]
+           [--gmsenabled={true|false}]
+           [--multicastport multicast-port]
+           [--multicastaddress multicast-address]
+           [--bindaddress bind-address]
+           [--hosts hadb-host-list]
+           [--haagentport port-number]
+           [--haadminpassword password]
+           [--haadminpasswordfile file-name] [--devicesize devicesize ]
+           [--haproperty (name=value)[:name=value]*]
+           [--autohadb=false] [--portbase port-number]
+           cluster-name
+
+说明
+       create-cluster 子命令创建 GlassFish Server 集群。最初，集群不包含任何
+       GlassFish Server 实例、应用程序或资源。
+
+       集群需要对命名配置的引用，用于定义添加到集群的所有实例的配置。可在命令中指定要创建集群的配置，但不是必需的。如果没有指定配置，子命令会为集群创建名为
+       cluster-name-config
+       的配置。所创建的集群是独立集群，因为该集群的配置不与其他任何集群或独立实例共享。
+
+       要向集群添加实例，请在使用以下任一子命令时，将 --cluster
+       选项设置为集群的名称：
+
+       ·   create-instance(1)
+
+       ·   create-local-instance(1)
+
+       要在任何时候从集群删除服务器实例，请使用以下子命令之一：
+
+       ·   delete-instance(1)
+
+       ·   delete-local-instance(1)
+
+       要将应用程序和资源与集群中的所有实例相关联，请在执行以下操作时，将
+       --target 选项设置为该集群的名称：
+
+       ·   使用 deploy(1) 子命令部署应用程序
+
+       ·   使用子命令 (例如 create-jdbc-resource(1)) 创建资源
+
+       ·   使用 create-application-ref(1)
+           子命令创建对已在其他目标中部署的应用程序的引用
+
+       ·   使用 create-resource-ref(1)
+           子命令创建对已在其他目标中创建的资源的引用
+
+       该子命令仅在远程模式下受支持。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --config
+           指定集群引用的命名配置。该配置必须存在，且不能命名为 default-config
+           或 server-config。指定 --config
+           选项可创建共享集群。如果忽略此选项，将会创建一个独立集群。
+
+       --systemproperties
+           为针对集群创建的配置定义系统属性。这些属性会覆盖 default-config
+           配置中的属性值。以下属性可用：
+
+           ASADMIN_LISTENER_PORT
+               该属性指定 DAS 在连接到实例以管理实例时使用的 HTTP 端口或 HTTPS
+               端口的端口号。有效值为 1-65535。在 UNIX 上，创建用于监听 1 到
+               1024 端口的套接字需要超级用户权限。
+
+           HTTP_LISTENER_PORT
+               此属性可指定用于监听 HTTP 请求的端口的端口号。有效值为
+               1-65535。在 UNIX 上，创建用于监听 1 到 1024
+               端口的套接字需要超级用户权限。
+
+           HTTP_SSL_LISTENER_PORT
+               此属性可指定用于监听 HTTPS 请求的端口的端口号。有效值为
+               1-65535。在 UNIX 上，创建用于监听 1 到 1024
+               端口的套接字需要超级用户权限。
+
+           IIOP_LISTENER_PORT
+               此属性可指定用于 IIOP 连接的端口的端口号。有效值为 1-65535。在
+               UNIX 上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+           IIOP_SSL_LISTENER_PORT
+               此属性可指定用于安全 IIOP 连接的端口的端口号。有效值为
+               1-65535。在 UNIX 上，创建用于监听 1 到 1024
+               端口的套接字需要超级用户权限。
+
+           IIOP_SSL_MUTUALAUTH_PORT
+               此属性可指定用于带有客户机验证功能的安全 IIOP
+               连接的端口的端口号。有效值为 1-65535。在 UNIX 上，创建用于监听
+               1 到 1024 端口的套接字需要超级用户权限。
+
+           JAVA_DEBUGGER_PORT
+               此属性指定用于连接到 Java 平台调试器体系结构 (JPDA)
+               的端口的端口号
+
+               调试器。有效值为 1-65535。在 UNIX 上，创建用于监听 1 到 1024
+               端口的套接字需要超级用户权限。
+
+           JMS_PROVIDER_PORT
+               此属性指定 Java 消息服务提供方的端口号。有效值为 1-65535。在
+               UNIX 上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+           JMX_SYSTEM_CONNECTOR_PORT
+               该属性指定 JMX 连接器监听的端口号。有效值为 1-65535。在 UNIX
+               上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+           OSGI_SHELL_TELNET_PORT
+               此属性指定用于连接到 Apache Felix Remote Shell 的端口的端口号
+               。此 Shell 使用 Felix Shell 服务与 OSGi
+               模块管理子系统进行交互。有效值为 1-65535。在 UNIX
+               上，创建用于监听 1 到 1024 端口的套接字需要超级用户权限。
+
+       --properties
+           为集群定义属性。以下属性可用：
+
+           GMS_DISCOVERY_URI_LIST
+               集群中 GlassFish Server
+               实例的位置，用于搜索集群。只有在组管理服务 (GMS)
+               未将多点传送用于广播消息时才需要此属性。
+
+               该属性的有效值如下：
+
+               ·   统一资源标识符 (URI) 的逗号分隔列表。每个 URI 必须定位一个
+                   GlassFish Server 实例或 DAS。如果多个 GlassFish Server
+                   实例运行在同一主机上，则需要采用该格式。
+
+                   列表中每个 URI 的格式如下：
+
+                   scheme://host-name-or -IP-address:port
+
+                   ·   scheme 是 URI 方案，值为 tcp。
+
+                   ·   host-name-or -IP-address 是运行实例的主机的主机名或 IP
+                       地址。
+
+                   ·   port 是实例用于从 GMS
+                       监听消息的端口的端口号。必须为实例设置系统属性
+                       GMS_LISTENER_PORT-clustername。有关为实例设置此系统属性的信息，请参阅
+                       Oracle GlassFish Server High Availability
+                       Administration Guide 中的 Discovering a Cluster When
+                       Multicast Transport Is Unavailable。
+
+               ·   正在运行 DAS 或实例的 IP
+                   地址或主机名的逗号分隔列表。该列表可混合包含 IP
+                   地址和主机名。仅当每个主机上运行一个集群实例时，才能使用该格式。GMS_LISTENER_PORT
+                   属性的值对于域中的每个集群都必须是唯一的。
+
+               ·   关键字 generate。仅在每个主机上运行集群中的一个实例并且 DAS
+                   在单独的主机上运行时，才可以使用此格式。同一主机上的多个实例不能是同一集群的成员。GMS_LISTENER_PORT
+                   属性的值对于域中的每个集群都必须是唯一的。
+
+           GMS_LISTENER_PORT
+               集群用于监听来自 GMS 消息的端口的端口号。
+
+               默认值为对 GMS_LISTENER_PORT-cluster-name
+               系统属性的引用。默认情况下，未设置此系统属性。在这种情况下，GMS
+               从属性 GMS_TCPSTARTPORT 和 GMS_TCPENDPORT
+               定义的范围中选择空闲端口。默认情况下，此范围为
+               9090-9200。在大多数情况下，该默认行为应该足够。
+
+               但是，如果 GMS 不使用多点传送来广播消息，则 GMS_LISTENER_PORT
+               属性必须指定一个对集群中所有 GlassFish Server
+               实例都有效的端口号。要使用默认值以满足该要求，请使用系统属性分别为每个实例设置端口号。
+
+               例如，使用 create-system-properties 子命令为 DAS 创建系统属性
+               GMS_LISTENER_PORT-cluster-name。然后，对于集群中的每个实例，将
+               GMS_LISTENER_PORT-cluster-name 系统属性设置为实例用于从 GMS
+               监听消息的端口号。集群的 GMS_LISTENER_PORT
+               属性的默认值引用此系统属性。
+
+           GMS_LOOPBACK
+               指定实例是否可以接收其广播到集群的应用级消息。
+
+               可能的值如下：
+
+               假
+                   实例不
+
+               真
+                   实例可以接收自己发送的消息。当实例是集群中的唯一实例时，使用此设置对该实例进行测试。
+
+           GMS_MULTICAST_TIME_TO_LIVE
+               以下类型事件的多点传送消息在被丢弃之前可以尝试的最大迭代数或传输数：
+
+               ·   组搜索
+
+               ·   成员脉动
+
+               ·   成员关系更改
+
+               要匹配在其上部署 DAS
+               和集群实例的网络配置，可将此值设置的尽可能小些。要确定系统的最小可能值，可使用
+               validate-multicast(1) 子命令。
+
+               值 0 确保多点传送消息从不离开广播它们的主机。
+
+               值 1
+               会阻止在同一子网上通过交换机或路由器连接的主机之间广播消息。
+
+               默认值为
+               4，将确保消息成功广播到通过交换机或路由器连接主机的网络中的所有集群成员。
+
+           GMS_TCPENDPORT
+               范围中的最大端口号；如果未设置 GMS_LISTENER_PORT-cluster-name
+               系统属性，则 GMS 将从该范围中选择空闲端口。默认值为 9200。
+
+           GMS_TCPSTARTPORT
+               范围中的最小端口号；如果未设置 GMS_LISTENER_PORT-cluster-name
+               系统属性，则 GMS 将从该范围中选择空闲端口。默认值为 9090。
+
+       --gmsenabled
+           指定是否为集群启用 GMS。
+
+           可能的值如下：
+
+           真
+               为集群启用 GMS (默认值)。
+
+               为集群启用 GMS 时，会在集群和 DAS 的每个服务器实例中启动
+               GMS。DAS 将加入到该选项设置为真
+
+           假
+               为集群禁用 GMS。
+
+       --multicastaddress
+           GMS 监听组事件的地址。此选项必须指定 224.0.0.0 到 239.255.255.255
+           范围内的多点传送地址。默认值为 228.9.XX.YY，其中 XX 和 YY
+           是自动生成的 0 到 255 之间的独立值。
+
+       --multicastport
+           GMS 在其上监听组事件的通信端口的端口号。此选项必须指定一个在
+           2048-49151 范围内的有效端口号。默认值是在此范围内自动生成的一个值。
+
+       --bindaddress
+           GMS 绑定到的网络接口的 Internet 协议 (IP)
+           地址。此选项必须指定本地网络接口的 IP
+           地址。默认值是所有公共网络接口地址。
+
+           在多宿主计算机上，此选项配置用于 GMS
+           的网络接口。多宿主计算机可处理两个或多个网络接口。
+
+           要指定一个对集群中所有 GlassFish Server
+           实例都有效的地址，请使用系统属性为每个实例分别设置地址。
+
+           例如，使用 create-system-properties 子命令创建系统属性
+           GMS-BIND-INTERFACE-ADDRESS-cluster-name。然后，将此子命令的
+           --bindaddress 选项设置为 ${GMS-BIND-INTERFACE-ADDRESS-cluster-name}
+           以指定系统属性。最后，对于集群中的每个实例，将
+           GMS-BIND-INTERFACE-ADDRESS-cluster-name
+           系统属性设置为实例计算机上所需的网络接口地址。
+
+       --hosts
+           不指定此选项。为了与早期发行版兼容而保留此选项。如果指定此选项，则不会出现语法错误。相反，子命令会成功运行，并显示忽略了此选项的警告消息。
+
+       --haagentport
+           不指定此选项。为了与早期发行版兼容而保留此选项。如果指定此选项，则不会出现语法错误。相反，子命令会成功运行，并显示忽略了此选项的警告消息。
+
+       --haadminpassword
+           不指定此选项。为了与早期发行版兼容而保留此选项。如果指定此选项，则不会出现语法错误。相反，子命令会成功运行，并显示忽略了此选项的警告消息。
+
+       --haadminpasswordfile
+           不指定此选项。为了与早期发行版兼容而保留此选项。如果指定此选项，则不会出现语法错误。相反，子命令会成功运行，并显示忽略了此选项的警告消息。
+
+       --devicesize
+           不指定此选项。为了与早期发行版兼容而保留此选项。如果指定此选项，则不会出现语法错误。相反，子命令会成功运行，并显示忽略了此选项的警告消息。
+
+       --haproperty
+           不指定此选项。为了与早期发行版兼容而保留此选项。如果指定此选项，则不会出现语法错误。相反，子命令会成功运行，并显示忽略了此选项的警告消息。
+
+       --autohadb
+           不指定此选项。为了与早期发行版兼容而保留此选项。如果指定此选项，则不会出现语法错误。相反，子命令会成功运行，并显示忽略了此选项的警告消息。
+
+       --portbase
+           不指定此选项。为了与早期发行版兼容而保留此选项。如果指定此选项，则不会出现语法错误。相反，子命令会成功运行，并显示忽略了此选项的警告消息。
+
+操作数
+       cluster-name
+           集群的名称。
+
+           名称必须满足以下要求：
+
+           ·   名称中只能包含 ASCII 字符。
+
+           ·   名称开头必须是字母、数字或下划线。
+
+           ·   名称只能包含以下字符：
+
+               ·   小写字母
+
+               ·   大写字母
+
+               ·   数字
+
+               ·   连字符
+
+               ·   句点
+
+               ·   下划线
+
+           ·   名称在域中必须是唯一的，而且不能是另一个集群、命名配置、GlassFish
+               Server 实例或节点的名称。
+
+           ·   名称不得是 domain、server 或 GlassFish Server
+               保留的任何其他关键字。
+
+           如果 configure-jms-cluster(1) 子命令将用于配置消息队列集群以将 JMS
+           服务提供至 GlassFish Server 集群，则可能会限制 GlassFish Server
+           集群名称的长度：
+
+           ·   如果在 configure-jms-cluster(1) 子命令中 clustertype 设置为
+               enhanced，则该名称可以不长于 n–21 个字符，其中 n
+               是数据库所允许的最大表名长度。
+
+           ·   如果在 configure-jms-cluster(1) 子命令中将 configstoretype
+               设置为 shareddb，则该名称可以不长于 n–19 个字符，其中 n
+               是数据库所允许的最大表名长度。
+
+示例
+       Example 1, 创建集群
+           本示例创建名为 ltscluster 的集群，在该集群中，端口 1169 将用于安全
+           IIOP 连接。由于没有指定 --config 选项，集群将引用名为
+           ltscluster-config 的命名配置 default-config 的副本。
+
+               asadmin> create-cluster
+               --systemproperties IIOP_SSL_LISTENER_PORT=1169
+               ltscluster
+               Command create-cluster executed successfully.
+
+       Example 2, 创建一个集群，其中包含用于搜索集群的 URI 列表
+           此示例创建一个名为 tcpcluster 的集群。在此示例中，GMS
+           不使用多点传送广播消息，并且多个实例驻留在同一主机上。因此，GMS_DISCOVERY_URI_LIST
+           属性将设置为 GlassFish Server
+           实例的位置，用于搜索集群。这些实例位于 IP 地址为 10.152.23.224
+           的主机上，并在端口 9090、9091 和 9092 上监听 GMS 事件。
+
+           为将 URI 中的冒号 (:)
+           字符与属性列表中的分隔符区分开来，使用单引号字符 (') 和反斜杠 (\)
+           字符对 URI 中的冒号进行转义。有关 asadmin
+           实用程序选项中的转义符的详细信息，请参阅 asadmin(1M) 帮助页。
+
+           此示例假定，通过 GMS_LISTENER_PORT-tcpcluster
+           系统属性单独为每个实例设置该实例用于监听 GMS
+           消息的端口。有关如何设置实例用于监听 GMS 消息的端口的信息，请参阅
+           Oracle GlassFish Server High Availability Administration Guide 中的
+           Discovering a Cluster When Multicast Transport Is Unavailable。
+
+               asadmin> create-cluster --properties GMS_DISCOVERY_URI_LIST=
+               tcp'\\:'//10.152.23.224'\\:'9090,
+               tcp'\\:'//10.152.23.224'\\:'9091,
+               tcp'\\:'//10.152.23.224'\\:'9092 tcpcluster
+               Command create-cluster executed successfully.
+
+       Example 3, 创建一个集群，其中包含用于搜索集群的 IP 地址列表
+           此示例创建一个名为 ipcluster 的集群。在此示例中，GMS
+           不使用多点传送广播消息，并且每个主机上仅驻留一个集群实例。因此，GMS_DISCOVERY_URI_LIST
+           属性将设置为主机的 IP
+           地址，用于搜索集群的实例正在这些主机上运行。集群在端口 9090 上监听
+           GMS 消息。
+
+               asadmin> create-cluster --properties 'GMS_DISCOVERY_URI_LIST=
+               10.152.23.225,10.152.23.226,10.152.23.227,10.152.23.228:
+               GMS_LISTENER_PORT=9090' ipcluster
+               Command create-cluster executed successfully.
+
+       Example 4, 创建一个集群，其中包含用于搜索集群的已生成实例列表
+           此示例创建一个名为 gencluster 的集群。在此示例中，GMS
+           不使用多点传送广播消息，一个集群中在每台主机上都有一个实例在运行，并且
+           DAS 运行在单独的主机上。因此，GMS_DISCOVERY_URI_LIST
+           属性将设置为关键字
+           generate，以便生成用于搜索集群的实例列表。集群在端口 9090 上监听
+           GMS 消息。
+
+               asadmin> create-cluster --properties 'GMS_DISCOVERY_URI_LIST=generate:
+               GMS_LISTENER_PORT=9090' gencluster
+               Command create-cluster executed successfully.
+
+退出状态
+       0
+           已成功执行命令
+
+       1
+           执行命令时出现错误
+
+另请参阅
+       create-application-ref(1), create-instance(1), create-jdbc-resource(1),
+       create-local-instance(1), create-resource-ref(1), delete-cluster(1),
+       delete-instance(1), delete-local-instance(1), deploy(1),
+       list-clusters(1), start-cluster(1), stop-cluster(1),
+       validate-multicast(1)
+
+       asadmin(1M)
+
+       Oracle GlassFish Server High Availability Administration Guide 中的
+       Discovering a Cluster When Multicast Transport Is Unavailable
+
+       Apache Felix Remote Shell
+       (http://felix.apache.org/site/apache-felix-remote-shell.html)、Java
+       平台调试器体系结构 (JPDA)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                      2012 年 1 月 4 日             create-cluster(1)

@@ -1,0 +1,199 @@
+setup-ssh(1)                asadmin 实用程序子命令                setup-ssh(1)
+
+名称
+       setup-ssh - 在指定的主机上设置 SSH 密钥
+
+提要
+           setup-ssh [--help]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile] [--sshpublickeyfile ssh-public-keyfile]
+           [--generatekey={false|true}]
+           host-list
+
+说明
+       setup-ssh 子命令在作为子命令操作数指定的主机上设置安全 Shell (SSH)
+       密钥。该密钥使 GlassFish Server
+       能够使用公共密钥验证方法来验证用户在远程主机上的 SSH 登录。
+
+       SSH 确保能够集中管理跨越多个主机的 GlassFish Server
+       集群。当用户运行对多台主机执行操作的集群管理子命令时，该子命令将从域管理服务器
+       (DAS) 主机传播到远程主机。要传播对未运行的 GlassFish Server
+       实例或未运行实例的节点进行操作的子命令，GlassFish Server 将使用
+       SSH。SSH 可为 DAS 和远程主机之间交换的数据提供机密性和安全性。
+
+       公共密钥验证使用由以下密钥构成的 SSH 密钥对：
+
+       ·   私有密钥，存储在 DAS 主机上的安全位置，可以使用密码短语进行保护
+
+       ·   公共密钥，存储在与 DAS 通信的所有远程主机上
+
+       该子命令不需要 DAS 提供任何配置信息，也不会修改 DAS 的配置。
+
+       该子命令仅在本地模式下受支持。
+
+   使用 setup-ssh 子命令的前提条件
+       要使用 setup-ssh 子命令，SSH 用户必须能够使用 SSH 登录到要设置 SSH
+       的远程主机。具体而言，必须满足下列前提条件：
+
+       ·   ssh(1) 客户机已安装在 DAS 主机上，并且可通过 DAS 用户的路径访问。
+
+       ·   sshd(1M) 守护程序已在要设置 SSH 密钥的所有主机上安装并正在运行。
+
+       ·   --sshuser 选项指定的用户能够通过 SSH 登录到要设置 SSH
+           密钥的所有主机。
+
+       ·   ssh-keygen(1) 实用程序已安装在 DAS 主机的默认位置或 DAS
+           用户路径中定义的位置。
+
+       ·   在 Windows 系统上，安装了用于 Cygwin
+
+           或提供 SSH 的 MKS 软件
+
+           工具包。
+
+   setup-ssh 子命令的行为
+       该子命令通过自动完成以下任务在 DAS 主机和远程主机之间建立 SSH 连接：
+
+       ·   生成 SSH 密钥对。如果不存在 SSH
+           密钥对，则该子命令的默认行为是提示用户生成 SSH 密钥对。生成的 SSH
+           密钥对不包含加密密码短语。如果需要密码短语保护的密钥对，必须使用
+           SSH 命令 ssh-keygen(1) 手动生成密钥对。
+
+       ·   分发公共密钥。该子命令将公共密钥文件的内容附加到每个远程主机上的
+           user-home/.ssh/authorized_keys
+           文件。默认情况下，该子命令将在运行它的主机上的 user-home/.ssh
+           目录中查找公共密钥文件。如果 user-home/.ssh/authorized_keys
+           文件在主机上不存在，该子命令将创建此文件。user-home
+           是用户在主机上的主目录。
+
+           要分发公共密钥，需要验证用户的 SSH
+           登录。如果私有密钥受密码短语的保护，则还需要提供该密码短语。默认情况下，该子命令将提示用户提供口令，必要时提示提供密码短语。要分发公共密钥且不进行提示，请按以下方式运行该子命令：
+
+           ·   将 asadmin(1M) 实用程序的 --interactive 选项设置为假
+
+           ·   将 asadmin 实用程序的 --passwordfile
+               选项设置为一个文件，该文件中的 AS_ADMIN_SSHPASSWORD 条目指定了
+               SSH 用户登录到指定主机时所用的口令。
+
+           ·   如果需要密码短语，请确保 asadmin 实用程序的 --passwordfile
+               选项所指定的文件还包含 AS_ADMIN_SSHKEYPASSPHRASE 的条目。
+
+           如果已经在某台主机上设置了公共密钥验证，该子命令将通知用户已设置公共密钥验证，且不会向该主机分发密钥。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --sshport
+           与要设置 SSH 的主机建立 SSH 连接所用的端口。默认值为 22。
+
+       --sshuser
+           远程主机上的 SSH 用户，该用户将在该主机上运行相应进程以设置
+           SSH。默认值为运行该子命令的用户。为了确保 DAS 可以读取此用户的 SSH
+           私有密钥文件，请指定正在运行 DAS 进程的用户。
+
+       --sshkeyfile
+           --sshuser 选项所指定用户的 SSH
+           私有密钥文件的绝对路径。此文件用于向主机上的 sshd
+           守护程序进行验证。
+
+           运行该子命令的用户必须能够访问密钥文件的路径并读取该密钥文件。
+
+           默认值为运行该子命令的主机上的 .ssh
+           用户目录中的密钥文件。如果找到多个密钥文件，则子命令遵循以下先后顺序：
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --sshpublickeyfile
+           --sshuser 选项所指定用户的 SSH
+           公共密钥文件的绝对路径。该公共密钥文件的内容将附加到要设置 SSH
+           的每台主机上的用户的 .ssh/authorized_keys 文件。如果
+           .ssh/authorized_keys 文件在主机上不存在，则该子命令将创建此文件。
+
+           运行该子命令的用户必须能够访问密钥文件的路径并读取该密钥文件。
+
+           默认值为运行该子命令的主机上的 .ssh
+           用户目录中的密钥文件。如果找到多个密钥文件，则子命令遵循以下先后顺序：
+
+            1. id_rsa.pub
+
+            2. id_dsa.pub
+
+            3. identity.pub
+
+       --generatekey
+           指定该子命令是否在不提示用户的情况下生成 SSH 密钥文件。
+
+           可能的值如下：
+
+           真
+               该子命令将生成 SSH 密钥文件而不提示用户。
+
+           假
+               该子命令的行为取决于 SSH 密钥文件是否存在：
+
+               ·   如果 SSH 密钥文件存在，则该子命令不生成文件。
+
+               ·   如果 SSH 密钥文件不存在，则该子命令的行为取决于 asadmin
+                   实用程序的 --interactive 选项的值：
+
+                   ·   如果 --interactive
+                       选项为真
+
+                   ·   如果 --interactive 选项为假
+
+               该值为默认值。
+
+操作数
+       host-list
+           要设置 SSH 密钥的主机名的空格分隔列表。
+
+示例
+       Example 1, 设置 SSH 密钥
+           该示例将在主机 sj03 和 sj04 上为用户 gfuser 设置 SSH
+           密钥。不生成密钥文件，而是从运行该子命令的主机上的 .ssh
+           用户目录中复制密钥文件。
+
+               asadmin> setup-ssh sj03 sj04
+               Enter SSH password for gfuser@sj03>
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj03
+               Successfully connected to gfuser@sj03 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj04
+               Successfully connected to gfuser@sj04 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+       Example 2, 生成并设置 SSH 密钥
+           该示例将在主机 sua01 和 sua02 上为用户 gfuser 生成并设置 SSH 密钥。
+
+               asadmin> setup-ssh --generatekey=true sua01 sua02
+               Enter SSH password for gfuser@sua01>
+               Created directory /home/gfuser/.ssh
+               /usr/bin/ssh-keygen successfully generated the identification /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua01
+               Successfully connected to gfuser@sua01 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua02
+               Successfully connected to gfuser@sua02 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+退出状态
+       0
+           已成功执行命令
+
+       1
+           执行命令时出现错误
+
+另请参阅
+       ssh(1)、ssh-keygen(1)
+
+       asadmin(1M)
+
+       sshd(1M)
+
+       Cygwin 信息和安装 (http://www.cygwin.com/)、MKS 软件
+       (http://www.mkssoftware.com/)
+
+Java EE 7                     2010 年 12 月 14 日                 setup-ssh(1)

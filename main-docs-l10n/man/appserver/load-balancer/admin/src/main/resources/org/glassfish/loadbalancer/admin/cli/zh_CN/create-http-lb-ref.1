@@ -1,0 +1,141 @@
+create-http-lb-ref(1)       asadmin 实用程序子命令       create-http-lb-ref(1)
+
+名称
+       create-http-lb-ref -
+       向现有负载平衡器配置或负载平衡器添加现有集群或服务器实例
+
+提要
+           create-http-lb-ref [--help] --config config_name | --lbname load_balancer_name
+           [--lbpolicy round-robin] [--lbpolicymodule lb_policy_module]
+           [--healthcheckerurl url] [--healthcheckerinterval 10]
+           [--healthcheckertimeout 10] [--lbenableallinstances=true]
+           [--lbenableallapplications=true] [--lbweight instance=weight[:instance=weight]*]
+           target
+
+说明
+       使用 create-http-lb-ref 子命令可以：
+
+       ·   向现有负载平衡器配置或负载平衡器添加现有集群或服务器实例。负载平衡器会将请求转发到它所引用的集群实例和独立实例。
+
+       ·   将负载平衡策略设置为循环 (共享)、加权循环 (共享) 或用户定义的策略。
+
+       ·   为负载平衡器配置健康检查器。在此处定义的任何健康检查器设置仅适用于此目标。如果没有使用此子命令创建健康检查器，请使用
+           create-http-health-checker。
+
+       ·   为目标集群中的所有实例启用负载平衡，或使用 enable-http-lb-server
+           为各个实例分别启用。
+
+       ·   为部署到此目标的所有应用程序启用负载平衡，或使用
+           enable-http-lb-application 为各个实例分别启用。
+
+           注意
+           ┌─────────────────────────────────────┐
+           │注                                   │
+           │                                     │
+           │           该子命令仅适用于 Oracle   │
+           │           GlassFish                 │
+           │           Server。该子命令不适用于  │
+           │           GlassFish Server 开源版。 │
+           └─────────────────────────────────────┘
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --config
+           指定要向其中添加集群和服务器实例的负载平衡器配置。指定负载平衡器配置或负载平衡器。同时指定这两者会导致出现错误。
+
+       --lbname
+           指定要向其中添加集群和服务器实例的负载平衡器。指定负载平衡器配置或负载平衡器。同时指定这两者会导致出现错误。
+
+       --lbpolicy
+           负载平衡器所遵循的策略。有效值为 round-robin、weighted-round-robin
+           和 user-defined。如果选择 user-defined，则使用 lbpolicymodule
+           选项指定负载平衡器策略模块。如果选择 weighted-round-robin，则使用
+           configure-lb-weight 子命令为服务器实例分配权重。默认值为
+           round-robin。
+
+       --lbpolicymodule
+           如果负载平衡器策略是
+           user-defined，请使用此选项指定负载平衡策略模块的共享库的完整路径和名称。共享库需要位于
+           Web 服务器可访问的位置中。
+
+       --healthcheckerurl
+           要执行试通操作以确定实例是否健康的 URL。
+
+       --healthcheckerinterval
+           健康检查器在检查某个健康状况异常的实例以确定它是否已处于正常健康状况时等待的时间间隔
+           (秒)。默认值为 30 秒。值为 0 表示禁用健康检查器。
+
+       --healthcheckertimeout
+           健康检查器从某个实例接收响应所等待的时间间隔
+           (秒)。如果健康检查器没有在此时间间隔内接收到响应，则认为此实例的健康状况异常。默认值为
+           10。
+
+       --lbenableallinstances
+           启用目标集群中的所有实例以实现负载平衡。如果目标是一个服务器实例，则为该实例启用负载平衡。默认值为“真”。
+
+       --lbenableallapplications
+           为部署到目标集群或实例的所有应用程序启用负载平衡。默认值为“真”。
+
+       --lbweight
+           实例的名称以及您正为实例分配的权重。权重必须为整数。实例/权重对由冒号分隔。例如，instance1=1:instance2=4
+           表示每五个请求中，一个前往实例 1，四个前往实例 2。权重 1 为默认值。
+
+操作数
+       target
+           指定要添加到负载平衡器中的集群或实例。有效值为：
+
+           ·   cluster_name - 指定对此集群的请求将由负载平衡器处理。
+
+           ·   stand-alone_instance_name -
+               指定对此独立实例的请求将由负载平衡器处理。
+
+示例
+       Example 1, 向负载平衡器配置添加集群引用
+           此示例将对名为 cluster2 的集群的引用添加到名为 mylbconfig
+           的负载平衡器配置。
+
+               asadmin> create-http-lb-ref --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Example 2, 向负载平衡器添加集群引用
+           此示例将对名为 cluster2 的集群的引用添加到名为 mylb 的负载平衡器。
+
+               asadmin> create-http-lb-ref --lbname mylb cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Example 3, 配置健康检查器和负载平衡器策略
+           此示例配置健康检查器和负载平衡策略，并为实例和应用程序启用负载平衡器。
+
+               asadmin> create-http-lb-ref --config mylbconfig --lbpolicy weighted-round-robin
+               --healthcheckerinterval 40 --healthcheckertimeout 20
+               --lbenableallinstances=true --lbenableallapplications=true cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Example 4, 设置用户定义的负载平衡策略
+           此示例设置用户定义的负载平衡策略。
+
+               asadmin> create-http-lb-ref --lbpolicy user-defined --lbpolicymodule /user/modules/module.so
+               --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+退出状态
+       0
+           已成功执行子命令
+
+       1
+           执行子命令时出现错误
+
+另请参阅
+       delete-http-lb-ref(1), create-http-health-checker(1),
+       enable-http-lb-server(1), enable-http-lb-application(1),
+       list-http-lb-configs(1), list-http-lbs(1) configure-lb-weight(1)
+
+       asadmin(1M)
+
+Java EE 7                     2010 年 8 月 25 日         create-http-lb-ref(1)

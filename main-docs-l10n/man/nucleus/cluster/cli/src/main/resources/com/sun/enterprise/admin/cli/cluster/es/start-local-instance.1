@@ -1,0 +1,216 @@
+start-local-instance(1) Subcomandos de la Utilidad asa start-local-instance(1)
+
+NOMBRE DE REFERENCIA
+       start-local-instance - inicia una instancia de GlassFish Server en
+       ejecución en el host en el que se ejecuta el subcomando.
+
+SINOPSIS
+           start-local-instance [--help]
+           [--nodedir node-dir] [--node node]
+           [--debug={false|true}] [--dry-run={false|true}] [--sync={normal|full|none}]
+           [--verbose={false|true}] [--watchdog={false|true}]
+           [instance-name]
+
+DESCRIPCIÓN
+       El subcomando start-local-instance inicia una instancia de GlassFish
+       Server en el host donde se ejecuta el subcomando. Este subcomando no
+       requiere la configuración del protocolo remoto Distributed Component
+       Object Model (DCOM) ni del shell seguro (SSH). Este comando se debe
+       ejecutar desde el host en el que reside la instancia.
+
+       El subcomando puede iniciar cualquier instancia de GlassFish Server,
+       independientemente de la forma en que fuera creada. Por ejemplo, este
+       subcomando puede iniciar una instancia creada mediante el subcomando
+       create-instance(1).
+
+       El subcomando start-local-instance no establece contacto con el
+       servidor de administración de dominio (DAS) para determinar en qué nodo
+       reside la instancia. Para determinar el nodo en el que la instancia
+       reside, el subcomando busca en el directorio que contiene los
+       directorios de nodo. Si hay varios directorios de nodo, será necesario
+       especificar el nodo como una opción del subcomando.
+
+       Este subcomando está soportado en modo local. Sin embargo, para
+       sincronizar la instancia con el DAS, este subcomando se debe ejecutar
+       en modo remoto.
+
+OPCIONES
+       --help, -?
+           Muestra el texto de ayuda para el subcomando.
+
+       --nodedir
+           Especifica el directorio que contiene el directorio de nodos de la
+           instancia. Los archivos de la instancia se almacenan en el
+           directorio de nodos de la instancia. El valor por defecto es
+           as-install/nodes.
+
+       --node
+           Especifica el nodo en el que reside la instancia. Esta opción sólo
+           se puede omitir si el directorio que especifica la opción --nodedir
+           contiene un único directorio del nodo. De lo contrario, esta opción
+           es necesaria.
+
+       --debug
+           Especifica si la instancia se inicia con el depurador Java Platform
+           Debugger Architecture (JPDA)
+
+           activado.
+
+           Los valores posibles son los siguientes:
+
+           true
+               La instancia se ha iniciado con la depuración JPDA habilitada y
+               muestra el número de puerto de la depuración JPDA.
+
+           false
+               Se ha iniciado la instancia con la depuración JPDA
+               deshabilitada (valor por defecto).
+
+       --dry-run, -n
+           Suprime el inicio real de la instancia. En su lugar,
+           start-local-instance mostrará todos los comandos de Java que se
+           utilizarían para iniciar la instancia, incluidas todas las
+           opciones. Revisar este comando puede ser útil para confirmar las
+           opciones de JVM y a la hora de solucionar problemas con el inicio.
+
+           El valor por defecto es false.
+
+       --sync
+           El tipo de sincronización entre el DAS y los archivos de la
+           instancia una vez iniciada la instancia.
+
+           Los valores posibles son los siguientes:
+
+           none
+               El DAS no sincroniza los archivos de la instancia con ningún
+               cambio. Este tipo de sincronización reduce al mínimo el tiempo
+               que se requiere para iniciar la instancia.
+
+           normal
+               El DAS sincroniza la instancia con los cambios realizados desde
+               la última sincronización de la siguiente manera:
+
+               ·   Para el directorio config, el DAS sincroniza la instancia
+                   con todos los cambios.
+
+               ·   Para el directorio applications y el directorio docroot,
+                   solo un cambio en un subdirectorio de nivel superior hace
+                   que el DAS sincronice todos los archivos de ese
+                   subdirectorio.
+
+                   Si un archivo situado por debajo del subdirectorio de nivel
+                   superior cambia sin afectar a un archivo del subdirectorio
+                   de nivel superior, es necesario realizar una sincronización
+                   completa. Durante el funcionamiento normal, los archivos
+                   situados por debajo de los subdirectorios de nivel superior
+                   de estos directorios no cambian. Si una aplicación se
+                   instala y luego se desinstala, no es necesario realizar una
+                   sincronización completa para actualizar la instancia con el
+                   cambio.
+
+               Éste es el valor por defecto.
+
+           full
+               El DAS sincroniza la instancia con todos los archivos de la
+               instancia, independientemente de si los archivos han cambiado o
+               no desde la última sincronización. Este tipo de sincronización
+               puede retrasar el inicio de la instancia debido a que el DAS
+               debe actualizar todos los archivos de los directorios de la
+               instancia.
+
+                   Atención
+                   ┌────────────────────────────────────────┐
+                   │Atención Si el DAS no se está           │
+                   │ejecutando o no se encuentra accesible  │
+                   │desde el host en el que se está         │
+                   │ejecutando este subcomando, no defina   │
+                   │la opción --sync como full. Para        │
+                   │realizar una sincronización completa,   │
+                   │el subcomando elimina la caché de la    │
+                   │instancia. Si el DAS no se puede        │
+                   │contactar con que sustituir la caché,   │
+                   │el subcomando falla y la instancia no   │
+                   │se puede reiniciar hasta que se vuelven │
+                   │con DAS.                                │
+                   └────────────────────────────────────────┘
+
+       --verbose, -v
+           Especifica si se muestra información detallada sobre la instancia
+           en la ventana de consola en la que se ejecuta el subcomando.
+
+           Los valores posibles son los siguientes:
+
+           true
+               En la ventana de consola en la que se ejecuta el subcomando se
+               muestran mensajes de inicio y mensajes de log detallados sobre
+               la instancia. Si la instancia se reinicia posteriormente
+               ejecutando el subcomando restart-local-instance(1), emitido
+               desde una ventana de consola diferente, los mensajes se siguen
+               mostrando en la ventana de consola original.
+
+               Puede finalizar el proceso GlassFish Server escribiendo CTRL-C
+               en la ventana de consola.
+
+               Puede matar el proceso GlassFish Server y obtener un volcado de
+               threads para el servidor escribiendo una de las siguientes
+               combinaciones de teclas en la ventana de consola:
+
+               ·   CTRL-\ en los sistemas UNIX
+
+               ·   CTRL-Break en los sistemas Windows
+
+           false
+               No se muestra información detallada (valor por defecto).
+
+       --watchdog, -w
+           Especifica si se muestra información limitada sobre la instancia en
+           la ventana de consola en la que se ejecuta el subcomando. La opción
+           --watchdog es similar a --verbose pero no muestra los mensajes de
+           inicio y log detallados. Esta opción es útil cuando se ejecuta la
+           utilidad asadmin en segundo plano o sin consola adjunta.
+
+           Los valores posibles son los siguientes:
+
+           true
+               Se muestra información limitada en la ventana de la consola.
+
+           false
+               La información limitada no se muestran en la ventana de consola
+               (por defecto).
+
+OPERANDOS
+       instance-name
+           El nombre de la instancia que se va a iniciar.
+
+EJEMPLOS
+       Ejemplo 1, Cómo Iniciar Instancias Localmente
+           En este ejemplo se inicia la instancia yml-i-sj01 en el host en el
+           que se ejecuta el subcomando.
+
+               asadmin> start-local-instance --node sj01 yml-i-sj01
+               Waiting for the server to start .................................
+               Successfully started the instance: yml-i-sj01
+               instance Location: /export/glassfish3/glassfish/nodes/sj01/yml-i-sj01
+               Log File: /export/glassfish3/glassfish/nodes/sj01/yml-i-sj01/logs/server.log
+               Admin Port: 24849
+               Command start-local-instance executed successfully.
+
+ESTADO DE SALIDA
+       0
+           Comando ejecutado correctamente
+
+       1
+           Error al ejecutar el comando
+
+CONSULTE TAMBIÉN
+       create-instance(1), create-local-instance(1), delete-instance(1),
+       delete-local-instance(1), restart-instance(1),
+       restart-local-instance(1), start-domain(1), start-instance(1),
+       stop-domain(1), stop-instance(1), stop-local-instance(1)
+
+       asadmin(1M)
+
+       Java Platform Debugger Architecture (JPDA)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                    13 de febrero de 2013     start-local-instance(1)

@@ -1,0 +1,423 @@
+create-jdbc-connection-pool(asadmin 公用程式子命create-jdbc-connection-pool(1)
+
+參考名
+       create-jdbc-connection-pool - 註冊 JDBC 連線集區
+
+概要
+           create-jdbc-connection-pool [--help]
+           [--datasourceclassname=datasourceclassname]
+           [--restype=resourcetype]
+           [--steadypoolsize=poolsize]
+           [--maxpoolsize=maxpoolsize]
+           [--maxwait=maxwaittime]
+           [--poolresize=poolresizelimit]
+           [--idletimeout=idletimeout]
+           [--initsql=initsqlstring]
+           [--isolationlevel=isolationlevel]
+           [--isisolationguaranteed={true|false}]
+           [--isconnectvalidatereq={false|true}]
+           [--validationmethod=validationmethod]
+           [--validationtable=validationtable]
+           [--failconnection={false|true}]
+           [--allownoncomponentcallers={false|true}]
+           [--nontransactionalconnections={false|true}]
+           [--validateatmostonceperiod=validationinterval]
+           [--leaktimeout=leaktimeout]
+           [--leakreclaim={false|true}]
+           [--statementleaktimeout=satementleaktimeout]
+           [--statmentleakreclaim={false|true}]
+           [--creationretryattempts=creationretryattempts]
+           [--creationretryinterval=creationretryinterval]
+           [--sqltracelisteners=sqltracelisteners[,sqltracelisteners]]
+           [--statementtimeout=statementtimeout]
+           [--lazyconnectionenlistment={false|true}]
+           [--lazyconnectionassociation={false|true}]
+           [--associatewiththread={false|true}]
+           [--driverclassname=jdbcdriverclassname]
+           [--matchconnections={false|true}]
+           [--maxconnectionusagecount=maxconnectionusagecount]
+           [--ping={false|true}]
+           [--pooling={false|true}]
+           [--statementcachesize=statementcachesize]
+           [--validationclassname=validationclassname]
+           [--wrapjdbcobjects={false|true}]
+           [--description description]
+           [--property name=value)[:name=value]*]
+           [--target=target]
+           connectionpoolid
+
+描述
+       create-jdbc-connection-pool 子命令會以指定的 JDBC 連線集區名稱註冊新的
+       Java Database Connectivity (JDBC) 軟體連線集區。
+
+       您可以建立具有認證的 JDBC 連線集區，方法為使用 --property
+       選項來指定使用者、密碼或其他連線資訊，或是在 XML
+       描述元檔案中指定連線資訊。
+
+       只有遠端模式支援這個子命令。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --datasourceclassname
+           供應商提供的 JDBC 資料來源資源管理員之名稱。XA
+           或是可進行全域作業事件的資料來源類別將實行 javax.sql.XADatasource
+           介面。非 XA 或專用於本機之作業事件資料來源將實行
+           javax.sql.Datasource 介面。
+
+       --restype, 在下列情況下是必要的：資料來源類別實行兩個或多個介面
+       (javax.sql.DataSource 、javax.sql.XADataSource 或
+       javax.sql.ConnectionPoolDataSource)，或是必須提供驅動程式類別名稱時。
+
+           ·   如果 --restype = java.sql.Driver，則需要 --driverclassname
+               選項。
+
+           ·   如果 --restype = javax.sql.DataSource、javax.sql.XADataSource
+               或 javax.sql.ConnectionPoolDataSource，則需要
+               --datasourceclassname 選項。
+
+           ·   如果未指定 -restype，則必須指定 --driverclassname 或
+               --datasourceclassname 選項，但不能同時指定兩者。
+
+       --steadypoolsize
+           在集區中維護之連線的最小數目和初始數目。預設值為 8。
+
+       --maxpoolsize
+           可建立的連線最大數目。預設值為 32。
+
+       --maxwait
+           在傳送連線逾時之前，呼叫者要等待的時間量 (以毫秒為單位)。預設值為
+           60000 (60 秒)。若值為 0，將會強制呼叫者無限期地等待。
+
+       --poolresize
+           idle-timeout-in-seconds
+           計時器過期時要移除的連線數。這是集區增加或減少的連線數量。增加：當集區沒有可用的連線時，會增加這個數量的連線。減少：移除所有無效和閒置的連線，有時會導致移除數量大於此值的連線。閒置時間超過逾時值的連線符合移除資格。將會確保
+           Steadypoolsize。可能的值是 0 到 MAX_INTEGER 之間。預設值為 2。
+
+       --idletimeout
+           連線在集區中可保持閒置狀態的最長時間
+           (以秒為單位)。在這段時間之後，實行可以關閉此連線。此逾時值必須保持小於資料庫伺服器端的逾時值，以防止應用程式中累積無法使用的連線。預設值為
+           300。
+
+       --initsql
+           每當從集區中建立連線時執行的 SQL
+           字串。如果重複使用現有的連線，則不會執行此字串。閒置時間超過逾時值的連線符合移除資格。此選項沒有預設值。
+
+       --isolationlevel
+           集區儲存的資料庫連線上的
+           transaction-isolation-level。此選項沒有預設值。如果未指定，集區會以
+           JDBC
+           驅動程式所提供的預設隔離層級運作。您可以使用以下標準作業事件隔離層級之一設定所需的隔離層級：read-uncommitted、read-committed、
+           repeatable-read、serializable。在集區儲存的連線上以程式變更隔離層級的應用程式，會產生污染集區的風險。這可能導致程式錯誤。
+
+       --isisolationguaranteed
+           將特別的隔離層級指定給 transaction-isolation-level
+           時，才會發生此情況。預設值為 true。
+
+           此選項可確保，每次從集區取得連線時，隔離層級都會設定為所需的值。這可能會某些
+           JDBC 驅動程式有效能上的影響。在傳回連線之前，應用程式未變更
+           --isolationlevel 時，管理員可將此項目設定為 false。
+
+       --isconnectvalidatereq
+           如果設定為
+           true，會驗證或檢查連線，以查看其在提供給應用程式之前是否可使用。預設值為
+           false。
+
+       --validationmethod
+           當 is-connection-validation-required 為 true
+           時所要執行的驗證類型。有效的設定為：auto-commit、 meta-data、table
+           或 custom-validation。預設值為 table。
+
+       --validationtable
+           用來執行查詢以驗證連線的驗證表格名稱。如果
+           is-connection-validation-required 設為 true，且
+           connection-validation-type 設為 table，則此選項是必要的。
+
+       --failconnection
+           如果設定為
+           true，當單一驗證檢查失敗時，集區中的所有連線都必須關閉。預設值為
+           false。會嘗試一次重新建立失敗的連線。
+
+       --allownoncomponentcallers
+           非 Java EE 元件 (即 EJB 或 Servlet 以外的元件) 可使用此特性設定為
+           true
+           的集區。傳回連線會使用從作業事件管理員取得之作業事件上下文進行自動登錄。在作業事件結尾，容器不會自動清除非元件呼叫者所取得的連線。這些連線必須由呼叫者明確關閉。
+
+       --nontransactionalconnections
+           此特性設定為 true
+           的集區會傳回非作業事件式連線。此連線不會使用作業事件管理員自動登錄。
+
+       --validateatmostonceperiod
+           指定連續請求驗證連線的最長時間間隔
+           (以秒為單位)。將此屬性設定為適當值，可將驗證連線請求的數目減至最小。預設值為
+           0，表示未啟用此屬性。
+
+       --leaktimeout
+           指定追蹤的連線集區中連線錯誤的時間量
+           (以秒為單位)。當應用程式未在指定的期間內將連線傳回集區中時，則假設為可能的洩漏，並且會記錄呼叫者的堆疊追蹤。此選項只會偵測是否有連線洩漏。只有在
+           connection-leak-reclaim 設為 true 時，才能收回連線。
+
+           如果已啟用連線錯誤追蹤，您可以使用 管理主控台 來啟用監視 JDBC
+           連線集區，以取得連線錯誤次數的統計資料。預設值為
+           0，其會停用連線洩漏追蹤。
+
+       --leakreclaim
+           指定是否在錯誤連線追蹤完成後，將錯誤的連線復原至連線集區。可能值如下：
+
+           false
+               錯誤連線不
+
+           true
+               錯誤連線會復原至連線集區。
+
+       --statementleaktimeout
+           指定時間量
+           (以秒為單位)，在該時間量後將偵測尚未被應用程式所關閉的任何敘述句。如果敘述句物件未適當關閉，則應用程式可能會執行完游標。此選項只會偵測是否有敘述句洩漏。只有在
+           statement-leak-reclaim 設為 true
+           時，才能收回敘述句。洩漏的敘述句會在被收回時關閉。
+
+           當偵測到敘述句洩漏時，將會記錄建立該敘述句之呼叫者的堆疊追蹤。如果已啟用敘述句洩漏追蹤，您可以使用
+           管理主控台 來啟用 JDBC
+           連線集區監視，以取得有關敘述句洩漏數的統計資訊。預設值為
+           0，其會停用敘述句洩漏追蹤。
+
+           以下是套用至敘述句洩漏逾時值的限制：
+
+           ·   此值必須小於針對連線 leak-timeout 所設定的值。
+
+           ·   此值必須大於針對 statement-timeout 所設定的值。
+
+       --statementleakreclaim
+           指定敘述句洩漏之後，是否要收回洩漏的敘述句。可能值如下：
+
+           false
+               不
+
+           true
+               收回洩漏的敘述句。
+
+       --creationretryattempts
+           指定初始嘗試失敗時，GlassFish Server
+           嘗試建立連線的次數上限。預設值為 0，其指定 GlassFish Server
+           不重試建立連線。
+
+       --creationretryinterval
+           指定連續嘗試建立連線之間的間隔 (以秒為單位)。
+
+           如果 --creationretryattempts 為 0，便會忽略 --creationretryinterval
+           選項。預設值為 10。
+
+       --sqltracelisteners
+           一或多個自訂模組的清單，其可自訂記錄資料庫活動。每一個模組都必須實行
+           org.glassfish.api.jdbc.SQLTraceListener
+           公用介面。當設為適當的值時，會追蹤應用程式所執行的 SQL
+           敘述句。此選項沒有預設值。
+
+       --statementtimeout
+           指定未完成的查詢終止之後的時間長度 (以秒為單位)。
+
+           長時期一直未完成的查詢，可能會導致提交查詢的應用程式當機。若要防止發生此情況，請使用此選項，針對將從您要建立之連線集區中建立的所有敘述句，設定逾時值。建立敘述句時，GlassFish
+           Server 會將敘述句上的 QueryTimeout 特性設為指定的時間長度。預設值為
+           -1，其指定未完成的查詢不會終止。
+
+       --lazyconnectionenlistment
+           指定是否只有在方法實際使用資源時，才會登錄作業事件資源。可能值如下：
+
+           false
+               作業事件的資源一律會自動登錄，且只有在方法實際使用資源 (預設值)
+               時才不
+
+           true
+               作業事件的資源只
+
+       --lazyconnectionassociation
+           指定是否只有在使用實體連線時，實體連線才會與邏輯連線相關聯；而在完成作業事件後即取消關聯。這種關聯性會重複使用實體連線。可能值如下：
+
+           false
+               在使用實體連線之前，實體連線已經與邏輯連線相關聯；而在完成作業事件後，並不
+               (預設)。
+
+           true
+               只有在使用實體連線時，實體連線才會與邏輯連線相關聯；而在完成作業事件即取消關聯。--lazyconnectionenlistment
+               選項必須也設定為 true。
+
+       --associatewiththread
+           指定連線是否與繫線相關聯，以啟用繫線來重複使用連線。如果連線與繫線無關，則每一次繫線要求連線時，繫線都必須與集區取得連線。可能值如下：
+
+           false
+               連線與繫線無
+
+           true
+               連線與繫線相關聯。
+
+       --driverclassname
+           供應商提供的 JDBC 驅動程式類別之名稱。此驅動程式應實行
+           java.sql.Driver 介面。
+
+       --matchconnections
+           指定資源轉接器是否應比對從集區中所選取的連線。如果集區中的所有連線皆為同質連線，則不需要資源轉接器對從集區中挑選的連線進行比對，這表示此選項可以設為
+           false。可能值如下：
+
+           false
+               資源轉接器不
+
+           true
+               資源轉接器應比對連線。
+
+       --maxconnectionusagecount
+           指定可重複使用連線的次數上限。到達此限制時，連線就會關閉。藉由限制可以重複使用連線的次數上限，可以避免敘述句洩漏。
+
+           預設值為 0，其指定可以重複使用連線的次數沒有限制。
+
+       --ping
+           指定在集區建立或重新組態期間是否對集區執行
+           ping，以識別並警告是否有任何錯誤的屬性值。預設值為 false。
+
+       --pooling
+           指定是否對集區啟用連線集區管理。預設值為 true。
+
+       --statementcachesize
+           要使用預設快取機制 (「近來最少使用」) 快取的 SQL 敘述句數。預設值為
+           0，這表示不啟用敘述句快取。
+
+       --validationclassname
+           當 validationmethod 的值為 custom-validation
+           時，提供自訂驗證的類別名稱。此類別必須實行
+           org.glassfish.api.jdbc.ConnectionValidation 介面，而且它必須可供
+           GlassFish Server
+           存取。如果連線驗證類型設為自訂驗證，則此選項是必要的。
+
+       --wrapjdbcobjects
+           指定集區管理基礎架構是否提供已包裝 JDBC
+           物件給應用程式。藉由提供已包裝 JDBC
+           物件，集區管理基礎架構可防止連線洩漏，因為可確保應用程式使用連線集區中的邏輯連接而非實體連接。使用邏輯連線可確保連線在關閉時會傳回連線集區中。不過，佈建已包裝
+           JDBC 物件可能會損害應用程式的效能。預設值為 true。
+
+           集區管理基礎架構提供已包裝物件，以用於在 JDBC API 中實行下列介面：
+
+           ·   java.sql.CallableStatement
+
+           ·   java.sql.DatabaseMetaData
+
+           ·   java.sql.PreparedStatement
+
+           ·   java.sql.ResultSet
+
+           ·   java.sql.Statement
+
+           --wrapjdbcobjects 可能的值如下：
+
+           false
+               集區管理基礎架構不
+
+           true
+               集區管理基礎架構會提供已包裝 JDBC 物件給應用程式。
+
+       --description
+           提供有關指定 JDBC 連線集區之詳細資訊的文字。
+
+       --property
+           用於組態集區的選擇性屬性名/值配對。提供的特性如下：
+
+           user
+               指定用於連線至資料庫的使用者名稱。
+
+           password
+               指定用於連線至資料庫的密碼。
+
+           databaseName
+               為此連線集區指定資料庫。
+
+           serverName
+               為此連線集區指定資料庫伺服器。
+
+           port
+               指定資料庫伺服器監聽請求時所在的連接埠。
+
+           networkProtocol
+               指定協定。
+
+           roleName
+               指定初始 SQL 角色名稱。
+
+           datasourceName
+               指定基礎 XADataSource 或 ConnectionPoolDataSource
+               (如果已完成連線集區管理作業)。
+
+           description
+               指定文字描述。
+
+           url
+               指定此連線集區的 URL。雖然這不是標準特性，不過很常使用。
+
+           dynamic-reconfiguration-wait-timeout-in-seconds
+               用於無阻礙地將連線集區動態重新組態至正在使用該集區的應用程式，如此不需重新啟用應用程式，對集區所做的屬性或特性變更即可生效。只要連線請求在逾時時間範圍內，並且可以完成作業階段，將允許使用舊的集區組態來完成任何執行中作業事件的連線請求。新的連線請求將等候集區重新組態完成，並且必須使用修改過的集區組態來進行連線。
+
+           LazyConnectionEnlistment
+               不贊成使用。使用相等屬性。預設值為 false。
+
+           LazyConnectionAssociation
+               不贊成使用。使用相等屬性。預設值為 false。
+
+           AssociateWithThread
+               不贊成使用。使用相等屬性。預設值為 false。
+
+           MatchConnections
+               不贊成使用。使用相等屬性。預設值為 true。
+
+           Prefer-Validate-Over-Recreate
+               指定集區變更大小程式是否應在銷毀及重新建立閒置連線之前驗證它們。預設值為
+               true。
+
+           time-to-keep-queries-in-minutes
+               指定用於計算常用查詢的快取分鐘數。會在啟用 JDBC 連線集區的 SQL
+               追蹤和監視時生效。預設值為 5 分鐘。
+
+           number-of-top-queries-to-report
+               指定報告最多及最常用查詢時要列出的查詢數。會在啟用 JDBC
+               連線集區的 SQL 追蹤和監視時生效。預設值為 10 個查詢。
+
+               注意
+               ┌─────────────────────────────────────────────────────────────────────────────────────────────┐
+               │備註                                                                                         │
+               │如果屬性名稱或屬性值包含冒號，則必須使用反斜線                                               │
+               │(\)                                                                                          │
+               │來逸出名稱或值中的冒號。其他字元可能也需要退出字元。如需命令選項中退出字元的更多資訊，請參閱 │
+               │asadmin(1M) 線上手冊。                                                                       │
+               └─────────────────────────────────────────────────────────────────────────────────────────────┘
+
+       --target
+           請勿指定此選項。保留這個選項是為了兼顧與舊版本的相容性。如果您指定此選項，並不會發生語法錯誤。相反地，子命令會順利執行，並顯示已忽略該選項的警告訊息。
+
+運算元
+       connectionpoolid
+           要建立的 JDBC 連線集區名稱。
+
+範例
+       範例 1, 建立 JDBC 連線集區
+           此範例會建立名為 sample_derby_pool 的 JDBC 連線集區。
+
+               asadmin> create-jdbc-connection-pool
+               --datasourceclassname org.apache.derby.jdbc.ClientDataSource
+               --restype javax.sql.XADataSource
+               --property portNumber=1527:password=APP:user=APP:serverName=
+               localhost:databaseName=sun-appserv-samples:connectionAttributes=\;
+               create\\=true sample_derby_pool
+               Command create-jdbc-connection-pool executed successfully
+           --property 選項中使用逸出字元反斜線 (\) 來區別分號 (;)。兩個反斜線
+           (\\) 用來區別等號 (=)。
+
+結束狀態
+       0
+           已成功執行子命令
+
+       1
+           執行子命令時發生錯誤
+
+另請參閱
+       delete-jdbc-connection-pool(1), list-jdbc-connection-pools(1)
+
+       asadmin(1M)
+
+Java EE 7                     2011 年 2 月 10 日create-jdbc-connection-pool(1)

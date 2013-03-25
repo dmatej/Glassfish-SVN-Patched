@@ -1,0 +1,163 @@
+restart-local-instance(1Sous-commandes de l'utilitairrestart-local-instance(1)
+
+NOM
+       restart-local-instance - redémarre une instance GlassFish Server en
+       cours d'exécution sur l'hôte sur lequel la sous-commande est exécutée
+
+SYNTAXE
+           restart-local-instance [--help]
+           [--nodedir nodedir] [--node node]
+           [--debug={false|true}]
+           [--force={true|false}] [--kill={false|true}]
+           [instance-name]
+
+DESCRIPTION
+       La sous-commande restart-local-instance redémarre une instance
+       GlassFish Server sur l'hôte sur lequel la sous-commande est exécutée.
+       Cette sous-commande n'exige pas que le protocole SSH (Secure Shell)
+       soit configuré. Vous devez exécuter cette commande à partir de l'hôte
+       sur lequel l'instance réside.
+
+       La sous-commande peut redémarrer toutes les instances GlassFish Server,
+       quelle que soit la méthode utilisée pour les créer. Par exemple, cette
+       sous-commande peut redémarrer une instance qui a été créée à l'aide de
+       la sous-commande create-instance(1).
+
+       La sous-commande restart-local-instance ne contacte pas le serveur
+       d'administration de domaine (serveur DAS) pour déterminer le noeud sur
+       lequel l'instance réside. Pour cela, elle effectue une recherche dans
+       le répertoire qui contient les répertoires de noeud. S'il existe
+       plusieurs répertoires de noeud, le noeud doit être indiqué en tant
+       qu'option de la sous-commande.
+
+       Lorsque cette sous-commande redémarre une instance, le serveur DAS la
+       synchronise avec les modifications apportées depuis la dernière
+       synchronisation, comme suit :
+
+       ·   Pour le répertoire config, le serveur DAS synchronise l'instance
+           avec toutes les modifications apportées.
+
+       ·   Pour les répertoires applications et docroot, seule une
+           modification apportée à un sous-répertoire de niveau supérieur
+           entraîne la synchronisation de tous les fichiers situés en dessous
+           de ce sous-répertoire par le serveur DAS.
+
+           Si un fichier situé en dessous d'un sous-répertoire de niveau
+           supérieur est modifié sans qu'aucun changement ne soit apporté au
+           fichier du sous-répertoire de niveau supérieur, une synchronisation
+           complète est requise. En mode de fonctionnement normal, les
+           fichiers situés en dessous des sous-répertoires de niveau supérieur
+           correspondant à ces répertoires ne sont pas modifiés. Si une
+           application est déployée et que son déploiement est annulé, la
+           synchronisation complète n'est pas nécessaire pour mettre à jour
+           l'instance en fonction de la modification.
+
+       Si un autre comportement de synchronisation est requis, l'instance doit
+       être arrêtée puis redémarrée selon la séquence suivante de
+       sous-commandes :
+
+        1. stop-local-instance(1)
+
+        2. start-local-instance(1)
+
+       Cette sous-commande est prise en charge en mode local. Cependant, pour
+       synchroniser l'instance avec le serveur DAS, cette sous-commande doit
+       être exécutée en mode distant.
+
+OPTIONS
+       --help, -?
+           Cette option affiche le texte d'aide de la sous-commande.
+
+       --nodedir
+           Cette option indique le répertoire contenant le répertoire de noeud
+           de l'instance. Les fichiers de l'instance sont stockés dans le
+           répertoire de noeud de l'instance. La valeur par défaut est
+           as-install/nodes.
+
+       --node
+           Cette option indique le noeud sur lequel réside l'instance. Vous ne
+           pouvez l'omettre que si le répertoire spécifié par l'option
+           --nodedir ne contient qu'un répertoire de noeud. Sinon, cette
+           option est obligatoire.
+
+       --debug
+           Indique si l'instance est redémarrée avec le débogueur JPDA (Java
+           Platform Debugger Architecture)
+
+           activé.
+
+           Les valeurs possibles sont les suivantes :
+
+           true
+               L'instance est redémarrée avec le débogage JPDA activé. Le
+               numéro de port pour le débogage JPDA est affiché.
+
+           false
+               L'instance est redémarrée avec le débogage JPDA désactivé (par
+               défaut).
+
+           La valeur par défaut correspond à la valeur en cours de cette
+           option pour l'instance à redémarrer.
+
+       --force
+           Indique si l'arrêt de l'instance est forcé immédiatement avant son
+           redémarrage.
+
+           Les valeurs possibles sont les suivantes :
+
+           true
+               L'arrêt de l'instance est forcé immédiatement (par défaut).
+
+           false
+               La sous-commande attend que tous les threads associés à
+               l'instance soient fermés avant d'arrêter l'instance.
+
+       --kill
+           Indique si l'instance est arrêtée avant d'être redémarrée en
+           utilisant la fonctionnalité du système d'exploitation pour mettre
+           fin au processus de l'instance.
+
+           Les valeurs possibles sont les suivantes :
+
+           false
+               L'instance n'est pas arrêtée. La sous-commande utilise la
+               fonctionnalité de la plate-forme Java pour mettre fin au
+               processus de l'instance (par défaut).
+
+           true
+               L'instance est arrêtée. La sous-commande utilise la
+               fonctionnalité du système d'exploitation pour mettre fin au
+               processus de l'instance.
+
+OPÉRANDES
+       instance-name
+           Nom de l'instance GlassFish Server à redémarrer. Si l'instance
+           n'est pas en cours d'exécution, la sous-commande affiche un message
+           d'avertissement et tente de la démarrer.
+
+EXEMPLES
+       Exemple 1, Redémarrage d'une instance en local
+           Dans cet exemple, l'instance ymlsa1 du domaine domain1 est
+           redémarrée sur l'hôte sur lequel la sous-commande est exécutée.
+
+               asadmin> restart-local-instance --node localhost-domain1 ymlsa1
+               Command restart-local-instance executed successfully.
+
+STATUT DE SORTIE
+       0
+           commande correctement exécutée
+
+       1
+           erreur lors de l'exécution de la commande
+
+VOIR AUSSI
+       create-instance(1), create-local-instance(1), delete-instance(1),
+       delete-local-instance(1), restart-instance(1), start-instance(1),
+       start-local-instance(1), stop-instance(1), stop-local-instance(1)
+
+       asadmin(1M)
+
+       Java Platform Debugger Architecture (JPDA)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                         11 fév 2011        restart-local-instance(1)

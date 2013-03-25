@@ -1,0 +1,413 @@
+create-instance(1)      Comandi secondari della utilit      create-instance(1)
+
+NOME
+       create-instance - crea un'istanza di GlassFish Server
+
+SINTASSI
+           create-instance [--help] --node node-name
+           [--config config-name | --cluster cluster-name]
+           [--lbenabled={true|false}]
+           [--portbase=port-number] [--checkports={true|false}]
+           [--systemproperties (name=value)[:name=value]* ]
+           instance-name
+
+DESCRIZIONE
+       Il comando secondario create-instance crea un'istanza di GlassFish
+       Server. Questo comando secondario richiede la configurazione del
+       protocollo remoto DCOM (Distributed Component Object Model) o del
+       protocollo SSH (Secure Shell) nell'host in cui è in esecuzione il
+       server di amministrazione del dominio (DAS) e nell'host rappresentato
+       dal nodo in cui deve risiedere l'istanza.
+
+           Nota
+           ┌───────────────────────────────────────┐
+           │Nota                                   │
+           │                                       │
+           │           Se l'istanza deve risiedere │
+           │           in un nodo di tipo CONFIG   │
+           │           che rappresenta l'host      │
+           │           locale, i protocolli DCOM e │
+           │           SSH (Secure Shell) non sono │
+           │           richiesti. Il nodo di tipo  │
+           │           CONFIG non è abilitato per  │
+           │           la comunicazione remota su  │
+           │           DCOM o SSH.                 │
+           └───────────────────────────────────────┘
+
+       È possibile eseguire questo comando da qualsiasi host in grado di
+       contattare il server DAS.
+
+       Un'istanza di GlassFish Server è una Virtual Machine singola per la
+       piattaforma Java (Java Virtual Machine o JVM) in un nodo singolo in cui
+       è in esecuzione GlassFish Server. Un nodo definisce l'host in cui
+       risiede l'istanza di GlassFish Server. La JVM deve essere compatibile
+       con la piattaforma Java, Enterprise Edition (Java EE).
+
+       Un'istanza di GlassFish Server richiede un riferimento agli elementi
+       riportati di seguito.
+
+       ·   Il nodo che definisce l'host in cui risiede l'istanza. Il nodo deve
+           essere specificato nel comando di creazione dell'istanza.
+
+       ·   La configurazione denominata che definisce la configurazione
+           dell'istanza. La configurazione può essere specificata nel comando
+           di creazione dell'istanza, ma non è obbligatorio. Se per un'istanza
+           non collegata a un cluster non è specificata alcuna configurazione,
+           il comando secondario ne crea una per l'istanza. Un'istanza
+           collegata a un cluster riceve la configurazione dal cluster padre.
+
+       Ogni istanza di GlassFish Server rientra in uno dei tipi descritti di
+       seguito.
+
+       Istanza standalone
+           Le istanze standalone non condividono la configurazione con altre
+           istanze o cluster. Un'istanza standalone viene creata se vengono
+           soddisfatte le seguenti condizioni:
+
+           ·   Non vengono specificati cluster o configurazioni nel comando di
+               creazione dell'istanza.
+
+           ·   Una configurazione a cui non fanno riferimento istanze o
+               cluster viene specificata nel comando di creazione
+               dell'istanza.
+
+           Quando non viene specificato alcun cluster o configurazione, viene
+           creata una copia della configurazione default-config per l'istanza.
+           Il nome di questa configurazione è nome-istanza-config, dove
+           nome-istanza rappresenta il nome di un'istanza server non in
+           cluster.
+
+       Istanza condivisa
+           Le istanze condivise condividono la configurazione con altre
+           istanze o altri cluster. Se nel comando di creazione dell'istanza
+           viene specificata una configurazione alla quale fanno riferimento
+           altre istanze o altri cluster, verrà creata un'istanza condivisa.
+
+       Istanza in cluster
+           L'istanza in cluster eredita la propria configurazione dal cluster
+           cui appartiene e condivide la configurazione con le altre istanze
+           nel cluster. Un'istanza in cluster viene creata se nel comando di
+           creazione dell'istanza viene specificato un cluster.
+
+           Qualsiasi istanza che non fa parte di un cluster è considerata
+           un'istanza server non in cluster. Le istanze standalone e le
+           istanze condivise sono pertanto istanze server non in cluster.
+
+       Per impostazione predefinita, questo comando secondario tenta di
+       risolvere possibili conflitti di porta per l'istanza che si sta
+       creando. Inoltre, il comando secondario assegna ad altre istanze dello
+       stesso nodo le porte correntemente non in uso e non ancora assegnate.
+       Il comando secondario assegna queste porte basandosi su un proprio
+       algoritmo interno. Utilizzare l'opzione --systemproperties per
+       risolvere i conflitti delle porte per istanze aggiuntive dello stesso
+       nodo. Per manipolare le proprietà di sistema di un'istanza, è possibile
+       usare i comandi secondari create-system-properties(1) e
+       delete-system-property(1).
+
+       Questo comando secondario è supportato solo in modalità remota.
+
+OPZIONI
+       --help, -?
+           Visualizza il testo della Guida per il comando secondario.
+
+       --node
+           Il nome del nodo che definisce l'host in cui deve essere creata
+           l'istanza. Il nodo deve esistere già. Se l'istanza deve essere
+           creata sull'host in cui è in esecuzione il server di
+           amministrazione del dominio (DAS), usare il nodo predefinito
+           localhost-domain.
+
+       --config
+           Specifica la configurazione denominata alla quale fa riferimento
+           l'istanza. La configurazione deve esistere e non deve essere
+           denominata default-config o server-config. Quando si specifica
+           l'opzione --config, viene creata un'istanza condivisa.
+
+           L'opzione --config e l'opzione --cluster sono ad esclusione
+           reciproca. Se vengono omesse entrambe, viene creata un'istanza
+           standalone.
+
+       --cluster
+           Specifica il cluster da cui l'istanza eredita la configurazione.
+           Quando si specifica l'opzione --cluster, viene creata un'istanza in
+           cluster.
+
+           L'opzione --config e l'opzione --cluster sono ad esclusione
+           reciproca. Se vengono omesse entrambe, viene creata un'istanza
+           standalone.
+
+       --lbenabled
+           Specifica se l'istanza è abilitata al bilanciamento del carico. Di
+           seguito sono riportati i valori possibili.
+
+           true
+               L'istanza è abilitata al bilanciamento del carico (valore
+               predefinito).
+
+               Se un'istanza è abilitata al bilanciamento del carico, un load
+               balancer invia richieste all'istanza.
+
+           false
+               L'istanza non è abilitata al bilanciamento del carico.
+
+               Se un'istanza non è abilitata per il bilanciamento del carico,
+               un load balancer non invia richieste all'istanza.
+
+       --portbase
+           Determina il numero con cui deve iniziare l'assegnazione delle
+           porte. Un'istanza usa un certo numero di porte che sono assegnate
+           in modo statico. Il valore portbase determina il numero da cui deve
+           iniziare l'assegnazione. I valori per le porte sono calcolati come
+           riportato di seguito.
+
+           ·   Porta di amministrazione: portbase + 48
+
+           ·   Porta del listener HTTP: portbase + 80
+
+           ·   Porta del listener HTTPS: portbase + 81
+
+           ·   Porta JMS: portbase + 76
+
+           ·   Porta del listener IIOP: portbase + 37
+
+           ·   Porta del listener IIOP sicura: portbase + 38
+
+           ·   Porta IIOP sicura con autenticazione reciproca: portbase + 39
+
+           ·   Porta JMX: portbase + 86
+
+           ·   Porta del programma di debug JPA: portbase + 9
+
+           ·   Porta del servizio shell Felix per la gestione del modulo OSGi:
+               portbase + 66
+
+           Quando si specifica l'opzione --portbase, l'output di questo
+           comando secondario comprende la lista completa delle porte
+           utilizzate.
+
+       --checkports
+           Specifica se controllare la disponibilità delle porte di
+           amministrazione, HTTP, JMS, JMX e IIOP. Il valore predefinito è
+           true.
+
+       --systemproperties
+           Definisce le proprietà di sistema per l'istanza. Queste proprietà
+           sostituiscono le definizioni delle proprietà relative alle
+           impostazioni delle porte, contenute nella configurazione
+           dell'istanza. Le impostazioni predefinite per le porte devono
+           essere sostituite se, ad esempio, due istanze in cluster risiedono
+           nello stesso host. In questa situazione è necessario che le
+           impostazioni delle porte per una delle istanze siano sostituite,
+           perché le due istanze condividono la stessa configurazione.
+
+           Sono disponibili le proprietà riportate di seguito.
+
+           ASADMIN_LISTENER_PORT
+               Questa proprietà specifica il numero della porta HTTP o HTTPS
+               attraverso la quale il server DAS stabilisce la connessione
+               all'istanza, ai fini della gestione. I valori validi sono
+               compresi tra 1 e 65535. In ambiente UNIX, la creazione di
+               socket che rimangono in ascolto sulle porte 1-1024 richiede
+               privilegi di utente privilegiato.
+
+           HTTP_LISTENER_PORT
+               Questa proprietà specifica il numero della porta usata per
+               l'ascolto delle richieste HTTP. I valori validi sono compresi
+               tra 1 e 65535. In ambiente UNIX, la creazione di socket che
+               rimangono in ascolto sulle porte 1-1024 richiede privilegi di
+               utente privilegiato.
+
+           HTTP_SSL_LISTENER_PORT
+               Questa proprietà specifica il numero della porta usata per
+               l'ascolto delle richieste HTTPS. I valori validi sono compresi
+               tra 1 e 65535. In ambiente UNIX, la creazione di socket che
+               rimangono in ascolto sulle porte 1-1024 richiede privilegi di
+               utente privilegiato.
+
+           IIOP_LISTENER_PORT
+               Questa proprietà specifica il numero della porta usata per le
+               connessioni IIOP. I valori validi sono compresi tra 1 e 65535.
+               In ambiente UNIX, la creazione di socket che rimangono in
+               ascolto sulle porte 1-1024 richiede privilegi di utente
+               privilegiato.
+
+           IIOP_SSL_LISTENER_PORT
+               Questa proprietà specifica il numero della porta usata per le
+               connessioni IIOP sicure. I valori validi sono compresi tra 1 e
+               65535. In ambiente UNIX, la creazione di socket che rimangono
+               in ascolto sulle porte 1-1024 richiede privilegi di utente
+               privilegiato.
+
+           IIOP_SSL_MUTUALAUTH_PORT
+               Questa proprietà specifica il numero della porta usata per le
+               connessioni IIOP sicure con autenticazione del client. I valori
+               validi sono compresi tra 1 e 65535. In ambiente UNIX, la
+               creazione di socket che rimangono in ascolto sulle porte 1-1024
+               richiede privilegi di utente privilegiato.
+
+           JAVA_DEBUGGER_PORT
+               Questa proprietà specifica il numero della porta usata per le
+               connessioni al programma di debug JPDA (Java Platform Debugger
+               Architecture)
+               (http://java.sun.com/javase/technologies/core/toolsapis/jpda/).
+               I valori validi sono compresi tra 1 e 65535. In ambiente UNIX,
+               la creazione di socket che rimangono in ascolto sulle porte
+               1-1024 richiede privilegi di utente privilegiato.
+
+           JMS_PROVIDER_PORT
+               Questa proprietà specifica il numero di porta del provider JMS
+               (Java Message Service). I valori validi sono compresi tra 1 e
+               65535. In ambiente UNIX, la creazione di socket che rimangono
+               in ascolto sulle porte 1-1024 richiede privilegi di utente
+               privilegiato.
+
+           JMX_SYSTEM_CONNECTOR_PORT
+               Questa proprietà specifica il numero di porta di ascolto del
+               connettore JMX. I valori validi sono compresi tra 1 e 65535. In
+               ambiente UNIX, la creazione di socket che rimangono in ascolto
+               sulle porte 1-1024 richiede privilegi di utente privilegiato.
+
+           OSGI_SHELL_TELNET_PORT
+               Questa proprietà specifica il numero della porta usata per le
+               connessioni alla shell remota Apache Felix
+               (http://felix.apache.org/site/apache-felix-remote-shell.html).
+               Questa shell utilizza il servizio shell Felix per interagire
+               con il sottosistema di gestione dei moduli OSGi. I valori
+               validi sono compresi tra 1 e 65535. In ambiente UNIX, la
+               creazione di socket che rimangono in ascolto sulle porte 1-1024
+               richiede privilegi di utente privilegiato.
+
+OPERANDI
+       instance-name
+           Il nome dell'istanza che si sta creando.
+
+           Il nome deve soddisfare i requisiti riportati di seguito.
+
+           ·   Il nome può contenere solo caratteri ASCII.
+
+           ·   Il nome deve iniziare con una lettera, un numero o un carattere
+               di sottolineatura.
+
+           ·   Il nome può contenere solo i caratteri seguenti:
+
+               ·   Lettere minuscole
+
+               ·   Lettere maiuscole
+
+               ·   Numeri
+
+               ·   Trattino
+
+               ·   Punto
+
+               ·   Carattere di sottolineatura
+
+           ·   Il nome deve essere univoco nel dominio e non deve essere il
+               nome di un'istanza, di un cluster, di una configurazione
+               denominata o di un nodo di GlassFish Server esistente.
+
+           ·   Il nome non deve essere domain, server, né un'altra parola
+               chiave riservata di GlassFish Server.
+
+ESEMPI
+       Esempio 1, Creazione di un'istanza standalone di GlassFish Server
+           In questo esempio viene creata l'istanza standalone di GlassFish
+           Server pmdsainst nel dominio domain1 nell'host locale.
+
+               asadmin> create-instance --node localhost-domain1 pmdsainst
+               Port Assignments for server instance pmdsainst:
+               JMX_SYSTEM_CONNECTOR_PORT=28688
+               JMS_PROVIDER_PORT=27678
+               ASADMIN_LISTENER_PORT=24850
+               HTTP_LISTENER_PORT=28082
+               IIOP_LISTENER_PORT=23702
+               IIOP_SSL_LISTENER_PORT=23822
+               HTTP_SSL_LISTENER_PORT=28183
+               IIOP_SSL_MUTUALAUTH_PORT=23922
+
+               Command create-instance executed successfully.
+
+       Esempio 2, Creazione di un'istanza standalone di GlassFish Server con
+       assegnazione delle porte personalizzata
+           In questo esempio viene creata l'istanza standalone di GlassFish
+           Server pmdcpinst nel dominio domain1 nell'host locale. Vengono
+           assegnati numeri di porta personalizzati alle porte seguenti:
+
+           ·   Porta listener HTTP
+
+           ·   Porta listener HTTPS
+
+           ·   Porta connessioni IIOP
+
+           ·   Porta connessioni IIOP sicure
+
+           ·   Porta connessioni IIOP sicure con autenticazione reciproca
+
+           ·   Porta connettore JMX
+
+               asadmin> create-instance --node localhost-domain1
+               --systemproperties HTTP_LISTENER_PORT=58294:
+               HTTP_SSL_LISTENER_PORT=58297:
+               IIOP_LISTENER_PORT=58300:
+               IIOP_SSL_LISTENER_PORT=58303:
+               IIOP_SSL_MUTUALAUTH_PORT=58306:
+               JMX_SYSTEM_CONNECTOR_PORT=58309 pmdcpinst
+               Port Assignments for server instance pmdcpinst:
+               JMS_PROVIDER_PORT=27679
+               ASADMIN_LISTENER_PORT=24851
+
+               Command create-instance executed successfully.
+
+       Esempio 3, Creazione di un'istanza condivisa di GlassFish Server
+           In questo esempio viene creata l'istanza condivisa di GlassFish
+           Server pmdsharedinst1 nel dominio domain1 nell'host locale. La
+           configurazione condivisa di questa istanza è pmdsharedconfig.
+
+               asadmin create-instance --node localhost-domain1 --config pmdsharedconfig
+               pmdsharedinst1
+               Port Assignments for server instance pmdsharedinst1:
+               JMX_SYSTEM_CONNECTOR_PORT=28687
+               JMS_PROVIDER_PORT=27677
+               ASADMIN_LISTENER_PORT=24849
+               HTTP_LISTENER_PORT=28081
+               IIOP_LISTENER_PORT=23701
+               IIOP_SSL_LISTENER_PORT=23821
+               HTTP_SSL_LISTENER_PORT=28182
+               IIOP_SSL_MUTUALAUTH_PORT=23921
+
+               Command create-instance executed successfully.
+
+       Esempio 4, Creazione di un'istanza di GlassFish Server in cluster
+           In questo esempio viene creata l'istanza in cluster di GlassFish
+           Server pmdinst1 nel dominio domain1 nell'host locale. L'istanza è
+           un membro del cluster pmdclust1.
+
+               asadmin> create-instance --node localhost-domain1 --cluster pmdclust pmdinst1
+               Port Assignments for server instance pmdinst1:
+               JMX_SYSTEM_CONNECTOR_PORT=28686
+               JMS_PROVIDER_PORT=27676
+               HTTP_LISTENER_PORT=28080
+               ASADMIN_LISTENER_PORT=24848
+               IIOP_SSL_LISTENER_PORT=23820
+               IIOP_LISTENER_PORT=23700
+               HTTP_SSL_LISTENER_PORT=28181
+               IIOP_SSL_MUTUALAUTH_PORT=23920
+
+               Command create-instance executed successfully.
+
+STATO DI USCITA
+       0
+           esecuzione del comando riuscita
+
+       1
+           errore durante l'esecuzione del comando
+
+VEDERE ANCHE
+       create-local-instance(1), create-node-config(1), create-node-dcom(1),
+       create-node-ssh(1), create-system-properties(1), delete-instance(1),
+       delete-system-property(1), list-instances(1), setup-ssh(1),
+       start-instance(1), stop-instance(1)
+
+       asadmin(1M)
+
+Java EE 7                       8 dicembre 2011             create-instance(1)

@@ -1,0 +1,109 @@
+update-node-dcom(1)   asadminユーティリティのサブコマンド  update-node-dcom(1)
+
+名前
+       update-node-dcom - ノードの構成データを更新します
+
+概要
+           update-node-dcom [--help]
+           [--nodehost node-host]
+           [--installdir as-install-parent] [--nodedir node-dir]
+           [--windowsuser windows-user] [--windowsdomain windows-domain]
+           [--force={false|true}]
+           node-name
+
+説明
+       update-node-dcomサブコマンドは、ノードの構成データを更新します。このサブコマンドを使用する場合は、ドメイン管理サーバー(DAS)が稼働しているホスト上およびノードが存在するホスト上に、分散コンポーネント・オブジェクト・モデル(DCOM)リモート・プロトコルを構成する必要があります。DCOMプロトコルはWindowsシステムでのみ使用可能です。このサブコマンドは、DASにアクセス可能な任意のホストから実行できます。
+
+       このサブコマンドは、リモート通信に対してノードが有効かどうかに関係なく、どのノードでも更新できます。ノードがリモート通信に対して有効ではない場合、サブコマンドはノードに対するDCOM通信を有効にし、その他の指定された構成データを更新します。
+
+       このサブコマンドのオプションでは、ノードの構成データの新しい値を指定します。ほとんどのオプションのデフォルトでは、既存の値は変更されません。ただし、このサブコマンドを実行してノードに対するDCOM通信を有効にすると、次のいずれかのオプションが省略されている場合にデフォルト値が適用されます。
+
+       ·   --windowsuser
+
+       ·   --windowsdomain
+
+       DASがDCOM経由でノードのホストにアクセスできない場合、デフォルトでは、このサブコマンドは失敗し、ノードは更新されません。DCOM経由でホストにアクセスできない場合でも強制的にノードを更新するには、--forceオプションをtrueに設定します。
+
+       このサブコマンドは、リモート・モードでのみサポートされています。
+
+オプション
+       --help, -?
+           サブコマンドに関するヘルプ・テキストが表示されます。
+
+       --nodehost
+           ノードの更新後にノードが表すホストの名前。
+
+       --installdir
+           ホスト上のGlassFish
+           Serverソフトウェアのベース・インストール・ディレクトリの親のフルパス(例:
+           /export/glassfish3/)。
+
+       --nodedir
+           ノード上で作成されたGlassFish
+           Serverインスタンスを含めるディレクトリのパス。相対パスを指定する場合、パスはas-installディレクトリに相対的になります。as-installはホスト上のGlassFish
+           Serverソフトウェアのベース・インストール・ディレクトリです。
+
+       --windowsuser, -w
+           DCOM経由でホストに接続するためのプロセスを実行する、このノードのホストのユーザー。デフォルトは、このサブコマンドを実行してノードに対するDCOM通信を有効にしたかどうかによって異なります。
+
+           ·   ノードがDCOM経由の通信に対してすでに有効な場合、デフォルトではユーザーは変更されません。
+
+           ·   このサブコマンドを実行してノードに対するDCOM通信を有効にした場合、デフォルトはDASプロセスを実行するユーザーです。
+
+           --nodehostオプションをlocalhostに設定した場合、--windowsuserオプションは無視されます。
+
+       --windowsdomain, -d
+           --windowsuserオプションで指定したユーザーが含まれているWindowsドメインの名前。デフォルトは、このサブコマンドを実行してノードに対するDCOM通信を有効にしたかどうかによって異なります。
+
+           ·   ノードがDCOM経由の通信に対してすでに有効な場合、デフォルトではドメインは変更されません。
+
+           ·   このサブコマンドを実行してノードに対するDCOM通信を有効にした場合、デフォルトはサブコマンドを実行するホストの名前です。
+
+       --force
+           ノードのパラメータ検証に失敗した場合でもノードを更新するかを指定します。ノードのパラメータを検証するには、DASがDCOM経由でノードのホストにアクセスできる必要があります。使用可能な値は次のとおりです:
+
+           false
+               ノードのパラメータ検証に失敗した場合、ノードは更新されません(デフォルト)。
+
+           true
+               ノードのパラメータ検証に失敗した場合でもノードが更新されます。
+
+オペランド
+       node-name
+           更新するノードの名前。ノードが存在する必要があります。
+           それ以外の場合はエラーが発生します。
+
+例
+       例 1, ノードが表すホストの更新
+           この例では、ノードwpmdl1が表すホストをwj01に更新します。
+
+               asadmin> update-node-dcom --nodehost wj01 wpmdl1
+               Command update-node-dcom executed successfully.
+
+       例 2, 強制的なノードの更新
+           この例では、ノードxkydを強制的に更新し、DCOM経由の通信に対してノードを有効にします。
+
+               asadmin> update-node-dcom --force xkyd
+               Warning: some parameters appear to be invalid.
+               Could not find a remote Glassfish installation on host: xkyd.example.com at
+               C:\glassfish3\glassfish
+               Continuing with node update due to use of --force.
+               Command update-node-dcom executed successfully.
+
+終了ステータス
+       0
+           コマンドは正常に実行されました
+
+       1
+           コマンドの実行時にエラーが発生しました
+
+関連項目
+       create-node-config(1), create-node-dcom(1), create-node-ssh(1),
+       delete-node-config(1), delete-node-dcom(1), delete-node-ssh(1),
+       install-node(1), install-node-dcom(1), install-node-ssh(1),
+       list-nodes(1), uninstall-node(1), uninstall-node-dcom(1),
+       uninstall-node-ssh(1), update-node-config(1), update-node-ssh(1)
+
+       asadmin(1M)
+
+Java EE 7                       2011年11月29日             update-node-dcom(1)

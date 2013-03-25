@@ -1,0 +1,195 @@
+dotted-names(5ASC)           GlassFish Server 개념          dotted-names(5ASC)
+
+제목
+       dotted-names - 점으로 이름 요소를 구분하는 구문
+
+설명
+       점으로 구분된 이름은 구성 가능한 객체나 모니터링 가능한 객체와 같은
+       특정 GlassFish Server 요소에 대한 식별자입니다. 점으로 구분된
+       이름에서는 점이라는 마침표(.)를 구분자로 사용하여 요소 이름의 부분을
+       구분합니다. 점으로 구분된 이름의 마침표는 UNIX 파일 시스템에서 파일
+       절대 경로 이름의 레벨을 구분하는 슬래시(/) 문자와 유사합니다.
+
+       asadmin 유틸리티의 하위 명령은 점으로 구분된 이름을 다음과 같이
+       사용합니다.
+
+       ·   list 하위 명령은 관리 구성 요소 속성의 정규화된 점으로 구분된
+           이름을 제공합니다.
+
+       ·   get 하위 명령은 속성에 대한 액세스 권한을 제공합니다.
+
+       ·   set 하위 명령은 구성 가능한 속성을 수정하고 속성을 설정할 수
+           있습니다.
+
+       구성 계층 구조는 도메인의 스키마 문서를 다소 참조하며 속성은 수정할 수
+       있습니다. 모니터링 계층 구조의 속성은 읽기 전용입니다.
+
+       다음은 구성의 점으로 구분된 이름에 사용되는 형식입니다(기울임꼴은 대체
+       가능함을 나타냄).
+
+       config-name.config-element-name.primary-key.attribute-name |
+       instance-name.config-element-name.primary-key.attribute-name
+
+       다음은 리소스의 점으로 구분된 이름에 사용되는 형식입니다(기울임꼴은
+       대체 가능함을 나타냄).
+
+       server-name.resource-name.primary-key.attribute-name |
+       domain.resources.resource-name.primary-key.attribute-name
+
+       다음은 점으로 구분된 이름 구성에 적용되는 규칙입니다.
+
+       ·   최상위 레벨은 구성, 서버 또는 도메인 이름입니다. 예를 들어
+           server-config(기본 구성), server(기본 서버) 또는 domain1(기본
+           도메인)입니다.
+
+       ·   점(.)은 항상 이름의 순차적인 두 부분을 구분합니다.
+
+       ·   이름을 구성하는 부분은 대개 서버 하위 시스템 또는 특정 인스턴스를
+           식별합니다. 예를 들어 web-container, log-service,
+           thread-pool-1입니다.
+
+       ·   이름을 구성하는 부분 자체에 점(.)이 포함되어 있는 경우에는 .(점)이
+           구분자로 사용되지 않도록 앞에 \(백슬래시)를 붙여 이스케이프
+           처리해야 합니다. 이스케이프 문자에 대한 자세한 내용은 asadmin(1M)
+           도움말 페이지를 참조하십시오.
+
+       ·   *(별표) 문자는 위치와 상관없이 점으로 구분된 이름의 일부로 사용할
+           수 있으며 정규 표현식에서 와일드 카드 문자의 역할을 합니다. 또한
+           *는 점으로 구분된 이름의 모든 부분을 축약할 수 있습니다. 예를 들어
+           this.is.really.long.hierarchy와 같이 점으로 구분된 긴 이름은
+           th*.hierarchy로 축약할 수 있습니다.  .(점)은 항상 점으로 구분된
+           이름의 부분을 구분합니다.
+
+               참고
+               ┌───────────────────────────────────────┐
+               │주 *(별표)처럼 셸 또는 명령            │
+               │인터프리터에 특별한 의미가 있는 문자는 │
+               │인수를 따옴표로 묶는 것처럼 셸에 맞게  │
+               │따옴표로 묶거나 이스케이프 처리해야    │
+               │합니다. 다중 모드에서 따옴표는 공백,   │
+               │따옴표 또는 백슬래시가 포함된 인수에만 │
+               │필요합니다.                            │
+               └───────────────────────────────────────┘
+
+       ·   get 및 list 하위 명령의 --monitor 옵션은 모니터링 또는 구성 계층
+           구조를 선택합니다. 하위 명령에서 --monitor=false(기본값)로 지정하면
+           구성 계층 구조가 선택됩니다. 하위 명령에서 --monitor=true로
+           지정하면 모니터링 계층 구조가 선택됩니다.
+
+       ·   점으로 구분된 전체 이름을 알고 있어 와일드 카드 문자를 사용할
+           필요가 없으면 list, get 및 set 하위 명령에서 이름을 다르게
+           처리합니다.
+
+           ·   list 하위 명령의 경우 점으로 구분된 전체 이름을 추상 계층
+               구조에 있는 상위 노드의 이름으로 처리합니다. 이 이름을 list
+               하위 명령에 지정하면 해당 레벨에서 바로 아래 하위 항목의 이름이
+               반환됩니다. 예를 들어 다음 명령을 사용하면 도메인 또는 기본
+               서버에 배치된 모든 웹 모듈이 나열됩니다.
+
+                   asadmin> list server.applications.web-module
+
+           ·   get 및 set 하위 명령의 경우 점으로 구분된 전체 이름을 노드(이
+               노드의 점으로 구분된 이름 자체는 이 점으로 구분된 이름의 마지막
+               부분을 제거하여 얻어진 이름임) 속성의 정규화된 이름으로
+               처리합니다. 이 이름을 get 또는 set 하위 명령에 지정하면 하위
+               명령은 해당 속성이 존재하는 경우 속성의 값에서 작동합니다. 계층
+               구조에 있는 특정 노드의 속성 이름을 찾기 위해서는 * 와일드 카드
+               문자를 사용해야 하기 때문에 이 경우에는 시작할 수 없습니다.
+               예를 들어 다음과 같은 점으로 구분된 이름은 도메인이나 기본
+               서버에 배치된 웹 응용 프로그램의 컨텍스트 루트를 반환합니다.
+
+                   server.applications.web-module.JSPWiki.context-root
+
+예제
+       예 1, 구성 가능한 모든 요소 나열
+           이 예제는 구성 가능한 모든 요소를 나열합니다.
+
+               asadmin> list *
+           다음과 같은 출력이 표시됩니다.
+
+               applications
+               configs
+               configs.config.server-config
+               configs.config.server-config.admin-service
+               configs.config.server-config.admin-service.das-config
+               configs.config.server-config.admin-service.jmx-connector.system
+               configs.config.server-config.admin-service.property.adminConsoleContextRoot
+               configs.config.server-config.admin-service.property.adminConsoleDownloadLocation
+               configs.config.server-config.admin-service.property.ipsRoot
+               configs.config.server-config.ejb-container
+               configs.config.server-config.ejb-container.ejb-timer-service
+               configs.config.server-config.http-service
+               configs.config.server-config.http-service.access-log
+               configs.config.server-config.http-service.virtual-server.__asadmin
+               configs.config.server-config.http-service.virtual-server.server
+               configs.config.server-config.iiop-service
+               configs.config.server-config.iiop-service.iiop-listener.SSL
+               configs.config.server-config.iiop-service.iiop-listener.SSL.ssl
+               configs.config.server-config.iiop-service.iiop-listener.SSL_MUTUALAUTH
+               configs.config.server-config.iiop-service.iiop-listener.SSL_MUTUALAUTH.ssl
+               configs.config.server-config.iiop-service.iiop-listener.orb-listener-1
+               configs.config.server-config.iiop-service.orb
+               configs.config.server-config.java-config
+               configs.config.server-config.jms-service
+               configs.config.server-config.jms-service.jms-host.default_JMS_host
+               configs.config.server-config.mdb-container
+               configs.config.server-config.monitoring-service
+               configs.config.server-config.monitoring-service.module-monitoring-levels
+               ...
+               property.administrative.domain.name
+               resources
+               resources.jdbc-connection-pool.DerbyPool
+               resources.jdbc-connection-pool.DerbyPool.property.DatabaseName
+               resources.jdbc-connection-pool.DerbyPool.property.Password
+               resources.jdbc-connection-pool.DerbyPool.property.PortNumber
+               resources.jdbc-connection-pool.DerbyPool.property.User
+               resources.jdbc-connection-pool.DerbyPool.property.connectionAttributes
+               resources.jdbc-connection-pool.DerbyPool.property.serverName
+               resources.jdbc-connection-pool.__TimerPool
+               resources.jdbc-connection-pool.__TimerPool.property.connectionAttributes
+               resources.jdbc-connection-pool.__TimerPool.property.databaseName
+               resources.jdbc-resource.jdbc/__TimerPool
+               resources.jdbc-resource.jdbc/__default
+               servers
+               servers.server.server
+               servers.server.server.resource-ref.jdbc/__TimerPool
+               servers.server.server.resource-ref.jdbc/__default
+               system-applications
+               Command list executed successfully.
+
+       예 2, 모니터링 가능한 모든 객체 나열
+           다음 예제는 모니터링 가능한 모든 객체를 나열합니다.
+
+               asadmin> list --monitor *
+           다음과 같은 출력이 표시됩니다.
+
+               server
+               server.jvm
+               server.jvm.class-loading-system
+               server.jvm.compilation-system
+               server.jvm.garbage-collectors
+               server.jvm.garbage-collectors.Copy
+               server.jvm.garbage-collectors.MarkSweepCompact
+               server.jvm.memory
+               server.jvm.operating-system
+               server.jvm.runtime
+               server.network
+               server.network.admin-listener
+               server.network.admin-listener.connections
+               server.network.admin-listener.file-cache
+               server.network.admin-listener.keep-alive
+               server.network.admin-listener.thread-pool
+               server.network.http-listener-1
+               server.network.http-listener-1.connections
+               server.network.http-listener-1.file-cache
+               server.network.http-listener-1.keep-alive
+               server.network.http-listener-1.thread-pool
+               server.transaction-service
+               Command list executed successfully.
+
+참조
+       list(1), get(1), set(1)
+
+       asadmin(1M)
+
+Java EE 7                       2009년 9월 14일             dotted-names(5ASC)

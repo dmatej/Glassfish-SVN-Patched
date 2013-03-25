@@ -1,0 +1,184 @@
+create-jvm-options(1)       asadmin 实用程序子命令       create-jvm-options(1)
+
+名称
+       create-jvm-options - 为 Java 应用程序启动器创建选项
+
+提要
+           create-jvm-options [--help] [--target target] [--profiler={true|false}]
+           (jvm-option-name=jvm-option-value) [:jvm-option-name=jvm-option-value*]
+
+说明
+       create-jvm-options 子命令创建命令行选项，这些选项会在 GlassFish Server
+       启动时传递给 Java 应用程序启动器。此子命令创建的选项作为在 GlassFish
+       Server 中预设的选项的补充。Java 应用程序启动器选项存储在 domain.xml
+       文件的 Java 配置 java—config 元素或分析器的 profiler
+       元素中。将按照这些选项在 domain.xml 文件的 java—config 元素或分析器的
+       profiler 元素中的显示顺序将它们发送到命令行。
+
+       分析器选项用于记录启动特定分析器所需的设置。分析器必须已存在。如有必要，可使用
+       create-profiler(1) 子命令创建分析器。
+
+       此子命令可用于创建下列类型的选项：
+
+       ·   Java 系统属性。通过 Java 应用程序启动器的 -D
+           选项设置这些选项。例如：
+
+           -Djava.security.manager
+
+           -Denvironment=Production
+
+       ·   Java 应用程序启动器的启动参数。这些选项前面带短划线字符 (-)。例如：
+
+           --XX:PermSize=size
+
+           -Xmx1024m
+
+           -d64
+
+       如果子命令指定一个已经存在的选项，该命令不会重新创建选项。
+
+           注意
+           ┌──────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+           │注                                                                                                        │
+           │                                                                                                          │
+           │           请确保创建的任何选项都有效。子命令可能允许您创建无效选项，但这样的无效选项可能会导致启动失败。 │
+           └──────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+       可在启动 GlassFish Server 后，通过检查服务器日志来验证选项。启动
+       GlassFish Server 时，首先将 Java 应用程序启动器的选项写入 server.log
+       文件，然后再写入任何其他信息。
+
+       增加某些选项后，需要重新启动服务器才能使更改生效。其他选项是直接在域管理服务器
+       (DAS) 环境中设置的，不需要重新启动。是否需要重新启动取决于选项的类型。
+
+       ·   对于名称不
+           系统属性，不需要重新启动。例如，以下 Java 系统属性不
+
+           -Denvironment=Production
+
+       ·   以下选项需要重新启动：
+
+           ·   名称以 -Djava.  或 -Djavax.  (包括尾随句点) 开头的 Java
+               系统属性。例如：
+
+               -Djava.security.manager
+
+           ·   Java 应用程序启动器的启动参数。例如：
+
+               -client
+
+               -Xmx1024m
+
+               -d64
+
+       要重新启动 DAS，请使用 restart-domain(1) 命令。
+
+       该子命令仅在远程模式下受支持。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --target
+           指定创建 Java 应用程序启动器选项的目标。
+
+           有效值如下：
+
+           server
+               指定 DAS (默认值)。
+
+           instance-name
+               指定 GlassFish Server 实例。
+
+           cluster-name
+               指定集群。
+
+           configuration-name
+               指定命名配置。
+
+       --profiler
+           指示 Java
+           应用程序启动器选项是否适用于分析器。只有存在分析器，该选项才能为“真”。默认值为“假”。
+
+操作数
+       jvm-option-name
+           用冒号 (:) 分隔的一个或多个选项。选项的格式取决于以下因素：
+
+           ·   如果选项中包含一个名称和一个值，则格式为 option-name=value。
+
+           ·   如果选项中仅包含一个名称，则格式为
+               option-name。例如，-Xmx2048m。
+
+           ·   如果可以将第一个选项名曲解为一个或多个 asadmin 短选项，则格式为
+               -- option-name。例如，可以将以下命令中的 -server 曲解为
+               --secure 和 --echo 的 asadmin 短格式 -se：
+
+                   create-jvm-options -server
+               要创建 JVM 选项 -server，请改用以下命令：
+
+                   create-jvm-options -- -server
+
+               注意
+               ┌───────────────────────────────────────────────────────────────────────────────────────────────────────┐
+               │注                                                                                                     │
+               │如果选项名称或选项值中包含冒号，则必须使用反斜杠                                                       │
+               │(\)                                                                                                    │
+               │对名称或值中的冒号进行转义。其他字符也可能要求使用转义字符。有关子命令选项中的转义符的详细信息，请参阅 │
+               │asadmin(1M) 手册页。                                                                                   │
+               └───────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+示例
+       Example 1, 设置 Java 系统属性
+           此示例设置多个 Java 系统属性。
+
+               asadmin> create-jvm-options -Dunixlocation=/root/example:
+               -Dvariable=\$HOME:-Dwindowslocation=d\:\\sun\\appserver:-Doption1=-value1
+               created 4 option(s)
+               Command create-jvm-options executed successfully.
+
+       Example 2, 设置 Java 应用程序启动器的启动参数
+           此示例将最大的可用堆大小设置为 1024。
+
+               asadmin> create-jvm-options -Xmx1024m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+       Example 3, 设置 Java 应用程序启动器的多个启动参数
+           此示例将最大的可用堆大小设置为 1024 并请求关于垃圾回收的详细信息。
+
+               asadmin> create-jvm-options "-Xmx1024m:-XX\:+PrintGCDetails"
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+           在本例中，其中一个 (共两个)
+           参数已经存在，因此子命令将报告仅设置了一个选项。
+
+       Example 4, 设置分析器的 JVM 启动参数
+           此示例设置分析器的 JVM 启动参数。
+
+               asadmin> create-jvm-options --profiler=true -XX\:MaxPermSize=192m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+退出状态
+       0
+           已成功执行子命令
+
+       1
+           执行子命令时出现错误
+
+另请参阅
+       delete-jvm-options(1), list-jvm-options(1), create-profiler(1),
+       restart-domain(1)
+
+       asadmin(1M)
+
+       有关 Java
+       应用程序启动器的详细信息，请参阅适用于您所使用的操作系统的参考页：
+
+       ·   Oracle Solaris 和 Linux：java - Java 应用程序启动器
+           (http://java.sun.com/javase/6/docs/technotes/tools/solaris/java.html)
+
+       ·   Windows：java - Java 应用程序启动器
+           (http://java.sun.com/javase/6/docs/technotes/tools/windows/java.html)
+
+Java EE 7                     2010 年 11 月 29 日        create-jvm-options(1)

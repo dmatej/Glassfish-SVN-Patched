@@ -1,0 +1,206 @@
+appclient(1M)                Comandi della utility               appclient(1M)
+
+NOME
+       appclient - avvia il contenitore del client dell'applicazione e
+       richiama l'applicazione client che si trova in genere all'interno di
+       package nel file JAR dell'applicazione
+
+SINTASSI
+           appclient [client_application_classfile | -client client_application_jar]
+           [-mainclass main_class_name | -name display_name]
+           [-xml sun-acc.xml file] [-textauth]
+           [-targetserver host[:port][,host[:port]...]]
+           [-user username] [-passwordfile password_file]
+           [application-options]
+
+           appclient [jvm-options]
+           [-mainclass main_class_name | -name display_name]
+           [-xml client_config_xml_file] [-textauth]
+           [-targetserver host[:port][,host[:port]...]]
+           [-user username] [-passwordfile password_file]
+           class-selector [application-options]
+
+DESCRIZIONE
+       Utilizzare il comando appclient per avviare il contenitore del client
+       dell'applicazione e richiamare un'applicazione client che si trova in
+       genere all'interno di package in un file JAR di applicazione. Il file
+       JAR del client dell'applicazione viene specificato e creato durante la
+       distribuzione mediante la Console di amministrazione o il comando
+       asadmin deploy con l'opzione --retrieve. È possibile recuperare il file
+       JAR del client anche utilizzando il comando asadmin get-client-stubs.
+
+       Il contenitore del client dell'applicazione è un set di classi,
+       librerie e altri file Java necessari per eseguire un programma client
+       per applicazioni di primo livello in una JVM (Java Virtual Machine). Il
+       contenitore del client dell'applicazione comunica con il server tramite
+       RMI-IIOP.
+
+       Il file JAR del client che viene recuperato dopo la distribuzione di
+       un'applicazione deve essere passato con l'opzione -client o -jar quando
+       si esegue la utility appclient. Il nome del file JAR di un client è nel
+       formato app-name Client.jar. In caso di più client di applicazione in
+       un file EAR, è necessario utilizzare l'opzione -mainclass o -name per
+       specificare il client da richiamare.
+
+       Se il client di applicazione è un modulo standalone o è l'unico client
+       in un file EAR, il contenitore del client dell'applicazione sarà in
+       grado di trovare il client senza utilizzare l'opzione -mainclass o
+       -name. Se si fornisce un valore -mainclass o -name che non corrisponde
+       al contenuto del client, il contenitore del client dell'applicazione
+       avvierà comunque il client generando tuttavia un'avvertenza in cui
+       viene indicato che la selezione non corrisponde alle informazioni
+       contenute nel client. Nell'avvertenza vengono inoltre indicati i valori
+       effettivi di mainclass e name per il client.
+
+OPZIONI
+       jvm-options
+           Facoltativa. È possibile impostare le opzioni JVM per
+           l'applicazione client. Sono supportate tutte le opzioni dei comandi
+           java valide, ad eccezione di -client o -jar. Le opzioni JVM possono
+           essere combinate con altre opzioni di comandi appclient, purché
+           entrambi i tipi di opzioni precedano class-selector.
+
+       client_application_classfile
+           Facoltativa. Percorso del file
+            .class dell'applicazione client nel file system. Un percorso
+           relativo deve essere relativo rispetto alla directory corrente.
+           Questo file di classe deve contenere il metodo main() che dovrà
+           essere richiamato dal contenitore del client dell'applicazione.
+
+           Se si usa client_application_classfile e la classe dipende da altre
+           classi utente, è necessario impostare anche il classpath. È
+           possibile utilizzare a scelta l'opzione JVM -classpath nel comando
+           appclient oppure impostare la variabile di ambiente CLASSPATH. Per
+           ulteriori informazioni sull'impostazione del classpath, vedere
+           Setting the Class Path, Oracle Solaris Version
+           (http://download.oracle.com/javase/6/docs/technotes/tools/solaris/classpath.html)
+           o Setting the Class Path, Windows Version
+           (http://download.oracle.com/javase/6/docs/technotes/tools/windows/classpath.html).
+
+       -client
+           Facoltativa. Il nome e la posizione del file JAR del client.
+
+       -mainclass
+           Facoltativa. Il nome di classe completo dell'applicazione client
+           principale specificato nella voce Main-Class nel file
+            MANIFEST.MF. Utilizzata per più applicazioni client. Per
+           impostazione predefinita, utilizza la classe specificata nel file
+           jar del client. Ad esempio: com.example.test.AppClient.
+
+       -name
+           Facoltativa. Il nome visualizzato dell'applicazione client.
+           Utilizzata per più applicazioni client. Per impostazione
+           predefinita, il nome visualizzato è specificato nel file JAR
+           application-client.xml del client identificato dall'attributo
+           display-name.
+
+       -xml
+           Facoltativa se si utilizzano il dominio, l'istanza, e il nome
+           (sun-acc.xml) predefiniti, altrimenti è obbligatoria. Identifica il
+           nome e la posizione del file XML di configurazione del client. Se
+           non viene specificata, viene utilizzato per impostazione
+           predefinita il file sun-acc.xml nella directory domain-dir/config.
+
+       -textauth
+           Facoltativa. Utilizzata per specificare l'uso dell'autenticazione
+           del formato testo quando è richiesta l'autenticazione.
+
+       -targetserver
+           Facoltativa. Lista separata da virgole di una o più specifiche di
+           server per endpoint ORB. Ogni specifica di server deve includere
+           almeno l'host. Una specifica di server può includere
+           facoltativamente anche la porta. Se in una specifica di server non
+           è specificata la porta, per l'host viene utilizzato il valore
+           predefinito 3700.
+
+       -user
+           Facoltativa. L'utente dell'applicazione autorizzato ad accedere a
+           particolari componenti controllati nell'applicazione, ad esempio i
+           componenti EJB.
+
+       -passwordfile
+           Facoltativa. Specifica il nome, incluso il percorso completo, di un
+           file che contiene la password per i client di applicazione nel
+           formato seguente:
+
+               PASSWORD=appclient-password
+           Se questa opzione viene omessa, la password verrà specificata in
+           modo interattivo al prompt dei comandi.
+
+               Attenzione
+               ┌────────────────────────────────────────┐
+               │Attenzione Evitare di specificare la    │
+               │password in modo interattivo al prompt  │
+               │dei comandi. La password specificata in │
+               │questo modo può essere vista da utenti  │
+               │in grado di eseguire i comandi per      │
+               │visualizzare i processi in esecuzione e │
+               │i comandi per avviarli, quale ad        │
+               │esempio ps.                             │
+               └────────────────────────────────────────┘
+           Per motivi di sicurezza, una password specificata come variabile di
+           ambiente non viene letta dalla utility appclient.
+
+       class-selector
+           Obbligatoria. È necessario specificare la classe dell'applicazione
+           client utilizzando uno dei selettori di classi riportati di
+           seguito.
+
+           -jar jar-file
+               Il nome e la posizione del file JAR del client. Il file JAR del
+               client dell'applicazione viene specificato e creato durante la
+               distribuzione tramite il comando asadmin deploy. Se viene
+               specificato, l'impostazione -classpath viene ignorata in
+               conformità con l'impostazione Class-Path nel manifest del file
+               JAR del client.
+
+           class-name
+               Il nome completamente qualificato della classe principale del
+               client dell'applicazione. Il contenitore del client
+               dell'applicazione richiama il metodo main di tale classe per
+               avviare il client. Ad esempio: com.example.test.AppClient.
+
+               Se si utilizza class-name come selettore di classi, è
+               necessario impostare anche il classpath. È possibile utilizzare
+               a scelta l'opzione JVM -classpath nel comando appclient oppure
+               impostare la variabile di ambiente CLASSPATH. Per ulteriori
+               informazioni sull'impostazione del classpath, vedere Setting
+               the Class Path, Oracle Solaris Version
+               (http://download.oracle.com/javase/6/docs/technotes/tools/solaris/classpath.html)
+               o Setting the Class Path, Windows Version
+               (http://download.oracle.com/javase/6/docs/technotes/tools/windows/classpath.html).
+
+       application-options
+           Facoltativa. È possibile impostare gli argomenti dell'applicazione
+           client.
+
+ESEMPI
+       Esempio 1, Uso del comando appclient
+
+               appclient -xml sun-acc.xml -jar myclientapp.jar scott sample
+           Dove: sun-acc.xml è il nome del file XML di configurazione del
+           client, myclientapp.jar è il file.jar dell'applicazione client e
+           scott e sample sono argomenti da passare all'applicazione. Se i
+           file sun-acc.xml e myclientapp.jar non si trovano nella directory
+           corrente, è necessario specificare i percorsi assoluti, altrimenti
+           verranno utilizzati i percorsi relativi. Il percorso relativo è
+           relativo rispetto alla directory in cui viene eseguito il comando.
+
+ATTRIBUTI
+       Vedere attributes(5) per le descrizioni degli attributi seguenti:
+
+       ┌──────────────────────┬─────────────────────────┐
+       │                      │                         │
+       │       TIPO ATTRIBUTO │        VALORE ATTRIBUTO │
+       ├──────────────────────┼─────────────────────────┤
+       │                      │                         │
+       │       Stabilità      │        Instabile        │
+       │       interfaccia    │                         │
+       └──────────────────────┴─────────────────────────┘
+
+VEDERE ANCHE
+       get-client-stubs(1)
+
+       asadmin(1M), package-appclient(1M)
+
+Java EE 7                      16 dicembre 2010                  appclient(1M)

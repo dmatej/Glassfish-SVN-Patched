@@ -1,0 +1,201 @@
+setup-ssh(1)                asadmin 公用程式子命令                setup-ssh(1)
+
+參考名
+       setup-ssh - 設定指定主機上的 SSH 金鑰
+
+概要
+           setup-ssh [--help]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile] [--sshpublickeyfile ssh-public-keyfile]
+           [--generatekey={false|true}]
+           host-list
+
+描述
+       setup-ssh 子指定可在指定為子命令運算元的主機上設定安全 Shell (SSH)
+       金鑰。這個金鑰可讓 GlassFish Server
+       使用公開金鑰認證，來認證遠端主機上的使用者 SSH 登入資訊。
+
+       SSH 可確保能夠集中管理跨多台主機的 GlassFish Server
+       叢集。當使用者針對作用於多台主機上的叢集管理執行子命令時，子命令會從網域管理伺服器
+       (DAS) 主機傳送至遠端主機。GlassFish Server 會使用
+       SSH，以傳送針對未執行的 GlassFish Server
+       執行處理或沒有執行任何執行處理的節點所執行的子命令。SSH 可為 DAS
+       和遠端主機之間交換的資料提供機密性和安全性。
+
+       公開金鑰認證使用的 SSH 金鑰配對由下列金鑰組成：
+
+       ·   私密金鑰，儲存在 DAS 主機上的安全位置，可利用複雜密碼保護
+
+       ·   公開金鑰，儲存在與 DAS 通訊的所有遠端主機上。
+
+       子命令不需要任何來自 DAS 的組態資訊，也不會修改 DAS 的組態。
+
+       只有本機模式支援這個子命令。
+
+   使用 setup-ssh 子命令的必要條件
+       若要使用 setup-ssh 子命令，則 SSH 使用者必須能夠使用 SSH 登入要設定 SSH
+       的遠端主機。尤其是必須符合下列必要條件：
+
+       ·   ssh(1) 從屬端安裝於 DAS 主機，且可透過 DAS 使用者的路徑存取。
+
+       ·   安裝 sshd(1M) 常駐程式並且在要設定 SSH 金鑰的所有主機上執行。
+
+       ·   --sshuser 選項指定的使用者，在即將設定 SSH
+           金鑰的所有主機上都可以進行 SSH 登入。
+
+       ·   ssh-keygen(1) 公用程式安裝在 DAS 主機上的預設位置或 DAS
+           使用者路徑中定義的位置。
+
+       ·   在 Windows 系統上已安裝適用於 Cygwin
+
+           或已安裝可提供 SSH 的 MKS Software
+
+           工具組。
+
+   setup-ssh 子命令的行為
+       此子命令會自動執行下列作業，以設定 DAS 主機和遠端主機之間的 SSH 連結：
+
+       ·   產生 SSH 金鑰組。如果沒有 SSH
+           金鑰組，子命令的預設行為會提示使用者產生一個 SSH 金鑰組。產生 SSH
+           金鑰配對時，不需要加密複雜密碼。如果需要以複雜密碼保護的金鑰配對，則必須使用
+           SSH 命令 ssh-keygen(1) 手動產生金鑰配對。
+
+       ·   分配公開金鑰。子命令會將公開金鑰檔的內容附加至每個遠端主機上的
+           user-home/.ssh/authorized_keys
+           檔案。依照預設，子命令會在其執行所在之主機的 user-home/.ssh
+           目錄中找出公開金鑰檔。如果主機上沒有 user-home/.ssh/authorized_keys
+           檔案，子命令會建立檔案。user-home 為使用者在主機上的主目錄。
+
+           若要分配公開金鑰，必須認證使用者的 SSH
+           登入資訊。如果私密金鑰受到複雜密碼保護，則也需要該複雜密碼。依預設，子命令會提示使用者提供密碼和複雜密碼
+           (如有必要)。若分配公開金鑰時不需提示，請如下執行子命令：
+
+           ·   將 asadmin(1M) 公用程式的 --interactive 選項設為 false。
+
+           ·   將 asadmin 公用程式的 --passwordfile 選項設為檔案，其中
+               AS_ADMIN_SSHPASSWORD 項目會指定 SSH
+               使用者用來登入指定主機的密碼。
+
+           ·   如果需要複雜密碼，請確認 asadmin 公用程式的 --passwordfile
+               選項指定的檔案也包含 AS_ADMIN_SSHKEYPASSPHRASE 的項目。
+
+           如果已在主機上設定公開金鑰認證，則子命令會通知使用者，已經設定公開金鑰認證，不需要將金鑰分配至主機。
+
+選項
+       --help, -?
+           顯示子命令的說明文字。
+
+       --sshport
+           SSH 連線至要設定 SSH 的主機所使用的連接埠。預設值為 22。
+
+       --sshuser
+           遠端主機上即將執行處理作業以在該主機上設定 SSH 的 SSH
+           使用者。預設值為執行此子命令的使用者。若要確保 DAS
+           可以讀取此使用者的 SSH 私密金鑰檔案，請指定執行 DAS
+           處理作業的使用者。
+
+       --sshkeyfile
+           SSH 私密金鑰檔案的絕對路徑，該檔案屬於 --sshuser
+           選項指定的使用者。此檔案用於向主機上的 sshd 常駐程式認證。
+
+           執行此子命令的使用者必須能夠連線至金鑰檔案的路徑並讀取金鑰檔案。
+
+           預設值為使用者在執行子命令之主機上的 .ssh
+           目錄中的金鑰檔案。若有多個金鑰檔案，則子命令會依照以下優先順序加以使用：
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --sshpublickeyfile
+           SSH 公開金鑰檔案的絕對路徑，該檔案屬於 --sshuser
+           選項所指定的用戶者。公開金鑰檔案的內容會附加至正在設定 SSH
+           之每台主機上的使用者 .ssh/authorized_keys 檔案。如果主機上沒有
+           .ssh/authorized_keys 檔案，子命令會建立該檔案。
+
+           執行此子命令的使用者必須能夠連線至金鑰檔案的路徑並讀取金鑰檔案。
+
+           預設值為使用者在執行子命令之主機上的 .ssh
+           目錄中的金鑰檔案。若有多個金鑰檔案，則子命令會依照以下優先順序加以使用：
+
+            1. id_rsa.pub
+
+            2. id_dsa.pub
+
+            3. identity.pub
+
+       --generatekey
+           指定子命令是否在不提示使用者的情形下產生 SSH 金鑰檔案。
+
+           可能值如下：
+
+           true
+               子命令在不提示使用者的情形下產生 SSH 金鑰檔案。
+
+           false
+               子命令的行為取決於 SSH 金鑰檔案是否存在：
+
+               ·   如果 SSH 金鑰檔案存在，子命令就不會產生檔案。
+
+               ·   如果 SSH 金鑰檔案不存在，子命令的行為就取決於 asadmin
+                   公用程式的 --interactive 選項的值：
+
+                   ·   如果 --interactive 選項是
+                       true，子命令就會提示使用者建立檔案。
+
+                   ·   如果 --interactive 選項是 false，子命令就會失敗。
+
+               此為預設值。
+
+運算元
+       host-list
+           要設定 SSH 金鑰之主機的名稱清單 (以空格分隔)。
+
+範例
+       範例 1, 設定 SSH 金鑰
+           此範例會為主機 sj03 和 sj04 上的使用者 gfuser 設定 SSH
+           金鑰。這樣不會產生金鑰檔案，而是從執行子命令之主機上的使用者 .ssh
+           目錄複製。
+
+               asadmin> setup-ssh sj03 sj04
+               Enter SSH password for gfuser@sj03>
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj03
+               Successfully connected to gfuser@sj03 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj04
+               Successfully connected to gfuser@sj04 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+       範例 2, 產生和設定 SSH 金鑰
+           此範例會為主機 sua01 和 sua02 上的使用者 gfuser 產生和設定 SSH
+           金鑰。
+
+               asadmin> setup-ssh --generatekey=true sua01 sua02
+               Enter SSH password for gfuser@sua01>
+               Created directory /home/gfuser/.ssh
+               /usr/bin/ssh-keygen successfully generated the identification /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua01
+               Successfully connected to gfuser@sua01 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua02
+               Successfully connected to gfuser@sua02 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+結束狀態
+       0
+           命令執行成功
+
+       1
+           執行命令時發生錯誤
+
+另請參閱
+       ssh(1), ssh-keygen(1)
+
+       asadmin(1M)
+
+       sshd(1M)
+
+       Cygwin Information and Installation (http://www.cygwin.com/), MKS
+       Software (http://www.mkssoftware.com/)
+
+Java EE 7                     2010 年 12 月 14 日                 setup-ssh(1)

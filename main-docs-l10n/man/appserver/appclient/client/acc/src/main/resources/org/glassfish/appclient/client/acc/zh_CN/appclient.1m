@@ -1,0 +1,159 @@
+appclient(1M)                    实用程序命令                    appclient(1M)
+
+名称
+       appclient - 启动应用程序客户机容器，并调用通常打包在应用程序 JAR
+       文件中的客户机应用程序
+
+提要
+           appclient [client_application_classfile | -client client_application_jar]
+           [-mainclass main_class_name | -name display_name]
+           [-xml sun-acc.xml file] [-textauth]
+           [-targetserver host[:port][,host[:port]...]]
+           [-user username] [-passwordfile password_file]
+           [application-options]
+
+           appclient [jvm-options]
+           [-mainclass main_class_name | -name display_name]
+           [-xml client_config_xml_file] [-textauth]
+           [-targetserver host[:port][,host[:port]...]]
+           [-user username] [-passwordfile password_file]
+           class-selector [application-options]
+
+说明
+       使用 appclient 命令启动应用程序客户机容器并调用通常打包在应用程序 JAR
+       文件中的客户机应用程序。部署期间通过管理控制台或带有 --retrieve 选项的
+       asadmin deploy 命令指定并创建应用程序客户机 JAR 文件。您也可以使用
+       asadmin get-client-stubs 命令检索客户机 JAR 文件。
+
+       应用程序客户机容器是在适用于 Java 平台的虚拟机 (JVM 计算机)
+       上执行第一层应用程序客户机程序所需的一组 Java
+       类、库和其他文件。应用程序客户机容器使用 RMI-IIOP 与服务器进行通信。
+
+       运行 appclient 实用程序时，应使用 -client 或 -jar
+       选项传递在部署应用程序后检索到的客户机 JAR 文件。客户机 JAR
+       文件的名称格式为 app-nameClient.jar。对于一个 EAR
+       文件中的多个应用程序客户机，必须使用 -mainclass 或 -name
+       选项来指定要调用的客户机。
+
+       如果应用程序客户机是独立模块或 EAR
+       文件中的唯一客户机，应用程序客户机容器可以在不使用 -mainclass 或 -name
+       选项的情况下找到客户机。如果您提供的 -mainclass 或 -name
+       值与客户机中的值不匹配，应用程序客户机容器也会启动客户机，但会发出警告，表明所选内容与客户机中的信息不匹配。该警告还显示客户机实际的主类和名称值。
+
+选项
+       jvm-options
+           可选；可以为客户机应用程序设置 JVM 选项。这些选项可以是除 -client
+           或 -jar 以外的任何有效的 java 命令选项。JVM 选项可与其他 appclient
+           命令选项一起使用，但前提是这两种类型的选项都出现在 class-selector
+           之前。
+
+       client_application_classfile
+           可选；客户机应用程序 .class
+           文件的文件系统路径名。相对路径名必须相对于当前目录。该类文件必须包含将由应用程序客户机容器调用的
+           main() 方法。
+
+           如果使用
+           client_application_classfile，并且该类依赖于其他用户类，您还必须设置类路径。您既可使用
+           appclient 命令中的 -classpath JVM 选项，也可设置 CLASSPATH
+           环境变量。有关设置类路径的详细信息，请参阅“设置类路径 - Oracle
+           Solaris
+           版本”(http://download.oracle.com/javase/6/docs/technotes/tools/solaris/classpath.html)
+           或“设置类路径 - Windows
+           版本”(http://download.oracle.com/javase/6/docs/technotes/tools/windows/classpath.html)。
+
+       -client
+           可选；客户机 JAR 文件的名称和位置。
+
+       -mainclass
+           可选；MANIFEST.MF 文件中的 Main-Class
+           条目中指定的主客户机应用程序的完整类名。用于多个客户机应用程序。默认情况下，使用
+           client jar 中指定的类。例如，com.example.test.AppClient。
+
+       -name
+           可选；客户机应用程序的显示名称。用于多个客户机应用程序。默认情况下，在客户机
+           Jar application-client.xml 文件中指定显示名称，该文件通过
+           display-name 属性标识。
+
+       -xml
+           如果使用默认域、实例以及名称
+           (sun-acc.xml)，则为可选，否则为必需；标识客户机配置 XML
+           文件的名称和位置。如果未指定，则默认为 domain-dir/config 目录中的
+           sun-acc.xml 文件。
+
+       -textauth
+           可选；用于指定需要验证时使用文本格式验证。
+
+       -targetserver
+           可选；以逗号分隔的 ORB
+           端点的一个或多个服务器规范的列表。每个服务器规范必须至少包含主机。可选，服务器规范也可包含端口。如果服务器规范中省略了端口，则该主机使用默认值
+           3700。
+
+       -user
+           可选；经授权可对应用程序中特定保护组件 (例如，EJB 组件)
+           进行访问的应用程序用户。
+
+       -passwordfile
+           可选；指定包含应用程序客户机口令的文件的名称
+           (包括完整路径)，格式如下：
+
+               PASSWORD=appclient-password
+           如果省略此选项，则在命令提示符下以交互方式指定口令。
+
+               小心
+               ┌─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+               │注意                                                                                                                                 │
+               │避免在命令提示符下以交互方式指定口令。用户可以看到这样一个口令，他们可以运行命令来显示正在运行的进程以及用于启动这些进程的命令，例如 │
+               │ps。                                                                                                                                 │
+               └─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+           出于安全原因，appclient 实用程序无法读取指定为环境变量的口令。
+
+       class-selector
+           必需；您必须使用以下类选择器之一指定客户机应用程序类。
+
+           -jar jar-file
+               客户机 JAR 文件的名称和位置。部署期间通过 asadmin deploy
+               命令指定和创建应用程序客户机 JAR 文件。如果指定，则忽略
+               -classpath 设置，而遵从客户机 JAR 文件清单中的 Class-Path
+               设置。
+
+           class-name
+               应用程序客户机主类的全限定名称。应用程序客户机容器将调用该类的
+               main 方法来启动客户机。例如，com.example.test.AppClient。
+
+               如果将 class-name 用作类选择器，则还必须设置类路径。您既可使用
+               appclient 命令中的 -classpath JVM 选项，也可设置 CLASSPATH
+               环境变量。有关设置类路径的详细信息，请参阅“设置类路径 - Oracle
+               Solaris
+               版本”(http://download.oracle.com/javase/6/docs/technotes/tools/solaris/classpath.html)
+               或“设置类路径 - Windows
+               版本”(http://download.oracle.com/javase/6/docs/technotes/tools/windows/classpath.html)。
+
+       application-options
+           可选；可以设置客户机应用程序参数。
+
+示例
+       Example 1, 使用 appclient 命令
+
+               appclient -xml sun-acc.xml -jar myclientapp.jar scott sample
+           其中：sun-acc.xml 是客户机配置 XML 文件的名称，myclientapp.jar
+           是客户机应用程序 .jar 文件，而 scott 和 sample
+           是要传递到应用程序的参数。如果 sun-acc.xml 和 myclientapp.jar
+           不在当前目录中，您必须提供绝对路径位置；否则将使用相对路径。相对路径是相对于执行命令的目录而言的。
+
+属性
+       有关以下属性的说明，请参阅属
+
+       ┌──────────────────┬───────────────┐
+       │                  │               │
+       │       属性类型   │        属性值 │
+       ├──────────────────┼───────────────┤
+       │                  │               │
+       │       接口稳定性 │        不稳定 │
+       └──────────────────┴───────────────┘
+
+另请参阅
+       get-client-stubs(1)
+
+       asadmin(1M), package-appclient(1M)
+
+Java EE 7                     2010 年 12 月 16 日                appclient(1M)

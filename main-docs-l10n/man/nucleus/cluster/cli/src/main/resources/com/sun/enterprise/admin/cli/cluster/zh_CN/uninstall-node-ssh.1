@@ -1,0 +1,163 @@
+uninstall-node-ssh(1)       asadmin 实用程序子命令       uninstall-node-ssh(1)
+
+名称
+       uninstall-node-ssh - 从启用了 SSH 的指定主机上卸载 GlassFish Server
+       软件
+
+提要
+           uninstall-node-ssh [--help]
+           [--installdir as-install-parent]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile]
+           [--force={false|true}]
+           host-list
+
+说明
+       uninstall-node-ssh 子命令可以从作为子命令操作数指定的主机中卸载
+       GlassFish Server 软件。该子命令需要在运行该子命令的主机上以及卸载
+       GlassFish Server 软件的每台主机上配置安全 Shell (SSH)。
+
+           注意
+           ┌──────────────────────────────────────────────┐
+           │注                                            │
+           │                                              │
+           │           此子命令等同于                     │
+           │           uninstall-node(1)                  │
+           │           子命令。要从使用分布式组件对象模型 │
+           │           (DCOM) 远程协议的主机上卸载        │
+           │           GlassFish Server                   │
+           │           软件，请使用                       │
+           │           uninstall-node-dcom(1)             │
+           │           子命令。                           │
+           └──────────────────────────────────────────────┘
+
+       默认情况下，如果有预定义节点 localhost-domain
+       以外的任何节点位于正在从中卸载 GlassFish Server
+       软件的主机上，此子命令将失败。要从用户定义节点所在的主机中卸载
+       GlassFish Server 软件，请将 --force 选项设置为真
+       选项为真
+
+       如果基安装目录的父目录下的文件处于打开状态，则子命令将失败。
+
+       如果指定了多个主机，下列各项的配置必须在所有主机上相同：
+
+       ·   GlassFish Server 软件基础安装目录的父目录
+
+       ·   SSH 端口
+
+       ·   SSH 用户
+
+       ·   SSH 密钥文件
+
+       该子命令不会修改域管理服务器 (DAS) 的配置。
+
+       该子命令仅在本地模式下受支持。
+
+选项
+       --help, -?
+           显示子命令的帮助文本。
+
+       --installdir
+           每台主机上安装 GlassFish Server
+           软件的基安装目录的父目录的绝对路径，例如 /export/glassfish3/。
+
+           运行该子命令的用户必须对指定的目录具有写入访问权限。否则，会出现错误。
+
+           指定的目录中必须包含 GlassFish Server
+           软件在主机上的安装。否则，会出现错误。
+
+           默认值为运行该子命令的主机上的 GlassFish Server
+           软件基础安装目录的父目录。
+
+       --sshport
+           与要卸载 GlassFish Server 软件的主机建立 SSH
+           连接所用的端口。默认值为 22。
+
+       --sshuser
+           在要卸载 GlassFish Server 软件的主机上，运行相应的进程以通过 SSH
+           连接主机的用户。默认值为运行该子命令的用户。为了确保 DAS
+           可以读取此用户的 SSH 私有密钥文件，请指定正在运行 DAS 进程的用户。
+
+       --sshkeyfile
+           --sshuser 选项所指定用户的 SSH
+           私有密钥文件的绝对路径。此文件用于向主机上的 sshd
+           守护程序进行验证。
+
+           运行该子命令的用户必须能够访问密钥文件的路径并读取该密钥文件。
+
+           默认值为用户的 .ssh
+           目录中的密钥文件。如果找到多个密钥文件，则子命令遵循以下先后顺序：
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --force
+           指定是否即使用户定义的节点位于某个主机上，该子命令也要从该主机卸载
+           GlassFish Server 软件。可能的值如下：
+
+           假
+               如果主机上驻留了用户定义的节点，则不卸载软件且该子命令失败
+               (默认值)。
+
+               如果 --force 选项为假
+               软件文件。而不会删除基础安装目录的父目录中的其他内容，例如配置文件。
+
+           真
+               即使主机上驻留了用户定义的节点，该子命令仍从该主机中卸载
+               GlassFish Server 软件。
+
+               如果 --force
+               选项为真
+
+操作数
+       host-list
+           要卸载 GlassFish Server 软件的主机名的空格分隔列表。
+
+示例
+       Example 1, 从默认位置卸载 GlassFish Server 软件
+           该示例将从 sj03.example.com 和 sj04.example.com 主机的默认位置卸载
+           GlassFish Server 软件。
+
+               asadmin> uninstall-node-ssh sj03 sj04
+               Successfully connected to gfuser@sj03.example.com using keyfile /home/gfuser
+               /.ssh/id_rsa
+               Successfully connected to gfuser@sj04.example.com using keyfile /home/gfuser
+               /.ssh/id_rsa
+               Command uninstall-node-ssh executed successfully.
+
+       Example 2, 强制卸载 GlassFish Server 软件
+           该示例将在主机 sj02.example.com 上卸载 GlassFish Server 软件。
+
+           即使用户定义的节点位于该主机上，也会卸载该软件。将删除
+           /export/glassfish3 目录的全部内容。
+
+           为方便阅读，该示例省略了一些输出行。
+
+               asadmin> uninstall-node-ssh --force --installdir /export/glassfish3 sj02.example.com
+               Successfully connected to gfuser@sj02.example.com using keyfile /home/gfuser
+               /.ssh/id_rsa
+               Force removing file /export/glassfish3/mq/lib/help/en/add_overrides.htm
+               Force removing file /export/glassfish3/mq/lib/help/en/add_connfact.htm
+               ...
+               Force removing directory /export/glassfish3/glassfish/lib/appclient
+               Force removing directory /export/glassfish3/glassfish/lib
+               Force removing directory /export/glassfish3/glassfish
+               Command uninstall-node-ssh executed successfully.
+
+退出状态
+       0
+           已成功执行命令
+
+       1
+           执行命令时出现错误
+
+另请参阅
+       install-node(1), install-node-ssh(1), uninstall-node(1),
+       uninstall-node-dcom(1)
+
+       asadmin(1M)
+
+Java EE 7                      2012 年 1 月 5 日         uninstall-node-ssh(1)

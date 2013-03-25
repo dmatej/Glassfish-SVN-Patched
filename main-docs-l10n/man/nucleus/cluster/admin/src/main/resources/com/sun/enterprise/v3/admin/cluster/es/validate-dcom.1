@@ -1,0 +1,161 @@
+validate-dcom(1)        Subcomandos de la Utilidad asa        validate-dcom(1)
+
+NOMBRE DE REFERENCIA
+       validate-dcom - comprueba la conexión por DCOM con un host remoto.
+
+SINOPSIS
+           validate-dcom [--help]
+           [--windowsuser windows-user] [--windowsdomain windows-domain]
+           [--remotetestdir remote-test-directory]
+           [--verbose={false|true}] host-name
+
+DESCRIPCIÓN
+       El subcomando validate-dcom comprueba la conexión a través del
+       protocolo remoto Distributed Component Object Model (DCOM) con el host
+       remoto que se especifica como el operando del subcomando. El protocolo
+       DCOM sólo está disponible para los sistemas Windows.
+
+       Los requisitos previos para ejecutar este subcomando son los
+       siguientes:
+
+       ·   DCOM debe estar configurado en el host en el que se ejecuta el
+           servidor de administración de dominios (DAS) y en el host remoto
+           que se especifica como el operando del subcomando.
+
+       ·   En el host remoto deben estar abiertos los siguientes puertos:
+
+           ·   Puerto DCOM 135 o 139
+
+           ·   Puerto 445 de Windows Shares
+
+       ·   En el host remoto está activado el servidor como un servicio de
+           Windows.
+
+       Este subcomando verifica si se cumplen los requisitos previos para
+       crear un nodo DCOM o una instancia de GlassFish Server en un nodo DCOM.
+       Si se produce un fallo en el subcomando, también fallará cualquier
+       intento de crear un nodo DCOM o una instancia en un nodo DCOM.
+
+       Puede ejecutar este subcomando desde cualquier máquina que pueda
+       establecer contacto con el DAS.
+
+       El subcomando comprueba la conexión a través de DCOM con el host remoto
+       realizando las siguientes operaciones en el host remoto:
+
+       ·   Resolución del nombre del host.
+
+       ·   Conexión con DCOM a través del puerto 135 o 139.
+
+       ·   Conexión con Windows Shares a través del puerto 445.
+
+       ·   Copia de un script denominado delete_me.bat en la carpeta
+           especificada por la opción --remotetestdir.
+
+       ·   Ejecución del script para obtener un listado de la carpeta en la
+           que se escribió delete_me.bat.
+
+       Por defecto, el subcomando no muestra información sobre las operaciones
+       realizadas para probar la conexión al host remoto. Para visualizar
+       información sobre estas operaciones, define la opción --verbose en
+       true.
+
+       Este subcomando sólo está soportado en modo remoto.
+
+OPCIONES
+       --help, -?
+           Muestra el texto de ayuda para el subcomando.
+
+       --windowsuser, -w
+           El usuario del host remoto que va a ejecutar el proceso para
+           conectarse al host a través de DCOM. El valor por defecto es el
+           usuario que está ejecutando el proceso DAS.
+
+       --windowsdomain, -d
+           El nombre del dominio de Windows que contiene el usuario que
+           especifica la opción --windowsuser. El valor por defecto es el
+           nombre del host en el que se ejecuta el subcomando.
+
+       --remotetestdir
+           Especifica la carpeta del host remoto en la que el subcomando crea
+           el archivo delete_me.bat. El usuario que especifica la opción
+           --windowsuser debe tener acceso de escritura a esta carpeta. De lo
+           contrario, se produce un error. El valor por defecto es C:\.
+
+       --verbose, -v
+           Especifica si el subcomando mostrará información sobre las
+           operaciones que realizadas para probar la conexión al host remoto.
+
+           Los valores posibles son los siguientes:
+
+           false
+               No se muestra ningún tipo de información sobre las operaciones
+               realizadas para probar la conexión (valor por defecto).
+
+           true
+               El subcomando mostrará información sobre las operaciones
+               realizadas para probar la conexión.
+
+               Si la opción --verbose es true y se ha definido la variable de
+               entorno AS_DEBUG, el subcomando también mostrará la línea de
+               comando de cada proceso en ejecución en el host remoto.
+
+OPERANDOS
+       host-name
+           El nombre del host para el que comprobar la conexión a través de
+           DCOM.
+
+EJEMPLOS
+       Ejemplo 1, Comprobación de la Conexión mediante DCOM con un Host Remoto
+           En este ejemplo se comprueba la conexión a través de DCOM con el
+           host wpmdl2.
+
+               asadmin> validate-dcom --wpmdl2
+               Command validate-dcom executed successfully.
+
+       Ejemplo 2, Comprobación Detallada de la Conexión mediante DCOM con un
+       Host Remoto
+           Este ejemplo prueba la conexión mediante DCOM con el host wpmdl2 y
+           muestra información acerca de las operaciones realizadas para
+           probar la conexión con el host remoto.
+
+               asadmin> validate-dcom --verbose wpmdl2
+
+               Successfully resolved host name to: wpmdl2/192.168.122.106
+               Successfully connected to DCOM Port at port 135 on host wpmdl2.
+               Successfully connected to NetBIOS Session Service at port 139 on host wpmdl2.
+               Successfully connected to Windows Shares at port 445 on host wpmdl2.
+               Successfully accessed C: on wpmdl2 using DCOM.
+               Successfully wrote delete_me.bat to C: on wpmdl2 using DCOM.
+               Successfully accessed WMI (Windows Management Interface) on wpmdl2. There are 40
+               processes running on wpmdl2.
+               Successfully ran the test script on wpmdl2 using DCOM.
+               The script simply ran the DIR command. Here are the first few lines from the
+               output of the dir command on the remote machine:
+
+               C:\Windows\system32>dir C:\
+                Volume in drive C has no label.
+                Volume Serial Number is XXXX-XXX
+
+                Directory of C:\
+
+               12/05/2011  10:21 AM                63 .asadminpass
+               02/15/2011  01:08 PM    <DIR>          aroot
+               12/05/2011  04:43 PM                 8 delete_me.bat
+               03/03/2011  10:36 AM    <DIR>          export
+
+               Command validate-dcom executed successfully.
+
+ESTADO DE SALIDA
+       0
+           Comando ejecutado correctamente
+
+       1
+           Error al ejecutar el comando
+
+CONSULTE TAMBIÉN
+       create-node-dcom(1), delete-node-dcom(1), list-nodes(1),
+       ping-node-dcom(1), update-node-dcom(1)
+
+       asadmin(1M)
+
+Java EE 7                     5 de enero de 2012              validate-dcom(1)
