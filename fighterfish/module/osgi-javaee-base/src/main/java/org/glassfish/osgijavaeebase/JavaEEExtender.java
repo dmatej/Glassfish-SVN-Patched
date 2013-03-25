@@ -214,7 +214,7 @@ public class JavaEEExtender implements Extender {
 
         public long getDeploymentTimeout() {
             long timeOut;
-            String time = context.getProperty("DEPLOYMENT_TIMEOUT");
+            String time = context.getProperty(DEPLOYMENT_TIMEOUT);
             if (time != null) {
                 timeOut = Long.valueOf(time);
             } else {
