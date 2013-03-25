@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -53,6 +53,8 @@ import org.glassfish.internal.data.ApplicationInfo;
 import org.glassfish.internal.deployment.Deployment;
 import org.glassfish.server.ServerEnvironmentImpl;
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.BundleReference;
 
 import java.io.File;
 import java.io.IOException;
@@ -241,29 +243,41 @@ public abstract class OSGiDeploymentRequest
 
         // ok we need to explode the archive somwhere and
         // remember to delete it on shutdown
-        // We can't use archive name as it can contain file separator, so
-        // we shall use a temporary name
-        // TODO(Sahoo): Do it in Bundle private storage of the container
-        File tmpFile = File.createTempFile("osgiapp", "");
-
-        // create a directory in place of the tmp file.
-        if (!tmpFile.delete()) {
-            throw new IOException("Not able to expand " + archive.getName() +
-                    " in " + tmpFile);
+        File tmpFile = getExplodedDir();
+        if (!tmpFile.exists()) {
+        	if (tmpFile.mkdirs())
+        	{
+        		WritableArchive targetArchive = archiveFactory.createArchive(tmpFile);
+        		new OSGiArchiveHandler().expand(archive, targetArchive, dc);
+        		logger.logp(Level.INFO, "OSGiDeploymentRequest", "expand",
+        				"Expanded at {0}", new Object[]{targetArchive.getURI()});
+        		archive = archiveFactory.openArchive(tmpFile);
+        	}else{
+        		throw new IOException("Not able to expand " + archive.getName() +
+        				" in " + tmpFile);
+        	}
         }
-        tmpFile = new File(tmpFile.getAbsolutePath());
-        tmpFile.deleteOnExit();
-        if (tmpFile.mkdirs())
-        {
-            WritableArchive targetArchive = archiveFactory.createArchive(tmpFile);
-            new OSGiArchiveHandler().expand(archive, targetArchive, dc);
-            logger.logp(Level.INFO, "OSGiDeploymentRequest", "expand",
-                    "Expanded at {0}", new Object[]{targetArchive.getURI()});
-            archive = archiveFactory.openArchive(tmpFile);
-        } else {
-            throw new IOException("Not able to expand " + archive.getName() +
-                    " in " + tmpFile);
-        }
+    }
+    
+    /**
+     * We don't keep the file in tmpdir, because in some deployment environment, the tmpdir is periodically cleaned
+     * up by external programs to reclaim memory. So, we keep them under application dir in bundle private storage area.
+     * More over, we need to make sure that the directory is named uniquely to avoid accidental reuse.
+     * So, we include Bundle-Id and Bundle-LastModifiedTimestamp in the dir name.
+     * 
+     * @return the directory where the OSGi application will be exploded during deployment
+     */
+    private File getExplodedDir() {
+    	BundleContext ctx = getBundleContext(this.getClass());
+    	File bundleBaseStorage = ctx.getDataFile("");
+    	// We keep everything under application directory.
+    	// We include Bundle-Id and Bundle-Timestamp to ensure that we don't accidentally use stale contents.
+    	// Assume the following where stale contents can be there in a file if we don't use timestamp in name:
+    	// a wab deployed. Now system is stopped forcefully. During next restart osgi-webcontainer
+    	// is not started, but wab is updated. Next time, osgi-web-container comes up, it should not end up using
+    	// previously exploded directory.
+    	final String name = "applications" + File.separator + "bundle" + b.getBundleId() + "-" + b.getLastModified();
+    	return new File(bundleBaseStorage, name);
     }
 
     /**
@@ -312,5 +326,21 @@ public abstract class OSGiDeploymentRequest
         ServerEnvironment se = Globals.get(ServerEnvironment.class);
         String target = se.getInstanceName();
         return target;
+    }
+    
+    /** Obtaining BundleContext which belongs to osgi-javaee-base
+     * @param clazz some class belongs to osgi-javaee-base
+     * @return BundleContext which belongs to osgi-javaee-base
+     */
+    private BundleContext getBundleContext(Class<?> clazz) {
+    	BundleContext bc = null;
+    	try {
+    		bc = BundleReference.class.cast(clazz.getClassLoader())
+    				.getBundle().getBundleContext();
+    	}catch (ClassCastException cce) {
+    		throw cce;
+    	}
+    	
+    	return bc;
     }
 }
