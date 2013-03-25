@@ -333,14 +333,8 @@ public abstract class OSGiDeploymentRequest
      * @return BundleContext which belongs to osgi-javaee-base
      */
     private BundleContext getBundleContext(Class<?> clazz) {
-    	BundleContext bc = null;
-    	try {
-    		bc = BundleReference.class.cast(clazz.getClassLoader())
-    				.getBundle().getBundleContext();
-    	}catch (ClassCastException cce) {
-    		throw cce;
-    	}
-    	
-    	return bc;
+    	return BundleReference.class.cast(clazz.getClassLoader())
+                .getBundle().getBundleContext();
+
     }
 }
