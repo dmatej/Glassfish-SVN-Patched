@@ -37,7 +37,7 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package org.glassfish.spec;
+package org.glassfish.spec.maven;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -59,7 +59,6 @@ public class SetSpecPropertiesMojo extends AbstractSpecMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         checkParams();
-
         Properties specProps = computeSpecProperties();
         
         getLog().info("");

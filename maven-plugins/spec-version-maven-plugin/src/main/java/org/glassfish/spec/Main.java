@@ -46,9 +46,9 @@ import java.util.jar.*;
 import java.util.zip.*;
 
 /**
- * Main - check that version information in jar files is correct.
+ * VersionCheck - check that version information in jar files is correct.
  *
- * Usage: java Main
+ * Usage: java VersionCheck
  *	--properties file	read settings from property file
  *	--nonfinal		non-final specification
  *	--standalone		API has a standalone implementation
@@ -298,10 +298,10 @@ public class Main {
 	System.out.printf("API jar file:\t\t\t%s-api.jar%n", apipackage);
 	System.out.printf("  OSGi Bundle-SymbolicName:\t%s-api%n", apipackage);
 	if (nonfinal) {
-	    System.out.printf("  OSGi bundle specversion:\t%s.99.b%s%n",
-		specversion, specbuild);
-	    System.out.printf("  OSGi Bundle-Version:\t\t%s.99.b%s%n",
-		specversion, specbuild);
+	    System.out.printf("  OSGi bundle specversion:\t%s.99.%s%n",
+		specversion, buildname(specbuild));
+	    System.out.printf("  OSGi Bundle-Version:\t\t%s.99.%s%n",
+		specversion, buildname(specbuild));
 	} else {
 	    System.out.printf("  OSGi bundle specversion:\t%s%n", specversion);
 	    System.out.printf("  OSGi Bundle-Version:\t\t%s%n",
@@ -310,19 +310,20 @@ public class Main {
 	System.out.printf("  Maven group ID, artifact ID:\t%s:%s-api%n",
 	    apipackage, apipackage);
 	if (nonfinal)
-	    System.out.printf("  Maven version:\t\t%s-b%s%n",
-		newspecversion, specbuild);
+	    System.out.printf("  Maven version:\t\t%s-%s%n",
+		newspecversion, buildname(specbuild));
 	else
 	    System.out.printf("  Maven version:\t\t%s%n", specimplversion);
 	System.out.printf("  Maven API jar file:\t\t%s-api-%s.jar%n",
 	    apipackage,
-	    (nonfinal ? (newspecversion + "-b" + specbuild) : specimplversion));
+	    (nonfinal ?
+		(newspecversion + "-" + buildname(specbuild)) : specimplversion));
 	System.out.printf("  Jar Extension-Name:\t\t%s%n", apipackage);
 	if (nonfinal) {
 	    System.out.printf("  jar Specification-Version:\t%s.99.%s%n",
-		specversion, specbuild);
-	    System.out.printf("  jar Implementation-Version:\t%s-b%s%n",
-		newspecversion, specbuild);
+		specversion, buildnum(specbuild));
+	    System.out.printf("  jar Implementation-Version:\t%s-%s%n",
+		newspecversion, buildname(specbuild));
 	} else {
 	    System.out.printf("  jar Specification-Version:\t%s%n",
 		specversion);
@@ -342,10 +343,10 @@ public class Main {
 	System.out.printf("  OSGi Bundle-SymbolicName:\t%s.%s%n",
 	    implpackage, apipackage);
 	if (nonfinal) {
-	    System.out.printf("  OSGi bundle specversion:\t%s.99.b%s%n",
-		specversion, specbuild);
-	    System.out.printf("  OSGi Bundle-Version:\t\t%s.99.b%s%n",
-		shortosgiimplversion, implbuild);
+	    System.out.printf("  OSGi bundle specversion:\t%s.99.%s%n",
+		specversion, buildname(specbuild));
+	    System.out.printf("  OSGi Bundle-Version:\t\t%s.99.%s%n",
+		shortosgiimplversion, buildname(implbuild));
 	} else {
 	    System.out.printf("  OSGi bundle specversion:\t%s%n", specversion);
 	    System.out.printf("  OSGi Bundle-Version:\t\t%s%n",
@@ -354,19 +355,20 @@ public class Main {
 	System.out.printf("  Maven group ID, artifact ID:\t%s:%s%n",
 	    implpackage, apipackage);
 	if (nonfinal)
-	    System.out.printf("  Maven version:\t\t%s-b%s%n",
-		newimplversion, implbuild);
+	    System.out.printf("  Maven version:\t\t%s-%s%n",
+		newimplversion, buildname(implbuild));
 	else
 	    System.out.printf("  Maven version:\t\t%s%n", implversion);
 	System.out.printf("  Maven impl jar file:\t\t%s-%s.jar%n",
 	    apipackage,
-	    (nonfinal ? (newimplversion + "-b" + implbuild) : implversion));
+	    (nonfinal ?
+		(newimplversion + "-" + buildname(implbuild)) : implversion));
 	System.out.printf("  jar Extension-Name:\t\t%s%n", apipackage);
 	if (nonfinal) {
 	    System.out.printf("  jar Specification-Version:\t%s.99.%s%n",
-		specversion, specbuild);
-	    System.out.printf("  jar Implementation-Version:\t%s-b%s%n",
-		newimplversion, implbuild);
+		specversion, buildnum(specbuild));
+	    System.out.printf("  jar Implementation-Version:\t%s-%s%n",
+		newimplversion, buildname(implbuild));
 	} else {
 	    System.out.printf("  jar Specification-Version:\t%s%n",
 		specversion);
@@ -381,10 +383,12 @@ public class Main {
 	 */
 	if (maven && apijar == null)
 	    apijar = repoUrl(apipackage, apipackage + "-api", nonfinal ?
-		    (newspecversion + "-b" + specbuild) : specimplversion);
+		    (newspecversion + "-" + buildname(specbuild)) :
+		    specimplversion);
 	if (maven && standalone && impljar == null)
 	    impljar = repoUrl(implpackage, apipackage,
-		nonfinal ? (newimplversion + "-b" + implbuild) : implversion);
+		nonfinal ? (newimplversion + "-" + buildname(implbuild)) :
+		    implversion);
 
 	if (apijar == null)
 	    apijar = prompt("Enter the API jar file name");
@@ -402,7 +406,7 @@ public class Main {
 	    }
 	    String apijarname = apipackage + "-api.jar";
 	    String apijarmavenname = apipackage + "-api-" +
-		(nonfinal ? (newspecversion + "-b" + specbuild) :
+		(nonfinal ? (newspecversion + "-" + buildname(specbuild)) :
 			    specimplversion) +
 		".jar";
 	    if (!(name.equals(apijarname) || name.equals(apijarmavenname)))
@@ -413,7 +417,7 @@ public class Main {
 	    Attributes a = m.getMainAttributes();
 	    acheck(a, "Bundle-SymbolicName", apipackage + "-api");
 	    acheck(a, "Bundle-Version", nonfinal ?
-		    (specversion + ".99.b" + specbuild) :
+		    (specversion + ".99." + buildname(specbuild)) :
 		    osgispecimplversion);
 
 	    // check Maven group ID, artifact ID, version
@@ -430,7 +434,7 @@ public class Main {
 		    if (ename.startsWith("META-INF/maven/") &&
 			ename.endsWith("/pom.properties")) {
 			mavenCheck(jf.getInputStream(je),
-			    nonfinal ? (newspecversion + "-b" + specbuild) :
+			    nonfinal ? (newspecversion + "-" + buildname(specbuild)) :
 				specimplversion,
 			    apipackage, apipackage + "-api");
 			break;
@@ -438,7 +442,7 @@ public class Main {
 		}
 	    } else {
 		mavenCheck(jf.getInputStream(ze),
-		    nonfinal ? (newspecversion + "-b" + specbuild) :
+		    nonfinal ? (newspecversion + "-" + buildname(specbuild)) :
 			specimplversion,
 		    apipackage, apipackage + "-api");
 	    }
@@ -446,9 +450,9 @@ public class Main {
 	    acheck(a, "Extension-Name", apipackage);
 	    if (nonfinal) {
 		acheck(a, "Specification-Version",
-		    specversion + ".99." + specbuild);
+		    specversion + ".99." + buildnum(specbuild));
 		acheck(a, "Implementation-Version",
-		    newspecversion + "-b" + specbuild);
+		    newspecversion + "-" + buildname(specbuild));
 	    } else {
 		acheck(a, "Specification-Version", specversion);
 		acheck(a, "Implementation-Version", specimplversion);
@@ -476,7 +480,7 @@ public class Main {
 	    String impljarname = apipackage + ".jar";
 	    String impljarmavenname =
 		apipackage + "-" +
-		    (nonfinal ? (newimplversion + "-b" + implbuild) :
+		    (nonfinal ? (newimplversion + "-" + buildname(implbuild)) :
 				implversion) +
 		    ".jar";
 	    if (!(name.equals(impljarname) || name.equals(impljarmavenname)))
@@ -487,7 +491,8 @@ public class Main {
 	    Attributes a = m.getMainAttributes();
 	    acheck(a, "Bundle-SymbolicName", implpackage + "." + apipackage);
 	    acheck(a, "Bundle-Version", nonfinal ?
-		(shortosgiimplversion + ".99.b" + implbuild) : osgiimplversion);
+		(shortosgiimplversion + ".99." + buildname(implbuild)) :
+		osgiimplversion);
 
 	    // check Maven group ID, artifact ID, version
 	    ZipEntry ze = jf.getEntry("META-INF/maven/" +
@@ -503,7 +508,8 @@ public class Main {
 		    if (ename.startsWith("META-INF/maven/") &&
 			ename.endsWith("/pom.properties")) {
 			mavenCheck(jf.getInputStream(je),
-			    nonfinal ? (newimplversion + "-b" + implbuild) :
+			    nonfinal ? (newimplversion + "-" +
+					    buildname(implbuild)) :
 					implversion,
 			    implpackage, apipackage);
 			break;
@@ -511,7 +517,7 @@ public class Main {
 		}
 	    } else {
 		mavenCheck(jf.getInputStream(ze),
-		    nonfinal ? (newimplversion + "-b" + implbuild) :
+		    nonfinal ? (newimplversion + "-" + buildname(implbuild)) :
 				implversion,
 		    implpackage, apipackage);
 	    }
@@ -519,9 +525,9 @@ public class Main {
 	    acheck(a, "Extension-Name", apipackage);
 	    if (nonfinal) {
 		acheck(a, "Specification-Version",
-		    specversion + ".99." + specbuild);
+		    specversion + ".99." + buildnum(specbuild));
 		acheck(a, "Implementation-Version",
-		    newimplversion + "-b" + implbuild);
+		    newimplversion + "-" + buildname(implbuild));
 	    } else {
 		acheck(a, "Specification-Version", specversion);
 		acheck(a, "Implementation-Version", implversion);
@@ -568,6 +574,26 @@ public class Main {
      */
     private static void warn(String s) {
 	System.out.println("WARNING: " + s);
+    }
+
+    /**
+     * Return the build "name" with a leading "b" or whatever.
+     */
+    private static String buildname(String b) {
+	if (Character.isDigit(b.charAt(0)))
+	    return "b" + b;
+	else
+	    return b;
+    }
+
+    /**
+     * Returnthe build number, without any leading "b".
+     */
+    private static String buildnum(String b) {
+	if (Character.isDigit(b.charAt(0)))
+	    return b;
+	else
+	    return b.substring(1);
     }
 
     /**

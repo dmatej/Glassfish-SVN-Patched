@@ -1,5 +1,3 @@
-package org.glassfish.spec;
-
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
@@ -40,12 +38,14 @@ package org.glassfish.spec;
  * holder.
  */
 
-import java.io.File;
+package org.glassfish.spec.test.integration;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
+import org.glassfish.spec.test.sets.Womba;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -56,20 +56,12 @@ import org.junit.Test;
  */
 public class WombaTest {
     
-    private static final String artifactId = "javax.womba-api";
-    private static final String MODULES_DIR = "target/it/modules";
-    private static final File jar = new File(MODULES_DIR+"/"+artifactId+"/target/"+artifactId+".jar");
-    private static final String BUNDLE_VERSION = "1.0.99.b35";
-    private static final String BUNDLE_SYMBOLIC_NAME = "javax.womba-api";
-    private static final String EXTENSION_NAME = "javax.womba";
-    private static final String IMPLEMENTATION_VERSION = "1.0-b35";
-    
     private static Manifest manifest;
     
     @BeforeClass
     public static void init() throws IOException{
-        Assert.assertTrue("test that "+jar.getCanonicalPath()+" exists", jar.exists());
-        JarFile jarFile = new JarFile(jar);
+        Assert.assertTrue("test that "+Womba.jar.getCanonicalPath()+" exists", Womba.jar.exists());
+        JarFile jarFile = new JarFile(Womba.jar);
         ZipEntry e = jarFile.getEntry("META-INF/MANIFEST.MF");
         Assert.assertNotNull(e);
         InputStream is = jarFile.getInputStream(e);
@@ -77,25 +69,25 @@ public class WombaTest {
     }
     
     @Test
-    public void wonbaManifest() {
+    public void verifyManifest() {
         // Bundle-Version
         String bundleVersion = manifest.getMainAttributes().getValue("Bundle-Version");
         Assert.assertNotNull(bundleVersion);
-        Assert.assertEquals(bundleVersion, BUNDLE_VERSION);
+        Assert.assertEquals(Womba.BUNDLE_VERSION,bundleVersion);
         
         // Bundle-SymbolicName
         String bundleSymbolicName = manifest.getMainAttributes().getValue("Bundle-SymbolicName");
         Assert.assertNotNull(bundleSymbolicName);
-        Assert.assertEquals(bundleSymbolicName, BUNDLE_SYMBOLIC_NAME);
+        Assert.assertEquals(Womba.BUNDLE_SYMBOLIC_NAME,bundleSymbolicName);
         
         // Extension-Name
         String extensionName = manifest.getMainAttributes().getValue("Extension-Name");
         Assert.assertNotNull(extensionName);
-        Assert.assertEquals(extensionName, EXTENSION_NAME);
+        Assert.assertEquals(Womba.EXTENSION_NAME,extensionName);
         
         // Implementation-Version
         String implementationVersion = manifest.getMainAttributes().getValue("Implementation-Version");
         Assert.assertNotNull(implementationVersion);
-        Assert.assertEquals(implementationVersion, IMPLEMENTATION_VERSION);
+        Assert.assertEquals(Womba.IMPLEMENTATION_VERSION,implementationVersion);
     }
 }
