@@ -244,19 +244,29 @@ public abstract class OSGiDeploymentRequest
         // ok we need to explode the archive somwhere and
         // remember to delete it on shutdown
         File tmpFile = getExplodedDir();
-        if (!tmpFile.exists()) {
-        	if (tmpFile.mkdirs())
-        	{
-        		WritableArchive targetArchive = archiveFactory.createArchive(tmpFile);
-        		new OSGiArchiveHandler().expand(archive, targetArchive, dc);
-        		logger.logp(Level.INFO, "OSGiDeploymentRequest", "expand",
-        				"Expanded at {0}", new Object[]{targetArchive.getURI()});
-        		archive = archiveFactory.openArchive(tmpFile);
-        	}else{
-        		throw new IOException("Not able to expand " + archive.getName() +
-        				" in " + tmpFile);
-        	}
+        tmpFile.deleteOnExit();
+
+        // We don't reuse old directory at this point of time as we are not completely sure if it is safe to reuse.
+        // It is possible that we had a semicomplete directory from previous execution.
+        // e.g., if glassfish can be killed while osgi-container is exploding the archive.
+        // or glassfish can be killed while it was in the middle of deleting the previously exploded directory.
+        // So, better to not reuse existing directory until we ensure that explosion or removal are atomic operations.
+        if (tmpFile.exists()) {
+            logger.logp(Level.INFO, "OSGiDeploymentRequest", "expandIfNeeded",
+                    "Going to delete existing exploded content found at {0}", new Object[]{tmpFile});
+            if (!FileUtils.whack(tmpFile)) {
+                throw new IOException("Unable to delete directory wth name " + tmpFile);
+            }
         }
+        if (!tmpFile.mkdirs())
+        {
+            throw new IOException("Not able to expand " + archive.getName() + " in " + tmpFile);
+        }
+        WritableArchive targetArchive = archiveFactory.createArchive(tmpFile);
+        new OSGiArchiveHandler().expand(archive, targetArchive, dc);
+        logger.logp(Level.INFO, "OSGiDeploymentRequest", "expandIfNeeded",
+                "Expanded at {0}", new Object[]{targetArchive.getURI()});
+        archive = archiveFactory.openArchive(tmpFile);
     }
     
     /**
