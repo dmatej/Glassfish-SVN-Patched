@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -145,11 +145,11 @@ public abstract class AbstractOSGiDeployer implements OSGiDeployer {
     }
 
     protected ActionReport getReport() {
-        try {
-            return getGlassFish().getService(ActionReport.class, "plain");
-        } catch (GlassFishException e) {
-            throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
-        }
+        // First of all, we can't get a reference to GlassFish service when server is stopping, because
+        // GlassFish is first unregistered from registry when shutdown is called. Even if we we cache a reference to
+        // GlassFish during startup, we can't use GlassFish.getService, because GlassFish would be in stopping state
+        // and that would lead to IllegalStateException. So, use the ugly Globals API.
+        return Globals.get(ActionReport.class);
     }
 
     /**
@@ -191,17 +191,6 @@ public abstract class AbstractOSGiDeployer implements OSGiDeployer {
      * Integration with Event Admin Service happens here.
      */
     protected void raiseEvent(State state, Bundle appBundle, Throwable throwable) {
-    }
-
-    private GlassFish getGlassFish() {
-        GlassFish gf = (GlassFish) getBundleContext().getService(getBundleContext().getServiceReference(
-                GlassFish.class.getName()));
-        try {
-            assert(gf.getStatus() == GlassFish.Status.STARTED);
-        } catch (GlassFishException e) {
-            throw new RuntimeException(e); // TODO(Sahoo): Proper Exception Handling
-        }
-        return gf;
     }
 
 }
