@@ -77,7 +77,7 @@ public class WombaTest {
     }
     
     @Test
-    public void wonbaManifest() throws IOException{
+    public void wonbaManifest() {
         // Bundle-Version
         String bundleVersion = manifest.getMainAttributes().getValue("Bundle-Version");
         Assert.assertNotNull(bundleVersion);
