@@ -58,17 +58,17 @@ public class SpecVersionTest {
         final boolean _nonfinal = true;
         final boolean _api = true;
         final boolean _impl = false;
-        final String _apipackage = "javax.womba";
+        final String _apipackage = Womba.API_PACKAGE;
         final boolean _standalone = false;
         final String _implpackage = null;
         final String _implversion = null;
         final String _newimplversion = null;
-        final String _specversion = "1.0";
-        final String _newspecversion = "1.0";
-        final String _specimplversion = "1.0.99.b35";
-        final MavenVersion mavenVersion = new MavenVersion("1","0","b35-SNAPSHOT");
-        final String groupId = "javax.womba";
-        final String artifactId = "javax.womba-api";
+        final String _specversion = Womba.SPEC_VERSION;
+        final String _newspecversion = Womba.NEW_SPEC_VERSION;
+        final String _specimplversion = Womba.SPEC_IMPL_VERSION;
+        final MavenVersion mavenVersion = Womba.MAVEN_VERSION;
+        final String groupId = Womba.GROUPID;
+        final String artifactId = Womba.ARTIFACTID;
         
         try {
             SpecVersion.checkParams(
@@ -103,7 +103,7 @@ public class SpecVersionTest {
                 _implversion,
                 mavenVersion.getBuildNumber());
 
-        // jar Extension-Name
+        // JAR Extension-Name
         String extensionName = specProps.getProperty("spec.extension.name");
         Assert.assertNotNull(extensionName);
         Assert.assertEquals(Womba.EXTENSION_NAME,extensionName);
@@ -123,7 +123,7 @@ public class SpecVersionTest {
         Assert.assertNotNull(bundleVersion);
         Assert.assertEquals(Womba.BUNDLE_VERSION,bundleVersion);
         
-        // jar Implementation-Version
+        // JAR Implementation-Version
         String implementationVersion = specProps.getProperty("spec.implementation.version");
         Assert.assertNotNull(implementationVersion);
         Assert.assertEquals(Womba.IMPLEMENTATION_VERSION,implementationVersion);

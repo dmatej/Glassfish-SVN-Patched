@@ -60,8 +60,8 @@ public class WombaTest {
     
     @BeforeClass
     public static void init() throws IOException{
-        Assert.assertTrue("test that "+Womba.jar.getCanonicalPath()+" exists", Womba.jar.exists());
-        JarFile jarFile = new JarFile(Womba.jar);
+        Assert.assertTrue("test that "+Womba.JAR.getCanonicalPath()+" exists", Womba.JAR.exists());
+        JarFile jarFile = new JarFile(Womba.JAR);
         ZipEntry e = jarFile.getEntry("META-INF/MANIFEST.MF");
         Assert.assertNotNull(e);
         InputStream is = jarFile.getInputStream(e);
