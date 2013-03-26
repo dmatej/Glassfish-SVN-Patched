@@ -1,0 +1,197 @@
+appclient(1M)               Comandos do Utilitário               appclient(1M)
+
+NOME
+       appclient - aciona o Application Client Container e chama a aplicação
+       cliente que normalmente está encapsulada no arquivo JAR da aplicação
+
+SINOPSE
+           appclient [client_application_classfile | -client client_application_jar]
+           [-mainclass main_class_name | -name display_name]
+           [-xml sun-acc.xml file] [-textauth]
+           [-targetserver host[:port][,host[:port]...]]
+           [-user username] [-passwordfile password_file]
+           [application-options]
+
+           appclient [jvm-options]
+           [-mainclass main_class_name | -name display_name]
+           [-xml client_config_xml_file] [-textauth]
+           [-targetserver host[:port][,host[:port]...]]
+           [-user username] [-passwordfile password_file]
+           class-selector [application-options]
+
+DESCRIçãO
+       Utilize o comando appclient para acionar o Application Client Container
+       e chamar a aplicação cliente que normalmente está encapsulada em um
+       arquivo JAR da aplicação. O arquivo JAR do cliente da aplicação é
+       especificado e criado durante a implantação pela Console de
+       Administração ou pelo comando asadmin deploy com a opção --retrieve.
+       Também é possível recuperar o arquivo JAR do cliente utilizando o
+       comando asadmin-get-client-stubs.
+
+       O Application Client Container é um conjunto de classes Java,
+       bibliotecas e outros arquivos que são necessários para executar um
+       programa cliente da aplicação de primeiro nível em uma Máquina Virtual
+       para a plataforma Java (máquina JVM). O Application Client Container
+       comunica-se com o servidor utilizando RMI-IIOP.
+
+       O arquivo JAR do cliente que foi recuperado depois de implantar uma
+       aplicação deve ser transmitido com a opção -client ou -jar ao executar
+       o utilitário appclient. O nome de arquivo JAR do cliente é do formato
+       app-name Client.jar. Para vários clientes da aplicação em um arquivo
+       EAR, você deve usar a opção -mainclass ou -name para especificar qual
+       cliente deverá ser chamado.
+
+       Se o cliente da aplicação for um módulo standalone ou o único cliente
+       em um arquivo EAR, o Application Client Container poderá encontrar o
+       cliente sem utilizar as opções -mainclass ou -name. Se você
+       providenciar um valor -mainclass ou -name que não corresponda ao que
+       está no cliente, o Application Client Container acionará o cliente de
+       qualquer maneira, mas emitirá uma advertência dizendo que a seleção não
+       corresponde às informações do cliente. A advertência também exibe quais
+       são os valores de nome e classe principal reais do cliente.
+
+OPçõES
+       jvm-options
+           opcional; é possível definir opções JVM para a aplicação cliente.
+           Essas podem ser quaisquer opções de comando java válidas, exceto
+           -client ou -jar. As opções JVM podem ser combinadas com outras
+           opções do comando appclient, contanto que os dois tipos de opções
+           apareçam antes de class-selector.
+
+       client_application_classfile
+           opcional; o nome do caminho do sistema de arquivos do arquivo
+            .class da aplicação cliente. O nome do caminho relativo deve ser
+           relativo ao diretório atual. Esse arquivo de classe deve conter o
+           método main() a ser chamado pelo Application Client Container.
+
+           Se você utiliza client_application_classfile e a classe é
+           dependente de outras classes de usuário, também é necessário
+           definir o classpath. Você pode utilizar a opção -classpath da JVM
+           no comando appclient ou definir a variável de ambiente CLASSPATH.
+           Para obter mais informações sobre como definir um classpath,
+           consulte Setting the Class Path, Oracle Solaris Version
+           (http://download.oracle.com/javase/6/docs/technotes/tools/solaris/classpath.htm)
+           ou Setting the Class Path, Windows Version
+           (http://download.oracle.com/javase/6/docs/technotes/tools/windows/classpath.htm).
+
+       -client
+           opcional; o nome e a localização do arquivo JAR do cliente.
+
+       -mainclass
+           opcional; o nome de classe completo da aplicação cliente principal
+           conforme especificado na entrada Main-Class do arquivo
+            MANIFEST.MF. Utilizado por várias aplicações clientes. Por
+           default, utiliza a classe especificada no client jar. Por exemplo,
+           com.example.test.AppClient.
+
+       -name
+           opcional; o nome para exibição da aplicação cliente. Utilizado por
+           várias aplicações clientes. Por default, o nome para exibição é
+           especificado no arquivo application-client.xml jar do cliente, que
+           é identificado pelo atributodisplay-name.
+
+       -xml
+           opcional se utilizar o nome, a instância e o domínio default
+           (sun-acc.xml); caso contrário, é obrigatório. Identifica o nome e a
+           localização do arquivo XML de configuração do cliente. Se essa
+           opção não for especificada, será adotado como default o arquivo
+           sun-acc.xml no diretório domain-dir/config.
+
+       -textauth
+           opcional; utilizado para especificar a utilização da autenticação
+           de formato de texto quando a autenticação for necessária.
+
+       -targetserver
+           opcional; uma lista separada por vírgulas de uma ou mais
+           especificações de servidor para pontos finais ORB. Cada
+           especificação de servidor deve incluir, pelo menos, o host.
+           Opcionalmente, uma especificação de servidor pode também incluir a
+           porta. Se a porta é omitida na especificação de um servidor, o
+           valor default, 3700, é utilizado para aquele host.
+
+       -user
+           opcional; o usuário da aplicação que está autorizado a ter acesso a
+           determinados componentes guardados na aplicação, como componentes
+           EJB.
+
+       -passwordfile
+           opcional; especifica o nome, inclusive o caminho completo de um
+           arquivo que contém a senha dos clientes da aplicação no seguinte
+           formato:
+
+               PASSWORD=appclient-password
+           Se esta opção for omitida, a senha será especificada de forma
+           interativa no prompt de comandos.
+
+               Cuidado
+               ┌────────────────────────────────────────┐
+               │Cuidado Evite especificar uma senha de  │
+               │forma interativa no prompt de comandos. │
+               │Essa senha pode ser vista pelos         │
+               │usuários capazes de executar comandos   │
+               │para exibir processos em execução e os  │
+               │comandos para iniciá-los, como ps.      │
+               └────────────────────────────────────────┘
+           Por razões de segurança, uma senha que é especificada como uma
+           variável de ambiente não é lida pelo utilitário appclient.
+
+       class-selector
+           obrigatório; é necessário especificar a classe de aplicação cliente
+           utilizando um dos seletores de classe a seguir.
+
+           -jar jar-file
+               o nome e a localização do arquivo JAR do cliente. O arquivo JAR
+               do cliente da aplicação é especificado e criado durante a
+               implantação pelo comando asadmin deploy. Se especificada, a
+               definição -classpath será ignorada em consideração à definição
+               Class-Path no manifesto do arquivo JAR do cliente.
+
+           class-name
+               o nome totalmente qualificado da classe principal do cliente da
+               aplicação. O Application Client Container chama o método
+               principal desta classe para iniciar o cliente. Por exemplo,
+               com.example.test.AppClient.
+
+               Se você utilizar class-name como seletor de classe, também
+               deverá definir o classpath. Você pode utilizar a opção
+               -classpath da JVM no comando appclient ou definir a variável de
+               ambiente CLASSPATH. Para obter mais informações sobre como
+               definir um classpath, consulte Setting the Class Path, Oracle
+               Solaris Version
+               (http://download.oracle.com/javase/6/docs/technotes/tools/solaris/classpath.htm)
+               ou Setting the Class Path, Windows Version
+               (http://download.oracle.com/javase/6/docs/technotes/tools/windows/classpath.htm).
+
+       application-options
+           opcional; é possível definir argumentos da aplicação cliente.
+
+EXEMPLOS
+       Example 1, Utilizando o comando appclient
+
+               appclient -xml sun-acc.xml -jar myclientapp.jar scott sample
+           Onde: sun-acc.xml é o nome do arquivo XML de configuração do
+           cliente, myclientapp.jar é o arquivo .jar da aplicação cliente,
+           escott e sample são argumentos passados à aplicação. Se sun-acc.xml
+           e myclientapp.jar não estão no diretório atual, é necessário
+           fornecer as localizações de caminho absolutas, caso contrário, os
+           caminhos relativos são utilizados. O caminho relativo é relativo ao
+           diretório onde o comando está sendo executado.
+
+ATRIBUTOS
+       Consulte atributos(5) para ver a descrição dos seguintes atributos:
+
+       ┌────────────────────────┬──────────────────────────┐
+       │                        │                          │
+       │       TIPO DE ATRIBUTO │        VALOR DO ATRIBUTO │
+       ├────────────────────────┼──────────────────────────┤
+       │                        │                          │
+       │       Estabilidade da  │        Instável          │
+       │       Interface        │                          │
+       └────────────────────────┴──────────────────────────┘
+
+CONSULTE TAMBéM
+       get-client-stubs(1)
+
+       asadmin(1M), package-appclient(1M)
+
+Java EE 7                   16 de dezembro de 2010               appclient(1M)

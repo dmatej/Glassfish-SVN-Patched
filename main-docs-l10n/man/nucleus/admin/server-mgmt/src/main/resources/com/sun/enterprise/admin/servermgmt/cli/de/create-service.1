@@ -1,0 +1,295 @@
+create-service(1)       Unterbefehle des asadmin-Utili       create-service(1)
+
+NAME
+       create-service - konfiguriert den Start eines DAS oder einer GlassFish
+       Server-Instanz bei einem unbeaufsichtigten Boot-Vorgang
+
+ZUSAMMENFASSUNG
+           create-service [--help] [--name service-name]
+           [--serviceproperties service-properties]
+           [--dry-run={false|true}] [--force={false|true}]
+           [--serviceuser service-user]
+           [--domaindir domain-dir]
+           [--nodedir node-dir] [--node node]
+           [domain-or-instance-name]
+
+BESCHREIBUNG
+       Der Unterbefehl create-service konfiguriert den Start eines
+       Domainadministrationsservers (DAS) oder einer GlassFish Server-Instanz
+       bei einem unbeaufsichtigten Boot-Vorgang auf Windows-, Linux- und
+       Oracle Solaris-Systemen.
+
+       Wenn kein Operand angegeben ist und das Domainverzeichnis nur eine
+       Domain enthält, konfiguriert der Unterbefehl den Start des DAS für die
+       Standarddomain. Wenn kein Operand angegeben ist und das
+       Domainverzeichnis mehrere Domains enthält, tritt ein Fehler auf.
+
+       Wenn der Operand eine Instanz angibt, kontaktiert der Unterbefehl
+       create-service den Domainadministrationsserver (DAS) nicht, um den
+       Knoten zu bestimmen, auf dem sich die Instanz befindet. Um den Knoten
+       zu bestimmen, auf dem sich die Instanz befindet, durchsucht der
+       Unterbefehl das Verzeichnis, das die Knotenverzeichnisse enthält. Wenn
+       mehrere Knotenverzeichnisse vorhanden sind, muss der Knoten als Option
+       des Unterbefehls angegeben werden.
+
+       Der Unterbefehl enthält interne Logik, um zu bestimmen, ob der
+       angegebene Operand ein DAS oder eine Instanz ist.
+
+       Dieser Unterbefehl wird nur im lokalen Modus unterstützt.
+
+   Behavior von create-service bei Windows-Systemen
+       Bei Windows-Systemen erstellt der Unterbefehl create-service einen
+       Windows-Service, der den DAS oder die Instanz darstellt. Der Service
+       wird im deaktivierten Status erstellt. Nachdem dieser Unterbefehl den
+       Service erstellt hat, müssen Sie den Windows Services Manager oder den
+       Windows Services Wrapper verwenden, um den Service zu starten, zu
+       stoppen, zu deinstallieren oder zu installieren.
+
+       Auf Windows-Systemen muss dieser Unterbefehl von einem
+       Administratorbenutzer auf Betriebssystemebene ausgeführt werden.
+
+       Der Unterbefehl erstellt die folgenden Windows Services Wrapper-Dateien
+       für den Service im Verzeichnis domain-dir\bin oder dem Verzeichnis
+       instance-dir\bin:
+
+       ·   Konfigurationsdatei: service-nameService.xml
+
+       ·   Ausführbare Datei: service-nameService.exe
+
+       Auf Windows-Systemen erfordert dieser Unterbefehl das /Microsoft .NET
+       Framework . Andernfalls ist der Unterbefehl nicht erfolgreich.
+
+   Behavior von create-service bei Linux-Systemen
+       Bei Linux-Systemen erstellt der Unterbefehl create-service ein
+       System-V-Initialisierungsskript
+       /etc/init.d/GlassFish_domain-or-instance-name und installiert einen
+       Link zu diesem Skript in den /etc/rc?.d-Verzeichnissen. Nachdem dieser
+       Unterbefehl das Skript erstellt hat, müssen Sie dieses Skript zum
+       Starten, Stoppen oder Neustarten der Domain oder Instanz verwenden.
+
+       Bei Linux-Systemen muss dieser Unterbefehl von einem Root-Benutzer auf
+       Betriebssystemebene ausgeführt werden.
+
+   Behavior von create-service bei Oracle Solaris-Systemen
+       Bei Oracle Solaris-Systemen erstellt der Unterbefehl create-service
+       einen Service Management Facility-(SMF-)Service, der den DAS oder die
+       Instanz darstellt. Der Service wird im deaktivierten Status erstellt.
+       Nachdem dieser Unterbefehl den Service erstellt hat, müssen Sie
+       SMF-Befehle verwenden, um den Service zu starten, zu aktivieren, zu
+       deaktivieren, zu löschen oder zu stoppen. Weitere Informationen zu SMF
+       erhalten Sie in der folgenden Dokumentation für das Oracle
+       Solaris-Betriebssystem:
+
+       ·   "Managing Services (Overview)" im System Administration Guide:
+           Basic Administration
+
+       ·   "Managing Services (Tasks)" im System Administration Guide: Basic
+           Administration
+
+       Auf Oracle Solaris-Systemen muss dieser Unterbefehl von einem Benutzer
+       mit Superuser-Berechtigungen auf Betriebssystemebene ausgeführt werden.
+       Die Konfigurationsdatei für den DAS oder die Instanz muss in einem
+       Verzeichnis gespeichert werden, auf das der Superuser Zugriff hat, und
+       kann nicht in einem Netzwerkdateisystem gespeichert werden. Der
+       erstellte Service wird vom Benutzer auf Betriebssystemebene gesteuert,
+       der Eigentümer des Verzeichnisses ist, in dem sich die Konfiguration
+       des DAS oder der Instanz befindet.
+
+       Auf Oracle Solaris-Systemen wird die Manifestdatei standardmäßig im
+       folgenden Verzeichnis erstellt:
+
+           /var/svc/manifest/application/GlassFish/domain-or-instance-name_domain-or-instance-root-dir
+
+       Um diesen Unterbefehl auszuführen, müssen Sie über die
+       solaris.smf.*-Autorisierung verfügen. Informationen zum Erteilen von
+       Autorisierungen für Benutzer finden Sie auf den Manpages useradd1M und
+       usermod1M.
+
+       Um diese Befehle als Nicht-Root-Benutzer auszuführen, muss der
+       Systemadministrator kontaktiert werden, damit die entsprechenden
+       Autorisierungen erteilt werden. Außerdem müssen Sie sicherstellen, dass
+       die folgenden Bedingungen erfüllt sind:
+
+       ·   Oracle Solaris 10-Administrationsbefehle, wie svccfg(1M), , svcs(1)
+           und auths(1), sind über die Anweisung PATH verfügbar, sodass diese
+           Befehle ausgeführt werden können. Damit dies funktioniert, kann ein
+           einfacher Test ausgeführt werden, indem der Befehl which svccfg in
+           der Shell ausgeführt wird.
+
+       ·   Sie müssen über Schreibberechtigungen für den Pfad
+           /var/svc/manifest/application/GlassFish verfügen. Normalerweise
+           verfügt der Superuser über eine Schreibberechtigung für diesen
+           Pfad.
+
+       Wenn Sie einen Service löschen, den Sie mit dem Unterbefehl
+       create-service erstellt haben, müssen Sie das Verzeichnis mit der
+       Manifestdatei und den gesamten Content des Verzeichnisses löschen.
+       Andernfalls ist der Versuch, den Service mit dem Unterbefehl
+       create-service erneut zu erstellen, nicht erfolgreich. Durch den Oracle
+       Solaris-Befehl svccfg wird dieses Verzeichnis nicht gelöscht.
+
+OPTIONEN
+       --help, -?
+           Zeigt den Hilfetext für den Unterbefehl an.
+
+       --name
+           (Nur Windows- und Oracle Solaris-Systeme) Der Name des Service, den
+           Sie verwenden, wenn Sie den Service über Oracle Solaris SMF-Befehle
+           oder die Serviceverwaltungsfeatures des Windows-Betriebssystems
+           verwalten. Der Standard ist der Name der Domain oder Instanz, die
+           als Operand dieses Unterbefehls angegeben ist.
+
+       --serviceproperties
+           Gibt eine durch Doppelpunkte (:) getrennte Liste mit verschiedenen
+           Eigenschaften an, die speziell für den Service gelten.
+
+           Um den Anzeigenamen des Service in der Windows-Serviceliste
+           anzupassen, setzen Sie die Eigenschaft DISPLAY_NAME auf den
+           erforderlichen Namen.
+
+           Für Oracle Solaris 10-Systeme gilt: Wenn Sie net_privaddr angeben,
+           können die Prozesse des Service eine Verbindung mit privilegierten
+           Ports (<1024) auf der Plattform herstellen. Sie können nur dann
+           eine Verbindung mit Ports (< 1024) herstellen, wenn der Eigentümer
+           des Service der Superuser ist. Andernfalls ist dies nicht zulässig.
+
+       --dry-run, -n
+           Zeigt den Versuch, einen Service zu erstellen, in der Vorschau an.
+           Zeigt Probleme und das Ergebnis an, das zustande kommt, wenn Sie
+           den Befehl ausführen, ohne die Option --dry-run zu verwenden. Dabei
+           wird nichts konfiguriert. Der Standardwert ist "false".
+
+       --force
+           Gibt an, ob der Service auch dann erstellt wird, wenn die
+           Validierung des Service nicht erfolgreich ist.
+
+           Mögliche Werte:
+
+           true
+               Der Service wird auch dann erstellt, wenn die Validierung des
+               Service nicht erfolgreich ist.
+
+           false
+               Der Service wird nicht erstellt (Standard).
+
+       --serviceuser
+           (Nur Linux-Systeme) Der Benutzer, der die GlassFish Server-Software
+           ausführt, wenn der Service gestartet wird. Standardmäßig ist dies
+           der Benutzer, der den Unterbefehl ausführt. Geben Sie diese Option
+           an, wenn die GlassFish Server-Software von einem anderen Benutzer
+           als dem Root-Benutzer ausgeführt werden soll.
+
+       --domaindir
+           Der absolute Pfad des Verzeichnisses auf dem Datenträger, das die
+           Konfiguration der Domain enthält. Wenn diese Option angegeben wird,
+           muss der Operand eine Domain angeben.
+
+       --nodedir
+           Gibt das Verzeichnis an, das das Knotenverzeichnis der Instanz
+           enthält. Die Dateien der Instanz werden im Knotenverzeichnis der
+           Instanz gespeichert. Der Standard ist as-install/nodes. Wenn diese
+           Option angegeben wird, muss der Operand eine Instanz angeben.
+
+       --node
+           Gibt den Knoten an, auf dem sich die Instanz befindet. Diese Option
+           kann ausgelassen werden, wenn das Verzeichnis, das mit der Option
+           --nodedir angegeben wird, nur ein Knotenverzeichnis enthält.
+           Andernfalls ist diese Option erforderlich. Wenn diese Option
+           angegeben wird, muss der Operand eine Instanz angeben.
+
+OPERANDEN
+       domain-or-instance-name
+           Der Name der Domain oder Instanz, die konfiguriert werden soll. Ist
+           kein Operand angegeben, wird die Standarddomain verwendet.
+
+BEISPIELE
+       Example 1, Services auf einem Windows-System erstellen
+           In diesem Beispiel wird ein Service für die Standarddomain auf
+           einem System erstellt, auf dem Windows ausgeführt wird.
+
+               asadmin> create-service
+               Found the Windows Service and successfully uninstalled it.
+               The Windows Service was created successfully.  It is ready to be started.  Here are
+               the details:
+               ID of the service: domain1
+               Display Name of the service:domain1 GlassFish Server
+               Domain Directory: C:\glassfish3\glassfish\domains\domain1
+               Configuration file for Windows Services Wrapper: C:\glassfish3\glassfish\domains\
+               domain1\bin\domain1Service.xml
+               The service can be controlled using the Windows Services Manager or you can use the
+               Windows Services Wrapper instead:
+               Start Command:  C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe  start
+               Stop Command:   C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe  stop
+               Uninstall Command:  C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe
+               uninstall
+               Install Command:  C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe
+               install
+
+               This message is also available in a file named PlatformServices.log in the domain's
+               root directory
+               Command create-service executed successfully.
+
+       Example 2, Services auf einem Linux-System erstellen
+           In diesem Beispiel wird ein Service für die Standarddomain auf
+           einem System erstellt, auf dem Linux ausgeführt wird.
+
+               asadmin> create-service
+               Found the Linux Service and successfully uninstalled it.
+               The Service was created successfully. Here are the details:
+               Name of the service:domain1
+               Type of the service:Domain
+               Configuration location of the service:/etc/init.d/GlassFish_domain1
+               User account that will run the service: root
+               You have created the service but you need to start it yourself.
+               Here are the most typical Linux commands of interest:
+
+               * /etc/init.d/GlassFish_domain1 start
+               * /etc/init.d/GlassFish_domain1 stop
+               * /etc/init.d/GlassFish_domain1 restart
+
+               For your convenience this message has also been saved to this file:
+               /export/glassfish3/glassfish/domains/domain1/PlatformServices.log
+               Command create-service executed successfully.
+
+       Example 3, Services auf einem Oracle Solaris-System erstellen
+           In diesem Beispiel wird ein Service für die Standarddomain auf
+           einem System erstellt, auf dem Oracle Solaris ausgeführt wird.
+
+               asadmin> create-service
+               The Service was created successfully. Here are the details:
+               Name of the service:application/GlassFish/domain1
+               Type of the service:Domain
+               Configuration location of the service:/home/gfuser/glassfish-installations
+               /glassfish3/glassfish/domains
+               Manifest file location on the system:/var/svc/manifest/application
+               /GlassFish/domain1_home_gfuser_glassfish-installations_glassfish3
+               _glassfish_domains/Domain-service-smf.xml.
+               You have created the service but you need to start it yourself.
+               Here are the most typical Solaris commands of interest:
+               * /usr/bin/svcs -a | grep domain1 // status
+               * /usr/sbin/svcadm enable domain1 // start
+               * /usr/sbin/svcadm disable domain1 // stop
+               * /usr/sbin/svccfg delete domain1 // uninstall
+               Command create-service executed successfully.
+
+BEENDIGUNGSSTATUS
+       0
+           Unterbefehl erfolgreich ausgeführt
+
+       1
+           Fehler beim Ausführen des Unterbefehls
+
+SIEHE AUCH
+       asadmin(1M)
+
+       auths(1), svcs(1)
+
+       svccfg(1M), useradd(1M), usermod(1M)
+
+       "Managing Services (Overview)" im System Administration Guide: Basic
+       Administration, "Managing Services (Tasks)" im System Administration
+       Guide: Basic Administration
+
+       Microsoft .NET Framework (http://www.microsoft.com/net/)
+
+Java EE 7                        8. Dez. 2011                create-service(1)

@@ -1,0 +1,157 @@
+add-resources(1)        Unterbefehle des asadmin-Utili        add-resources(1)
+
+NAME
+       add-resources - erstellt die in einer XML-Datei angegebenen Ressourcen
+
+ZUSAMMENFASSUNG
+           add-resources [--help] [--target target]
+           [--upload={false|true}] xml-file-name
+
+BESCHREIBUNG
+       Der Unterbefehl add-resources erstellt die Ressourcen, die in der
+       angegebenen XML-Datei benannt sind. Die Ressourcen, die mit diesem
+       Unterbefehl erstellt werden können, sind auf dieser Hilfeseite unter
+       "Siehe auch" aufgeführt.
+
+       Die Option --target gibt das Ziel an, für das Sie die Ressourcen
+       erstellen. Wenn diese Option die Domain angibt, werden die Ressourcen
+       nur der Konfiguration des Domainadministrationsservers (DAS)
+       hinzugefügt. Wenn diese Option ein anderes Ziel angibt, werden die
+       Ressourcen der Konfiguration des DAS und Referenzen zu den Ressourcen
+       aus dem angegebenen Ziel hinzugefügt.
+
+       Der Operand xml-file-name ist der Pfad zur XML-Datei, die die zu
+       erstellenden Ressourcen enthält. Der DOCTYPE muss als
+       http://glassfish.org/dtds/glassfish-resources_1_5.dtd in der Datei
+       resources.xml angegeben werden.
+
+       Dieser Unterbefehl wird nur im Remote-Modus unterstützt.
+
+OPTIONEN
+       --help, -?
+           Zeigt den Hilfetext für den Unterbefehl an.
+
+       --target
+           Gibt das Ziel an, für das Sie die Ressourcen erstellen.
+
+           Folgende Werte sind gültig:
+
+           server
+               Erstellt die Ressourcen für die standardmäßige Serverinstanz
+               server und ist der Standardwert.
+
+           domain
+               Erstellt die Ressourcen für die Domain.
+
+           cluster-name
+               Erstellt die Ressourcen für jede Serverinstanz im Cluster.
+
+           instance-name
+               Erstellt die Ressourcen für eine bestimmte GlassFish
+               Server-Instanz.
+
+       --upload
+           Gibt an, ob der Unterbefehl die Datei auf den DAS hochlädt. In den
+           meisten Fällen kann diese Option ausgelassen werden.
+
+           Folgende Werte sind gültig:
+
+           false
+               Der Unterbefehl lädt die Datei nicht hoch, sondern versucht,
+               über den angegebenen Dateinamen darauf zuzugreifen. Wenn der
+               DAS nicht auf die Datei zugreifen kann, ist der Unterbefehl
+               nicht erfolgreich.
+
+               Beispielsweise kann der DAS unter einem anderen Benutzer als
+               dem Admin-Benutzer ausgeführt werden, der keinen Lesezugriff
+               auf die Datei besitzt. In diesem Fall ist der Unterbefehl nicht
+               erfolgreich, wenn die Option --upload auf false gesetzt ist.
+
+           true
+               Der Unterbefehl lädt die Datei über die Netzwerkverbindung auf
+               den DAS hoch.
+
+           Der Standardwert hängt davon ab, ob sich der DAS auf dem Host
+           befindet, auf dem der Unterbefehl ausgeführt wird, oder ob er auf
+           einem Remote-Host liegt.
+
+           ·   Befindet sich der DAS auf dem Host, auf dem der Unterbefehl
+               ausgeführt wird, ist die Standardeinstellung false.
+
+           ·   Befindet sich der DAS auf einem Remote-Host, ist die
+               Standardeinstellung true.
+
+OPERANDEN
+       xml-file-name
+           Der Pfad zur XML-Datei mit den zu erstellenden Ressourcen. Sie
+           können einen absoluten Pfad, nur den Dateinamen oder einen
+           relativen Pfad angeben.
+
+           ·   Wenn Sie einen absoluten Pfad angeben, kann die XML-Datei
+               überall gespeichert sein.
+
+           ·   Wenn Sie nur den Dateinamen angeben, muss sich die XML-Datei im
+               Verzeichnis domain-dir/config auf dem DAS-Host befinden. Diese
+               Anforderung muss auch dann erfüllt sein, wenn Sie den
+               Unterbefehl über einen anderen Host ausführen.
+
+           ·   Wenn Sie einen relativen Pfad angeben, muss die XML-Datei im
+               relativen Verzeichnis gespeichert sein.
+
+           Es folgt eine XML-Beispieldatei.
+
+               <?xml version="1.0" encoding="UTF-8"?>
+               <!DOCTYPE resources PUBLIC
+                  "-//GlassFish.org//DTD GlassFish Application Server 3.1 Resource Definitions //EN"
+                  "http://glassfish.org/dtds/glassfish-resources_1_5.dtd">
+               <resources>
+                <jdbc-connection-pool name="SPECjPool" steady-pool-size="100"
+                  max-pool-size="150" max-wait-time-in-millis="60000"
+                  pool-resize-quantity="2" idle-timeout-in-seconds="300"
+                  is-isolation-level-guaranteed="true"
+                  is-connection-validation-required="false"
+                  connection-validation-method="auto-commit"
+                  fail-all-connections="false"
+                  datasource-classname="oracle.jdbc.pool.OracleDataSource">
+                 <property name="URL"
+                   value="jdbc:oracle:thin:@iasperfsol12:1521:specdb"/>
+                 <property name="User" value="spec"/>
+                 <property name="Password" value="spec"/>
+                 <property name="MaxStatements" value="200"/>
+                 <property name="ImplicitCachingEnabled" value="true"/>
+                </jdbc-connection-pool>
+                <jdbc-resource enabled="true" pool-name="SPECjPool"
+                  jndi-name="jdbc/SPECjDB"/>
+               </resources>
+
+BEISPIELE
+       Example 1, Ressourcen hinzufügen
+           In diesem Beispiel werden Ressourcen mit dem Content der XML-Datei
+           resource.xml erstellt.
+
+               asadmin> add-resources resource.xml
+               Command : Connector connection pool jms/testQFactoryPool created.
+               Command : Administered object jms/testQ created.
+               Command : Connector resource jms/testQFactory created.
+               Command : Resource adapter config myResAdapterConfig created successfully
+               Command : JDBC connection pool DerbyPoolA created successfully.
+               Command : JDBC resource jdbc/__defaultA created successfully.
+               Command add-resources executed successfully.
+
+BEENDIGUNGSSTATUS
+       0
+           Unterbefehl erfolgreich ausgeführt
+
+       1
+           Fehler beim Ausführen des Unterbefehls
+
+SIEHE AUCH
+       create-jdbc-connection-pool(1),create-jdbc-resource(1),
+       create-jms-resource(1), create-jndi-resource(1),
+       create-javamail-resource(1), create-custom-resource(1),
+       create-connector-resource(1), create-connector-work-security-map(1),
+       create-admin-object(1), create-resource-adapter-config(1)
+
+       asadmin(1M)
+
+Java EE 7                        23. Dez. 2010                add-resources(1)

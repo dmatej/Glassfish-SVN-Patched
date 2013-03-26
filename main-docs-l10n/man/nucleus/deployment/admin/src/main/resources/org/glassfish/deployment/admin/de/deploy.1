@@ -1,0 +1,589 @@
+deploy(1)               Unterbefehle des asadmin-Utili               deploy(1)
+
+NAME
+       deploy - stellt die angegebene Komponente bereit
+
+ZUSAMMENFASSUNG
+           deploy [--help]
+           [--force={false|true}]
+           [--virtualservers virtual_servers]
+           [--contextroot context_root]
+           [--precompilejsp={false|true}]
+           [--verify={false|true}]
+           [--name component_name]
+           [--upload={true|false}]
+           [--retrieve local_dirpath]
+           [--dbvendorname dbvendorname]
+           [--createtables={true|false}|--dropandcreatetables={true|false}]
+           [--uniquetablenames={true|false}]
+           [--deploymentplan deployment_plan]
+           [--altdd alternate_deploymentdescriptor]
+           [--runtimealtdd runtime_alternate_deploymentdescriptor]
+           [--deploymentorder deployment_order]
+           [--enabled={true|false}]
+           [--generatermistubs={false|true}]
+           [--availabilityenabled={false|true}]
+           [--asyncreplication={true|false}]
+           [--lbenabled={true|false}]
+           [--keepstate={false|true}]
+           [--libraries jar_file[,jar_file]*]
+           [--target target]
+           [--type pkg-type]
+           [--properties(name=value)[:name=value]*]
+           [file_archive|filepath]
+
+BESCHREIBUNG
+       Der Unterbefehl deploy stellt Anwendungen für den Server bereit. Zur
+       Auswahl stehen Unternehmensanwendungen, Webanwendungen, Enterprise
+       JavaBeans-(EJB-)Module, Connector-Module und Anwendungsclientmodule.
+       Wenn die Komponente bereits bereitgestellt wurde oder vorhanden ist,
+       wird ihr erneutes Deployment erzwungen, wenn die Option --force auf
+       true gesetzt ist (Standard ist false).
+
+       Da die Optionen --createtables und --dropandcreatetables boolesche
+       Kennzeichen sind, können sie die Werte "true" und "false" annehmen.
+       Diese Optionen werden nur während des Deployments von CMP-Beans
+       verwendet, die keiner Datenbank zugeordnet wurden (d.h. es ist kein
+       sun-cmp-mappings.xml-Deskriptor im META-INF-Verzeichnis des Moduls
+       angegeben). Andernfalls werden sie ignoriert.
+
+       Die Optionen --createtables und --dropandcreatetables schließen sich
+       gegenseitig aus. Es kann nur eine Option verwendet werden. Wenn der
+       Befehl zum Löschen und/oder Erstellen von Tabellen nicht erfolgreich
+       ist, ist das Deployment dennoch erfolgreich. In diesem Fall wird eine
+       Warnmeldung in die Logdatei geschrieben.
+
+       Dieser Unterbefehl wird nur im Remote-Modus unterstützt.
+
+OPTIONEN
+       --help, -?
+           Zeigt den Hilfetext für den Unterbefehl an.
+
+       --force
+           Ist der Wert auf true gesetzt, wird die Komponente selbst dann,
+           wenn sie bereits bereitgestellt oder vorhanden ist, erneut
+           bereitgestellt. Der Standardwert lautet false.
+
+       --virtualservers
+           Eine oder mehrere IDs von virtuellen Servern. Mehrere IDs werden
+           durch Komma getrennt.
+
+       --contextroot
+           Nur gültig, wenn das Archiv ein Webmodul ist. Bei anderen
+           Archivtypen wird der Wert ignoriert und wird standardmäßig auf
+           einen Dateinamen ohne Erweiterung gesetzt.
+
+       --precompilejsp
+           Standardmäßig erlaubt diese Option nicht, dass die JSP während des
+           Deployment vorkompiliert wird. Stattdessen werden JSPs während der
+           Laufzeit kompiliert. Der Standardwert lautet false.
+
+       --verify
+           Ist der Wert auf "true" gesetzt und sind die erforderlichen
+           Verifier-Packages vom Updatetool installiert, werden die Syntax und
+           die Semantik des Deployment-Deskriptors verifiziert. Der
+           Standardwert lautet false.
+
+       --name
+           Name der bereitstellbaren Komponente.
+
+           Der Name kann eine optionale Versions-ID enthalten, die dem Namen
+           folgt und von diesem durch einen Doppelpunkt (:) getrennt ist. Die
+           Versions-ID muss mit einem Buchstaben oder einer Zahl beginnen. Er
+           kann alphanumerische Zeichen sowie Unterstriche (_), Bindestriche
+           (-) und Punkte (.) enthalten. Weitere Informationen zu Modul- und
+           Anwendungsversionen finden Sie unter "Module and Application
+           Versions" im Oracle GlassFish Server Application Deployment Guide.
+
+       --upload
+           Gibt an, ob der Unterbefehl die Datei auf den DAS hochlädt. In den
+           meisten Fällen kann diese Option ausgelassen werden.
+
+           Folgende Werte sind gültig:
+
+           false
+               Der Unterbefehl lädt die Datei nicht hoch, sondern versucht,
+               über den angegebenen Dateinamen darauf zuzugreifen. Wenn der
+               DAS nicht auf die Datei zugreifen kann, ist der Unterbefehl
+               nicht erfolgreich.
+
+               Beispielsweise kann der DAS unter einem anderen Benutzer als
+               dem Admin-Benutzer ausgeführt werden, der keinen Lesezugriff
+               auf die Datei besitzt. In diesem Fall ist der Unterbefehl nicht
+               erfolgreich, wenn die Option --upload auf false gesetzt ist.
+
+           true
+               Der Unterbefehl lädt die Datei über die Netzwerkverbindung auf
+               den DAS hoch.
+
+           Der Standardwert hängt davon ab, ob sich der DAS auf dem Host
+           befindet, auf dem der Unterbefehl ausgeführt wird, oder ob er auf
+           einem Remote-Host liegt.
+
+           ·   Befindet sich der DAS auf dem Host, auf dem der Unterbefehl
+               ausgeführt wird, ist die Standardeinstellung false.
+
+           ·   Befindet sich der DAS auf einem Remote-Host, ist die
+               Standardeinstellung true.
+
+           Wenn das Verzeichnis filepath angegeben ist, wird diese Option
+           ignoriert.
+
+       --retrieve
+           Ruft die JAR-Datei des Client-Stubs aus dem Serverrechner in das
+           lokale Verzeichnis ab.
+
+       --dbvendorname
+           Gibt den Namen des Datenbankherstellers an, für den die Tabellen
+           erstellt werden. Unterstützte Werte sind db2, mssql, mysql, oracle,
+           derby, javadb, postgresql und sybase. Diese Werte sind von Groß-
+           und Kleinschreibung unabhängig. Wird diese Option nicht angegeben,
+           wird der Wert des Attributs database-vendor-name in
+           glassfish-ejb-jar.xml verwendet. Ist kein Wert angegeben, wird eine
+           Verbindung mit der Ressource hergestellt, die vom Unterelement
+           jndi-name des Elements cmp-resource in der Datei
+           glassfish-ejb-jar.xml angegeben ist, und der Name des
+           Datenbankherstellers wird gelesen. Kann die Verbindung nicht
+           hergestellt oder der Wert nicht erkannt werden, wird
+           SQL-92-Konformität vorausgesetzt.
+
+       --createtables
+           Ist der Wert auf "true" gesetzt, werden beim Deployment einer
+           Anwendung mit nicht zugeordneten CMP-Beans Tabellen erstellt. Ist
+           der Wert auf "false" gesetzt, werden keine Tabellen erstellt. Ist
+           der Wert nicht festgelegt, bestimmt der Wert des Eintrags
+           create-tables-at-deploy im Element cmp-resource der Datei
+           glassfish-ejb-jar.xml, ob Tabellen erstellt werden. Es werden keine
+           eindeutigen Constraints für die Tabellen erstellt.
+
+       --dropandcreatetables
+           Ist der Wert zum Zeitpunkt des erneuten Deployments der Komponente
+           auf "true" gesetzt, werden die während des vorhergehenden
+           Deployments erstellten Tabellen verworfen, bevor neue Tabellen
+           erstellt werden. Gilt für bereitgestellte Anwendungen mit nicht
+           zugeordneten CMP-Beans. Bereits vorhandene Tabellen werden beim
+           ersten Deployment einer Anwendung oder bei einem Deployment, das
+           auf eine explizite Aufhebung eines Deployments folgt, nicht
+           verworfen. Ist der Wert auf "false" gesetzt, werden Tabellen weder
+           verworfen noch erstellt. Ist kein Wert angegeben, werden die
+           Tabellen verworfen, wenn der Eintrag drop-tables-at-undeploy im
+           Element cmp-resource der Datei glassfish-ejb-jar.xml auf "true"
+           gesetzt ist, und die neuen Tabellen werden erstellt, wenn der
+           Eintrag create-tables-at-deploy im Element cmp-resource der Datei
+           glassfish-ejb-jar.xml auf "true" gesetzt ist.
+
+       --uniquetablenames
+           Garantiert eindeutige Tabellennamen für alle Beans und bewirkt,
+           dass ein Hash-Code zu den Tabellennamen hinzugefügt wird. Dies ist
+           hilfreich, wenn Sie über eine Anwendung mit Bean-Namen verfügen,
+           die von Groß- und Kleinschreibung abhängig sind. Gilt für
+           Anwendungen mit nicht zugeordneten CMP-Beans.
+
+       --deploymentplan
+           Stellt den Deployment-Plan bereit. Dabei handelt es sich um eine
+           JAR-Datei, die GlassFish Server-Deskriptoren enthält. Geben Sie
+           diese Option an, wenn Sie eine reine EAR-Datei bereitstellen. Eine
+           reine EAR-Datei ist eine EAR-Datei ohne GlassFish
+           Server-Deskriptoren.
+
+       --altdd
+           Stellt die Anwendung über einen standardmäßigen Java
+           EE-Deployment-Deskriptor bereit, der sich außerhalb des
+           Anwendungsarchivs befindet. Geben Sie einen absoluten Pfad oder
+           einen relativen Pfad zur alternativen Deployment-Deskriptordatei
+           an. Der alternative Deployment-Deskriptor setzt den im Archiv
+           enthaltenen Deployment-Deskriptor oberster Ebene außer Kraft.
+           Beispiel: Bei einer EAR-Datei wird durch die Verwendung von --altdd
+           die Datei application.xml außer Kraft gesetzt. Bei einem
+           Standalone-Modul setzt die Verwendung von --altdd den
+           Moduldeskriptor oberster Ebene wie web.xml außer Kraft.
+
+       --runtimealtdd
+           Stellt die Anwendung über einen GlassFish
+           Server-Laufzeit-Deployment-Deskriptor bereit, der sich außerhalb
+           des Anwendungsarchivs befindet. Geben Sie einen absoluten Pfad oder
+           einen relativen Pfad zur alternativen Deployment-Deskriptordatei
+           an. Der alternative Deployment-Deskriptor setzt den im Archiv
+           enthaltenen Deployment-Deskriptor oberster Ebene außer Kraft.
+           Beispiel: Bei einer EAR-Datei wird durch die Verwendung von
+           --runtimealtdd die Datei glassfish-application.xml außer Kraft
+           gesetzt. Bei einem Standalone-Modul setzt die Verwendung von
+           --runtimealtdd den Moduldeskriptor oberster Ebene wie
+           glassfish-web.xml außer Kraft. Gilt nur für GlassFish
+           Server-Deployment-Deskriptoren (glassfish-*.xml); der Name der
+           alternativen Deployment-Deskriptordatei muss mit glassfish-
+           anfangen. Gilt nicht für sun-*.xml-Deployment-Deskriptoren, die
+           verworfen werden.
+
+       --deploymentorder
+           Legt die Deployment-Reihenfolge der Anwendung fest. Dies ist
+           nützlich, wenn die Anwendung über Abhängigkeiten verfügt und beim
+           Serverstart in einer bestimmten Reihenfolge geladen werden muss.
+           Die Deployment-Reihenfolge wird als Ganzzahl angegeben. Der
+           Standardwert ist 8080. Anwendungen mit einer niedrigeren Zahl
+           werden vor Anwendungen mit einer höheren Zahl geladen. Beispiel:
+           Eine Anwendung mit der Deployment-Reihenfolge 102 wird vor einer
+           Anwendung mit der Deployment-Reihenfolge 110 geladen. Wird keine
+           Deployment-Reihenfolge festgelegt, wird der Standardwert 100
+           zugewiesen. Wenn zwei Anwendungen dieselbe Deployment-Reihenfolge
+           haben, wird diejenige zuerst bereitgestellt, die beim Serverstart
+           als erste geladen wird.
+
+           Die Deployment-Reihenfolge wird üblicherweise bei der ersten
+           Bereitstellung der Anwendung festgelegt, kann jedoch über den
+           Unterbefehl set auch nach dem anfänglichen Deployment angegeben
+           oder geändert werden. Mithilfe des Unterbefehls get können Sie die
+           Deployment-Reihenfolge einer Anwendung anzeigen.
+
+       --enabled
+           Ermöglicht Benutzern, auf die Anwendung zuzugreifen. Ist der Wert
+           auf false gesetzt, können Benutzer nicht auf die Anwendung
+           zugreifen. Diese Option aktiviert die Anwendung auf der angegebenen
+           Zielinstanz oder dem angegebenen Cluster. Wenn Sie das Deployment
+           für das Ziel domain ausführen, wird diese Option ignoriert, da das
+           Deployment für diese Domain kein Deployment für eine bestimmte
+           Instanz oder ein bestimmtes Cluster ist. Der Standardwert ist true.
+
+       --generatermistubs
+           Ist der Wert auf true gesetzt, werden statische RMI-IIOP-Stubs
+           generiert und in die Datei client.jar eingefügt. Ist der Wert auf
+           false gesetzt, werden keine Stubs generiert. Der Standardwert
+           lautet false.
+
+       --availabilityenabled
+           Diese Option steuert, ob High Availability für Websessions und für
+           die Durchführung von SFSB-Checkpoints (Session Bean mit Status
+           "Stateful") und möglicherweise für Passivierung aktiviert wird. Ist
+           der Wert auf "false" (Standardwert) gesetzt, werden alle
+           Websession-Speichervorgänge und SFSB-Checkpoints für die angegebene
+           Anwendung, Webanwendung oder das EJB-Modul deaktiviert. Ist der
+           Wert auf "true" gesetzt, wird die angegebene Anwendung oder das
+           Modul für High Availability aktiviert. Setzen Sie diese Option nur
+           dann auf "true", wenn High Availability auf einer höheren Ebene
+           konfiguriert und aktiviert ist, beispielsweise auf Server- und
+           Containerebene.
+
+       --asyncreplication
+           Diese Option steuert, ob Websession- und SFSB-Status, für die High
+           Availability aktiviert ist, zunächst gepuffert und dann repliziert
+           werden, indem ein separater asynchroner Thread verwendet wird. Ist
+           der Wert auf "true" (Standardwert) gesetzt, wird die Performance
+           verbessert, aber die Verfügbarkeit verringert. Wenn die Instanz,
+           bei der Status gepuffert, aber noch nicht repliziert sind, nicht
+           erfolgreich ist, gehen die Status verloren. Ist der Wert auf
+           "false" gesetzt, wird die Performance verringert, aber die
+           Verfügbarkeit sichergestellt. Status werden nicht gepuffert,
+           sondern unmittelbar an andere Instanzen im Cluster übertragen.
+
+       --lbenabled
+           Diese Option steuert, ob die bereitgestellte Anwendung für Load
+           Balancing verfügbar ist. Der Standardwert ist "true".
+
+       --keepstate
+           Diese Option steuert, ob Websessions, SFSB-Instanzen und persistent
+           erstellte EJB-Timer zwischen erneuten Deployments erhalten bleiben.
+
+           Der Standardwert ist "false". Diese Option wird nur bei der
+           standardmäßigen Serverinstanz (server) unterstützt. Bei anderen
+           Zielen wird sie nicht unterstützt und ignoriert.
+
+           Änderungen, die an einer Anwendung zwischen Deployments vorgenommen
+           werden, verhindern, dass diese Funktion richtig funktioniert.
+           Ändern Sie beispielsweise nicht die Instanzenvariablen in der
+           SFSB-Bean-Klasse.
+
+           Bei Webanwendungen ist dieses Feature nur dann anwendbar, wenn in
+           der Datei glassfish-web-app.xml das Attribut persistence-type des
+           Elements session-manager file lautet.
+
+           Für Session Bean-Instanzen mit Status "Stateful" ist der
+           Persistenztyp ohne High Availability im Server (Attribut
+           sfsb-persistence-type) festgelegt und muss auf den empfohlenen
+           Standardwert file gesetzt werden.
+
+           Kann eine aktive Websession, SFSB-Instanz oder ein EJB-Timer nicht
+           gespeichert oder wiederhergestellt werden, stehen diese nicht zur
+           Verfügung, wenn das erneute Deployment abgeschlossen ist. Das
+           erneute Deployment wird jedoch fortgesetzt, und eine Warnmeldung
+           wird aufgezeichnet.
+
+           Damit die Daten aktiver Zustände erhalten bleiben, werden die Daten
+           von GlassFish Server serialisiert und gespeichert. Zum
+           Wiederherstellen der Daten entserialisiert der Class Loader der
+           erneut bereitgestellten Anwendung die Daten, die zuvor gespeichert
+           wurden.
+
+       --libraries
+           Eine durch Komma getrennte Liste mit JAR-Dateien für Librarys.
+           Geben Sie die relativen oder absoluten Pfade der JAR-Dateien der
+           Library an. Geben Sie relative Pfade relativ zu
+           domain-dir/lib/applibs an. Die Librarys werden der Anwendung in der
+           angegebenen Reihenfolge zugänglich gemacht.
+
+       --target
+           Gibt das Ziel an, für das Sie das Deployment durchführen. Gültige
+           Werte sind:
+
+           server
+               Stellt die Komponente für die standardmäßige Serverinstanz
+               server bereit und ist der Standardwert.
+
+           domain
+               Stellt die Komponente für die Domain bereit. Wenn domain das
+               Ziel für ein ursprüngliches Deployment ist, wird die Anwendung
+               für die Domain bereitgestellt. Es verweisen aber keine
+               Serverinstanzen oder Cluster auf die Anwendung. Wenn domain das
+               Ziel für ein erneutes Deployment ist (die Option --force ist
+               auf "true" gesetzt) und die dynamische Neukonfiguration für die
+               Cluster oder Serverinstanzen aktiviert ist, die auf die
+               Anwendung verweisen, rufen diese Cluster oder Serverinstanzen
+               automatisch die neue Version der Anwendung ab. Wird ein
+               erneutes Deployment durchgeführt und die dynamische
+               Konfiguration ist deaktiviert, rufen die verweisenden Cluster
+               oder Serverinstanzen die neue Version der Anwendung erst dann
+               ab, wenn die Cluster- oder Standalone-Serverinstanz neu
+               gestartet wird.
+
+           cluster_name
+               Stellt die Komponente für jede Serverinstanz im Cluster bereit.
+
+           instance_name
+               Stellt die Komponente für eine bestimmte
+               Standalone-Serverinstanz bereit.
+
+       --type
+           Der Packaging-Archivtyp der bereitgestellten Komponente. Mögliche
+           Werte:
+
+           car
+               Die Komponente ist als eine CAR-Datei in ein Package
+               integriert.
+
+           ear
+               Die Komponente ist als eine EAR-Datei in ein Package
+               integriert.
+
+           ejb
+               Die Komponente ist ein EJB, das als JAR-Datei in ein Package
+               integriert ist.
+
+           osgi
+               Die Komponente ist als OSGi-Bundle in ein Package integriert.
+
+           rar
+               Die Komponente ist als eine RAR-Datei in ein Package
+               integriert.
+
+           war
+               Die Komponente ist als eine WAR-Datei in ein Package
+               integriert.
+
+       --properties oder --property
+           Optionale Schlüsselwort/Wert-Paare, die weitere Eigenschaften für
+           das Deployment angeben. Die verfügbaren Eigenschaften werden durch
+           die Implementierung der bereitgestellten oder erneut
+           bereitgestellten Komponente festgelegt. Die Option --properties und
+           die Option --property sind äquivalent. Sie können jede Option
+           unabhängig von der Anzahl der von Ihnen angegebenen Eigenschaften
+           verwenden.
+
+           Sie können folgende Eigenschaften für ein Deployment festlegen:
+
+           jar-signing-alias
+               Gibt den Alias für das Sicherheitszertifikat an, mit dem die
+               JAR-Datei des Anwendungsclientcontainers signiert wird. Java
+               Web Start führt keinen Code aus, der höhere Berechtigungen
+               erfordert, es sei denn, der Code befindet sich in einer
+               JAR-Datei, die mit einem Zertifikat signiert ist, dem das
+               System des Benutzers vertraut. Aus Gründen der
+               Benutzerfreundlichkeit signiert GlassFish Server die JAR-Datei
+               automatisch, wobei das Zertifikat zusammen mit diesem Alias aus
+               dem Keystore der Domain verwendet wird. Anschließend fragt Java
+               Web Start den Benutzer, ob dem Code vertraut werden kann, und
+               zeigt die GlassFish Server-Zertifikatinformationen an. Um diese
+               JAR-Datei mit einem anderen Zertifikat zu signieren, fügen Sie
+               das Zertifikat zum Keystore der Domain hinzu. Danach verwenden
+               Sie diese Eigenschaft. Sie können beispielsweise ein Zertifikat
+               einer vertrauenswürdigen Quelle verwenden, wodurch vermieden
+               wird, dass die Java Web Start-Eingabeaufforderung angezeigt
+               wird, oder Sie können das Zertifikat Ihres eigenen Unternehmens
+               verwenden, von dem Benutzer wissen, dass es vertrauenswürdig
+               ist. Der Standardwert ist s1as, der Alias für das
+               selbstsignierte Zertifikat, das für jede Domain erstellt wird.
+
+           java-web-start-enabled
+               Gibt an, ob der Zugriff auf Java Web Start für ein
+               Anwendungsclientmodul erlaubt ist. Der Standardwert ist "true".
+
+           compatibility
+               Gibt die GlassFish Server-Version für die Abwärtskompatibilität
+               in Bezug auf JAR-Sichtbarkeitsanforderungen für Anwendungen an.
+               Der einzig zulässige Wert lautet v2, der auf Sun GlassFish
+               Enterprise Server Version 2 oder Sun Java System Application
+               Server Version 9.1 oder 9.1.1 verweist. Die Java EE
+               6-Plattformspezifikation enthält striktere Anforderungen als
+               Java EE 5, was die Sichtbarkeit bestimmter JAR-Dateien für
+               verschiedene Module innerhalb einer EAR-Datei angeht.
+               Insbesondere dürfen Anwendungsclients keinen Zugriff auf
+               EJB-JAR-Dateien oder andere JAR-Dateien in der EAR-Datei haben,
+               es sei denn, Referenzen verwenden den standardmäßigen Java
+               SE-Mechanismus (beispielsweise Erweiterungen) oder den Java
+               EE-Library-Verzeichnismechanismus. Wenn diese Eigenschaft auf
+               v2 gesetzt wird, werden diese Java EE 6-Beschränkungen
+               entfernt.
+
+           keepSessions={false|true}
+               Wurde durch die Option --keepstate ersetzt.
+
+               Ist die Option --force auf true gesetzt, kann diese Eigenschaft
+               verwendet werden, um anzugeben, ob aktive Sessions der erneut
+               bereitgestellten Anwendung gespeichert und wiederhergestellt
+               werden, wenn das erneute Deployment abgeschlossen ist. Gilt für
+               HTTP-Sessions in einem Webcontainer. Der Standardwert lautet
+               false.
+
+               false
+                   Aktive Sessions der Anwendung werden nicht beibehalten und
+                   wiederhergestellt (Standardeinstellung).
+
+               true
+                   Aktive Sessions der Anwendung werden beibehalten und
+                   wiederhergestellt.
+
+                   Kann eine aktive Session der Anwendung nicht gespeichert
+                   oder wiederhergestellt werden, ist keine der Sessions
+                   verfügbar, wenn das erneute Deployment abgeschlossen ist.
+                   Das erneute Deployment wird jedoch fortgesetzt, und eine
+                   Warnmeldung wird aufgezeichnet.
+
+                   Zum Speichern von aktiven Sessions serialisiert GlassFish
+                   Server die Sessions und speichert sie im Arbeitsspeicher.
+                   Zum Wiederherstellen der Sessions entserialisiert der Class
+                   Loader der erneut bereitgestellten Anwendung alle Sessions,
+                   die zuvor gespeichert wurden.
+
+           preserveAppScopedResources
+               Ist der Wert auf true gesetzt, werden anwendungsspezifische
+               Ressourcen beibehalten und während des erneuten Deployment
+               wiederhergestellt. Der Standardwert lautet false.
+
+           Andere verfügbare Eigenschaften werden durch die Implementierung
+           der erneut bereitgestellten Komponente festgelegt.
+
+OPERANDEN
+       file_archive|filepath
+           Der Pfad zum Archiv, das die bereitgestellte Anwendung enthält.
+           Dieser Pfad kann ein relativer oder absoluter Pfad sein.
+
+           Das Archiv kann eines der folgenden Formate haben:
+
+           ·   Beispiel: eine Archivdatei /export/JEE_apps/hello.war.
+
+               Ist die Option --upload auf true gesetzt, ist dies der Pfad zur
+               bereitstellbaren Datei auf dem lokalen Clientrechner. Ist die
+               Option --upload auf false gesetzt, ist dies der Pfad zur Datei
+               auf dem Serverrechner.
+
+           ·   Ein Verzeichnis, das das aufgelöste Format des bereitstellbaren
+               Archivs enthält. Dies ist der Pfad zum Verzeichnis auf dem
+               Serverrechner.
+
+               Wenn Sie ein Verzeichnis angeben, wird die Option --upload
+               ignoriert.
+
+BEISPIELE
+       Example 1, Unternehmensanwendung bereitstellen
+           In diesem Beispiel wird die Unternehmensanwendung in der Datei
+           Cart.ear für die standardmäßige Serverinstanz server
+           bereitgestellt. Mit der Option --target können Sie das Deployment
+           für eine andere Serverinstanz oder ein Cluster durchführen.
+
+               asadmin> deploy Cart.ear
+               Application deployed successfully with name Cart.
+               Command deploy executed successfully
+
+       Example 2, Webanwendung mit Standardkontext-Root bereitstellen
+           In diesem Beispiel wird die Webanwendung in der Datei hello.war für
+           die Standardserverinstanz server bereitgestellt. Mit der Option
+           --target können Sie das Deployment für eine andere Serverinstanz
+           oder ein Cluster durchführen.
+
+               asadmin> deploy hello.war
+               Application deployed successfully with name hello.
+               Command deploy executed successfully
+
+       Example 3, Deployment einer Webanwendung mit spezieller Kontext-Root
+       erzwingen
+           In diesem Beispiel wird das Deployment der Webanwendung in der
+           Datei
+            hello.war erzwungen. Die Kontext-Root der bereitgestellten
+           Webanwendung ist greetings. Eine bereits bereitgestellte Anwendung
+           wird erneut bereitgestellt.
+
+               asadmin> deploy --force=true --contextroot greetings hello.war
+               Application deployed successfully with name hello.
+               Command deploy executed successfully
+
+       Example 4, Enterprise Bean bereitstellen
+           In diesem Beispiel wird eine auf der EJB-Spezifikation (Enterprise
+           Bean) basierende Komponente mit CMP bereitgestellt, und es werden
+           die vom Bean verwendeten Datenbanktabellen erstellt.
+
+           In diesem Beispiel wird die Option --target verwendet. Das Ziel in
+           diesem Beispiel ist ein vorhandenes Cluster (cluster1).
+
+               asadmin> deploy --createtables=true --target cluster1 EmployeeEJB.jar
+               Application deployed successfully with name EmployeeEJB.
+               Command deploy executed successfully
+
+       Example 5, Connector-Modul bereitstellen
+           In diesem Beispiel wird ein Connector-Modul bereitgestellt, das in
+           einer RAR-Datei verpackt ist.
+
+           In diesem Beispiel wird die Option --target verwendet. Das Ziel in
+           diesem Beispiel ist eine vorhandene Standalone-Serverinstanz, die
+           nicht zu einem Cluster gehört.
+
+               asadmin> deploy --target myinstance jdbcra.rar
+               Application deployed successfully with name jdbcra.
+               Command deploy executed successfully
+
+       Example 6, Deployment-Reihenfolge für eine Anwendung festlegen
+           In diesem Beispiel wird die Deployment-Reihenfolge für zwei
+           Anwendungen festgelegt. Die Anwendung cart wird beim Serverstart
+           vor der Anwendung horse geladen.
+
+               asadmin> deploy --deploymentorder 102 --name cart cart.war
+               asadmin> deploy --deploymentorder 110 --name horse horse.war
+
+       Example 7, Anwendung über eine alternative Java EE
+       7-Deployment-Deskriptordatei bereitstellen
+           In diesem Beispiel wird eine Anwendung über eine standardmäßige
+           Java EE-Deployment-Deskriptordatei bereitgestellt, die sich
+           außerhalb des Anwendungsarchivs befindet.
+
+               asadmin> deploy --altdd path_to_alternate_descriptor cart.ear
+
+       Example 8, Anwendung über eine alternative GlassFish
+       Server-Deployment-Deskriptordatei bereitstellen
+           In diesem Beispiel wird eine Anwendung über eine GlassFish
+           Server-Laufzeit-Deployment-Deskriptordatei bereitgestellt, die sich
+           außerhalb des Anwendungsarchivs befindet.
+
+               asadmin> deploy --runtimealtdd path_to_alternate_runtime_descriptor horse.ear
+
+BEENDIGUNGSSTATUS
+       0
+           Unterbefehl erfolgreich ausgeführt
+
+       1
+           Fehler beim Ausführen des Unterbefehls
+
+SIEHE AUCH
+       redeploy(1), list-components(1), undeploy(1), get(1), set(1)
+
+       asadmin(1M)
+
+       Oracle GlassFish Server Application Deployment Guide
+
+Java EE 7                        12. Feb. 2013                       deploy(1)

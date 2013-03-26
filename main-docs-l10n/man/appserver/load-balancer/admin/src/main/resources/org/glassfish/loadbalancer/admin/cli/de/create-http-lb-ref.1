@@ -1,0 +1,187 @@
+create-http-lb-ref(1)   Unterbefehle des asadmin-Utili   create-http-lb-ref(1)
+
+NAME
+       create-http-lb-ref - fügt eine vorhandene Cluster- oder Serverinstanz
+       zu einer vorhandenen Load Balancer-Konfiguration bzw. einem Load
+       Balancer hinzu
+
+ZUSAMMENFASSUNG
+           create-http-lb-ref [--help] --config config_name | --lbname load_balancer_name
+           [--lbpolicy round-robin] [--lbpolicymodule lb_policy_module]
+           [--healthcheckerurl url] [--healthcheckerinterval 10]
+           [--healthcheckertimeout 10] [--lbenableallinstances=true]
+           [--lbenableallapplications=true] [--lbweight instance=weight[:instance=weight]*]
+           target
+
+BESCHREIBUNG
+       Verwenden Sie den Unterbefehl create-http-lb-ref, um wie folgt
+       vorzugehen:
+
+       ·   Fügen Sie eine vorhandene Cluster- oder Serverinstanz zu einer
+           vorhandenen Load Balancer-Konfiguration oder einem Load Balancer
+           hinzu. Der Load Balancer leitet die Anforderungen an die von ihm
+           referenzierten geclusterten und Standalone-Instanzen weiter.
+
+       ·   Setzen Sie die Load Balancer Policy auf "round-robin"
+           (Round-Robin), "weighted round-robin" (gewichtetes Round-Robin)
+           oder "user-defined" (benutzerdefiniert).
+
+       ·   Konfigurieren Sie eine Integritätsprüfung für den Load Balancer.
+           Alle hier definierten Integritätsprüfungseinstellungen gelten nur
+           für das Ziel. Wenn Sie keine Integritätsprüfung mit diesem
+           Unterbefehl erstellen, verwenden Sie create-http-health-checker.
+
+       ·   Aktivieren Sie alle Instanzen im Zielcluster für das Load
+           Balancing, oder verwenden Sie enable-http-lb-server, um die
+           Instanzen einzeln zu aktivieren.
+
+       ·   Aktivieren Sie Load Balancing für alle Anwendungen, die für das
+           Ziel bereitgestellt sind, oder verwenden Sie
+           enable-http-lb-application, um die Anwendungen einzeln zu
+           aktivieren.
+
+           Note
+           ┌────────────────────────────────────────┐
+           │Hinweis                                 │
+           │                                        │
+           │           Dieser Unterbefehl ist nur   │
+           │           auf Oracle GlassFish Server  │
+           │           anwendbar. Dieser            │
+           │           Unterbefehl ist nicht auf    │
+           │           GlassFish Server Open Source │
+           │           Edition anwendbar.           │
+           └────────────────────────────────────────┘
+
+OPTIONEN
+       --help, -?
+           Zeigt den Hilfetext für den Unterbefehl an.
+
+       --config
+           Gibt an, zu welcher Load Balancer-Konfiguration Cluster und
+           Serverinstanzen hinzugefügt werden. Geben Sie entweder eine Load
+           Balancer-Konfiguration oder einen Load Balancer an. Wird beides
+           angegeben, tritt ein Fehler auf.
+
+       --lbname
+           Gibt den Load Balancer an, zu dem Cluster und Serverinstanzen
+           hinzugefügt werden. Geben Sie entweder eine Load
+           Balancer-Konfiguration oder einen Load Balancer an. Wird beides
+           angegeben, tritt ein Fehler auf.
+
+       --lbpolicy
+           Die Policy des Load Balancers folgt. Gültige Werte sind
+           round-robin,
+            weighted-round-robin und user-defined. Wenn Sie "user-defined"
+           wählen, geben Sie ein Load Balancer Policy-Modul mit der Option
+           lbpolicymodule an. Wenn Sie weighted-round-robin wählen, weisen Sie
+           den Serverinstanzen Gewichtungen zu, indem Sie den Unterbefehl
+           configure-lb-weight verwenden. Der Standardwert ist round-robin.
+
+       --lbpolicymodule
+           Wenn die Load Balancer Policy user-defined (benutzerdefiniert) ist,
+           verwenden Sie diese Option, um den vollständigen Pfad und den Namen
+           der gemeinsam genutzten Library Ihres Load Balancer Policy-Moduls
+           anzugeben. Die gemeinsam genutzte Library muss sich in einem
+           Verzeichnis befinden, das für den Webserver zugänglich ist.
+
+       --healthcheckerurl
+           Die zu pingende URL, um festzustellen, ob die Instanz integer ist.
+
+       --healthcheckerinterval
+           Das Intervall in Sekunden, das die Integritätsprüfung zwischen den
+           Prüfungen, denen eine nicht integre Instanz unterzogen wird,
+           wartet, um festzustellen, ob die Integrität der Instanz
+           wiederhergestellt wurde. Der Standardwert beträgt 30 Sekunden. Der
+           Wert 0 deaktiviert die Integritätsprüfung.
+
+       --healthcheckertimeout
+           Das Intervall in Sekunden, das die Integritätsprüfung wartet, um
+           eine Antwort von einer Instanz zu erhalten. Wenn die
+           Integritätsprüfung innerhalb dieses Zeitraums keine Antwort
+           empfängt, wird die Instanz als nicht integer betrachtet. Der
+           Standardwert ist 10.
+
+       --lbenableallinstances
+           Aktiviert alle Instanzen im Zielcluster für das Load Balancing.
+           Handelt es sich beim Ziel um eine Serverinstanz, wird diese Instanz
+           für Load Balancing aktiviert. Der Standardwert ist "true".
+
+       --lbenableallapplications
+           Aktiviert alle Anwendungen, die für das Zielcluster oder die
+           Instanz bereitgestellt sind, für Load Balancing. Der Standardwert
+           ist "true".
+
+       --lbweight
+           Der Name der Instanz und die Gewichtung, die Sie der Instanz
+           zuweisen. Die Gewichtung muss eine Ganzzahl sein. Die Paare der
+           Instanzen und Gewichtungen werden durch Doppelpunkte getrennt.
+           Beispiel: instance1=1:instance2=4 bedeutet, dass eine von fünf
+           Anforderungen an instance1 geht und vier von fünf Anforderungen an
+           instance2 gehen. Eine Gewichtung von 1 ist der Standardwert.
+
+OPERANDEN
+       target
+           Gibt an, welches Cluster oder welche Instanz zum Load Balancer
+           hinzugefügt wird. Gültige Werte sind:
+
+           ·   cluster_name - Gibt an, dass Anforderungen für dieses Cluster
+               vom Load Balancer bearbeitet werden.
+
+           ·   stand-alone_instance_name - Gibt an, dass Anforderungen für
+               diese Standalone-Instanz vom Load Balancer bearbeitet werden.
+
+BEISPIELE
+       Example 1, Clusterreferenzen zu einer Load Balancer-Konfiguration
+       hinzufügen
+           In diesem Beispiel wird eine Referenz zu einem Cluster namens
+           cluster2 zu einer Load Balancer-Konfiguration namens mylbconfig
+           hinzugefügt.
+
+               asadmin> create-http-lb-ref --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Example 2, Clusterreferenzen zu einem Load Balancer hinzufügen
+           In diesem Beispiel wird eine Referenz zu einem Cluster namens
+           cluster2 zu einem Load Balancer namens mylb hinzugefügt.
+
+               asadmin> create-http-lb-ref --lbname mylb cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Example 3, Konfigurieren einer Integritätsprüfung und einer Load
+       Balancer Policy
+           In diesem Beispiel werden eine Integritätsprüfung und eine Load
+           Balancer Policy konfiguriert, und der Load Balancer wird für
+           Instanzen und Anwendungen aktiviert.
+
+               asadmin> create-http-lb-ref --config mylbconfig --lbpolicy weighted-round-robin
+               --healthcheckerinterval 40 --healthcheckertimeout 20
+               --lbenableallinstances=true --lbenableallapplications=true cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Example 4, Benutzerdefinierte Load Balancing Policys festlegen
+           In diesem Beispiel wird eine benutzerdefinierte Load Balancing
+           Policy festgelegt.
+
+               asadmin> create-http-lb-ref --lbpolicy user-defined --lbpolicymodule /user/modules/module.so
+               --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+BEENDIGUNGSSTATUS
+       0
+           Unterbefehl erfolgreich ausgeführt
+
+       1
+           Fehler beim Ausführen des Unterbefehls
+
+SIEHE AUCH
+       delete-http-lb-ref(1), create-http-health-checker(1),
+       enable-http-lb-server(1), enable-http-lb-application(1),
+       list-http-lb-configs(1), list-http-lbs(1) configure-lb-weight(1)
+
+       asadmin(1M)
+
+Java EE 7                        25. Aug. 2010           create-http-lb-ref(1)

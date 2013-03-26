@@ -1,0 +1,233 @@
+create-jmsdest(1)       Unterbefehle des asadmin-Utili       create-jmsdest(1)
+
+NAME
+       create-jmsdest - erstellt ein physisches JMS-Ziel
+
+ZUSAMMENFASSUNG
+           create-jmsdest [--help]
+           --desttype dest_type
+           [--property (name=value)[:name=value]*]
+           [--target target]
+           [--force[={false|true}]]
+           dest_name
+
+BESCHREIBUNG
+       Der Unterbefehl create-jmsdest erstellt ein physisches Java Message
+       Service-(JMS-)Ziel. In der Regel verwenden Sie den Unterbefehl
+       create-jms-resource, um eine JMS-Zielressource zu erstellen, deren
+       Name-Eigenschaft das physische Ziel angibt. Das physische Ziel wird
+       automatisch erstellt, wenn Sie eine Anwendung ausführen, die die
+       Zielressource verwendet. Verwenden Sie den Unterbefehl create-jmsdest,
+       wenn Sie ein physisches Ziel mit nicht standardmäßigen
+       Eigenschaftseinstellungen erstellen möchten.
+
+       Dieser Unterbefehl wird nur im Remote-Modus unterstützt. Für
+       Remote-asadmin-Unterbefehle muss ein Domainadministrationsserver (DAS)
+       ausgeführt werden.
+
+OPTIONEN
+       --help, -?
+           Zeigt den Hilfetext für den Unterbefehl an.
+
+       --desttype
+           Der Typ des JMS-Ziels. Gültige Werte sind topic und queue.
+
+       --property
+           Optionale Name/Wert-Paare für Attribute zum Konfigurieren des
+           physischen Ziels. Sie können folgende Eigenschaften für ein
+           physisches Ziel angeben.
+
+           maxNumMsgs
+               Die für das Ziel maximal zulässige Anzahl nicht konsumierter
+               Meldungen. Der Wert -1 bedeutet, dass die Anzahl der Meldungen
+               unbegrenzt ist. Der Standardwert ist -1. Der Standardwert für
+               die Queue für nicht zugestellte Meldungen ist 1000.
+
+               Wenn die Eigenschaft limitBehavior auf FLOW_CONTROL gesetzt
+               ist, kann der angegebene Meldungsgrenzwert überschritten
+               werden, da der Broker nicht schnell genug reagieren kann, um
+               den Fluss der eingehenden Meldungen zu stoppen. In solchen
+               Fällen dient der für maxNumMsgs angegebene Wert lediglich als
+               Hinweis für den Broker, nicht aber als strikt erzwungener
+               Grenzwert.
+
+           maxBytesPerMsg
+               Die maximal zulässige Größe einer einzelnen Meldung in Byte.
+               Bei Ablehnung einer persistenten Meldung wird dem
+               produzierenden Client eine Exception gemeldet. Bei nicht
+               persistenten Meldungen wird keine Benachrichtigung gesendet.
+
+               Der Wert kann mit den folgenden Suffixen in Byte, Kilobyte oder
+               Megabyte ausgedrückt werden:
+
+               b
+                   Byte
+
+               k
+                   Kilobyte (1024 Byte)
+
+               m
+                   Megabyte (1024 x 1024 = 1.048.576 Byte)
+
+               Ein Wert ohne Suffix wird in Byte ausgedrückt. Der Wert -1
+               bedeutet, dass die Meldungsgröße unbegrenzt ist. Der
+               Standardwert ist -1.
+
+           maxTotalMsgBytes
+               Der maximale Gesamtspeicher für unkonsumierte Meldungen in
+               Byte. Der Standardwert ist -1. Die Syntax ist dieselbe wie für
+               maxBytesPerMsg. Der Standardwert für die Queue für nicht
+               zugestellte Meldungen ist 10m.
+
+           limitBehavior
+               Das Behavior des Message Queue-Brokers bei Erreichen des
+               Speicherschwellenwerts. Folgende Werte sind gültig.
+
+               REJECT_NEWEST
+                   Die neuesten Meldungen werden abgelehnt, und dem
+                   produzierenden Client wird nur dann eine Exception
+                   gemeldet, wenn die Meldung persistent ist. Dies ist der
+                   Standardwert.
+
+               FLOW_CONTROL
+                   Die Geschwindigkeit, mit der Meldungs-Producer Meldungen
+                   senden, wird verringert.
+
+               REMOVE_OLDEST
+                   Die ältesten Meldungen werden entfernt.
+
+               REMOVE_LOW_PRIORITY
+                   Die Meldungen mit der altersbezogenen niedrigsten Priorität
+                   werden entfernt, ohne dass der produzierende Client
+                   benachrichtigt wird.
+
+               Wenn der Wert REMOVE_OLDEST oder REMOVE_LOW_PRIORITY lautet und
+               die Eigenschaft useDMQ auf true gesetzt ist, werden überzählige
+               Meldungen in die Queue für nicht zugestellte Meldungen
+               verschoben. Für die Queue für nicht zugestellte Meldungen
+               selbst ist das standardmäßige Behavior REMOVE_OLDEST, und der
+               Wert kann nicht auf FLOW_CONTROL gesetzt werden.
+
+           maxNumProducers
+               Die maximale Anzahl der Meldungs-Producer für das Ziel. Bei
+               Erreichen dieses Grenzwerts können keine neuen Producer mehr
+               erstellt werden. Der Wert -1 bedeutet, dass die Anzahl der
+               Producer unbegrenzt ist. Der Standardwert ist 8080. Diese
+               Eigenschaft gilt nicht für die Queue für nicht zugestellte
+               Meldungen.
+
+           consumerFlowLimit
+               Die maximale Anzahl an Meldungen, die einem Consumer in einem
+               einzigen Batch zugestellt werden können. Der Wert -1 bedeutet,
+               dass die Anzahl der Meldungen unbegrenzt ist. Der Standardwert
+               ist 1000. Die Clientlaufzeit kann diesen Grenzwert
+               überschreiben, indem ein niedrigerer Wert für das Connection
+               Factory-Objekt angegeben wird.
+
+               Bei einer Queuezustellung mit Load Balancing ist dies die
+               anfängliche Anzahl der in die Queue gestellten Meldungen, die
+               an aktive Consumer weitergeleitet werden, bevor das Load
+               Balancing beginnt.
+
+           useDMQ
+               Ist der Wert auf true gesetzt, werden nicht zugestellte
+               Meldungen in die Queue für nicht zugestellte Meldungen
+               gestellt. Ist der Wert auf false gesetzt, werden nicht
+               zugestellte Meldungen verworfen. Der Standardwert ist true.
+
+           validateXMLSchemaEnabled
+               Ist der Wert auf true gesetzt, wird die XML-Schemavalidierung
+               für das Ziel aktiviert. Der Standardwert ist false.
+
+               Wenn die XML-Validierung aktiviert ist, versucht die Message
+               Queue-Clientlaufzeit, eine XML-Meldung anhand der angegebenen
+               XSDs (oder anhand der DTD, wenn kein XSD angegeben wurde) zu
+               validieren, bevor sie an den Broker gesendet wird. Wenn das
+               angegebene Schema nicht gefunden oder die Meldung nicht
+               validiert werden kann, wird die Meldung nicht gesendet, und
+               eine Exception wird ausgelöst.
+
+               Diese Eigenschaft sollte festgelegt werden, wenn ein Ziel
+               inaktiv ist, d.h. wenn es keine Consumer oder Producer aufweist
+               und sich keine Meldungen im Ziel befinden. Andernfalls muss der
+               Producer erneut eine Verbindung herstellen.
+
+           XMLSchemaURIList
+               Eine durch Leerzeichen getrennte Liste von
+               XML-Schemadokument-(XSD-)URI-Zeichenfolgen. Die URIs verweisen
+               auf das Verzeichnis eines oder mehrerer XSDs, die für die
+               XML-Schemavalidierung verwendet werden, wenn
+               validateXMLSchemaEnabled auf true gesetzt ist. Der Standardwert
+               ist null.
+
+               Schließen Sie diesen Wert in doppelte Anführungszeichen ein,
+               wenn mehrere URIs angegeben werden (siehe folgendes Beispiel):
+
+                   "http://foo/flap.xsd http://test.com/test.xsd"
+               Wenn diese Eigenschaft nicht festgelegt oder auf null gesetzt
+               wurde und die XML-Validierung aktiviert ist, wird die
+               XML-Validierung mit einer im XML-Dokument angegebenen DTD
+               durchgeführt. Wenn infolge einer Änderung der
+               Anwendungsanforderungen ein XSD geändert wird, müssen alle
+               Clientanwendungen, die XML-Meldungen basierend auf dem
+               geänderten XSD erstellen, erneut eine Verbindung zum Broker
+               herstellen.
+
+           Um den Wert dieser Eigenschaften zu ändern, können Sie den Befehl
+           as-install/mq/bin/imqcmd verwenden. Weitere Informationen finden
+           Sie unter "Physical Destination Property Reference" im Oracle
+           GlassFish Server Message Queue Administration Guide.
+
+       --target
+           Erstellt das physische Ziel nur für das angegebene Ziel. Obwohl der
+           Unterbefehl create-jmsdest auf Ressourcen bezogen ist, wird ein
+           physisches Ziel mit dem JMS-Service (JMS-Broker) erstellt, der Teil
+           der Konfiguration ist. Ein JMS-Broker wird im
+           Konfigurationsabschnitt von
+            domain.xml konfiguriert. Folgende Werte sind gültig:
+
+           server
+               Erstellt das physische Ziel für die standardmäßige
+               Serverinstanz. Dies ist der Standardwert.
+
+           configuration-name
+               Erstellt das physische Ziel in der angegebenen Konfiguration.
+
+           cluster-name
+               Erstellt das physische Ziel für jede Serverinstanz im
+               angegebenen Cluster.
+
+           instance-name
+               Erstellt das physische Ziel für die angegebene Serverinstanz.
+
+       --force
+           Legt fest, ob der Unterbefehl das vorhandene physische JMS-Ziel
+           desselben Namens überschreibt. Der Standardwert ist false.
+
+OPERANDEN
+       dest_name
+           Eine eindeutige ID für das JMS-Ziel, das erstellt werden soll.
+
+BEISPIELE
+       Example 1, Physische JMS-Ziele erstellen
+           Der folgende Unterbefehl erstellt eine physische JMS-Queue namens
+           PhysicalQueue mit nicht standardmäßigen Eigenschaftswerten.
+
+               asadmin> create-jmsdest --desttype queue
+               --property maxNumMsgs=1000:maxBytesPerMsg=5k PhysicalQueue
+               Command create-jmsdest executed successfully.
+
+BEENDIGUNGSSTATUS
+       0
+           Unterbefehl erfolgreich ausgeführt
+
+       1
+           Fehler beim Ausführen des Unterbefehls
+
+SIEHE AUCH
+       create-jms-resource(1), delete-jmsdest(1), list-jmsdest(1),
+       flush-jmsdest(1)
+
+       asadmin(1M)
+
+Java EE 7                        12. Feb. 2013               create-jmsdest(1)

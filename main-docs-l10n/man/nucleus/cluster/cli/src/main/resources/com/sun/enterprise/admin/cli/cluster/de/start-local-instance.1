@@ -1,0 +1,222 @@
+start-local-instance(1) Unterbefehle des asadmin-Utili start-local-instance(1)
+
+NAME
+       start-local-instance - startet eine GlassFish Server-Instanz auf dem
+       Host, auf dem der Unterbefehl ausgeführt wird
+
+ZUSAMMENFASSUNG
+           start-local-instance [--help]
+           [--nodedir node-dir] [--node node]
+           [--debug={false|true}] [--dry-run={false|true}] [--sync={normal|full|none}]
+           [--verbose={false|true}] [--watchdog={false|true}]
+           [instance-name]
+
+BESCHREIBUNG
+       Der Unterbefehl start-local-instance startet eine GlassFish
+       Server-Instanz auf dem Host, auf dem der Unterbefehl ausgeführt wird.
+       Für diesen Unterbefehl muss das Distributed Component Object
+       Model-(DCOM-)Remote-Protokoll oder die Secure Shell (SSH) nicht
+       konfiguriert sein. Sie müssen diesen Befehl auf dem Host ausführen, auf
+       dem sich die Instanz befindet.
+
+       Der Unterbefehl kann jede GlassFish Server-Instanz starten, unabhängig
+       davon, wie sie erstellt wurde. Dieser Unterbefehl kann beispielsweise
+       eine Instanz starten, die mithilfe des Unterbefehls create-instance(1)
+       erstellt wurde.
+
+       Der Unterbefehl start-local-instance kontaktiert nicht den
+       Domainadministrationsserver (DAS), um den Knoten zu bestimmen, auf dem
+       sich die Instanz befindet. Um den Knoten zu bestimmen, auf dem sich die
+       Instanz befindet, durchsucht der Unterbefehl das Verzeichnis, das die
+       Knotenverzeichnisse enthält. Wenn mehrere Knotenverzeichnisse vorhanden
+       sind, muss der Knoten als Option des Unterbefehls angegeben werden.
+
+       Dieser Unterbefehl wird im lokalen Modus unterstützt. Um die Instanz
+       mit dem DAS zu synchronisieren, muss dieser Unterbefehl jedoch im
+       Remote-Modus ausgeführt werden.
+
+OPTIONEN
+       --help, -?
+           Zeigt den Hilfetext für den Unterbefehl an.
+
+       --nodedir
+           Gibt das Verzeichnis an, das das Knotenverzeichnis der Instanz
+           enthält. Die Dateien der Instanz werden im Knotenverzeichnis der
+           Instanz gespeichert. Der Standard ist as-install/nodes.
+
+       --node
+           Gibt den Knoten an, auf dem sich die Instanz befindet. Diese Option
+           kann ausgelassen werden, wenn das Verzeichnis, das mit der Option
+           --nodedir angegeben wird, nur ein Knotenverzeichnis enthält.
+           Andernfalls ist diese Option erforderlich.
+
+       --debug
+           Gibt an, ob die Instanz mit aktiviertem Debugging mittels Java
+           Platform Debugger Architecture (JPDA) gestartet werden soll
+
+           .
+
+           Mögliche Werte:
+
+           true
+               Die Instanz wird mit aktiviertem JPDA-Debugging gestartet, und
+               die Portnummer für JPDA-Debugging wird angezeigt.
+
+           false
+               Die Instanz wird mit deaktiviertem JPDA-Debugging gestartet
+               (Standard).
+
+       --dry-run, -n
+           Unterdrückt den tatsächlichen Start der Instanz. Stattdessen zeigt
+           start-local-instance den vollständigen Java-Befehl mitsamt allen
+           Optionen an, mit dem die Instanz gestartet werden kann. Eine
+           Überprüfung dieses Befehls kann nützlich sein, um JVM-Optionen zu
+           bestätigen und Startprobleme zu beheben.
+
+           Der Standardwert ist false.
+
+       --sync
+           Der Synchronisierungstyp zwischen dem DAS und den Instanzdateien
+           beim Starten der Instanz.
+
+           Mögliche Werte:
+
+           none
+               Der DAS führt keine Synchronisierung der Instanzdateien mit
+               Änderungen durch. Durch diesen Synchronisierungstyp verringert
+               sich die für das Starten der Instanz erforderliche Zeit.
+
+           normal
+               Der DAS führt eine Synchronisierung der Instanz mit den
+               Änderungen seit der letzten Synchronisierung wie folgt durch:
+
+               ·   Für das Verzeichnis config synchronisiert der DAS die
+                   Instanz mit allen Änderungen.
+
+               ·   Für die Verzeichnisse applications und docroot muss ein
+                   Unterverzeichnis der obersten Ebene geändert werden, damit
+                   der DAS alle Dateien unter diesem Unterverzeichnis
+                   synchronisiert.
+
+                   Wenn eine Datei unterhalb eines Unterverzeichnisses der
+                   obersten Ebene geändert wurde, ohne dass eine Änderung an
+                   einer Datei im Unterverzeichnis der obersten Ebene
+                   vorgenommen wurde, ist eine vollständige Synchronisierung
+                   erforderlich. Im normalen Betrieb werden Dateien unterhalb
+                   der Unterverzeichnisse der obersten Ebene dieser
+                   Verzeichnisse nicht geändert. Wenn eine Anwendung
+                   bereitgestellt und das Deployment aufgehoben wird, ist
+                   keine vollständige Synchronisierung erforderlich, um die
+                   Instanz mit der Änderung zu aktualisieren.
+
+               Dies ist der Standardwert.
+
+           full
+               Der DAS synchronisiert die Instanz mit allen Instanzdateien,
+               unabhängig davon, ob die Dateien seit der letzten
+               Synchronisierung geändert wurden. Durch diesen
+               Synchronisierungstyp kann sich das Hochfahren der Instanz
+               verzögern, während der DAS alle Dateien in den
+               Instanzverzeichnissen aktualisiert.
+
+                   Caution
+                   ┌────────────────────────────────────────┐
+                   │Achtung Wenn der DAS nicht ausgeführt   │
+                   │wird oder nicht für den Host erreichbar │
+                   │ist, auf dem Sie den Unterbefehl        │
+                   │ausführen, setzen Sie die Option --sync │
+                   │nicht auf full. Um eine vollständige    │
+                   │Synchronisierung durchzuführen,         │
+                   │entfernt der Unterbefehl den Cache der  │
+                   │Instanz. Wenn der DAS nicht kontaktiert │
+                   │werden kann, um den Cache zu ersetzen,  │
+                   │ist der Unterbefehl nicht erfolgreich,  │
+                   │und die Instanz kann erst neu gestartet │
+                   │werden, wenn sie erneut mit dem DAS     │
+                   │synchronisiert wurde.                   │
+                   └────────────────────────────────────────┘
+
+       --verbose, -v
+           Gibt an, ob ausführliche Informationen zur Instanz in dem
+           Konsolenfenster angezeigt werden, in dem der Unterbefehl ausgeführt
+           wird.
+
+           Mögliche Werte:
+
+           true
+               Ausführliche Start- und Logmeldungen zur Instanz werden in dem
+               Konsolenfenster angezeigt, in dem der Unterbefehl ausgeführt
+               wird. Wenn die Instanz zu einem späteren Zeitpunkt erneut
+               gestartet wird, indem der Unterbefehl restart-local-instance(1)
+               über ein anderes Konsolenfenster ausgeführt wird, werden
+               Meldungen weiterhin im zuerst geöffneten Konsolenfenster
+               angezeigt.
+
+               Sie können den GlassFish Server-Prozess abbrechen, indem Sie
+               CTRL-C im Konsolenfenster eingeben.
+
+               Sie können den GlassFish Server-Prozess abbrechen und ein
+               Threaddump für den Server abrufen, indem Sie eine der folgenden
+               Tastenkombinationen im Konsolenfenster eingeben:
+
+               ·   CTRL-\ unter UNIX-Systemen
+
+               ·   CTRL-Break unter Windows-Systemen
+
+           false
+               Es werden keine ausführlichen Informationen angezeigt
+               (Standard).
+
+       --watchdog, -w
+           Gibt an, ob beschränkte Informationen zur Instanz im
+           Konsolenfenster angezeigt werden, in dem der Unterbefehl ausgeführt
+           wird. Die Option --watchdog ähnelt der Option --verbose, zeigt
+           jedoch keine detaillierten Start- und Logmeldungen an. Diese Option
+           ist nützlich, wenn das Utility asadmin im Hintergrund oder ohne
+           zugehörige Konsole ausgeführt wird.
+
+           Mögliche Werte:
+
+           true
+               Im Konsolenfenster werden beschränkte Informationen angezeigt.
+
+           false
+               Im Konsolenfenster werden keine beschränkten Informationen
+               angezeigt (Standardeinstellung).
+
+OPERANDEN
+       instance-name
+           Der Name der Instanz, die gestartet werden soll.
+
+BEISPIELE
+       Example 1, Instanz lokal starten
+           In diesem Beispiel wird die Instanz yml-i-sj01 auf dem Host
+           gestartet, auf dem der Unterbefehl ausgeführt wird.
+
+               asadmin> start-local-instance --node sj01 yml-i-sj01
+               Waiting for the server to start .................................
+               Successfully started the instance: yml-i-sj01
+               instance Location: /export/glassfish3/glassfish/nodes/sj01/yml-i-sj01
+               Log File: /export/glassfish3/glassfish/nodes/sj01/yml-i-sj01/logs/server.log
+               Admin Port: 24849
+               Command start-local-instance executed successfully.
+
+BEENDIGUNGSSTATUS
+       0
+           Befehl erfolgreich ausgeführt
+
+       1
+           Fehler beim Ausführen des Befehls
+
+SIEHE AUCH
+       create-instance(1), create-local-instance(1), delete-instance(1),
+       delete-local-instance(1), restart-instance(1),
+       restart-local-instance(1), start-domain(1), start-instance(1),
+       stop-domain(1), stop-instance(1), stop-local-instance(1)
+
+       asadmin(1M)
+
+       Java Platform Debugger Architecture (JPDA)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                        13. Feb. 2013         start-local-instance(1)

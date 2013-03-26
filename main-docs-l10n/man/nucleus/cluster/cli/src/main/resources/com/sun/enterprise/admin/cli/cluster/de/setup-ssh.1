@@ -1,0 +1,254 @@
+setup-ssh(1)            Unterbefehle des asadmin-Utili            setup-ssh(1)
+
+NAME
+       setup-ssh - richtet einen SSH-Schlüssel auf angegebenen Hosts ein
+
+ZUSAMMENFASSUNG
+           setup-ssh [--help]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile] [--sshpublickeyfile ssh-public-keyfile]
+           [--generatekey={false|true}]
+           host-list
+
+BESCHREIBUNG
+       Der Unterbefehl setup-ssh richtet einen Secure Shell-(SSH-)Schlüssel
+       auf den Hosts ein, die als Operanden des Unterbefehls angegeben sind.
+       Durch diesen Schlüssel kann GlassFish Server eine Public
+       Key-Authentifizierung für die Authentifizierung der SSH-Anmeldung des
+       Benutzers auf Remote-Hosts verwenden.
+
+       SSH stellt sicher, dass GlassFish Server-Cluster, die mehrere Hosts
+       umfassen, zentral verwaltet werden können. Wenn ein Benutzer einen
+       Unterbefehl zur Clusteradministration ausführt, der für mehrere Hosts
+       gilt, wird der Unterbefehl vom Host des Domainadministrationsservers
+       (DAS) an Remote-Hosts propagiert. Um Unterbefehle zu propagieren, die
+       für eine nicht ausgeführte GlassFish Server-Instanz oder für einen
+       Knoten gelten, auf dem keine Instanzen ausgeführt werden, verwendet
+       GlassFish Server SSH. SSH bietet Vertraulichkeit und Sicherheit für
+       Daten, die zwischen dem DAS und Remote-Hosts ausgetauscht werden.
+
+       Für die Public Key-Authentifizierung wird ein SSH-Schlüsselpaar
+       verwendet, in dem die folgenden Schlüssel enthalten sind:
+
+       ·   ein Private Key, der in einem sicheren Verzeichnis auf dem DAS-Host
+           gespeichert ist und durch eine Passphrase geschützt sein kann
+
+       ·   der Public Key, der auf allen Remote-Hosts gespeichert ist, mit
+           denen der DAS kommuniziert
+
+       Der Unterbefehl erfordert keine Konfigurationsinformationen vom DAS und
+       ändert nicht die Konfiguration des DAS.
+
+       Dieser Unterbefehl wird nur im lokalen Modus unterstützt.
+
+   Voraussetzungen für die Verwendung des Unterbefehls setup-ssh
+       Um den Unterbefehl setup-ssh zu verwenden, muss der SSH-Benutzer SSH
+       zur Anmeldung bei Remote-Hosts verwenden können, auf denen SSH
+       eingerichtet werden soll. Folgende Voraussetzungen müssen insbesondere
+       erfüllt werden:
+
+       ·   Der ssh(1)-Client ist auf dem DAS-Host installiert und über den
+           DAS-Benutzerpfad zugänglich.
+
+       ·   Der sshd(1M)-Daemon wird auf allen Hosts installiert und
+           ausgeführt, auf denen ein SSH-Schlüssel eingerichtet werden soll.
+
+       ·   Der Benutzer, der von der Option --sshuser angegeben wird, verfügt
+           über eine SSH-Anmeldung auf allen Hosts, auf denen ein
+           SSH-Schlüssel eingerichtet werden soll.
+
+       ·   Das Utility ssh-keygen(1) wird auf dem DAS-Host entweder im
+           Standardverzeichnis oder in einem Verzeichnis, das im
+           DAS-Benutzerpfad definiert ist, gespeichert.
+
+       ·   Auf Windows-Systemen ist das SSH-Package für Cygwin
+
+           oder ein MKS Software-Toolkit,
+
+           das SSH bereitstellt, installiert.
+
+   Behavior des Unterbefehls setup-ssh
+       Der Unterbefehl richtet durch die Automatisierung der folgenden
+       Aufgaben SSH-Konnektivität zwischen dem DAS-Host und Remote-Hosts ein:
+
+       ·   Erzeugen eines SSH-Schlüsselpaars.  Ist kein SSH-Schlüsselpaar
+           vorhanden, fordert der Unterbefehl den Benutzer standardmäßig auf,
+           ein SSH-Schlüsselpaar zu generieren. Das SSH-Schlüsselpaar wird
+           ohne Verschlüsselungs-Passphrase generiert. Wenn ein
+           Passphrase-geschütztes Schlüsselpaar erforderlich ist, muss das
+           Schlüsselpaar manuell mit dem SSH-Befehl ssh-keygen(1) generiert
+           werden.
+
+       ·   Verteilen des Public Keys.  Der Unterbefehl hängt den Content der
+           Public Key-Datei auf jedem Remote-Host an die Datei
+           user-home/.ssh/authorized_keys an. Standardmäßig sucht der
+           Unterbefehl die Public Key-Datei im Verzeichnis user-home/.ssh auf
+           dem Host, auf dem der Unterbefehl ausgeführt wird. Wenn die Datei
+           user-home/.ssh/authorized_keys nicht auf einem Host vorhanden ist,
+           wird sie vom Unterbefehl erstellt.  user-home ist das
+           Home-Verzeichnis des Benutzers auf einem Host.
+
+           Um den Public Key zu verteilen, ist die Authentifizierung der
+           SSH-Anmeldung des Benutzers erforderlich. Wenn der Private Key
+           durch eine Passphrase geschützt ist, ist die Passphrase ebenfalls
+           erforderlich. Standardmäßig fordert der Unterbefehl den Benutzer
+           zur Eingabe des Kennworts und gegebenenfalls der Passphrase auf. Um
+           den Public Key ohne Prompt zu verteilen, führen Sie den Unterbefehl
+           folgendermaßen aus:
+
+           ·   Setzen Sie die Option --interactive des Utilitys asadmin(1M)
+               auf false.
+
+           ·   Richten Sie für Option --passwordfile des Utilitys asadmin eine
+               Datei ein, in der der Eintrag AS_ADMIN_SSHPASSWORD das Kennwort
+               des SSH-Benutzers für die Anmeldung bei den angegebenen Hosts
+               angibt.
+
+           ·   Wenn eine Passphrase erforderlich ist, stellen Sie sicher, dass
+               die Datei, die in der Option --passwordfile des Utilitys
+               asadmin angegeben ist, auch einen Eintrag für
+               AS_ADMIN_SSHKEYPASSPHRASE enthält.
+
+           Wenn die Public Key-Authentifizierung bereits auf einem Host
+           eingerichtet ist, informiert der Unterbefehl den Benutzer darüber,
+           dass die Public Key-Authentifizierung bereits eingerichtet ist, und
+           verteilt den Schlüssel nicht an den Host.
+
+OPTIONEN
+       --help, -?
+           Zeigt den Hilfetext für den Unterbefehl an.
+
+       --sshport
+           Der zu verwendende Port für SSH-Verbindungen mit dem Host, auf dem
+           SSH eingerichtet wird. Der Standardwert ist 22.
+
+       --sshuser
+           Der SSH-Benutzer auf dem Remote-Host, der den Einrichtungsprozess
+           für SSH auf diesem Host ausführen soll. Standardmäßig ist dies der
+           Benutzer, der diesen Unterbefehl ausführt. Um sicherzustellen, dass
+           der DAS die SSH-Private Key-Datei dieses Benutzers lesen kann,
+           geben Sie den Benutzer an, der den DAS-Prozess ausführt.
+
+       --sshkeyfile
+           Der absolute Pfad zur SSH-Private Key-Datei für den Benutzer, der
+           die Option --sshuser angibt. Diese Datei dient zur
+           Authentifizierung beim sshd-Daemon auf dem Host.
+
+           Der Benutzer, der diesen Unterbefehl ausführt, muss den Pfad zur
+           Schlüsseldatei erreichen und die Schlüsseldatei lesen können.
+
+           Der Standard ist eine Schlüsseldatei im Verzeichnis .ssh des
+           Benutzers auf dem Host, auf dem der Unterbefehl ausgeführt wird.
+           Wenn mehrere Schlüsseldateien vorhanden sind, gilt folgende
+           Prioritätsreihenfolge für den Unterbefehl:
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --sshpublickeyfile
+           Der absolute Pfad zur SSH-Public Key-Datei für den Benutzer, der
+           durch die Option --sshuser angegeben wird. Der Content der Public
+           Key-Datei wird an die Datei .ssh/authorized_keys des Benutzers auf
+           allen Hosts angehängt, auf denen SSH eingerichtet wird. Wenn die
+           Datei .ssh/authorized_keys nicht auf einem Host vorhanden ist, wird
+           sie vom Unterbefehl erstellt.
+
+           Der Benutzer, der diesen Unterbefehl ausführt, muss den Pfad zur
+           Schlüsseldatei erreichen und die Schlüsseldatei lesen können.
+
+           Der Standard ist eine Schlüsseldatei im Verzeichnis .ssh des
+           Benutzers auf dem Host, auf dem der Unterbefehl ausgeführt wird.
+           Wenn mehrere Schlüsseldateien vorhanden sind, gilt folgende
+           Prioritätsreihenfolge für den Unterbefehl:
+
+            1. id_rsa.pub
+
+            2. id_dsa.pub
+
+            3. identity.pub
+
+       --generatekey
+           Gibt an, ob der Unterbefehl die SSH-Schlüsseldateien generiert,
+           ohne den Benutzer dazu aufzufordern.
+
+           Mögliche Werte:
+
+           true
+               Der Unterbefehl generiert die SSH-Schlüsseldateien, ohne den
+               Benutzer dazu aufzufordern.
+
+           false
+               Das Behavior des Unterbefehls hängt davon ab, ob die
+               SSH-Schlüsseldateien vorhanden sind:
+
+               ·   Wenn die SSH-Schlüsseldateien vorhanden sind, werden sie
+                   nicht vom Unterbefehl generiert.
+
+               ·   Wenn die SSH-Schlüsseldateien nicht vorhanden sind, hängt
+                   das Behavior des Unterbefehls vom Wert der Option
+                   --interactive des Utilitys asadmin ab:
+
+                   ·   Wenn die Option --interactive auf true gesetzt ist,
+                       fordert der Unterbefehl den Benutzer auf, die Dateien
+                       zu erstellen.
+
+                   ·   Wenn die Option --interactive auf false gesetzt ist,
+                       ist der Unterbefehl nicht erfolgreich.
+
+               Dies ist der Standardwert.
+
+OPERANDEN
+       host-list
+           Eine durch Leerzeichen getrennte Liste der Namen der Hosts, auf
+           denen ein SSH-Schlüssel eingerichtet werden soll.
+
+BEISPIELE
+       Example 1, SSH-Schlüssel einrichten
+           In diesem Beispiel wird ein SSH-Schlüssel für den Benutzer gfuser
+           auf den Hosts sj03 und sj04 eingerichtet. Die Schlüsseldatei wird
+           nicht generiert, sondern aus dem Verzeichnis .ssh des Benutzers auf
+           dem Host kopiert, auf dem der Unterbefehl ausgeführt wird.
+
+               asadmin> setup-ssh sj03 sj04
+               Enter SSH password for gfuser@sj03>
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj03
+               Successfully connected to gfuser@sj03 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj04
+               Successfully connected to gfuser@sj04 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+       Example 2, SSH-Schlüssel generieren und einrichten
+           In diesem Beispiel wird ein SSH-Schlüssel für den Benutzer gfuser
+           auf den Hosts sua01 und sua02 generiert und eingerichtet.
+
+               asadmin> setup-ssh --generatekey=true sua01 sua02
+               Enter SSH password for gfuser@sua01>
+               Created directory /home/gfuser/.ssh
+               /usr/bin/ssh-keygen successfully generated the identification /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua01
+               Successfully connected to gfuser@sua01 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua02
+               Successfully connected to gfuser@sua02 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+BEENDIGUNGSSTATUS
+       0
+           Befehl erfolgreich ausgeführt
+
+       1
+           Fehler beim Ausführen des Befehls
+
+SIEHE AUCH
+       ssh(1), ssh-keygen(1)
+
+       asadmin(1M)
+
+       sshd(1M)
+
+       Cygwin-Informationen und -Installation (http://www.cygwin.com/), MKS
+       Software (http://www.mkssoftware.com/)
+
+Java EE 7                        14. Dez. 2010                    setup-ssh(1)

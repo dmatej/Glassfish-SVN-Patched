@@ -1,0 +1,218 @@
+dotted-names(5ASC)        GlassFish Server-Grundlagen       dotted-names(5ASC)
+
+NAME
+       dotted-names - Syntax für die Verwendung von Punkten zum Trennen von
+       Namenselementen
+
+BESCHREIBUNG
+       Ein Name mit Punkten ist eine ID für ein bestimmtes GlassFish
+       Server-Element, wie beispielsweise ein konfigurierbares oder
+       überwachbares Objekt. In einem Namen mit Punkten wird der Punkt (.) als
+       Trennzeichen verwendet, um die Teile eines Elementnamen zu trennen. Der
+       Punkt in einem Namen mit Punkten hat eine ähnliche Funktion wie der
+       Schrägstrich (/), der die Ebenen eines absoluten Pfadnamens einer Datei
+       in einem UNIX-Dateisystem trennt.
+
+       Die Unterbefehle des Utilitys asadmin verwenden Namen mit Punkten wie
+       folgt:
+
+       ·   Der Unterbefehl list stellt die vollqualifizierten Namen mit
+           Punkten der Attribute der Verwaltungskomponenten bereit.
+
+       ·   Der Unterbefehl get bietet Zugriff auf die Attribute.
+
+       ·   Der Unterbefehl set ermöglicht Ihnen, konfigurierbare Attribute zu
+           modifizieren und Eigenschaften festzulegen.
+
+       Die Konfigurationshierarchie basiert locker auf dem Schemadokument der
+       Domain, und die Attribute sind modifizierbar. Die Attribute der
+       Überwachungshierarchie sind schreibgeschützt.
+
+       Das folgende Format wird für Namen mit Punkten von Konfigurationen
+       verwendet (austauschbare Elemente stehen in Kursivschrift):
+
+       config-name.config-element-name.primary-key.attribute-name |
+       instance-name.config-element-name.primary-key.attribute-name
+
+       Das folgende Format wird für Namen mit Punkten von Ressourcen verwendet
+       (austauschbare Elemente stehen in Kursivschrift):
+
+       server-name.resource-name.primary-key.attribute-name |
+       domain.resources.resource-name.primary-key.attribute-name
+
+       Die folgenden Regeln gelten für die Bildung von Namen mit Punkten:
+
+       ·   Die oberste Ebene ist eine Konfiguration, ein Server oder ein
+           Domainname. Beispiel: server-config (Standardkonfiguration), server
+           (Standardserver) oder domain1 (Standarddomain).
+
+       ·   Ein Punkt (.) trennt immer zwei aufeinander folgende Teile des
+           Namens.
+
+       ·   Ein Teil des Namens dient normalerweise zur Identifizierung eines
+           Serversubsystems oder seiner spezifischen Instanz. Beispiel:
+           web-container, log-service , thread-pool-1.
+
+       ·   Wenn ein Teil des Namens selbst einen Punkt (.) enthält, muss
+           diesem ein umgekehrter Schrägstrich (\) als Escape-Zeichen
+           vorangestellt werden, damit der Punkt (.) nicht als Trennzeichen
+           fungiert. Weitere Informationen zu Escape-Zeichen finden Sie auf
+           der Hilfeseite asadmin(1M).
+
+       ·   Ein Sternchen (*) kann überall im Namen mit Punkten verwendet
+           werden und fungiert als Platzhalterzeichen in regulären Ausdrücken.
+           Außerdem kann ein Sternchen (*) alle Teile des Namens mit Punkten
+           ausblenden. Ein langer Name mit Punkten wie beispielsweise
+           this.is.really.long.hierarchy kann auf th*.hierarchy abgekürzt
+           werden. Der Punkt (.) begrenzt immer die Teile des Namens mit
+           Punkten.
+
+               Note
+               ┌───────────────────────────────────────┐
+               │Hinweis Zeichen wie das Sternchen (*), │
+               │die eine spezielle Bedeutung für die   │
+               │Shell oder den Befehls-Interpreter     │
+               │haben, sollten entsprechend in         │
+               │Anführungszeichen gesetzt oder von     │
+               │Escape-Zeichen angeführt werden,       │
+               │beispielsweise indem das Argument in   │
+               │Anführungszeichen eingeschlossen wird. │
+               │Im Mehrfachmodus werden                │
+               │Anführungszeichen nur für Argumente    │
+               │benötigt, die Leerzeichen,             │
+               │Anführungszeichen oder umgekehrte      │
+               │Schrägstriche enthalten.               │
+               └───────────────────────────────────────┘
+
+       ·   Die Option --monitor der Unterbefehle get und list aktiviert die
+           Überwachungs- oder Konfigurationshierarchie. Wenn der Unterbefehl
+           die Option --monitor=false (Standardeinstellung) angibt, ist die
+           Konfigurationshierarchie ausgewählt. Wenn der Unterbefehl die
+           Option --monitor=true angibt, ist die Überwachungshierarchie
+           ausgewählt.
+
+       ·   Wenn Sie den vollständigen Namen mit Punkten kennen und keinen
+           Platzhalter verwenden müssen, wird der Name von den Unterbefehlen
+           list, get und set unterschiedlich behandelt:
+
+           ·   Der Unterbefehl list behandelt einen vollständigen Namen mit
+               Punkten als Namen eines übergeordneten Knotens in der
+               abstrakten Hierarchie. Wenn Sie diesen Namen für den
+               Unterbefehl list angeben, werden die Namen der unmittelbar
+               untergeordneten Elemente der Ebene zurückgegeben. Der folgende
+               Befehl listet beispielsweise alle für die Domain oder den
+               Standardserver bereitgestellten Webmodule auf:
+
+                   asadmin> list server.applications.web-module
+
+           ·   Die Unterbefehle get und set behandeln einen vollständigen
+               Namen mit Punkten als vollqualifizierten Namen des Attributs
+               eines Knotens (dessen Name mit Punkten selbst der Name ist, den
+               Sie erhalten, wenn Sie den letzten Teil des Namens mit Punkten
+               entfernen). Wenn Sie diesen Namen für den Unterbefehl get oder
+               set angeben, gilt der Unterbefehl für den Wert des Attributs,
+               sofern ein solches Attribut vorhanden ist. Allerdings beginnen
+               Sie nie mit dieser Konstellation, da Sie ein Sternchen (*) als
+               Platzhalterzeichen verwenden müssen, um die Namen der Attribute
+               eines speziellen Knotens in der Hierarchie festzustellen. Der
+               folgende Name mit Punkten gibt beispielsweise die Context Root
+               der Webanwendung an, die für die Domain oder den Standardserver
+               bereitgestellt ist:
+
+                   server.applications.web-module.JSPWiki.context-root
+
+BEISPIELE
+       Example 1, Alle konfigurierbaren Elemente auflisten
+           In diesem Beispiel werden alle konfigurierbaren Elemente
+           aufgelistet.
+
+               asadmin> list *
+           Eine Ausgabe wie die folgende wird angezeigt:
+
+               applications
+               configs
+               configs.config.server-config
+               configs.config.server-config.admin-service
+               configs.config.server-config.admin-service.das-config
+               configs.config.server-config.admin-service.jmx-connector.system
+               configs.config.server-config.admin-service.property.adminConsoleContextRoot
+               configs.config.server-config.admin-service.property.adminConsoleDownloadLocation
+               configs.config.server-config.admin-service.property.ipsRoot
+               configs.config.server-config.ejb-container
+               configs.config.server-config.ejb-container.ejb-timer-service
+               configs.config.server-config.http-service
+               configs.config.server-config.http-service.access-log
+               configs.config.server-config.http-service.virtual-server.__asadmin
+               configs.config.server-config.http-service.virtual-server.server
+               configs.config.server-config.iiop-service
+               configs.config.server-config.iiop-service.iiop-listener.SSL
+               configs.config.server-config.iiop-service.iiop-listener.SSL.ssl
+               configs.config.server-config.iiop-service.iiop-listener.SSL_MUTUALAUTH
+               configs.config.server-config.iiop-service.iiop-listener.SSL_MUTUALAUTH.ssl
+               configs.config.server-config.iiop-service.iiop-listener.orb-listener-1
+               configs.config.server-config.iiop-service.orb
+               configs.config.server-config.java-config
+               configs.config.server-config.jms-service
+               configs.config.server-config.jms-service.jms-host.default_JMS_host
+               configs.config.server-config.mdb-container
+               configs.config.server-config.monitoring-service
+               configs.config.server-config.monitoring-service.module-monitoring-levels
+               ...
+               property.administrative.domain.name
+               resources
+               resources.jdbc-connection-pool.DerbyPool
+               resources.jdbc-connection-pool.DerbyPool.property.DatabaseName
+               resources.jdbc-connection-pool.DerbyPool.property.Password
+               resources.jdbc-connection-pool.DerbyPool.property.PortNumber
+               resources.jdbc-connection-pool.DerbyPool.property.User
+               resources.jdbc-connection-pool.DerbyPool.property.connectionAttributes
+               resources.jdbc-connection-pool.DerbyPool.property.serverName
+               resources.jdbc-connection-pool.__TimerPool
+               resources.jdbc-connection-pool.__TimerPool.property.connectionAttributes
+               resources.jdbc-connection-pool.__TimerPool.property.databaseName
+               resources.jdbc-resource.jdbc/__TimerPool
+               resources.jdbc-resource.jdbc/__default
+               servers
+               servers.server.server
+               servers.server.server.resource-ref.jdbc/__TimerPool
+               servers.server.server.resource-ref.jdbc/__default
+               system-applications
+               Command list executed successfully.
+
+       Example 2, Alle überwachbaren Objekte auflisten
+           Im folgenden Beispiel werden alle überwachbaren Objekte
+           aufgelistet.
+
+               asadmin> list --monitor *
+           Eine Ausgabe wie die folgende wird angezeigt:
+
+               server
+               server.jvm
+               server.jvm.class-loading-system
+               server.jvm.compilation-system
+               server.jvm.garbage-collectors
+               server.jvm.garbage-collectors.Copy
+               server.jvm.garbage-collectors.MarkSweepCompact
+               server.jvm.memory
+               server.jvm.operating-system
+               server.jvm.runtime
+               server.network
+               server.network.admin-listener
+               server.network.admin-listener.connections
+               server.network.admin-listener.file-cache
+               server.network.admin-listener.keep-alive
+               server.network.admin-listener.thread-pool
+               server.network.http-listener-1
+               server.network.http-listener-1.connections
+               server.network.http-listener-1.file-cache
+               server.network.http-listener-1.keep-alive
+               server.network.http-listener-1.thread-pool
+               server.transaction-service
+               Command list executed successfully.
+
+SIEHE AUCH
+       list(1), get(1), set(1)
+
+       asadmin(1M)
+
+Java EE 7                        14. Sep. 2009              dotted-names(5ASC)

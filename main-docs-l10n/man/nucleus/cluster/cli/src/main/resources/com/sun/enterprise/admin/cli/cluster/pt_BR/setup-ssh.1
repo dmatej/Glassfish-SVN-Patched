@@ -1,0 +1,251 @@
+setup-ssh(1)            Subcomandos do utilitário asad            setup-ssh(1)
+
+NOME
+       setup-ssh - configura uma chave SSH em hosts especificados
+
+SINOPSE
+           setup-ssh [--help]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile] [--sshpublickeyfile ssh-public-keyfile]
+           [--generatekey={false|true}]
+           host-list
+
+DESCRIçãO
+       O subcomando setup-ssh define uma chave de shell seguro (SSH) nos hosts
+       que são especificados como o operando do subcomando. Esta chave permite
+       ao GlassFish Server usar a autenticação de chave pública para
+       autenticar o log-in SSH do usuário em hosts remotos.
+
+       O SSH assegura que os clusters do GlassFish Server que se espalham por
+       múltiplos hosts, possam ser centralizadamente administrados. Quando um
+       usuário executa um subcomando para a administração do cluster que age
+       em múltiplos hosts, o subcomando é propagado do servidor de
+       administração de domínios (DAS) para os hosts remotos. Para propagar
+       subcomandos que agem em uma instância do GlassFish Server que não está
+       em execução, ou em um nó onde nenhuma instância está em execução, o
+       GlassFish Server usa o SSH. O SSH fornece a confidencialidade e
+       segurança para os dados que são trocados entre o DAS e os hosts
+       remotos.
+
+       A autenticação de chave pública usa um par de chaves de SSH que
+       compreende as seguintes chaves:
+
+       ·   Uma chave privada que é armazenada em uma localização segura no
+           host do DAS e que pode ser protegida por uma frase-senha
+
+       ·   A chave pública que é armazenada em todos os hosts remotos com os
+           quais o DAS se comunica
+
+       O subcomando não requer nenhuma informação de configuração do DAS e não
+       modifica a configuração do DAS.
+
+       Este subcomando é suportado só no modo local.
+
+   Pré-requistos para Usar o Subcomando setup-ssh
+       Para usar o subcomando setup-ssh , o usuário do SSH precisa ser capaz
+       de usar o SSH para efetuar o log-in nos hosts remotos onde o SSH deve
+       ser instalado. Especificamente, os seguintes pré-requisitos precisam
+       ser atendidos:
+
+       ·   O cliente ssh(1) é instalado no host do DAS e é acessível por meio
+           do caminho do usuário do DAS.
+
+       ·   O domínio sshd(1M) é instalado e executado em todos os hosts em que
+           a chave SSH deve ser instalada.
+
+       ·   O usuário especificado pela opção --sshuser tem um log-in SSH em
+           todos os hosts nos quais uma chave SSH deve ser instalada.
+
+       ·   O utilitário ssh-keygen(1) é instalado no host do DAS na
+           localização default ou em uma localização definida no caminho do
+           usuário do DAS.
+
+       ·   No sistema Windows, o pacote SSH para Cygwin
+
+           ou um kit de ferramentas do Software MKS
+
+           que ofereça o SSH instalado.
+
+   Comportamento do subcomando setup-ssh
+       O subcomando configura a conectividade SSH ao host do DAS e aos hosts
+       remotos ao automatizar as seguintes tarefas:
+
+       ·   Gerando um par de chaves SSH.  Se nenhum par de chaves SSH existir,
+           o default comportamento do subcomando é para solicitar que o
+           usuário gere um par de chaves ssh. O par de chaves SSH é gerado sem
+           uma frase-senha criptografada. Se for necessário uma par de chaves
+           protegido por frase-senha, o par de chaves precisa ser gerado
+           manualmente usando o comandossh-keygen(1) do SSH.
+
+       ·   Distribuindo a chave pública.  O subcomando acrescenta o conteúdo
+           do arquivo-chave pública para o usuário-home/.ssh/arquivo
+           authorized_keys em cada host remoto. Por default, o subcomando
+           localiza o arquivo de chave pública no diretório user-home/.ssh no
+           host em que o subcomando é executado. Se o arquivo
+           user-home/.ssh/authorized_keys não existir em um host, o subcomando
+           criará o arquivo.  user-home é o diretório home do usuário em um
+           host.
+
+           Para distribuir a chave pública, a autenticação do log-in no SSH do
+           usuário é necessária. Se a chave privada for protegida por uma
+           frase-senha, a frase-senha também será necessária. Por default, o
+           subcomando solicita a senha ao usuário e, se necessário, a
+           frase-senha. Para distribuir a chave pública sem ser consultado,
+           execute o subcomando como segue:
+
+           ·   Defina a opção --interactive do utilitário asadmin(1M) como
+               false.
+
+           ·   Defina a opção --passwordfile do utilitário asadmin como um
+               arquivo no qual a entrada AS_ADMIN_SSHPASSWORD especifica a
+               senha SSH do usuário para efetuar log-in nos hosts
+               especificados.
+
+           ·   Se uma frase-senha for necessária, certifique-se de que o
+               arquivo que a opção --passwordfile do utilitário asadmin
+               especifica também contenha uma entrada para um
+               AS_ADMIN_SSHKEYPASSPHRASE.
+
+           Se a autenticação da chave pública já estiver definida em um host,
+           o subcomando informará ao usuário que a autenticação da chave
+           pública já está definida e não distribui a chave ao host.
+
+OPçõES
+       --help, -?
+           Exibe o texto de ajuda do subcomando.
+
+       --sshport
+           A porta a ser usada para as conexões SSH ao host onde o SSH está
+           sendo instalado. O default é 22.
+
+       --sshuser
+           O usuário SSH no host remoto que deve executar o processo para
+           configurar um SSH naquele host. O default é o usuário que está
+           executando este subcomando. Para garantir que o DAS possa ler o
+           arquivo de chave privada de SSH desse usuário, especifique o
+           usuário que está executando o processo DAS.
+
+       --sshkeyfile
+           O caminho absoluto para o arquivo da chave privada de SSH do
+           usuário que a opção --sshuser especifica. O arquivo é usado para a
+           autenticação do domínio sshd no host.
+
+           O usuário que estiver executando este subcomando precisa ser capaz
+           de alcançar o caminho para o arquivo de chave e ler o arquivo de
+           chave.
+
+           O default é um arquivo de chave no diretório .ssh do usuário no
+           host onde o subcomando é executado. Se múltiplos arquivos-chave
+           forem encontrados, o subcomando usa a seguinte ordem de
+           preferência:
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --sshpublickeyfile
+           O caminho absoluto para o arquivo de chave pública SSH para o
+           usuário especificado pela opção sshuser. O conteúdo do arquivo de
+           chave pública é acrescentado ao arquivo .ssh/authorized_keys do
+           usuário em cada host no qual o SSH está sendo instalado. Se o
+           arquivo .ssh/authorized_keys não existir em um host, o subcomando
+           criará o arquivo.
+
+           O usuário que estiver executando este subcomando precisa ser capaz
+           de alcançar o caminho para o arquivo de chave e ler o arquivo de
+           chave.
+
+           O default é um arquivo de chave no diretório .ssh do usuário no
+           host onde o subcomando é executado. Se múltiplos arquivos-chave
+           forem encontrados, o subcomando usa a seguinte ordem de
+           preferência:
+
+            1. id_rsa.pub
+
+            2. id_dsa.pub
+
+            3. identity.pub
+
+       --generatekey
+           Especifica se o subcomando gera os arquivos de chave SSH sem
+           consultar o usuário:
+
+           Os valores possíveis são os seguintes:
+
+           true
+               O subcomando gera os arquivos de chave SSH sem consultar o
+               usuário.
+
+           false
+               O comportamento do subcomando depende da existência dos
+               arquivos de chave SSH:
+
+               ·   Se os arquivos de chave SSH existirem, o subcomando não
+                   gera os arquivos.
+
+               ·   Se os arquivos de chave SSH não existirem, o comportamento
+                   do subcomando dependerá do valor da opção --interactive do
+                   utilitário asadmin:
+
+                   ·   Se a opção --interactive for true, o subcomando
+                       solicitará que o usuário crie os arquivos.
+
+                   ·   Se a opção --interactive for false, haverá falha no
+                       subcomando.
+
+               Esse é o valor default.
+
+OPERANDOS
+       host-list
+           Um lista separada por espaços dos nomes dos hosts onde uma chave
+           SSH deve ser definida.
+
+EXEMPLOS
+       Example 1, Configurando uma Chave SSH
+           Este exemplo define uma chave SSH para o usuário gfuser nos hosts
+           sj03 e sj04. O arquivo de chaves não é gerado porque ele é copiado
+           do diretório .ssh do usuário no host onde o subcomando está em
+           execução.
+
+               asadmin> setup-ssh sj03 sj04
+               Enter SSH password for gfuser@sj03>
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj03
+               Successfully connected to gfuser@sj03 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sj04
+               Successfully connected to gfuser@sj04 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+       Example 2, Gerando e Configurando uma Chave SSH
+           Este exemplo gera e configura uma chave SSH para o usuário gfuser
+           nos hosts sua01 e sua02.
+
+               asadmin> setup-ssh --generatekey=true sua01 sua02
+               Enter SSH password for gfuser@sua01>
+               Created directory /home/gfuser/.ssh
+               /usr/bin/ssh-keygen successfully generated the identification /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua01
+               Successfully connected to gfuser@sua01 using keyfile /home/gfuser/.ssh/id_rsa
+               Copied keyfile /home/gfuser/.ssh/id_rsa.pub to gfuser@sua02
+               Successfully connected to gfuser@sua02 using keyfile /home/gfuser/.ssh/id_rsa
+               Command setup-ssh executed successfully.
+
+STATUS DE SAíDA
+       0
+           comando executado com sucesso
+
+       1
+           erro ao executar o comando
+
+CONSULTE TAMBéM
+       ssh(1), ssh-keygen(1)
+
+       asadmin(1M)
+
+       sshd(1M)
+
+       Informações e Instalação do Cygwin (http://www.cygwin.com/), Software
+       MKS (http://www.mkssoftware.com/)
+
+Java EE 7                         14 dez 2010                     setup-ssh(1)

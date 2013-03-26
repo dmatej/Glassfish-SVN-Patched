@@ -1,0 +1,187 @@
+create-http-lb-ref(1)   Subcomandos do utilitário asad   create-http-lb-ref(1)
+
+NOME
+       create-http-lb-ref - adiciona um cluster existente ou uma instância do
+       servidor a uma configuração do balanceador de carga existente ou ao
+       balanceador de carga
+
+SINOPSE
+           create-http-lb-ref [--help] --config config_name | --lbname load_balancer_name
+           [--lbpolicy round-robin] [--lbpolicymodule lb_policy_module]
+           [--healthcheckerurl url] [--healthcheckerinterval 10]
+           [--healthcheckertimeout 10] [--lbenableallinstances=true]
+           [--lbenableallapplications=true] [--lbweight instance=weight[:instance=weight]*]
+           target
+
+DESCRIçãO
+       Utilize o subcomando create-http-lb-ref para:
+
+       ·   Adicionar um cluster ou instância de servidor existente a uma
+           configuração de balanceador de carga ou a um balanceador de carga
+           existente. O balanceador de carga encaminha as solicitações para as
+           instâncias standalone e clusterizadas a que faz referência.
+
+       ·   Defina a política de balanceamento de carga como revezamento,
+           revezamento de peso ou uma política definida pelo usuário.
+
+       ·   Configure um verificador de integridade para o balanceador de
+           carga. Quaisquer definições do verificador de integridade definidas
+           aqui aplicam-se somente ao alvo. Se um verificador de integridade
+           não for criado com o subcomando, use create-http-health-checker.
+
+       ·   Ative todas as instâncias no cluster do alvo para o balanceamento
+           de carga ou use enable-http-lb-server para ativá-las
+           individualmente.
+
+       ·   Ative todas as aplicações implantados no alvo para balanceamento de
+           carga ou utilize enable-http-lb-application para ativá-las
+           individualmente.
+
+           Nota
+           ┌──────────────────────────────────────┐
+           │Observação                            │
+           │                                      │
+           │           Este subcomando pode ser   │
+           │           aplicado apenas ao Oracle  │
+           │           GlassFish Server. Esse     │
+           │           subcomando não é aplicável │
+           │           ao GlassFish Server Open   │
+           │           Source Edition.            │
+           └──────────────────────────────────────┘
+
+OPçõES
+       --help, -?
+           Exibe o texto de ajuda do subcomando.
+
+       --config
+           Especifica a configuração do balanceador de carga na qual clusters
+           e instâncias de servidores serão adicionados. Especifica tanto uma
+           configuração do balanceador de carga quanto um balanceador de
+           carga. Especificando os resultados em um erro.
+
+       --lbname
+           Especifica o balanceador de carga ao qual clusters e instâncias de
+           servidores serão adicionados. Especifica tanto uma configuração do
+           balanceador de carga quanto um balanceador de carga. Especificando
+           os resultados em um erro.
+
+       --lbpolicy
+           A política que o balanceador de carga segue. Os valores válidos são
+           round-robin,
+            weighted-round-robin e user-defined. Se for escolhido
+           user-defined, especifique um módulo de política de balanceador de
+           carga com a opção lbpolicymodule. Se você escolher
+           weighted-round-robin, designa pesos às instâncias do servidor
+           utilizando o subcomando configure-lb-weight. O default é
+           round-robin.
+
+       --lbpolicymodule
+           Se sua política de balanceador de carga for user-defined, utilize
+           esta opção para especificar o caminho completo e o nome da
+           biblioteca compartilhada do módulo de política de balanceamento de
+           carga. A biblioteca compartilhada necessita estar em um local
+           acessível pelo servidor da Web.
+
+       --healthcheckerurl
+           O URL para ping para determinar se a instância está em boas
+           condições.
+
+       --healthcheckerinterval
+           O intervalo em segundos que o verificador de integridade aguarda
+           entre as verificações de um instância que não estava em boas
+           condições para confirmar se ela já está em boas condições. O valor
+           default é 30 segundos. Um valor 0 desativa o verificador de
+           integridade.
+
+       --healthcheckertimeout
+           O intervalo em segundos que o verificador de integridade aguarda
+           para receber a resposta de uma instância. Se o verificador de
+           integridade não receber uma resposta nesse intervalo, a instância é
+           considerada como em más condições. O default é 10.
+
+       --lbenableallinstances
+           Ativa todas as instâncias no cluster do alvo para balanceamento de
+           carga. Se o alvo for uma instância de servidor, ativa essa
+           instância para balanceamento de carga. O valor default é
+           verdadeiro.
+
+       --lbenableallapplications
+           Ativa todas as aplicações implantadas na instância ou no cluster do
+           alvo para balanceamento de carga. O valor default é verdadeiro.
+
+       --lbweight
+           O nome da instância e o peso que está sendo designado a ela. O
+           valor do peso deve ser um número inteiro. Os pares de instâncias e
+           pesos são separados por dois-pontos. Por exemplo,
+           instance1=1:instance2=4 significa que, para cada cinco
+           solicitações, uma vai para a instance1 e quatro vão para instance2.
+           O valor 1 é o default para o peso.
+
+OPERANDOS
+       target
+           Especifica o cluster ou instância para adicionar ao balanceador de
+           carga. Os valores válidos são:
+
+           ·   cluster_name- Especifica que solicitações para esse cluster
+               serão tratadas pelo balanceador de carga.
+
+           ·   stand-alone_instance_name- Especifica se solicitações da
+               instância standalone serão tratadas pelo balanceador de carga.
+
+EXEMPLOS
+       Example 1, Adicionando uma Referência de Cluster à Configuração do
+       Balanceador de Carga
+           Esse exemplo adiciona uma referência a um cluster com o nome
+           cluster2 em uma configuração de balanceador de carga com o nome
+           mylbconfig.
+
+               asadmin> create-http-lb-ref --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Example 2, Adicionando uma Referência de Cluster ao Balanceador de
+       Carga
+           Esse exemplo adiciona uma referência a um cluster com o nome
+           cluster2 em um balanceador de carga com o nome mylb.
+
+               asadmin> create-http-lb-ref --lbname mylb cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Example 3, Configurando o Verificar de Integridade e a Política do
+       Balanceador de Carga
+           Esse exemplo configura um verificador de integridade e uma política
+           de balanceamento de carga, além de ativar o balanceador de carga
+           para instâncias e aplicações.
+
+               asadmin> create-http-lb-ref --config mylbconfig --lbpolicy weighted-round-robin
+               --healthcheckerinterval 40 --healthcheckertimeout 20
+               --lbenableallinstances=true --lbenableallapplications=true cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+       Example 4, Definindo uma Política do Balanceamento de Carga Definida
+       pelo Usuário
+           Esse exemplo configura uma política de balanceamento de carga
+           definida pelo usuário.
+
+               asadmin> create-http-lb-ref --lbpolicy user-defined --lbpolicymodule /user/modules/module.so
+               --config mylbconfig cluster2
+
+               Command create-http-lb-ref executed successfully.
+
+STATUS DE SAíDA
+       0
+           subcomando executado com sucesso
+
+       1
+           erro na execução do subcomando
+
+CONSULTE TAMBéM
+       delete-http-lb-ref(1), create-http-health-checker(1),
+       enable-http-lb-server(1), enable-http-lb-application(1),
+       list-http-lb-configs(1), list-http-lbs(1) configure-lb-weight(1)
+
+       asadmin(1M)
+
+Java EE 7                    25 de agosto de 2010        create-http-lb-ref(1)

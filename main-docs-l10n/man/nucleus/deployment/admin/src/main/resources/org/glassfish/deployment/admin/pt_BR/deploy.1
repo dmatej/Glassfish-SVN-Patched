@@ -1,0 +1,567 @@
+deploy(1)               Subcomandos do utilitário asad               deploy(1)
+
+NOME
+       deploy - implanta o componente especificado
+
+SINOPSE
+           deploy [--help]
+           [--force={false|true}]
+           [--virtualservers virtual_servers]
+           [--contextroot context_root]
+           [--precompilejsp={false|true}]
+           [--verify={false|true}]
+           [--name component_name]
+           [--upload={true|false}]
+           [--retrieve local_dirpath]
+           [--dbvendorname dbvendorname]
+           [--createtables={true|false}|--dropandcreatetables={true|false}]
+           [--uniquetablenames={true|false}]
+           [--deploymentplan deployment_plan]
+           [--altdd alternate_deploymentdescriptor]
+           [--runtimealtdd runtime_alternate_deploymentdescriptor]
+           [--deploymentorder deployment_order]
+           [--enabled={true|false}]
+           [--generatermistubs={false|true}]
+           [--availabilityenabled={false|true}]
+           [--asyncreplication={true|false}]
+           [--lbenabled={true|false}]
+           [--keepstate={false|true}]
+           [--libraries jar_file[,jar_file]*]
+           [--target target]
+           [--type pkg-type]
+           [--properties(name=value)[:name=value]*]
+           [file_archive|filepath]
+
+DESCRIçãO
+       O subcomando deploy implanta aplicações para o servidor. Aplicações
+       podem ser aplicações empresariais, aplicações Web, módulos Enterprise
+       JavaBeans (EJB), módulos de conector e módulos clientes das aplicações.
+       Se o componente estiver implantado ou já existir, ele será reimplantado
+       de maneira forçada, caso a opção --force esteja definida como true (o
+       default é false).
+
+       As opções --createtables e --dropandcreatetables são flags boolianos e,
+       portanto, podem aceitar os valores de true ou false. Essas opções são
+       utilizadas apenas durante a implantação dos beans CMP que não foram
+       mapeados para um banco de dados (isto é, nenhum descritor
+        sun-cmp-mappings.xml é fornecido no diretório do módulo META-INF).
+       Caso contrário, são ignoradas.
+
+       As opções --createtables e --dropandcreatetables são mutuamente
+       exclusivas: apenas uma deve ser utilizada. Se a operação de soltar e/ou
+       criar tabelas for eliminada, a implantação não falhará; será fornecida
+       uma mensagem de advertência no arquivo do log.
+
+       Esse subcomando só é suportado no modo remoto.
+
+OPçõES
+       --help, -?
+           Exibe o texto de ajuda do subcomando.
+
+       --force
+           Se definida como true, reimplanta o componente, mesmo se o
+           componente especificado já tiver sido implantado ou já existir. O
+           default é false.
+
+       --virtualservers
+           Um ou mais IDs do servidor virtual. Vários IDs são separados por
+           vírgulas.
+
+       --contextroot
+           Válida apenas se o arquivo compactado for um módulo da Web. É
+           ignorada para outros tipos de arquivo compactado, será adotada como
+           default para nomes de arquivo sem extensão.
+
+       --precompilejsp
+           Por default, essa opção não permite que o JSP seja pré-compilado
+           durante a implantação. Em vez disso, JSPs são compilados durante o
+           runtime. O default é false.
+
+       --verify
+           Se definido como verdadeiro e os pacotes dos verificadores
+           necessários estiverem instalados na Ferramenta de Atualização, a
+           sintaxe e semântica do descritor de implantação serão verificadas.
+           O default é false.
+
+       --name
+           Nome do componente que pode ser implantado.
+
+           O nome pode incluir um identificador de versão opcional, que segue
+           o nome e é separado do nome por dois-pontos (:). O identificador de
+           versão deve começar com uma letra ou número. Pode conter caracteres
+           alfanuméricos e sublinhado (_), traço (-), e ponto (.). Para obter
+           mais informações sobre versões de módulo e da aplicação, consulte
+           "Module and Application Versions" no Oracle GlassFish Server
+           Application Deployment Guide.
+
+       --upload
+           Especifica se o subcomando faz upload do arquivo no DAS. Na maioria
+           das situações, esta opção pode ser omitida.
+
+           Os valores válidos são os seguintes:
+
+           false
+               O subcomando não faz upload do arquivo e tenta acessá-lo por
+               meio do nome de arquivo especificado. Se o DAS não puder
+               acessar o arquivo, o subcomando falhará.
+
+               Por exemplo, o DAS pode estar sendo executado como um usuário
+               diferente do que o usuário administrador e não tem acesso para
+               leitura ao arquivo. Nesta situação, o subcomando falhará se a
+               opção --upload for false.
+
+           true
+               O subcomando faz upload do arquivo no DAS por meio da conexão
+               de rede.
+
+           O valor default depende se o DAS está no host onde o subcomando é
+           executado ou em um host remoto.
+
+           ·   Se o DAS estiver no host onde o subcomando é executado, o
+               default é false.
+
+           ·   Se o DAS estiver em um host remoto, o default é true.
+
+           Se um diretório filepath for especificado, esta opção será
+           ignorada.
+
+       --retrieve
+           Recupera o arquivo JAR de stub cliente da máquina do servidor para
+           o diretório local.
+
+       --dbvendorname
+           Especifica o nome do fornecedor do banco de dados para o qual
+           tabelas são criadas. Os valores suportados incluem db2,
+            mssql, mysql, oracle,
+            derby, javadb, postgresql e sybase. Esses valores diferenciam
+           maiúsculas de minúsculas. Se essa opção não for especificada, o
+           valor do atributo database-vendor-name no glassfish-ejb-jar.xml
+           será usado. Se nenhum valor for especificado, é feita uma conexão
+           com o recurso especificado pelo subelemento
+            jndi-name do elemento cmp-resource no arquivo
+           glassfish-ejb-jar.xml , e o nome do fornecedor do banco de dados
+           será lido. Se não for possível estabelecer a conexão, ou se o valor
+           não for reconhecido, a conformidade com SQL-92 será presumida.
+
+       --createtables
+           Se essa opção for especificada como verdadeira, criará tabelas
+           durante a implantação de uma aplicação com beans CMP não mapeados.
+           Se essa opção for especificada como falsa, as tabelas não serão
+           criadas. Se essa opção não for especificada, o valor da entrada
+           create-tables-at-deploy no elemento cmp-resource do arquivo
+           glassfish-ejb-jar.xml determina se as tabelas são ou não criadas.
+           Nenhuma restrição única será criada para as tabelas.
+
+       --dropandcreatetables
+           Se essa opção for especificada como verdadeira quando o componente
+           for reimplantado, as tabelas criadas pela implantação anterior
+           serão eliminadas antes da criação de novas tabelas. Utilizada em
+           aplicações implantadas com beans CMP não mapeados. As tabelas
+           preexistentes não serão eliminadas durante a implantação inicial de
+           uma aplicação ou durante uma implantação realizada após o
+           cancelamento explícito de uma implantação. Se essa opção for
+           especificada como falsa, as tabelas não serão nem eliminadas, nem
+           criadas. Se essa opção não for especificada, as tabelas serão
+           eliminadas se a entrada drop-tables-at-undeploy no elemento
+           cmp-resource do arquivo glassfish-ejb-jar.xml estiver definida como
+           verdadeira, e as novas tabelas serão criadas se a entrada
+           create-tables-at-deploy no elemento cmp-resource do arquivo
+            glassfish-ejb-jar.xml estiver definida como verdadeira.
+
+       --uniquetablenames
+           Garante nomes de tabela exclusivos para todos os beans e resulta em
+           um código hash adicionado aos nomes das tabelas. Essa opção será
+           útil se você tiver uma aplicação com nomes de beans que fazem
+           distinção entre maiúsculas e minúsculas. Utilizada em aplicações
+           com beans CMP não mapeados.
+
+       --deploymentplan
+           Implanta o plano de implantação, que é um arquivo JAR que contém
+           descritores do GlassFish Server. Especifique essa opção ao
+           implantar um arquivo EAR puro. Um arquivo EAR puro é um EAR sem
+           descritores do GlassFish Server.
+
+       --altdd
+           Implanta a aplicação por meio do descritor de implantação padrão
+           Java EE que reside fora do arquivo compactado da aplicação.
+           Especifica um caminho absoluto ou relativo para o arquivo do
+           descritor de implantação alternativo O descritor de implantação
+           alternativo substitui o descritor de implantação de nível superior
+           empacotado no arquivo compactado. Por exemplo, para um EAR, o uso
+           de --altdd substitui application.xml. Para um módulo standalone, o
+           uso de --altdd substitui o escritor de nível superior do módulo,
+           como o web.xml.
+
+       --runtimealtdd
+           Implanta a aplicação por meio do descritor de implantação de
+           runtime de GlassFish Server que reside fora do arquivo compactado
+           da aplicação. Especifica um caminho absoluto ou relativo para o
+           arquivo do descritor de implantação alternativo O descritor de
+           implantação alternativo substitui o descritor de implantação de
+           nível superior empacotado no arquivo compactado. Por exemplo, para
+           um EAR, o uso de --runtimealtdd substitui
+           glassfish-application.xml. Para um módulo standalone, o uso de
+           --runtimealtdd substitui o descritor de nível superior do módulo,
+           como o glassfish-web.xml. Aplica-se só a descritores de implantação
+           do GlassFish Server (glassfish-*.xml); o nome do arquivo do
+           descritor de implantação alternativo que deve começar com
+           glassfish-. Não se aplica aos descritores de implantação sun-*.xml,
+           que são obsoletos.
+
+       --deploymentorder
+           Especifica a ordem de implantação da aplicação. É útil se a
+           aplicação tiver dependências e tiver que ser carregado em uma
+           determinada ordem na inicialização do servidor. A ordem de
+           implantação é especificada como um número inteiro. O valor default
+           é 100. As aplicações com um número mais baixo são carregadas antes
+           de aplicações com um número maior. Por exemplo, uma aplicação com
+           uma ordem de implantação de 102 é carregada antes uma aplicação com
+           uma ordem de implantação de 110. Se uma ordem de implantação não
+           for especificada, o valor default igual a 100 será atribuído. Se
+           duas aplicações tiverem a mesma ordem de implantação, a primeira
+           aplicação a ser implantada será a primeira aplicação a ser
+           carregada na inicialização do servidor.
+
+           A ordem de implantação geralmente é especificada quando a aplicação
+           é implantada pela primeira vez, mas também pode ser especificada ou
+           alterada após a implantação inicial usando o subcomando set. Você
+           pode exibir a ordem de implantação de uma aplicação usando o
+           subcomando get.
+
+       --enabled
+           Permite aos usuários acessar a aplicação. Se esta opção for
+           definida como false, os usuários não poderão acessar a aplicação.
+           Essa opção ativa a aplicação na instância ou no cluster do alvo
+           especificado. Se você implantar no domain do alvo, essa opção será
+           ignorada, já que a implantação no domínio não implanta em uma
+           instância ou cluster específico. O default é verdadeiro.
+
+       --generatermistubs
+           Se essa opção for definida como true, os stubs de RMI-IIOP
+           estáticos são gerados e colocados no client.jar. Se essa opção for
+           definida como false, os stubs não são gerados. O default é false.
+
+       --availabilityenabled
+           Essa opção controla se a alta disponibilidade está ativada para
+           sessões Web e para checkpoint (SFSB) do bean de sessão de estado e
+           para passivação potencial. Se essa opção for definida como falsa
+           (default), todo os salvamentos de sessão Web e checkpoints SFSB
+           serão desativados para a aplicação, a aplicação Web ou o módulo EJB
+           especificado. Se essa opção for definida como verdadeira, a
+           aplicação ou o módulo especificado será ativado para alta
+           disponibilidade. Defina essa opção como verdadeira apenas se a alta
+           disponibilidade estiver configurada e ativada em níveis mais altos,
+           como os níveis do servidor e contêiner.
+
+       --asyncreplication
+           Essa opção controla se primeiro é feito o buffer e depois a
+           replicação dos estados da sessão da Web e do SFSB, para os quais a
+           alta disponibilidade está ativada, ao utilizar um thread assíncrono
+           separado. Se essa opção for definida como verdadeira (default), o
+           desempenho é melhorado, mas a disponibilidade é reduzida. Se a
+           instância em que os estados são colocados em buffer, mas não ainda
+           replicados falhar, os estados serão perdidos. Se essa opção for
+           definida como falsa, o desempenho será reduzido, mas a
+           disponibilidade será garantida. Os estados não são colocados em
+           buffer, mas imediatamente transmitidos para as outras instâncias do
+           cluster.
+
+       --lbenabled
+           Essa opção controla se a aplicação implantada está disponível para
+           balanceamento de carga. O default é verdadeiro.
+
+       --keepstate
+           Essa opção controla se as sessões Web, as instâncias SFSB e os
+           timers EJB criados persistentemente são retidos entre as
+           reimplantações.
+
+           O default é falso. Esta opção somente é suportada na instância do
+           servidor default, com o nome server. Não é suportada e ignorada em
+           nenhum outro alvo.
+
+           Algumas alterações em uma aplicação entre as reimplantações impedem
+           que este recurso funcione apropriadamente. Por exemplo, não altere
+           o conjunto de variáveis da instância na classe do bean SFSB.
+
+           Para aplicações Web, este recurso somente é aplicável se no arquivo
+           glassfish-web-app.xml o atributo persistence-type do elemento
+           session-manager for file.
+
+           Para instâncias do bean de sessão com estado, o tipo de
+           persistência sem alta disponibilidade é definido no servidor (o
+           atributo sfsb-persistence-type) e precisa ser definido como file,
+           que é o default e o valor recomendado.
+
+           Se qualquer sessão Web ativa, instância SFSB ou timer EJB falhar em
+           ser preservado ou restaurado, nenhum deles estará disponível quando
+           a reimplantação tiver sido concluída. Entretanto, a reimplantação
+           continuará e uma advertência será registrada.
+
+           Para preservar dados do estado ativo, o GlassFish Server serializa
+           os dados e os salva na memória. Para restaurar os dados, o
+           carregador de classes da aplicação recém-reimplantada desserializa
+           todos os dados salvos anteriormente.
+
+       --libraries
+           Uma lista separada por vírgulas de arquivos JAR da biblioteca.
+           Especifique os arquivos JAR da biblioteca com seus caminhos
+           relativos ou absolutos. Especifique os caminhos relativos
+           referentes ao domain-dir/lib/applibs. As bibliotecas são
+           disponibilizadas para a aplicação na ordem especificada.
+
+       --target
+           Especifica o alvo para o qual você está implantando. Os valores
+           válidos são:
+
+           server
+               Implanta o componente para a instância de servidor default
+               server e é o valor default.
+
+           domain
+               Implanta o componente no domínio. Se domain for o alvo para uma
+               implantação inicial, a aplicação será implantada no domínio,
+               mas nenhuma instância ou cluster do servidor fará referência à
+               aplicação. Se domain for o alvo para uma reimplantação (a
+               opção--force será definida como verdadeira) e a reconfiguração
+               dinâmica será ativada para os clusters ou instâncias do
+               servidor que fazem referência à aplicação. As instâncias ou
+               clusters do servidor de referência obterão, automaticamente, a
+               nova versão da aplicação. Se a reimplantação e a configuração
+               dinâmica estiverem desativadas, os clusters ou instâncias do
+               servidor de referência não obterão a nova versão da aplicação
+               até que as instâncias clusterizadas ou standalone do servidor
+               sejam reiniciadas.
+
+           cluster_name
+               Implanta o componente em cada instância do servidor do cluster.
+
+           instance_name
+               Implanta o componente em uma determinada instância standalone
+               do servidor.
+
+       --type
+           O tipo de arquivo compactado que encapsula o componente que está
+           sendo implantado. Os valores possíveis são os seguintes:
+
+           car
+               O componente é encapsulado como um arquivo CAR.
+
+           ear
+               O componente é encapsulado como um arquivo EAR.
+
+           ejb
+               O componente é um EJB empacotado como um arquivo JAR.
+
+           osgi
+               O componente é encapsulado como um pacote OSGi.
+
+           rar
+               O componente é encapsulado como um arquivo RAR.
+
+           war
+               O componente é encapsulado como um arquivo WAR.
+
+       --properties or --property
+           Pares palavra-chave-valor opcionais que especificam propriedades
+           adicionais para a implantação. As propriedades disponíveis são
+           determinadas pela implantação do componente que está sendo
+           implantado ou reimplantado. A opção --properties e a opção
+           --property são equivalentes. Você pode utilizar qualquer opção,
+           independentemente do número de propriedades que especificar.
+
+           Você pode especificar as seguintes propriedades para uma
+           implantação:
+
+           jar-signing-alias
+               Especifica o alias para o certificado de segurança com o qual o
+               arquivo JAR do contêiner do cliente da aplicação está assinado.
+               O Java Web Start não irá executar código que requer permissões
+               elevadas, a menos que ele resida em um arquivo JAR assinado com
+               um certificado que o sistema do usuário confia. Para sua
+               conveniência, o GlassFish Server assina o arquivo JAR
+               automaticamente, utilizando o certificado com esse alias a
+               partir do armazenamento de chave do domínio. O Java Web Start,
+               em seguida, pergunta ao usuário se deve confiar no código e
+               exibe as informações do certificado do GlassFish Server. Para
+               assinar esse arquivo JAR com um certificado diferente, adicione
+               o certificado ao armazenamento de chave do domínio e, em
+               seguida, utilize essa propriedade. Por exemplo, você pode
+               utilizar um certificado de uma autoridade confiável, o que
+               evita o prompt do Java Web Start ou de sua própria empresa, que
+               os usuários sabem que podem confiar. O default é s1as, o alias
+               para o certificado de assinatura automática, criado para cada
+               domínio.
+
+           java-web-start-enabled
+               Especifica se o acesso do Java Web Start é permitido para um
+               módulo do cliente da aplicação. O default é verdadeiro.
+
+           compatibility
+               Especifica a release do GlassFish Server com a qual deverá ter
+               retrocompatibilidade em termos de requisitos de visibilidade
+               JAR para aplicações. O único valor permitido é v2, que se
+               refere à versão 2 de Sun GlassFish Enterprise Server ou à
+               versão 9.1 ou 9.1.1 de Sistema Sun Java Servidor de Aplicações.
+               A especificação da plataforma Java EE 6 impõe exigências mais
+               estritas do que o Java EE 5, no qual os arquivos JAR podem
+               estar visíveis a vários módulos em um arquivo EAR.
+               Especificamente, os clientes da aplicação não devem ter acesso
+               a arquivos JAR EJB ou outros arquivos JAR no arquivo EAR, a
+               menos que as referências utilizem os mecanismos EE Java padrão
+               (extensões, por exemplo) ou o mecanismo biblioteca-diretório
+               Java EE. Definir a propriedade como v2remove essas restrições
+               Java EE 6.
+
+           keepSessions={false|true}
+               Precedido da opção --keepstate.
+
+               Se a opção --force for definida como true, essa propriedade
+               poderá ser utilizada para especificar se as sessões ativas da
+               aplicação que está sendo reimplantada serão preservadas e, em
+               seguida, restauradas quando a reimplantação for concluída.
+               Aplica-se a sessões HTTP em um contêiner Web. O default é
+               false.
+
+               false
+                   As sessões ativas da aplicação não são preservadas e
+                   restauradas (default).
+
+               true
+                   As sessões ativas da aplicação são preservadas e
+                   restauradas.
+
+                   Se alguma sessão ativa da aplicação não for preservada ou
+                   restaurada, nenhuma das sessões será disponibilizada quando
+                   a reimplantação for concluída. Entretanto, a reimplantação
+                   continuará e uma advertência será registrada.
+
+                   Para preservar sessões ativas, o GlassFish Server serializa
+                   as sessões e as salva na memória. Para restaurar as
+                   sessões, o carregador de classe da aplicação
+                   recém-reimplantada desserializará todas as sessões
+                   anteriormente salvas.
+
+           preserveAppScopedResources
+               Se essa opção for definida como true, preservará quaisquer
+               recursos de escopo de aplicação e os restaurará durante a
+               reimplantação. O default é false.
+
+           Outras propriedades disponíveis são determinadas pela implantação
+           do componente que está sendo reimplantado.
+
+OPERANDOS
+       file_archive|filepath
+           O caminho para o arquivo compactado que contém a aplicação que está
+           sendo implantada. Este caminho pode ser relativo ou absoluto.
+
+           O arquivo compactado pode estar nos seguintes formatos:
+
+           ·   Um arquivo compactado, por exemplo, /export/JEE_apps/hello.war.
+
+               Se a opção --upload for definida como true, este é o caminho
+               para o arquivo implementável na máquina cliente local. Se a
+               opção --upload estiver definida como false, este será o caminho
+               para o arquivo na máquina do servidor.
+
+           ·   Um diretório que contém o formato detalhado do arquivo
+               compactado implementável. Este é o caminho para o diretório na
+               máquina do servidor.
+
+               Se você especificar um diretório, a opção --upload será
+               ignorada.
+
+EXEMPLOS
+       Example 1, Implantando uma Aplicação Enterprise
+           Este exemplo implanta a aplicação enterprise encapsulada no arquivo
+           Cart.ear para a instância de servidor default server. Você pode
+           usar a opção --target para fazer a implantação em outra instância
+           do servidor ou em um cluster.
+
+               asadmin> deploy Cart.ear
+               Application deployed successfully with name Cart.
+               Command deploy executed successfully
+
+       Example 2, Implantando uma Aplicação Web com a Raiz de Contexto Default
+           Esse exemplo implanta a aplicação Web no arquivo hello.war para
+           instância de servidor default server. Você pode usar a opção
+           --target para fazer a implantação em outra instância do servidor ou
+           em um cluster.
+
+               asadmin> deploy hello.war
+               Application deployed successfully with name hello.
+               Command deploy executed successfully
+
+       Example 3, Implantando uma Aplicação Web de Maneira Forçada com uma
+       Raiz de Contexto Específico
+           Este exemplo implanta de maneira forçada a aplicação Web no arquivo
+           hello.war. A raiz de contexto da aplicação Web implantada é
+           greetings. Se a aplicação já tiver sido implantada, ele será
+           reimplantada.
+
+               asadmin> deploy --force=true --contextroot greetings hello.war
+               Application deployed successfully with name hello.
+               Command deploy executed successfully
+
+       Example 4, Implantando um Enterprise Bean
+           Este exemplo implanta um componente com base na especificação EJB
+           (enterprise bean) com CMP e cria as tabelas de bancos de dados
+           utilizadas pelo bean.
+
+           Este exemplo utiliza a opção --target. O alvo deste exemplo é um
+           cluster existente, cluster1.
+
+               asadmin> deploy --createtables=true --target cluster1 EmployeeEJB.jar
+               Application deployed successfully with name EmployeeEJB.
+               Command deploy executed successfully
+
+       Example 5, Implantando um Módulo do Conector
+           Este exemplo implanta um módulo do conector que é encapsulado em um
+           arquivo RAR.
+
+           Este exemplo utiliza a opção --target. O alvo deste exemplo é uma
+           instância de servidor standalone existente que não pertence a um
+           cluster.
+
+               asadmin> deploy --target myinstance jdbcra.rar
+               Application deployed successfully with name jdbcra.
+               Command deploy executed successfully
+
+       Example 6, Especificando a Ordem de Implantação para uma Aplicação
+           Este exemplo especifica a ordem de implantação das duas aplicações.
+           A aplicação cart é carregada antes da aplicação horse na
+           inicialização do servidor.
+
+               asadmin> deploy --deploymentorder 102 --name cart cart.war
+               asadmin> deploy --deploymentorder 110 --name horse horse.war
+
+       Example 7, Implantando uma Aplicação Usando um Arquivo Descritor de
+       Implantação Java EE 7 Alternativo
+           Este exemplo implanta a aplicação por meio do descritor de
+           implantação padrão Java EE que reside fora do arquivo compactado da
+           aplicação.
+
+               asadmin> deploy --altdd path_to_alternate_descriptor cart.ear
+
+       Example 8, Implantando uma Aplicação Usando um Arquivo Descritor de
+       Implantação de GlassFish Server Alternativo
+           Este exemplo implanta a aplicação por meio do descritor de
+           implantação de runtime de GlassFish Server que reside fora do
+           arquivo compactado da aplicação.
+
+               asadmin> deploy --runtimealtdd path_to_alternate_runtime_descriptor horse.ear
+
+STATUS DE SAíDA
+       0
+           subcomando executado com sucesso
+
+       1
+           erro na execução do subcomando
+
+CONSULTE TAMBéM
+       redeploy(1), list-components(1), undeploy(1), get(1), set(1)
+
+       asadmin(1M)
+
+       Oracle GlassFish Server Application Deployment Guide
+
+Java EE 7                   12 de fevereiro de 2013                  deploy(1)

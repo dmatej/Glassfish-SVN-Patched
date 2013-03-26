@@ -1,0 +1,222 @@
+create-jvm-options(1)   Subcomandos do utilitário asad   create-jvm-options(1)
+
+NOME
+       create-jvm-options - cria opções para o acionador da aplicação Java
+
+SINOPSE
+           create-jvm-options [--help] [--target target] [--profiler={true|false}]
+           (jvm-option-name=jvm-option-value) [:jvm-option-name=jvm-option-value*]
+
+DESCRIçãO
+       O subcomando create-jvm-options cria opções da linha de comando que são
+       passadas ao acionador de aplicações Java quando o GlassFish Server é
+       iniciado. As opções que este subcomando cria são adicionais às opções
+       predefinidas com o GlassFish Server. As opções do acionador da
+       aplicação Java são armazenadas no elemento java—config da configuração
+       Java ou no elemento gerador de perfis profiler do arquivo domain.xml.
+       As opções são enviadas à linha de comandos na ordem em que aparecem no
+       elemento java—config ou no elemento do gerador de perfis profiler no
+       arquivo domain.xml.
+
+       As opções do gerador de perfil são utilizadas para gravar as definições
+       necessárias para iniciar um gerador de perfil específico. O gerador de
+       perfil já deve existir. Se necessário, utilize o subcomando
+       create-profiler(1) para criar um gerador de perfil.
+
+       Esse subcomando pode ser usado para criar os seguintes tipos de opções:
+
+       ·   propriedades do sistema Java.  Essas opções são conjunto por meio
+           da opção -D do acionador da aplicação Java. Por exemplo:
+
+           -Djava.security.manager
+
+           -Denvironment=Production
+
+       ·   Os parâmetros de inicialização para o acionador de aplicações Java.
+           Essas opções são precedidos pelo caractere traço (-). Por exemplo:
+
+           --XX:PermSize=size
+
+           -Xmx1024m
+
+           -d64
+
+       Se o subcomando especificar uma opção que já existe, o comando não
+       recria a opção.
+
+           Nota
+           ┌───────────────────────────────────────┐
+           │Observação                             │
+           │                                       │
+           │           Assegure-se de que todas as │
+           │           opções criadas sejam        │
+           │           válidas. O subcomando pode  │
+           │           permitir a criação de uma   │
+           │           opção inválida, mas tal     │
+           │           opção inválida pode causar  │
+           │           uma falha na inicialização. │
+           └───────────────────────────────────────┘
+
+       Uma opção pode ser verificada ao examinar o servidor de log após a
+       inicialização de GlassFish Server. As opções para o acionador de
+       aplicações Java são gravadas no arquivo server.log antes das outras
+       informações quando o GlassFish Server é iniciado.
+
+       A adição de algumas opções necessita da reinicialização do servidor
+       para que as alterações tenham efeito. Outras opções são definidas
+       imediatamente no ambiente do servidor de administração de domínios
+       (DAS) e não requer uma reinicialização. Se uma reinicialização é
+       necessária, depende do tipo de opção.
+
+       ·   Não é necessário reiniciar para as propriedades do sistema Java
+           cujos nomes não comecem com -Djava.  ou -Djavax.  (inclusive o
+           ponto final posterior). Por exemplo, não é necessário reiniciar
+           para a seguinte propriedade do sistema Java:
+
+           -Denvironment=Production
+
+       ·   É necessário reiniciar para as seguinte opções:
+
+           ·   Propriedades do sistema Java cujos nomes começam com -Djava.
+               ou -Djavax.  (inclusive o ponto final posterior). Por exemplo:
+
+               -Djava.security.manager
+
+           ·   Os parâmetros de inicialização para o acionador de aplicações
+               Java. Por exemplo:
+
+               -client
+
+               -Xmx1024m
+
+               -d64
+
+       Para reiniciar o DAS, use o comando restart-domain(1) .
+
+       Esse subcomando só é suportado no modo remoto.
+
+OPçõES
+       --help, -?
+           Exibe o texto de ajuda do subcomando.
+
+       --target
+           Especifica o alvo onde as opções do acionador de aplicações Java
+           está sendo criado.
+
+           Os valores válidos são os seguintes:
+
+           server
+               Especifica o DAS (default).
+
+           instance-name
+               Especifica uma instância do GlassFish Server.
+
+           cluster-name
+               Especifica um cluster.
+
+           configuration-name
+               Especifica uma configuração nomeada.
+
+       --profiler
+           Indica se as opções do acionador de aplicações Java são para o
+           gerador de perfil. O gerador de perfil deve existir para que esta
+           opção seja verdadeira. O default é falso.
+
+OPERANDOS
+       jvm-option-name
+           Uma ou mais opções delimitadas por dois-pontos (:). O formato de
+           uma opção depende do seguinte:
+
+           ·   Se a opção tiver um nome e um valor, o formato será
+               option-name=value.
+
+           ·   Se a opção tiver apenas um nome, o formato será option-name.
+               Por exemplo, -Xmx2048m.
+
+           ·   Se houver a possibilidade de má interpretação do nome da
+               primeira opção como uma ou mais opções reduzidas de asadmin, o
+               formato será -- option-name. Por exemplo, -server no comando a
+               seguir poderia ser erroneamente interpretado como -se, os
+               formatos reduzidos de asadmin para --secure e --echo:
+
+                   create-jvm-options -server
+               Para criar a opção -server da JVM, use o comando:
+
+                   create-jvm-options -- -server
+
+               Nota
+               ┌────────────────────────────────────────┐
+               │Observação Se o nome ou o valor de uma  │
+               │opção contiver dois-pontos, a barra     │
+               │invertida (\) deverá ser utilizada como │
+               │caractere de escape para os dois-pontos │
+               │no nome ou valor. Outros caracteres     │
+               │também podem requisitar caracteres de   │
+               │escape. Para obter mais informações     │
+               │sobre os caracteres de escape nas       │
+               │opções do subcomando, consulte a página │
+               │do manual asadmin(1M).                  │
+               └────────────────────────────────────────┘
+
+EXEMPLOS
+       Example 1, Definindo Propriedades do Sistema Java
+           Este exemplo define diversas propriedades do sistema Java.
+
+               asadmin> create-jvm-options -Dunixlocation=/root/example:
+               -Dvariable=\$HOME:-Dwindowslocation=d\:\\sun\\appserver:-Doption1=-value1
+               created 4 option(s)
+               Command create-jvm-options executed successfully.
+
+       Example 2, Definindo um Parâmetro de Inicialização para o Acionador de
+       Aplicações Java
+           Este exemplo configura o tamanho máximo de heap disponível como
+           1024.
+
+               asadmin> create-jvm-options -Xmx1024m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+       Example 3, Definindo Múltiplos Parâmetros de Inicialização para o
+       Acionador de Aplicações Java
+           Este exemplo configura o tamanho máximo de heap disponível como
+           1024 e solicita detalhes sobre a coleta de lixo.
+
+               asadmin> create-jvm-options "-Xmx1024m:-XX\:+PrintGCDetails"
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+           Neste caso, um dos dois parâmetros já existe, então o subcomando
+           informa que apenas uma opção foi definida.
+
+       Example 4, Definindo um Parâmetro de Inicialização JVM para o Gerador
+       de Perfil
+           Este exemplo configura um parâmetro de inicialização JVM para o
+           gerador de perfil.
+
+               asadmin> create-jvm-options --profiler=true -XX\:MaxPermSize=192m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+STATUS DE SAíDA
+       0
+           subcomando executado com sucesso
+
+       1
+           erro na execução do subcomando
+
+CONSULTE TAMBéM
+       delete-jvm-options(1), list-jvm-options(1), create-profiler(1),
+       restart-domain(1)
+
+       asadmin(1M)
+
+       Para obter mais informações sobre o acionador de aplicações Java,
+       consulte a página de referência para o sistema operacional que está
+       utilizando:
+
+       ·   Oracle Solaris e Linux: java - o acionador de aplicações Java
+           (http://java.sun.com/javase/6/docs/technotes/tools/solaris/java.html)
+
+       ·   Windows: java - o acionador de aplicações Java
+           (http://java.sun.com/javase/6/docs/technotes/tools/windows/java.html)
+
+Java EE 7                         29 nov 2010            create-jvm-options(1)

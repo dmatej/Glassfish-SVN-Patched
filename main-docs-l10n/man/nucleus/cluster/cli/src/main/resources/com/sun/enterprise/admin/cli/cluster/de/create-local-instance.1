@@ -1,0 +1,443 @@
+create-local-instance(1)Unterbefehle des asadmin-Utilicreate-local-instance(1)
+
+NAME
+       create-local-instance - erstellt eine GlassFish Server-Instanz auf dem
+       Host, auf dem der Unterbefehl ausgeführt wird
+
+ZUSAMMENFASSUNG
+           create-local-instance [--help]
+           [--node node-name] [--nodedir node-dir]
+           [--config config-name | --cluster cluster-name]
+           [--lbenabled={true|false}]
+           [--portbase port-number] [--checkports={true|false}]
+           [--savemasterpassword={false|true}]
+           [--usemasterpassword={false|true}]
+           [--systemproperties (name=value)[:name=value]* ]
+           instance-name
+
+BESCHREIBUNG
+       Der Unterbefehl create-local-instance erstellt eine GlassFish
+       Server-Instanz auf dem Knoten, der den Host darstellt, auf dem der
+       Unterbefehl ausgeführt wird. Für diesen Unterbefehl muss das
+       Distributed Component Object Model-(DCOM-)Remote-Protokoll oder die
+       Secure Shell (SSH) nicht konfiguriert sein.
+
+       Sie müssen diesen Unterbefehl auf dem Host ausführen, den der Knoten
+       darstellt, auf dem die Instanz sich befinden soll. Zum Kontaktieren des
+       Domainadministrationsservers (DAS) benötigt dieser Unterbefehl den
+       Namen des Hosts, auf dem der DAS ausgeführt wird. Wenn für die
+       Administration ein nicht standardmäßiger Port verwendet wird, erfordert
+       dieser Unterbefehl außerdem die Portnummer. Wenn Sie die erste Instanz
+       zu einem Knoten hinzufügen, müssen Sie diese Informationen über die
+       Optionen --host und --port des Utilitys asadmin(1M) angeben. Für
+       weitere Instanzen werden diese Informationen aus den DAS-Eigenschaften
+       des Knotens abgerufen.
+
+       Eine GlassFish Server-Instanz ist eine einzelne Virtual Machine für die
+       Java-Plattform (Java Virtual Machine oder JVM) auf einem einzelnen
+       Knoten, in dem GlassFish Server ausgeführt wird. Ein Knoten definiert
+       den Host, auf dem sich die GlassFish Server-Instanz befindet. Der
+       JVM-Rechner muss mit Java Platform, Enterprise Edition (Java EE)
+       kompatibel sein.
+
+       Eine GlassFish Server-Instanz benötigt eine Referenz zu folgenden
+       Elementen:
+
+       ·   Der Knoten, der den Host definiert, auf dem sich die Instanz
+           befindet. Der Knoten kann im Befehl zur Erstellung der Instanz
+           angegeben werden. Er ist aber nur dann erforderlich, wenn mehrere
+           Knoten im Verzeichnis vorhanden sind, in dem Dateien für Knoten
+           gespeichert sind. Wenn kein Knoten angegeben ist, hängt das
+           Behavior des Unterbefehls von der Anzahl vorhandener Knoten im
+           Verzeichnis ab, in dem die Knoten gespeichert sind:
+
+           ·   Wenn keine Knoten vorhanden sind, erstellt der Unterbefehl
+               einen Knoten für die Instanz. Der Name des Knotens ist der Name
+               des Hosts, auf dem der Unterbefehl ausgeführt wird.
+
+           ·   Wenn nur ein Knoten vorhanden ist, erstellt der Unterbefehl
+               eine Referenz zum vorhandenen Knoten für die Instanz.
+
+           ·   Wenn zwei oder mehr Knoten vorhanden sind, tritt ein Fehler
+               auf.
+
+       ·   Die benannte Konfiguration, die die Konfiguration der Instanz
+           definiert. Die Konfiguration kann im Befehl zur Erstellung der
+           Instanz angegeben werden. Diese Angabe ist aber nicht erforderlich.
+           Wenn keine Konfiguration für eine Instanz, die nicht in einem
+           Cluster enthalten ist, angegeben wird, erstellt der Unterbefehl
+           eine Konfiguration für die Instanz. Eine Instanz, die in ein
+           Cluster integriert wird, enthält ihre Konfiguration vom
+           übergeordneten Cluster.
+
+       Jede GlassFish Server-Instanz entspricht einem der folgenden
+       Instanztypen:
+
+       Standalone-Instanz
+           Eine Standalone-Instanz teilt ihre Konfiguration nicht mit anderen
+           Instanzen oder Clustern. Eine Standalone-Instanz wird erstellt,
+           wenn eine der folgenden Bedingungen erfüllt ist:
+
+           ·   Im Befehl zum Erstellen der Instanz ist weder eine
+               Konfiguration noch ein Cluster angegeben.
+
+           ·   Im Befehl zum Erstellen der Instanz ist eine Konfiguration
+               angegeben, die nicht von anderen Instanzen oder Clustern
+               referenziert wird.
+
+           Wenn keine Konfiguration bzw. kein Cluster angegeben ist, wird eine
+           Kopie der Konfiguration default-config für die Instanz erstellt.
+           Der Name dieser Konfiguration ist instance-name-config, wobei
+           instance-name der Name einer nicht geclusterten Serverinstanz ist.
+
+       Gemeinsam genutzte Instanz
+           Eine gemeinsam genutzte Instanz teilt ihre Konfiguration mit
+           anderen Instanzen oder Clustern. Eine gemeinsam genutzte Instanz
+           wird erstellt, wenn im Befehl zum Erstellen der Instanz eine
+           Konfiguration angegeben ist, die von anderen Instanzen oder
+           Clustern referenziert wird.
+
+       Geclusterte Instanz
+           Eine geclusterte Instanz übernimmt ihre Konfiguration aus dem
+           Cluster, zu dem die Instanz gehört, und nutzt diese Konfiguration
+           gemeinsam mit anderen Instanzen im Cluster. Eine geclusterte
+           Instanz wird erstellt, wenn ein Cluster im Befehl zum Erstellen der
+           Instanz angegeben ist.
+
+           Jede Instanz, die nicht zu einem Cluster gehört, wird als nicht
+           geclusterte Serverinstanz betrachtet. Aus diesem Grunde sind
+           Standalone-Instanzen und gemeinsam genutzte Instanzen nicht
+           geclusterte Serverinstanzen.
+
+       Dieser Unterbefehl versucht standardmäßig, mögliche Portkonflikte für
+       die erstellte Instanz aufzulösen. Außerdem weist der Unterbefehl Ports
+       zu, die derzeit nicht verwendet werden und noch keinen anderen
+       Instanzen auf demselben Knoten zugewiesen sind. Der Unterbefehl weist
+       diese Ports anhand eines im Unterbefehl enthaltenen Algorithmus zu.
+       Verwenden Sie die Option --systemproperties, um Portkonflikte für
+       zusätzliche Instanzen auf demselben Knoten aufzulösen. Die
+       Systemeigenschaften einer Instanz können bearbeitet werden, indem die
+       Unterbefehle create-system-properties(1) und delete-system-property(1)
+       verwendet werden.
+
+       Beim Erstellen einer Instanz ruft der Unterbefehl die Dateien ab, die
+       für die sichere Synchronisierung mit dem Domainadministrationsserver
+       (DAS) benötigt werden. Die Instanz wird mit dem DAS synchronisiert,
+       wenn sie gestartet wird
+
+OPTIONEN
+       --help, -?
+           Zeigt den Hilfetext für den Unterbefehl an.
+
+       --node
+           Der Name des Knotens, der den Host definiert, auf dem die Instanz
+           erstellt werden soll. Der Knoten muss nur dann angegeben werden,
+           wenn mehrere Knoten im Verzeichnis vorhanden sind, in dem die
+           Knoten gespeichert sind. Andernfalls kann der Knoten ausgelassen
+           werden. Wenn ein Knoten angegeben wird, muss dieser vorhanden sein.
+
+           Wenn kein Knoten angegeben ist, hängt das Behavior des Unterbefehls
+           von der Anzahl vorhandener Knoten im Verzeichnis ab, in dem die
+           Knoten gespeichert sind:
+
+           ·   Wenn keine Knoten vorhanden sind, erstellt der Unterbefehl
+               einen Knoten für die Instanz. Der Name des Knotens ist der Name
+               des Hosts, auf dem der Unterbefehl ausgeführt wird.
+
+           ·   Wenn nur ein Knoten vorhanden ist, erstellt der Unterbefehl
+               eine Referenz zum vorhandenen Knoten für die Instanz.
+
+           ·   Wenn zwei oder mehr Knoten vorhanden sind, tritt ein Fehler
+               auf.
+
+       --nodedir
+           Der Pfad zum Verzeichnis, in dem die Dateien für den Knoten der
+           Instanz gespeichert werden sollen. Der Standard ist
+           as-install/nodes.
+
+       --config
+           Gibt die benannte Konfiguration an, die die Instanz referenziert.
+           Die Konfiguration muss vorhanden sein und darf nicht den Namen
+           default-config oder server-config haben. Durch Angabe der Option
+           --config wird eine gemeinsam genutzte Instanz erstellt.
+
+           Die Optionen --config und --cluster schließen sich gegenseitig aus.
+           Wenn beide Optionen ausgelassen werden, wird eine
+           Standalone-Instanz erstellt.
+
+       --cluster
+           Gibt das Cluster an, aus dem die Instanz ihre Konfiguration
+           übernimmt. Durch Angabe der Option --cluster wird eine geclusterte
+           Instanz erstellt.
+
+           Die Optionen --config und --cluster schließen sich gegenseitig aus.
+           Wenn beide Optionen ausgelassen werden, wird eine
+           Standalone-Instanz erstellt.
+
+       --lbenabled
+           Gibt an, ob die Instanz für Load Balancing aktiviert ist. Mögliche
+           Werte:
+
+           true
+               Die Instanz ist für Load Balancing aktiviert (Standard).
+
+               Wenn eine Instanz für Load Balancing aktiviert ist, sendet ein
+               Load Balancer Anforderungen an die Instanz.
+
+           false
+               Die Instanz ist für Load Balancing deaktiviert.
+
+               Wenn eine Instanz für Load Balancing deaktiviert ist, sendet
+               ein Load Balancer keine Anforderungen an die Instanz.
+
+       --portbase
+           Legt die Zahl fest, mit der die Portzuweisung beginnen soll. Eine
+           Instanz verwendet eine bestimmte Anzahl an Ports, die statisch
+           zugewiesen sind. Der portbase-Wert bestimmt, wo die Zuweisung
+           beginnt. Die Werte für die Ports werden wie folgt berechnet:
+
+           ·   Administrationsport: portbase + 48
+
+           ·   HTTP-Listener-Port: portbase + 80
+
+           ·   HTTPS-Listener-Port: portbase + 81
+
+           ·   JMS-Port: portbase + 76
+
+           ·   IIOP-Listener-Port: portbase + 37
+
+           ·   Secure IIOP-Listener-Port: portbase + 38
+
+           ·   Secure IIOP-Port mit gegenseitiger Authentifizierung: portbase
+               + 39
+
+           ·   JMX-Port: portbase + 86
+
+           ·   JPA-Debugger-Port: portbase + 9
+
+           ·   Felix Shell-Serviceport für OSGi-Modulverwaltung: portbase + 66
+
+           Wenn die Option --portbase angegeben ist, enthält die Ausgabe
+           dieses Unterbefehls eine vollständige Liste der verwendeten Ports.
+
+       --checkports
+           Gibt an, ob die Administrations-, HTTP-, JMS-, JMX- und IIOP-Ports
+           auf Verfügbarkeit geprüft werden sollen. Der Standardwert ist true.
+
+       --savemasterpassword
+           Ist diese Option auf true gesetzt, kann das Master-Kennwort in das
+           Dateisystem geschrieben werden. Wenn das Master-Kennwort in das
+           Dateisystem geschrieben wird, kann die Instanz gestartet werden,
+           ohne dass zur Eingabe des Kennworts aufgefordert werden muss. Ist
+           diese Option auf true gesetzt, ist für die Option
+           --usemasterpassword ebenfalls "true" eingestellt, unabhängig von
+           dem in der Befehlszeile angegebenen Wert. Da es unsicher ist, das
+           Master-Kennwort in das Dateisystem zu schreiben, ist der
+           Standardwert false.
+
+           Die Master-Kennwortdatei für eine Instanz wird im Knotenverzeichnis
+           gespeichert und nicht im Domainverzeichnis. Daher ist diese Option
+           nur für die erste Instanz erforderlich, die für jeden Knoten in
+           einer Domain erstellt wird.
+
+       --usemasterpassword
+           Gibt an, ob der Keystore mit einem in das System integrierten oder
+           einem benutzerdefinierten Master-Kennwort verschlüsselt wird.
+
+           Ist der Wert auf false gesetzt (Standard), wird der Keystore mit
+           einem bekannten Kennwort verschlüsselt, das in das System
+           integriert ist. Die Verschlüsselung des Keystores mit einem in das
+           System integrierten Kennwort bietet keine zusätzliche Sicherheit.
+
+           Ist der Wert auf true gesetzt, ruft der Unterbefehl das
+           Master-Kennwort aus dem Eintrag AS_ADMIN_MASTERPASSWORD in der
+           Kennwortdatei ab oder fordert zur Eingabe des Master-Kennworts auf.
+           Die Kennwortdatei wird in der Option --passwordfile des Utilitys
+           asadmin(1M)angegeben.
+
+           Wenn die Option --savemasterpassword auf true gesetzt ist, gilt für
+           diese Option ebenfalls "true", unabhängig von dem in der
+           Befehlszeile angegebenen Wert.
+
+           Das Master-Kennwort muss für alle Instanzen in einer Domain
+           identisch sein.
+
+       --systemproperties
+           Definiert Systemeigenschaften für die Instanz. Diese Eigenschaften
+           überschreiben die Eigenschaftsdefinitionen für Porteinstellungen in
+           der Konfiguration der Instanz. Vordefinierte Porteinstellungen
+           müssen überschrieben werden, wenn sich beispielsweise zwei
+           geclusterte Instanzen auf demselben Host befinden. In solch einem
+           Fall müssen die Porteinstellungen für eine Instanz überschrieben
+           werden, da beide Instanzen dieselbe Konfiguration verwenden.
+
+           Folgende Eigenschaften stehen zur Verfügung:
+
+           ASADMIN_LISTENER_PORT
+               Diese Eigenschaft legt die Nummer des HTTP- oder HTTPS-Ports
+               fest, über den der DAS zur Verwaltung der Instanz eine
+               Verbindung zu dieser Instanz herstellt. Gültige Werte sind
+               1-65535. Bei UNIX-Systemen erfordert das Erstellen von Sockets,
+               die auf den Ports 1-1024 horchen, Superuser-Berechtigungen.
+
+           HTTP_LISTENER_PORT
+               Diese Eigenschaft legt die Portnummer des Ports fest, der zur
+               Überwachung von HTTP-Anforderungen verwendet werden soll.
+               Gültige Werte sind 1-65535. Bei UNIX-Systemen erfordert das
+               Erstellen von Sockets, die auf den Ports 1-1024 horchen,
+               Superuser-Berechtigungen.
+
+           HTTP_SSL_LISTENER_PORT
+               Diese Eigenschaft legt die Portnummer des Ports fest, der zur
+               Überwachung von HTTPS-Anforderungen verwendet werden soll.
+               Gültige Werte sind 1-65535. Bei UNIX-Systemen erfordert das
+               Erstellen von Sockets, die auf den Ports 1-1024 horchen,
+               Superuser-Berechtigungen.
+
+           IIOP_LISTENER_PORT
+               Diese Eigenschaft legt die Portnummer des Ports fest, der für
+               IIOP-Verbindungen verwendet wird. Gültige Werte sind 1-65535.
+               Bei UNIX-Systemen erfordert das Erstellen von Sockets, die auf
+               den Ports 1-1024 horchen, Superuser-Berechtigungen.
+
+           IIOP_SSL_LISTENER_PORT
+               Diese Eigenschaft legt die Portnummer des Ports fest, der für
+               sichere IIOP-Verbindungen verwendet wird. Gültige Werte sind
+               1-65535. Bei UNIX-Systemen erfordert das Erstellen von Sockets,
+               die auf den Ports 1-1024 horchen, Superuser-Berechtigungen.
+
+           IIOP_SSL_MUTUALAUTH_PORT
+               Diese Eigenschaft legt die Portnummer des Ports fest, der für
+               sichere IIOP-Verbindungen mit Clientauthentifizierung verwendet
+               wird. Gültige Werte sind 1-65535. Bei UNIX-Systemen erfordert
+               das Erstellen von Sockets, die auf den Ports 1-1024 horchen,
+               Superuser-Berechtigungen.
+
+           JAVA_DEBUGGER_PORT
+               Diese Eigenschaft gibt die Portnummer des Ports an, der für
+               Verbindungen zum Java Platform Debugger Architecture (JPDA-)
+               (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+               Debugger verwendet wird. Gültige Werte sind 1-65535. Bei
+               UNIX-Systemen erfordert das Erstellen von Sockets, die auf den
+               Ports 1-1024 horchen, Superuser-Berechtigungen.
+
+           JMS_PROVIDER_PORT
+               Diese Eigenschaft legt die Portnummer für den Java Message
+               Service-Provider fest. Gültige Werte sind 1-65535. Bei
+               UNIX-Systemen erfordert das Erstellen von Sockets, die auf den
+               Ports 1-1024 horchen, Superuser-Berechtigungen.
+
+           JMX_SYSTEM_CONNECTOR_PORT
+               Diese Eigenschaft dient zum Festlegen der Portnummer, auf der
+               der JMX-Connector horcht. Gültige Werte sind 1-65535. Bei
+               UNIX-Systemen erfordert das Erstellen von Sockets, die auf den
+               Ports 1-1024 horchen, Superuser-Berechtigungen.
+
+           OSGI_SHELL_TELNET_PORT
+               Diese Eigenschaft gibt die Portnummer des Ports an, der für
+               Verbindungen zur Apache Felix Remote Shell
+               (http://felix.apache.org/site/apache-felix-remote-shell.html)
+               verwendet wird. Diese Shell verwendet den Felix-Shell-Service,
+               um mit dem Subsystem zur OSGi-Modulverwaltung zu kommunizieren.
+               Gültige Werte sind 1-65535. Bei UNIX-Systemen erfordert das
+               Erstellen von Sockets, die auf den Ports 1-1024 horchen,
+               Superuser-Berechtigungen.
+
+OPERANDEN
+       instance-name
+           Der Name der Instanz, die erstellt wird.
+
+           Der Name muss den folgenden Anforderungen entsprechen:
+
+           ·   Der Name darf nur ASCII-Zeichen enthalten.
+
+           ·   Der Name muss mit einem Buchstaben, einer Ziffer oder einem
+               Unterstrich beginnen.
+
+           ·   Der Name darf nur die folgenden Zeichen enthalten:
+
+               ·   Kleinbuchstaben
+
+               ·   Großbuchstaben
+
+               ·   Ziffern
+
+               ·   Bindestriche
+
+               ·   Punkte
+
+               ·   Unterstriche
+
+           ·   Der Name in der Domain muss eindeutig sein und darf nicht der
+               Name einer anderen GlassFish Server-Instanz, eines Clusters,
+               einer benannten Konfiguration oder eines Knotens sein.
+
+           ·   Bei dem Namen darf es sich nicht um domain, server oder ein
+               anderes Schlüsselwort handeln, das von GlassFish Server
+               reserviert ist.
+
+BEISPIELE
+       Example 1, Standalone-GlassFish Server-Instanzen erstellen
+           In diesem Beispiel wird die Standalone-Instanz il3 auf dem Host
+           erstellt, auf dem der Befehl ausgeführt wird. Der DAS wird auf
+           demselben Host ausgeführt. Die Instanz referenziert den einzigen
+           vorhandenen Knoten.
+
+               asadmin> create-local-instance il3
+               Rendezvoused with DAS on localhost:4848.
+               Port Assignments for server instance il3:
+               JMX_SYSTEM_CONNECTOR_PORT=28686
+               JMS_PROVIDER_PORT=27676
+               HTTP_LISTENER_PORT=28080
+               ASADMIN_LISTENER_PORT=24848
+               JAVA_DEBUGGER_PORT=29009
+               IIOP_SSL_LISTENER_PORT=23820
+               IIOP_LISTENER_PORT=23700
+               OSGI_SHELL_TELNET_PORT=26666
+               HTTP_SSL_LISTENER_PORT=28181
+               IIOP_SSL_MUTUALAUTH_PORT=23920
+               Command create-local-instance executed successfully.
+
+       Example 2, Geclusterte GlassFish Server-Instanz auf einem bestimmten
+       Knoten erstellen
+           In diesem Beispiel wird die geclusterte Instanz ymli2 auf dem
+           Knoten sj02 erstellt. Die Instanz gehört zum Cluster ymlclust.
+
+           Der Befehl wird auf dem Host sj02 ausgeführt. Hierbei handelt es
+           sich um den Host, den der Knoten sj02 darstellt. Der DAS wird auf
+           dem Host sr04 ausgeführt und verwendet den standardmäßigen
+           HTTP-Port für die Administration. Da keine Instanzen auf dem Knoten
+           vorhanden sind, wird der Host, auf dem der DAS ausgeführt wird,
+           über die Option --host des Utilitys asadmin angegeben.
+
+               sj02# asadmin --host sr04 create-local-instance --cluster ymlclust --node sj02 ymli2
+               Rendezvoused with DAS on sr04:4848.
+               Port Assignments for server instance ymli2:
+               JMX_SYSTEM_CONNECTOR_PORT=28686
+               JMS_PROVIDER_PORT=27676
+               HTTP_LISTENER_PORT=28080
+               ASADMIN_LISTENER_PORT=24848
+               JAVA_DEBUGGER_PORT=29009
+               IIOP_SSL_LISTENER_PORT=23820
+               IIOP_LISTENER_PORT=23700
+               OSGI_SHELL_TELNET_PORT=26666
+               HTTP_SSL_LISTENER_PORT=28181
+               IIOP_SSL_MUTUALAUTH_PORT=23920
+               Command create-local-instance executed successfully.
+
+BEENDIGUNGSSTATUS
+       0
+           Befehl erfolgreich ausgeführt
+
+       1
+           Fehler beim Ausführen des Befehls
+
+SIEHE AUCH
+       create-instance(1), create-node-config(1), create-node-dcom(1),
+       create-node-ssh(1), create-system-properties(1),
+       delete-local-instance(1), delete-system-property(1), list-instances(1),
+       start-local-instance(1), stop-local-instance(1)
+
+       asadmin(1M)
+
+Java EE 7                        08. Dez. 2011        create-local-instance(1)

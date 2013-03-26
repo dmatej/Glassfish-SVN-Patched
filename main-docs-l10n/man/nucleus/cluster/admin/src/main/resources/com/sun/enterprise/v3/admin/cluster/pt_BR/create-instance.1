@@ -1,0 +1,393 @@
+create-instance(1)      Subcomandos do utilitário asad      create-instance(1)
+
+NOME
+       create-instance - cria uma instância do GlassFish Server
+
+SINOPSE
+           create-instance [--help] --node node-name
+           [--config config-name | --cluster cluster-name]
+           [--lbenabled={true|false}]
+           [--portbase=port-number] [--checkports={true|false}]
+           [--systemproperties (name=value)[:name=value]* ]
+           instance-name
+
+DESCRIçãO
+       O subcomando create-instance cria uma instância do GlassFish Server.
+       Este subcomando requer o protocolo remoto DCOM (Distributed Component
+       Object Model) ou SSH (Secure Shell) para ser configurado no host em que
+       o servidor de administração de domínios (DAS) está em execução e no
+       host que é representado pelo nó em que a instância deverá residir.
+
+           Nota
+           ┌────────────────────────────────────────┐
+           │Observação                              │
+           │                                        │
+           │           DCOM ou SSH não será         │
+           │           necessário se a instância    │
+           │           for armazenada em um nó do   │
+           │           tipo CONFIG que representa o │
+           │           host local. Um nó do tipo    │
+           │            CONFIG não está ativado     │
+           │           para a comunicação remota    │
+           │           usando o DCOM ou o SSH.      │
+           └────────────────────────────────────────┘
+
+       É possível executar esse comando a partir de qualquer host que possa
+       entrar em contato com o DAS.
+
+       Uma instância do GlassFish Server é uma Máquina virtual única para a
+       plataforma Java (Máquina Virtual Java ou máquina JVM) em um nó único no
+       qual o GlassFish Server está em execução. Um nó define a host onde a
+       instância do GlassFish Server reside. A máquina JVM deve ser compatível
+       com a Plataforma Java, Enterprise Edition (Java EE).
+
+       Uma instância do GlassFish Server necessita de uma referência para os
+       elementos a seguir:
+
+       ·   O nó que define a host onde a instância reside. O nó precisa ser
+           especificado no comando para criar a instância.
+
+       ·   A configuração nomeada que define a configuração da instância. A
+           configuração pode ser especificada no comando para criar a
+           instância, mas não é necessária. Se nenhuma configuração for
+           especificada para uma instância que não está se unindo ao cluster,
+           o subcomando cria uma configuração para as instâncias. Uma
+           instância que está se unindo a um cluster recebe sua configuração
+           de seu cluster pai.
+
+       Cada instância do GlassFish Server é um dos tipos de instância a
+       seguir:
+
+       Instância standalone
+           Uma instância standalone não compartilha sua configuração com
+           quaisquer outras instâncias ou clusters. Uma instância standalone é
+           criada, caso uma das condições a seguir sejam atendidas:
+
+           ·   Nenhuma configuração ou cluster é especificadas no comando para
+               criar a instância.
+
+           ·   Uma configuração que não é referenciada por qualquer outras
+               instâncias ou clusters no comando para criar a instância.
+
+           Quando nenhuma configuração ou cluster for especificada, uma cópia
+           da configuração default-config é criada para a instância. O nome
+           desta configuração é instance-name-config, em que instance-name
+           representa o nome de uma instância do servidor não clusterizado.
+
+       Instância compartilhada
+           Uma instância compartilhada compartilha sua configuração com outras
+           instâncias ou clusters. Um instância compartilhada será criada se
+           uma configuração que é referenciada por outras instâncias ou
+           clusters for especificada no comando para criar a instância.
+
+       Instância clusterizada
+           Uma instância clusterizada herda sua configuração do cluster, ao
+           qual a instância pertence, e compartilha sua configuração com
+           outras instâncias no cluster. Uma instância clusterizada é criada
+           se um cluster for especificado no comando para criar a instância.
+
+           Qualquer instância que não faça parte de um cluster é considerada
+           uma instância de servidor não clusterizada. Portanto, as instâncias
+           standalone e as instâncias compartilhadas são instâncias de
+           servidor não clusterizadas.
+
+       Por default, esse o subcomando tenta resolver possíveis conflitos de
+       porta para a instância criada. O subcomando também designa portas que
+       não estão em uso e não estão designadas a outras instâncias do mesmo
+       nó. O subcomando designa essas portas em uma base por algoritmo que é
+       interno para o subcomando. Use a opção --systemproperties para resolver
+       conflitos de portas para instâncias adicionais no mesmo nó.
+       Propriedades de sistema de uma instância podem ser manipuladas
+       utilizando o subcomando create-system-properties(1) e o
+       delete-system-property(1).
+
+       Esse subcomando só é suportado no modo remoto.
+
+OPçõES
+       --help, -?
+           Exibe o texto de ajuda do subcomando.
+
+       --node
+           O nome do nó que define o host onde a instância deve ser criada. O
+           nó já deve existir. Se a instância for criada no host em que o
+           servidor de administração de domínios (DAS) está em execução, use o
+           nó predefinido localhost-domain.
+
+       --config
+           Especifica a configuração nomeada que a instância referencia. A
+           configuração deve existir e não pode ser chamada default-config ou
+            server-config. Especificar a opção --config cria uma instância
+           compartilhada.
+
+           A opção --config e a opção --cluster são mutuamente exclusivas. Se
+           ambas as opções forem omitidas, uma instância standalone é criada.
+
+       --cluster
+           Especifica o cluster do qual a instância herda sua configuração.
+           Especificar a opção --cluster cria uma instância clusterizada.
+
+           A opção --config e a opção --cluster são mutuamente exclusivas. Se
+           ambas as opções forem omitidas, uma instância standalone é criada.
+
+       --lbenabled
+           Especifica se a instância está ativa para o balanceamento de peso.
+           Os valores possíveis são os seguintes:
+
+           true
+               A instância é ativada para o balanceamento de peso (default).
+
+               Quando uma instância é ativada para o balanceamento de peso, um
+               balanceamento de peso envia solicitações para a instância.
+
+           false
+               A instância é desativada para o balanceamento de peso.
+
+               Quando uma instância é desativada para o balanceamento de peso,
+               um balanceamento de peso não envia solicitações para a
+               instância.
+
+       --portbase
+           Determina o número com o qual a designação da porta deve iniciar.
+           Uma instância utiliza um certo número de portas que são designadas
+           estatisticamente. O valor portbase determina onde a designação deve
+           começar. Os valores para as portas são calculados como a seguir:
+
+           ·   Porta de administração: portbase + 48
+
+           ·   Porta do listener HTTP: portbase + 80
+
+           ·   Porta do listener HTTPS: portbase + 81
+
+           ·   Porta JMS: portbase + 76
+
+           ·   Porta do listener IIOP: portbase + 37
+
+           ·   Porta do listener IIOP segura: portbase + 38
+
+           ·   IIOP seguro com porta de autenticação mútua: portbase + 39
+
+           ·   Porta JMX: portbase + 86
+
+           ·   Porta do depurador JPA: portbase + 9
+
+           ·   Porta do serviço de shell Felix para o gerenciamento do módulo
+               OSGi: portbase + 66
+
+           Quando a opção --portbase é especificada, a saída desse subcomando
+           inclui uma lista completa de portas utilizadas.
+
+       --checkports
+           Especifica se deve verificar a disponibilidade das portas de
+           administração, HTTP, JMS, JMX e IIOP. O valor default é verdadeiro.
+
+       --systemproperties
+           Define as propriedades do sistema para a instância. Essas
+           propriedades substituem as definições de propriedade para
+           definições de porta na configuração da instância. As definições de
+           porta predefinidas deverão ser substituídas se, por exemplo, duas
+           instâncias clusterizadas residirem no mesmo host. Nessa situação,
+           as definições de porta para uma instância devem ser substituídas
+           porque ambas as instâncias compartilham a mesma configuração.
+
+           As propriedades a seguir estão disponíveis:
+
+           ASADMIN_LISTENER_PORT
+               Esta propriedade especifica o número da porta HTTP ou HTTPS
+               através da qual o DAS se conecta à instância para gerenciá-la.
+               Os valores válidos são 1-65535. No UNIX, a criação de soquetes
+               com listener nas portas 1-1024 requer privilégios de
+               superusuário.
+
+           HTTP_LISTENER_PORT
+               Esta propriedade especifica o número de porta que é utilizada
+               para atender solicitações HTTP. Os valores válidos são 1-65535.
+               No UNIX, a criação de soquetes com listener nas portas 1-1024
+               requer privilégios de superusuário.
+
+           HTTP_SSL_LISTENER_PORT
+               Esta propriedade especifica o número da porta que é utilizada
+               para interpretar solicitações HTTPS. Os valores válidos são
+               1-65535. No UNIX, a criação de soquetes com listener nas portas
+               1-1024 requer privilégios de superusuário.
+
+           IIOP_LISTENER_PORT
+               Esta propriedade especifica o número da porta que é utilizada
+               para conexões IIOP. Os valores válidos são 1-65535. No UNIX, a
+               criação de soquetes com listener nas portas 1-1024 requer
+               privilégios de superusuário.
+
+           IIOP_SSL_LISTENER_PORT
+               Essa propriedade especifica o número da porta que é utilizada
+               para conexões IIOP seguras. Os valores válidos são 1-65535. No
+               UNIX, a criação de soquetes com listener nas portas 1-1024
+               requer privilégios de superusuário.
+
+           IIOP_SSL_MUTUALAUTH_PORT
+               Essa propriedade especifica o número da porta que é utilizada
+               para conexões IIOP seguras com autenticação do cliente. Os
+               valores válidos são 1-65535. No UNIX, a criação de soquetes com
+               listener nas portas 1-1024 requer privilégios de superusuário.
+
+           JAVA_DEBUGGER_PORT
+               Esta propriedade especifica o número da porta que é usada para
+               conexões com o depurador do Java Platform Debugger Architecture
+               (JPDA)(http://java.sun.com/javase/technologies/core/toolsapis/jpda/).
+               Os valores válidos são 1-65535. No UNIX, a criação de soquetes
+               com listener nas portas 1-1024 requer privilégios de
+               superusuário.
+
+           JMS_PROVIDER_PORT
+               Esta propriedade especifica o número da porta para o provedor
+               Java Message Service. Os valores válidos são 1-65535. No UNIX,
+               a criação de soquetes com listener nas portas 1-1024 requer
+               privilégios de superusuário.
+
+           JMX_SYSTEM_CONNECTOR_PORT
+               Esta propriedade especifica o número da porta na qual o
+               conector JMX faz listening. Os valores válidos são 1-65535. No
+               UNIX, a criação de soquetes com listener nas portas 1-1024
+               requer privilégios de superusuário.
+
+           OSGI_SHELL_TELNET_PORT
+               Esta propriedade especifica o número da porta que é usado para
+               conexões com o Apache Felix Remote Shell
+               (http://felix.apache.org/site/apache-felix-remote-shell.html).
+               Este shell usa o serviço de shell Felix para interagir com o
+               subsistema de gerenciamento do módulo OSGi. Os valores válidos
+               são 1-65535. No UNIX, a criação de soquetes com listener nas
+               portas 1-1024 requer privilégios de superusuário.
+
+OPERANDOS
+       instance-name
+           O nome da instância que está sendo criada.
+
+           O nome deve cumprir os seguintes requisitos:
+
+           ·   O nome pode conter somente caracteres ASCII.
+
+           ·   O nome deve começar com uma letra, um número ou um sublinhado.
+
+           ·   O nome pode conter somente os seguintes caracteres:
+
+               ·   Letras minúsculas
+
+               ·   Letras maiúsculas
+
+               ·   Números
+
+               ·   Hífen
+
+               ·   Ponto
+
+               ·   Sublinhado
+
+           ·   O nome deve ser único no domínio e não deve ser o nome de outra
+               instância, um cluster, uma configuração nomeada ou um nó do
+               GlassFish Server.
+
+           ·   O nome não deve ser domain, server, nem outra palavra-chave que
+               esteja reservada pelo GlassFish Server.
+
+EXEMPLOS
+       Example 1, Criando uma Instância Standalone do GlassFish Server
+           Este exemplo cria a instância do GlassFish Server standalone
+           pmdsainst no domínio domain1 no host local.
+
+               asadmin> create-instance --node localhost-domain1 pmdsainst
+               Port Assignments for server instance pmdsainst:
+               JMX_SYSTEM_CONNECTOR_PORT=28688
+               JMS_PROVIDER_PORT=27678
+               ASADMIN_LISTENER_PORT=24850
+               HTTP_LISTENER_PORT=28082
+               IIOP_LISTENER_PORT=23702
+               IIOP_SSL_LISTENER_PORT=23822
+               HTTP_SSL_LISTENER_PORT=28183
+               IIOP_SSL_MUTUALAUTH_PORT=23922
+
+               Command create-instance executed successfully.
+
+       Example 2, Criando uma Instância do GlassFish Server Standalone com
+       Designações de Porta Personalizadas.
+           Este exemplo cria a instância do GlassFish Server standalone
+           pmdcpinst no domínio domain1 no host local. Números de porta
+           personalizados são designados às portas a seguir:
+
+           ·   Porta de listener HTTP
+
+           ·   Porta de listener HTTPS
+
+           ·   Porta de conexões IIOP
+
+           ·   Porta de conexões IIOP seguras
+
+           ·   Porta de conexões IIOP seguras com autenticação mútua
+
+           ·   Porta de conector JMX
+
+               asadmin> create-instance --node localhost-domain1
+               --systemproperties HTTP_LISTENER_PORT=58294:
+               HTTP_SSL_LISTENER_PORT=58297:
+               IIOP_LISTENER_PORT=58300:
+               IIOP_SSL_LISTENER_PORT=58303:
+               IIOP_SSL_MUTUALAUTH_PORT=58306:
+               JMX_SYSTEM_CONNECTOR_PORT=58309 pmdcpinst
+               Port Assignments for server instance pmdcpinst:
+               JMS_PROVIDER_PORT=27679
+               ASADMIN_LISTENER_PORT=24851
+
+               Command create-instance executed successfully.
+
+       Example 3, Criando uma Instância do GlassFish Server Compartilhada
+           Este exemplo cria a instância do GlassFish Server compartilhada
+           pmdsharedinst no domínio domain1 no host local. A configuração
+           compartilhada dessa instância é
+            pmdsharedconfig.
+
+               asadmin create-instance --node localhost-domain1 --config pmdsharedconfig
+               pmdsharedinst1
+               Port Assignments for server instance pmdsharedinst1:
+               JMX_SYSTEM_CONNECTOR_PORT=28687
+               JMS_PROVIDER_PORT=27677
+               ASADMIN_LISTENER_PORT=24849
+               HTTP_LISTENER_PORT=28081
+               IIOP_LISTENER_PORT=23701
+               IIOP_SSL_LISTENER_PORT=23821
+               HTTP_SSL_LISTENER_PORT=28182
+               IIOP_SSL_MUTUALAUTH_PORT=23921
+
+               Command create-instance executed successfully.
+
+       Example 4, Criando uma Instância Clusterizada do GlassFish Server
+           Este exemplo cria a instância do GlassFish Server clusterizada
+           pmdinst1 no domínio domain1 no host local. A instância é um membro
+           do cluster pmdclust1 .
+
+               asadmin> create-instance --node localhost-domain1 --cluster pmdclust pmdinst1
+               Port Assignments for server instance pmdinst1:
+               JMX_SYSTEM_CONNECTOR_PORT=28686
+               JMS_PROVIDER_PORT=27676
+               HTTP_LISTENER_PORT=28080
+               ASADMIN_LISTENER_PORT=24848
+               IIOP_SSL_LISTENER_PORT=23820
+               IIOP_LISTENER_PORT=23700
+               HTTP_SSL_LISTENER_PORT=28181
+               IIOP_SSL_MUTUALAUTH_PORT=23920
+
+               Command create-instance executed successfully.
+
+STATUS DE SAíDA
+       0
+           comando executado com sucesso
+
+       1
+           erro ao executar o comando
+
+CONSULTE TAMBéM
+       create-local-instance(1), create-node-config(1), create-node-dcom(1),
+       create-node-ssh(1), create-system-properties(1), delete-instance(1),
+       delete-system-property(1), list-instances(1), setup-ssh(1),
+       start-instance(1), stop-instance(1)
+
+       asadmin(1M)
+
+Java EE 7                         08 dez 2011               create-instance(1)

@@ -1,0 +1,226 @@
+create-jvm-options(1)   Unterbefehle des asadmin-Utili   create-jvm-options(1)
+
+NAME
+       create-jvm-options - erstellt Optionen für den Java-Anwendungs-Launcher
+
+ZUSAMMENFASSUNG
+           create-jvm-options [--help] [--target target] [--profiler={true|false}]
+           (jvm-option-name=jvm-option-value) [:jvm-option-name=jvm-option-value*]
+
+BESCHREIBUNG
+       Der Unterbefehl create-jvm-options erstellt Befehlszeilenoptionen, die
+       an den Java-Anwendungs-Launcher übergeben werden, wenn GlassFish Server
+       gestartet wird. Die Optionen, die von diesem Unterbefehl erstellt
+       werden, ergänzen die Optionen, die mit GlassFish Server voreingestellt
+       sind. Die Optionen des Java-Anwendungs-Launchers werden im
+       Java-Konfigurationselement java—config oder im Profiler-Element
+       profiler der Datei domain.xml gespeichert. Die Optionen werden in der
+       Reihenfolge an die Befehlszeile gesendet, in der sie im Element java—
+       config oder im Profiler-Element profiler in der Datei domain.xml
+       erscheinen.
+
+       Mit den Profiler-Optionen werden die Einstellungen aufgezeichnet, die
+       benötigt werden, um einen bestimmten Profiler zu starten. Der Profiler
+       muss bereits vorhanden sein. Verwenden Sie bei Bedarf den Unterbefehl
+       create-profiler(1), um den Profiler zu erstellen.
+
+       Mit diesem Unterbefehl können Sie die folgenden Optionstypen erstellen:
+
+       ·   Java-Systemeigenschaften.  Diese Optionen werden über die Option -D
+           des Java-Anwendungs-Launcher festgelegt. Beispiel:
+
+           -Djava.security.manager
+
+           -Denvironment=Production
+
+       ·   Startup-Parameter für den Java-Anwendungs-Launcher.  Diesen
+           Optionen wird ein Bindestrich (-) vorangestellt. Beispiel:
+
+           --XX:PermSize=size
+
+           -Xmx1024m
+
+           -d64
+
+       Wenn der Unterbefehl eine Option angibt, die bereits vorhanden ist,
+       wird die Option nicht vom Befehl neu erstellt.
+
+           Note
+           ┌────────────────────────────────────────┐
+           │Hinweis                                 │
+           │                                        │
+           │           Stellen Sie sicher, dass     │
+           │           jede erstellte Option gültig │
+           │           ist. Der Unterbefehl kann    │
+           │           zulassen, dass Sie eine      │
+           │           ungültige Option erstellen.  │
+           │           Eine solche ungültige Option │
+           │           kann allerdings dazu führen, │
+           │           dass das Hochfahren nicht    │
+           │           erfolgreich ist.             │
+           └────────────────────────────────────────┘
+
+       Eine Option kann geprüft werden, indem das Serverlog untersucht wird,
+       nachdem GlassFish Server gestartet wurde. Optionen für den
+       Java-Anwendungs-Launcher werden vor allen anderen Informationen in die
+       Datei server.log geschrieben, wenn GlassFish Server gestartet wird.
+
+       Wenn bestimmte Optionen hinzugefügt werden, muss der Server neu
+       gestartet werden, damit die Änderungen in Kraft treten. Andere Optionen
+       werden sofort in der Umgebung des DAS (Domain Administration Server)
+       festgelegt und erfordern keinen Neustart. Ob ein Neustart erforderlich
+       ist, hängt vom Typ der Option ab.
+
+       ·   Es ist kein Neustart bei Verwendung von Java-Systemeigenschaften
+           erforderlich, deren Namen nicht mit -Djava.  oder -Djavax. beginnen
+           (einschließlich nachgestelltem Punkt). Beispielsweise ist bei
+           Verwendung der folgenden Java-Systemeigenschaft kein Neustart
+           erforderlich:
+
+           -Denvironment=Production
+
+       ·   Bei folgenden Optionen ist ein Neustart erforderlich:
+
+           ·   Java-Systemeigenschaften, deren Namen mit -Djava.  oder
+               -Djavax.  (einschließlich nachgestelltem Punkt) beginnen.
+               Beispiel:
+
+               -Djava.security.manager
+
+           ·   Startup-Parameter für den Java-Anwendungs-Launcher. Beispiel:
+
+               -client
+
+               -Xmx1024m
+
+               -d64
+
+       Um den DAS neu zu starten, verwenden Sie den Befehl restart-domain(1).
+
+       Dieser Unterbefehl wird nur im Remote-Modus unterstützt.
+
+OPTIONEN
+       --help, -?
+           Zeigt den Hilfetext für den Unterbefehl an.
+
+       --target
+           Gibt das Ziel an, auf dem Sie die Optionen für den
+           Java-Anwendungs-Launcher erstellen.
+
+           Folgende Werte sind gültig:
+
+           server
+               Gibt den DAS an (Standardeinstellung).
+
+           instance-name
+               Gibt eine GlassFish Server-Instanz an.
+
+           cluster-name
+               Gibt ein Cluster an.
+
+           configuration-name
+               Gibt eine benannte Konfiguration an.
+
+       --profiler
+           Gibt an, ob die Optionen des Java-Anwendungs-Launchers für den
+           Profiler gelten. Der Profiler muss vorhanden sein, damit diese
+           Option den Wert "true" hat. Der Standardwert ist "false".
+
+OPERANDEN
+       jvm-option-name
+           Eine oder mehrere Optionen, die durch einen Doppelpunkt (:)
+           getrennt werden. Das Format einer Option hängt von Folgendem ab:
+
+           ·   Wenn die Option einen Namen und einen Wert hat, ist das Format
+               option-name=value.
+
+           ·   Wenn die Option nur einen Namen hat, ist das Format
+               option-name. Beispiel: -Xmx2048m.
+
+           ·   Wenn der erste Optionsname fälschlicherweise als eine oder
+               mehrere asadmin-Kurzoptionen interpretiert werden könnte, ist
+               das Format -- option-name. Beispiel: -server im folgenden
+               Befehl könnte fälschlicherweise als -se (asadmin-Kurzformen für
+               --secure und --echo) interpretiert werden:
+
+                   create-jvm-options -server
+               Um die JVM-Option -server zu erstellen, verwenden Sie
+               stattdessen den Befehl:
+
+                   create-jvm-options -- -server
+
+               Note
+               ┌───────────────────────────────────────┐
+               │Hinweis Wenn ein Optionsname oder      │
+               │Optionswert einen Doppelpunkt enthält, │
+               │muss der umgekehrte Schrägstrich (\)   │
+               │als Escape-Zeichen für den Doppelpunkt │
+               │im Namen oder Wert verwendet werden.   │
+               │Andere Zeichen können ebenfalls ein    │
+               │Escape-Zeichen erfordern. Weitere      │
+               │Informationen zu Escape-Zeichen in     │
+               │Unterbefehlsoptionen finden Sie in der │
+               │Dokumentation asadmin(1M).             │
+               └───────────────────────────────────────┘
+
+BEISPIELE
+       Example 1, Java-Systemeigenschaften festlegen
+           In diesem Beispiel werden mehrere Java-Systemeigenschaften
+           festgelegt.
+
+               asadmin> create-jvm-options -Dunixlocation=/root/example:
+               -Dvariable=\$HOME:-Dwindowslocation=d\:\\sun\\appserver:-Doption1=-value1
+               created 4 option(s)
+               Command create-jvm-options executed successfully.
+
+       Example 2, Startup-Parameter für den Java-Anwendungs-Launcher festlegen
+           In diesem Beispiel wird die maximal verfügbare Heap-Größe auf 1024
+           gesetzt.
+
+               asadmin> create-jvm-options -Xmx1024m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+       Example 3, Mehrere Startup-Parameter für den Java-Anwendungs-Launcher
+       festlegen
+           In diesem Beispiel wird die maximal verfügbare Heap-Größe auf 1024
+           gesetzt, und es werden Details zur Garbage Collection angefordert.
+
+               asadmin> create-jvm-options "-Xmx1024m:-XX\:+PrintGCDetails"
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+           In diesem Fall ist einer der beiden Parameter bereits vorhanden,
+           sodass der Unterbefehl meldet, dass nur eine Option festgelegt
+           wurde.
+
+       Example 4, JVM-Startup-Parameter für den Profiler festlegen
+           In diesem Beispiel wird ein JVM-Startup-Parameter für den Profiler
+           festgelegt.
+
+               asadmin> create-jvm-options --profiler=true -XX\:MaxPermSize=192m
+               created 1 option(s)
+               Command create-jvm-options executed successfully.
+
+BEENDIGUNGSSTATUS
+       0
+           Unterbefehl erfolgreich ausgeführt
+
+       1
+           Fehler beim Ausführen des Unterbefehls
+
+SIEHE AUCH
+       delete-jvm-options(1), list-jvm-options(1), create-profiler(1),
+       restart-domain(1)
+
+       asadmin(1M)
+
+       Weitere Informationen zum Java-Anwendungs-Launcher finden Sie auf der
+       Referenzseite für das Betriebssystem, das Sie verwenden:
+
+       ·   Oracle Solaris und Linux: Java - der Java-Anwendungs-Launcher
+           (http://java.sun.com/javase/6/docs/technotes/tools/solaris/java.html)
+
+       ·   Windows: Java - der Java-Anwendungs-Launcher
+           (http://java.sun.com/javase/6/docs/technotes/tools/windows/java.html)
+
+Java EE 7                        29. Nov. 2010           create-jvm-options(1)

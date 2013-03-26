@@ -1,0 +1,215 @@
+create-node-ssh(1)      Subcomandos do utilitário asad      create-node-ssh(1)
+
+NOME
+       create-node-ssh - cria um nó que está ativado para comunicação usando
+       SSH
+
+SINOPSE
+           create-node-ssh [--help]
+           --nodehost node-host
+           [--installdir as-install-parent] [--nodedir node-dir]
+           [--sshport ssh-port] [--sshuser ssh-user]
+           [--sshkeyfile ssh-keyfile]
+           [--force={false|true}]
+           [--install={false|true}] [--archive archive]
+           node-name
+
+DESCRIçãO
+       O subcomando create-node-ssh cria um nó ativado para comunicação com
+       shell seguro (SSH).
+
+       Um nó representa um host no qual o software GlassFish Server está
+       instalado. Um nó deve estar presente em cada host na qual as instâncias
+       GlassFish Server residem.
+
+       O servidor de administração de domínios (DAS) contata um host do nó SSH
+       por meio do conector SSH para gerenciar instâncias do GlassFish Server
+       que residem no nó. No entanto, o DAS não utiliza o conector SSH para
+       contatar o host onde o DAS está em execução, pois ele pode executar
+       todos os subcomandos asadmin localmente.
+
+       Por default, o subcomando falha e o nó não é criado se o DAS não puder
+       contatar o host do nó através do SSH. Para forçar a criação do nó na
+       configuração DAS mesmo que o host não possa ser contatado por meio do
+       SSH, defina a opção --force como true.
+
+       Esse subcomando só é suportado no modo remoto.
+
+OPçõES
+       --help, -?
+           Exibe o texto de ajuda do subcomando.
+
+       --nodehost
+           O nome do host que o nó representa. O nome do host deve ser
+           especificado. Caso contrário, ocorrerá um erro.
+
+       --installdir
+           O caminho completo para o pai do diretório de instalação base do
+           software GlassFish Server no host, por exemplo /export/glassfish3/.
+           O default é o principal do diretório de instalação de base do
+           software GlassFish Server para o DAS. Esse default é útil apenas se
+           GlassFish Server estiver instalado no mesmo local em todas as
+           máquinas.
+
+       --nodedir
+           O caminho para o diretório que contém as instâncias GlassFish
+           Server que são criadas no nó. O default é as-install/nodes, no qual
+           as-install é o diretório de instalação base do software do
+           GlassFish Server no host. Se um caminho relativo for especificado,
+           o caminho será relativo ao diretório as-install.
+
+       --sshport
+           A porta a ser utilizada nas conexões SSH a este host do nó. O
+           default é 22. Se a opção --nodehost estiver definida como
+           localhost-domain, a opção --sshport será ignorada.
+
+       --sshuser
+           Usuário deste host do nó que deve executar o processo para conexão
+           com o host através de SSH. O default é o usuário que está
+           executando o processo DAS. Para garantir que o DAS possa ler o
+           arquivo de chave privada de SSH desse usuário, especifique o
+           usuário que está executando o processo DAS. Se a opção --nodehost
+           estiver definida como localhost-domain, a opção --sshuser será
+           ignorada.
+
+       --sshkeyfile
+           O caminho absoluto para o arquivo da chave privada de SSH do
+           usuário que a opção --sshuser especifica. Este arquivo é utilizado
+           para autenticação do daemon
+            sshd no host do nó.
+
+               Nota
+               ┌────────────────────────────────────────┐
+               │Observação GlassFish Server também      │
+               │suporta autenticação por senha por meio │
+               │da entrada AS_ADMIN_SSHPASSWORD no      │
+               │arquivo de senhas. O arquivo de senha é │
+               │especificado na opção --paswordfile do  │
+               │utilitário asadmin(1M).                 │
+               └────────────────────────────────────────┘
+           Se o arquivo de chave privada de SSH estiver protegido por uma
+           frase-senha, o arquivo de senha deverá conter a entrada
+           AS_ADMIN_SSHKEYPASSPHRASE.
+
+           O caminho para o arquivo da chave deverá ser acessível pelo DAS, e
+           o arquivo de chave deverá ser lido pelo DAS.
+
+           O default é um arquivo-chave no diretório .ssh do usuário. Se
+           múltiplos arquivos-chave forem encontrados, o subcomando usa a
+           seguinte ordem de preferência:
+
+            1. id_rsa
+
+            2. id_dsa
+
+            3. identity
+
+       --force
+           Especifica se o nó será criado na configuração DAS, mesmo se a
+           validação dos parâmetros do nó falhar. Para validar os parâmetros
+           de um nó, o DAS deve ser capaz de contatar o host do nó por meio de
+           SSH. Os valores possíveis são os seguintes:
+
+           false
+               O nó não será criado se a validação dos parâmetros do nó falhar
+               (default).
+
+           true
+               O nó será criado mesmo se a validação dos parâmetros do nó
+               falhar.
+
+       --install
+           Especifica se o subcomando deve instalar o software do GlassFish
+           Server no host que o nó representa.
+
+           Os valores possíveis são os seguintes:
+
+           false
+               O comando não deve instalar o software do GlassFish Server no
+               host (default).
+
+           true
+               O comando deve instalar o software GlassFish Server no host.
+
+       --archive
+           O caminho absoluto do arquivo compactado do software GlassFish
+           Server a ser instalado. Se esta opção for omitida e o subcomando
+           --install for true, o subcomando criará um arquivo compactado ZIP
+           do software GlassFish Server com base na instalação em que este
+           subcomando é executado. O arquivo compactado não contém o diretório
+           domains ou o diretório nodes.
+
+OPERANDOS
+       node-name
+           O nome do nó.
+
+           O nome deve cumprir os seguintes requisitos:
+
+           ·   O nome pode conter somente caracteres ASCII.
+
+           ·   O nome deve começar com uma letra, um número ou um sublinhado.
+
+           ·   O nome pode conter somente os seguintes caracteres:
+
+               ·   Letras minúsculas
+
+               ·   Letras maiúsculas
+
+               ·   Números
+
+               ·   Hífen
+
+               ·   Ponto
+
+               ·   Sublinhado
+
+           ·   O nome deve ser único no domínio e não deve ser o nome de outro
+               nó, um cluster, uma configuração nomeada ou uma instância do
+               GlassFish Server.
+
+           ·   O nome não deve ser domain, server, nem outra palavra-chave que
+               esteja reservada pelo GlassFish Server.
+
+EXEMPLOS
+       Example 1, Criando um Nó
+           Esse exemplo cria o nó adc para o host adc.example.com. Por
+           default, o pai do diretório-base da instalação do software do
+           GlassFish Server é /export/glassfish3.
+
+               asadmin> create-node-ssh
+               --nodehost adc.example.com
+               --installdir /export/glassfish3 adc
+
+               Command create-node-ssh executed successfully.
+
+       Example 2, Forçando a Criação de um Nó
+           Esse exemplo força a criação do nó eg1 para o host
+           eghost.example.com. O nó é criado apesar da falha do DAS em
+           contatar o host eghost.example.com para validar os parâmetros do
+           nó.
+
+               asadmin> create-node-ssh --force --nodehost eghost.example.com eg1
+               Warning: some parameters appear to be invalid.
+               Could not connect to host eghost.example.com using SSH.
+               There was a problem while connecting to eghost.example.com:22
+               eghost.example.com
+               Continuing with node creation due to use of --force.
+
+               Command create-node-ssh executed successfully.
+
+STATUS DE SAíDA
+       0
+           comando executado com sucesso
+
+       1
+           erro ao executar o comando
+
+CONSULTE TAMBéM
+       create-node-config(1), create-node-dcom(1), delete-node-ssh(1),
+       install-node(1), install-node-ssh(1), list-nodes(1), ping-node-ssh(1),
+       setup-ssh(1), uninstall-node(1), uninstall-node-ssh(1),
+       update-node-ssh(1)
+
+       asadmin(1M)
+
+Java EE 7                         5 jan 2012                create-node-ssh(1)

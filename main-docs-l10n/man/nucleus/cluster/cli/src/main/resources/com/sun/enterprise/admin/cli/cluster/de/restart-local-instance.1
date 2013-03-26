@@ -1,0 +1,162 @@
+restart-local-instance(1Unterbefehle des asadmin-Utilrestart-local-instance(1)
+
+NAME
+       restart-local-instance - startet eine aktive GlassFish Server-Instanz
+       auf dem Host neu, auf dem der Unterbefehl ausgeführt wird
+
+ZUSAMMENFASSUNG
+           restart-local-instance [--help]
+           [--nodedir nodedir] [--node node]
+           [--debug={false|true}]
+           [--force={true|false}] [--kill={false|true}]
+           [instance-name]
+
+BESCHREIBUNG
+       Der Unterbefehl restart-local-instance startet eine GlassFish
+       Server-Instanz auf dem Host neu, auf dem der Unterbefehl ausgeführt
+       wird. Für diesen Unterbefehl muss Secure Shell (SSH) nicht konfiguriert
+       sein. Sie müssen diesen Befehl auf dem Host ausführen, auf dem sich die
+       Instanz befindet.
+
+       Der Unterbefehl kann jede GlassFish Server-Instanz neu starten,
+       unabhängig davon, wie sie erstellt wurde. Dieser Unterbefehl kann
+       beispielsweise eine Instanz neu starten, die mithilfe des Unterbefehls
+       create-instance(1) erstellt wurde.
+
+       Der Unterbefehl restart-local-instance kontaktiert nicht den
+       Domainadministrationsserver (DAS), um den Knoten zu bestimmen, auf dem
+       sich die Instanz befindet. Um den Knoten zu bestimmen, auf dem sich die
+       Instanz befindet, durchsucht der Unterbefehl das Verzeichnis, das die
+       Knotenverzeichnisse enthält. Wenn mehrere Knotenverzeichnisse vorhanden
+       sind, muss der Knoten als Option des Unterbefehls angegeben werden.
+
+       Wenn dieser Unterbefehl eine Instanz neu startet, synchronisiert der
+       DAS die Instanz mit Änderungen, die seit der letzten Synchronisierung
+       vorgenommen wurden, auf folgende Weise:
+
+       ·   Für das Verzeichnis config synchronisiert der DAS die Instanz mit
+           allen Änderungen.
+
+       ·   Für die Verzeichnisse applications und docroot muss ein
+           Unterverzeichnis der obersten Ebene geändert werden, damit der DAS
+           alle Dateien unter diesem Unterverzeichnis synchronisiert.
+
+           Wenn eine Datei unterhalb eines Unterverzeichnisses der obersten
+           Ebene geändert wurde, ohne dass eine Änderung an einer Datei im
+           Unterverzeichnis der obersten Ebene vorgenommen wurde, ist eine
+           vollständige Synchronisierung erforderlich. Im normalen Betrieb
+           werden Dateien unterhalb der Unterverzeichnisse der obersten Ebene
+           dieser Verzeichnisse nicht geändert. Wenn eine Anwendung
+           bereitgestellt und das Deployment aufgehoben wird, ist keine
+           vollständige Synchronisierung erforderlich, um die Instanz mit der
+           Änderung zu aktualisieren.
+
+       Ist ein anderes Synchronisierungs-Behavior erforderlich, muss die
+       Instanz gestoppt und mithilfe der folgenden Unterbefehlreihe neu
+       gestartet werden:
+
+        1. stop-local-instance(1)
+
+        2. start-local-instance(1)
+
+       Dieser Unterbefehl wird im lokalen Modus unterstützt. Um die Instanz
+       mit dem DAS zu synchronisieren, muss dieser Unterbefehl jedoch im
+       Remote-Modus ausgeführt werden.
+
+OPTIONEN
+       --help, -?
+           Zeigt den Hilfetext für den Unterbefehl an.
+
+       --nodedir
+           Gibt das Verzeichnis an, das das Knotenverzeichnis der Instanz
+           enthält. Die Dateien der Instanz werden im Knotenverzeichnis der
+           Instanz gespeichert. Der Standard ist as-install/nodes.
+
+       --node
+           Gibt den Knoten an, auf dem sich die Instanz befindet. Diese Option
+           kann ausgelassen werden, wenn das Verzeichnis, das mit der Option
+           --nodedir angegeben wird, nur ein Knotenverzeichnis enthält.
+           Andernfalls ist diese Option erforderlich.
+
+       --debug
+           Gibt an, ob die Instanz mit aktiviertem Debugging mittels Java
+           Platform Debugger Architecture (JPDA) neu gestartet werden soll
+
+           .
+
+           Mögliche Werte:
+
+           true
+               Die Instanz wird mit aktiviertem JPDA-Debugging neu gestartet,
+               und die Portnummer für JPDA-Debugging wird angezeigt.
+
+           false
+               Die Instanz wird mit deaktiviertem JPDA-Debugging neu gestartet
+               (Standard).
+
+           Der Standardwert ist die aktuelle Einstellung dieser Option für die
+           Instanz, die neu gestartet wird.
+
+       --force
+           Gibt an, ob die Instanz erzwungenermaßen unmittelbar vor dem
+           Neustart gestoppt wird.
+
+           Mögliche Werte:
+
+           true
+               Die Instanz wird erzwungenermaßen sofort gestoppt
+               (Standardeinstellung).
+
+           false
+               Der Unterbefehl wartet, bis alle mit der Instanz verknüpften
+               Threads beendet sind, bevor die Instanz gestoppt wird.
+
+       --kill
+           Gibt an, ob die Instanz mithilfe der Funktionen des Betriebssystems
+           zum Beenden des Instanzprozesses vor dem Neustart abgebrochen wird.
+
+           Mögliche Werte:
+
+           false
+               Die Instanz wird nicht abgebrochen. Der Unterbefehl verwendet
+               die Funktionen der Java-Plattform, um den Instanzprozess zu
+               beenden (Standardeinstellung).
+
+           true
+               Die Instanz wird abgebrochen. Der Unterbefehl verwendet die
+               Funktionen des Betriebssystems, um den Instanzprozess zu
+               beenden.
+
+OPERANDEN
+       instance-name
+           Der Name der GlassFish Server-Instanz, die neu gestartet werden
+           soll. Wird die Instanz nicht ausgeführt, zeigt der Unterbefehl eine
+           Warnmeldung an und versucht, die Instanz zu starten.
+
+BEISPIELE
+       Example 1, Instanzen lokal neu starten
+           In diesem Beispiel wird die Instanz ymlsa1 in der Domain domain1
+           auf dem Host neu gestartet, auf dem der Unterbefehl ausgeführt
+           wird.
+
+               asadmin> restart-local-instance --node localhost-domain1 ymlsa1
+               Command restart-local-instance executed successfully.
+
+BEENDIGUNGSSTATUS
+       0
+           Befehl erfolgreich ausgeführt
+
+       1
+           Fehler beim Ausführen des Befehls
+
+SIEHE AUCH
+       create-instance(1), create-local-instance(1), delete-instance(1),
+       delete-local-instance(1), restart-instance(1), start-instance(1),
+       start-local-instance(1), stop-instance(1), stop-local-instance(1)
+
+       asadmin(1M)
+
+       Java Platform Debugger Architecture (JPDA)
+       (http://java.sun.com/javase/technologies/core/toolsapis/jpda/)
+
+Java EE 7                        11. Feb. 2011       restart-local-instance(1)

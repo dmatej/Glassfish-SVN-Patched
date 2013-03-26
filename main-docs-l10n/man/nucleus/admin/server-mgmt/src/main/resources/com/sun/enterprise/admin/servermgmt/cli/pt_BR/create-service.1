@@ -1,0 +1,288 @@
+create-service(1)       Subcomandos do utilitário asad       create-service(1)
+
+NOME
+       create-service - configura o início de uma instância do DAS ou do
+       GlassFish Server em uma inicialização não assistida
+
+SINOPSE
+           create-service [--help] [--name service-name]
+           [--serviceproperties service-properties]
+           [--dry-run={false|true}] [--force={false|true}]
+           [--serviceuser service-user]
+           [--domaindir domain-dir]
+           [--nodedir node-dir] [--node node]
+           [domain-or-instance-name]
+
+DESCRIçãO
+       O subcomando create-service configura a inicialização de um servidor de
+       administração de domínios (DAS) ou uma instância do GlassFish Server em
+       uma inicialização não assistida nos sistemas Windows, Linux e Oracle
+       Solaris.
+
+       Caso nenhum operando esteja especificado e o diretório do domínio
+       contém somente um domínio, o subcomando configura a inicialização do
+       DAS para o domínio default. Caso nenhum operando esteja especificado e
+       o diretório do domínio contiver múltiplos domínios, ocorre um erro.
+
+       Caso o operando especifica uma instância, o subcomando create-service
+       não contata o servidor de administração de domínios (DAS) para
+       determinar o nó no qual a instância reside. Para determinar o nó no
+       qual a instância reside, o subcomando busca o diretório que contém os
+       diretórios do nó. Se vários diretórios de nó existirem, o nó deve ser
+       especificado como uma opção do subcomando.
+
+       O subcomando contém uma lógica interna para determinar se o operando
+       fornecido é um DAS ou uma instância.
+
+       Este subcomando é suportado só no modo local.
+
+   Comportamento do create-service nos sistemas do Windows
+       Em sistemas Windows, o subcomando create-service cria um serviço do
+       Windows para representar o DAS ou a instância. O serviço é criado no
+       estado desativado. Após a criação do serviço por este subcomando, é
+       necessário utilizar o Gerenciador de serviços do Windows ou o Windows
+       Services Wrapper para iniciar, interromper, desinstalar ou instalar o
+       serviço.
+
+       Em sistemas Windows, este subcomando precisa ser executado no nível de
+       usuário administrador do SO.
+
+       O subcomando cria os seguintes arquivos do Ajustador de Serviços do
+       Windows para o serviço no diretório domain-dir\bin ou no diretório
+       instance-dir\bin:
+
+       ·   Arquivo de configuração: service-nameService.xml
+
+       ·   Arquivo executável: service-nameService.exe
+
+       Em sistemas do Windows, este subcomando requer o Microsoft .NET
+       Framework . Caso contrário, o subcomando irá falhar.
+
+   Comportamento do create-service nos sistemas Linux
+       Em sistemas Linux, o subcomando create-service cria um script de
+       inicialização System-V-style
+       /etc/init.d/GlassFish_domain-or-instance-name e instala um link para
+       este script no diretório /etc/rc?.d. Após este subcomando ter criado o
+       script, é preciso usar este script para iniciar, interromper ou
+       reiniciar o domínio ou instância.
+
+       Em sistemas Linux, este subcomando precisa ser executado no nível de
+       usuário administrador do SO.
+
+   Comportamento de create-service nos sistemas do Oracle Solaris
+       Nos sistemas do Oracle Solaris, o subcomando create-service cria um
+       serviço SMF (Service Management Facility) para representar o DAS ou a
+       instância. O serviço é criado no estado desativado. Após a criação do
+       serviço pelo subcomando, é necessário utilizar os comandos SMF para
+       iniciar, ativar, desativar, deletar ou interromper o serviço. Para
+       obter mais informações sobre o SMF, consulte a seguinte documentação do
+       sistema operacional Oracle Solaris:
+
+       ·   "Managing Services (Overview)" no System Administration Guide:
+           Basic Administration
+
+       ·   "Managing Services (Tasks)" no System Administration Guide: Basic
+           Administration
+
+       Em sistemas Oracle Solaris, este subcomando precisa ser executado como
+       o usuário no nível do SO com privilégios de superusuário. O arquivo de
+       configurações para o DAS ou instância deve ser armazenado em um
+       diretório que o superusuário tenha acesso e não pode ser armazenado em
+       um sistema de arquivo da rede. O serviço que é criado é controlado pelo
+       usuário do nível do SO que possui o diretório onde as configurações do
+       DAS ou da instância residem.
+
+       Em sistemas Oracle Solaris, por default, o arquivo de manifesto é
+       criado no seguinte diretório:
+
+           /var/svc/manifest/application/GlassFish/domain-or-instance-name_domain-or-instance-root-dir
+
+       Para executar este subcomando, você precisa ter autorização
+       solaris.smf.*. Para obter informações sobre como conceder autorizações
+       a usuários, consulte as páginas do manual useradd(1M) e usermod(1M).
+
+       Para executar estes comandos como usuário sem raiz, o administrador do
+       sistema deve ser contatado para a que as autorizações relevantes sejam
+       concedidas. Também é necessário assegurar que as seguintes condições
+       sejam atendidas:
+
+       ·   Os comandos de administração do Oracle Solaris 10, como o
+           svccfg(1M), svcs(1), and auths(1) estão disponíveis por meio da
+           instrução PATH, de modo que esses comandos possam ser executados.
+           Um teste simples a se fazer é executar o comando which svccfg em um
+           shell.
+
+       ·   Você precisa ter permissão de gravação para o caminho
+           /var/svc/manifest/application/GlassFish. Normalmente, o
+           superusuário tem permissão de gravação para este caminho.
+
+       Caso você delete um serviço que foi criado usando o subcomando
+       create-service, primeiro é preciso deletar o diretório que contém o
+       arquivo de manifesto e todo o conteúdo do diretório. Caso contrário,
+       uma tentativa de recriar o serviço usando o subcomando create-service
+       irá falhar. O comando svccfg do Oracle Solaris não deleta este
+       diretório.
+
+OPçõES
+       --help, -?
+           Exibe o texto de ajuda do subcomando.
+
+       --name
+           (Somente sistema Windows e Oracle Solaris) O nome do serviço que
+           será usado quando a administração do serviço através dos comandos
+           Oracle Solaris SMF ou dos recursos de gerenciamento do serviço do
+           sistema operacional Windows. O default é o nome do domínio ou
+           instância que é especificado como o operando deste subcomando.
+
+       --serviceproperties
+           Especifica uma lista separada por dois-pontos (:) de diversas
+           propriedades específicas do serviço.
+
+           Para personalizar o nome para exibição do serviço na lista do
+           Windows Service, defina a propriedade DISPLAY_NAME com o nome
+           obrigatório.
+
+           Para sistemas Oracle Solaris 10, se você especificar net_privaddr,
+           os processos do serviço poderão ser vinculados às portas
+           privilegiadas (<1024) na plataforma. É possível vincular a portas<
+           1024 apenas se o proprietário do serviço for um superusuário, caso
+           contrário, isto não é permitido.
+
+       --dry-run, -n
+           Visualiza a tentativa de criação de um serviço. Indica emissões e
+           resultados que ocorrerão ao executar o comando sem usar a opção
+           --dry-run. Não há nada configurado atualmente. O default é falso.
+
+       --force
+           Especifica se o serviço será criado mesmo se a validação do serviço
+           falhar.
+
+           Os valores possíveis são os seguintes:
+
+           true
+               O serviço será criado mesmo se a validação do serviço falhar.
+
+           false
+               O serviço não é criado (default).
+
+       --serviceuser
+           (Somente sistemas Linux) O usuário que irá executar o software
+           GlassFish Server quando o serviço é iniciado. O default é o usuário
+           que está executando o subcomando. Especifique esta opção se o
+           software GlassFish Server deve ser executado por um usuário que não
+           seja o usuário-raiz.
+
+       --domaindir
+           O caminho absoluto do diretório no disco que contém as
+           configurações do domínio. Se esta opção for especificada, o
+           operando precisa especificar um domínio.
+
+       --nodedir
+           Especifica o diretório que contém o diretório do nó da instância.
+           Os arquivos da instância são armazenados no diretório do nó da
+           instância. O default é as-install/nodes. Se esta opção for
+           especificada, o operando precisa especificar uma instância.
+
+       --node
+           Especifica o nó no qual a instância reside. Essa opção só poderá
+           ser omitida se o diretório que a opção --nodedir especifica
+           contiver somente um diretório de nós. Ao contrário, essa opção é
+           obrigatória. Se esta opção for especificada, o operando precisa
+           especificar uma instância.
+
+OPERANDOS
+       domain-or-instance-name
+           O nome do domínio ou instância a ser configurado. Se nenhum
+           operando for especificado, o domínio default será usado.
+
+EXEMPLOS
+       Example 1, Criando um Serviço em um Sistema Windows
+           Este exemplo cria um serviço para o domínio default em um sistema
+           que está executando o Windows.
+
+               asadmin> create-service
+               Found the Windows Service and successfully uninstalled it.
+               The Windows Service was created successfully.  It is ready to be started.  Here are
+               the details:
+               ID of the service: domain1
+               Display Name of the service:domain1 GlassFish Server
+               Domain Directory: C:\glassfish3\glassfish\domains\domain1
+               Configuration file for Windows Services Wrapper: C:\glassfish3\glassfish\domains\
+               domain1\bin\domain1Service.xml
+               The service can be controlled using the Windows Services Manager or you can use the
+               Windows Services Wrapper instead:
+               Start Command:  C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe  start
+               Stop Command:   C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe  stop
+               Uninstall Command:  C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe
+               uninstall
+               Install Command:  C:\glassfish3\glassfish\domains\domain1\bin\domain1Service.exe
+               install
+
+               This message is also available in a file named PlatformServices.log in the domain's
+               root directory
+               Command create-service executed successfully.
+
+       Example 2, Criando um Serviço em um Sistema Linux
+           Este exemplo cria um serviço para o domínio default em um sistema
+           que executa o Linux.
+
+               asadmin> create-service
+               Found the Linux Service and successfully uninstalled it.
+               The Service was created successfully. Here are the details:
+               Name of the service:domain1
+               Type of the service:Domain
+               Configuration location of the service:/etc/init.d/GlassFish_domain1
+               User account that will run the service: root
+               You have created the service but you need to start it yourself.
+               Here are the most typical Linux commands of interest:
+
+               * /etc/init.d/GlassFish_domain1 start
+               * /etc/init.d/GlassFish_domain1 stop
+               * /etc/init.d/GlassFish_domain1 restart
+
+               For your convenience this message has also been saved to this file:
+               /export/glassfish3/glassfish/domains/domain1/PlatformServices.log
+               Command create-service executed successfully.
+
+       Example 3, Criando um Serviço em um Sistema Oracle Solaris
+           Este exemplo cria um serviço para o domínio default em um sistema
+           que executa o Oracle Solaris.
+
+               asadmin> create-service
+               The Service was created successfully. Here are the details:
+               Name of the service:application/GlassFish/domain1
+               Type of the service:Domain
+               Configuration location of the service:/home/gfuser/glassfish-installations
+               /glassfish3/glassfish/domains
+               Manifest file location on the system:/var/svc/manifest/application
+               /GlassFish/domain1_home_gfuser_glassfish-installations_glassfish3
+               _glassfish_domains/Domain-service-smf.xml.
+               You have created the service but you need to start it yourself.
+               Here are the most typical Solaris commands of interest:
+               * /usr/bin/svcs -a | grep domain1 // status
+               * /usr/sbin/svcadm enable domain1 // start
+               * /usr/sbin/svcadm disable domain1 // stop
+               * /usr/sbin/svccfg delete domain1 // uninstall
+               Command create-service executed successfully.
+
+STATUS DE SAíDA
+       0
+           subcomando executado com sucesso
+
+       1
+           erro na execução do subcomando
+
+CONSULTE TAMBéM
+       asadmin(1M)
+
+       auths(1), svcs(1)
+
+       svccfg(1M), useradd(1M), usermod(1M)
+
+       "Managing Services (Overview)" no System Administration Guide: Basic
+       Administration, "Managing Services (Tasks)" no System Administration
+       Guide: Basic Administration
+
+       Microsoft .NET Framework (http://www.microsoft.com/net/)
+
+Java EE 7                         8 dez 2011                 create-service(1)
