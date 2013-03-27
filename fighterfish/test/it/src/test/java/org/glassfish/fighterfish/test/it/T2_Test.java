@@ -395,8 +395,7 @@ public class T2_Test extends AbstractTestObject {
      * @throws BundleException
      */
     @Test
-    @Ignore
-    // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
+    @Ignore // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
     public void testapp11_wab() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.logp(Level.INFO, "T2_Test", "testapp11_wab", "ENTRY");
         TestContext tc = TestContext.create(getClass());
@@ -430,8 +429,7 @@ public class T2_Test extends AbstractTestObject {
      * @throws BundleException
      */
     @Test
-    @Ignore
-    // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
+    @Ignore // Currently this does not work because of remote ejb class loading issue yet to be understood and filed as a bug
     public void testapp11_war() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.logp(Level.INFO, "T2_Test", "testapp11_war", "ENTRY");
         TestContext tc = TestContext.create(getClass());
@@ -809,7 +807,6 @@ public class T2_Test extends AbstractTestObject {
      * @throws BundleException
      */
     @Test
-    @Ignore //mark it @Ignore temply until when integrating the new version of osgi-javaee-base
     public void test_GLASSFISH_19662() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_19662", "ENTRY");
         TestContext tc = TestContext.create(getClass());
