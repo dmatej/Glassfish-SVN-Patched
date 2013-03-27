@@ -51,6 +51,9 @@ import org.glassfish.server.ServerEnvironmentImpl;
 import org.osgi.framework.Bundle;
 
 import java.io.File;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -113,6 +116,17 @@ public abstract class OSGiUndeploymentRequest
         appInfo.stop(dc, logger);
         appInfo.unload(dc);
         deployer.undeploy(appInfo.getName(), dc);
+
+        // GLASSFISH-19727: Close all class loaders. This must be done before we clean up exploded directory
+        // because WebappClassLoader is known to hold on to hold onto references to WEB-INF/lib contents.
+        // Ideally we should not have to do it. Deployer.undeploy is supposed to close class loaders referenced
+        // in DeploymentContext. But, there are two issues:
+        // 1. In undeployment path, we use a different instance of class loader as we don't have an easy way to
+        // locate the class loader that was created during deployment.
+        // 2. DeploymentContext.preDestroy does not call getClassLoader methods. It uses fields directly.
+        // We actually override the getClassLoader method and want that to be used.
+        closeClassLoaders(Arrays.asList(osgiAppInfo.getClassLoader(), dc.shareableTempClassLoader, dc.finalClassLoader));
+
         if (!osgiAppInfo.isDirectoryDeployment())
         {
             // We can always assume dc.getSourceDir will return a valid file
@@ -120,6 +134,35 @@ public abstract class OSGiUndeploymentRequest
             cleanup(dc.getSourceDir());
         }
         postUndeploy();
+    }
+
+    private void closeClassLoaders(List<? extends Object> os) {
+        for (Object o : os) {
+            if (preDestroy(o)) {
+                logger.logp(Level.INFO, "OSGiUndeploymentRequest", "closeClassLoaders",
+                        "ClassLoader [ {0} ] has been closed.", new Object[]{o});
+            }
+        }
+    }
+
+    /**
+     * Calls preDestroy method. Since PreDestroy has changed incompatibly between HK2 1.x and 2.x,
+     * We can't rely on class name. So, we use this ugly work around to be compatible with both GF 3.x (which uses
+     * older package name for PreDestroy and 4.0 (which uses new package name for PreDestroy).
+     *
+     * @param o Object whose preDestroy method needs to be called if such a method exists
+     * @return true if such a method was successfully called, false otherwise
+     */
+    private boolean preDestroy(Object o) {
+        Method m = null;
+        try {
+            m = o.getClass().getMethod("preDestroy");
+            m.invoke(o);
+            return true;
+        } catch (Exception e) {
+            // ignore
+        }
+        return false;
     }
 
     protected abstract OSGiDeploymentContext getDeploymentContextImpl(ActionReport reporter, Logger logger, ReadableArchive source, UndeployCommandParameters undeployParams, ServerEnvironmentImpl env, Bundle bundle) throws Exception;
