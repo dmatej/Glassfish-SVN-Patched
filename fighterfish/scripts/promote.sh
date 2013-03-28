@@ -10,7 +10,7 @@ MODULES="\
 
 GPG_PASSPHRASE=$1 #Take as argument for security reasons
 
-function promote_one_module() {
+promote_one_module() {
     # MODULE is relative path of module to be promoted wrt fighterfish dir.
     MODULE=$1
 
