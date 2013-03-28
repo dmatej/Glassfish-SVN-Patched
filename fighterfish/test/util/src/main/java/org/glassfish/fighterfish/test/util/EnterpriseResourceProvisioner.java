@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -115,20 +115,16 @@ public class EnterpriseResourceProvisioner {
         } else {
             createPoolForEmbeddedDerbyDb(gf, poolName, db);
         }
-        execute(gf, "delete-jdbc-resource", Constants.DEFAULT_DS);
-        execute(gf, "create-jdbc-resource", "--connectionpoolid", poolName, Constants.DEFAULT_DS);
+        final String poolNameProperty = "resources.jdbc-resource." + Constants.DEFAULT_DS + ".pool-name";
+        execute(gf, "set", poolNameProperty + "=" + poolName);
         final RestorableDomainConfiguration rdc = new RestorableDomainConfiguration() {
             @Override
             public void restore() throws GlassFishException {
-                CommandResult result = gf.getCommandRunner().run("delete-jdbc-resource", Constants.DEFAULT_DS);
+                CommandResult result = gf.getCommandRunner().run("set", poolNameProperty + "=" + Constants.DEFAULT_POOL);
                 if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
                     Assert.fail(result.getOutput());
                 }
                 result = gf.getCommandRunner().run("delete-jdbc-connection-pool", poolName);
-                if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
-                    Assert.fail(result.getOutput());
-                }
-                result = gf.getCommandRunner().run("create-jdbc-resource", "--connectionpoolid", Constants.DEFAULT_POOL, Constants.DEFAULT_DS);
                 if (result.getExitStatus() == CommandResult.ExitStatus.FAILURE) {
                     Assert.fail(result.getOutput());
                 }
