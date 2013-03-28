@@ -5,8 +5,7 @@
 # We hard code the module name to avoid having to update the hudson job
 # everytime we want to promote. This also allows us better tracking.
 MODULES="\
- module/osgi-javaee-base \
- module/osgi-web-container \
+ test/util \
 "
 
 GPG_PASSPHRASE=$1 #Take as argument for security reasons
