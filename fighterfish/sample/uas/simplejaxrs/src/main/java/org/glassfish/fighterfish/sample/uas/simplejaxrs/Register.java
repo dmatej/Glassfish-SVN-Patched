@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -43,13 +43,12 @@ package org.glassfish.fighterfish.sample.uas.simplejaxrs;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
@@ -78,20 +77,19 @@ public class Register {
      * @return String that will be send back as a response of type "text/plain".
      */
     @POST 
+    @Path("/getIt")
     @Produces("text/plain")
     public String getIt() {
         return "Hi there!";
     }
     
-    @GET
+    @POST
 	@Produces(MediaType.TEXT_HTML)
 	@Consumes(MediaType.TEXT_PLAIN)
 	public String getLogin(
-			@Context HttpServletRequest request,
-			@Context HttpServletResponse response
+			@QueryParam("name") String name,
+			@QueryParam("password") String password
 	) throws ServletException {
-	       String name = request.getParameter("name");
-	       String password = request.getParameter("password");
 	        try {
        	            if (uas.register(name, password)) {
                 return "Registered";	  
