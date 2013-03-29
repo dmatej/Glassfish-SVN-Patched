@@ -165,27 +165,36 @@ public class WebAppBundle {
         return b;
     }
     
-    //[TangYong]Implementing GLASSFISH-19794
+    //Implementing GLASSFISH-19794
     //Adding a getHttpPostResponse for post request
     public String getHttpPostResponse(String relativePath) throws IOException {
-    	return getHttpResponse(relativePath, "POST");
+    	return getHttpResponse(relativePath, "POST", null);
     }
     
-    //[TangYong]Implementing GLASSFISH-19794
+    //seeing GLASSFISH-20099
+    public String getHttpPostResponse(String relativePath, String contentType) throws IOException {
+    	return getHttpResponse(relativePath, "POST", contentType);
+    }
+    
+    //Implementing GLASSFISH-19794
     //Adding a getHttpGetResponse for get request
     public String getHttpGetResponse(String relativePath) throws IOException {
-        return getHttpResponse(relativePath, "GET");
+        return getHttpResponse(relativePath, "GET", null);
     }
     
-    //[TangYong]Implementing GLASSFISH-19794
+    //Implementing GLASSFISH-19794
     //Common handling logic
-    private String getHttpResponse(String relativePath, String mode) throws IOException{
+    private String getHttpResponse(String relativePath, String mode, String contentType) throws IOException{
     	HttpURLConnection connection = null;
         URL serverAddress = null;
 
         serverAddress = new URL("http", getHost(), getPort(), contextPath + relativePath);
         connection = (HttpURLConnection)serverAddress.openConnection();
         connection.setReadTimeout(60000);
+        //setting Content-Type
+        if (contentType != null){
+        	connection.setRequestProperty("Content-Type", contentType);
+        }
         
         connection.setRequestMethod(mode);
              
