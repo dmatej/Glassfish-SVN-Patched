@@ -3,9 +3,9 @@
 # MODULE is relative path of module to be promoted wrt fighterfish dir.
 # We hard code the module name to avoid having to update the hudson job
 # everytime we want to rollback. This also allows us better tracking.
-MODULE=test/util
+MODULE=sample/uas/simplejaxrs
 # Directory relative to WORKSPACE where last failed promotion job ran.
-DIRNAME=20130328_013744
+DIRNAME=20130329_042002
 
 if [ "$MODULE" = "" ]
 then
