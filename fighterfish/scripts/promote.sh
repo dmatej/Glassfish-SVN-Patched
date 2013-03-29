@@ -6,7 +6,6 @@
 # everytime we want to promote. This also allows us better tracking.
 MODULES="\
  sample/uas/simplejaxrs \
- test/util \
 "
 
 GPG_PASSPHRASE=$1 #Take as argument for security reasons
