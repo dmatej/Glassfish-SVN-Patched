@@ -37,77 +37,26 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package org.glassfish.spec.maven;
 
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.project.MavenProject;
-
+package org.glassfish.spec.test.sets;
 
 /**
  *
  * @author Romain Grecourt
  */
-public abstract class AbstractSpecMojo extends AbstractMojo {
-
-    /**
-     * @parameter default-value="${project}"
-     * @required
-     * @readonly
-     */
-    protected MavenProject project;
-    
-    /**
-     * @parameter expression="${ignoreFailures}" default-value="false"
-     */
-    protected boolean ignoreFailures; 
-    
-    /**
-     * Is it a final specification?
-     * 
-     * @parameter expression="${isFinal}" default-value="false"
-     */
-    protected boolean isFinal;
-    
-    /**
-     * Is it an API jar?
-     * 
-     * @parameter expression="${isApi}" default-value="true"
-     */
-    protected boolean isApi;
-    
-    /**
-     * Implementation package
-     * 
-     * @parameter expression="${apipackage}"
-     */
-    protected String implPackage;
-    
-    /**
-     * version number of the JCP specification
-     * 
-     * @required
-     * @parameter expression="${specversion}"
-     */
-    protected String version;
-    
-    /**
-     * version number of the implementation
-     * 
-     * @parameter expression="${implversion}"
-     */
-    protected String implVersion;
-    
-    /**
-     * version number of the spec under development
-     * 
-     * @parameter expression="${newspecversion}"
-     */
-    protected String newVersion;
-    
-    /**
-     * build number
-     * 
-     * @parameter expression="${buildNumber}"
-     */
-    protected String buildNumber;
+public class Womba {
+    public static final String GROUPID = "${womba.groupId}";
+    public static final String ARTIFACTID = "${womba.artifactId}";
+    public static final String SPEC_VERSION = "${womba.specVersion}";
+    public static final String NEW_SPEC_VERSION = "${womba.newSpecVersion}";
+    public static final String API_PACKAGE = "${womba.apiPackage}";
+    public static final String BUNDLE_VERSION = "${womba.bundleVersion}";
+    public static final String BUNDLE_SYMBOLIC_NAME = "${womba.bundleSymbolicName}";
+    public static final String BUNDLE_SPEC_VERSION = "${womba.bundleSpecVersion}";
+    public static final String JAR_EXTENSION_NAME = "${womba.jarExtensionName}";
+    public static final String JAR_IMPLEMENTATION_VERSION = "${womba.jarImplementationVersion}";
+    public static final String JAR_SPECIFICATION_VERSION = "${womba.jarSpecificationVersion}";
+    public static final String MAVEN_VERSION = "${womba.mavenVersion}";
+    private static final String MODULES_DIR = "target/it/modules";
+    public static final String JAR = MODULES_DIR+"/"+ARTIFACTID+"/target/"+ARTIFACTID+".jar";
 }

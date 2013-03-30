@@ -44,6 +44,8 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.glassfish.spec.Artifact;
+import org.glassfish.spec.Spec;
 
 
 /**
@@ -58,8 +60,17 @@ public class SetSpecPropertiesMojo extends AbstractSpecMojo {
     
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        checkParams();
-        Properties specProps = computeSpecProperties();
+        Artifact artifact = new Artifact(
+                project.getGroupId(),
+                project.getArtifactId(),
+                project.getVersion());
+        
+        Spec spec = new Spec(
+                artifact,
+                version, 
+                newVersion,
+                implVersion);
+        Properties specProps = spec.getMetadata().getProperties();
         
         getLog().info("");
         getLog().info("-- spec properties --");

@@ -38,30 +38,57 @@
  * holder.
  */
 
-package org.glassfish.spec.test.sets;
+package org.glassfish.spec.test.unit;
 
-import java.io.File;
-import org.glassfish.spec.SpecVersion;
-import org.glassfish.spec.SpecVersion.MavenVersion;
+import org.glassfish.spec.Artifact;
+import org.glassfish.spec.ComplianceException;
+import org.glassfish.spec.Spec;
+import org.glassfish.spec.test.sets.Womba;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
- *
+ * 
  * @author Romain Grecourt
  */
-public class Womba {
+public class SpecTest {
+
+    private static Artifact wombaArtifact;
+
+    @BeforeClass
+    public static void init() {
+        // womba is a non final API artifact
+        wombaArtifact = new Artifact(
+                Womba.GROUPID,
+                Womba.ARTIFACTID,
+                Womba.MAVEN_VERSION);
+
+        // TODO non final Standalone artifact
+        // TODO final API artifact
+        // TODO final Standalone artifact
+    }
     
-    public static final String GROUPID = "javax.womba";
-    public static final String ARTIFACTID = "javax.womba-api";
-    private static final String MODULES_DIR = "target/it/modules";
-    public static final File JAR = new File(MODULES_DIR+"/"+ARTIFACTID+"/target/"+ARTIFACTID+".jar");
-    public static final String BUNDLE_VERSION = "1.0.99.b35";
-    public static final String BUNDLE_SYMBOLIC_NAME = "javax.womba-api";
-    public static final String BUNDLE_SPEC_VERSION = "1.0.99.b35";
-    public static final String EXTENSION_NAME = "javax.womba";
-    public static final String IMPLEMENTATION_VERSION = "1.0-b35";
-    public static final String SPEC_VERSION = "1.0";
-    public static final String NEW_SPEC_VERSION = "1.0";
-    public static final String SPEC_IMPL_VERSION = "1.0.99.b35";
-    public static final String API_PACKAGE = "javax.womba";
-    public static final MavenVersion MAVEN_VERSION = new SpecVersion.MavenVersion("1","0","b35-SNAPSHOT");
+    public static void positive(
+            Artifact artifact,
+            String version,
+            String newVersion,
+            String implVersion) {
+
+        String msg = artifact + " - specVersion (" + version + ")"
+                + " - newVersion (" + newVersion + ")"
+                + " - implVersion (" + implVersion + ")"
+                + " should be compliant";
+        try {
+            Spec spec = new Spec(artifact, version, newVersion, implVersion);
+            Assert.assertTrue(msg,true);
+        } catch (ComplianceException cex) {
+            Assert.assertFalse(msg, cex.isCompliant());
+        }
+    }
+    
+    @Test
+    public void simpleAPITest(){
+        positive(wombaArtifact,Womba.SPEC_VERSION,Womba.NEW_SPEC_VERSION,Womba.JAR_IMPLEMENTATION_VERSION);
+    }
 }

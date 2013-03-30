@@ -37,57 +37,50 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+package org.glassfish.spec;
 
-package org.glassfish.spec.test.integration;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
-import java.util.zip.ZipEntry;
-import org.glassfish.spec.test.sets.Womba;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  *
  * @author Romain Grecourt
  */
-public class WombaTest {
+public final class ComplianceException extends RuntimeException {
+    private final List<String> breakers = new LinkedList<String>();
     
-    private static Manifest manifest;
-    
-    @BeforeClass
-    public static void init() throws IOException{
-        Assert.assertTrue("test that "+Womba.JAR.getCanonicalPath()+" exists", Womba.JAR.exists());
-        JarFile jarFile = new JarFile(Womba.JAR);
-        ZipEntry e = jarFile.getEntry("META-INF/MANIFEST.MF");
-        Assert.assertNotNull(e);
-        InputStream is = jarFile.getInputStream(e);
-        manifest = new Manifest(is);
+    public ComplianceException() {
+    }
+
+    public ComplianceException(String string) {
+        this();
+        breakers.add(string);
     }
     
-    @Test
-    public void verifyManifest() {
-        // Bundle-Version
-        String bundleVersion = manifest.getMainAttributes().getValue("Bundle-Version");
-        Assert.assertNotNull(bundleVersion);
-        Assert.assertEquals(Womba.BUNDLE_VERSION,bundleVersion);
-        
-        // Bundle-SymbolicName
-        String bundleSymbolicName = manifest.getMainAttributes().getValue("Bundle-SymbolicName");
-        Assert.assertNotNull(bundleSymbolicName);
-        Assert.assertEquals(Womba.BUNDLE_SYMBOLIC_NAME,bundleSymbolicName);
-        
-        // Extension-Name
-        String extensionName = manifest.getMainAttributes().getValue("Extension-Name");
-        Assert.assertNotNull(extensionName);
-        Assert.assertEquals(Womba.EXTENSION_NAME,extensionName);
-        
-        // Implementation-Version
-        String implementationVersion = manifest.getMainAttributes().getValue("Implementation-Version");
-        Assert.assertNotNull(implementationVersion);
-        Assert.assertEquals(Womba.IMPLEMENTATION_VERSION,implementationVersion);
+    public void addBreaker(String s){
+        breakers.add(s);
+    }
+    
+    public void addBreaker(ComplianceException e){
+        breakers.addAll(e.breakers);
+    }
+    
+    public boolean isCompliant(){
+        return breakers.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for(int i=0; i < breakers.size() ; i++){
+            sb.append(String.valueOf(i));
+            sb.append('.');
+            sb.append(' ');
+            sb.append(breakers.get(i));
+            if(i < breakers.size()-1){
+                sb.append('\n');
+            }
+        }
+        return sb.toString();
     }
 }

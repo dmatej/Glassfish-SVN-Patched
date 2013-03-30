@@ -37,77 +37,53 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package org.glassfish.spec.maven;
 
-import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.project.MavenProject;
+package org.glassfish.spec.test.integration;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.jar.JarFile;
+import org.glassfish.spec.Metadata;
+import org.glassfish.spec.test.sets.Womba;
+import org.junit.Assert;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  *
  * @author Romain Grecourt
  */
-public abstract class AbstractSpecMojo extends AbstractMojo {
-
-    /**
-     * @parameter default-value="${project}"
-     * @required
-     * @readonly
-     */
-    protected MavenProject project;
+public class MetadataTest {
     
-    /**
-     * @parameter expression="${ignoreFailures}" default-value="false"
-     */
-    protected boolean ignoreFailures; 
+    private static Metadata mdata;
     
-    /**
-     * Is it a final specification?
-     * 
-     * @parameter expression="${isFinal}" default-value="false"
-     */
-    protected boolean isFinal;
+    @BeforeClass
+    public static void init() throws IOException{
+        File f = new File(Womba.JAR);
+        Assert.assertTrue("test that "+f.getCanonicalPath()+" exists", f.exists());
+        mdata = Metadata.fromJar(new JarFile(f));
+    }
     
-    /**
-     * Is it an API jar?
-     * 
-     * @parameter expression="${isApi}" default-value="true"
-     */
-    protected boolean isApi;
-    
-    /**
-     * Implementation package
-     * 
-     * @parameter expression="${apipackage}"
-     */
-    protected String implPackage;
-    
-    /**
-     * version number of the JCP specification
-     * 
-     * @required
-     * @parameter expression="${specversion}"
-     */
-    protected String version;
-    
-    /**
-     * version number of the implementation
-     * 
-     * @parameter expression="${implversion}"
-     */
-    protected String implVersion;
-    
-    /**
-     * version number of the spec under development
-     * 
-     * @parameter expression="${newspecversion}"
-     */
-    protected String newVersion;
-    
-    /**
-     * build number
-     * 
-     * @parameter expression="${buildNumber}"
-     */
-    protected String buildNumber;
+    @Test
+    public void verifyMetadata() {
+        String msg = "Testing "+Metadata.BUNDLE_VERSION;
+        Assert.assertNotNull(msg, mdata.getBundleVersion());
+        Assert.assertEquals(msg, Womba.BUNDLE_VERSION, mdata.getBundleVersion());
+        
+        msg = "Testing "+Metadata.BUNDLE_SYMBOLIC_NAME;
+        Assert.assertNotNull(msg, mdata.getBundleSymbolicName());
+        Assert.assertEquals(msg, Womba.BUNDLE_SYMBOLIC_NAME, mdata.getBundleSymbolicName());
+        
+        msg = "Testing "+Metadata.JAR_EXTENSION_NAME;
+        Assert.assertNotNull(msg, mdata.getJarExtensionName());
+        Assert.assertEquals(msg, Womba.JAR_EXTENSION_NAME, mdata.getJarExtensionName());
+        
+        msg = "Testing "+Metadata.JAR_SPECIFICATION_VERSION;
+        Assert.assertNotNull(msg,mdata.getJarSpecificationVersion());
+        Assert.assertEquals(msg,Womba.JAR_SPECIFICATION_VERSION, mdata.getJarSpecificationVersion());
+        
+        msg = "Testing "+Metadata.JAR_IMPLEMENTATION_VERSION;
+        Assert.assertNotNull(msg,mdata.getjarImplementationVersion());
+        Assert.assertEquals(msg,Womba.JAR_IMPLEMENTATION_VERSION, mdata.getjarImplementationVersion());
+    }
 }
