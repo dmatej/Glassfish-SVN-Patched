@@ -44,7 +44,6 @@ package org.glassfish.fighterfish.test.it;
 import org.glassfish.embeddable.GlassFishException;
 import org.glassfish.fighterfish.test.util.*;
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleException;
@@ -290,7 +289,6 @@ public class T1_SamplesTest extends AbstractTestObject {
     }
 
     @Test
-    @Ignore // Until GLASSFISH-18836 is fixed
     public void jaxrs_sample_test() throws GlassFishException, InterruptedException, BundleException, IOException {
         logger.logp(Level.INFO, "T1_SamplesTest", "jaxrs_sample_test", "ENTRY");
         TestContext tc = TestContext.create(getClass());
@@ -300,7 +298,7 @@ public class T1_SamplesTest extends AbstractTestObject {
              */
             String uas_api = "mvn:org.glassfish.fighterfish/sample.uas.api/1.0.0";
             String uas_simpleservice = "mvn:org.glassfish.fighterfish/sample.uas.simpleservice/1.0.0";
-            String uas_simplejaxrs = "mvn:org.glassfish.fighterfish/sample.uas.simplejaxrs/1.0.0/war";
+            String uas_simplejaxrs = "mvn:org.glassfish.fighterfish/sample.uas.simplejaxrs/1.0.1/war";
 
             final String registrationRequest = "/register?name=admin&password=admin";
             final String successfulRegistration = "Registered";
@@ -317,7 +315,7 @@ public class T1_SamplesTest extends AbstractTestObject {
             String response = null;
             {
                 //  register a user
-                response = uas_simple_jaxwebapp.getHttpPostResponse(registrationRequest);
+                response = uas_simple_jaxwebapp.getHttpPostResponse(registrationRequest, "text/plain");
                 logger.logp(Level.INFO, "T1_SamplesTest", "uas_jaxsample_test", "response = {0}", new Object[]{response});
                 assertThat(response, new StringPatternMatcher(successfulRegistration));
                 //  login the user
