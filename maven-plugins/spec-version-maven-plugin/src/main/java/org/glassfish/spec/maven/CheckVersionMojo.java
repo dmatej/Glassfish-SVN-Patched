@@ -60,7 +60,7 @@ import org.glassfish.spec.Spec;
  *
  * @author Romain Grecourt
  */
-public class SpecCheckVersionMojo extends AbstractSpecMojo {
+public class CheckVersionMojo extends AbstractSpecMojo {
     /**
      * 
      * @parameter expression="${properties}"

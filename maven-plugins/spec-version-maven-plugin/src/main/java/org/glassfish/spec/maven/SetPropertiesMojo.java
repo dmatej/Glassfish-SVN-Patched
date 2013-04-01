@@ -56,7 +56,7 @@ import org.glassfish.spec.Spec;
  *
  * @author Romain Grecourt
  */
-public class SpecSetPropertiesMojo extends AbstractSpecMojo {
+public class SetPropertiesMojo extends AbstractSpecMojo {
     
     /**
      * @parameter expression="${ignoreFailures}" default-value="false"
