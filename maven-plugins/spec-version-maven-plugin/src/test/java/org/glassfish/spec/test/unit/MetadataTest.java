@@ -65,7 +65,7 @@ public class MetadataTest {
                 Womba.ARTIFACTID,
                 Womba.MAVEN_VERSION);
         
-        // womba is a final API artifact
+        // courgette is a final API artifact
         courgetteArtifact = new Artifact(
                 Courgette.GROUPID,
                 Courgette.ARTIFACTID,
