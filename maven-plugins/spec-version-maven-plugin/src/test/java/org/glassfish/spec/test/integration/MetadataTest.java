@@ -48,7 +48,6 @@ import org.glassfish.spec.test.sets.Courgette;
 import org.glassfish.spec.test.sets.Womba;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
