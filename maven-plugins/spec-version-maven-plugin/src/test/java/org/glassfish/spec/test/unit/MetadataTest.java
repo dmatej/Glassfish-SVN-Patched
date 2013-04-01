@@ -111,14 +111,13 @@ public class MetadataTest {
     
     @Test
     public void simpleNegativeAPITest() {
-        
         // test specVersion == newSpecVersion for non final API
         negative(wombaArtifact, Womba.SPEC_VERSION, Womba.SPEC_VERSION, null);
         
         // test with specVersion > newSpecVersion for non final API
         negative(wombaArtifact, Womba.NEW_SPEC_VERSION, Womba.SPEC_VERSION, null);
         
-        // test specVersion with a big randome number
+        // test specVersion with a big random number
         negative(wombaArtifact, "50", Womba.SPEC_VERSION, null);
     }
 }
