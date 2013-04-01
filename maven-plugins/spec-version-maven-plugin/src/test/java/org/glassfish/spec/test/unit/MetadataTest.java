@@ -46,7 +46,6 @@ import org.glassfish.spec.Metadata;
 import org.glassfish.spec.test.sets.Womba;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -110,7 +109,6 @@ public class MetadataTest {
         }
     }
     
-    @Ignore
     @Test
     public void simpleNegativeAPITest() {
         

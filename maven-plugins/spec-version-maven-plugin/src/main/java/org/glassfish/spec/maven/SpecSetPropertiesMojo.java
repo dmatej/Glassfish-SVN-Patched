@@ -56,7 +56,41 @@ import org.glassfish.spec.Spec;
  *
  * @author Romain Grecourt
  */
-public class SetSpecPropertiesMojo extends AbstractSpecMojo {
+public class SpecSetPropertiesMojo extends AbstractSpecMojo {
+    
+    /**
+     * @parameter expression="${ignoreFailures}" default-value="false"
+     */
+    protected boolean ignoreFailures;     
+    
+    /**
+     * version number of the JCP specification
+     * 
+     * @required
+     * @parameter expression="${specversion}"
+     */
+    protected String version;
+    
+    /**
+     * version number of the implementation
+     * 
+     * @parameter expression="${implversion}"
+     */
+    protected String implVersion;
+    
+    /**
+     * version number of the spec under development
+     * 
+     * @parameter expression="${newspecversion}"
+     */
+    protected String newVersion;
+    
+    /**
+     * build number
+     * 
+     * @parameter expression="${buildNumber}"
+     */
+    protected String buildNumber;    
     
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {

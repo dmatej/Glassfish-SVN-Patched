@@ -56,10 +56,6 @@ public abstract class AbstractSpecMojo extends AbstractMojo {
      */
     protected MavenProject project;
     
-    /**
-     * @parameter expression="${ignoreFailures}" default-value="false"
-     */
-    protected boolean ignoreFailures; 
     
     /**
      * Is it a final specification?
@@ -73,41 +69,5 @@ public abstract class AbstractSpecMojo extends AbstractMojo {
      * 
      * @parameter expression="${isApi}" default-value="true"
      */
-    protected boolean isApi;
-    
-    /**
-     * Implementation package
-     * 
-     * @parameter expression="${apipackage}"
-     */
-    protected String implPackage;
-    
-    /**
-     * version number of the JCP specification
-     * 
-     * @required
-     * @parameter expression="${specversion}"
-     */
-    protected String version;
-    
-    /**
-     * version number of the implementation
-     * 
-     * @parameter expression="${implversion}"
-     */
-    protected String implVersion;
-    
-    /**
-     * version number of the spec under development
-     * 
-     * @parameter expression="${newspecversion}"
-     */
-    protected String newVersion;
-    
-    /**
-     * build number
-     * 
-     * @parameter expression="${buildNumber}"
-     */
-    protected String buildNumber;
+    protected boolean isAPI;
 }

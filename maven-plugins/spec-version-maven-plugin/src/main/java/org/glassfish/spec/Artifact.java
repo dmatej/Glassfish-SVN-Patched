@@ -51,10 +51,11 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
  *
  * @author Romain Grecourt
  */
-public final class Artifact {
+public class Artifact {
 
     private String groupId;
     private String artifactId;
+    // version is specVersion
     private ArtifactVersion version;
     private String absoluteVersion;
     private String buildNumber;
