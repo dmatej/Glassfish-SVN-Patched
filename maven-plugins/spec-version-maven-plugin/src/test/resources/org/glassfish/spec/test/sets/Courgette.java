@@ -44,20 +44,19 @@ package org.glassfish.spec.test.sets;
  *
  * @author Romain Grecourt
  */
-public class Womba {
-    public static final String GROUPID = "${womba.groupId}";
-    public static final String ARTIFACTID = "${womba.artifactId}";
-    public static final String SPEC_VERSION = "${womba.specVersion}";
-    public static final String NEW_SPEC_VERSION = "${womba.newSpecVersion}";
-    public static final String API_PACKAGE = "${womba.apiPackage}";
-    public static final String IMPL_VERSION = "${womba.implVersion}";
-    public static final String BUNDLE_VERSION = "${womba.bundleVersion}";
-    public static final String BUNDLE_SYMBOLIC_NAME = "${womba.bundleSymbolicName}";
-    public static final String BUNDLE_SPEC_VERSION = "${womba.bundleSpecVersion}";
-    public static final String JAR_EXTENSION_NAME = "${womba.jarExtensionName}";
-    public static final String JAR_IMPLEMENTATION_VERSION = "${womba.jarImplementationVersion}";
-    public static final String JAR_SPECIFICATION_VERSION = "${womba.jarSpecificationVersion}";
-    public static final String MAVEN_VERSION = "${womba.mavenVersion}";
+public class Courgette {
+    public static final String GROUPID = "${courgette.groupId}";
+    public static final String ARTIFACTID = "${courgette.artifactId}";
+    public static final String SPEC_VERSION = "${courgette.specVersion}";
+    public static final String API_PACKAGE = "${courgette.apiPackage}";
+    public static final String IMPL_VERSION = "${courgette.implVersion}";
+    public static final String BUNDLE_VERSION = "${courgette.bundleVersion}";
+    public static final String BUNDLE_SYMBOLIC_NAME = "${courgette.bundleSymbolicName}";
+    public static final String BUNDLE_SPEC_VERSION = "${courgette.bundleSpecVersion}";
+    public static final String JAR_EXTENSION_NAME = "${courgette.jarExtensionName}";
+    public static final String JAR_IMPLEMENTATION_VERSION = "${courgette.jarImplementationVersion}";
+    public static final String JAR_SPECIFICATION_VERSION = "${courgette.jarSpecificationVersion}";
+    public static final String MAVEN_VERSION = "${courgette.mavenVersion}";
     private static final String MODULES_DIR = "target/it/modules";
     public static final String JAR = MODULES_DIR+"/"+ARTIFACTID+"/target/"+ARTIFACTID+".jar";
 }

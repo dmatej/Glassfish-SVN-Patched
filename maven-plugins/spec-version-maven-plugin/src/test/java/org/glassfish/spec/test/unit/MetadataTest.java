@@ -43,6 +43,7 @@ package org.glassfish.spec.test.unit;
 import org.glassfish.spec.Artifact;
 import org.glassfish.spec.ComplianceException;
 import org.glassfish.spec.Metadata;
+import org.glassfish.spec.test.sets.Courgette;
 import org.glassfish.spec.test.sets.Womba;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -54,6 +55,7 @@ import org.junit.Test;
  */
 public class MetadataTest {
     private static Artifact wombaArtifact;
+    private static Artifact courgetteArtifact;
     
     @BeforeClass
     public static void init() {
@@ -63,8 +65,13 @@ public class MetadataTest {
                 Womba.ARTIFACTID,
                 Womba.MAVEN_VERSION);
         
+        // womba is a final API artifact
+        courgetteArtifact = new Artifact(
+                Courgette.GROUPID,
+                Courgette.ARTIFACTID,
+                Courgette.MAVEN_VERSION);
+        
         // TODO non final Standalone artifact
-        // TODO final API artifact
         // TODO final Standalone artifact
     }
     
@@ -75,7 +82,10 @@ public class MetadataTest {
     }
     
     @Test
-    public void simpleAPITest() {
+    public void nonFinalAPITest() {
+        Assert.assertEquals("womba is an API artifact",true,wombaArtifact.isAPI());
+        Assert.assertEquals("womba is not final",false,wombaArtifact.isFinal());
+        
         Metadata mdata = Metadata.generate(
                 wombaArtifact,
                 Womba.SPEC_VERSION,
@@ -89,6 +99,26 @@ public class MetadataTest {
         positive(Metadata.JAR_EXTENSION_NAME,Womba.JAR_EXTENSION_NAME,mdata.getJarExtensionName());
         positive(Metadata.JAR_SPECIFICATION_VERSION,Womba.JAR_SPECIFICATION_VERSION,mdata.getJarSpecificationVersion());
         positive(Metadata.JAR_IMPLEMENTATION_VERSION,Womba.JAR_IMPLEMENTATION_VERSION,mdata.getjarImplementationVersion());
+    }
+    
+    @Test
+    public void finalAPITest() {
+        Assert.assertEquals("courgette is an API artifact",true,courgetteArtifact.isAPI());
+        Assert.assertEquals("courgette is final",true,courgetteArtifact.isFinal());
+        
+        Metadata mdata = Metadata.generate(
+                courgetteArtifact,
+                Courgette.SPEC_VERSION,
+                null,
+                Courgette.IMPL_VERSION);
+        Assert.assertNotNull(mdata);
+        
+        positive(Metadata.BUNDLE_SYMBOLIC_NAME,Courgette.BUNDLE_SYMBOLIC_NAME,mdata.getBundleSymbolicName());
+        positive(Metadata.BUNDLE_SPEC_VERSION,Courgette.BUNDLE_SPEC_VERSION,mdata.getBundleSpecVersion());
+        positive(Metadata.BUNDLE_VERSION,Courgette.BUNDLE_VERSION,mdata.getBundleVersion());
+        positive(Metadata.JAR_EXTENSION_NAME,Courgette.JAR_EXTENSION_NAME,mdata.getJarExtensionName());
+        positive(Metadata.JAR_SPECIFICATION_VERSION,Courgette.JAR_SPECIFICATION_VERSION,mdata.getJarSpecificationVersion());
+        positive(Metadata.JAR_IMPLEMENTATION_VERSION,Courgette.JAR_IMPLEMENTATION_VERSION,mdata.getjarImplementationVersion());
     }
     
     public static void negative(
@@ -110,7 +140,7 @@ public class MetadataTest {
     }
     
     @Test
-    public void simpleNegativeAPITest() {
+    public void negativeNonFinalAPITest() {
         // test specVersion == newSpecVersion for non final API
         negative(wombaArtifact, Womba.SPEC_VERSION, Womba.SPEC_VERSION, null);
         

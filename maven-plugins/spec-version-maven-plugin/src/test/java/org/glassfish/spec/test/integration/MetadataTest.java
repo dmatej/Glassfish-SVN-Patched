@@ -44,9 +44,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.jar.JarFile;
 import org.glassfish.spec.Metadata;
+import org.glassfish.spec.test.sets.Courgette;
 import org.glassfish.spec.test.sets.Womba;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
@@ -55,35 +57,63 @@ import org.junit.Test;
  */
 public class MetadataTest {
     
-    private static Metadata mdata;
+    private static Metadata wombaMdata;
+    private static Metadata courgetteMdata;
     
     @BeforeClass
     public static void init() throws IOException{
         File f = new File(Womba.JAR);
         Assert.assertTrue("test that "+f.getCanonicalPath()+" exists", f.exists());
-        mdata = Metadata.fromJar(new JarFile(f));
+        wombaMdata = Metadata.fromJar(new JarFile(f));
+        
+        File g = new File(Courgette.JAR);
+        Assert.assertTrue("test that "+g.getCanonicalPath()+" exists", g.exists());
+        courgetteMdata = Metadata.fromJar(new JarFile(g));
     }
     
     @Test
-    public void verifyMetadata() {
+    public void verifyWombaMetadata() {
         String msg = "Testing "+Metadata.BUNDLE_VERSION;
-        Assert.assertNotNull(msg, mdata.getBundleVersion());
-        Assert.assertEquals(msg, Womba.BUNDLE_VERSION, mdata.getBundleVersion());
+        Assert.assertNotNull(msg, wombaMdata.getBundleVersion());
+        Assert.assertEquals(msg, Womba.BUNDLE_VERSION, wombaMdata.getBundleVersion());
         
         msg = "Testing "+Metadata.BUNDLE_SYMBOLIC_NAME;
-        Assert.assertNotNull(msg, mdata.getBundleSymbolicName());
-        Assert.assertEquals(msg, Womba.BUNDLE_SYMBOLIC_NAME, mdata.getBundleSymbolicName());
+        Assert.assertNotNull(msg, wombaMdata.getBundleSymbolicName());
+        Assert.assertEquals(msg, Womba.BUNDLE_SYMBOLIC_NAME, wombaMdata.getBundleSymbolicName());
         
         msg = "Testing "+Metadata.JAR_EXTENSION_NAME;
-        Assert.assertNotNull(msg, mdata.getJarExtensionName());
-        Assert.assertEquals(msg, Womba.JAR_EXTENSION_NAME, mdata.getJarExtensionName());
+        Assert.assertNotNull(msg, wombaMdata.getJarExtensionName());
+        Assert.assertEquals(msg, Womba.JAR_EXTENSION_NAME, wombaMdata.getJarExtensionName());
         
         msg = "Testing "+Metadata.JAR_SPECIFICATION_VERSION;
-        Assert.assertNotNull(msg,mdata.getJarSpecificationVersion());
-        Assert.assertEquals(msg,Womba.JAR_SPECIFICATION_VERSION, mdata.getJarSpecificationVersion());
+        Assert.assertNotNull(msg,wombaMdata.getJarSpecificationVersion());
+        Assert.assertEquals(msg,Womba.JAR_SPECIFICATION_VERSION, wombaMdata.getJarSpecificationVersion());
         
         msg = "Testing "+Metadata.JAR_IMPLEMENTATION_VERSION;
-        Assert.assertNotNull(msg,mdata.getjarImplementationVersion());
-        Assert.assertEquals(msg,Womba.JAR_IMPLEMENTATION_VERSION, mdata.getjarImplementationVersion());
+        Assert.assertNotNull(msg,wombaMdata.getjarImplementationVersion());
+        Assert.assertEquals(msg,Womba.JAR_IMPLEMENTATION_VERSION, wombaMdata.getjarImplementationVersion());
+    }
+    
+    @Test
+    public void verifyCourgetteMetadata() {
+        String msg = "Testing "+Metadata.BUNDLE_VERSION;
+        Assert.assertNotNull(msg, wombaMdata.getBundleVersion());
+        Assert.assertEquals(msg, Courgette.BUNDLE_VERSION, courgetteMdata.getBundleVersion());
+        
+        msg = "Testing "+Metadata.BUNDLE_SYMBOLIC_NAME;
+        Assert.assertNotNull(msg, wombaMdata.getBundleSymbolicName());
+        Assert.assertEquals(msg, Courgette.BUNDLE_SYMBOLIC_NAME, courgetteMdata.getBundleSymbolicName());
+        
+        msg = "Testing "+Metadata.JAR_EXTENSION_NAME;
+        Assert.assertNotNull(msg, wombaMdata.getJarExtensionName());
+        Assert.assertEquals(msg, Courgette.JAR_EXTENSION_NAME, courgetteMdata.getJarExtensionName());
+        
+        msg = "Testing "+Metadata.JAR_SPECIFICATION_VERSION;
+        Assert.assertNotNull(msg,wombaMdata.getJarSpecificationVersion());
+        Assert.assertEquals(msg,Courgette.JAR_SPECIFICATION_VERSION, courgetteMdata.getJarSpecificationVersion());
+        
+        msg = "Testing "+Metadata.JAR_IMPLEMENTATION_VERSION;
+        Assert.assertNotNull(msg,wombaMdata.getjarImplementationVersion());
+        Assert.assertEquals(msg,Courgette.JAR_IMPLEMENTATION_VERSION, courgetteMdata.getjarImplementationVersion());
     }
 }

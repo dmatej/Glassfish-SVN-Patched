@@ -56,7 +56,7 @@ public final class Spec {
     static final String START_WITH_JAVAX = "start with \"javax.\"";
     
     public static void checkSpecVersion(String s, ComplianceException ex) {
-        if (!s.matches("[0-9]+\\.[0-9]+")) {
+        if (s!=null && !s.matches("[0-9]+\\.[0-9]+")) {
             String msg = "invalid specVersion (" + s + "):"
                     + " JCP specification version number "
                     + "must be of the form <major>.<minor>";
@@ -89,8 +89,8 @@ public final class Spec {
                 || specVersion == null || specVersion.isEmpty()
                 || implVersion == null || implVersion.isEmpty()){
             
-             throw new IllegalArgumentException("artifact, specVersion,"
-                     + " newSpecVersion and implVersion can't be null or empty");
+             throw new IllegalArgumentException("artifact, specVersion"
+                     + " and implVersion can't be null or empty");
         }
         
         if (!_artifact.isFinal()) {
@@ -106,7 +106,7 @@ public final class Spec {
                         + "[-SNAPSHOT]");
             }
         } else {
-            if (newVersion == null) {
+            if (newVersion != null && !newVersion.isEmpty()) {
                 
                 throw new IllegalArgumentException(
                         "newspecversion must not be specified for final specification");
