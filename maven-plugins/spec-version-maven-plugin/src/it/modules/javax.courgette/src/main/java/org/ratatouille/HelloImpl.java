@@ -37,8 +37,12 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package javax.courgette;
 
-public interface Hello{
-    public void sayHello();
+package org.ratatouille;
+import javax.courgette.Hello;
+
+public class HelloImpl implements Hello{
+    public void sayHello(){
+        System.out.println("Hello from Ratatatouille !");
+    }
 }

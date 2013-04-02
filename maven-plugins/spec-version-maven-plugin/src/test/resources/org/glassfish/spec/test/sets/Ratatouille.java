@@ -37,8 +37,27 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package javax.courgette;
 
-public interface Hello{
-    public void sayHello();
+package org.glassfish.spec.test.sets;
+
+/**
+ *
+ * @author Romain Grecourt
+ */
+public class Ratatouille {
+    public static final String GROUPID = "${ratatouille.groupId}";
+    public static final String ARTIFACTID = "${ratatouille.artifactId}";
+    public static final String SPEC_VERSION = "${ratatouille.specVersion}";
+    public static final String API_PACKAGE = "${ratatouille.apiPackage}";
+    public static final String IMPL_PACKAGE = "${ratatouille.implPackage}";
+    public static final String IMPL_VERSION = "${ratatouille.implVersion}";
+    public static final String BUNDLE_VERSION = "${ratatouille.bundleVersion}";
+    public static final String BUNDLE_SYMBOLIC_NAME = "${ratatouille.bundleSymbolicName}";
+    public static final String BUNDLE_SPEC_VERSION = "${ratatouille.bundleSpecVersion}";
+    public static final String JAR_EXTENSION_NAME = "${ratatouille.jarExtensionName}";
+    public static final String JAR_IMPLEMENTATION_VERSION = "${ratatouille.jarImplementationVersion}";
+    public static final String JAR_SPECIFICATION_VERSION = "${ratatouille.jarSpecificationVersion}";
+    public static final String MAVEN_VERSION = "${ratatouille.mavenVersion}";
+    private static final String MODULES_DIR = "target/it/modules";
+    public static final String JAR = MODULES_DIR+"/"+ARTIFACTID+"/target/"+ARTIFACTID+".jar";
 }

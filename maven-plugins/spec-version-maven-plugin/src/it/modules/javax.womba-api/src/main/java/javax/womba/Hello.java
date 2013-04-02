@@ -39,8 +39,6 @@
  */
 package javax.womba;
 
-public class Hello{
-    public void sayHello(){
-        System.out.println("Hello from Womba !");
-    }
+public interface Hello{
+    public void sayHello();
 }

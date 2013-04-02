@@ -44,6 +44,7 @@ import org.glassfish.spec.Artifact;
 import org.glassfish.spec.ComplianceException;
 import org.glassfish.spec.Metadata;
 import org.glassfish.spec.test.sets.Courgette;
+import org.glassfish.spec.test.sets.Ratatouille;
 import org.glassfish.spec.test.sets.Womba;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -56,6 +57,7 @@ import org.junit.Test;
 public class MetadataTest {
     private static Artifact wombaArtifact;
     private static Artifact courgetteArtifact;
+    private static Artifact ratatouilleArtifact;
     
     @BeforeClass
     public static void init() {
@@ -71,7 +73,12 @@ public class MetadataTest {
                 Courgette.ARTIFACTID,
                 Courgette.MAVEN_VERSION);
         
-        // TODO non final Standalone artifact
+        // ratatouille is a final standalone artifact
+        ratatouilleArtifact = new Artifact(
+                Ratatouille.GROUPID,
+                Ratatouille.ARTIFACTID,
+                Ratatouille.MAVEN_VERSION);
+        
         // TODO final Standalone artifact
     }
     
@@ -119,6 +126,26 @@ public class MetadataTest {
         positive(Metadata.JAR_EXTENSION_NAME,Courgette.JAR_EXTENSION_NAME,mdata.getJarExtensionName());
         positive(Metadata.JAR_SPECIFICATION_VERSION,Courgette.JAR_SPECIFICATION_VERSION,mdata.getJarSpecificationVersion());
         positive(Metadata.JAR_IMPLEMENTATION_VERSION,Courgette.JAR_IMPLEMENTATION_VERSION,mdata.getjarImplementationVersion());
+    }
+    
+    @Test
+    public void finalStandaloneTest() {
+        Assert.assertEquals("ratatouille is a standalone artifact",false,ratatouilleArtifact.isAPI());
+        Assert.assertEquals("ratatouille is final",true,ratatouilleArtifact.isFinal());
+        
+        Metadata mdata = Metadata.generate(
+                ratatouilleArtifact,
+                Ratatouille.SPEC_VERSION,
+                null,
+                Ratatouille.IMPL_VERSION);
+        Assert.assertNotNull(mdata);
+        
+        positive(Metadata.BUNDLE_SYMBOLIC_NAME,Ratatouille.BUNDLE_SYMBOLIC_NAME,mdata.getBundleSymbolicName());
+        positive(Metadata.BUNDLE_SPEC_VERSION,Ratatouille.BUNDLE_SPEC_VERSION,mdata.getBundleSpecVersion());
+        positive(Metadata.BUNDLE_VERSION,Ratatouille.BUNDLE_VERSION,mdata.getBundleVersion());
+        positive(Metadata.JAR_EXTENSION_NAME,Ratatouille.JAR_EXTENSION_NAME,mdata.getJarExtensionName());
+        positive(Metadata.JAR_SPECIFICATION_VERSION,Ratatouille.JAR_SPECIFICATION_VERSION,mdata.getJarSpecificationVersion());
+        positive(Metadata.JAR_IMPLEMENTATION_VERSION,Ratatouille.JAR_IMPLEMENTATION_VERSION,mdata.getjarImplementationVersion());
     }
     
     public static void negative(

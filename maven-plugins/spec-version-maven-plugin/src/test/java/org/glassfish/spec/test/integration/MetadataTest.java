@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.util.jar.JarFile;
 import org.glassfish.spec.Metadata;
 import org.glassfish.spec.test.sets.Courgette;
+import org.glassfish.spec.test.sets.Ratatouille;
 import org.glassfish.spec.test.sets.Womba;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -58,6 +59,7 @@ public class MetadataTest {
     
     private static Metadata wombaMdata;
     private static Metadata courgetteMdata;
+    private static Metadata ratatouilleMdata;
     
     @BeforeClass
     public static void init() throws IOException{
@@ -68,6 +70,10 @@ public class MetadataTest {
         File g = new File(Courgette.JAR);
         Assert.assertTrue("test that "+g.getCanonicalPath()+" exists", g.exists());
         courgetteMdata = Metadata.fromJar(new JarFile(g));
+        
+        File h = new File(Ratatouille.JAR);
+        Assert.assertTrue("test that "+h.getCanonicalPath()+" exists", g.exists());
+        ratatouilleMdata = Metadata.fromJar(new JarFile(g));
     }
     
     @Test
@@ -96,23 +102,46 @@ public class MetadataTest {
     @Test
     public void verifyCourgetteMetadata() {
         String msg = "Testing "+Metadata.BUNDLE_VERSION;
-        Assert.assertNotNull(msg, wombaMdata.getBundleVersion());
+        Assert.assertNotNull(msg, courgetteMdata.getBundleVersion());
         Assert.assertEquals(msg, Courgette.BUNDLE_VERSION, courgetteMdata.getBundleVersion());
         
         msg = "Testing "+Metadata.BUNDLE_SYMBOLIC_NAME;
-        Assert.assertNotNull(msg, wombaMdata.getBundleSymbolicName());
+        Assert.assertNotNull(msg, courgetteMdata.getBundleSymbolicName());
         Assert.assertEquals(msg, Courgette.BUNDLE_SYMBOLIC_NAME, courgetteMdata.getBundleSymbolicName());
         
         msg = "Testing "+Metadata.JAR_EXTENSION_NAME;
-        Assert.assertNotNull(msg, wombaMdata.getJarExtensionName());
+        Assert.assertNotNull(msg, courgetteMdata.getJarExtensionName());
         Assert.assertEquals(msg, Courgette.JAR_EXTENSION_NAME, courgetteMdata.getJarExtensionName());
         
         msg = "Testing "+Metadata.JAR_SPECIFICATION_VERSION;
-        Assert.assertNotNull(msg,wombaMdata.getJarSpecificationVersion());
+        Assert.assertNotNull(msg,courgetteMdata.getJarSpecificationVersion());
         Assert.assertEquals(msg,Courgette.JAR_SPECIFICATION_VERSION, courgetteMdata.getJarSpecificationVersion());
         
         msg = "Testing "+Metadata.JAR_IMPLEMENTATION_VERSION;
-        Assert.assertNotNull(msg,wombaMdata.getjarImplementationVersion());
+        Assert.assertNotNull(msg,courgetteMdata.getjarImplementationVersion());
         Assert.assertEquals(msg,Courgette.JAR_IMPLEMENTATION_VERSION, courgetteMdata.getjarImplementationVersion());
+    }
+    
+    @Test
+    public void verifyRatatouilleMetadata() {
+        String msg = "Testing "+Metadata.BUNDLE_VERSION;
+        Assert.assertNotNull(msg, ratatouilleMdata.getBundleVersion());
+        Assert.assertEquals(msg, Courgette.BUNDLE_VERSION, ratatouilleMdata.getBundleVersion());
+        
+        msg = "Testing "+Metadata.BUNDLE_SYMBOLIC_NAME;
+        Assert.assertNotNull(msg, ratatouilleMdata.getBundleSymbolicName());
+        Assert.assertEquals(msg, Courgette.BUNDLE_SYMBOLIC_NAME, ratatouilleMdata.getBundleSymbolicName());
+        
+        msg = "Testing "+Metadata.JAR_EXTENSION_NAME;
+        Assert.assertNotNull(msg, ratatouilleMdata.getJarExtensionName());
+        Assert.assertEquals(msg, Courgette.JAR_EXTENSION_NAME, ratatouilleMdata.getJarExtensionName());
+        
+        msg = "Testing "+Metadata.JAR_SPECIFICATION_VERSION;
+        Assert.assertNotNull(msg,ratatouilleMdata.getJarSpecificationVersion());
+        Assert.assertEquals(msg,Courgette.JAR_SPECIFICATION_VERSION, ratatouilleMdata.getJarSpecificationVersion());
+        
+        msg = "Testing "+Metadata.JAR_IMPLEMENTATION_VERSION;
+        Assert.assertNotNull(msg,ratatouilleMdata.getjarImplementationVersion());
+        Assert.assertEquals(msg,Courgette.JAR_IMPLEMENTATION_VERSION, ratatouilleMdata.getjarImplementationVersion());
     }
 }

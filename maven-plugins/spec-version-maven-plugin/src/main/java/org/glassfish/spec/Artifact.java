@@ -51,7 +51,7 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
  *
  * @author Romain Grecourt
  */
-public class Artifact {
+public final class Artifact {
 
     private String groupId;
     private String artifactId;
