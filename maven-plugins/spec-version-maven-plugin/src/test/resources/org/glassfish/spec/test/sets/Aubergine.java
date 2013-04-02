@@ -44,20 +44,20 @@ package org.glassfish.spec.test.sets;
  *
  * @author Romain Grecourt
  */
-public class Womba {
-    public static final String GROUPID = "${womba.groupId}";
-    public static final String ARTIFACTID = "${womba.artifactId}";
-    public static final String SPEC_VERSION = "${womba.specVersion}";
-    public static final String NEW_SPEC_VERSION = "${womba.newSpecVersion}";
-    public static final String API_PACKAGE = "${womba.apiPackage}";
-    public static final String IMPL_VERSION = "${womba.implVersion}";
-    public static final String BUNDLE_VERSION = "${womba.bundleVersion}";
-    public static final String BUNDLE_SYMBOLIC_NAME = "${womba.bundleSymbolicName}";
-    public static final String BUNDLE_SPEC_VERSION = "${womba.bundleSpecVersion}";
-    public static final String JAR_EXTENSION_NAME = "${womba.jarExtensionName}";
-    public static final String JAR_IMPLEMENTATION_VERSION = "${womba.jarImplementationVersion}";
-    public static final String JAR_SPECIFICATION_VERSION = "${womba.jarSpecificationVersion}";
-    public static final String MAVEN_VERSION = "${womba.mavenVersion}";
+public class Aubergine {
+    public static final String GROUPID = "${aubergine.groupId}";
+    public static final String ARTIFACTID = "${aubergine.artifactId}";
+    public static final String SPEC_VERSION = "${aubergine.specVersion}";
+    public static final String NEW_SPEC_VERSION = "${aubergine.newSpecVersion}";
+    public static final String API_PACKAGE = "${aubergine.apiPackage}";
+    public static final String IMPL_VERSION = "${aubergine.implVersion}";
+    public static final String BUNDLE_VERSION = "${aubergine.bundleVersion}";
+    public static final String BUNDLE_SYMBOLIC_NAME = "${aubergine.bundleSymbolicName}";
+    public static final String BUNDLE_SPEC_VERSION = "${aubergine.bundleSpecVersion}";
+    public static final String JAR_EXTENSION_NAME = "${aubergine.jarExtensionName}";
+    public static final String JAR_IMPLEMENTATION_VERSION = "${aubergine.jarImplementationVersion}";
+    public static final String JAR_SPECIFICATION_VERSION = "${aubergine.jarSpecificationVersion}";
+    public static final String MAVEN_VERSION = "${aubergine.mavenVersion}";
     private static final String MODULES_DIR = "target/it/modules";
     public static final String JAR = MODULES_DIR+"/"+ARTIFACTID+"/target/"+ARTIFACTID+".jar";
 }

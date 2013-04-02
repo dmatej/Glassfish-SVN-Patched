@@ -38,58 +38,27 @@
  * holder.
  */
 
-package org.glassfish.spec.test.unit;
-
-import org.glassfish.spec.Artifact;
-import org.glassfish.spec.ComplianceException;
-import org.glassfish.spec.Spec;
-import org.glassfish.spec.test.sets.Aubergine;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+package org.glassfish.spec.test.sets;
 
 /**
- * 
+ *
  * @author Romain Grecourt
  */
-public class SpecTest {
-
-    private static Artifact aubergineArtifact;
-
-    @BeforeClass
-    public static void init() {
-        // Aubergine is a non final API artifact
-        aubergineArtifact = new Artifact(
-                Aubergine.GROUPID,
-                Aubergine.ARTIFACTID,
-                Aubergine.MAVEN_VERSION);
-
-        // TODO non final Standalone artifact
-        // TODO final API artifact
-        // TODO final Standalone artifact
-    }
-    
-    public static void positive(
-            Artifact artifact,
-            String version,
-            String newVersion,
-            String implVersion) {
-
-        String msg = artifact + " - specVersion (" + version + ")"
-                + " - newVersion (" + newVersion + ")"
-                + " - implVersion (" + implVersion + ")"
-                + " should be compliant";
-        try {
-            Spec spec = new Spec(artifact, version, newVersion, implVersion);
-            spec.getMetadata().verify();
-            Assert.assertTrue(msg,true);
-        } catch (ComplianceException cex) {
-            Assert.assertFalse(msg, cex.isCompliant());
-        }
-    }
-    
-    @Test
-    public void simpleAPITest(){
-        positive(aubergineArtifact,Aubergine.SPEC_VERSION,Aubergine.NEW_SPEC_VERSION,Aubergine.JAR_IMPLEMENTATION_VERSION);
-    }
+public class Moussaka {
+    public static final String GROUPID = "${moussaka.groupId}";
+    public static final String ARTIFACTID = "${moussaka.artifactId}";
+    public static final String SPEC_VERSION = "${moussaka.specVersion}";
+    public static final String NEW_IMPL_VERSION = "${moussaka.newImplVersion}";
+    public static final String API_PACKAGE = "${moussaka.apiPackage}";
+    public static final String IMPL_PACKAGE = "${moussaka.implPackage}";
+    public static final String IMPL_VERSION = "${moussaka.implVersion}";
+    public static final String BUNDLE_VERSION = "${moussaka.bundleVersion}";
+    public static final String BUNDLE_SYMBOLIC_NAME = "${moussaka.bundleSymbolicName}";
+    public static final String BUNDLE_SPEC_VERSION = "${moussaka.bundleSpecVersion}";
+    public static final String JAR_EXTENSION_NAME = "${moussaka.jarExtensionName}";
+    public static final String JAR_IMPLEMENTATION_VERSION = "${moussaka.jarImplementationVersion}";
+    public static final String JAR_SPECIFICATION_VERSION = "${moussaka.jarSpecificationVersion}";
+    public static final String MAVEN_VERSION = "${moussaka.mavenVersion}";
+    private static final String MODULES_DIR = "target/it/modules";
+    public static final String JAR = MODULES_DIR+"/"+ARTIFACTID+"/target/"+ARTIFACTID+".jar";
 }

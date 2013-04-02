@@ -37,59 +37,8 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
+package javax.womba;
 
-package org.glassfish.spec.test.unit;
-
-import org.glassfish.spec.Artifact;
-import org.glassfish.spec.ComplianceException;
-import org.glassfish.spec.Spec;
-import org.glassfish.spec.test.sets.Aubergine;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-/**
- * 
- * @author Romain Grecourt
- */
-public class SpecTest {
-
-    private static Artifact aubergineArtifact;
-
-    @BeforeClass
-    public static void init() {
-        // Aubergine is a non final API artifact
-        aubergineArtifact = new Artifact(
-                Aubergine.GROUPID,
-                Aubergine.ARTIFACTID,
-                Aubergine.MAVEN_VERSION);
-
-        // TODO non final Standalone artifact
-        // TODO final API artifact
-        // TODO final Standalone artifact
-    }
-    
-    public static void positive(
-            Artifact artifact,
-            String version,
-            String newVersion,
-            String implVersion) {
-
-        String msg = artifact + " - specVersion (" + version + ")"
-                + " - newVersion (" + newVersion + ")"
-                + " - implVersion (" + implVersion + ")"
-                + " should be compliant";
-        try {
-            Spec spec = new Spec(artifact, version, newVersion, implVersion);
-            spec.getMetadata().verify();
-            Assert.assertTrue(msg,true);
-        } catch (ComplianceException cex) {
-            Assert.assertFalse(msg, cex.isCompliant());
-        }
-    }
-    
-    @Test
-    public void simpleAPITest(){
-        positive(aubergineArtifact,Aubergine.SPEC_VERSION,Aubergine.NEW_SPEC_VERSION,Aubergine.JAR_IMPLEMENTATION_VERSION);
-    }
+public interface Hello{
+    public void sayHello();
 }

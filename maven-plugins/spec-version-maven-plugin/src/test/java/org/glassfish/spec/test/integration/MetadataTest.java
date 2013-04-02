@@ -46,7 +46,8 @@ import java.util.jar.JarFile;
 import org.glassfish.spec.Metadata;
 import org.glassfish.spec.test.sets.Courgette;
 import org.glassfish.spec.test.sets.Ratatouille;
-import org.glassfish.spec.test.sets.Womba;
+import org.glassfish.spec.test.sets.Aubergine;
+import org.glassfish.spec.test.sets.Moussaka;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -57,15 +58,16 @@ import org.junit.Test;
  */
 public class MetadataTest {
     
-    private static Metadata wombaMdata;
+    private static Metadata aubergineMdata;
     private static Metadata courgetteMdata;
     private static Metadata ratatouilleMdata;
+    private static Metadata moussakaMdata;
     
     @BeforeClass
     public static void init() throws IOException{
-        File f = new File(Womba.JAR);
+        File f = new File(Aubergine.JAR);
         Assert.assertTrue("test that "+f.getCanonicalPath()+" exists", f.exists());
-        wombaMdata = Metadata.fromJar(new JarFile(f));
+        aubergineMdata = Metadata.fromJar(new JarFile(f));
         
         File g = new File(Courgette.JAR);
         Assert.assertTrue("test that "+g.getCanonicalPath()+" exists", g.exists());
@@ -73,30 +75,34 @@ public class MetadataTest {
         
         File h = new File(Ratatouille.JAR);
         Assert.assertTrue("test that "+h.getCanonicalPath()+" exists", g.exists());
-        ratatouilleMdata = Metadata.fromJar(new JarFile(g));
+        ratatouilleMdata = Metadata.fromJar(new JarFile(h));
+        
+        File i = new File(Moussaka.JAR);
+        Assert.assertTrue("test that "+h.getCanonicalPath()+" exists", g.exists());
+        moussakaMdata = Metadata.fromJar(new JarFile(i));
     }
     
     @Test
-    public void verifyWombaMetadata() {
+    public void verifyAubergineMetadata() {
         String msg = "Testing "+Metadata.BUNDLE_VERSION;
-        Assert.assertNotNull(msg, wombaMdata.getBundleVersion());
-        Assert.assertEquals(msg, Womba.BUNDLE_VERSION, wombaMdata.getBundleVersion());
+        Assert.assertNotNull(msg, aubergineMdata.getBundleVersion());
+        Assert.assertEquals(msg, Aubergine.BUNDLE_VERSION, aubergineMdata.getBundleVersion());
         
         msg = "Testing "+Metadata.BUNDLE_SYMBOLIC_NAME;
-        Assert.assertNotNull(msg, wombaMdata.getBundleSymbolicName());
-        Assert.assertEquals(msg, Womba.BUNDLE_SYMBOLIC_NAME, wombaMdata.getBundleSymbolicName());
+        Assert.assertNotNull(msg, aubergineMdata.getBundleSymbolicName());
+        Assert.assertEquals(msg, Aubergine.BUNDLE_SYMBOLIC_NAME, aubergineMdata.getBundleSymbolicName());
         
         msg = "Testing "+Metadata.JAR_EXTENSION_NAME;
-        Assert.assertNotNull(msg, wombaMdata.getJarExtensionName());
-        Assert.assertEquals(msg, Womba.JAR_EXTENSION_NAME, wombaMdata.getJarExtensionName());
+        Assert.assertNotNull(msg, aubergineMdata.getJarExtensionName());
+        Assert.assertEquals(msg, Aubergine.JAR_EXTENSION_NAME, aubergineMdata.getJarExtensionName());
         
         msg = "Testing "+Metadata.JAR_SPECIFICATION_VERSION;
-        Assert.assertNotNull(msg,wombaMdata.getJarSpecificationVersion());
-        Assert.assertEquals(msg,Womba.JAR_SPECIFICATION_VERSION, wombaMdata.getJarSpecificationVersion());
+        Assert.assertNotNull(msg,aubergineMdata.getJarSpecificationVersion());
+        Assert.assertEquals(msg,Aubergine.JAR_SPECIFICATION_VERSION, aubergineMdata.getJarSpecificationVersion());
         
         msg = "Testing "+Metadata.JAR_IMPLEMENTATION_VERSION;
-        Assert.assertNotNull(msg,wombaMdata.getjarImplementationVersion());
-        Assert.assertEquals(msg,Womba.JAR_IMPLEMENTATION_VERSION, wombaMdata.getjarImplementationVersion());
+        Assert.assertNotNull(msg,aubergineMdata.getjarImplementationVersion());
+        Assert.assertEquals(msg,Aubergine.JAR_IMPLEMENTATION_VERSION, aubergineMdata.getjarImplementationVersion());
     }
     
     @Test
@@ -126,22 +132,45 @@ public class MetadataTest {
     public void verifyRatatouilleMetadata() {
         String msg = "Testing "+Metadata.BUNDLE_VERSION;
         Assert.assertNotNull(msg, ratatouilleMdata.getBundleVersion());
-        Assert.assertEquals(msg, Courgette.BUNDLE_VERSION, ratatouilleMdata.getBundleVersion());
+        Assert.assertEquals(msg, Ratatouille.BUNDLE_VERSION, ratatouilleMdata.getBundleVersion());
         
         msg = "Testing "+Metadata.BUNDLE_SYMBOLIC_NAME;
         Assert.assertNotNull(msg, ratatouilleMdata.getBundleSymbolicName());
-        Assert.assertEquals(msg, Courgette.BUNDLE_SYMBOLIC_NAME, ratatouilleMdata.getBundleSymbolicName());
+        Assert.assertEquals(msg, Ratatouille.BUNDLE_SYMBOLIC_NAME, ratatouilleMdata.getBundleSymbolicName());
         
         msg = "Testing "+Metadata.JAR_EXTENSION_NAME;
         Assert.assertNotNull(msg, ratatouilleMdata.getJarExtensionName());
-        Assert.assertEquals(msg, Courgette.JAR_EXTENSION_NAME, ratatouilleMdata.getJarExtensionName());
+        Assert.assertEquals(msg, Ratatouille.JAR_EXTENSION_NAME, ratatouilleMdata.getJarExtensionName());
         
         msg = "Testing "+Metadata.JAR_SPECIFICATION_VERSION;
         Assert.assertNotNull(msg,ratatouilleMdata.getJarSpecificationVersion());
-        Assert.assertEquals(msg,Courgette.JAR_SPECIFICATION_VERSION, ratatouilleMdata.getJarSpecificationVersion());
+        Assert.assertEquals(msg,Ratatouille.JAR_SPECIFICATION_VERSION, ratatouilleMdata.getJarSpecificationVersion());
         
         msg = "Testing "+Metadata.JAR_IMPLEMENTATION_VERSION;
         Assert.assertNotNull(msg,ratatouilleMdata.getjarImplementationVersion());
-        Assert.assertEquals(msg,Courgette.JAR_IMPLEMENTATION_VERSION, ratatouilleMdata.getjarImplementationVersion());
+        Assert.assertEquals(msg,Ratatouille.JAR_IMPLEMENTATION_VERSION, ratatouilleMdata.getjarImplementationVersion());
     }
+    
+    @Test
+    public void verifyMoussakaMetadata() {
+        String msg = "Testing "+Metadata.BUNDLE_VERSION;
+        Assert.assertNotNull(msg, moussakaMdata.getBundleVersion());
+        Assert.assertEquals(msg, Moussaka.BUNDLE_VERSION, moussakaMdata.getBundleVersion());
+        
+        msg = "Testing "+Metadata.BUNDLE_SYMBOLIC_NAME;
+        Assert.assertNotNull(msg, moussakaMdata.getBundleSymbolicName());
+        Assert.assertEquals(msg, Moussaka.BUNDLE_SYMBOLIC_NAME, moussakaMdata.getBundleSymbolicName());
+        
+        msg = "Testing "+Metadata.JAR_EXTENSION_NAME;
+        Assert.assertNotNull(msg, moussakaMdata.getJarExtensionName());
+        Assert.assertEquals(msg, Moussaka.JAR_EXTENSION_NAME, moussakaMdata.getJarExtensionName());
+        
+        msg = "Testing "+Metadata.JAR_SPECIFICATION_VERSION;
+        Assert.assertNotNull(msg,moussakaMdata.getJarSpecificationVersion());
+        Assert.assertEquals(msg,Moussaka.JAR_SPECIFICATION_VERSION, moussakaMdata.getJarSpecificationVersion());
+        
+        msg = "Testing "+Metadata.JAR_IMPLEMENTATION_VERSION;
+        Assert.assertNotNull(msg,moussakaMdata.getjarImplementationVersion());
+        Assert.assertEquals(msg,Moussaka.JAR_IMPLEMENTATION_VERSION, moussakaMdata.getjarImplementationVersion());
+    } 
 }

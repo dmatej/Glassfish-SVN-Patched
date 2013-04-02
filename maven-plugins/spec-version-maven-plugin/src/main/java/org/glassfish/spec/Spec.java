@@ -41,7 +41,6 @@ package org.glassfish.spec;
 
 import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Properties;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -163,11 +162,6 @@ public final class Spec {
         }
     }
     
-//    public Spec(JarFile jar) throws IOException {
-//        this.artifact = Artifact.fromJar(jar);
-//        this.metadata = Metadata.fromJar(jar);
-//    }
-
     public Artifact getArtifact() {
         return artifact;
     }
@@ -181,7 +175,6 @@ public final class Spec {
      */
     private static void err(String s) {
 	System.out.println("ERROR: " + s);
-//	errs++;
     }
 
     /**
@@ -189,18 +182,6 @@ public final class Spec {
      */
     private static void warn(String s) {
 	System.out.println("WARNING: " + s);
-    }
-
-    /**
-     * Does the specified property have the expected value?
-     */
-    private static void pcheck(Properties p, String name, String expected) {
-	String value = p.getProperty(name);
-	if (value == null)
-	    err("Maven property " + name + " is missing");
-	else if (!value.equals(expected))
-	    err("Maven property " + name + " is " + value +
-		" but should be " + expected);
     }
 
     /**

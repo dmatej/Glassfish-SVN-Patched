@@ -132,6 +132,12 @@ public class CheckVersionMojo extends AbstractSpecMojo {
      */
     protected String implBuild;
     
+    /**
+     * 
+     * @parameter expression="${help}"
+     */
+    protected Boolean help;
+    
 
     private static Console cons;    
     
@@ -147,8 +153,7 @@ public class CheckVersionMojo extends AbstractSpecMojo {
 	return s;
     }
     
-    private static boolean getBooleanProperty(Properties p, String name,
-						boolean def) {
+    private static boolean getBooleanProperty(Properties p, String name, boolean def) {
 	String s = p.getProperty(name);
 	if (s == null)
 	    return def;
@@ -166,27 +171,27 @@ public class CheckVersionMojo extends AbstractSpecMojo {
     private static void printParam(String arg, String desc){
         StringBuilder sb = new StringBuilder("\t-D");
         System.out.println(sb.append(arg).append(' ').append(desc).toString());
-    }    
-    
-    private void usage(){
-        printParam("properties","file\tread settings from property file");
-        printParam("nonfinal","\t\tnon-final specification");
-        printParam("standalone","\t\tAPI has a standalone implementation");
-        printParam("apijar","api.jar\tAPI jar file");
-        printParam("impljar","impl.jar\timplementation jar file");
-        printParam("apipackage","package\tAPI package");
-        printParam("implpackage","package\timplementation package");
-        printParam("specversion","version\tversion number of the JCP specification");
-        printParam("specimplversion","vers\tversion number of the API classes");
-        printParam("implversion","version\tversion number of the implementation");
-        printParam("newspecversion","vers\tversion number of the spec under development");
-        printParam("specbuild","num\tbuild number of spec API jar file");
-        printParam("newimplversion","vers\tversion number of the implementation when final");
-        printParam("implbuild","num\tbuild number of implementation jar file");        
     }
     
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        if (help) {
+            printParam("properties", "file\tread settings from property file");
+            printParam("nonfinal", "\t\tnon-final specification");
+            printParam("standalone", "\t\tAPI has a standalone implementation");
+            printParam("apijar", "api.jar\tAPI jar file");
+            printParam("impljar", "impl.jar\timplementation jar file");
+            printParam("apipackage", "package\tAPI package");
+            printParam("implpackage", "package\timplementation package");
+            printParam("specversion", "version\tversion number of the JCP specification");
+            printParam("specimplversion", "vers\tversion number of the API classes");
+            printParam("implversion", "version\tversion number of the implementation");
+            printParam("newspecversion", "vers\tversion number of the spec under development");
+            printParam("specbuild", "num\tbuild number of spec API jar file");
+            printParam("newimplversion", "vers\tversion number of the implementation when final");
+            printParam("implbuild", "num\tbuild number of implementation jar file");
+            return;
+        }
         
         Artifact artifact = null;
         
@@ -228,7 +233,28 @@ public class CheckVersionMojo extends AbstractSpecMojo {
             }
         }
 
-        // check args and fail accordingly
+        if (isAPI) {
+	    if (implJar != null)
+		fail("--impljar must not be specified if no standalone implementation");
+	    if (implPackage != null)
+		fail("--implpackage must not be specified if no standalone implementation");
+	    if (implVersion != null)
+		fail("--implversion must not be specified if no standalone implementation");
+	    if (newImplVersion != null)
+		fail("--newimplversion must not be specified if no standalone implementation");
+	}
+
+	if (isFinal) {
+	    if (newSpecVersion != null)
+		fail("--newspecversion must not be specified for final specification");
+	    if (specBuild != null)
+		fail("--specbuild must not be specified for final specification");
+	    if (newImplVersion != null)
+		fail("--newimplversion must not be specified for final specification");
+	    if (implBuild != null)
+		fail("--implbuild must not be specified for final specification");
+	}
+        
         
         // if no options, prompt for everything
         if (properties == null
@@ -271,10 +297,12 @@ public class CheckVersionMojo extends AbstractSpecMojo {
             }
         }
         
+        Spec spec;
         if(isAPI){
-            Spec spec = new Spec(artifact, specVersion, newSpecVersion, specImplVersion);
+            spec = new Spec(artifact, specVersion, newSpecVersion, specImplVersion);
         } else {
-            Spec spec = new Spec(artifact, implVersion, newImplVersion, implVersion);
+            spec = new Spec(artifact, implVersion, newImplVersion, implVersion);
         }
+        spec.getMetadata().verify();
     }
 }

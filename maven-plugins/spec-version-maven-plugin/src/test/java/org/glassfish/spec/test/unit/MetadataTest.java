@@ -45,7 +45,8 @@ import org.glassfish.spec.ComplianceException;
 import org.glassfish.spec.Metadata;
 import org.glassfish.spec.test.sets.Courgette;
 import org.glassfish.spec.test.sets.Ratatouille;
-import org.glassfish.spec.test.sets.Womba;
+import org.glassfish.spec.test.sets.Aubergine;
+import org.glassfish.spec.test.sets.Moussaka;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -55,17 +56,18 @@ import org.junit.Test;
  * @author Romain Grecourt
  */
 public class MetadataTest {
-    private static Artifact wombaArtifact;
+    private static Artifact aubergineArtifact;
     private static Artifact courgetteArtifact;
     private static Artifact ratatouilleArtifact;
+    private static Artifact moussakaArtifact;
     
     @BeforeClass
     public static void init() {
         // womba is a non final API artifact
-        wombaArtifact = new Artifact(
-                Womba.GROUPID,
-                Womba.ARTIFACTID,
-                Womba.MAVEN_VERSION);
+        aubergineArtifact = new Artifact(
+                Aubergine.GROUPID,
+                Aubergine.ARTIFACTID,
+                Aubergine.MAVEN_VERSION);
         
         // courgette is a final API artifact
         courgetteArtifact = new Artifact(
@@ -79,7 +81,11 @@ public class MetadataTest {
                 Ratatouille.ARTIFACTID,
                 Ratatouille.MAVEN_VERSION);
         
-        // TODO final Standalone artifact
+        // moussaka is a non final standalone artifact
+        moussakaArtifact = new Artifact(
+                Moussaka.GROUPID,
+                Moussaka.ARTIFACTID,
+                Moussaka.MAVEN_VERSION);
     }
     
     public static void positive(String key, String expected, String value){
@@ -90,22 +96,22 @@ public class MetadataTest {
     
     @Test
     public void nonFinalAPITest() {
-        Assert.assertEquals("womba is an API artifact",true,wombaArtifact.isAPI());
-        Assert.assertEquals("womba is not final",false,wombaArtifact.isFinal());
+        Assert.assertEquals("Aubergine is an API artifact",true,aubergineArtifact.isAPI());
+        Assert.assertEquals("Aubergine is not final",false,aubergineArtifact.isFinal());
         
         Metadata mdata = Metadata.generate(
-                wombaArtifact,
-                Womba.SPEC_VERSION,
-                Womba.NEW_SPEC_VERSION,
+                aubergineArtifact,
+                Aubergine.SPEC_VERSION,
+                Aubergine.NEW_SPEC_VERSION,
                 null);
         Assert.assertNotNull(mdata);
         
-        positive(Metadata.BUNDLE_SYMBOLIC_NAME,Womba.BUNDLE_SYMBOLIC_NAME,mdata.getBundleSymbolicName());
-        positive(Metadata.BUNDLE_SPEC_VERSION,Womba.BUNDLE_SPEC_VERSION,mdata.getBundleSpecVersion());
-        positive(Metadata.BUNDLE_VERSION,Womba.BUNDLE_VERSION,mdata.getBundleVersion());
-        positive(Metadata.JAR_EXTENSION_NAME,Womba.JAR_EXTENSION_NAME,mdata.getJarExtensionName());
-        positive(Metadata.JAR_SPECIFICATION_VERSION,Womba.JAR_SPECIFICATION_VERSION,mdata.getJarSpecificationVersion());
-        positive(Metadata.JAR_IMPLEMENTATION_VERSION,Womba.JAR_IMPLEMENTATION_VERSION,mdata.getjarImplementationVersion());
+        positive(Metadata.BUNDLE_SYMBOLIC_NAME,Aubergine.BUNDLE_SYMBOLIC_NAME,mdata.getBundleSymbolicName());
+        positive(Metadata.BUNDLE_SPEC_VERSION,Aubergine.BUNDLE_SPEC_VERSION,mdata.getBundleSpecVersion());
+        positive(Metadata.BUNDLE_VERSION,Aubergine.BUNDLE_VERSION,mdata.getBundleVersion());
+        positive(Metadata.JAR_EXTENSION_NAME,Aubergine.JAR_EXTENSION_NAME,mdata.getJarExtensionName());
+        positive(Metadata.JAR_SPECIFICATION_VERSION,Aubergine.JAR_SPECIFICATION_VERSION,mdata.getJarSpecificationVersion());
+        positive(Metadata.JAR_IMPLEMENTATION_VERSION,Aubergine.JAR_IMPLEMENTATION_VERSION,mdata.getjarImplementationVersion());
     }
     
     @Test
@@ -148,6 +154,26 @@ public class MetadataTest {
         positive(Metadata.JAR_IMPLEMENTATION_VERSION,Ratatouille.JAR_IMPLEMENTATION_VERSION,mdata.getjarImplementationVersion());
     }
     
+    @Test
+    public void nonFinalStandaloneTest() {
+        Assert.assertEquals("moussaka is a standalone artifact",false,moussakaArtifact.isAPI());
+        Assert.assertEquals("moussaka is non final",false,moussakaArtifact.isFinal());
+        
+        Metadata mdata = Metadata.generate(
+                moussakaArtifact,
+                Moussaka.SPEC_VERSION,
+                Moussaka.NEW_IMPL_VERSION,
+                Moussaka.IMPL_VERSION);
+        Assert.assertNotNull(mdata);
+        
+        positive(Metadata.BUNDLE_SYMBOLIC_NAME,Moussaka.BUNDLE_SYMBOLIC_NAME,mdata.getBundleSymbolicName());
+        positive(Metadata.BUNDLE_SPEC_VERSION,Moussaka.BUNDLE_SPEC_VERSION,mdata.getBundleSpecVersion());
+        positive(Metadata.BUNDLE_VERSION,Moussaka.BUNDLE_VERSION,mdata.getBundleVersion());
+        positive(Metadata.JAR_EXTENSION_NAME,Moussaka.JAR_EXTENSION_NAME,mdata.getJarExtensionName());
+        positive(Metadata.JAR_SPECIFICATION_VERSION,Moussaka.JAR_SPECIFICATION_VERSION,mdata.getJarSpecificationVersion());
+        positive(Metadata.JAR_IMPLEMENTATION_VERSION,Moussaka.JAR_IMPLEMENTATION_VERSION,mdata.getjarImplementationVersion());
+    }
+    
     public static void negative(
             Artifact artifact,
             String version,
@@ -169,12 +195,12 @@ public class MetadataTest {
     @Test
     public void negativeNonFinalAPITest() {
         // test specVersion == newSpecVersion for non final API
-        negative(wombaArtifact, Womba.SPEC_VERSION, Womba.SPEC_VERSION, null);
+        negative(aubergineArtifact, Aubergine.SPEC_VERSION, Aubergine.SPEC_VERSION, null);
         
         // test with specVersion > newSpecVersion for non final API
-        negative(wombaArtifact, Womba.NEW_SPEC_VERSION, Womba.SPEC_VERSION, null);
+        negative(aubergineArtifact, Aubergine.NEW_SPEC_VERSION, Aubergine.SPEC_VERSION, null);
         
         // test specVersion with a big random number
-        negative(wombaArtifact, "50", Womba.SPEC_VERSION, null);
+        negative(aubergineArtifact, "50", Aubergine.SPEC_VERSION, null);
     }
 }

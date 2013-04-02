@@ -301,11 +301,13 @@ public final class Metadata {
                     //  jar Extension-Name:		${API_PACKAGE}
                     //  jar Specification-Version:	${SPEC_VERSION}.99.${SPEC_BUILD}
                     //  jar Implementation-Version:	${NEW_IMPL_VERSION}-b${IMPL_BUILD}
-
+                    
+                    ArtifactVersion implAv = new DefaultArtifactVersion(implVersion);
+                    
                     metadata = new Metadata(
                             artifact.getImplNamespace() + "." + artifact.getApiPackage(),
                             specVersion + NONFINAL_BUILD_SEPARATOR + artifact.getBuildNumber(),
-                            implVersion + NONFINAL_BUILD_SEPARATOR + artifact.getBuildNumber(),
+                            implAv.getMajorVersion()+"."+implAv.getMinorVersion() + NONFINAL_BUILD_SEPARATOR + artifact.getBuildNumber(),
                             artifact.getApiPackage(),
                             specVersion + NONFINAL_BUILD_SEPARATOR_SPEC + artifact.getBuildNumber(),
                             newVersion + "-b" + artifact.getBuildNumber());
