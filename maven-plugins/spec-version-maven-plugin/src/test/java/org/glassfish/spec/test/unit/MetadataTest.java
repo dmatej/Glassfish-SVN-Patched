@@ -41,7 +41,6 @@
 package org.glassfish.spec.test.unit;
 
 import org.glassfish.spec.Artifact;
-import org.glassfish.spec.ComplianceException;
 import org.glassfish.spec.Metadata;
 import org.glassfish.spec.test.sets.Courgette;
 import org.glassfish.spec.test.sets.Ratatouille;
@@ -184,14 +183,11 @@ public class MetadataTest {
                 + " - newVersion (" + newVersion + ")"
                 + " - implVersion (" + implVersion + ")"
                 + " should not be compliant";
-        try {
-            Metadata.generate(artifact, version, newVersion, implVersion);
-            Assert.fail(msg);
-        } catch (ComplianceException cex) {
-            Assert.assertFalse(msg, cex.isCompliant());
-        }
+        Metadata mdata =
+                Metadata.generate(artifact, version, newVersion, implVersion);
+        Assert.assertFalse(msg, mdata.getErrors().isEmpty());
     }
-    
+
     @Test
     public void negativeNonFinalAPITest() {
         // test specVersion == newSpecVersion for non final API

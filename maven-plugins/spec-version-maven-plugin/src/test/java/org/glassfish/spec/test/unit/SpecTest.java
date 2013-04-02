@@ -41,11 +41,12 @@
 package org.glassfish.spec.test.unit;
 
 import org.glassfish.spec.Artifact;
-import org.glassfish.spec.ComplianceException;
 import org.glassfish.spec.Spec;
 import org.glassfish.spec.test.sets.Aubergine;
+import org.glassfish.spec.test.sets.Courgette;
+import org.glassfish.spec.test.sets.Ratatouille;
+import org.glassfish.spec.test.sets.Moussaka;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -53,43 +54,71 @@ import org.junit.Test;
  * @author Romain Grecourt
  */
 public class SpecTest {
-
-    private static Artifact aubergineArtifact;
-
-    @BeforeClass
-    public static void init() {
-        // Aubergine is a non final API artifact
-        aubergineArtifact = new Artifact(
-                Aubergine.GROUPID,
-                Aubergine.ARTIFACTID,
-                Aubergine.MAVEN_VERSION);
-
-        // TODO non final Standalone artifact
-        // TODO final API artifact
-        // TODO final Standalone artifact
-    }
-    
     public static void positive(
             Artifact artifact,
             String version,
             String newVersion,
             String implVersion) {
 
-        String msg = artifact + " - specVersion (" + version + ")"
+        Spec spec = new Spec(artifact, version, newVersion, implVersion);
+        spec.verify();
+        if(!spec.getErrors().isEmpty()){
+            String msg = artifact + " - specVersion (" + version + ")"
                 + " - newVersion (" + newVersion + ")"
                 + " - implVersion (" + implVersion + ")"
                 + " should be compliant";
-        try {
-            Spec spec = new Spec(artifact, version, newVersion, implVersion);
-            spec.getMetadata().verify();
-            Assert.assertTrue(msg,true);
-        } catch (ComplianceException cex) {
-            Assert.assertFalse(msg, cex.isCompliant());
+            for(String error : spec.getErrors()){
+                msg = "\n" + error;
+            }
+            Assert.fail(msg);
         }
     }
     
     @Test
-    public void simpleAPITest(){
-        positive(aubergineArtifact,Aubergine.SPEC_VERSION,Aubergine.NEW_SPEC_VERSION,Aubergine.JAR_IMPLEMENTATION_VERSION);
+    public void nonFinalAPI() {
+        positive(
+                new Artifact(
+                Aubergine.GROUPID,
+                Aubergine.ARTIFACTID,
+                Aubergine.MAVEN_VERSION),
+                Aubergine.SPEC_VERSION,
+                Aubergine.NEW_SPEC_VERSION,
+                Aubergine.IMPL_VERSION);
+    }
+
+    @Test
+    public void finalAPI() {
+        positive(
+                new Artifact(
+                Courgette.GROUPID,
+                Courgette.ARTIFACTID,
+                Courgette.MAVEN_VERSION),
+                Courgette.SPEC_VERSION,
+                null,
+                Courgette.IMPL_VERSION);
+    }
+
+    @Test
+    public void nonFinalStandlone() {
+        positive(
+                new Artifact(
+                Moussaka.GROUPID,
+                Moussaka.ARTIFACTID,
+                Moussaka.MAVEN_VERSION),
+                Moussaka.SPEC_VERSION,
+                Moussaka.NEW_IMPL_VERSION,
+                Moussaka.IMPL_VERSION);
+    }
+    
+    @Test
+    public void finalStandalone() {
+        positive(
+                new Artifact(
+                Ratatouille.GROUPID,
+                Ratatouille.ARTIFACTID,
+                Ratatouille.MAVEN_VERSION),
+                Ratatouille.SPEC_VERSION,
+                null,
+                Ratatouille.IMPL_VERSION);
     }
 }

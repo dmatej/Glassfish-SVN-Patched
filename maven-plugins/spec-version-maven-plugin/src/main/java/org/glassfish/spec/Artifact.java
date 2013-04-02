@@ -41,7 +41,11 @@ package org.glassfish.spec;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Enumeration;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Properties;
+import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
@@ -55,12 +59,12 @@ public final class Artifact {
 
     private String groupId;
     private String artifactId;
-    // version is specVersion
     private ArtifactVersion version;
     private String absoluteVersion;
     private String buildNumber;
     private String apiPackage;
     private String implNamespace;
+    private final List<String> errors;
     private static final String[] buildNumberSeparators = new String[] {"m", "b"};
     public static final String SNAPSHOT_QUALIFIER = "SNAPSHOT";
     public static final String API_SUFFIX = "-api";
@@ -109,6 +113,7 @@ public final class Artifact {
         this.version = new DefaultArtifactVersion(_version);
         this.buildNumber = getBuildNumber(version.getQualifier());
         this.absoluteVersion = getAbsoluteVersion(version);
+        this.errors = new LinkedList<String>();
         
         if (isAPI()) {
             apiPackage = groupId;
@@ -116,20 +121,14 @@ public final class Artifact {
             apiPackage = artifactId;
         }
         
-        ComplianceException cex = new ComplianceException();
-        Spec.checkApiPackage(apiPackage,cex);
+        Spec.checkApiPackage(apiPackage,errors);
         
         implNamespace = null;
         if (!isAPI()) {
             implNamespace = groupId;
             if (implNamespace.startsWith("javax.")) {
-                String msg = "Implementation packages must NOT "+Spec.START_WITH_JAVAX;
-                cex.addBreaker(msg);
+                errors.add("Implementation packages must NOT "+Spec.START_WITH_JAVAX);
             }
-        }
-        
-        if(!cex.isCompliant()){
-            throw cex;
         }
     }
 
@@ -177,9 +176,24 @@ public final class Artifact {
     public String getImplNamespace() {
         return implNamespace;
     }
+
+    public List<String> getErrors() {
+        return errors;
+    }
+    
+    private static ZipEntry getPomPropertiesFile(JarFile jar){
+        Enumeration<JarEntry> entries = jar.entries();
+        while(entries.hasMoreElements()){
+            JarEntry entry = entries.nextElement();
+            if(entry.getName().endsWith("pom.properties")){
+                return entry;
+            }
+        }
+        return null;
+    }
     
     public static Artifact fromJar(JarFile jar) throws IOException {
-        ZipEntry entry = jar.getEntry("pom.properties");
+        ZipEntry entry = getPomPropertiesFile(jar);
         if (entry == null) {
             throw new RuntimeException("unable to find pom.properties "
                     + "files inside " + jar.getName());
@@ -197,6 +211,7 @@ public final class Artifact {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        sb.append("[ ");
         if(!isFinal()){
             sb.append("non ");
         }
@@ -207,6 +222,7 @@ public final class Artifact {
             sb.append("standalone ");
         }
         sb.append("jar ");
+        sb.append("] ");
         sb.append('(');
         sb.append(groupId);
         sb.append(':');

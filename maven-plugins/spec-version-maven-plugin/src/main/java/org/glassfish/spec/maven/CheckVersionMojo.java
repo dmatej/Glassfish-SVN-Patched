@@ -303,6 +303,6 @@ public class CheckVersionMojo extends AbstractSpecMojo {
         } else {
             spec = new Spec(artifact, implVersion, newImplVersion, implVersion);
         }
-        spec.getMetadata().verify();
+        spec.verify();
     }
 }

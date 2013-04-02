@@ -39,8 +39,10 @@
  */
 package org.glassfish.spec;
 
+import java.io.IOException;
 import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -52,114 +54,174 @@ import java.util.jar.JarFile;
 public final class Spec {
     private Artifact artifact;
     private Metadata metadata;
+    private String specVersion;
+    private String newVersion;
+    private String implVersion;
+    
     static final String START_WITH_JAVAX = "start with \"javax.\"";
     
-    public static void checkSpecVersion(String s, ComplianceException ex) {
-        if (s!=null && !s.matches("[0-9]+\\.[0-9]+")) {
-            String msg = "invalid specVersion (" + s + "):"
+    static void checkSpecVersion(String s, String key, List<String> errors) {
+        if (s != null && !s.matches("[0-9]+\\.[0-9]+")) {
+            String msg = "invalid "+key+" (" + s + "):"
                     + " JCP specification version number "
                     + "must be of the form <major>.<minor>";
-            if (ex != null) {
-                ex.addBreaker(msg);
-            } else {
-                throw new ComplianceException(msg);
+            if (errors != null) {
+                errors.add(msg);
             }
         }
     }
-    
-    public static void checkApiPackage(String s, ComplianceException ex) {
-        if (!s.startsWith("javax.")) {
-            String msg = "API packages must" + START_WITH_JAVAX + " but is \"" + s + "\"";
-            if (ex != null) {
-                ex.addBreaker(msg);
-            } else {
-                throw new ComplianceException(msg);
-            }
-        }
-    }
-    
-    public static void check(
-            Artifact _artifact,
-            String specVersion,
-            String newVersion,
-            String implVersion){
-        
-        if(_artifact == null 
-                || specVersion == null || specVersion.isEmpty()
-                || implVersion == null || implVersion.isEmpty()){
-            
-             throw new IllegalArgumentException("artifact, specVersion"
-                     + " and implVersion can't be null or empty");
-        }
-        
-        if (!_artifact.isFinal()) {
-            if (newVersion == null) {
-                
-                throw new IllegalArgumentException("new version is required for nonfinal");
-                
-            } else if (!_artifact.specVersionEquals(newVersion)) {
-                
-                throw new IllegalArgumentException(
-                        "maven version should be "
-                        + newVersion + "-[b|m]" + _artifact.getBuildNumber()
-                        + "[-SNAPSHOT]");
-            }
-        } else {
-            if (newVersion != null && !newVersion.isEmpty()) {
-                
-                throw new IllegalArgumentException(
-                        "newspecversion must not be specified for final specification");
-            }
-        }
-        
-        ComplianceException cex = new ComplianceException();
-        checkSpecVersion(specVersion,cex);
-        checkSpecVersion(newVersion,cex);
 
-        if (_artifact.isAPI()) {
-            String sv = _artifact.isFinal() ? specVersion : newVersion;
+    static void checkApiPackage(String s, List<String> errors) {
+        if (s!=null && !s.startsWith("javax.")) {
+            String msg = "API packages must" + START_WITH_JAVAX + " but is \"" + s + "\"";
+            if (errors != null) {
+                errors.add(msg);
+            }
+        }
+    }
+    
+    public void verify(){
+        
+//        if(_artifact == null 
+//                || specVersion == null || specVersion.isEmpty()
+//                || implVersion == null || implVersion.isEmpty()){
+//            
+//             throw new IllegalArgumentException("artifact, specVersion"
+//                     + " and implVersion can't be null or empty");
+//        }
+        
+//        if (!_artifact.isFinal()) {
+//            if (newVersion == null) {
+//                
+//                throw new IllegalArgumentException("new version is required for nonfinal");
+//                
+//            } else if (!_artifact.specVersionEquals(newVersion)) {
+//                
+//                throw new IllegalArgumentException(
+//                        "maven version should be "
+//                        + newVersion + "-[b|m]" + _artifact.getBuildNumber()
+//                        + "[-SNAPSHOT]");
+//            }
+//        } else {
+//            if (newVersion != null && !newVersion.isEmpty()) {
+//                
+//                throw new IllegalArgumentException(
+//                        "newspecversion must not be specified for final specification");
+//            }
+//        }
+        
+        List<String> errors = artifact.getErrors();
+
+        if (artifact.isAPI()) {
+
+            checkSpecVersion(specVersion,"spec version",errors);
+            checkSpecVersion(newVersion,"new spec version",errors);            
+            String sv = artifact.isFinal() ? specVersion : newVersion;
             
             if (!(implVersion.equals(sv)
                     || implVersion.startsWith(sv + ".")
                     || implVersion.startsWith(sv + "-"))) {
-                cex.addBreaker("spec implementation version must"
-                        + " start with JCP specification version number");
+                
+                errors.add("spec implementation ("+implVersion+") version must"
+                        + " start with JCP specification version number ("+sv+")");
             }
+        } else {
+            checkSpecVersion(specVersion,"spec version",errors);
+            checkSpecVersion(newVersion,"new impl version",errors);              
         }
-
-        if (!cex.isCompliant()) {
-            throw cex;
-        }
+        
+//        if(bundleSymbolicName == null
+//                || bundleVersion == null){
+//            return;
+//        }
+//        
+//        boolean isAPI = false;
+//        if (bundleSymbolicName.contains(Artifact.API_SUFFIX)) {
+//            isAPI = true;
+//        }
+//        boolean isFinal = true;
+//        if (bundleVersion.contains(NONFINAL_BUILD_SEPARATOR)) {
+//            isFinal = false;
+//        }
+//
+//        String apiPackage = jarExtensionName;
+//        Spec.checkApiPackage(apiPackage, errors);
+//        
+//        if (isAPI) {
+//            //  OSGi Bundle-SymbolicName:	${API_PACKAGE}-api
+//            if (bundleSymbolicName!=null
+//                    && apiPackage != null
+//                    &&!apiPackage.equals(
+//                    bundleSymbolicName.substring(0,
+//                    bundleSymbolicName.lastIndexOf(Artifact.API_SUFFIX)))) {
+//                errors.add(BUNDLE_SYMBOLIC_NAME+" should be"
+//                        + " \"" + apiPackage + Artifact.API_SUFFIX + "\"");
+//            }
+//        } else {
+//            //  OSGi Bundle-SymbolicName:	${IMPL_NAMESPACE}.${API_PACKAGE}
+//            if (bundleSymbolicName!= null
+//                    && apiPackage != null
+//                    && !bundleSymbolicName.contains("." + apiPackage)) {
+//                 errors.add(BUNDLE_SYMBOLIC_NAME + " (" + bundleSymbolicName + ") "
+//                        + "should end with \"."+ apiPackage + "\"");
+//            }
+//        }
+//
+//        if (isFinal) {
+//            //  OSGi Bundle-Version:    ${SPEC_IMPL_VERSION}
+//            //  jar Implementation-Version:	${SPEC_IMPL_VERSION}
+//            if (bundleVersion!=null
+//                    && jarImplementationVersion !=null
+//                    && !bundleVersion.equals(jarImplementationVersion)) {
+//                 errors.add(BUNDLE_VERSION
+//                        + " (" + bundleVersion + ") should be equal"
+//                        + " to "+JAR_IMPLEMENTATION_VERSION
+//                        + " (" + jarImplementationVersion + ")");
+//            }
+//
+//            Spec.checkSpecVersion(jarSpecificationVersion, "jarSpecificationVersion",errors);
+//        } else {
+//            // Specification-Version can't use '.b' for the build number
+//            if (jarSpecificationVersion.contains(".b")) {
+//                 errors.add(JAR_SPECIFICATION_VERSION
+//                        +" cannot contain '.b': "+ jarSpecificationVersion);
+//            }
+//
+//            // Specification-Version and Bundle-Version should be similar
+//            // however one uses .b. as a separator, the other does not
+//            if (!bundleVersion.replace(
+//                    NONFINAL_BUILD_SEPARATOR,
+//                    NONFINAL_BUILD_SEPARATOR_SPEC).equals(jarSpecificationVersion)) {
+//                errors.add(BUNDLE_VERSION + " and "
+//                        + JAR_SPECIFICATION_VERSION + " mismatch");
+//            }
+//
+//            //  .99.XX
+//            int idx = jarSpecificationVersion.lastIndexOf(NONFINAL_BUILD_SEPARATOR_SPEC);
+//            Spec.checkSpecVersion(jarSpecificationVersion.substring(0, idx), "jarSpecificationVersion", errors);
+//            
+//            // .99-bXX
+//            idx = bundleVersion.lastIndexOf(NONFINAL_BUILD_SEPARATOR);
+//            Spec.checkSpecVersion(bundleVersion.substring(0, idx), "bundleVersion",errors);
+//        }        
     }
 
+    public Spec(JarFile jar) throws IOException{
+        this.artifact = Artifact.fromJar(jar);
+        this.metadata = Metadata.fromJar(jar);
+    }
+    
     public Spec(
             Artifact _artifact,
-            String specVersion,
-            String newVersion,
-            String implVersion) {
+            String _specVersion,
+            String _newVersion,
+            String _implVersion) {
         
-        ComplianceException cex = new ComplianceException();
-        try {
-            check(_artifact, specVersion, newVersion, implVersion);
-        } catch (ComplianceException ex) {
-            cex.addBreaker(ex);
-        } finally {
-            this.artifact = _artifact;
-        }
-
-        try {
-            this.metadata = Metadata.generate(
-                    artifact,
-                    specVersion,
-                    newVersion,
-                    implVersion);
-        } catch (ComplianceException ex) {
-            cex.addBreaker(ex);
-        }
-
-        if (!cex.isCompliant()) {
-            throw cex;
-        }
+        this.specVersion = _specVersion;
+        this.newVersion = _newVersion;
+        this.implVersion = _implVersion;
+        this.artifact = _artifact;
+        this.metadata = Metadata.generate(artifact,specVersion,newVersion,implVersion);
     }
     
     public Artifact getArtifact() {
@@ -170,16 +232,14 @@ public final class Spec {
         return metadata;
     }
     
-    /**
-     * Print and count an error.
-     */
+    public List<String> getErrors(){
+        return metadata.getErrors();
+    }
+    
     private static void err(String s) {
 	System.out.println("ERROR: " + s);
     }
 
-    /**
-     * Print a warning.
-     */
     private static void warn(String s) {
 	System.out.println("WARNING: " + s);
     }

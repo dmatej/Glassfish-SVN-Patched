@@ -37,50 +37,80 @@
  * only if the new code is made subject to such option by the copyright
  * holder.
  */
-package org.glassfish.spec;
+package org.glassfish.spec.maven;
 
-import java.util.LinkedList;
+import java.io.File;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.jar.JarFile;
+import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.MojoFailureException;
+import org.codehaus.plexus.util.FileUtils;
+import org.glassfish.spec.Spec;
+
 
 /**
  *
+ * @goal check-distribution
+ *
  * @author Romain Grecourt
  */
-public final class ComplianceException extends RuntimeException {
-    private final List<String> breakers = new LinkedList<String>();
+public class CheckDistribution extends AbstractMojo {
     
-    public ComplianceException() {
-    }
-
-    public ComplianceException(String string) {
-        this();
-        breakers.add(string);
-    }
+    /**
+     * @parameter expression="${ignoreFailures}" default-value="false"
+     */
+    protected boolean ignoreFailures;     
     
-    public void addBreaker(String s){
-        breakers.add(s);
-    }
+    /**
+     * include pattern
+     * 
+     * @parameter expression="${includes}" default-value="javax*.jar"
+     */
+    protected String includes;
     
-    public void addBreaker(ComplianceException e){
-        breakers.addAll(e.breakers);
-    }
+    /**
+     * exclude pattern
+     * 
+     * @parameter expression="${excludes}"
+     */
+    protected String excludes;
     
-    public boolean isCompliant(){
-        return breakers.isEmpty();
-    }
-
+    /**
+     * include pattern for inclusion
+     * 
+     * @required
+     * @parameter expression="${dir}"
+     */
+    protected File dir;
+    
     @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for(int i=0; i < breakers.size() ; i++){
-            sb.append(String.valueOf(i));
-            sb.append('.');
-            sb.append(' ');
-            sb.append(breakers.get(i));
-            if(i < breakers.size()-1){
-                sb.append('\n');
+    public void execute() throws MojoExecutionException, MojoFailureException {
+        try {
+            List<File> jars = Collections.EMPTY_LIST;
+            try {
+                jars = FileUtils.getFiles(dir, includes, excludes);
+            } catch (IOException ex) {
+                throw new MojoExecutionException(ex.getMessage(), ex);
             }
+            
+            for (File jar : jars) {
+                Spec spec = new Spec(new JarFile(jar));
+                
+                if (!spec.getErrors().isEmpty()) {
+                    System.out.println("");
+                    System.out.println("[ " + jar.getName() + " ] "
+                            + spec.getArtifact().toString());
+                    for (int i = 0; i < spec.getErrors().size(); i++) {
+                        System.out.println("-" + String.valueOf(i) 
+                                + " " + spec.getErrors().get(i));
+                    }
+                }
+            }
+        } catch (IOException ex) {
+            getLog().warn(ex.getMessage(), ex);
         }
-        return sb.toString();
     }
 }
