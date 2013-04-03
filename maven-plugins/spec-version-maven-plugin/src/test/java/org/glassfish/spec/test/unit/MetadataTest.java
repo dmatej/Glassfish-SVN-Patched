@@ -42,6 +42,7 @@ package org.glassfish.spec.test.unit;
 
 import org.glassfish.spec.Artifact;
 import org.glassfish.spec.Metadata;
+import org.glassfish.spec.Spec;
 import org.glassfish.spec.test.sets.Courgette;
 import org.glassfish.spec.test.sets.Ratatouille;
 import org.glassfish.spec.test.sets.Aubergine;
@@ -98,11 +99,11 @@ public class MetadataTest {
         Assert.assertEquals("Aubergine is an API artifact",true,aubergineArtifact.isAPI());
         Assert.assertEquals("Aubergine is not final",false,aubergineArtifact.isFinal());
         
-        Metadata mdata = Metadata.generate(
+        Metadata mdata = new Spec(
                 aubergineArtifact,
                 Aubergine.SPEC_VERSION,
                 Aubergine.NEW_SPEC_VERSION,
-                null);
+                Aubergine.IMPL_VERSION).getMetadata();
         Assert.assertNotNull(mdata);
         
         positive(Metadata.BUNDLE_SYMBOLIC_NAME,Aubergine.BUNDLE_SYMBOLIC_NAME,mdata.getBundleSymbolicName());
@@ -118,11 +119,11 @@ public class MetadataTest {
         Assert.assertEquals("courgette is an API artifact",true,courgetteArtifact.isAPI());
         Assert.assertEquals("courgette is final",true,courgetteArtifact.isFinal());
         
-        Metadata mdata = Metadata.generate(
+        Metadata mdata = new Spec(
                 courgetteArtifact,
                 Courgette.SPEC_VERSION,
-                null,
-                Courgette.IMPL_VERSION);
+                Courgette.IMPL_VERSION,
+                Courgette.IMPL_VERSION).getMetadata();
         Assert.assertNotNull(mdata);
         
         positive(Metadata.BUNDLE_SYMBOLIC_NAME,Courgette.BUNDLE_SYMBOLIC_NAME,mdata.getBundleSymbolicName());
@@ -138,11 +139,11 @@ public class MetadataTest {
         Assert.assertEquals("ratatouille is a standalone artifact",false,ratatouilleArtifact.isAPI());
         Assert.assertEquals("ratatouille is final",true,ratatouilleArtifact.isFinal());
         
-        Metadata mdata = Metadata.generate(
+        Metadata mdata =new Spec(
                 ratatouilleArtifact,
                 Ratatouille.SPEC_VERSION,
-                null,
-                Ratatouille.IMPL_VERSION);
+                Ratatouille.IMPL_VERSION,
+                Ratatouille.IMPL_VERSION).getMetadata();
         Assert.assertNotNull(mdata);
         
         positive(Metadata.BUNDLE_SYMBOLIC_NAME,Ratatouille.BUNDLE_SYMBOLIC_NAME,mdata.getBundleSymbolicName());
@@ -158,11 +159,11 @@ public class MetadataTest {
         Assert.assertEquals("moussaka is a standalone artifact",false,moussakaArtifact.isAPI());
         Assert.assertEquals("moussaka is non final",false,moussakaArtifact.isFinal());
         
-        Metadata mdata = Metadata.generate(
+        Metadata mdata = new Spec(
                 moussakaArtifact,
                 Moussaka.SPEC_VERSION,
                 Moussaka.NEW_IMPL_VERSION,
-                Moussaka.IMPL_VERSION);
+                Moussaka.IMPL_VERSION).getMetadata();
         Assert.assertNotNull(mdata);
         
         positive(Metadata.BUNDLE_SYMBOLIC_NAME,Moussaka.BUNDLE_SYMBOLIC_NAME,mdata.getBundleSymbolicName());
@@ -183,20 +184,24 @@ public class MetadataTest {
                 + " - newVersion (" + newVersion + ")"
                 + " - implVersion (" + implVersion + ")"
                 + " should not be compliant";
-        Metadata mdata =
-                Metadata.generate(artifact, version, newVersion, implVersion);
-        Assert.assertFalse(msg, mdata.getErrors().isEmpty());
+        Spec spec = new Spec(
+                artifact,
+                version,
+                newVersion,
+                implVersion);
+        spec.verify();
+        Assert.assertFalse(msg, spec.getErrors().isEmpty());
     }
 
     @Test
     public void negativeNonFinalAPITest() {
         // test specVersion == newSpecVersion for non final API
-        negative(aubergineArtifact, Aubergine.SPEC_VERSION, Aubergine.SPEC_VERSION, null);
+        negative(aubergineArtifact, Aubergine.SPEC_VERSION, Aubergine.SPEC_VERSION, Aubergine.IMPL_VERSION);
         
         // test with specVersion > newSpecVersion for non final API
-        negative(aubergineArtifact, Aubergine.NEW_SPEC_VERSION, Aubergine.SPEC_VERSION, null);
+        negative(aubergineArtifact, Aubergine.NEW_SPEC_VERSION, Aubergine.SPEC_VERSION, Aubergine.IMPL_VERSION);
         
         // test specVersion with a big random number
-        negative(aubergineArtifact, "50", Aubergine.SPEC_VERSION, null);
+        negative(aubergineArtifact, "50", Aubergine.SPEC_VERSION, Aubergine.IMPL_VERSION);
     }
 }

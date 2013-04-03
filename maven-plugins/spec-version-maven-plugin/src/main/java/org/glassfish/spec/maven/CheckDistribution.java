@@ -98,6 +98,8 @@ public class CheckDistribution extends AbstractMojo {
             
             for (File jar : jars) {
                 Spec spec = new Spec(new JarFile(jar));
+                spec.resolve();
+                spec.verify();
                 
                 if (!spec.getErrors().isEmpty()) {
                     System.out.println("");

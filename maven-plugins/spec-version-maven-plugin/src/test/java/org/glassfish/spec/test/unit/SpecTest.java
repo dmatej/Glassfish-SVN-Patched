@@ -63,14 +63,25 @@ public class SpecTest {
         Spec spec = new Spec(artifact, version, newVersion, implVersion);
         spec.verify();
         if(!spec.getErrors().isEmpty()){
-            String msg = artifact + " - specVersion (" + version + ")"
-                + " - newVersion (" + newVersion + ")"
-                + " - implVersion (" + implVersion + ")"
-                + " should be compliant";
-            for(String error : spec.getErrors()){
-                msg = "\n" + error;
+            StringBuilder msg = new StringBuilder();
+            msg.append(artifact);
+            msg.append(" - specVersion (");
+            msg.append(version);
+            msg.append(") - newVersion (");
+            msg.append(newVersion);
+            msg.append(") - implVersion (");
+            msg.append(implVersion);
+            msg.append(") should be compliant");
+            if (!spec.getErrors().isEmpty()) {
+                msg.append(" -- ");
             }
-            Assert.fail(msg);
+            for(int i=0 ; i < spec.getErrors().size() ; i++){
+                msg.append(spec.getErrors().get(i));
+                if(i < spec.getErrors().size() -1){
+                   msg.append(" -- ");
+                }                
+            }
+            Assert.fail(msg.toString());
         }
     }
     

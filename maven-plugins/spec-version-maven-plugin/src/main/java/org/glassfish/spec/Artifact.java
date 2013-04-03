@@ -42,14 +42,13 @@ package org.glassfish.spec;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Enumeration;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+
 
 /**
  *
@@ -60,14 +59,12 @@ public final class Artifact {
     private String groupId;
     private String artifactId;
     private ArtifactVersion version;
-    private String absoluteVersion;
     private String buildNumber;
-    private String apiPackage;
-    private String implNamespace;
-    private final List<String> errors;
+    private boolean isFinal;
+    private boolean isAPI;
+    
     private static final String[] buildNumberSeparators = new String[] {"m", "b"};
     public static final String SNAPSHOT_QUALIFIER = "SNAPSHOT";
-    public static final String API_SUFFIX = "-api";
     
     private static String stripSnapshotQualifier(String qualifier) {
         if (qualifier != null) {
@@ -80,8 +77,8 @@ public final class Artifact {
     }
     
     private static String getBuildNumber(String qualifier) {
+        qualifier = stripSnapshotQualifier(qualifier);
         if (qualifier != null) {
-            qualifier = stripSnapshotQualifier(qualifier);
             for (String c : buildNumberSeparators) {
                 if (qualifier.contains(c)) {
                     return qualifier.substring(qualifier.lastIndexOf(c) + 1);
@@ -91,47 +88,20 @@ public final class Artifact {
         return null;
     }
 
-    private static String getAbsoluteVersion(ArtifactVersion version) {
-        String absoluteV =
-                version.getMajorVersion() + "." + version.getMinorVersion();
-        String qualifier = stripSnapshotQualifier(version.getQualifier());
-        if (qualifier != null && !qualifier.isEmpty()){
-            absoluteV += "-" + qualifier;
-        }
-        return absoluteV;
-    }
-
     public Artifact(String _groupId, String _artifactId, String _version) {
-        if (_groupId == null || _groupId.isEmpty()
-                || _artifactId == null || _artifactId.isEmpty()
-                || _version == null || _version.isEmpty()) {
-            throw new IllegalArgumentException("groupId, artifactId and version"
-                    + " can't be null or empty");
-        }
         this.groupId = _groupId;
         this.artifactId = _artifactId;
         this.version = new DefaultArtifactVersion(_version);
         this.buildNumber = getBuildNumber(version.getQualifier());
-        this.absoluteVersion = getAbsoluteVersion(version);
-        this.errors = new LinkedList<String>();
-        
-        if (isAPI()) {
-            apiPackage = groupId;
-        } else {
-            apiPackage = artifactId;
+        if(this.version.getQualifier() == null
+                || this.version.getQualifier().isEmpty()){
+            this.isFinal = true;
         }
-        
-        Spec.checkApiPackage(apiPackage,errors);
-        
-        implNamespace = null;
-        if (!isAPI()) {
-            implNamespace = groupId;
-            if (implNamespace.startsWith("javax.")) {
-                errors.add("Implementation packages must NOT "+Spec.START_WITH_JAVAX);
-            }
+        if(this.artifactId.endsWith(Spec.API_SUFFIX)){
+            this.isAPI=true;
         }
     }
-
+    
     public String getArtifactId() {
         return artifactId;
     }
@@ -145,40 +115,23 @@ public final class Artifact {
     }
 
     public boolean isFinal() {
-        return buildNumber == null;
+        return isFinal;
+    }
+    
+    public void setIsFinal(boolean _isFinal){
+        isFinal = _isFinal;
     }
 
     public boolean isAPI() {
-        return artifactId.equals(groupId.concat(API_SUFFIX));
-    }
-
-    public String getAbsoluteVersion() {
-        return absoluteVersion;
+        return isAPI;
     }
     
-    public boolean specVersionEquals(String version){
-        for(String c : buildNumberSeparators){
-            if(absoluteVersion.contentEquals(version +"-"+c+buildNumber)){
-                return true;
-            }
-        }
-        return false;
+    public void setIsAPI(boolean _isAPI){
+        isAPI = _isAPI;
     }
 
     public String getBuildNumber() {
         return buildNumber;
-    }
-
-    public String getApiPackage() {
-        return apiPackage;
-    }
-
-    public String getImplNamespace() {
-        return implNamespace;
-    }
-
-    public List<String> getErrors() {
-        return errors;
     }
     
     private static ZipEntry getPomPropertiesFile(JarFile jar){
@@ -195,7 +148,8 @@ public final class Artifact {
     public static Artifact fromJar(JarFile jar) throws IOException {
         ZipEntry entry = getPomPropertiesFile(jar);
         if (entry == null) {
-            throw new RuntimeException("unable to find pom.properties "
+            throw new RuntimeException(
+                    "unable to find pom.properties "
                     + "files inside " + jar.getName());
         }
         InputStream is = jar.getInputStream(entry);

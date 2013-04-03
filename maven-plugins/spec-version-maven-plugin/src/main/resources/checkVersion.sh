@@ -48,4 +48,4 @@ do
   fi
 done
 
-mvn ${project.groupId}:${project.artifactId}:${project.version}:check-version $args
+mvn ${project.groupId}:${project.artifactId}:${project.version}:cli $args

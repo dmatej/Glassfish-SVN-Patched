@@ -51,8 +51,6 @@ import java.util.Properties;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
-import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 /**
  *
@@ -73,8 +71,6 @@ public final class Metadata {
     public static final String JAR_EXTENSION_NAME = "Extension-Name";
     public static final String JAR_SPECIFICATION_VERSION = "Specification-Version";
     public static final String JAR_IMPLEMENTATION_VERSION = "Implementation-Version";
-    private static final String NONFINAL_BUILD_SEPARATOR_SPEC = ".99.";
-    private static final String NONFINAL_BUILD_SEPARATOR = NONFINAL_BUILD_SEPARATOR_SPEC+"b";
     private List<String> errors = new LinkedList<String>();
     
     private static final String[] KEYS = {
@@ -85,37 +81,57 @@ public final class Metadata {
         JAR_SPECIFICATION_VERSION,
         JAR_IMPLEMENTATION_VERSION};
 
-    private Metadata(
-            String bundleSymbolicName,
-            String bundleSpecVersion,
-            String bundleVersion,
-            String jarExtensionName,
-            String jarSpecificationVersion,
-            String jarImplementationVersion,
-            List<String> _errors) {
+    Metadata(
+            String _bundleSymbolicName,
+            String _bundleSpecVersion,
+            String _bundleVersion,
+            String _jarExtensionName,
+            String _jarSpecificationVersion,
+            String _jarImplementationVersion) {
 
-        this.bundleSymbolicName = bundleSymbolicName;
-        this.bundleSpecVersion = bundleSpecVersion;
-        this.bundleVersion = bundleVersion;
-        this.jarExtensionName = jarExtensionName;
-        this.jarSpecificationVersion = jarSpecificationVersion;
-        this.jarImplementationVersion = jarImplementationVersion;
-        this.errors = _errors;
+        this.bundleSymbolicName = 
+                _bundleSymbolicName != null ? _bundleSymbolicName : "";
+        this.bundleSpecVersion = 
+                _bundleSpecVersion != null ? _bundleSpecVersion: "";
+        this.bundleVersion =
+                _bundleVersion != null ? _bundleVersion : "";
+        this.jarExtensionName = 
+                _jarExtensionName != null ? _jarExtensionName : "";
+        this.jarSpecificationVersion = 
+                _jarSpecificationVersion != null ? _jarSpecificationVersion : "";
+        this.jarImplementationVersion = 
+                _jarImplementationVersion != null ? _jarImplementationVersion : "";
 
         this.properties = new Properties();
-        properties.put("spec.bundle.symbolic-name", String.valueOf(bundleSymbolicName));
-        properties.put("spec.bundle.spec.version", String.valueOf(bundleSpecVersion));
-        properties.put("spec.bundle.version", String.valueOf(bundleVersion));
-        properties.put("spec.extension.name", String.valueOf(jarExtensionName));
-        properties.put("spec.specification.version", String.valueOf(jarSpecificationVersion));
-        properties.put("spec.implementation.version", String.valueOf(jarImplementationVersion));
+        properties.put("spec.bundle.symbolic-name", bundleSymbolicName);
+        properties.put("spec.bundle.spec.version", bundleSpecVersion);
+        properties.put("spec.bundle.version", bundleVersion);
+        properties.put("spec.extension.name", jarExtensionName);
+        properties.put("spec.specification.version", jarSpecificationVersion);
+        properties.put("spec.implementation.version", jarImplementationVersion);
+    }
+    
+    Metadata(
+            String _bundleSymbolicName,
+            String _bundleSpecVersion,
+            String _bundleVersion,
+            String _jarExtensionName,
+            String _jarSpecificationVersion,
+            String _jarImplementationVersion,
+            List<String> _errors) {
         
-        // TODO, pass isAPI and isFinal as parameters.
+        this(_bundleSymbolicName,
+                _bundleSpecVersion,
+                _bundleVersion,
+                _jarExtensionName,
+                _jarSpecificationVersion,
+                _jarImplementationVersion);
+        this.errors = _errors;
     }
     
     // TODO extract exported package version
     // to use with the fromJar approach
-    private static Map<String, List<String>> processOsgiHeader(String headers) {
+    private static String getBundleSpecVersion(String headers) {
         Map<String, List<String>> res = new HashMap<String, List<String>>();
 
         String[] headersTokens = headers.split(";");
@@ -153,7 +169,7 @@ public final class Metadata {
         } else {
             res.put(headers, Collections.EMPTY_LIST);
         }
-        return res;
+        return "";
     }    
 
     public static Metadata fromJar(JarFile jar) throws IOException {
@@ -164,8 +180,8 @@ public final class Metadata {
         List<String> errors = new LinkedList<String>();
         String[] mdata = new String[KEYS.length];
         for (int i=0 ; i<KEYS.length ; i++) {
-            // bundleSpecVersion does not appear as an explicit MANIFEST entry
             if (KEYS[i].equals(BUNDLE_SPEC_VERSION)){
+                // skip bundleSpecVersion
                 continue;
             }
             mdata[i] = manifest.getMainAttributes().getValue(KEYS[i]);
@@ -173,120 +189,9 @@ public final class Metadata {
                 errors.add(KEYS[i]+" not found in MANIFEST");
             }
         }
-        return new Metadata(mdata[0],mdata[1],mdata[2],mdata[3],mdata[4],mdata[5],errors);
-    }
-
-    public static Metadata generate(
-            Artifact artifact,
-            String specVersion,
-            String newVersion,
-            String implVersion) {
-
-        if(artifact == null){
-            throw new IllegalArgumentException("artifact can't be null!");
-        }
-        if(specVersion == null || specVersion.isEmpty()){
-            throw new IllegalArgumentException("specVersion can't be null or empty!");
-        }
         
-        Metadata metadata;
-        List<String> errors = artifact.getErrors();
-
-        if (artifact.isFinal()) {
-            if (artifact.isAPI()) {
-                //  OSGi Bundle-SymbolicName:	${API_PACKAGE}-api
-                //  OSGi bundle specversion:	${SPEC_VERSION}
-                //  OSGi Bundle-Version:	${SPEC_IMPL_VERSION}
-                //  jar Extension-Name:		${API_PACKAGE}
-                //  jar Specification-Version:	${SPEC_VERSION}
-                //  jar Implementation-Version:	${SPEC_IMPL_VERSION}
-
-                metadata = new Metadata(
-                        artifact.getApiPackage() + Artifact.API_SUFFIX,
-                        specVersion,
-                        implVersion,
-                        artifact.getApiPackage(),
-                        specVersion,
-                        implVersion,
-                        errors);
-
-            } else {
-                //  OSGi Bundle-SymbolicName:	${IMPL_NAMESPACE}.${API_PACKAGE}
-                //  OSGi bundle specversion:	${SPEC_VERSION}
-                //  OSGi Bundle-Version:	${IMPL_VERSION}
-                //  jar Extension-Name:		${API_PACKAGE}
-                //  jar Specification-Version:	${SPEC_VERSION}
-                //  jar Implementation-Version:	${IMPL_VERSION}
-
-                metadata = new Metadata(
-                        artifact.getImplNamespace() + "." + artifact.getApiPackage(),
-                        specVersion,
-                        implVersion,
-                        artifact.getApiPackage(),
-                        specVersion,
-                        implVersion,
-                        errors);
-            }
-        } else {
-            if (specVersion.equals(newVersion)) {
-                // specVersion must be != newVersion
-                errors.add("specVersion and newVersion can't be equal for non final artifacts");
-            } else {
-                ArtifactVersion specV = new DefaultArtifactVersion(specVersion);
-                ArtifactVersion newV = new DefaultArtifactVersion(newVersion);
-                if (specV.compareTo(newV) > 0) {
-                    // specVersion must be < to new Version
-                    errors.add("specVersion (" + specVersion + ") > newVersion(" + newVersion + ")");
-                } else {
-                    if (newV.getMajorVersion() - specV.getMajorVersion() > 1
-                            || newV.getMinorVersion() - specV.getMinorVersion() > 1) {
-                        // offset between major and minor can't be > 1
-                        errors.add("offset between major and minor can't be > 1 (specVersion=" + specVersion + " - newVersion=" + newVersion + ")");
-                    }
-                }
-            }
-
-            String osgiVersionSuffix = NONFINAL_BUILD_SEPARATOR + artifact.getBuildNumber();
-            String jarSpecVersion = specVersion + NONFINAL_BUILD_SEPARATOR_SPEC + artifact.getBuildNumber();
-            String jarImplVersion = newVersion + "-b" + artifact.getBuildNumber();
-
-            if (artifact.isAPI()) {
-                //  OSGi Bundle-SymbolicName:	${API_PACKAGE}-api
-                //  OSGi bundle specversion:	${SPEC_VERSION}.99.b${SPEC_BUILD}
-                //  OSGi Bundle-Version:	${SPEC_VERSION}.99.b${SPEC_BUILD}
-                //  jar Extension-Name:		${API_PACKAGE}
-                //  jar Specification-Version:	${SPEC_VERSION}.99.${SPEC_BUILD}
-                //  jar Implementation-Version:	${NEW_SPEC_VERSION}-b${SPEC_BUILD}
-
-                metadata = new Metadata(
-                        artifact.getApiPackage() + Artifact.API_SUFFIX,
-                        specVersion + osgiVersionSuffix,
-                        specVersion + osgiVersionSuffix,
-                        artifact.getApiPackage(),
-                        jarSpecVersion,
-                        jarImplVersion,
-                        errors);
-            } else {
-                //  OSGi Bundle-SymbolicName:	${IMPL_NAMESPACE}.${API_PACKAGE}
-                //  OSGi bundle specversion:	${SPEC_VERSION}.99.b${SPEC_BUILD}
-                //  OSGi Bundle-Version:	${OSGI_IMPL_VERSION}.99.b${IMPL_BUILD}
-                //  jar Extension-Name:		${API_PACKAGE}
-                //  jar Specification-Version:	${SPEC_VERSION}.99.${SPEC_BUILD}
-                //  jar Implementation-Version:	${NEW_IMPL_VERSION}-b${IMPL_BUILD}
-
-                ArtifactVersion implAv = new DefaultArtifactVersion(implVersion);
-
-                metadata = new Metadata(
-                        artifact.getImplNamespace() + "." + artifact.getApiPackage(),
-                        specVersion + NONFINAL_BUILD_SEPARATOR + artifact.getBuildNumber(),
-                        implAv.getMajorVersion() + "." + implAv.getMinorVersion() + NONFINAL_BUILD_SEPARATOR + artifact.getBuildNumber(),
-                        artifact.getApiPackage(),
-                        specVersion + NONFINAL_BUILD_SEPARATOR_SPEC + artifact.getBuildNumber(),
-                        newVersion + "-b" + artifact.getBuildNumber(),
-                        errors);
-            }
-        }
-        return metadata;
+        // TODO parse exported-packages to resolve bundleSpecVersion
+        return new Metadata(mdata[0],mdata[1],mdata[2],mdata[3],mdata[4],mdata[5],errors);
     }
 
     public String getBundleSymbolicName() {

@@ -54,13 +54,13 @@ import org.glassfish.spec.Spec;
 
 /**
  *
- * @goal check-version
+ * @goal cli
  * @phase validate
  * @requiresProject
  *
  * @author Romain Grecourt
  */
-public class CheckVersionMojo extends AbstractSpecMojo {
+public class CLiMojo extends AbstractSpecMojo {
     /**
      * 
      * @parameter expression="${properties}"
@@ -286,7 +286,7 @@ public class CheckVersionMojo extends AbstractSpecMojo {
                 if (!isFinal) {
                     specBuild = prompt("Enter the build number of the implementation jar file");
                 }
-                artifact = new Artifact(apiPackage, apiPackage+Artifact.API_SUFFIX, newSpecVersion);
+                artifact = new Artifact(apiPackage, apiPackage+Spec.API_SUFFIX, newSpecVersion);
             } else {
                 implPackage = prompt("Enter the main implementation package (e.g., com.sun.wombat)");
                 if (!isFinal) {
@@ -304,5 +304,9 @@ public class CheckVersionMojo extends AbstractSpecMojo {
             spec = new Spec(artifact, implVersion, newImplVersion, implVersion);
         }
         spec.verify();
+        
+        for(String error : spec.getErrors()){
+            System.out.println(error);
+        }
     }
 }
