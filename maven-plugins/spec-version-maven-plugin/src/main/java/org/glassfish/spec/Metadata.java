@@ -79,7 +79,8 @@ public final class Metadata {
         BUNDLE_VERSION,
         JAR_EXTENSION_NAME,
         JAR_SPECIFICATION_VERSION,
-        JAR_IMPLEMENTATION_VERSION};
+        JAR_IMPLEMENTATION_VERSION
+    };
 
     Metadata(
             String _bundleSymbolicName,
