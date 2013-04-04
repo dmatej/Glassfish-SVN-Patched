@@ -40,24 +40,67 @@
 
 package org.glassfish.spec.test.sets;
 
+import org.glassfish.spec.Artifact;
+import org.glassfish.spec.test.TestSpec;
+
 /**
  *
  * @author Romain Grecourt
  */
-public class Ratatouille {
-    public static final String GROUPID = "${ratatouille.groupId}";
-    public static final String ARTIFACTID = "${ratatouille.artifactId}";
-    public static final String SPEC_VERSION = "${ratatouille.specVersion}";
-    public static final String API_PACKAGE = "${ratatouille.apiPackage}";
-    public static final String IMPL_PACKAGE = "${ratatouille.implPackage}";
-    public static final String IMPL_VERSION = "${ratatouille.implVersion}";
-    public static final String BUNDLE_VERSION = "${ratatouille.bundleVersion}";
-    public static final String BUNDLE_SYMBOLIC_NAME = "${ratatouille.bundleSymbolicName}";
-    public static final String BUNDLE_SPEC_VERSION = "${ratatouille.bundleSpecVersion}";
-    public static final String JAR_EXTENSION_NAME = "${ratatouille.jarExtensionName}";
-    public static final String JAR_IMPLEMENTATION_VERSION = "${ratatouille.jarImplementationVersion}";
-    public static final String JAR_SPECIFICATION_VERSION = "${ratatouille.jarSpecificationVersion}";
-    public static final String MAVEN_VERSION = "${ratatouille.mavenVersion}";
-    private static final String MODULES_DIR = "target/it/modules";
-    public static final String JAR = MODULES_DIR+"/"+ARTIFACTID+"/target/"+ARTIFACTID+".jar";
+public class Ratatouille extends TestSpec {
+    public Ratatouille() {
+        super(
+                new Artifact(
+                "${ratatouille.groupId}",
+                "${ratatouille.artifactId}",
+                "${ratatouille.mavenVersion}"),
+                "${ratatouille.specVersion}",
+                "${ratatouille.newSpecVersion}",
+                "${ratatouille.specImplVersion}",
+                "${ratatouille.implVersion}",
+                "${ratatouille.newImplVersion}",
+                "${ratatouille.specBuild}",
+                "${ratatouille.implBuild}",
+                "${ratatouille.apiPackage}",
+                "${ratatouille.implNamespace}");
+        this.getArtifact().setIsAPI(
+                Boolean.valueOf("${ratatouille.isAPI}").booleanValue());
+        this.getArtifact().setIsFinal(
+                Boolean.valueOf("${ratatouille.isFinal}").booleanValue());
+    }
+
+    @Override
+    public String getExpectedBundleVersion() {
+        return "${ratatouille.bundleVersion}";
+    }
+
+    @Override
+    public String getExpectedBundleSpecVersion() {
+        return "${ratatouille.bundleSpecVersion}";
+    }
+
+    @Override
+    public String getExpectedBundleSymbolicName() {
+        return "${ratatouille.bundleSymbolicName}";
+    }
+
+    @Override
+    public String getExpectedJarExtensionName() {
+        return "${ratatouille.jarExtensionName}";
+    }
+
+    @Override
+    public String getExpectedJarImplementationVersion() {
+        return "${ratatouille.jarImplementationVersion}";
+    }
+    
+    @Override
+    public String getExpectedJarSpecificationVersion() {
+        return "${ratatouille.jarSpecificationVersion}";
+    }
+
+    @Override
+    public String getJarPath() {
+       return "target/it/modules/${ratatouille.artifactId}/target/${ratatouille.artifactId}.jar";
+    }
 }

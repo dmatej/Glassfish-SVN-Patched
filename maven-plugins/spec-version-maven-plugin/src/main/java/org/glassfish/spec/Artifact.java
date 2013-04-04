@@ -87,6 +87,9 @@ public final class Artifact {
         }
         return null;
     }
+    
+    public Artifact(){
+    }
 
     public Artifact(String _groupId, String _artifactId, String _version) {
         this.groupId = _groupId;
@@ -101,7 +104,7 @@ public final class Artifact {
             this.isAPI=true;
         }
     }
-    
+
     public String getArtifactId() {
         return artifactId;
     }
@@ -118,18 +121,30 @@ public final class Artifact {
         return isFinal;
     }
     
-    public void setIsFinal(boolean _isFinal){
-        isFinal = _isFinal;
-    }
-
     public boolean isAPI() {
         return isAPI;
     }
     
-    public void setIsAPI(boolean _isAPI){
-        isAPI = _isAPI;
+    public void setIsAPI(boolean b){
+        isAPI = b;
+    }
+    
+    public void setIsFinal(boolean b){
+        isFinal = b;
     }
 
+    public void setArtifactId(String artifactId) {
+        this.artifactId = artifactId;
+    }
+
+    public void setGroupId(String groupId) {
+        this.groupId = groupId;
+    }
+
+    public void setVersion(String version) {
+        this.version = new DefaultArtifactVersion(version);
+    }
+    
     public String getBuildNumber() {
         return buildNumber;
     }
@@ -185,5 +200,32 @@ public final class Artifact {
         sb.append(version);
         sb.append(')');
         return sb.toString();
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final Artifact other = (Artifact) obj;
+        if ((this.groupId == null) ? (other.groupId != null) : !this.groupId.equals(other.groupId)) {
+            return false;
+        }
+        if ((this.artifactId == null) ? (other.artifactId != null) : !this.artifactId.equals(other.artifactId)) {
+            return false;
+        }
+        if (this.version != other.version && (this.version == null || !this.version.equals(other.version))) {
+            return false;
+        }
+        return true;
     }
 }

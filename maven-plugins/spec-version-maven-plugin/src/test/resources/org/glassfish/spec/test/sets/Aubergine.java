@@ -40,24 +40,67 @@
 
 package org.glassfish.spec.test.sets;
 
+import org.glassfish.spec.Artifact;
+import org.glassfish.spec.test.TestSpec;
+
 /**
  *
  * @author Romain Grecourt
  */
-public class Aubergine {
-    public static final String GROUPID = "${aubergine.groupId}";
-    public static final String ARTIFACTID = "${aubergine.artifactId}";
-    public static final String SPEC_VERSION = "${aubergine.specVersion}";
-    public static final String NEW_SPEC_VERSION = "${aubergine.newSpecVersion}";
-    public static final String API_PACKAGE = "${aubergine.apiPackage}";
-    public static final String IMPL_VERSION = "${aubergine.implVersion}";
-    public static final String BUNDLE_VERSION = "${aubergine.bundleVersion}";
-    public static final String BUNDLE_SYMBOLIC_NAME = "${aubergine.bundleSymbolicName}";
-    public static final String BUNDLE_SPEC_VERSION = "${aubergine.bundleSpecVersion}";
-    public static final String JAR_EXTENSION_NAME = "${aubergine.jarExtensionName}";
-    public static final String JAR_IMPLEMENTATION_VERSION = "${aubergine.jarImplementationVersion}";
-    public static final String JAR_SPECIFICATION_VERSION = "${aubergine.jarSpecificationVersion}";
-    public static final String MAVEN_VERSION = "${aubergine.mavenVersion}";
-    private static final String MODULES_DIR = "target/it/modules";
-    public static final String JAR = MODULES_DIR+"/"+ARTIFACTID+"/target/"+ARTIFACTID+".jar";
+public class Aubergine extends TestSpec {
+    public Aubergine() {
+        super(
+                new Artifact(
+                "${aubergine.groupId}",
+                "${aubergine.artifactId}",
+                "${aubergine.mavenVersion}"),
+                "${aubergine.specVersion}",
+                "${aubergine.newSpecVersion}",
+                "${aubergine.specImplVersion}",
+                "${aubergine.implVersion}",
+                "${aubergine.newImplVersion}",
+                "${aubergine.specBuild}",
+                "${aubergine.implBuild}",
+                "${aubergine.apiPackage}",
+                "${aubergine.implNamespace}");
+        this.getArtifact().setIsAPI(
+                Boolean.valueOf("${aubergine.isAPI}").booleanValue());
+        this.getArtifact().setIsFinal(
+                Boolean.valueOf("${aubergine.isFinal}").booleanValue());
+    }
+
+    @Override
+    public String getExpectedBundleVersion() {
+        return "${aubergine.bundleVersion}";
+    }
+
+    @Override
+    public String getExpectedBundleSpecVersion() {
+        return "${aubergine.bundleSpecVersion}";
+    }
+
+    @Override
+    public String getExpectedBundleSymbolicName() {
+        return "${aubergine.bundleSymbolicName}";
+    }
+
+    @Override
+    public String getExpectedJarExtensionName() {
+        return "${aubergine.jarExtensionName}";
+    }
+
+    @Override
+    public String getExpectedJarImplementationVersion() {
+        return "${aubergine.jarImplementationVersion}";
+    }
+
+    @Override
+    public String getExpectedJarSpecificationVersion() {
+        return "${aubergine.jarSpecificationVersion}";
+    }
+
+    @Override
+    public String getJarPath() {
+       return "target/it/modules/${aubergine.artifactId}/target/${aubergine.artifactId}.jar";
+    }
 }

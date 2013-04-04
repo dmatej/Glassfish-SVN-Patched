@@ -40,8 +40,7 @@
 
 package org.glassfish.spec.test.unit;
 
-import org.glassfish.spec.Artifact;
-import org.glassfish.spec.Spec;
+import org.glassfish.spec.test.TestSpec;
 import org.glassfish.spec.test.sets.Aubergine;
 import org.glassfish.spec.test.sets.Courgette;
 import org.glassfish.spec.test.sets.Ratatouille;
@@ -54,30 +53,18 @@ import org.junit.Test;
  * @author Romain Grecourt
  */
 public class SpecTest {
-    public static void positive(
-            Artifact artifact,
-            String version,
-            String newVersion,
-            String implVersion) {
+    public static void positive(TestSpec spec) {
 
-        Spec spec = new Spec(artifact, version, newVersion, implVersion);
-        spec.verify();
-        if(!spec.getErrors().isEmpty()){
-            StringBuilder msg = new StringBuilder();
-            msg.append(artifact);
-            msg.append(" - specVersion (");
-            msg.append(version);
-            msg.append(") - newVersion (");
-            msg.append(newVersion);
-            msg.append(") - implVersion (");
-            msg.append(implVersion);
-            msg.append(") should be compliant");
-            if (!spec.getErrors().isEmpty()) {
+        spec.getSpec().verify();
+        if(!spec.getSpec().getErrors().isEmpty()){
+            StringBuilder msg = new StringBuilder(spec.getSpec().toString());
+            msg.append(" should be compliant");
+            if (!spec.getSpec().getErrors().isEmpty()) {
                 msg.append(" -- ");
             }
-            for(int i=0 ; i < spec.getErrors().size() ; i++){
-                msg.append(spec.getErrors().get(i));
-                if(i < spec.getErrors().size() -1){
+            for(int i=0 ; i < spec.getSpec().getErrors().size() ; i++){
+                msg.append(spec.getSpec().getErrors().get(i));
+                if(i < spec.getSpec().getErrors().size() -1){
                    msg.append(" -- ");
                 }                
             }
@@ -87,49 +74,21 @@ public class SpecTest {
     
     @Test
     public void nonFinalAPI() {
-        positive(
-                new Artifact(
-                Aubergine.GROUPID,
-                Aubergine.ARTIFACTID,
-                Aubergine.MAVEN_VERSION),
-                Aubergine.SPEC_VERSION,
-                Aubergine.NEW_SPEC_VERSION,
-                Aubergine.IMPL_VERSION);
+        positive(new Aubergine());
     }
 
     @Test
     public void finalAPI() {
-        positive(
-                new Artifact(
-                Courgette.GROUPID,
-                Courgette.ARTIFACTID,
-                Courgette.MAVEN_VERSION),
-                Courgette.SPEC_VERSION,
-                null,
-                Courgette.IMPL_VERSION);
+        positive(new Courgette());
     }
 
     @Test
     public void nonFinalStandlone() {
-        positive(
-                new Artifact(
-                Moussaka.GROUPID,
-                Moussaka.ARTIFACTID,
-                Moussaka.MAVEN_VERSION),
-                Moussaka.SPEC_VERSION,
-                Moussaka.NEW_IMPL_VERSION,
-                Moussaka.IMPL_VERSION);
+        positive(new Moussaka());
     }
     
     @Test
     public void finalStandalone() {
-        positive(
-                new Artifact(
-                Ratatouille.GROUPID,
-                Ratatouille.ARTIFACTID,
-                Ratatouille.MAVEN_VERSION),
-                Ratatouille.SPEC_VERSION,
-                null,
-                Ratatouille.IMPL_VERSION);
+        positive(new Ratatouille());
     }
 }

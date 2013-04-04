@@ -69,71 +69,6 @@ public class CLiMojo extends AbstractSpecMojo {
     
     /**
      * 
-     * @parameter expression="${apijar}"
-     */
-    protected String apiJar;
-    /**
-     * 
-     * @parameter expression="${impljar}"
-     */
-    protected String implJar;
-    
-    /**
-     * 
-     * @parameter expression="${implpackage}"
-     */
-    protected String implPackage;
-    
-    /**
-     * 
-     * @parameter expression="${apipackage}"
-     */
-    protected String apiPackage;
-    
-    /**
-     * 
-     * @parameter expression="${specversion}"
-     */
-    protected String specVersion;
-    
-    /**
-     * 
-     * @parameter expression="${specimplversion}"
-     */
-    protected String specImplVersion;
-    
-    /**
-     * 
-     * @parameter expression="${implversion}"
-     */
-    protected String implVersion;
-    
-    /**
-     * 
-     * @parameter expression="${newimplversion}"
-     */
-    protected String newImplVersion;
-    
-    /**
-     * 
-     * @parameter expression="${newspecversion}"
-     */
-    protected String newSpecVersion;
-    
-    /**
-     * 
-     * @parameter expression="${specbuild}"
-     */
-    protected String specBuild;
-    
-    /**
-     * 
-     * @parameter expression="${implbuild}"
-     */
-    protected String implBuild;
-    
-    /**
-     * 
      * @parameter expression="${help}"
      */
     protected Boolean help;
@@ -203,7 +138,7 @@ public class CLiMojo extends AbstractSpecMojo {
                 p.load(fis);
                 fis.close();
                 apiPackage = p.getProperty("API_PACKAGE", apiPackage);
-                implPackage = p.getProperty("IMPL_NAMESPACE", implPackage);
+                implNamespace = p.getProperty("IMPL_NAMESPACE", implNamespace);
                 isAPI = !getBooleanProperty(p, "STANDALONE_IMPL", isAPI);
                 if(isAPI){
                     implVersion = p.getProperty("SPEC_IMPL_VERSION", implVersion);
@@ -236,7 +171,7 @@ public class CLiMojo extends AbstractSpecMojo {
         if (isAPI) {
 	    if (implJar != null)
 		fail("--impljar must not be specified if no standalone implementation");
-	    if (implPackage != null)
+	    if (implNamespace != null)
 		fail("--implpackage must not be specified if no standalone implementation");
 	    if (implVersion != null)
 		fail("--implversion must not be specified if no standalone implementation");
@@ -260,7 +195,7 @@ public class CLiMojo extends AbstractSpecMojo {
         if (properties == null
                 && apiJar == null
                 && implJar == null
-                && implPackage == null
+                && implNamespace == null
                 && apiPackage == null
                 && specVersion == null
                 && specImplVersion == null
@@ -288,21 +223,26 @@ public class CLiMojo extends AbstractSpecMojo {
                 }
                 artifact = new Artifact(apiPackage, apiPackage+Spec.API_SUFFIX, newSpecVersion);
             } else {
-                implPackage = prompt("Enter the main implementation package (e.g., com.sun.wombat)");
+                implNamespace = prompt("Enter the main implementation package (e.g., com.sun.wombat)");
                 if (!isFinal) {
                     implBuild = prompt("Enter the build number of the implementation jar file");
                 }
                 newImplVersion = prompt("Enter the version number of the Impl jar file");
-                artifact = new Artifact(implPackage, apiPackage, newImplVersion);
+                artifact = new Artifact(implNamespace, apiPackage, newImplVersion);
             }
         }
         
-        Spec spec;
-        if(isAPI){
-            spec = new Spec(artifact, specVersion, newSpecVersion, specImplVersion);
-        } else {
-            spec = new Spec(artifact, implVersion, newImplVersion, implVersion);
-        }
+        Spec spec = new Spec(
+                artifact,
+                specVersion,
+                newSpecVersion,
+                specImplVersion,
+                implVersion,
+                newImplVersion,
+                specBuild,
+                implBuild,
+                apiPackage,
+                implNamespace);
         spec.verify();
         
         for(String error : spec.getErrors()){

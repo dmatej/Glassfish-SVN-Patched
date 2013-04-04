@@ -40,23 +40,67 @@
 
 package org.glassfish.spec.test.sets;
 
+import org.glassfish.spec.Artifact;
+import org.glassfish.spec.test.TestSpec;
+
 /**
  *
  * @author Romain Grecourt
  */
-public class Courgette {
-    public static final String GROUPID = "${courgette.groupId}";
-    public static final String ARTIFACTID = "${courgette.artifactId}";
-    public static final String SPEC_VERSION = "${courgette.specVersion}";
-    public static final String API_PACKAGE = "${courgette.apiPackage}";
-    public static final String IMPL_VERSION = "${courgette.implVersion}";
-    public static final String BUNDLE_VERSION = "${courgette.bundleVersion}";
-    public static final String BUNDLE_SYMBOLIC_NAME = "${courgette.bundleSymbolicName}";
-    public static final String BUNDLE_SPEC_VERSION = "${courgette.bundleSpecVersion}";
-    public static final String JAR_EXTENSION_NAME = "${courgette.jarExtensionName}";
-    public static final String JAR_IMPLEMENTATION_VERSION = "${courgette.jarImplementationVersion}";
-    public static final String JAR_SPECIFICATION_VERSION = "${courgette.jarSpecificationVersion}";
-    public static final String MAVEN_VERSION = "${courgette.mavenVersion}";
-    private static final String MODULES_DIR = "target/it/modules";
-    public static final String JAR = MODULES_DIR+"/"+ARTIFACTID+"/target/"+ARTIFACTID+".jar";
+public class Courgette extends TestSpec {
+    public Courgette() {
+        super(
+                new Artifact(
+                "${courgette.groupId}",
+                "${courgette.artifactId}",
+                "${courgette.mavenVersion}"),
+                "${courgette.specVersion}",
+                "${courgette.newSpecVersion}",
+                "${courgette.specImplVersion}",
+                "${courgette.implVersion}",
+                "${courgette.newImplVersion}",
+                "${courgette.specBuild}",
+                "${courgette.implBuild}",
+                "${courgette.apiPackage}",
+                "${courgette.implNamespace}");
+        this.getArtifact().setIsAPI(
+                Boolean.valueOf("${courgette.isAPI}").booleanValue());
+        this.getArtifact().setIsFinal(
+                Boolean.valueOf("${courgette.isFinal}").booleanValue());
+    }
+
+    @Override
+    public String getExpectedBundleVersion() {
+        return "${courgette.bundleVersion}";
+    }
+
+    @Override
+    public String getExpectedBundleSpecVersion() {
+        return "${courgette.bundleSpecVersion}";
+    }
+
+    @Override
+    public String getExpectedBundleSymbolicName() {
+        return "${courgette.bundleSymbolicName}";
+    }
+
+    @Override
+    public String getExpectedJarExtensionName() {
+        return "${courgette.jarExtensionName}";
+    }
+
+    @Override
+    public String getExpectedJarImplementationVersion() {
+        return "${courgette.jarImplementationVersion}";
+    }
+
+    @Override
+    public String getExpectedJarSpecificationVersion() {
+        return "${courgette.jarSpecificationVersion}";
+    }
+
+    @Override
+    public String getJarPath() {
+       return "target/it/modules/${courgette.artifactId}/target/${courgette.artifactId}.jar";
+    }
 }

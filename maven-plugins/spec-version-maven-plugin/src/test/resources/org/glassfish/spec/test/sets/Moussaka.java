@@ -40,25 +40,67 @@
 
 package org.glassfish.spec.test.sets;
 
+import org.glassfish.spec.Artifact;
+import org.glassfish.spec.test.TestSpec;
+
 /**
  *
  * @author Romain Grecourt
  */
-public class Moussaka {
-    public static final String GROUPID = "${moussaka.groupId}";
-    public static final String ARTIFACTID = "${moussaka.artifactId}";
-    public static final String SPEC_VERSION = "${moussaka.specVersion}";
-    public static final String NEW_IMPL_VERSION = "${moussaka.newImplVersion}";
-    public static final String API_PACKAGE = "${moussaka.apiPackage}";
-    public static final String IMPL_PACKAGE = "${moussaka.implPackage}";
-    public static final String IMPL_VERSION = "${moussaka.implVersion}";
-    public static final String BUNDLE_VERSION = "${moussaka.bundleVersion}";
-    public static final String BUNDLE_SYMBOLIC_NAME = "${moussaka.bundleSymbolicName}";
-    public static final String BUNDLE_SPEC_VERSION = "${moussaka.bundleSpecVersion}";
-    public static final String JAR_EXTENSION_NAME = "${moussaka.jarExtensionName}";
-    public static final String JAR_IMPLEMENTATION_VERSION = "${moussaka.jarImplementationVersion}";
-    public static final String JAR_SPECIFICATION_VERSION = "${moussaka.jarSpecificationVersion}";
-    public static final String MAVEN_VERSION = "${moussaka.mavenVersion}";
-    private static final String MODULES_DIR = "target/it/modules";
-    public static final String JAR = MODULES_DIR+"/"+ARTIFACTID+"/target/"+ARTIFACTID+".jar";
+public class Moussaka extends TestSpec {
+    public Moussaka() {
+        super(
+                new Artifact(
+                "${moussaka.groupId}",
+                "${moussaka.artifactId}",
+                "${moussaka.mavenVersion}"),
+                "${moussaka.specVersion}",
+                "${moussaka.newSpecVersion}",
+                "${moussaka.specImplVersion}",
+                "${moussaka.implVersion}",
+                "${moussaka.newImplVersion}",
+                "${moussaka.specBuild}",
+                "${moussaka.implBuild}",
+                "${moussaka.apiPackage}",
+                "${moussaka.implNamespace}");
+        this.getArtifact().setIsAPI(
+                Boolean.valueOf("${moussaka.isAPI}").booleanValue());
+        this.getArtifact().setIsFinal(
+                Boolean.valueOf("${moussaka.isFinal}").booleanValue());
+    }
+
+    @Override
+    public String getExpectedBundleVersion() {
+        return "${moussaka.bundleVersion}";
+    }
+
+    @Override
+    public String getExpectedBundleSpecVersion() {
+        return "${moussaka.bundleSpecVersion}";
+    }
+
+    @Override
+    public String getExpectedBundleSymbolicName() {
+        return "${moussaka.bundleSymbolicName}";
+    }
+
+    @Override
+    public String getExpectedJarExtensionName() {
+        return "${moussaka.jarExtensionName}";
+    }
+
+    @Override
+    public String getExpectedJarImplementationVersion() {
+        return "${moussaka.jarImplementationVersion}";
+    }
+
+    @Override
+    public String getExpectedJarSpecificationVersion() {
+        return "${moussaka.jarSpecificationVersion}";
+    }
+
+    @Override
+    public String getJarPath() {
+       return "target/it/modules/${moussaka.artifactId}/target/${moussaka.artifactId}.jar";
+    } 
 }

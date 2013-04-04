@@ -70,4 +70,69 @@ public abstract class AbstractSpecMojo extends AbstractMojo {
      * @parameter expression="${isApi}" default-value="true"
      */
     protected boolean isAPI;
+    
+    /**
+     * 
+     * @parameter expression="${apijar}"
+     */
+    protected String apiJar;
+    /**
+     * 
+     * @parameter expression="${impljar}"
+     */
+    protected String implJar;
+    
+    /**
+     * 
+     * @parameter expression="${implnamespace}"
+     */
+    protected String implNamespace;
+    
+    /**
+     * 
+     * @parameter expression="${apipackage}"
+     */
+    protected String apiPackage;
+    
+    /**
+     * 
+     * @parameter expression="${specversion}"
+     */
+    protected String specVersion;
+    
+    /**
+     * 
+     * @parameter expression="${specimplversion}"
+     */
+    protected String specImplVersion;
+    
+    /**
+     * 
+     * @parameter expression="${implversion}"
+     */
+    protected String implVersion;
+    
+    /**
+     * 
+     * @parameter expression="${newimplversion}"
+     */
+    protected String newImplVersion;
+    
+    /**
+     * 
+     * @parameter expression="${newspecversion}"
+     */
+    protected String newSpecVersion;
+    
+    /**
+     * 
+     * @parameter expression="${specbuild}"
+     */
+    protected String specBuild;
+    
+    /**
+     * 
+     * @parameter expression="${implbuild}"
+     */
+    protected String implBuild;    
 }

@@ -63,47 +63,26 @@ public class SetPropertiesMojo extends AbstractSpecMojo {
      */
     protected boolean ignoreFailures;     
     
-    /**
-     * version number of the JCP specification
-     * 
-     * @required
-     * @parameter expression="${specversion}"
-     */
-    protected String version;
-    
-    /**
-     * version number of the implementation
-     * 
-     * @parameter expression="${implversion}"
-     */
-    protected String implVersion;
-    
-    /**
-     * version number of the spec under development
-     * 
-     * @parameter expression="${newspecversion}"
-     */
-    protected String newVersion;
-    
-    /**
-     * build number
-     * 
-     * @parameter expression="${buildNumber}"
-     */
-    protected String buildNumber;    
-    
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         Artifact artifact = new Artifact(
                 project.getGroupId(),
                 project.getArtifactId(),
                 project.getVersion());
+        artifact.setIsAPI(isAPI);
+        artifact.setIsFinal(isFinal);
         
         Spec spec = new Spec(
                 artifact,
-                version, 
-                newVersion,
-                implVersion);
+                specVersion,
+                newSpecVersion,
+                specImplVersion,
+                implVersion,
+                newImplVersion,
+                specBuild,
+                implBuild,
+                apiPackage,
+                implNamespace);
         Properties specProps = spec.getMetadata().getProperties();
         
         getLog().info("");
