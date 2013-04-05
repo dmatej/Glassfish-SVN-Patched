@@ -38,37 +38,48 @@
  * holder.
  */
 
-package org.glassfish.spec.test.integration;
+package org.glassfish.spec.test.unit;
 
+import org.glassfish.spec.test.TestSpec;
 import org.glassfish.spec.test.sets.Courgette;
-import org.glassfish.spec.test.sets.Ratatouille;
-import org.glassfish.spec.test.sets.Aubergine;
-import org.glassfish.spec.test.sets.Moussaka;
+import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
- *
+ * 
  * @author Romain Grecourt
  */
-public class MetadataTest {
+public class FinalAPI {
     
-    @Test
-    public void verifyAubergineMetadata() {
-        new Aubergine().assertMetadataFromJar();
+    private static TestSpec spec;
+    
+    @BeforeClass
+    public static void init(){
+        spec = new Courgette();
     }
     
     @Test
-    public void verifyCourgetteMetadata() {
-        new Courgette().assertMetadataFromJar();
+    public void verifySpec() {
+        spec.verify();
+        if(!spec.getSpec().getErrors().isEmpty()){
+            StringBuilder msg = new StringBuilder(spec.getSpec().toString());
+            msg.append(" should be compliant");
+            if (!spec.getSpec().getErrors().isEmpty()) {
+                msg.append(" -- ");
+            }
+            for(int i=0 ; i < spec.getSpec().getErrors().size() ; i++){
+                msg.append(spec.getSpec().getErrors().get(i));
+                if(i < spec.getSpec().getErrors().size() -1){
+                   msg.append(" -- ");
+                }                
+            }
+            Assert.fail(msg.toString());
+        }
     }
     
     @Test
-    public void verifyRatatouilleMetadata() {
-        new Ratatouille().assertMetadataFromJar();
-    }
-    
-    @Test
-    public void verifyMoussakaMetadata() {
-        new Moussaka().assertMetadataFromJar();
+    public void verifyMetadata(){
+        spec.assertMetadata();
     }
 }

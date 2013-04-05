@@ -128,7 +128,11 @@ public class CheckDistribution extends AbstractMojo {
 
                 if (!spec.getErrors().isEmpty()) {
                     System.out.println("");
-                    System.out.println(spec.toString());
+                    System.out.println(spec.getArtifact().toString());
+                    String specDesc = spec.toString();
+                    if(!specDesc.isEmpty()){
+                        System.out.println(spec.toString());
+                    }
                     for (int i = 0; i < spec.getErrors().size(); i++) {
                         System.out.println(new StringBuilder()
                                 .append('-')

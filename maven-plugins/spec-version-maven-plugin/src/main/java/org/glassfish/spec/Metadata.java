@@ -196,7 +196,14 @@ public final class Metadata {
         }
         
         // TODO parse exported-packages to resolve bundleSpecVersion
-        return new Metadata(mdata[0],mdata[1],mdata[2],mdata[3],mdata[4],mdata[5],errors);
+        return new Metadata(
+                mdata[0],
+                mdata[1],
+                mdata[2],
+                mdata[3],
+                mdata[4],
+                mdata[5],
+                errors);
     }
 
     public String getBundleSymbolicName() {

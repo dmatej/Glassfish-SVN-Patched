@@ -41,20 +41,26 @@
 package org.glassfish.spec.test.unit;
 
 import org.glassfish.spec.test.TestSpec;
-import org.glassfish.spec.test.sets.Aubergine;
-import org.glassfish.spec.test.sets.Courgette;
-import org.glassfish.spec.test.sets.Ratatouille;
 import org.glassfish.spec.test.sets.Moussaka;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
  * 
  * @author Romain Grecourt
  */
-public class SpecTest {
-    public static void positive(TestSpec spec) {
-        spec.getSpec().verify();
+public class NonFinalStandaloneImpl {
+    private static TestSpec spec;
+    
+    @BeforeClass
+    public static void init(){
+        spec = new Moussaka();
+    }
+    
+    @Test
+    public void verifySpec() {
+        spec.verify();
         if(!spec.getSpec().getErrors().isEmpty()){
             StringBuilder msg = new StringBuilder(spec.getSpec().toString());
             msg.append(" should be compliant");
@@ -72,22 +78,7 @@ public class SpecTest {
     }
     
     @Test
-    public void nonFinalAPI() {
-        positive(new Aubergine());
-    }
-
-    @Test
-    public void finalAPI() {
-        positive(new Courgette());
-    }
-
-    @Test
-    public void nonFinalStandlone() {
-        positive(new Moussaka());
-    }
-    
-    @Test
-    public void finalStandalone() {
-        positive(new Ratatouille());
-    }
+    public void verifyMetadata(){
+        spec.assertMetadata();
+    }  
 }

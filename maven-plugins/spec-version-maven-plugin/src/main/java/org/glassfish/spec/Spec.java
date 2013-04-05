@@ -683,11 +683,11 @@ public class Spec {
     
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder(artifact.toString());
+        StringBuilder sb = new StringBuilder();
         if(nonFinal == null || standaloneImpl == null){
             return sb.toString();
         }
-        
+        sb.append("[ ");
         if (apiPackage!= null && !apiPackage.isEmpty()) {
             sb.append("apiPackage=");
             sb.append(apiPackage);
@@ -734,6 +734,7 @@ public class Spec {
             sb.append("specification-implementation-version=");
             sb.append(specImplVersion);
         }
+        sb.append(" ]");
         return sb.toString();
     }
 }
