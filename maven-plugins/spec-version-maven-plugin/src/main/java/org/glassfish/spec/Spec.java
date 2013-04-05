@@ -166,53 +166,48 @@ public class Spec {
         this.errors.clear();
         this.errors.addAll(getMetadata().getErrors());
         
-        boolean abort=false;
         StringBuilder configIssues = new StringBuilder();
-        configIssues.append("ERROR: missing configuration (");
-        
         if(nonFinal == null){ 
             configIssues.append(" nonFinal?");
-            abort=true;
         }
         if(standaloneImpl == null){
             configIssues.append(" standaloneImpl?");
-            abort=true;
         }
         if(specVersion == null || specVersion.isEmpty()){
             configIssues.append(" spec-version");
-            abort=true;
         }
         if(apiPackage == null || apiPackage.isEmpty()){
             configIssues.append(" api-package");
-            abort=true;
         }
         if(nonFinal!=null 
                 && nonFinal.booleanValue() 
                 && (newSpecVersion == null || newSpecVersion.isEmpty())){
             configIssues.append(" new-spec-version");
-            abort=true;
         }
         if (standaloneImpl != null) {
             if (standaloneImpl.booleanValue()) {
                 if (implNamespace == null || implNamespace.isEmpty()) {
                     configIssues.append(" impl-namespace");
-                    abort = true;
                 }
                 if (implVersion == null || implVersion.isEmpty()) {
                     configIssues.append(" impl-version");
-                    abort = true;
                 }
                 if (nonFinal.booleanValue()
                         && (newImplVersion == null || newImplVersion.isEmpty())){
                     configIssues.append(" new-impl-version");
-                    abort = true;
                 }
+            } else if (nonFinal != null && !nonFinal.booleanValue()){
+                if (specImplVersion == null || specImplVersion.isEmpty()) {
+                    configIssues.append(" spec-impl-version");
+                }                
             }
         }
         
         // no need to continue further...
-        if(abort){
-            errors.add(configIssues.append(" )").toString());
+        if(configIssues.length() > 0){
+            configIssues.insert(0, "ERROR: missing configuration (");
+            configIssues.append(" )");
+            errors.add(configIssues.toString());
             return;
         }
         
@@ -227,7 +222,8 @@ public class Spec {
         }
 
         // verify that Implementation-Version == Maven-Version
-        if (!getMetadata().getjarImplementationVersion()
+        if (!getMetadata().getjarImplementationVersion().isEmpty()
+                && !getMetadata().getjarImplementationVersion()
                 .equals(artifact.getVersion().toString())) {
             errors.add(new StringBuilder()
                     .append("WARNING: ")
@@ -321,7 +317,8 @@ public class Spec {
                     new StringBuilder(apiPackage)
                     .append(API_SUFFIX)
                     .toString();
-            if (!symbolicName.equals(getMetadata().getBundleSymbolicName())) {
+            if (!getMetadata().getBundleSymbolicName().isEmpty()
+                    && !symbolicName.equals(getMetadata().getBundleSymbolicName())) {
                 errors.add(new StringBuilder()
                         .append("WARNING: ")
                         .append(Metadata.BUNDLE_SYMBOLIC_NAME)
@@ -333,7 +330,8 @@ public class Spec {
             }
 
             // verify that Extension-Name == apiPackage
-            if (!getMetadata().getJarExtensionName().equals(apiPackage)) {
+            if (!getMetadata().getJarExtensionName().isEmpty()
+                    && !getMetadata().getJarExtensionName().equals(apiPackage)) {
                 errors.add(new StringBuilder()
                         .append("WARNING: ")
                         .append(Metadata.JAR_EXTENSION_NAME)
