@@ -161,7 +161,7 @@ public final class Artifact {
         sb.append(artifactId);
         sb.append(':');
         sb.append(version);
-        sb.append("] ");
+        sb.append(" ]");
         return sb.toString();
     }
 

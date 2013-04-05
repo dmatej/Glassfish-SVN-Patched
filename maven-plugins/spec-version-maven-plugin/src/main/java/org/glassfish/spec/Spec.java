@@ -179,7 +179,7 @@ public class Spec {
             abort=true;
         }
         if(specVersion == null || specVersion.isEmpty()){
-            configIssues.append(" specification-version");
+            configIssues.append(" spec-version");
             abort=true;
         }
         if(apiPackage == null || apiPackage.isEmpty()){
@@ -192,19 +192,21 @@ public class Spec {
             configIssues.append(" new-spec-version");
             abort=true;
         }
-        if (standaloneImpl!=null && standaloneImpl.booleanValue()) {
-            if (implNamespace == null || implNamespace.isEmpty()) {
-                configIssues.append(" implementation-namespace");
-                abort=true;
-            }
-            if (implVersion == null || implVersion.isEmpty()) {
-                configIssues.append(" implementation-version");
-                abort=true;
-            }
-            if(nonFinal.booleanValue()
-                    && (newImplVersion == null || newImplVersion.isEmpty())){
-                configIssues.append(" new-implementation-version");
-                abort=true;
+        if (standaloneImpl != null) {
+            if (standaloneImpl.booleanValue()) {
+                if (implNamespace == null || implNamespace.isEmpty()) {
+                    configIssues.append(" impl-namespace");
+                    abort = true;
+                }
+                if (implVersion == null || implVersion.isEmpty()) {
+                    configIssues.append(" impl-version");
+                    abort = true;
+                }
+                if (nonFinal.booleanValue()
+                        && (newImplVersion == null || newImplVersion.isEmpty())){
+                    configIssues.append(" new-impl-version");
+                    abort = true;
+                }
             }
         }
         
@@ -217,9 +219,9 @@ public class Spec {
         // verify that specVersion is <major>.<minor>
         if (!specVersion.matches("[0-9]+\\.[0-9]+")) {
             errors.add(new StringBuilder()
-                    .append("WARNING: specification version (")
+                    .append("WARNING: spec version (")
                     .append(specVersion)
-                    .append(") is invalid, JCP specification version number ")
+                    .append(") is invalid, JCP spec version number ")
                     .append("must be of the form <major>.<minor>")
                     .toString());
         }
@@ -346,29 +348,14 @@ public class Spec {
                 checkClasses(jar, apiPackage);
             }
             
-            // verify that implementation version starts with spec version
-            String sv = nonFinal? newSpecVersion : specVersion;
-            if (!(specImplVersion.equals(sv)
-                    || specImplVersion.startsWith(sv + ".")
-                    || specImplVersion.startsWith(sv + "-"))) {
-                errors.add(new StringBuilder()
-                        .append("WARNING: spec-implementation-version (")
-                        .append(specImplVersion)
-                        .append(") must start with ")
-                        .append("JCP specification version number (")
-                        .append(sv)
-                        .append(')')
-                        .toString());
-            }            
-
             if (nonFinal) {
                 // verify new spec version
                 if (!newSpecVersion.matches("[0-9]+\\.[0-9]+")) {
                     errors.add(new StringBuilder()
-                            .append("WARNING: new-specification-version (")
+                            .append("WARNING: new-spec-version (")
                             .append(newSpecVersion)
                             .append(") is invalid, ")
-                            .append("JCP specification version number ")
+                            .append("JCP spec-version number ")
                             .append("must be of the form <major>.<minor>")
                             .toString());
                 }
@@ -376,10 +363,10 @@ public class Spec {
                 // verify that specVersion != newSpecVersion
                 if (specVersion.equals(newSpecVersion)) {
                     errors.add(new StringBuilder()
-                            .append("WARNING: specification-version (")
+                            .append("WARNING: spec-version (")
                             .append(specVersion)
                             .append(") can't be equal to ")
-                            .append("new-specification-version (")
+                            .append("new-spec-version (")
                             .append(newSpecVersion)
                             .append(") for non final artifacts")
                             .toString());
@@ -390,10 +377,10 @@ public class Spec {
                     // verify that specVersion < newSpecVersion
                     if (specAV.compareTo(newSpecAV) > 0) {
                         errors.add(new StringBuilder()
-                                .append("new-specification-version (")
+                                .append("new-spec-version (")
                                 .append(newSpecVersion)
                                 .append(") must be greater than ")
-                                .append("specification-version (")
+                                .append("spec-version (")
                                 .append(specVersion)
                                 .append(')')
                                 .toString());
@@ -403,14 +390,28 @@ public class Spec {
                                 || newSpecAV.getMinorVersion() - specAV.getMinorVersion() > 1) {
                             errors.add(new StringBuilder()
                                     .append("WARNING: offset between ")
-                                    .append("new-specification-version (")
+                                    .append("new-spec-version (")
                                     .append(newSpecVersion)
-                                    .append(") and specification-version (")
+                                    .append(") and spec-version (")
                                     .append(specVersion)
                                     .append(") can't be greater than 1")
                                     .toString());
                         }
                     }
+                }
+            } else {
+                // verify that implementation version starts with spec version
+                if (!(specImplVersion.equals(specVersion)
+                        || specImplVersion.startsWith(specVersion + ".")
+                        || specImplVersion.startsWith(specVersion + "-"))) {
+                    errors.add(new StringBuilder()
+                            .append("WARNING: spec-impl-version (")
+                            .append(specImplVersion)
+                            .append(") must start with ")
+                            .append("JCP spec-version number (")
+                            .append(specVersion)
+                            .append(')')
+                            .toString());
                 }
             }
         } else {
@@ -481,10 +482,10 @@ public class Spec {
                 // verify that implVersion != newImplVersion
                 if (implVersion.equals(newImplVersion)) {
                     errors.add(new StringBuilder()
-                            .append("WARNING: implementation-version (")
+                            .append("WARNING: impl-version (")
                             .append(implVersion)
                             .append(") can't be equal to ")
-                            .append("new-implementation-version (")
+                            .append("new-impl-version (")
                             .append(newImplVersion)
                             .append(") for non final artifacts")
                             .toString());
@@ -495,10 +496,10 @@ public class Spec {
                     // verify that implVersion < newImplVersion
                     if (implAV.compareTo(newImplAV) > 0) {
                         errors.add(new StringBuilder()
-                                .append("WARNING: new-implementation-version (")
+                                .append("WARNING: new-impl-version (")
                                 .append(newImplVersion)
                                 .append(") must be greater than ")
-                                .append("implementation-version (")
+                                .append("impl-version (")
                                 .append(implVersion)
                                 .append(')')
                                 .toString());
@@ -509,9 +510,9 @@ public class Spec {
 
                             errors.add(new StringBuilder()
                                     .append("WARNING: offset between ")
-                                    .append("new-implementation-version (")
+                                    .append("new-impl-version (")
                                     .append(newImplVersion)
-                                    .append(") and implementation-version (")
+                                    .append(") and impl-version (")
                                     .append(implVersion)
                                     .append(") can't be greater than 1")
                                     .toString());
@@ -687,54 +688,47 @@ public class Spec {
         if(nonFinal == null || standaloneImpl == null){
             return sb.toString();
         }
-        sb.append("[ ");
-        if (apiPackage!= null && !apiPackage.isEmpty()) {
-            sb.append("apiPackage=");
-            sb.append(apiPackage);
-            sb.append(", ");
-        }
+        sb.append("{");
         if (specVersion!= null && !specVersion.isEmpty()){
-            sb.append("specification version=");
+            sb.append(" spec-version=");
             sb.append(specVersion);
-            sb.append(", ");
+        }        
+        if (apiPackage!= null && !apiPackage.isEmpty()) {
+            sb.append(" apiPackage=");
+            sb.append(apiPackage);
         }
         if(standaloneImpl.booleanValue()){
-            sb.append("standalone impl, ");
-            sb.append("implementation-namespace=");
+            sb.append(" standalone-impl");
+            sb.append(" impl-namespace=");
             sb.append(implNamespace);
-            sb.append(", ");            
             if(nonFinal){
-                sb.append("non final, ");
-                sb.append("new-specification-version=");
+                sb.append(" non-final");
+                sb.append(" new-spec-version=");
                 sb.append(newSpecVersion);
-                sb.append(", ");
-                sb.append("new-implementation-version=");
+                sb.append(" new-impl-version=");
                 sb.append(newSpecVersion);
-                sb.append(", ");
-                sb.append("implementation-build=");
+                sb.append(" impl-build=");
                 sb.append(implBuild);
             } else {
-                sb.append("final, ");
+                sb.append(" final");
             }
-            sb.append("implementation-version=");
+            sb.append(" impl-version=");
             sb.append(implVersion);
         } else {
-            sb.append("API, ");
+            sb.append(" API");
             if(nonFinal){
-                sb.append("non final, ");
-                sb.append("new-specification-version=");
+                sb.append(" non-final");
+                sb.append(" new-spec-version=");
                 sb.append(newSpecVersion);
-                sb.append(", ");
-                sb.append("specification-build=");
+                sb.append(" spec-build=");
                 sb.append(specBuild);        
-                sb.append(", ");        
             } else {
-                sb.append("final, ");
+                sb.append(" final");
+                sb.append(" spec-impl-version=");
+                sb.append(specImplVersion);
             }
-            sb.append("specification-implementation-version=");
-            sb.append(specImplVersion);
         }
-        sb.append(" ]");
+        sb.append(" }");
         return sb.toString();
     }
 }
