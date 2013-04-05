@@ -108,9 +108,6 @@ public class CheckDistribution extends AbstractMojo {
     
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        getLog().info("");
-        getLog().info("-- spec properties --");        
-
         List<File> jars = Collections.EMPTY_LIST;
         try {
             jars = FileUtils.getFiles(dir, includes, excludes);
