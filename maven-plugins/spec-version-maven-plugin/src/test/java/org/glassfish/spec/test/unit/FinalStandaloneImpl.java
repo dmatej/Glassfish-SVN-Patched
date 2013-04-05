@@ -41,7 +41,6 @@
 package org.glassfish.spec.test.unit;
 
 import org.glassfish.spec.test.TestSpec;
-import org.glassfish.spec.test.sets.Aubergine;
 import org.glassfish.spec.test.sets.Ratatouille;
 import org.junit.Assert;
 import org.junit.BeforeClass;
