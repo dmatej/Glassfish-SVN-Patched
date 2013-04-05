@@ -134,9 +134,9 @@ public class LogMessagesResourceBundleGenerator extends BaseLoggingProcessor {
             Iterator<? extends Element> it = logMessageElements.iterator();
             Set<String> messageIds = new HashSet<String>();
             
-            debug("Initial messages found so far: " + logMessagesMap);
             loadLogMessages(logMessagesMap, rbName);
             loadLogMessages(logMessagesDetails, rbName + DETAILS_SUFFIX);
+            debug("Initial messages found so far: " + logMessagesMap);
 
             while (it.hasNext()) {
                 Element elem = it.next();
