@@ -118,6 +118,7 @@ public final class Artifact {
 
     public void setVersion(String version) {
         this.version = new DefaultArtifactVersion(version);
+        this.buildNumber = getBuildNumber(this.version.getQualifier());
     }
     
     public String getBuildNumber() {
