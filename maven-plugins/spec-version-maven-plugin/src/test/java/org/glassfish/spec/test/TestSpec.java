@@ -67,19 +67,19 @@ public abstract class TestSpec extends Spec {
             String implNamespace,
             boolean standaloneImpl,
             boolean nonFinal) {
-        super(
-                artifact,
-                specVersion,
-                newSpecVersion,
-                specImplVersion,
-                implVersion,
-                newImplVersion,
-                specBuild,
-                implBuild,
-                apiPackage,
-                implNamespace,
-                standaloneImpl,
-                nonFinal);
+        super();
+        setArtifact(artifact);
+        setSpecVersion(specVersion);
+        setNewSpecVersion(newSpecVersion);
+        setSpecImplVersion(specImplVersion);
+        setImplVersion(implVersion);
+        setNewImplVersion(newImplVersion);
+        setSpecBuild(specBuild);
+        setImplBuild(implBuild);
+        setApiPackage(apiPackage);
+        setImplNamespace(implNamespace);
+        setStandaloneImpl(standaloneImpl);
+        setNonFinal(nonFinal);
     }
     
     public abstract String getExpectedBundleVersion();

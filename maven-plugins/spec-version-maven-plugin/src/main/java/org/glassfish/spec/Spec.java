@@ -79,34 +79,6 @@ public class Spec {
     public Spec(){
     }
 
-    public Spec(
-            Artifact _artifact,
-            String _specVersion,
-            String _newSpecVersion,
-            String _specImplVersion,
-            String _implVersion,
-            String _newImplVersion,
-            String _specBuild,
-            String _implBuild,
-            String _apiPackage,
-            String _implNamespace,
-            boolean _standaloneImpl,
-            boolean _nonFinal) {
-        
-        this.artifact = _artifact;
-        this.specVersion = _specVersion != null ? _specVersion : "";
-        this.newSpecVersion = _newSpecVersion != null ? _newSpecVersion : "";
-        this.specImplVersion = _specImplVersion != null ? _specImplVersion : "";
-        this.implVersion = _implVersion != null ? _implVersion : "";
-        this.newImplVersion = _newImplVersion != null ? _newImplVersion : "";
-        this.specBuild = _specBuild != null ? _specBuild : "";
-        this.implBuild = _implBuild != null ? _implBuild : "";
-        this.apiPackage = _apiPackage != null ? _apiPackage : "";
-        this.implNamespace = _implNamespace != null ? _implNamespace : "";
-        this.standaloneImpl = _standaloneImpl;
-        this.nonFinal = _nonFinal;
-    }
-    
     public void read(JarFile _jar) throws IOException {
         this.jar = _jar;
         this.artifact = Artifact.fromJar(jar);
@@ -199,7 +171,7 @@ public class Spec {
             } else if (nonFinal != null && !nonFinal.booleanValue()){
                 if (specImplVersion == null || specImplVersion.isEmpty()) {
                     configIssues.append(" spec-impl-version");
-                }                
+                }
             }
         }
         
@@ -629,39 +601,39 @@ public class Spec {
     }
 
     public void setApiPackage(String apiPackage) {
-        this.apiPackage = apiPackage;
+        this.apiPackage = apiPackage != null ? apiPackage : "";
     }
 
     public void setImplNamespace(String implNamespace) {
-        this.implNamespace = implNamespace;
+        this.implNamespace = implNamespace != null ? implNamespace : "";
     }
 
     public void setImplVersion(String implVersion) {
-        this.implVersion = implVersion;
+        this.implVersion = implVersion != null ? implVersion : "";
     }
 
     public void setSpecVersion(String specVersion) {
-        this.specVersion = specVersion;
+        this.specVersion = specVersion != null ? specVersion : "";
     }
 
     public void setNewImplVersion(String newImplVersion) {
-        this.newImplVersion = newImplVersion;
+        this.newImplVersion = newImplVersion != null ? newImplVersion : "";
     }
 
     public void setSpecBuild(String specBuild) {
-        this.specBuild = specBuild;
+        this.specBuild = specBuild != null ? specBuild : "";
     }
 
     public void setSpecImplVersion(String specImplVersion) {
-        this.specImplVersion = specImplVersion;
+        this.specImplVersion = specImplVersion != null ? specImplVersion : "";
     }
 
     public void setNewSpecVersion(String newSpecVersion) {
-        this.newSpecVersion = newSpecVersion;
+        this.newSpecVersion = newSpecVersion != null ? newSpecVersion : "";
     }
 
     public void setImplBuild(String implBuild) {
-        this.implBuild = implBuild;
+        this.implBuild = implBuild != null ? implBuild : "";
     }
 
     public void setArtifact(Artifact artifact) {

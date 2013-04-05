@@ -322,19 +322,19 @@ public class CLiMojo extends AbstractMojo {
             }
         }
         
-        Spec spec = new Spec(
-                artifact,
-                specVersion,
-                newSpecVersion,
-                specImplVersion,
-                implVersion,
-                newImplVersion,
-                specBuild,
-                implBuild,
-                apiPackage,
-                implNamespace,
-                !isAPI,
-                !isFinal);
+        // TODO remove mojo parameters and replace with spec.
+        Spec spec = new Spec();
+        spec.setArtifact(artifact);
+        spec.setSpecVersion(specVersion);
+        spec.setNewSpecVersion(newSpecVersion);
+        spec.setSpecImplVersion(specImplVersion);
+        spec.setImplVersion(implVersion);
+        spec.setSpecBuild(specBuild);
+        spec.setImplBuild(implBuild);
+        spec.setApiPackage(apiPackage);
+        spec.setImplNamespace(implNamespace);
+        spec.setStandaloneImpl(!isAPI);
+        spec.setNonFinal(!isFinal);
         spec.verify();
         
         for(String error : spec.getErrors()){
