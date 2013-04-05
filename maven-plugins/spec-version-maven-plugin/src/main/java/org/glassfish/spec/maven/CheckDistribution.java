@@ -96,54 +96,51 @@ public class CheckDistribution extends AbstractMojo {
     protected List<Spec> specs;
     
     
-    private Spec getSpec(Artifact a) throws IOException{
+    private Spec getSpec(File f) throws IOException{
+        JarFile j = new JarFile(f);
+        Artifact a = Artifact.fromJar(j);
         for(Spec s : specs){
             if(s.getArtifact().equals(a)){
+                s.setMetadata(Metadata.fromJar(j));
                 return s;
             }
         }
-        return null;
+        Spec spec = new Spec();
+        spec.setArtifact(a);
+        spec.setMetadata(Metadata.fromJar(j));
+        return spec;
     }
     
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+
+        List<File> jars = Collections.EMPTY_LIST;
         try {
-            List<File> jars = Collections.EMPTY_LIST;
+            jars = FileUtils.getFiles(dir, includes, excludes);
+        } catch (IOException ex) {
+            throw new MojoExecutionException(ex.getMessage(), ex);
+        }
+        
+        for (File jar : jars) {
             try {
-                jars = FileUtils.getFiles(dir, includes, excludes);
-            } catch (IOException ex) {
-                throw new MojoExecutionException(ex.getMessage(), ex);
-            }
+                Spec spec = getSpec(jar);
+                spec.verify();
 
-            for (File jar : jars) {
-                JarFile jarFile = new JarFile(jar);
-                Artifact artifact = Artifact.fromJar(jarFile);
-                Spec spec = getSpec(artifact);
-
-                List<String> errors;
-                if (spec == null) {
-                    System.out.println("WARNING: no spec information found for " + jar.getName());
-                    Metadata m = Metadata.fromJar(jarFile);
-                    errors = m.getErrors();
-                } else {
-                    spec.read(jarFile);
-                    spec.verify();
-                    errors = spec.getErrors();
-                }
-
-                if (!errors.isEmpty()) {
+                if (!spec.getErrors().isEmpty()) {
                     System.out.println("");
-                    System.out.println("[ " + jar.getName() + " ] "
-                            + artifact.toString());
-                    for (int i = 0; i < errors.size(); i++) {
-                        System.out.println("-" + String.valueOf(i)
-                                + " " + errors.get(i));
+                    System.out.println(spec.toString());
+                    for (int i = 0; i < spec.getErrors().size(); i++) {
+                        System.out.println(new StringBuilder()
+                                .append('-')
+                                .append(' ')
+                                .append(spec.getErrors().get(i))
+                                .toString());
                     }
                     System.out.println("");
                 }
+            } catch (IOException ex) {
+                getLog().warn(ex.getMessage(), ex);
             }
-        } catch (IOException ex) {
-            getLog().warn(ex.getMessage(), ex);
         }
     }
 }

@@ -64,7 +64,9 @@ public abstract class TestSpec extends Spec {
             String specBuild,
             String implBuild,
             String apiPackage,
-            String implNamespace) {
+            String implNamespace,
+            boolean standaloneImpl,
+            boolean nonFinal) {
         super(
                 artifact,
                 specVersion,
@@ -75,7 +77,9 @@ public abstract class TestSpec extends Spec {
                 specBuild,
                 implBuild,
                 apiPackage,
-                implNamespace);
+                implNamespace,
+                standaloneImpl,
+                nonFinal);
     }
     
     public abstract String getExpectedBundleVersion();

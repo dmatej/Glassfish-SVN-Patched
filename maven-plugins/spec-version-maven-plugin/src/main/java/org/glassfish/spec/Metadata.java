@@ -187,7 +187,11 @@ public final class Metadata {
             }
             mdata[i] = manifest.getMainAttributes().getValue(KEYS[i]);
             if (mdata[i] == null) {
-                errors.add(KEYS[i]+" not found in MANIFEST");
+                errors.add(new StringBuilder()
+                        .append("ERROR: ")
+                        .append(KEYS[i])
+                        .append(" not found in MANIFEST")
+                        .toString());
             }
         }
         

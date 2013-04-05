@@ -62,11 +62,9 @@ public class Ratatouille extends TestSpec {
                 "${ratatouille.specBuild}",
                 "${ratatouille.implBuild}",
                 "${ratatouille.apiPackage}",
-                "${ratatouille.implNamespace}");
-        this.getArtifact().setIsAPI(
-                Boolean.valueOf("${ratatouille.isAPI}").booleanValue());
-        this.getArtifact().setIsFinal(
-                Boolean.valueOf("${ratatouille.isFinal}").booleanValue());
+                "${ratatouille.implNamespace}",
+                Boolean.valueOf("${ratatouille.standaloneImpl}").booleanValue(),
+                Boolean.valueOf("${ratatouille.nonFinal}").booleanValue());
     }
 
     @Override

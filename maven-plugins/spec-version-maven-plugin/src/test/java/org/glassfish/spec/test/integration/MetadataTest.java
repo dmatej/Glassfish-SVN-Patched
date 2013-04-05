@@ -40,16 +40,10 @@
 
 package org.glassfish.spec.test.integration;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.jar.JarFile;
-import org.glassfish.spec.Metadata;
 import org.glassfish.spec.test.sets.Courgette;
 import org.glassfish.spec.test.sets.Ratatouille;
 import org.glassfish.spec.test.sets.Aubergine;
 import org.glassfish.spec.test.sets.Moussaka;
-import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 /**
@@ -61,96 +55,20 @@ public class MetadataTest {
     @Test
     public void verifyAubergineMetadata() {
         new Aubergine().assertMetadataFromJar();
-//        String msg = "Testing "+Metadata.BUNDLE_VERSION;
-//        Assert.assertNotNull(msg, aubergineMdata.getBundleVersion());
-//        Assert.assertEquals(msg, Aubergine.BUNDLE_VERSION, aubergineMdata.getBundleVersion());
-//        
-//        msg = "Testing "+Metadata.BUNDLE_SYMBOLIC_NAME;
-//        Assert.assertNotNull(msg, aubergineMdata.getBundleSymbolicName());
-//        Assert.assertEquals(msg, Aubergine.BUNDLE_SYMBOLIC_NAME, aubergineMdata.getBundleSymbolicName());
-//        
-//        msg = "Testing "+Metadata.JAR_EXTENSION_NAME;
-//        Assert.assertNotNull(msg, aubergineMdata.getJarExtensionName());
-//        Assert.assertEquals(msg, Aubergine.JAR_EXTENSION_NAME, aubergineMdata.getJarExtensionName());
-//        
-//        msg = "Testing "+Metadata.JAR_SPECIFICATION_VERSION;
-//        Assert.assertNotNull(msg,aubergineMdata.getJarSpecificationVersion());
-//        Assert.assertEquals(msg,Aubergine.JAR_SPECIFICATION_VERSION, aubergineMdata.getJarSpecificationVersion());
-//        
-//        msg = "Testing "+Metadata.JAR_IMPLEMENTATION_VERSION;
-//        Assert.assertNotNull(msg,aubergineMdata.getjarImplementationVersion());
-//        Assert.assertEquals(msg,Aubergine.JAR_IMPLEMENTATION_VERSION, aubergineMdata.getjarImplementationVersion());
     }
     
     @Test
     public void verifyCourgetteMetadata() {
         new Courgette().assertMetadataFromJar();
-//        String msg = "Testing "+Metadata.BUNDLE_VERSION;
-//        Assert.assertNotNull(msg, courgetteMdata.getBundleVersion());
-//        Assert.assertEquals(msg, Courgette.BUNDLE_VERSION, courgetteMdata.getBundleVersion());
-//        
-//        msg = "Testing "+Metadata.BUNDLE_SYMBOLIC_NAME;
-//        Assert.assertNotNull(msg, courgetteMdata.getBundleSymbolicName());
-//        Assert.assertEquals(msg, Courgette.BUNDLE_SYMBOLIC_NAME, courgetteMdata.getBundleSymbolicName());
-//        
-//        msg = "Testing "+Metadata.JAR_EXTENSION_NAME;
-//        Assert.assertNotNull(msg, courgetteMdata.getJarExtensionName());
-//        Assert.assertEquals(msg, Courgette.JAR_EXTENSION_NAME, courgetteMdata.getJarExtensionName());
-//        
-//        msg = "Testing "+Metadata.JAR_SPECIFICATION_VERSION;
-//        Assert.assertNotNull(msg,courgetteMdata.getJarSpecificationVersion());
-//        Assert.assertEquals(msg,Courgette.JAR_SPECIFICATION_VERSION, courgetteMdata.getJarSpecificationVersion());
-//        
-//        msg = "Testing "+Metadata.JAR_IMPLEMENTATION_VERSION;
-//        Assert.assertNotNull(msg,courgetteMdata.getjarImplementationVersion());
-//        Assert.assertEquals(msg,Courgette.JAR_IMPLEMENTATION_VERSION, courgetteMdata.getjarImplementationVersion());
     }
     
     @Test
     public void verifyRatatouilleMetadata() {
         new Ratatouille().assertMetadataFromJar();
-//        String msg = "Testing "+Metadata.BUNDLE_VERSION;
-//        Assert.assertNotNull(msg, ratatouilleMdata.getBundleVersion());
-//        Assert.assertEquals(msg, Ratatouille.BUNDLE_VERSION, ratatouilleMdata.getBundleVersion());
-//        
-//        msg = "Testing "+Metadata.BUNDLE_SYMBOLIC_NAME;
-//        Assert.assertNotNull(msg, ratatouilleMdata.getBundleSymbolicName());
-//        Assert.assertEquals(msg, Ratatouille.BUNDLE_SYMBOLIC_NAME, ratatouilleMdata.getBundleSymbolicName());
-//        
-//        msg = "Testing "+Metadata.JAR_EXTENSION_NAME;
-//        Assert.assertNotNull(msg, ratatouilleMdata.getJarExtensionName());
-//        Assert.assertEquals(msg, Ratatouille.JAR_EXTENSION_NAME, ratatouilleMdata.getJarExtensionName());
-//        
-//        msg = "Testing "+Metadata.JAR_SPECIFICATION_VERSION;
-//        Assert.assertNotNull(msg,ratatouilleMdata.getJarSpecificationVersion());
-//        Assert.assertEquals(msg,Ratatouille.JAR_SPECIFICATION_VERSION, ratatouilleMdata.getJarSpecificationVersion());
-//        
-//        msg = "Testing "+Metadata.JAR_IMPLEMENTATION_VERSION;
-//        Assert.assertNotNull(msg,ratatouilleMdata.getjarImplementationVersion());
-//        Assert.assertEquals(msg,Ratatouille.JAR_IMPLEMENTATION_VERSION, ratatouilleMdata.getjarImplementationVersion());
     }
     
     @Test
     public void verifyMoussakaMetadata() {
         new Moussaka().assertMetadataFromJar();
-//        String msg = "Testing "+Metadata.BUNDLE_VERSION;
-//        Assert.assertNotNull(msg, moussakaMdata.getBundleVersion());
-//        Assert.assertEquals(msg, Moussaka.BUNDLE_VERSION, moussakaMdata.getBundleVersion());
-//        
-//        msg = "Testing "+Metadata.BUNDLE_SYMBOLIC_NAME;
-//        Assert.assertNotNull(msg, moussakaMdata.getBundleSymbolicName());
-//        Assert.assertEquals(msg, Moussaka.BUNDLE_SYMBOLIC_NAME, moussakaMdata.getBundleSymbolicName());
-//        
-//        msg = "Testing "+Metadata.JAR_EXTENSION_NAME;
-//        Assert.assertNotNull(msg, moussakaMdata.getJarExtensionName());
-//        Assert.assertEquals(msg, Moussaka.JAR_EXTENSION_NAME, moussakaMdata.getJarExtensionName());
-//        
-//        msg = "Testing "+Metadata.JAR_SPECIFICATION_VERSION;
-//        Assert.assertNotNull(msg,moussakaMdata.getJarSpecificationVersion());
-//        Assert.assertEquals(msg,Moussaka.JAR_SPECIFICATION_VERSION, moussakaMdata.getJarSpecificationVersion());
-//        
-//        msg = "Testing "+Metadata.JAR_IMPLEMENTATION_VERSION;
-//        Assert.assertNotNull(msg,moussakaMdata.getjarImplementationVersion());
-//        Assert.assertEquals(msg,Moussaka.JAR_IMPLEMENTATION_VERSION, moussakaMdata.getjarImplementationVersion());
     } 
 }

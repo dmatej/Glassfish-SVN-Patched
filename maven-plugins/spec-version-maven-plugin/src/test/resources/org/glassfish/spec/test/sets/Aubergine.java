@@ -62,11 +62,9 @@ public class Aubergine extends TestSpec {
                 "${aubergine.specBuild}",
                 "${aubergine.implBuild}",
                 "${aubergine.apiPackage}",
-                "${aubergine.implNamespace}");
-        this.getArtifact().setIsAPI(
-                Boolean.valueOf("${aubergine.isAPI}").booleanValue());
-        this.getArtifact().setIsFinal(
-                Boolean.valueOf("${aubergine.isFinal}").booleanValue());
+                "${aubergine.implNamespace}",
+                Boolean.valueOf("${aubergine.standaloneImpl}").booleanValue(),
+                Boolean.valueOf("${aubergine.nonFinal}").booleanValue());
     }
 
     @Override

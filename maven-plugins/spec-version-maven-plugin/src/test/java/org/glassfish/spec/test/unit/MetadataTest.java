@@ -40,7 +40,6 @@
 
 package org.glassfish.spec.test.unit;
 
-import org.glassfish.spec.Artifact;
 import org.glassfish.spec.test.sets.Courgette;
 import org.glassfish.spec.test.sets.Ratatouille;
 import org.glassfish.spec.test.sets.Aubergine;
@@ -71,36 +70,5 @@ public class MetadataTest {
     @Test
     public void nonFinalStandaloneTest() {
         new Moussaka().assertMetadata();
-    }
-    
-    public static void negative(
-            Artifact artifact,
-            String version,
-            String newVersion,
-            String implVersion) {
-
-        String msg = artifact + " - specVersion (" + version + ")"
-                + " - newVersion (" + newVersion + ")"
-                + " - implVersion (" + implVersion + ")"
-                + " should not be compliant";
-//        Spec spec = new Spec(
-//                artifact,
-//                version,
-//                newVersion,
-//                implVersion);
-//        spec.verify();
-//        Assert.assertFalse(msg, spec.getErrors().isEmpty());
-    }
-
-    @Test
-    public void negativeNonFinalAPITest() {
-        // test specVersion == newSpecVersion for non final API
-//        negative(aubergineArtifact, Aubergine.SPEC_VERSION, Aubergine.SPEC_VERSION, Aubergine.IMPL_VERSION);
-        
-        // test with specVersion > newSpecVersion for non final API
-//        negative(aubergineArtifact, Aubergine.NEW_SPEC_VERSION, Aubergine.SPEC_VERSION, Aubergine.IMPL_VERSION);
-        
-//         test specVersion with a big random number
-//        negative(aubergineArtifact, "50", Aubergine.SPEC_VERSION, Aubergine.IMPL_VERSION);
     }
 }

@@ -242,7 +242,9 @@ public class CLiMojo extends AbstractSpecMojo {
                 specBuild,
                 implBuild,
                 apiPackage,
-                implNamespace);
+                implNamespace,
+                !isAPI,
+                !isFinal);
         spec.verify();
         
         for(String error : spec.getErrors()){

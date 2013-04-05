@@ -68,6 +68,8 @@ public class Spec {
     private String implBuild;
     private String apiPackage;
     private String implNamespace;
+    private Boolean nonFinal = null;
+    private Boolean standaloneImpl = null;
     
     private List<String> errors = new LinkedList<String>();
     private static final String NONFINAL_BUILD_SEPARATOR_SPEC = ".99.";
@@ -78,41 +80,40 @@ public class Spec {
     }
 
     public Spec(
-            Artifact artifact,
-            String specVersion,
-            String newSpecVersion,
-            String specImplVersion,
-            String implVersion,
-            String newImplVersion,
-            String specBuild,
-            String implBuild,
-            String apiPackage,
-            String implNamespace) {
+            Artifact _artifact,
+            String _specVersion,
+            String _newSpecVersion,
+            String _specImplVersion,
+            String _implVersion,
+            String _newImplVersion,
+            String _specBuild,
+            String _implBuild,
+            String _apiPackage,
+            String _implNamespace,
+            boolean _standaloneImpl,
+            boolean _nonFinal) {
         
-        this.artifact = artifact;
-        this.specVersion = specVersion != null ? specVersion : "";
-        this.newSpecVersion = newSpecVersion != null ? newSpecVersion : "";
-        this.specImplVersion = specImplVersion != null ? specImplVersion : "";
-        this.implVersion = implVersion != null ? implVersion : "";
-        this.newImplVersion = newImplVersion != null ? newImplVersion : "";
-        this.specBuild = specBuild != null ? specBuild : "";
-        this.implBuild = implBuild != null ? implBuild : "";
-        this.apiPackage = apiPackage != null ? apiPackage : "";
-        this.implNamespace = implNamespace != null ? implNamespace : "";
+        this.artifact = _artifact;
+        this.specVersion = _specVersion != null ? _specVersion : "";
+        this.newSpecVersion = _newSpecVersion != null ? _newSpecVersion : "";
+        this.specImplVersion = _specImplVersion != null ? _specImplVersion : "";
+        this.implVersion = _implVersion != null ? _implVersion : "";
+        this.newImplVersion = _newImplVersion != null ? _newImplVersion : "";
+        this.specBuild = _specBuild != null ? _specBuild : "";
+        this.implBuild = _implBuild != null ? _implBuild : "";
+        this.apiPackage = _apiPackage != null ? _apiPackage : "";
+        this.implNamespace = _implNamespace != null ? _implNamespace : "";
+        this.standaloneImpl = _standaloneImpl;
+        this.nonFinal = _nonFinal;
     }
     
     public void read(JarFile _jar) throws IOException {
         this.jar = _jar;
-        Artifact _artifact = Artifact.fromJar(jar);
-        if(artifact != null){
-            _artifact.setIsAPI(artifact.isAPI());
-            _artifact.setIsAPI(artifact.isFinal());
-        }
-        this.artifact = _artifact;
+        this.artifact = Artifact.fromJar(jar);
         this.metadata = Metadata.fromJar(jar);
         this.errors.clear();
-        this.errors.add(specBuild);
-    }    
+        this.errors.addAll(metadata.getErrors());
+    }
 
     private void checkClasses(JarFile jf, String... pkgs) {
         Enumeration<JarEntry> e = jf.entries();
@@ -165,41 +166,58 @@ public class Spec {
         this.errors.clear();
         this.errors.addAll(getMetadata().getErrors());
         
-        boolean stop=false;
-        if(specVersion == null){
-            errors.add("error: no specification-version");
-            stop=true;
+        boolean abort=false;
+        StringBuilder configIssues = new StringBuilder();
+        configIssues.append("ERROR: missing configuration (");
+        
+        if(nonFinal == null){ 
+            configIssues.append(" nonFinal?");
+            abort=true;
         }
-        if(apiPackage == null){
-            errors.add("error: no api-package");
-            stop=true;
+        if(standaloneImpl == null){
+            configIssues.append(" standaloneImpl?");
+            abort=true;
         }
-        if(!artifact.isFinal() && newSpecVersion == null){
-            errors.add("error: no new-spec-version");
-            stop=true;
+        if(specVersion == null || specVersion.isEmpty()){
+            configIssues.append(" specification-version");
+            abort=true;
         }
-        if (!artifact.isAPI()) {
-            if (implNamespace == null) {
-                errors.add("error: no implementation namespace");
-                stop=true;
+        if(apiPackage == null || apiPackage.isEmpty()){
+            configIssues.append(" api-package");
+            abort=true;
+        }
+        if(nonFinal!=null 
+                && nonFinal.booleanValue() 
+                && (newSpecVersion == null || newSpecVersion.isEmpty())){
+            configIssues.append(" new-spec-version");
+            abort=true;
+        }
+        if (standaloneImpl!=null && standaloneImpl.booleanValue()) {
+            if (implNamespace == null || implNamespace.isEmpty()) {
+                configIssues.append(" implementation-namespace");
+                abort=true;
             }
-            if (implVersion == null) {
-                errors.add("error: no implementation-version");
-                stop=true;
+            if (implVersion == null || implVersion.isEmpty()) {
+                configIssues.append(" implementation-version");
+                abort=true;
             }
-            if(!artifact.isFinal() && newImplVersion == null){
-                errors.add("error: no new-implementation-version");
-                stop=true;
+            if(nonFinal.booleanValue()
+                    && (newImplVersion == null || newImplVersion.isEmpty())){
+                configIssues.append(" new-implementation-version");
+                abort=true;
             }
         }
-        if(stop){
+        
+        // no need to continue further...
+        if(abort){
+            errors.add(configIssues.append(" )").toString());
             return;
         }
         
         // verify that specVersion is <major>.<minor>
         if (!specVersion.matches("[0-9]+\\.[0-9]+")) {
             errors.add(new StringBuilder()
-                    .append("specification version (")
+                    .append("WARNING: specification version (")
                     .append(specVersion)
                     .append(") is invalid, JCP specification version number ")
                     .append("must be of the form <major>.<minor>")
@@ -210,6 +228,7 @@ public class Spec {
         if (!getMetadata().getjarImplementationVersion()
                 .equals(artifact.getVersion().toString())) {
             errors.add(new StringBuilder()
+                    .append("WARNING: ")
                     .append(Metadata.JAR_IMPLEMENTATION_VERSION)
                     .append(" (")
                     .append(getMetadata().getjarImplementationVersion())
@@ -220,11 +239,12 @@ public class Spec {
                     .toString());
         }
 
-        if (artifact.isFinal()) {
+        if (!nonFinal) {
             // verify Bundle-Version
             if (!getMetadata().getBundleVersion()
                     .equals(artifact.getVersion().toString())) {
                 errors.add(new StringBuilder()
+                        .append("WARNING: ")
                         .append(Metadata.BUNDLE_VERSION)
                         .append(" (")
                         .append(metadata.getBundleVersion())
@@ -245,11 +265,12 @@ public class Spec {
                     .append('.')
                     .append(av.getMinorVersion())
                     .append(NONFINAL_BUILD_SEPARATOR)
-                    .append(artifact.isAPI()? specBuild : implBuild)
+                    .append(standaloneImpl? implBuild : specBuild)
                     .toString();
 
             if (!getMetadata().getBundleVersion().equals(bundleVersion)) {
                 errors.add(new StringBuilder()
+                        .append("WARNING: ")
                         .append(Metadata.BUNDLE_VERSION)
                         .append(" (")
                         .append(metadata.getBundleVersion())
@@ -261,10 +282,11 @@ public class Spec {
             // TODO check BundleSpecVersion == JarSpec (with no b)
         }
 
-        if (artifact.isAPI()) {
+        if (!standaloneImpl) {
             // verify that groupId starts with javax.
             if (!artifact.getGroupId().startsWith("javax.")) {
                 errors.add(new StringBuilder()
+                        .append("WARNING: ")
                         .append("groupId (")
                         .append(artifact.getGroupId())
                         .append(") must start with \"javax.\"")
@@ -274,6 +296,7 @@ public class Spec {
             // verify that artifactId does end with -api
             if (!artifact.getArtifactId().endsWith(API_SUFFIX)) {
                 errors.add(new StringBuilder()
+                        .append("WARNING: ")
                         .append("artifactId (")
                         .append(artifact.getArtifactId())
                         .append(") should end with ")
@@ -284,6 +307,7 @@ public class Spec {
             // verify that apiPackage starts with javax.
             if (!apiPackage.startsWith("javax.")) {
                 errors.add(new StringBuilder()
+                        .append("WARNING: ")
                         .append("API packages (")
                         .append(apiPackage)
                         .append(") must start with \"javax.\"")
@@ -297,6 +321,7 @@ public class Spec {
                     .toString();
             if (!symbolicName.equals(getMetadata().getBundleSymbolicName())) {
                 errors.add(new StringBuilder()
+                        .append("WARNING: ")
                         .append(Metadata.BUNDLE_SYMBOLIC_NAME)
                         .append(" (")
                         .append(apiPackage)
@@ -308,6 +333,7 @@ public class Spec {
             // verify that Extension-Name == apiPackage
             if (!getMetadata().getJarExtensionName().equals(apiPackage)) {
                 errors.add(new StringBuilder()
+                        .append("WARNING: ")
                         .append(Metadata.JAR_EXTENSION_NAME)
                         .append(" (")
                         .append(getMetadata().getJarExtensionName())
@@ -321,12 +347,12 @@ public class Spec {
             }
             
             // verify that implementation version starts with spec version
-            String sv = artifact.isFinal() ? specVersion : newSpecVersion;
+            String sv = nonFinal? newSpecVersion : specVersion;
             if (!(specImplVersion.equals(sv)
                     || specImplVersion.startsWith(sv + ".")
                     || specImplVersion.startsWith(sv + "-"))) {
                 errors.add(new StringBuilder()
-                        .append("spec-implementation-version (")
+                        .append("WARNING: spec-implementation-version (")
                         .append(specImplVersion)
                         .append(") must start with ")
                         .append("JCP specification version number (")
@@ -335,11 +361,11 @@ public class Spec {
                         .toString());
             }            
 
-            if (!artifact.isFinal()) {
+            if (nonFinal) {
                 // verify new spec version
                 if (!newSpecVersion.matches("[0-9]+\\.[0-9]+")) {
                     errors.add(new StringBuilder()
-                            .append("new-specification-version (")
+                            .append("WARNING: new-specification-version (")
                             .append(newSpecVersion)
                             .append(") is invalid, ")
                             .append("JCP specification version number ")
@@ -350,7 +376,7 @@ public class Spec {
                 // verify that specVersion != newSpecVersion
                 if (specVersion.equals(newSpecVersion)) {
                     errors.add(new StringBuilder()
-                            .append("specification-version (")
+                            .append("WARNING: specification-version (")
                             .append(specVersion)
                             .append(") can't be equal to ")
                             .append("new-specification-version (")
@@ -376,7 +402,7 @@ public class Spec {
                         if (newSpecAV.getMajorVersion() - specAV.getMajorVersion() > 1
                                 || newSpecAV.getMinorVersion() - specAV.getMinorVersion() > 1) {
                             errors.add(new StringBuilder()
-                                    .append("offset between ")
+                                    .append("WARNING: offset between ")
                                     .append("new-specification-version (")
                                     .append(newSpecVersion)
                                     .append(") and specification-version (")
@@ -391,7 +417,7 @@ public class Spec {
             // verify that groupId starts with javax.
             if (artifact.getGroupId().startsWith("javax.")) {
                 errors.add(new StringBuilder()
-                        .append("groupId (")
+                        .append("WARNING: groupId (")
                         .append(artifact.getGroupId())
                         .append(") should not start with \"javax.\"")
                         .toString());
@@ -400,7 +426,7 @@ public class Spec {
             // verify that artifactId does not end with -api
             if (artifact.getArtifactId().endsWith(API_SUFFIX)) {
                 errors.add(new StringBuilder()
-                        .append("artifactId (")
+                        .append("WARNING: artifactId (")
                         .append(artifact.getArtifactId())
                         .append(") should not end with ")
                         .append(API_SUFFIX)
@@ -410,6 +436,7 @@ public class Spec {
             // verify that Extension-Name == apiPackage
             if (!getMetadata().getJarExtensionName().equals(apiPackage)) {
                 errors.add(new StringBuilder()
+                        .append("WARNING: ")
                         .append(Metadata.JAR_EXTENSION_NAME)
                         .append(" (")
                         .append(getMetadata().getJarExtensionName())
@@ -421,7 +448,7 @@ public class Spec {
             // verify that apiPackage starts with javax.
             if (!apiPackage.startsWith("javax.")) {
                 errors.add(new StringBuilder()
-                        .append("API packages (")
+                        .append("WARNING: API packages (")
                         .append(apiPackage)
                         .append(") must start with \"javax.\"")
                         .toString());
@@ -437,6 +464,7 @@ public class Spec {
             if (!getMetadata().getBundleSymbolicName()
                     .equals(symbolicName)) {
                 errors.add(new StringBuilder()
+                        .append("WARNING: ")
                         .append(Metadata.BUNDLE_SYMBOLIC_NAME)
                         .append("( ")
                         .append(getMetadata().getBundleSymbolicName())
@@ -449,11 +477,11 @@ public class Spec {
                 checkClasses(jar, apiPackage, implNamespace);
             }
 
-            if (!artifact.isFinal()) {
+            if (nonFinal) {
                 // verify that implVersion != newImplVersion
                 if (implVersion.equals(newImplVersion)) {
                     errors.add(new StringBuilder()
-                            .append("implementation-version (")
+                            .append("WARNING: implementation-version (")
                             .append(implVersion)
                             .append(") can't be equal to ")
                             .append("new-implementation-version (")
@@ -467,7 +495,7 @@ public class Spec {
                     // verify that implVersion < newImplVersion
                     if (implAV.compareTo(newImplAV) > 0) {
                         errors.add(new StringBuilder()
-                                .append("new-implementation-version (")
+                                .append("WARNING: new-implementation-version (")
                                 .append(newImplVersion)
                                 .append(") must be greater than ")
                                 .append("implementation-version (")
@@ -480,7 +508,7 @@ public class Spec {
                                 || newImplAV.getMinorVersion() - implAV.getMinorVersion() > 1) {
 
                             errors.add(new StringBuilder()
-                                    .append("offset between ")
+                                    .append("WARNING: offset between ")
                                     .append("new-implementation-version (")
                                     .append(newImplVersion)
                                     .append(") and implementation-version (")
@@ -503,8 +531,8 @@ public class Spec {
             return metadata;
         }
 
-        if (artifact.isAPI()) {
-            if (artifact.isFinal()) {
+        if (!standaloneImpl) {
+            if (!nonFinal) {
                 //  OSGi Bundle-SymbolicName:	${API_PACKAGE}-api
                 //  OSGi bundle specversion:	${SPEC_VERSION}
                 //  OSGi Bundle-Version:	${SPEC_IMPL_VERSION}
@@ -547,7 +575,7 @@ public class Spec {
         } else {
             String symbolicName = implNamespace + "." + apiPackage;
 
-            if (artifact.isFinal()) {
+            if (!nonFinal) {
                 //  OSGi Bundle-SymbolicName:	${IMPL_NAMESPACE}.${API_PACKAGE}
                 //  OSGi bundle specversion:	${SPEC_VERSION}
                 //  OSGi Bundle-Version:	${IMPL_VERSION}
@@ -625,14 +653,6 @@ public class Spec {
         this.specBuild = specBuild;
     }
 
-    public String getSpecImplVersion() {
-        return specImplVersion;
-    }
-
-    public String getNewSpecVersion() {
-        return newSpecVersion;
-    }
-
     public void setSpecImplVersion(String specImplVersion) {
         this.specImplVersion = specImplVersion;
     }
@@ -647,5 +667,73 @@ public class Spec {
 
     public void setArtifact(Artifact artifact) {
         this.artifact = artifact;
+    }
+
+    public void setNonFinal(boolean nonFinal) {
+        this.nonFinal = nonFinal;
+    }
+
+    public void setStandaloneImpl(boolean standaloneImpl) {
+        this.standaloneImpl = standaloneImpl;
+    }
+
+    public void setMetadata(Metadata metadata) {
+        this.metadata = metadata;
+    }
+    
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder(artifact.toString());
+        if(nonFinal == null || standaloneImpl == null){
+            return sb.toString();
+        }
+        
+        if (apiPackage!= null && !apiPackage.isEmpty()) {
+            sb.append("apiPackage=");
+            sb.append(apiPackage);
+            sb.append(", ");
+        }
+        if (specVersion!= null && !specVersion.isEmpty()){
+            sb.append("specification version=");
+            sb.append(specVersion);
+            sb.append(", ");
+        }
+        if(standaloneImpl.booleanValue()){
+            sb.append("standalone impl, ");
+            sb.append("implementation-namespace=");
+            sb.append(implNamespace);
+            sb.append(", ");            
+            if(nonFinal){
+                sb.append("non final, ");
+                sb.append("new-specification-version=");
+                sb.append(newSpecVersion);
+                sb.append(", ");
+                sb.append("new-implementation-version=");
+                sb.append(newSpecVersion);
+                sb.append(", ");
+                sb.append("implementation-build=");
+                sb.append(implBuild);
+            } else {
+                sb.append("final, ");
+            }
+            sb.append("implementation-version=");
+            sb.append(implVersion);
+        } else {
+            sb.append("API, ");
+            if(nonFinal){
+                sb.append("non final, ");
+                sb.append("new-specification-version=");
+                sb.append(newSpecVersion);
+                sb.append(", ");
+                sb.append("specification-build=");
+                sb.append(specBuild);        
+                sb.append(", ");        
+            } else {
+                sb.append("final, ");
+            }
+            sb.append("specification-implementation-version=");
+            sb.append(specImplVersion);
+        }
+        return sb.toString();
     }
 }

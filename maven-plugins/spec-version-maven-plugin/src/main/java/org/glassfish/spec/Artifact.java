@@ -60,8 +60,6 @@ public final class Artifact {
     private String artifactId;
     private ArtifactVersion version;
     private String buildNumber;
-    private boolean isFinal;
-    private boolean isAPI;
     
     private static final String[] buildNumberSeparators = new String[] {"m", "b"};
     public static final String SNAPSHOT_QUALIFIER = "SNAPSHOT";
@@ -96,13 +94,6 @@ public final class Artifact {
         this.artifactId = _artifactId;
         this.version = new DefaultArtifactVersion(_version);
         this.buildNumber = getBuildNumber(version.getQualifier());
-        if(this.version.getQualifier() == null
-                || this.version.getQualifier().isEmpty()){
-            this.isFinal = true;
-        }
-        if(this.artifactId.endsWith(Spec.API_SUFFIX)){
-            this.isAPI=true;
-        }
     }
 
     public String getArtifactId() {
@@ -115,22 +106,6 @@ public final class Artifact {
 
     public ArtifactVersion getVersion() {
         return version;
-    }
-
-    public boolean isFinal() {
-        return isFinal;
-    }
-    
-    public boolean isAPI() {
-        return isAPI;
-    }
-    
-    public void setIsAPI(boolean b){
-        isAPI = b;
-    }
-    
-    public void setIsFinal(boolean b){
-        isFinal = b;
     }
 
     public void setArtifactId(String artifactId) {
@@ -181,24 +156,12 @@ public final class Artifact {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("[ ");
-        if(!isFinal()){
-            sb.append("non ");
-        }
-        sb.append("final ");
-        if(isAPI()){
-            sb.append("API ");
-        } else {
-            sb.append("standalone ");
-        }
-        sb.append("jar ");
-        sb.append("] ");
-        sb.append('(');
         sb.append(groupId);
         sb.append(':');
         sb.append(artifactId);
         sb.append(':');
         sb.append(version);
-        sb.append(')');
+        sb.append("] ");
         return sb.toString();
     }
 

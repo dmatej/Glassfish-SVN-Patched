@@ -62,11 +62,9 @@ public class Courgette extends TestSpec {
                 "${courgette.specBuild}",
                 "${courgette.implBuild}",
                 "${courgette.apiPackage}",
-                "${courgette.implNamespace}");
-        this.getArtifact().setIsAPI(
-                Boolean.valueOf("${courgette.isAPI}").booleanValue());
-        this.getArtifact().setIsFinal(
-                Boolean.valueOf("${courgette.isFinal}").booleanValue());
+                "${courgette.implNamespace}",
+                Boolean.valueOf("${courgette.standaloneImpl}").booleanValue(),
+                Boolean.valueOf("${courgette.nonFinal}").booleanValue());
     }
 
     @Override

@@ -62,11 +62,9 @@ public class Moussaka extends TestSpec {
                 "${moussaka.specBuild}",
                 "${moussaka.implBuild}",
                 "${moussaka.apiPackage}",
-                "${moussaka.implNamespace}");
-        this.getArtifact().setIsAPI(
-                Boolean.valueOf("${moussaka.isAPI}").booleanValue());
-        this.getArtifact().setIsFinal(
-                Boolean.valueOf("${moussaka.isFinal}").booleanValue());
+                "${moussaka.implNamespace}",
+                Boolean.valueOf("${moussaka.standaloneImpl}").booleanValue(),
+                Boolean.valueOf("${moussaka.nonFinal}").booleanValue());
     }
 
     @Override

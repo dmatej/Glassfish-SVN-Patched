@@ -42,8 +42,10 @@ package org.glassfish.spec.maven;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Properties;
+import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.project.MavenProject;
 import org.glassfish.spec.Artifact;
 import org.glassfish.spec.Spec;
 
@@ -56,33 +58,29 @@ import org.glassfish.spec.Spec;
  *
  * @author Romain Grecourt
  */
-public class SetPropertiesMojo extends AbstractSpecMojo {
+public class SetPropertiesMojo extends AbstractMojo {
     
     /**
-     * @parameter expression="${ignoreFailures}" default-value="false"
+     * @parameter default-value="${project}"
+     * @required
+     * @readonly
      */
-    protected boolean ignoreFailures;     
+    protected MavenProject project;
+    
+    /**
+     * @required
+     * @parameter expression="${spec}"
+     */    
+    protected Spec spec;
     
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        Artifact artifact = new Artifact(
+        
+        spec.setArtifact(new Artifact(
                 project.getGroupId(),
                 project.getArtifactId(),
-                project.getVersion());
-        artifact.setIsAPI(isAPI);
-        artifact.setIsFinal(isFinal);
+                project.getVersion()));
         
-        Spec spec = new Spec(
-                artifact,
-                specVersion,
-                newSpecVersion,
-                specImplVersion,
-                implVersion,
-                newImplVersion,
-                specBuild,
-                implBuild,
-                apiPackage,
-                implNamespace);
         Properties specProps = spec.getMetadata().getProperties();
         
         getLog().info("");

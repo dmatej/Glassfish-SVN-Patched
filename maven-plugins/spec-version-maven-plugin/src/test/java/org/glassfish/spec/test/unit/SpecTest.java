@@ -54,7 +54,6 @@ import org.junit.Test;
  */
 public class SpecTest {
     public static void positive(TestSpec spec) {
-
         spec.getSpec().verify();
         if(!spec.getSpec().getErrors().isEmpty()){
             StringBuilder msg = new StringBuilder(spec.getSpec().toString());
