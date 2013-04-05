@@ -62,11 +62,6 @@ import org.glassfish.spec.Spec;
 public class CheckDistribution extends AbstractMojo {
     
     /**
-     * @parameter expression="${ignoreFailures}" default-value="false"
-     */
-    protected boolean ignoreFailures;     
-    
-    /**
      * include pattern
      * 
      * @parameter expression="${includes}" default-value="javax*.jar"

@@ -46,8 +46,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.jar.JarFile;
+import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.project.MavenProject;
 import org.glassfish.spec.Artifact;
 import org.glassfish.spec.Spec;
 
@@ -60,7 +62,95 @@ import org.glassfish.spec.Spec;
  *
  * @author Romain Grecourt
  */
-public class CLiMojo extends AbstractSpecMojo {
+public class CLiMojo extends AbstractMojo {
+    
+   /**
+     * @parameter default-value="${project}"
+     * @required
+     * @readonly
+     */
+    protected MavenProject project;
+    
+    
+    /**
+     * Is it a final specification?
+     * 
+     * @parameter expression="${isFinal}" default-value="false"
+     */
+    protected boolean isFinal;
+    
+    /**
+     * Is it an API jar?
+     * 
+     * @parameter expression="${isApi}" default-value="true"
+     */
+    protected boolean isAPI;
+    
+    /**
+     * 
+     * @parameter expression="${apijar}"
+     */
+    protected String apiJar;
+    /**
+     * 
+     * @parameter expression="${impljar}"
+     */
+    protected String implJar;
+    
+    /**
+     * 
+     * @parameter expression="${implnamespace}"
+     */
+    protected String implNamespace;
+    
+    /**
+     * 
+     * @parameter expression="${apipackage}"
+     */
+    protected String apiPackage;
+    
+    /**
+     * 
+     * @parameter expression="${specversion}"
+     */
+    protected String specVersion;
+    
+    /**
+     * 
+     * @parameter expression="${specimplversion}"
+     */
+    protected String specImplVersion;
+    
+    /**
+     * 
+     * @parameter expression="${implversion}"
+     */
+    protected String implVersion;
+    
+    /**
+     * 
+     * @parameter expression="${newimplversion}"
+     */
+    protected String newImplVersion;
+    
+    /**
+     * 
+     * @parameter expression="${newspecversion}"
+     */
+    protected String newSpecVersion;
+    
+    /**
+     * 
+     * @parameter expression="${specbuild}"
+     */
+    protected String specBuild;
+    
+    /**
+     * 
+     * @parameter expression="${implbuild}"
+     */
+    protected String implBuild;        
+    
     /**
      * 
      * @parameter expression="${properties}"
