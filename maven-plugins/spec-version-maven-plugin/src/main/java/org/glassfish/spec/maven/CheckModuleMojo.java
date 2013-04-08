@@ -41,13 +41,11 @@ package org.glassfish.spec.maven;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
 import java.util.jar.JarFile;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.codehaus.plexus.util.FileUtils;
+import org.apache.maven.project.MavenProject;
 import org.glassfish.spec.Artifact;
 import org.glassfish.spec.Metadata;
 import org.glassfish.spec.Spec;
@@ -55,90 +53,71 @@ import org.glassfish.spec.Spec;
 
 /**
  *
- * @goal check-distribution
+ * @goal check-module
+ * @phase package
  *
  * @author Romain Grecourt
  */
-public class CheckDistribution extends AbstractMojo {
-    
+public class CheckModuleMojo extends AbstractMojo {
     /**
-     * include pattern
-     * 
-     * @parameter expression="${includes}" default-value="javax*.jar"
-     */
-    protected String includes;
-    
-    /**
-     * exclude pattern
-     * 
-     * @parameter expression="${excludes}"
-     */
-    protected String excludes;
-    
-    /**
-     * include pattern for inclusion
-     * 
+     * @parameter default-value="${project}"
      * @required
-     * @parameter expression="${dir}"
+     * @readonly
      */
-    protected File dir;
+    protected MavenProject project;
     
     /**
-     * Specs
+     * Module to verify
      * 
-     * @parameter expression="${specs}"
+     * @parameter expression="${module}"
+     */
+    protected File module;
+    
+    /**
+     * Spec
+     * 
+     * @parameter expression="${spec}"
      */    
-    protected List<Spec> specs;
-    
-    
-    private Spec getSpec(File f) throws IOException{
-        JarFile j = new JarFile(f);
-        Artifact a = Artifact.fromJar(j);
-        for(Spec s : specs){
-            if(s.getArtifact().equals(a)){
-                s.setMetadata(Metadata.fromJar(j));
-                return s;
-            }
-        }
-        Spec spec = new Spec();
-        spec.setArtifact(a);
-        spec.setMetadata(Metadata.fromJar(j));
-        return spec;
-    }
+    protected Spec spec;
     
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        List<File> jars = Collections.EMPTY_LIST;
+        if(module ==null || !module.exists()){
+            module = project.getArtifact().getFile();
+            if(module == null || !module.exists()){
+                throw new MojoFailureException("no jar to verify");
+            }
+        }
         try {
-            jars = FileUtils.getFiles(dir, includes, excludes);
+            if (spec == null) {
+                spec = new Spec();
+            }
+            spec.setArtifact(new Artifact(
+                    project.getGroupId(),
+                    project.getArtifactId(),
+                    project.getVersion()));
+            spec.setMetadata(Metadata.fromJar(new JarFile(module)));
+            spec.verify();
+
+            if (!spec.getErrors().isEmpty()) {
+                System.out.println("");
+                System.out.println(spec.getArtifact().toString());
+                String specDesc = spec.toString();
+                if (!specDesc.isEmpty()) {
+                    System.out.println(spec.toString());
+                }
+                for (int i = 0; i < spec.getErrors().size(); i++) {
+                    System.out.println(new StringBuilder()
+                            .append('-')
+                            .append(' ')
+                            .append(spec.getErrors().get(i))
+                            .toString());
+                }
+                System.out.println("");
+                throw new MojoFailureException("spec verification failed.");
+            }
         } catch (IOException ex) {
             throw new MojoExecutionException(ex.getMessage(), ex);
-        }
-        
-        for (File jar : jars) {
-            try {
-                Spec spec = getSpec(jar);
-                spec.verify();
-
-                if (!spec.getErrors().isEmpty()) {
-                    System.out.println("");
-                    System.out.println(spec.getArtifact().toString());
-                    String specDesc = spec.toString();
-                    if(!specDesc.isEmpty()){
-                        System.out.println(spec.toString());
-                    }
-                    for (int i = 0; i < spec.getErrors().size(); i++) {
-                        System.out.println(new StringBuilder()
-                                .append('-')
-                                .append(' ')
-                                .append(spec.getErrors().get(i))
-                                .toString());
-                    }
-                    System.out.println("");
-                }
-            } catch (IOException ex) {
-                getLog().warn(ex.getMessage(), ex);
-            }
         }
     }
 }

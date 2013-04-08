@@ -62,7 +62,7 @@ import org.glassfish.spec.Spec;
  *
  * @author Romain Grecourt
  */
-public class CLiMojo extends AbstractMojo {
+public class CommandLineMojo extends AbstractMojo {
     
    /**
      * @parameter default-value="${project}"
@@ -70,7 +70,6 @@ public class CLiMojo extends AbstractMojo {
      * @readonly
      */
     protected MavenProject project;
-    
     
     /**
      * Is it a final specification?
@@ -149,7 +148,7 @@ public class CLiMojo extends AbstractMojo {
      * 
      * @parameter expression="${implbuild}"
      */
-    protected String implBuild;        
+    protected String implBuild;
     
     /**
      * 
