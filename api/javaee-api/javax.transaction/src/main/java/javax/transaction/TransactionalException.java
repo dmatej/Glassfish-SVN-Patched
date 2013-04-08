@@ -40,18 +40,18 @@
 package javax.transaction;
 
 /**
- * RuntimeException used to rethrow Exceptions thrown from Transactional
- *  annotation interceptors implementation.
- * This results in the transaction being marked for rollback
- *  by default.
- * The original Exception is set as the nested exception and includes
- *  TransactionRequiredException for the case where a bean with
- *  TxType.MANDATORY is called outside a transaction context,
- *  InvalidTransactionException for the case where a bean with
- *  TxType.NEVER is called inside a transaction context,
- *  and various commit-time exceptions such as RollbackException,
- *  HeuristicMixedException, HeuristicRollbackException, SecurityException,
- *  IllegalStateException, and SystemException.
+ *
+ * The TransactionalException thrown from the Transactional interceptors
+ *  implementation contains the original exception as its nested exception
+ *  and is a RuntimeException, therefore, by default any
+ *  transaction that was started as a result of a Transactional annotation
+ *  earlier in the call stream will be marked for rollback as a result of
+ *  the TransactionalException being thrown by the Transactional interceptor
+ *  of the second bean. For example if a transaction is begun as a result of
+ *  a call to a bean annotated with Transactional(TxType.REQUIRED) and this
+ *  bean in turn calls a second bean annotated with
+ *  Transactional(TxType.NEVER), the transaction begun by the first bean
+ *  will be marked for rollback.
  *
  * @since JTA1.2
  */

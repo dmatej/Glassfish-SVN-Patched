@@ -47,8 +47,11 @@ import java.lang.annotation.Target;
 import javax.enterprise.context.NormalScope;
 
 /**
- * Annotation used to indicate a bean is to be scoped to the current active
- *  JTA transaction.
+ * <p>The javax.transaction.TransactionScoped annotation provides the ability to
+ * specify a standard CDI scope to define bean instances whose lifecycle is
+ * scoped to the currently active JTA transaction. This annotation has no effect
+ * on classes which have non-contextual references such those defined as managed
+ * beans by the Java EE specification. </p>
  *
  * The transaction scope is active when the return from a call to
  *  <code>UserTransaction.getStatus</code> or
@@ -61,27 +64,21 @@ import javax.enterprise.context.NormalScope;
  *      <li>Status.STATUS_PREPARING</li>
  *      <li>Status.STATUS_COMMITTING</li>
  *      <li>Status.STATUS_ROLLING_BACK</li>
- *
- * It is not intended that the term "active" as defined here in relation
- *  to TransactionScoped should also apply to its use in relation to transaction
- *  context, lifecycle, etc. mentioned elsewhere in this specification.
- * The transaction context is destroyed after any
- *  <code>Synchronization.beforeCompletion</code> methods are called and
- *  after completion calls have been made on enlisted resources.
- *  <code>Synchronization.afterCompletion</code> calls may occur before
- *  the transaction context is destroyed, however, there is no guarantee.
- *
- * A <code>javax.enterprise.context.ContextNotActiveException</code>
+ * <p>It is not intended that the term &quotactive&quot as defined here in relation to the
+ *  TransactionScoped annotation should also apply to its use in relation to
+ *  transaction context, lifecycle, etc. mentioned elsewhere in this
+ *  specification. The object with this annotation will be associated with the
+ *  current active JTA transaction when the object is used. This association must
+ *  be retained through any transaction suspend or resume calls as well as any
+ *  <code>Synchronization.beforeCompletion</code> callbacks. Any
+ *  <code>Synchronization.afterCompletion</code> methods will be invoked in an undefined
+ *  context. The way in which the JTA transaction is begun and completed
+ *  (for example via UserTransaction, Transactional interceptor, etc.) is of no consequence.
+ *  The contextual references used across different JTA transactions are distinct.
+ *  Refer to the CDI specification for more details on contextual references.
+ *  A <code>javax.enterprise.context.ContextNotActiveException</code>
  *  will be thrown if an object with this annotation is used when the
- *  transaction context is not active.
- * The object with this annotation is associated with the JTA transaction where
- *  it is first used and this association is retained through any transaction
- *  suspend or resume calls as well as any beforeCompletion Synchronization
- *  calls until the transaction is completed.
- * The way in which the JTA transaction is begun and completed
- *  (eg BMT, CMT, etc.) is of no consequence.
- * The contextual references used across different JTA transactions are
- *  distinct.
+ *  transaction context is not active.</p>
  *
  *  @since JTA1.2
  */

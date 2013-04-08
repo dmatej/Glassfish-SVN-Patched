@@ -44,39 +44,35 @@ import javax.interceptor.InterceptorBinding;
 import java.lang.annotation.*;
 
 /**
- * Annotation used by applications to control transaction boundaries on CDI
- * managed beans, as well as classes defined as managed beans by the Java EE
- * specification such as servlets, JAX-RS resource classes, and JAX-WS
- * service endpoints, declaratively.  This provides the semantics of EJB
- * transaction attributes in CDI without dependencies such as RMI.  This
- * support is implemented via an implementation of a CDI interceptor that
- * conducts the necessary suspending, resuming, etc.  The TxType element of
- * the annotation provides the semantic equivalent of the transaction
- * attributes in EJB.
+ * <p>The javax.transaction.Transactional annotation provides the application
+ * the ability to declaratively control transaction boundaries on CDI managed beans, as
+ * well as classes defined as managed beans by the Java EE specification, at both the class
+ * and method level where method level annotations override those at the class level.</p>
+ * <p>See the EJB specification for restrictions on the use of @Transactional with EJBs.</p>
+ * <p>This support is provided via an implementation of CDI interceptors that conduct the
+ * necessary suspending, resuming, etc. The Transactional interceptor interposes on business
+ * method invocations and lifecycle events. Lifecycle methods are invoked in an unspecified
+ * transaction context unless the method is annotated explicitly with @Transactional.</p>
+ * <p>If an attempt is made to call any method of the UserTransaction interface from within the
+ * scope of a bean or method annotated with @Transactional and a Transactional.TxType other
+ * than NOT_SUPPORTED or NEVER, an IllegalStateException must be thrown. The use of the
+ * TransactionSynchronizationRegistry is allowed regardless of any @Transactional annotation.</p>
+ * <p>The Transactional interceptors must have a priority of
+ * Interceptor.Priority.PLATFORM_BEFORE+200.
+ * Refer to the Interceptors specification for more details.</p>
+ * <p>The TxType element of the annotation indicates whether a bean method is to be executed within
+ * a transaction context.  TxType.REQUIRED is the default.     </p>
  *
- * By default checked exceptions do not result in the transactional
- * interceptor marking the transaction for rollback and instances of
- * RuntimeException and its subclasses do.  This default behavior can be
- * overridden by specifying which exceptions result in the interceptor marking
- * the transaction for rollback.  The rollbackOn element can be set to indicate
- * which exceptions should cause the interceptor to mark the transaction for
- * rollback.  Conversely, the dontRollbackOn element can be set to indicate
- * which exceptions should not cause the interceptor to mark the transaction
- * for rollback.  When a class is specified for either of these elements, the
- * designated behavior applies to subclasses of that class as well.  If both
- * elements are specified, dontRollbackOn takes precedence.
- *
- * EJB application exceptions (i.e., runtime exceptions annotated with
- *  @ApplicationException) are treated just as anyother runtime exceptions
- *  unless otherwise specified.
- *
- * When Transactional annotated managed beans are used in conjunction with EJB
- *  container managed transactions the EJB container behavior is applied before
- *  the bean is called.  When the bean is called the CDI behavior is applied
- *  before calling the bean's methods.  It is best practice to avoid such use of
- *  Transactional annotations in conjunction with EJB container managed transactions
- *  in order to avoid possible confusion.
- *
+ * <p>By default checked exceptions do not result in the transactional interceptor marking the
+ * transaction for rollback and instances of RuntimeException and its  subclasses do. This default
+ * behavior can be modified by specifying exceptions that result in the interceptor marking the
+ * transaction for rollback and/or exceptions that do not result in rollback.</p>
+ * <p>The rollbackOn element can be set to indicate exceptions that must cause the interceptor to mark
+ * the transaction for rollback.</p>
+ * <p>Conversely, the dontRollbackOn element can be set to indicate
+ * exceptions that must not cause the interceptor to mark the transaction for rollback.</p>
+ * <p>When a class is specified for either of these elements, the designated behavior applies to subclasses
+ * of that class as well. If both elements are specified, dontRollbackOn takes precedence.</p>
  *
  * @since JTA1.2
  */
@@ -85,13 +81,99 @@ import java.lang.annotation.*;
 @Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(value = RetentionPolicy.RUNTIME)
 public @interface Transactional {
+
+    /**
+     * The TxType element of the Transactional annotation indicates whether a bean method
+     * is to be executed within a transaction context.
+     */
+    @Nonbinding
     TxType value() default TxType.REQUIRED;
 
-    public enum TxType {REQUIRED, REQUIRES_NEW, MANDATORY, SUPPORTS, NOT_SUPPORTED, NEVER}
+    /**
+     * The TxType element of the annotation indicates whether a bean method is to be
+     * executed within a transaction context where the values provide the following
+     * corresponding behavior.
+     */
+    public enum TxType {
+        /**
+         *  <p>If called outside a transaction context, the interceptor must begin a new
+         *  JTA transaction, the managed bean method execution must then continue
+         *  inside this transaction context, and the transaction must be completed by
+         *  the interceptor.</p>
+         *  <p>If called inside a transaction context, the managed bean
+         *  method execution must then continue inside this transaction context.</p>
+         */
+        REQUIRED,
 
+        /**
+         *  <p>If called outside a transaction context, the interceptor must begin a new
+         *  JTA transaction, the managed bean method execution must then continue
+         *  inside this transaction context, and the transaction must be completed by
+         *  the interceptor.</p>
+         *  <p>If called inside a transaction context, the current transaction context must
+         *  be suspended, a new JTA transaction will begin, the managed bean method
+         *  execution must then continue inside this transaction context, the transaction
+         *  must be completed, and the previously suspended transaction must be resumed.</p>
+         */
+        REQUIRES_NEW,
+
+        /**
+         *  <p>If called outside a transaction context, a TransactionalException with a
+         *  nested TransactionRequiredException must be thrown.</p>
+         *  <p>If called inside a transaction context, managed bean method execution will
+         *  then continue under that context.</p>
+         */
+        MANDATORY,
+
+        /**
+         *  <p>If called outside a transaction context, managed bean method execution
+         *  must then continue outside a transaction context.</p>
+         *  <p>If called inside a transaction context, the managed bean method execution
+         *  must then continue inside this transaction context.</p>
+         */
+        SUPPORTS,
+
+        /**
+         *  <p>If called outside a transaction context, managed bean method execution
+         *  must then continue outside a transaction context.</p>
+         *  <p>If called inside a transaction context, the current transaction context must
+         *  be suspended, the managed bean method execution must then continue
+         *  outside a transaction context, and the previously suspended transaction
+         *  must be resumed by the interceptor that suspended it after the method
+         *  execution has completed.</p>
+         */
+        NOT_SUPPORTED,
+
+        /**
+         *  <p>If called outside a transaction context, managed bean method execution
+         *  must then continue outside a transaction context.</p>
+         *  <p>If called inside a transaction context, a TransactionalException with
+         *  a nested InvalidTransactionException must be thrown.</p>
+         */
+        NEVER
+    }
+
+    /**
+     * The rollbackOn element can be set to indicate exceptions that must cause
+     *  the interceptor to mark the transaction for rollback. Conversely, the dontRollbackOn
+     *  element can be set to indicate exceptions that must not cause the interceptor to mark
+     *  the transaction for rollback. When a class is specified for either of these elements,
+     *  the designated behavior applies to subclasses of that class as well. If both elements
+     *  are specified, dontRollbackOn takes precedence.
+     * @return Class[] of Exceptions
+     */
     @Nonbinding
     public Class[] rollbackOn() default {};
 
+    /**
+     * The dontRollbackOn element can be set to indicate exceptions that must not cause
+     *  the interceptor to mark the transaction for rollback. Conversely, the rollbackOn element
+     *  can be set to indicate exceptions that must cause the interceptor to mark the transaction
+     *  for rollback. When a class is specified for either of these elements,
+     *  the designated behavior applies to subclasses of that class as well. If both elements
+     *  are specified, dontRollbackOn takes precedence.
+     * @return Class[] of Exceptions
+     */
     @Nonbinding
     public Class[] dontRollbackOn() default {};
 
