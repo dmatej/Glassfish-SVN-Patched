@@ -60,6 +60,12 @@ import java.lang.annotation.Retention;
  * public void updateOrder(Order order) { ... }
  * </pre>
  * 
+ * <p>Only business method interception or timeout method interception may be specified
+ * by a method-level <tt>Interceptors</tt> declaration.</p>
+ *
+ * <p>Constructor interception may be specified
+ * by a constructor-level <tt>Interceptors</tt> declaration.</p>
+ *
  * @see javax.interceptor.ExcludeClassInterceptors
  * @see javax.interceptor.ExcludeDefaultInterceptors
  *
