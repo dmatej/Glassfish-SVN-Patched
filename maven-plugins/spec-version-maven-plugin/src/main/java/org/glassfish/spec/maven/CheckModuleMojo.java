@@ -74,6 +74,13 @@ public class CheckModuleMojo extends AbstractMojo {
     protected File module;
     
     /**
+     * Ignore failures
+     * 
+     * @parameter expression="${ignoreErrors}"
+     */
+    protected boolean ignoreErrors;
+    
+    /**
      * Spec
      * 
      * @parameter expression="${spec}"
@@ -114,7 +121,9 @@ public class CheckModuleMojo extends AbstractMojo {
                             .toString());
                 }
                 System.out.println("");
-                throw new MojoFailureException("spec verification failed.");
+                if(!ignoreErrors){
+                    throw new MojoFailureException("spec verification failed.");
+                }
             }
         } catch (IOException ex) {
             throw new MojoExecutionException(ex.getMessage(), ex);

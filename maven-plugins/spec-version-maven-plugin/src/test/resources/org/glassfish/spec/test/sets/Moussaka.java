@@ -63,7 +63,7 @@ public class Moussaka extends TestSpec {
                 "${moussaka.implBuild}",
                 "${moussaka.apiPackage}",
                 "${moussaka.implNamespace}",
-                Boolean.valueOf("${moussaka.standaloneImpl}").booleanValue(),
+                JarType.valueOf("${moussaka.jarType}"),
                 Boolean.valueOf("${moussaka.nonFinal}").booleanValue());
     }
 

@@ -52,6 +52,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.glassfish.spec.Artifact;
 import org.glassfish.spec.Spec;
+import org.glassfish.spec.Spec.JarType;
 
 
 /**
@@ -83,7 +84,7 @@ public class CommandLineMojo extends AbstractMojo {
      * 
      * @parameter expression="${isApi}" default-value="true"
      */
-    protected boolean isAPI;
+    protected JarType jarType;
     
     /**
      * 
@@ -228,8 +229,8 @@ public class CommandLineMojo extends AbstractMojo {
                 fis.close();
                 apiPackage = p.getProperty("API_PACKAGE", apiPackage);
                 implNamespace = p.getProperty("IMPL_NAMESPACE", implNamespace);
-                isAPI = !getBooleanProperty(p, "STANDALONE_IMPL", isAPI);
-                if(isAPI){
+                jarType = JarType.valueOf(p.getProperty("JAR_TYPE"));
+                if(jarType.equals(JarType.impl)){
                     implVersion = p.getProperty("SPEC_IMPL_VERSION", implVersion);
                     specBuild = p.getProperty("SPEC_BUILD", specBuild);
                     newSpecVersion = p.getProperty("NEW_SPEC_VERSION", newSpecVersion);
@@ -257,7 +258,7 @@ public class CommandLineMojo extends AbstractMojo {
             }
         }
 
-        if (isAPI) {
+        if (jarType.equals(JarType.impl)) {
 	    if (implJar != null)
 		fail("--impljar must not be specified if no standalone implementation");
 	    if (implNamespace != null)
@@ -299,12 +300,16 @@ public class CommandLineMojo extends AbstractMojo {
             s = prompt("Is this a non-final specification?");
             isFinal = !(s.charAt(0) == 'y');
             s = prompt("Is there a standalone implementation of this specification?");
-            isAPI = !(s.charAt(0) == 'y');
+            if(!(s.charAt(0) == 'y')){
+                jarType = JarType.impl;
+            } else {
+                jarType = JarType.api;
+            }
 
             apiPackage = prompt("Enter the main API package (e.g., javax.wombat)");
             specVersion = prompt("Enter the version number of the JCP specification");
 
-            if (isAPI) {
+            if (jarType.equals(JarType.impl)) {
                 specImplVersion = prompt("Enter the version number of the API jar file");
                 newSpecVersion = prompt("Enter the version number of the implementation that will be used when the implementation is final");
                 if (!isFinal) {
@@ -332,7 +337,7 @@ public class CommandLineMojo extends AbstractMojo {
         spec.setImplBuild(implBuild);
         spec.setApiPackage(apiPackage);
         spec.setImplNamespace(implNamespace);
-        spec.setStandaloneImpl(!isAPI);
+        spec.setJarType(jarType);
         spec.setNonFinal(!isFinal);
         spec.verify();
         

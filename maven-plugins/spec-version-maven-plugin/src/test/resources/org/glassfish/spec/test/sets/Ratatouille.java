@@ -63,7 +63,7 @@ public class Ratatouille extends TestSpec {
                 "${ratatouille.implBuild}",
                 "${ratatouille.apiPackage}",
                 "${ratatouille.implNamespace}",
-                Boolean.valueOf("${ratatouille.standaloneImpl}").booleanValue(),
+                JarType.valueOf("${ratatouille.jarType}"),
                 Boolean.valueOf("${ratatouille.nonFinal}").booleanValue());
     }
 

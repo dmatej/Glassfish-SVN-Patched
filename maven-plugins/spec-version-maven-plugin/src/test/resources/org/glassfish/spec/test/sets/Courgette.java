@@ -63,7 +63,7 @@ public class Courgette extends TestSpec {
                 "${courgette.implBuild}",
                 "${courgette.apiPackage}",
                 "${courgette.implNamespace}",
-                Boolean.valueOf("${courgette.standaloneImpl}").booleanValue(),
+                JarType.valueOf("${courgette.jarType}"),
                 Boolean.valueOf("${courgette.nonFinal}").booleanValue());
     }
 

@@ -63,7 +63,7 @@ public class Aubergine extends TestSpec {
                 "${aubergine.implBuild}",
                 "${aubergine.apiPackage}",
                 "${aubergine.implNamespace}",
-                Boolean.valueOf("${aubergine.standaloneImpl}").booleanValue(),
+                JarType.valueOf("${aubergine.jarType}"),
                 Boolean.valueOf("${aubergine.nonFinal}").booleanValue());
     }
 

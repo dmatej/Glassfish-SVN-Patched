@@ -65,7 +65,7 @@ public abstract class TestSpec extends Spec {
             String implBuild,
             String apiPackage,
             String implNamespace,
-            boolean standaloneImpl,
+            JarType jarType,
             boolean nonFinal) {
         super();
         setArtifact(artifact);
@@ -78,7 +78,7 @@ public abstract class TestSpec extends Spec {
         setImplBuild(implBuild);
         setApiPackage(apiPackage);
         setImplNamespace(implNamespace);
-        setStandaloneImpl(standaloneImpl);
+        setJarType(jarType);
         setNonFinal(nonFinal);
     }
     

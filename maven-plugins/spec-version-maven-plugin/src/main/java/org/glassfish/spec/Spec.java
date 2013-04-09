@@ -69,7 +69,12 @@ public class Spec {
     private String apiPackage;
     private String implNamespace;
     private Boolean nonFinal = null;
-    private Boolean standaloneImpl = null;
+    private JarType jarType = null;
+    
+    public static enum JarType {
+        api,
+        impl
+    }
     
     private List<String> errors = new LinkedList<String>();
     private static final String NONFINAL_BUILD_SEPARATOR_SPEC = ".99.";
@@ -142,8 +147,8 @@ public class Spec {
         if(nonFinal == null){ 
             configIssues.append(" nonFinal?");
         }
-        if(standaloneImpl == null){
-            configIssues.append(" standaloneImpl?");
+        if(jarType == null){
+            configIssues.append(" jarType?");
         }
         if(specVersion == null || specVersion.isEmpty()){
             configIssues.append(" spec-version");
@@ -156,8 +161,8 @@ public class Spec {
                 && (newSpecVersion == null || newSpecVersion.isEmpty())){
             configIssues.append(" new-spec-version");
         }
-        if (standaloneImpl != null) {
-            if (standaloneImpl.booleanValue()) {
+        if (jarType != null) {
+            if (jarType.equals(JarType.impl)) {
                 if (implNamespace == null || implNamespace.isEmpty()) {
                     configIssues.append(" impl-namespace");
                 }
@@ -235,7 +240,7 @@ public class Spec {
                     .append('.')
                     .append(av.getMinorVersion())
                     .append(NONFINAL_BUILD_SEPARATOR)
-                    .append(standaloneImpl? implBuild : specBuild)
+                    .append(jarType.equals(JarType.impl)? implBuild : specBuild)
                     .toString();
 
             if (!getMetadata().getBundleVersion().equals(bundleVersion)) {
@@ -252,7 +257,7 @@ public class Spec {
             // TODO check BundleSpecVersion == JarSpec (with no b)
         }
 
-        if (!standaloneImpl) {
+        if (jarType.equals(JarType.api)) {
             // verify that groupId starts with javax.
             if (!artifact.getGroupId().startsWith("javax.")) {
                 errors.add(new StringBuilder()
@@ -502,7 +507,7 @@ public class Spec {
             return metadata;
         }
 
-        if (!standaloneImpl) {
+        if (jarType.equals(JarType.api)) {
             if (!nonFinal) {
                 //  OSGi Bundle-SymbolicName:	${API_PACKAGE}-api
                 //  OSGi bundle specversion:	${SPEC_VERSION}
@@ -644,8 +649,8 @@ public class Spec {
         this.nonFinal = nonFinal;
     }
 
-    public void setStandaloneImpl(boolean standaloneImpl) {
-        this.standaloneImpl = standaloneImpl;
+    public void setJarType(JarType jarType) {
+        this.jarType = jarType;
     }
 
     public void setMetadata(Metadata metadata) {
@@ -655,7 +660,7 @@ public class Spec {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        if(nonFinal == null || standaloneImpl == null){
+        if(nonFinal == null || jarType == null){
             return sb.toString();
         }
         sb.append("{");
@@ -667,7 +672,7 @@ public class Spec {
             sb.append(" apiPackage=");
             sb.append(apiPackage);
         }
-        if(standaloneImpl.booleanValue()){
+        if(jarType.equals(JarType.impl)){
             sb.append(" standalone-impl");
             sb.append(" impl-namespace=");
             sb.append(implNamespace);
