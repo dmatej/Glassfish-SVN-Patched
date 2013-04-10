@@ -84,7 +84,7 @@ public class CommandLineMojo extends AbstractMojo {
      * 
      * @parameter expression="${isApi}" default-value="true"
      */
-    protected JarType jarType;
+    protected String jarType;
     
     /**
      * 
@@ -229,7 +229,7 @@ public class CommandLineMojo extends AbstractMojo {
                 fis.close();
                 apiPackage = p.getProperty("API_PACKAGE", apiPackage);
                 implNamespace = p.getProperty("IMPL_NAMESPACE", implNamespace);
-                jarType = JarType.valueOf(p.getProperty("JAR_TYPE"));
+                jarType = p.getProperty("JAR_TYPE", jarType);
                 if(jarType.equals(JarType.impl)){
                     implVersion = p.getProperty("SPEC_IMPL_VERSION", implVersion);
                     specBuild = p.getProperty("SPEC_BUILD", specBuild);
@@ -301,9 +301,9 @@ public class CommandLineMojo extends AbstractMojo {
             isFinal = !(s.charAt(0) == 'y');
             s = prompt("Is there a standalone implementation of this specification?");
             if(!(s.charAt(0) == 'y')){
-                jarType = JarType.impl;
+                jarType = JarType.impl.name();
             } else {
-                jarType = JarType.api;
+                jarType = JarType.api.name();
             }
 
             apiPackage = prompt("Enter the main API package (e.g., javax.wombat)");

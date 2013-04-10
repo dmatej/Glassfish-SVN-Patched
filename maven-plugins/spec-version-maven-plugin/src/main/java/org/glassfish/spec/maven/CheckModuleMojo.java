@@ -92,6 +92,7 @@ public class CheckModuleMojo extends AbstractMojo {
         if(module ==null || !module.exists()){
             module = project.getArtifact().getFile();
             if(module == null || !module.exists()){
+                getLog().error("There is no jar to verify, try using mvn package first.");
                 throw new MojoFailureException("no jar to verify");
             }
         }

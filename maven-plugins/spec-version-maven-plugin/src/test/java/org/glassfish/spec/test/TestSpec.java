@@ -65,7 +65,7 @@ public abstract class TestSpec extends Spec {
             String implBuild,
             String apiPackage,
             String implNamespace,
-            JarType jarType,
+            String jarType,
             boolean nonFinal) {
         super();
         setArtifact(artifact);
