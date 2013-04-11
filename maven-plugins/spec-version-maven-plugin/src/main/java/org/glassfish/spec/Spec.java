@@ -69,7 +69,7 @@ public class Spec {
     private String apiPackage;
     private String implNamespace;
     private boolean nonFinal = false;
-    private JarType jarType = null;
+    private JarType jarType = JarType.api;
     
     public static enum JarType {
         api,
@@ -82,7 +82,8 @@ public class Spec {
     private static final String JCP_VERSION_RULE = "JCP spec version number must be of the form <major>.<minor>";
     public static final String API_SUFFIX = "-api";
 
-    public Spec(){
+    public Spec() {
+        
     }
 
     public void read(JarFile _jar) throws IOException {
@@ -142,9 +143,6 @@ public class Spec {
         this.errors.addAll(getMetadata().getErrors());
         
         StringBuilder configIssues = new StringBuilder();
-        if(jarType == null){
-            configIssues.append(" jarType?");
-        }
         if(specVersion == null || specVersion.isEmpty()){
             configIssues.append(" spec-version");
         }
@@ -154,21 +152,19 @@ public class Spec {
         if(nonFinal && (newSpecVersion == null || newSpecVersion.isEmpty())){
             configIssues.append(" new-spec-version");
         }
-        if (jarType != null) {
-            if (jarType.equals(JarType.impl)) {
-                if (implNamespace == null || implNamespace.isEmpty()) {
-                    configIssues.append(" impl-namespace");
-                }
-                if (implVersion == null || implVersion.isEmpty()) {
-                    configIssues.append(" impl-version");
-                }
-                if (nonFinal && (newImplVersion == null || newImplVersion.isEmpty())){
-                    configIssues.append(" new-impl-version");
-                }
-            } else if (!nonFinal){
-                if (specImplVersion == null || specImplVersion.isEmpty()) {
-                    configIssues.append(" spec-impl-version");
-                }
+        if (jarType.equals(JarType.impl)) {
+            if (implNamespace == null || implNamespace.isEmpty()) {
+                configIssues.append(" impl-namespace");
+            }
+            if (implVersion == null || implVersion.isEmpty()) {
+                configIssues.append(" impl-version");
+            }
+            if (nonFinal && (newImplVersion == null || newImplVersion.isEmpty())){
+                configIssues.append(" new-impl-version");
+            }
+        } else if (!nonFinal){
+            if (specImplVersion == null || specImplVersion.isEmpty()) {
+                configIssues.append(" spec-impl-version");
             }
         }
         

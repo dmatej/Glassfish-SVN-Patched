@@ -108,6 +108,14 @@ public class CheckDistributionMojo extends AbstractMojo {
     
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
+        if(!dir.exists()){
+            String msg = String.format(
+                    "directory (%s) does not exist",
+                    dir.getAbsolutePath());
+            getLog().error(msg);
+            throw new MojoFailureException(msg);
+        }
+        
         List<File> jars = Collections.EMPTY_LIST;
         try {
             jars = FileUtils.getFiles(dir, includes, excludes);
