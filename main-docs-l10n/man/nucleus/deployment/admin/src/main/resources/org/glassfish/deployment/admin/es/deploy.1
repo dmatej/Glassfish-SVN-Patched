@@ -185,9 +185,10 @@ OPCIONES
            relativa al archivo descriptor de despliegue alternativo. El
            descriptor de despliegue alternativo sustituye el descriptor de
            despliegue de nivel superior empaquetado en el archivo. Por
-           ejemplo, para un EAR, el uso de --altdd sustituye application.xml.
-           Para un módulo autónomo, el uso de --altdd sustituye el descriptor
-           de módulo de nivel superior como web.xml.
+           ejemplo, para un EAR, el uso de la opción --altdd sustituye a
+           application.xml. Para un módulo autónomo, el uso de la opción
+           --altdd sustituye el descriptor de módulo de nivel superior como
+           web.xml.
 
        --runtimealtdd
            Despliega la aplicación mediante un descriptor de despliegue de
@@ -196,26 +197,26 @@ OPCIONES
            una ruta de acceso relativa al archivo descriptor de despliegue
            alternativo. El descriptor de despliegue alternativo sustituye el
            descriptor de despliegue de nivel superior empaquetado en el
-           archivo. Por ejemplo, para un EAR, el uso de --runtimealtdd
-           sustituye glassfish-application.xml. Para un módulo autónomo, el
-           uso de --runtimealtdd sustituye el descriptor de módulo de nivel
-           superior como glassfish-web.xml. Se aplica sólo a los descriptores
-           de despliegue de GlassFish Server (glassfish-*.xml); el nombre del
-           archivo descriptor de despliegue alternativo debe empezar por
-           glassfish-. No se aplica a los descriptores de despliegue
-           sun-*.xml, que están anticuados.
+           archivo. Por ejemplo, para un EAR, el uso de la opción
+           --runtimealtdd sustituye a glassfish-application.xml. Para un
+           módulo autónomo, el uso de la opción --runtimealtdd sustituye el
+           descriptor de módulo de nivel superior como glassfish-web.xml. Se
+           aplica sólo a los descriptores de despliegue de GlassFish Server
+           (glassfish-*.xml); el nombre del archivo descriptor de despliegue
+           alternativo debe empezar por glassfish-. No se aplica a los
+           descriptores de despliegue sun-*.xml, que están anticuados.
 
        --deploymentorder
            Especifica el orden de despliegue la aplicación. Esta función
            resulta útil si la aplicación tiene dependencias y se deben cargar
            en un orden determinado al iniciar el servidor. El orden de
            despliegue se especifica como un entero. El valor por defecto es
-           100. Aplicaciones con un número inferior se cargan antes de que las
-           aplicaciones con un número más alto. Por ejemplo, una aplicación
-           con un orden de despliegue de 102 se carga antes que una aplicación
-           con un orden de despliegue de 110. Si no se especifica un orden de
-           despliegue, se asigna el valor de 100 por defecto. Si dos
-           aplicaciones tienen el mismo orden de despliegue, la primera
+           100. Las aplicaciones con un número inferior se cargan antes de que
+           las aplicaciones con un número más alto. Por ejemplo, una
+           aplicación con un orden de despliegue de 102 se carga antes que una
+           aplicación con un orden de despliegue de 110. Si no se especifica
+           un orden de despliegue, se asigna el valor de 100 por defecto. Si
+           dos aplicaciones tienen el mismo orden de despliegue, la primera
            aplicación que se va a desplegar es la primera aplicación que se va
            a cargar al iniciar el servidor.
 
@@ -452,6 +453,18 @@ OPCIONES
            Otras propiedades disponibles están determinados por la
            implantación del componente que se va a volver a desplegar.
 
+           Para los componentes empaquetados como grupos OSGi (--type=osgi),
+           el subcomando deploy acepta argumentos de propiedades para
+           encapsular un archivo WAR como un paquete de aplicaciones web (WAB)
+           en el momento del despliegue. El subcomando busca la clave
+           denominada UriScheme y, si existe, utiliza la clave como un
+           manejador de flujos de URL para decorar el flujo de entrada. Otras
+           propiedades se utilizan en el proceso de decoración. Por ejemplo,
+           el contenedor web OSGi de GlassFish Server registra un manejador de
+           flujos de URL denominado webbundle, que se utiliza para encapsular
+           un archivo WAR sin formato como WAB. Para obtener más información
+           sobre el uso, consulte el ejemplo de esta página de ayuda.
+
 OPERANDOS
        file_archive|filepath
            Ruta de acceso al archivo que contiene la aplicación que se va a
@@ -536,8 +549,12 @@ EJEMPLOS
            dos aplicaciones. La aplicación cart se carga antes que la
            aplicación horse al iniciar el servidor.
 
+           Se omiten algunas líneas de salida del ejemplo para legibilidad.
+
                asadmin> deploy --deploymentorder 102 --name cart cart.war
+               ...
                asadmin> deploy --deploymentorder 110 --name horse horse.war
+               ...
 
        Ejemplo 7, Despliegue de una aplicación mediante un archivo descriptor
        de despliegue Java 7 EE alternativo
@@ -546,6 +563,8 @@ EJEMPLOS
            archivo de la aplicación.
 
                asadmin> deploy --altdd path_to_alternate_descriptor cart.ear
+               Application deployed successfully with name cart.
+               Command deploy executed successfully
 
        Ejemplo 8, Despliegue de una aplicación mediante un archivo descriptor
        de despliegue de GlassFish Server alternativo
@@ -554,6 +573,27 @@ EJEMPLOS
            que reside fuera del archivo de la aplicación.
 
                asadmin> deploy --runtimealtdd path_to_alternate_runtime_descriptor horse.ear
+               Application deployed successfully with name horse.
+               Command deploy executed successfully
+
+       Ejemplo 9, Encapsulación de un archivo WAR como WAB
+           En este ejemplo se encapsula un archivo WAR sin formato como WAB
+           cuando se despliega un grupo de OSGi y si es específico de los
+           componentes empaquetados como grupos de OSGi.
+
+           El carácter de barra invertida (\) se utiliza para realizar el
+           escape de caracteres en el comando. Para obtener más información
+           sobre los caracteres de escape en opciones para la utilidad
+           asadmin, consulte la página de ayuda asadmin(1M).
+
+               asadmin deploy --type osgi \
+               --properties "UriScheme=webbundle:Bundle-SymbolicName=bar:\
+               Import-Package=javax.servlet;javax.servlet.http;
+               %20version\\=3.0;resolution\\:
+               =mandatory:Web-ContextPath=/foo" \
+               /tmp/test_sample1.war
+               Application deployed successfully with name sample1.
+               Command deploy executed successfully
 
 ESTADO DE SALIDA
        0

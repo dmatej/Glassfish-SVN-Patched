@@ -191,9 +191,9 @@ OPTIONS
            de déploiement de remplacement. Le descripteur de déploiement de
            remplacement remplace le descripteur de déploiement de niveau
            supérieur packagé dans l'archive. Par exemple, pour un fichier EAR,
-           l'utilisation de --altdd entraîne le remplacement du fichier
-           application.xml. Pour un module autonome, l'utilisation de --altdd
-           entraîne le remplacement du descripteur de module de niveau
+           l'utilisation de l'option --altdd entraîne le remplacement de
+           application.xml. Pour un module autonome, l'utilisation de l'option
+           --altdd entraîne le remplacement du descripteur de module de niveau
            supérieur, tel que web.xml.
 
        --runtimealtdd
@@ -203,24 +203,25 @@ OPTIONS
            fichier de descripteur de déploiement de remplacement. Le
            descripteur de déploiement de remplacement remplace le descripteur
            de déploiement de niveau supérieur packagé dans l'archive. Par
-           exemple, pour un fichier EAR, l'utilisation de --runtimealtdd
-           entraîne le remplacement du fichier glassfish-application.xml. Pour
-           un module autonome, l'utilisation de --runtimealtdd entraîne le
-           remplacement du descripteur de module de niveau supérieur, tel que
-           glassfish-web.xml. S'applique uniquement aux descripteurs de
-           déploiement GlassFish Server (glassfish-*.xml) ; le nom du fichier
-           de descripteur de déploiement de remplacement doit commencer par
-           glassfish-. Ne s'applique pas aux descripteurs de déploiement
-           sun-*.xml, qui sont en phase d'abandon.
+           exemple, pour un fichier EAR, l'utilisation de l'option
+           --runtimealtdd entraîne le remplacement de
+           glassfish-application.xml. Pour un module autonome, l'utilisation
+           de l'option --runtimealtdd entraîne le remplacement du descripteur
+           de module de niveau supérieur, tel que glassfish-web.xml.
+           S'applique uniquement aux descripteurs de déploiement GlassFish
+           Server (glassfish-*.xml) ; le nom du fichier de descripteur de
+           déploiement de remplacement doit commencer par glassfish-. Ne
+           s'applique pas aux descripteurs de déploiement sun-*.xml, qui sont
+           en phase d'abandon.
 
        --deploymentorder
            Indique l'ordre de déploiement de l'application. Cette option
            s'avère utile si l'application comprend des dépendances et doit
            être chargée dans un certain ordre au démarrage du serveur. L'ordre
            de déploiement est spécifié sous la forme d'un entier. La valeur
-           par défaut est 100. Les applications associées à un numéro
-           inférieur sont chargées avant les applications associées à un
-           numéro supérieur. Par exemple, une application dont l'ordre de
+           par défaut est 100. Les applications associées à des numéros
+           inférieurs sont chargées avant les applications associées à des
+           numéros supérieurs. Par exemple, une application dont l'ordre de
            déploiement est 102 est chargée avant une application dont l'ordre
            de déploiement est 110. Si aucun ordre de déploiement n'est
            indiqué, la valeur par défaut (100) est affectée. Si deux
@@ -463,6 +464,18 @@ OPTIONS
            Les autres propriétés disponibles sont déterminées par
            l'implémentation du composant qui est en cours de redéploiement.
 
+           Pour les composants packagés en tant que groupes OSGi
+           (--type=osgi), la sous-commande deploy accepte les arguments des
+           propriétés afin d'encapsuler un fichier WAR en tant que WAB (Web
+           Application Bundle) au moment du déploiement. La sous-commande
+           recherche une clé nommée UriSchemeet, si elle existe, l'utilise en
+           tant que gestionnaire de flux d'URL pour décorer le flux en entrée.
+           D'autres propriétés sont utilisées dans le processus de décoration.
+           Par exemple, le conteneur Web OSGi GlassFish Server inscrit un
+           gestionnaire de flux d'URL nommé webbundle, qui sert à encapsuler
+           un fichier WAR normal en tant que WAB. Pour plus d'informations sur
+           la syntaxe, reportez-vous à l'exemple dans cette page d'aide.
+
 OPÉRANDES
        file_archive|filepath
            Chemin de l'archive contenant l'application à déployer. Il peut
@@ -545,8 +558,13 @@ EXEMPLES
            spécifié. L'application cart est chargée avant l'application horse
            lors du démarrage du serveur.
 
+           Certaines lignes de la sortie sont omises de cet exemple pour une
+           meilleure lisibilité.
+
                asadmin> deploy --deploymentorder 102 --name cart cart.war
+               ...
                asadmin> deploy --deploymentorder 110 --name horse horse.war
+               ...
 
        Exemple 7, Déploiement d'une application à l'aide d'un fichier de
        descripteur de déploiement Java EE 7 de remplacement
@@ -555,6 +573,8 @@ EXEMPLES
            de l'archive d'application.
 
                asadmin> deploy --altdd path_to_alternate_descriptor cart.ear
+               Application deployed successfully with name cart.
+               Command deploy executed successfully
 
        Exemple 8, Déploiement d'une application à l'aide d'un fichier de
        descripteur de déploiement GlassFish Server de remplacement
@@ -563,6 +583,27 @@ EXEMPLES
            en dehors de l'archive d'application.
 
                asadmin> deploy --runtimealtdd path_to_alternate_runtime_descriptor horse.ear
+               Application deployed successfully with name horse.
+               Command deploy executed successfully
+
+       Exemple 9, Encapsulation d'un fichier WAR en tant que WAB
+           Dans cet exemple, un fichier WAR normal est encapsulé en tant que
+           WAB lorsqu'un groupe OSGi est déployé et est propre aux composants
+           packagés en tant que groupes OSGi.
+
+           La barre oblique inverse (\) est utilisée pour échapper des
+           caractères dans la commande. Pour plus d'informations sur les
+           caractères d'échappement dans les options de l'utilitaire asadmin,
+           reportez-vous à la page d'aide asadmin(1M).
+
+               asadmin deploy --type osgi \
+               --properties "UriScheme=webbundle:Bundle-SymbolicName=bar:\
+               Import-Package=javax.servlet;javax.servlet.http;
+               %20version\\=3.0;resolution\\:
+               =mandatory:Web-ContextPath=/foo" \
+               /tmp/test_sample1.war
+               Application deployed successfully with name sample1.
+               Command deploy executed successfully
 
 STATUT DE SORTIE
        0

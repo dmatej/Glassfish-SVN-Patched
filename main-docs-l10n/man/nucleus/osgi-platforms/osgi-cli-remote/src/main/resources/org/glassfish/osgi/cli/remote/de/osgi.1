@@ -1,34 +1,146 @@
 osgi(1)                 Unterbefehle des asadmin-Utili                 osgi(1)
 
 NAME
-       osgi - führt asadmin-Unterbefehle in der OSGi-Shell aus
+       osgi - delegiert die Befehlszeile an die Remote-Shell Apache Felix Gogo
+       für die Ausführung von OSGi-Shellbefehlen
 
 ZUSAMMENFASSUNG
            osgi [--help]
            [--session session]
            [--session-id session-id]
            [--instance instance]
-           [command-line ...]
+           [command_line]
 
 BESCHREIBUNG
-       Der Unterbefehl osgi führt asadmin-Unterbefehle in der OSGi-Shell aus
+       Der Unterbefehl osgi delegiert die Befehlszeile an die Remote-Shell
+       Apache Felix Gogo für die Ausführung von OSGi-Shellbefehlen. Befehle
+       werden von der Remote-Shell ausgeführt, und Ergebnisse werden vom
+       Utility asadmin zurückgegeben. Die Remote-Shell wird zusammen mit
+       GlassFish Server bereitgestellt und dient zur Verwaltung und Prüfung
+       der OSGi-Laufzeit.
+
+       Es können mehrere Befehlszeilensessions erstellt werden. Mithilfe der
+       Optionen --session und --session-id können Sie Befehle in einer
+       bestimmten Befehlszeilensession ausführen. Wird keine Session
+       angegeben, wird eine neue Session zur Ausführung von Befehlen erstellt.
+       Bei Abschluss der Ausführung wird sie wieder geschlossen.
+
+       Ein zugehöriger Unterbefehl ist der Unterbefehl osgi-shell, mit dem Sie
+       mehrere Befehle aus einer Datei oder Befehle interaktiv ausführen
+       können. Weitere Informationen zum Unterbefehl osgi-shell finden Sie auf
+       der Hilfeseite osgi-shell(1).
 
        Dieser Unterbefehl wird nur im Remote-Modus unterstützt.
 
 OPTIONEN
        --help, -?
-           Zeigt den Hilfetext für den Unterbefehl an.
+           Zeigt den Hilfetext für den Unterbefehl osgi an.
+
+       --session
+           Führt Vorgänge der Befehlszeilensession aus. Gültige Werte sind:
+
+           new
+               Erstellt eine neue Session und gibt eine Session-ID zurück.
+
+           stop
+               Stoppt die Session mit der angegebenen Session-ID.
+
+           list
+               Listet alle aktiven Sessions auf.
+
+           execute
+               Führt in der Session mit der angegebenen Session-ID einen
+               Befehl aus.
+
+       --session-id
+           Gibt die Session-ID für die Vorgänge der Befehlszeilensession an.
+
+       --instance
+           Gibt die Serverinstanz an, an die der Befehl delegiert wird.
+
+           Die Standardinstanz ist der DAS (Domain Administration Server). Zur
+           Ausführung eines Befehls auf einer anderen Instanz muss der DAS
+           ausgeführt werden.
 
 OPERANDEN
-       command-line ...
-           TBD
+       command_line
+           Die vollständige Befehlszeilensyntax, wie sie für Befehle in der
+           Remote-Shell Apache Felix Gogo bereitgestellt wird.
 
 BEISPIELE
-       Example 1, TBD
-           TBD
+       Beispiel 1, Befehle der Remote-Shell Apache Felix Gogo auflisten
+           In diesem Beispiel werden die Befehle der Remote-Shell Apache Felix
+           Gogo aufgelistet, die mit dem Unterbefehl osgi verwendet werden
+           können.
 
-               asadmin> osgi
+           Aus Gründen der Lesbarkeit werden im folgenden Beispiel einige
+           Ausgabezeilen ausgelassen.
 
+               asadmin> osgi help
+               felix:bundlelevel
+               felix:cd
+               felix:frameworklevel
+               felix:headers
+               felix:help
+               felix:inspect
+               felix:install
+               felix:lb
+               felix:log
+               felix:ls
+               felix:refresh
+               felix:resolve
+               ...
+               gogo:cat
+               gogo:each
+               gogo:echo
+               gogo:format
+               gogo:getopt
+               gogo:gosh
+               gogo:grep
+               ...
+               Command osgi executed successfully.
+
+       Beispiel 2, Remote-Shellbefehle ausführen
+           In diesem Beispiel wird der Felix Remote-Shellbefehl lb ohne
+           Argumente ausgeführt, um alle installierten OSGi-Bundles
+           aufzulisten.
+
+           Aus Gründen der Lesbarkeit werden im folgenden Beispiel einige
+           Ausgabezeilen ausgelassen.
+
+               asadmin> osgi lb
+               START LEVEL 2
+               ID|State      |Level|Name
+                0|Active     |    0|System Bundle
+                1|Active     |    1|Metro Web Services API OSGi Bundle
+                2|Active     |    1|javax.annotation API
+                3|Active     |    1|jaxb-api
+               ...
+               Command osgi executed successfully.
+
+       Beispiel 3, Befehle ausführen, die eine bestimmte Befehlszeilensession
+       erstellen und darauf ausgerichtet sind
+           In diesem Beispiel werden Befehle ausgeführt, die eine bestimmte
+           Befehlszeilensession erstellen und darauf ausgerichtet sind.
+
+           Aus Gründen der Lesbarkeit werden im folgenden Beispiel einige
+           Ausgabezeilen ausgelassen.
+
+               asadmin> osgi --session new
+               9537e570-0def-4f2e-9c19-bc8f51a8082f
+               ...
+               asadmin> osgi --session list
+               9537e570-0def-4f2e-9c19-bc8f51a8082f
+               ...
+               asadmin> osgi --session execute --session-id 9537e570-0def-4f2e-9c19-bc8f51a8082f lb
+               START LEVEL 2
+               ID|State      |Level|Name
+                0|Active     |    0|System Bundle
+                1|Active     |    1|Metro Web Services API OSGi Bundle
+                2|Active     |    1|javax.annotation API
+                3|Active     |    1|jaxb-api
+               ...
+               asadmin> osgi --session stop --session-id 9537e570-0def-4f2e-9c19-bc8f51a8082f
                Command osgi executed successfully.
 
 BEENDIGUNGSSTATUS
@@ -39,6 +151,8 @@ BEENDIGUNGSSTATUS
            Fehler beim Ausführen des Unterbefehls
 
 SIEHE AUCH
+       osgi-shell(1)
+
        asadmin(1M)
 
 Java EE 7                        06. Feb. 2013                         osgi(1)

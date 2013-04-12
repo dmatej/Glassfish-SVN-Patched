@@ -192,9 +192,9 @@ OPZIONI
            relativo del file del descrittore di distribuzione alternativo. Il
            descrittore di distribuzione alternativo sostituisce il descrittore
            di distribuzione di livello superiore all'interno di package
-           nell'archivio. Per un file EAR, ad esempio, l'uso di --altdd
-           comporta la sostituzione del file application.xml. Per un modulo
-           standalone, l'uso di --altdd comporta la sostituzione del
+           nell'archivio. Ad esempio, per un file EAR, l'utilizzo dell'opzione
+           --altdd comporta la sostituzione di application.xml. Per un modulo
+           standalone, l'uso dell'opzione --altdd comporta la sostituzione del
            descrittore del modulo di livello superiore quale web.xml.
 
        --runtimealtdd
@@ -204,10 +204,11 @@ OPZIONI
            relativo del file del descrittore di distribuzione alternativo. Il
            descrittore di distribuzione alternativo sostituisce il descrittore
            di distribuzione di livello superiore all'interno di package
-           nell'archivio. Per un file EAR, ad esempio, l'uso di --runtimealtdd
-           comporta la sostituzione del file glassfish-application.xml. Per un
-           modulo standalone, l'uso di --runtimealtdd comporta la sostituzione
-           del descrittore del modulo di livello superiore quale
+           nell'archivio. Ad esempio, per un file EAR, l'utilizzo dell'opzione
+           --runtimealtdd comporta la sostituzione di
+           glassfish-application.xml. Per un modulo standalone, l'uso
+           dell'opzione --runtimealtdd comporta la sostituzione del
+           descrittore del modulo di livello superiore quale
            glassfish-web.xml. Si applica solo ai descrittori di distribuzione
            di GlassFish Server (glassfish-*.xml); il nome del file del
            descrittore di distribuzione alternativo deve iniziare con
@@ -219,8 +220,8 @@ OPZIONI
            l'applicazione dispone di dipendenze e deve essere caricata secondo
            un ordine preciso all'avvio del server. L'ordine di distribuzione è
            rappresentato da un numero intero. Il valore predefinito è 100. Le
-           applicazioni con numero inferiore vengono caricate prima delle
-           applicazioni con numero superiore. Ad esempio, un'applicazione con
+           applicazioni con numeri inferiori vengono caricate prima delle
+           applicazioni con numeri superiori. Ad esempio, un'applicazione con
            il numero di ordine di distribuzione 102 viene caricata prima di
            un'applicazione con il numero di ordine di distribuzione 110. Se
            l'ordine di distribuzione non viene specificato, verrà assegnato
@@ -469,6 +470,20 @@ OPZIONI
            Le altre proprietà disponibili sono determinate
            dall'implementazione del componente ridistribuito.
 
+           Per i componenti inclusi in package come bundle OSGi (--type=osgi),
+           il comando secondario deploy accetta gli argomenti delle proprietà
+           che consento di sottoporre a wrapping un file WAR come WAB (Web
+           Application Bundle) durante la distribuzione. Il comando secondario
+           cerca una chiave denominata UriScheme e, se presente, la utilizza
+           come handler di flusso URL per aggiungere caratteristiche al flusso
+           di input. Altre proprietà vengono utilizzate nel processo di
+           aggiunta delle caratteristiche. Ad esempio, il contenitore Web OSGi
+           GlassFish Server registra un handler di flusso URL denominato
+           webbundle, che viene utilizzato per eseguire il wrapping di un file
+           WAR non codificato come WAB. Per ulteriori informazioni
+           sull'utilizzo, vedere l'esempio riportato in questa pagina della
+           Guida.
+
 OPERANDI
        file_archive|filepath
            Il percorso dell'archivio che contiene l'applicazione distribuita.
@@ -553,8 +568,13 @@ ESEMPI
            due applicazioni. L'applicazione cart viene caricata prima
            dell'applicazione horse all'avvio del server.
 
+           Alcune righe di output sono state omesse dall'esempio per favorire
+           la leggibilità.
+
                asadmin> deploy --deploymentorder 102 --name cart cart.war
+               ...
                asadmin> deploy --deploymentorder 110 --name horse horse.war
+               ...
 
        Esempio 7, Distribuzione di un'applicazione mediante un file
        descrittore di distribuzione Java EE 7 alternativo
@@ -563,6 +583,8 @@ ESEMPI
            all'esterno dell'archivio dell'applicazione.
 
                asadmin> deploy --altdd path_to_alternate_descriptor cart.ear
+               Application deployed successfully with name cart.
+               Command deploy executed successfully
 
        Esempio 8, Distribuzione di un'applicazione mediante un file
        descrittore di distribuzione GlassFish Server alternativo
@@ -571,6 +593,27 @@ ESEMPI
            risiede all'esterno dell'archivio dell'applicazione.
 
                asadmin> deploy --runtimealtdd path_to_alternate_runtime_descriptor horse.ear
+               Application deployed successfully with name horse.
+               Command deploy executed successfully
+
+       Esempio 9, Wrapping di un file WAR come WAB
+           In questo esempio viene eseguito il wrapping di un file WAR non
+           codificato come WAB durante la distribuzione di un bundle OSGi; è
+           specifico per i componenti inclusi in package come bundle OSGi.
+
+           Il carattere barra rovesciata (\) viene utilizzato come carattere
+           di escape nel comando. Per ulteriori informazioni sui caratteri di
+           escape nelle opzioni per la utility asadmin, vedere la pagina della
+           Guida asadmin(1M).
+
+               asadmin deploy --type osgi \
+               --properties "UriScheme=webbundle:Bundle-SymbolicName=bar:\
+               Import-Package=javax.servlet;javax.servlet.http;
+               %20version\\=3.0;resolution\\:
+               =mandatory:Web-ContextPath=/foo" \
+               /tmp/test_sample1.war
+               Application deployed successfully with name sample1.
+               Command deploy executed successfully
 
 STATO DI USCITA
        0

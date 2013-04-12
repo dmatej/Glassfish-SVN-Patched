@@ -146,18 +146,17 @@ deploy(1)                   asadmin 实用程序子命令                   depl
        --altdd
            使用驻留在应用程序档案外部的 Java EE
            标准部署描述符部署应用程序。指定备用部署描述符文件的绝对路径或相对路径。备用部署描述符将覆盖档案中打包的顶级部署描述符。例如，对于
-           EAR，--altdd 的使用将覆盖 application.xml。对于独立模块，--altdd
-           的使用将覆盖顶级模块描述符，例如 web.xml。
+           EAR，使用 --altdd 选项覆盖 application.xml。对于独立模块，使用
+           --altdd 选项覆盖顶级模块描述符，例如 web.xml。
 
        --runtimealtdd
            使用驻留在应用程序档案外部的 GlassFish Server
            运行时部署描述符部署应用程序。指定备用部署描述符文件的绝对路径或相对路径。备用部署描述符将覆盖档案中打包的顶级部署描述符。例如，对于
-           EAR，--runtimealtdd 的使用将覆盖
-           glassfish-application.xml。对于独立模块，--runtimealtdd
-           的使用将覆盖顶级模块描述符，例如 glassfish-web.xml。仅适用于
-           GlassFish Server 部署描述符
-           (glassfish-*.xml)；备用部署描述符文件的名称必须以 glassfish-
-           开头。不适用于 sun-*.xml 部署描述符 (已过时)。
+           EAR，使用 --runtimealtdd 选项覆盖
+           glassfish-application.xml。对于独立模块，使用 --runtimealtdd
+           选项覆盖顶级模块描述符，例如 glassfish-web.xml。仅适用于 GlassFish
+           Server 部署描述符 (glassfish-*.xml)；备用部署描述符文件的名称必须以
+           glassfish- 开头。不适用于 sun-*.xml 部署描述符 (已过时)。
 
        --deploymentorder
            指定应用程序的部署顺序。这对于应用程序具有相关性并且必须在服务器启动时以特定顺序加载的情况非常有用。将部署顺序指定为整数。默认值为
@@ -319,6 +318,15 @@ deploy(1)                   asadmin 实用程序子命令                   depl
 
            其他可用属性取决于将要重新部署的组件的实现。
 
+           对于打包为 OSGi 绑定 (--type=osgi) 的组件，deploy
+           子命令接受在部署时将 WAR 文件包装为 WAB (Web 应用程序绑定)
+           的属性参数。子命令查找名为 UriScheme
+           的关键字，如果存在，将使用该关键字作为 URL
+           流处理程序来修饰输入流。修饰进程中使用其他属性。例如，GlassFish
+           Server OSGi Web 容器注册一个名为 webbundle 的 URL
+           流处理程序，该处理程序用于将纯 WAR 文件包装为
+           WAB。有关用法的详细信息，请参阅本帮助页中的示例。
+
 操作数
        file_archive|filepath
            包含正在部署的应用程序的档案的路径。此路径可以是相对路径，也可以是绝对路径。
@@ -385,20 +393,44 @@ deploy(1)                   asadmin 实用程序子命令                   depl
            此示例指定两个应用程序的部署顺序。服务器启动时在 horse
            应用程序之前加载 cart 应用程序。
 
+           为方便阅读，该示例省略了一些输出行。
+
                asadmin> deploy --deploymentorder 102 --name cart cart.war
+               ...
                asadmin> deploy --deploymentorder 110 --name horse horse.war
+               ...
 
        Example 7, 使用备用 Java EE 7 部署描述符文件部署应用程序
            此示例使用驻留在应用程序档案外部的 Java EE
            标准部署描述符文件部署应用程序。
 
                asadmin> deploy --altdd path_to_alternate_descriptor cart.ear
+               Application deployed successfully with name cart.
+               Command deploy executed successfully
 
        Example 8, 使用备用 GlassFish Server 部署描述符文件部署应用程序
            此示例使用驻留在应用程序档案外部的 GlassFish Server
            运行时部署描述符文件部署应用程序。
 
                asadmin> deploy --runtimealtdd path_to_alternate_runtime_descriptor horse.ear
+               Application deployed successfully with name horse.
+               Command deploy executed successfully
+
+       Example 9, 将 WAR 文件包装为 WAB
+           此示例在部署 OSGi 绑定时将纯 WAR 文件包装为 WAB，并特定于已打包为
+           OSGi 绑定的组件。
+
+           反斜杠 (\) 字符用于对命令中的字符进行转义。有关 asadmin
+           实用程序选项中的转义符的详细信息，请参阅 asadmin(1M) 帮助页。
+
+               asadmin deploy --type osgi \
+               --properties "UriScheme=webbundle:Bundle-SymbolicName=bar:\
+               Import-Package=javax.servlet;javax.servlet.http;
+               %20version\\=3.0;resolution\\:
+               =mandatory:Web-ContextPath=/foo" \
+               /tmp/test_sample1.war
+               Application deployed successfully with name sample1.
+               Command deploy executed successfully
 
 退出状态
        0

@@ -188,9 +188,9 @@ OPçõES
            descritor de implantação alternativo O descritor de implantação
            alternativo substitui o descritor de implantação de nível superior
            empacotado no arquivo compactado. Por exemplo, para um EAR, o uso
-           de --altdd substitui application.xml. Para um módulo standalone, o
-           uso de --altdd substitui o escritor de nível superior do módulo,
-           como o web.xml.
+           da opção --altdd opção substitui application.xml. Para um módulo
+           standalone, o uso da opção --altdd substitui o descritor de nível
+           superior do módulo, como o web.xml.
 
        --runtimealtdd
            Implanta a aplicação por meio do descritor de implantação de
@@ -199,22 +199,22 @@ OPçõES
            arquivo do descritor de implantação alternativo O descritor de
            implantação alternativo substitui o descritor de implantação de
            nível superior empacotado no arquivo compactado. Por exemplo, para
-           um EAR, o uso de --runtimealtdd substitui
-           glassfish-application.xml. Para um módulo standalone, o uso de
-           --runtimealtdd substitui o descritor de nível superior do módulo,
-           como o glassfish-web.xml. Aplica-se só a descritores de implantação
-           do GlassFish Server (glassfish-*.xml); o nome do arquivo do
-           descritor de implantação alternativo que deve começar com
-           glassfish-. Não se aplica aos descritores de implantação sun-*.xml,
-           que são obsoletos.
+           um EAR, o uso da opção --runtimealtdd substitui
+           glassfish-application.xml. Para um módulo standalone, o uso da
+           opção --runtimealtdd substitui o descritor de nível superior do
+           módulo, como o glassfish-web.xml. Aplica-se só a descritores de
+           implantação do GlassFish Server (glassfish-*.xml); o nome do
+           arquivo do descritor de implantação alternativo que deve começar
+           com glassfish-. Não se aplica aos descritores de implantação
+           sun-*.xml, que são obsoletos.
 
        --deploymentorder
            Especifica a ordem de implantação da aplicação. É útil se a
            aplicação tiver dependências e tiver que ser carregado em uma
            determinada ordem na inicialização do servidor. A ordem de
            implantação é especificada como um número inteiro. O valor default
-           é 100. As aplicações com um número mais baixo são carregadas antes
-           de aplicações com um número maior. Por exemplo, uma aplicação com
+           é 100. As aplicações com números mais baixos são carregadas antes
+           das aplicações com números maiores. Por exemplo, uma aplicação com
            uma ordem de implantação de 102 é carregada antes uma aplicação com
            uma ordem de implantação de 110. Se uma ordem de implantação não
            for especificada, o valor default igual a 100 será atribuído. Se
@@ -449,6 +449,18 @@ OPçõES
            Outras propriedades disponíveis são determinadas pela implantação
            do componente que está sendo reimplantado.
 
+           Para componentes que fazem parte de pacotes OSGi (--type=osgi), o
+           subcomando deploy aceita argumentos de propriedades para encapsular
+           um arquivo WAR como um WAB (pacote de aplicação web) no momento da
+           implantação. O subcomando procura uma chave denominada UriScheme e,
+           se estiver presente, usa a chave como um handler do fluxo do URL
+           para decorar o fluxo de entrada. Outras propriedades são usadas no
+           processo de decoração. Por exemplo, o contêiner Web OSGi do
+           GlassFish Server registra um handler do fluxo de URL denominado
+           webbundle, que é usado para encapsular um WAR sem formatação na
+           forma de um WAB. Para obter mais informações sobre o uso, veja o
+           exemplo desta página de ajuda.
+
 OPERANDOS
        file_archive|filepath
            O caminho para o arquivo compactado que contém a aplicação que está
@@ -531,8 +543,13 @@ EXEMPLOS
            A aplicação cart é carregada antes da aplicação horse na
            inicialização do servidor.
 
+           Algumas linhas da saída são omitidas deste exemplo para fins de
+           clareza de leitura.
+
                asadmin> deploy --deploymentorder 102 --name cart cart.war
+               ...
                asadmin> deploy --deploymentorder 110 --name horse horse.war
+               ...
 
        Example 7, Implantando uma Aplicação Usando um Arquivo Descritor de
        Implantação Java EE 7 Alternativo
@@ -541,6 +558,8 @@ EXEMPLOS
            aplicação.
 
                asadmin> deploy --altdd path_to_alternate_descriptor cart.ear
+               Application deployed successfully with name cart.
+               Command deploy executed successfully
 
        Example 8, Implantando uma Aplicação Usando um Arquivo Descritor de
        Implantação de GlassFish Server Alternativo
@@ -549,6 +568,27 @@ EXEMPLOS
            arquivo compactado da aplicação.
 
                asadmin> deploy --runtimealtdd path_to_alternate_runtime_descriptor horse.ear
+               Application deployed successfully with name horse.
+               Command deploy executed successfully
+
+       Example 9, Encapsulando um arquivo WAR na forma de um WAB
+           Este exemplo encapsula um arquivo WAR sem formatação na forma de um
+           WAB quando um pacote OSGi é implantado, e é específico de
+           componentes que fazem parte de pacotes OSGi.
+
+           O caractere de barra invertida (\) é usado para fazer escape de
+           caracteres no comando. Para obter mais informações sobre caracteres
+           de escape nas opções do utilitário asadmin, consulte a página da
+           ajuda asadmin(1M).
+
+               asadmin deploy --type osgi \
+               --properties "UriScheme=webbundle:Bundle-SymbolicName=bar:\
+               Import-Package=javax.servlet;javax.servlet.http;
+               %20version\\=3.0;resolution\\:
+               =mandatory:Web-ContextPath=/foo" \
+               /tmp/test_sample1.war
+               Application deployed successfully with name sample1.
+               Command deploy executed successfully
 
 STATUS DE SAíDA
        0

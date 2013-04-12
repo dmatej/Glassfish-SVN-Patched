@@ -6,10 +6,11 @@ create-managed-executoasadminユ
 
 概要
            create-managed-executor-service [--help]
-           [--enabled[={false|true}]]
-           [--contextinfo contextinfo]
+           [--enabled={false|true}]
+           [--contextinfoenabled={false|true}]
+           [--contextinfo={Classloader|JNDI|Security|WorkArea}]
            [--threadpriority threadpriority]
-           [--longrunningtasks[={false|true}]]]
+           [--longrunningtasks={false|true}]
            [--hungafterseconds hungafterseconds]
            [--corepoolsize corepoolsize]
            [--maximumpoolsize maximumpoolsize]
@@ -31,68 +32,75 @@ create-managed-executoasadminユ
            サブコマンドに関するヘルプ・テキストが表示されます。
 
        --enabled
-           管理対象エグゼキュータ・サービス・リソースが実行時に使用可能かどうかを指定します。
+           リソースが実行時に有効かどうかを判断します。デフォルト値はtrueです。
 
-           デフォルト値はtrueです。
+       --contextinfoenabled
+           コンテナ・コンテキストがスレッドに伝播されるかどうかを判断します。trueに設定された場合、--contextinfoオプションで指定されたコンテキストが伝播されます。falseに設定された場合、コンテキストは伝播されず、--contextinfoオプションは無視されます。デフォルト値はtrueです。
 
        --contextinfo
-           伝播されるコンテキスト・タイプを指定するカンマ区切りテキスト文字列。コンテキスト・タイプはセキュリティ、クラスローダー、JNDIおよび作業領域です。省略した場合、すべてのコンテキスト・タイプが伝播されます。
+           スレッドに伝播する個々のコンテナ・コンテキストを指定します。有効な値はClassloader、JNDI、SecurityおよびWorkAreaです。値をカンマ区切りリストで指定し、大文字と小文字は区別されません。デフォルトでは、すべてのコンテキストが伝播されます。
 
        --threadpriority
-           管理対象エグゼキュータ・サービス・インスタンスに対して作成されるスレッドの優先度を指定します。
-
-           デフォルト値は5です。
+           作成されたスレッドに割り当てる優先度を指定します。デフォルト値は5です。
 
        --longrunningtasks
-           コンテナでスレッドを処理する方法を指定します。trueに設定されている場合、スタック・スレッドはレポートされず、長時間実行中のタスクを待機する管理対象エグゼキュータ・サービスの停止はブロックされません。デフォルト値はfalseです。
+           リソースを長時間実行中のタスクに使用するかどうかを指定します。デフォルト値はfalseです。trueに設定された場合、長時間実行中のタスクはスタックとして報告されません。
 
        --hungafterseconds
-           タスクがハングしたとみなされるまで実行可能な時間を秒単位で指定します。省略した場合、タスクがハングしたとみなされることはありません。
+           タスクが無応答であるとみなされるまでに実行可能な秒数を指定します。デフォルト値は0で、タスクは無応答であるとみなされません。
 
        --corepoolsize
-           スレッド・プール内に保持するスレッド数を指定します。
+           アイドル状態の場合でも、スレッド・プール内に保持するスレッド数を指定します。デフォルト値は0です。
 
-           デフォルト値は0です。
+           新規タスクが発行されたが実行中のスレッド数がcorepoolsizeより少ない場合は、リクエストを処理するために新規スレッドが作成されます。corepoolsizeの値が0
+           (デフォルト)の場合、タスク・キューがフルであるか、またはリソースが直接キューを使用している場合を除き、新規スレッドは作成されません。taskqueuecapacityが0の場合、またはtaskqueuecapacityが2147483647でかつcorepoolsizeが0の場合に、直接キューが発生します。
 
-       ---maximumpoolsize
-           スレッド・プールに含めることができるスレッドの最大数を指定します。
-
-           デフォルト値は2147483647です。
+       --maximumpoolsize
+           スレッド・プールに含めることができるスレッドの最大数を指定します。デフォルト値は2147483647です。スレッド・プールは基本的に無制限で、スレッドをいくつでも含めることができます。
 
        --keepaliveseconds
-           スレッド数がコア・サイズより大きい場合に、スレッドがアイドル状態でいられる秒数を指定します。
-
-           デフォルト値は60です。
+           スレッド数がcorepoolsizeより大きい場合に、スレッドがアイドル状態でいられる秒数を指定します。デフォルト値は60です。
 
        --threadlifetimeseconds
-           スレッド数がコア・サイズより大きいかどうか、またはスレッドがアイドル状態であるかどうかにかかわらず、各スレッドがパージされる前にスレッド・プール内に存続できる秒数を指定します。リクエストの実行中は、スレッドは中断されません。thread-lifetime-seconds値を超えるスレッドは、現在のリクエストの完了後にスレッド・プールに返されません。
-
-           デフォルト値は0です。
+           スレッド数がcorepoolsizeより大きいかどうか、またはスレッドがアイドル状態であるかどうかにかかわらず、スレッドがパージされるまでにスレッド・プール内に存続できる秒数を指定します。デフォルト値は0で、スレッドはパージされません。
 
        --taskqueuecapacity
-           実行待ちの送信済タスクを保持するキューのサイズを指定します。
-
-           デフォルト値は2147483647です。
+           実行待ちタスク・キューに格納可能な発行済タスク数を指定します。デフォルト値は2147483647です。タスク・キューは基本的に無制限で、発行済タスクをいくつでも格納できます。
 
        --description
-           管理対象エグゼキュータ・サービス・リソースの詳細を説明するテキスト。
+           リソースの詳細を説明します。
 
        --property
-           管理対象エグゼキュータ・サービス・インスタンスを構成する、オプションの属性名と値のペア。
+           リソースを構成するための属性名と値のペア(オプション)。
+
+           GlassFish
+           Serverはこのリソースの追加プロパティを定義しません。また、このリソースは、現在追加プロパティを使用しません。
 
        --target
-           管理対象エグゼキュータ・サービス・リソースが作成されるターゲット。
+           リソースを作成するターゲットを指定します。有効なターゲットは次のとおりです:
+
+           server
+               デフォルトのサーバー・インスタンスにリソースを作成します。これがデフォルト値です。
+
+           domain
+               ドメインにリソースを作成します。
+
+           cluster_name
+               指定したクラスタ内のすべてのサーバー・インスタンスにリソースを作成します。
+
+           instance_name
+               指定したサーバー・インスタンスにリソースを作成します。
 
 オペランド
        jndi_name
-           管理対象エグゼキュータ・サービス・インスタンスをルックアップするためのJNDI名。
+           リソースのJNDI名。
 
 例
        例 1, 管理対象エグゼキュータ・サービス・リソースの作成
-           この例では、管理対象エグゼキュータ・サービス・リソースを作成します。
+           この例では、concurrent/myExecutorという管理対象エグゼキュータ・サービス・リソースを作成します。
 
-               asadmin> create-managed-executor-service concurrent/SampleExecutor
-               Managed executor service concurrent/SampleExecutor created successfully.
+               asadmin> create-managed-executor-service concurrent/myExecutor
+               Managed executor service concurrent/myExecutor created successfully.
                Command create-managed-executor-service executed successfully.
 
 終了ステータス

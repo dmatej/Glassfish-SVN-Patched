@@ -1,34 +1,129 @@
 osgi(1)                     asadmin 公用程式子命令                     osgi(1)
 
 參考名
-       osgi - 執行 OSGi Shell 中的 asadmin 子命令
+       osgi - 將命令行委任給 Apache Felix Gogo Remote Shell 以執行 OSGi Shell
+       命令
 
 概要
            osgi [--help]
            [--session session]
            [--session-id session-id]
            [--instance instance]
-           [command-line ...]
+           [command_line]
 
 描述
-       osgi 子命令會在 OSGi Shell 中執行 asadmin 子命令
+       osgi 子命令將命令行委任給 Apache Felix Gogo Remote Shell 以執行 OSGi
+       Shell 命令。命令由遠端 Shell 執行，而結果由 asadmin 公用程式傳回。遠端
+       Shell 隨附於 GlassFish Server，可用來管理和檢查 OSGi 執行階段。
 
-       只有遠端模式才支援這個子命令。
+       可以建立多個命令行階段作業。使用 --session 和 --session-id
+       選項，以便在特定的命令行階段作業中執行命令。若未指定階段作業，則會建立新的階段作業來執行命令，並在執行完成時關閉。
+
+       相關的子命令為 osgi-shell
+       子命令，可讓您執行檔案中的多個命令或以互動方式執行命令。如需 osgi-shell
+       子命令的詳細資訊，請參閱 osgi-shell(1) 說明頁面。
+
+       只有遠端模式支援這個子命令。
 
 選項
        --help, -?
-           顯示子命令的說明文字。
+           顯示 osgi 子命令的說明文字。
+
+       --session
+           執行命令行階段作業。有效值包括
+
+           new
+               建立新的階段作業並傳回階段作業 ID。
+
+           stop
+               停止指定階段作業 ID 的階段作業。
+
+           list
+               列出所有使用中階段作業。
+
+           execute
+               在指定階段作業 ID 的階段作業中執行命令。
+
+       --session-id
+           指定命令行階段作業的階段作業 ID。
+
+       --instance
+           指定要委任命令的伺服器執行處理。
+
+           預設為網域管理伺服器 (DAS)。DAS
+           必須正在執行中才能在另一個執行處理上執行命令。
 
 運算元
-       command-line ...
-           TBD
+       command_line
+           Apache Felix Gogo Remote Shell 提供之命令的完整命令行語法。
 
 範例
-       範例 1, TBD
-           TBD
+       範例 1, 列出 Apache Felix Gogo Remote Shell 命令
+           此範例會列出可與 osgi 子命令一起使用的 Apache Felix Gogo Remote
+           Shell 命令。
 
-               asadmin> osgi
+           為提高可讀性，此範例將省略一些輸出行。
 
+               asadmin> osgi help
+               felix:bundlelevel
+               felix:cd
+               felix:frameworklevel
+               felix:headers
+               felix:help
+               felix:inspect
+               felix:install
+               felix:lb
+               felix:log
+               felix:ls
+               felix:refresh
+               felix:resolve
+               ...
+               gogo:cat
+               gogo:each
+               gogo:echo
+               gogo:format
+               gogo:getopt
+               gogo:gosh
+               gogo:grep
+               ...
+               Command osgi executed successfully.
+
+       範例 2, 執行遠端 Shell 命令
+           此範例會執行不使用任何引數的 Felix Remote Shell 命令 lb
+           來列出所有安裝的 OSGi 組合。
+
+           為提高可讀性，此範例將省略一些輸出行。
+
+               asadmin> osgi lb
+               START LEVEL 2
+               ID|State      |Level|Name
+                0|Active     |    0|System Bundle
+                1|Active     |    1|Metro Web Services API OSGi Bundle
+                2|Active     |    1|javax.annotation API
+                3|Active     |    1|jaxb-api
+               ...
+               Command osgi executed successfully.
+
+       範例 3, 執行建立特定命令行階段作業並將其設定為目標的命令
+           此範例會執行建立特定命令行階段作業並將其設定為目標的命令。
+
+           為提高可讀性，此範例將省略一些輸出行。
+
+               asadmin> osgi --session new
+               9537e570-0def-4f2e-9c19-bc8f51a8082f
+               ...
+               asadmin> osgi --session list
+               9537e570-0def-4f2e-9c19-bc8f51a8082f
+               ...
+               asadmin> osgi --session execute --session-id 9537e570-0def-4f2e-9c19-bc8f51a8082f lb
+               START LEVEL 2
+               ID|State      |Level|Name
+                0|Active     |    0|System Bundle
+                1|Active     |    1|Metro Web Services API OSGi Bundle
+                2|Active     |    1|javax.annotation API
+                3|Active     |    1|jaxb-api
+               ...
+               asadmin> osgi --session stop --session-id 9537e570-0def-4f2e-9c19-bc8f51a8082f
                Command osgi executed successfully.
 
 結束狀態
@@ -39,6 +134,8 @@ osgi(1)                     asadmin 公用程式子命令                     os
            執行子命令時發生錯誤
 
 另請參閱
+       osgi-shell(1)
+
        asadmin(1M)
 
 Java EE 7                      2013 年 2 月 6 日                       osgi(1)

@@ -1,35 +1,147 @@
 osgi(1)                 Sous-commandes de l'utilitaire                 osgi(1)
 
 NOM
-       osgi - exécute les sous-commandes asadmin dans le shell OSGi
+       osgi - délègue la ligne de commande au shell distant Apache Felix Gogo
+       pour l'exécution des commandes shell OSGi
 
 SYNTAXE
            osgi [--help]
            [--session session]
            [--session-id session-id]
            [--instance instance]
-           [command-line ...]
+           [command_line]
 
 DESCRIPTION
-       La sous-commande osgi exécute les sous-commandes asadmin dans le shell
-       OSGi.
+       La sous-commande osgi délègue la ligne de commande au shell distant
+       Apache Felix Gogo pour l'exécution des commandes shell OSGi. Les
+       commandes sont exécutées par le shell distant et les résultats sont
+       renvoyés par l'utilitaire asadmin. Le shell distant est fourni avec
+       GlassFish Server et est utilisé pour administrer et inspecter
+       l'exécution OSGi.
+
+       Plusieurs sessions de ligne de commande peuvent être créées. Utilisez
+       les options --session et --session-id pour exécuter des commandes dans
+       une session de ligne de commande spécifique. Si aucune session n'est
+       spécifiée, une session est créée pour exécuter des commandes et fermée
+       lorsque l'exécution est terminée.
+
+       osgi-shell est une sous-commande associée ; elle permet d'exécuter
+       plusieurs commandes à partir d'un fichier ou d'exécuter des commandes
+       de manière interactive. Pour plus d'informations sur la sous-commande
+       osgi-shell, reportez-vous à la page d'aide osgi-shell(1).
 
        Cette sous-commande est prise en charge en mode distant uniquement.
 
 OPTIONS
        --help, -?
-           Cette option affiche le texte d'aide de la sous-commande.
+           Affiche le texte d'aide pour la sous-commande osgi.
+
+       --session
+           Effectue des opérations de session de ligne de commande. Les
+           valeurs valides sont les suivantes :
+
+           new
+               Crée une session et renvoie un ID de session.
+
+           stop
+               Arrête la session ayant l'ID de session spécifié.
+
+           list
+               Répertorie toutes les sessions actives.
+
+           execute
+               Exécute une commande dans la session ayant l'ID de session
+               spécifié.
+
+       --session-id
+           Indique l'ID de session pour les opérations de session de ligne de
+           commande.
+
+       --instance
+           Indique l'instance de serveur à laquelle la commande est déléguée.
+
+           La valeur par défaut est le serveur d'administration de domaine
+           (DAS). Le serveur DAS doit être en cours d'exécution pour exécuter
+           une commande sur une autre instance.
 
 OPÉRANDES
-       command-line ...
-           TBD
+       command_line
+           Syntaxe de ligne de commande complète telle que fournie pour les
+           commandes dans le shell distant Apache Felix Gogo.
 
 EXEMPLES
-       Exemple 1, TBD
-           TBD
+       Exemple 1, Liste des commandes shell distant Apache Felix Gogo
+           Dans cet exemple, les commandes shell distant Apache Felix Gogo qui
+           peuvent être utilisées avec la sous-commande osgi sont
+           répertoriées.
 
-               asadmin> osgi
+           Certaines lignes de la sortie sont omises de cet exemple pour une
+           meilleure lisibilité.
 
+               asadmin> osgi help
+               felix:bundlelevel
+               felix:cd
+               felix:frameworklevel
+               felix:headers
+               felix:help
+               felix:inspect
+               felix:install
+               felix:lb
+               felix:log
+               felix:ls
+               felix:refresh
+               felix:resolve
+               ...
+               gogo:cat
+               gogo:each
+               gogo:echo
+               gogo:format
+               gogo:getopt
+               gogo:gosh
+               gogo:grep
+               ...
+               Command osgi executed successfully.
+
+       Exemple 2, Exécution d'une commande shell distant
+           Dans cet exemple, la commande shell distant Felix lb est exécutée
+           sans argument afin de répertorier tous les groupes OSGi installés.
+
+           Certaines lignes de la sortie sont omises de cet exemple pour une
+           meilleure lisibilité.
+
+               asadmin> osgi lb
+               START LEVEL 2
+               ID|State      |Level|Name
+                0|Active     |    0|System Bundle
+                1|Active     |    1|Metro Web Services API OSGi Bundle
+                2|Active     |    1|javax.annotation API
+                3|Active     |    1|jaxb-api
+               ...
+               Command osgi executed successfully.
+
+       Exemple 3, Exécution de commandes qui créent et ciblent une session de
+       ligne de commande spécifique
+           Dans cet exemple, des commandes qui créent et ciblent une session
+           de ligne de commande spécifique sont exécutées.
+
+           Certaines lignes de la sortie sont omises de cet exemple pour une
+           meilleure lisibilité.
+
+               asadmin> osgi --session new
+               9537e570-0def-4f2e-9c19-bc8f51a8082f
+               ...
+               asadmin> osgi --session list
+               9537e570-0def-4f2e-9c19-bc8f51a8082f
+               ...
+               asadmin> osgi --session execute --session-id 9537e570-0def-4f2e-9c19-bc8f51a8082f lb
+               START LEVEL 2
+               ID|State      |Level|Name
+                0|Active     |    0|System Bundle
+                1|Active     |    1|Metro Web Services API OSGi Bundle
+                2|Active     |    1|javax.annotation API
+                3|Active     |    1|jaxb-api
+               ...
+               asadmin> osgi --session stop --session-id 9537e570-0def-4f2e-9c19-bc8f51a8082f
                Command osgi executed successfully.
 
 STATUT DE SORTIE
@@ -40,6 +152,8 @@ STATUT DE SORTIE
            erreur lors de l'exécution de la sous-commande
 
 VOIR AUSSI
+       osgi-shell(1)
+
        asadmin(1M)
 
 Java EE 7                         6 fév 2013                           osgi(1)

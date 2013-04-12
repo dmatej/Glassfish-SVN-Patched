@@ -1,34 +1,129 @@
 osgi(1)                     asadmin 实用程序子命令                     osgi(1)
 
 名称
-       osgi - 执行 OSGi shell 中的 asadmin 子命令
+       osgi - 将命令行委派给 Apache Felix Gogo 远程 Shell 以便执行 OSGi Shell
+       命令
 
 提要
            osgi [--help]
            [--session session]
            [--session-id session-id]
            [--instance instance]
-           [command-line ...]
+           [command_line]
 
 说明
-       osgi 子命令可执行 OSGi shell 中的 asadmin 子命令
+       osgi 子命令可将命令行委派给 Apache Felix Gogo 远程 Shell 以便执行 OSGi
+       Shell 命令。命令由远程 Shell 执行，其结果由 asadmin 实用程序返回。远程
+       Shell 在 GlassFish Server 中提供，可用来管理和检查 OSGi 运行时。
+
+       可以创建多个命令行会话。使用 --session 和 --session-id
+       选项运行特定命令行会话中的命令。如果未指定会话，将创建新会话以运行命令并在执行完成时关闭该新会话。
+
+       相关子命令为 osgi-shell
+       子命令，使用该子命令可以从文件中运行多个命令或以交互方式运行命令。有关
+       osgi-shell 子命令的详细信息，请参阅 osgi-shell(1) 帮助页。
 
        该子命令仅在远程模式下受支持。
 
 选项
        --help, -?
-           显示子命令的帮助文本。
+           显示 osgi 子命令的帮助上下文。
+
+       --session
+           执行命令行会话操作。有效值为：
+
+           new
+               创建新会话并返回会话 ID。
+
+           stop
+               停止具有指定会话 ID 的会话。
+
+           list
+               列出所有活动会话。
+
+           execute
+               运行具有指定会话 ID 的会话中的命令。
+
+       --session-id
+           指定命令行会话操作的会话 ID。
+
+       --instance
+           指定要将命令委派到的服务器实例。
+
+           默认值为域管理服务器 (DAS)。DAS
+           必须处于运行状态才能在其他实例上运行命令。
 
 操作数
-       命
-           TBD
+       command_line
+           为 Apache Felix Gogo 远程 Shell 中的命令提供的完整命令行语法。
 
 示例
-       Example 1, TBD
-           TBD
+       Example 1, 列出 Apache Felix Gogo 远程 Shell 命令
+           此示例列出可与 osgi 子命令一起使用的 Apache Felix Gogo 远程 Shell
+           命令。
 
-               asadmin> osgi
+           为方便阅读，该示例省略了一些输出行。
 
+               asadmin> osgi help
+               felix:bundlelevel
+               felix:cd
+               felix:frameworklevel
+               felix:headers
+               felix:help
+               felix:inspect
+               felix:install
+               felix:lb
+               felix:log
+               felix:ls
+               felix:refresh
+               felix:resolve
+               ...
+               gogo:cat
+               gogo:each
+               gogo:echo
+               gogo:format
+               gogo:getopt
+               gogo:gosh
+               gogo:grep
+               ...
+               Command osgi executed successfully.
+
+       Example 2, 运行远程 Shell 命令
+           此示例运行 Felix 远程 Shell 命令 lb
+           而不带任何参数，以列出所有已安装的 OSGi 绑定。
+
+           为方便阅读，该示例省略了一些输出行。
+
+               asadmin> osgi lb
+               START LEVEL 2
+               ID|State      |Level|Name
+                0|Active     |    0|System Bundle
+                1|Active     |    1|Metro Web Services API OSGi Bundle
+                2|Active     |    1|javax.annotation API
+                3|Active     |    1|jaxb-api
+               ...
+               Command osgi executed successfully.
+
+       Example 3, 运行创建特定命令行会话并以该会话为目标的命令
+           此示例运行创建特定命令行会话并以该会话为目标的命令。
+
+           为方便阅读，该示例省略了一些输出行。
+
+               asadmin> osgi --session new
+               9537e570-0def-4f2e-9c19-bc8f51a8082f
+               ...
+               asadmin> osgi --session list
+               9537e570-0def-4f2e-9c19-bc8f51a8082f
+               ...
+               asadmin> osgi --session execute --session-id 9537e570-0def-4f2e-9c19-bc8f51a8082f lb
+               START LEVEL 2
+               ID|State      |Level|Name
+                0|Active     |    0|System Bundle
+                1|Active     |    1|Metro Web Services API OSGi Bundle
+                2|Active     |    1|javax.annotation API
+                3|Active     |    1|jaxb-api
+               ...
+               asadmin> osgi --session stop --session-id 9537e570-0def-4f2e-9c19-bc8f51a8082f
                Command osgi executed successfully.
 
 退出状态
@@ -39,6 +134,8 @@ osgi(1)                     asadmin 实用程序子命令                     os
            执行子命令时出现错误
 
 另请参阅
+       osgi-shell(1)
+
        asadmin(1M)
 
 Java EE 7                      2013 年 2 月 6 日                       osgi(1)
