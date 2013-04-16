@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -50,13 +50,14 @@ import java.lang.annotation.*;
  * and method level where method level annotations override those at the class level.</p>
  * <p>See the EJB specification for restrictions on the use of @Transactional with EJBs.</p>
  * <p>This support is provided via an implementation of CDI interceptors that conduct the
- * necessary suspending, resuming, etc. The Transactional interceptor interposes on business
- * method invocations and lifecycle events. Lifecycle methods are invoked in an unspecified
- * transaction context unless the method is annotated explicitly with @Transactional.</p>
+ * necessary suspending, resuming, etc. The Transactional interceptor interposes on business method
+ * invocations only and not on lifecycle events. Lifecycle methods are invoked in an unspecified
+ * transaction context.</p>
  * <p>If an attempt is made to call any method of the UserTransaction interface from within the
- * scope of a bean or method annotated with @Transactional and a Transactional.TxType other
- * than NOT_SUPPORTED or NEVER, an IllegalStateException must be thrown. The use of the
- * TransactionSynchronizationRegistry is allowed regardless of any @Transactional annotation.</p>
+ * scope of a bean or method annotated with @Transactional and a Transactional.TxType other than
+ * NOT_SUPPORTED or NEVER, an IllegalStateException must be thrown. The use of the UserTransaction
+ * is allowed within life cycle events. The use of the TransactionSynchronizationRegistry is allowed
+ * regardless of any @Transactional annotation.</p>
  * <p>The Transactional interceptors must have a priority of
  * Interceptor.Priority.PLATFORM_BEFORE+200.
  * Refer to the Interceptors specification for more details.</p>
