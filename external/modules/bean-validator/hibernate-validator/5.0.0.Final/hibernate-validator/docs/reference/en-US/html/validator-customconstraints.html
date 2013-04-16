@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory">Chapter 3. Creating custom constraints</title><link rel="stylesheet" href="css/hibernate.css" type="text/css"/><meta xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" name="generator" content="DocBook XSL Stylesheets V1.74.0"/><link rel="home" href="index.html" title="Hibernate Validator"/><link rel="up" href="index.html" title="Hibernate Validator"/><link rel="prev" href="validator-usingvalidator.html" title="Chapter 2. Validation step by step"/><link rel="next" href="validator-xmlconfiguration.html" title="Chapter 4. XML configuration"/></head><body><p id="title"><a href="http://www.hibernate.org" class="site_href"><strong>Hibernate.org</strong></a><a href="http://hibernate.org/Documentation/DocumentationOverview" class="doc_href"><strong>Community Documentation</strong></a></p><ul class="docnav"><li class="previous"><a accesskey="p" href="validator-usingvalidator.html"><strong>Prev</strong></a></li><li class="next"><a accesskey="n" href="validator-xmlconfiguration.html"><strong>Next</strong></a></li></ul><div class="chapter" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="validator-customconstraints"/>Chapter 3. Creating custom constraints</h2></div></div></div><div class="toc"><dl><dt><span class="section"><a href="validator-customconstraints.html#validator-customconstraints-simple">3.1. Creating a simple constraint</a></span></dt><dd><dl><dt><span class="section"><a href="validator-customconstraints.html#validator-customconstraints-constraintannotation">3.1.1. The constraint annotation</a></span></dt><dt><span class="section"><a href="validator-customconstraints.html#validator-customconstraints-validator">3.1.2. The constraint
+      validator</a></span></dt><dt><span class="section"><a href="validator-customconstraints.html#validator-customconstraints-errormessage">3.1.3. The error message</a></span></dt><dt><span class="section"><a href="validator-customconstraints.html#validator-customconstraints-using">3.1.4. Using the constraint</a></span></dt></dl></dd><dt><span class="section"><a href="validator-customconstraints.html#validator-customconstraints-compound">3.2. Constraint composition</a></span></dt></dl></div><p>Though the Bean Validation API defines a whole set of standard
+  constraint annotations one can easily think of situations in which these
+  standard annotations won't suffice. For these cases you are able to create
+  custom constraints tailored to your specific validation requirements in a
+  simple manner.</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="validator-customconstraints-simple"/>3.1. Creating a simple constraint</h2></div></div></div><p>To create a custom constraint, the following three steps are
+    required:</p><div class="itemizedlist"><ul><li><p>Create a constraint annotation</p></li><li><p>Implement a validator</p></li><li><p>Define a default error message</p></li></ul></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="validator-customconstraints-constraintannotation"/>3.1.1. The constraint annotation</h3></div></div></div><p>Let's write a constraint annotation, that can be used to express
+      that a given string shall either be upper case or lower case. We'll
+      apply it later on to the <span class="property">licensePlate</span> field of the
+      <code class="classname">Car</code> class from <a class="xref" href="validator-gettingstarted.html" title="Chapter 1. Getting started">Chapter 1, <i>Getting started</i></a> to ensure, that the field is always
+      an upper-case string.</p><p>First we need a way to express the two case modes. We might use
+      <code class="classname">String</code> constants, but a better way to go is to
+      use a Java 5 enum for that purpose:</p><div class="example"><a id="d0e1847"/><p class="title"><b>Example 3.1. Enum <code class="classname">CaseMode</code> to express upper vs. lower
+        case</b></p><div class="example-contents"><pre xmlns="" xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="JAVA"><!-- <br/> --><span class="java_keyword">package</span><!-- <br/> --><span class="java_plain">&nbsp;com</span><!-- <br/> --><span class="java_separator">.</span><!-- <br/> --><span class="java_plain">mycompany</span><!-- <br/> --><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">public</span><span class="java_plain">&nbsp;enum&nbsp;</span><span class="java_type">CaseMode</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;UPPER</span><span class="java_separator">,</span><span class="java_plain">&nbsp;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;LOWER</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_separator">}</span></pre></div></div><br class="example-break"/><p>Now we can define the actual constraint annotation. If you've
+      never designed an annotation before, this may look a bit scary, but
+      actually it's not that hard:</p><div class="example"><a id="example-defining-custom-constraint"/><p class="title"><b>Example 3.2. Defining CheckCase constraint annotation</b></p><div class="example-contents"><pre xmlns="" xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="JAVA"><!-- <br/> --><span class="java_keyword">package</span><!-- <br/> --><span class="java_plain">&nbsp;com</span><!-- <br/> --><span class="java_separator">.</span><!-- <br/> --><span class="java_plain">mycompany</span><!-- <br/> --><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;</span><span class="java_keyword">static</span><span class="java_plain">&nbsp;java</span><span class="java_separator">.</span><span class="java_plain">lang</span><span class="java_separator">.</span><span class="java_plain">annotation</span><span class="java_separator">.</span><span class="java_type">ElementType</span><span class="java_separator">.</span><span class="java_operator">*</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;</span><span class="java_keyword">static</span><span class="java_plain">&nbsp;java</span><span class="java_separator">.</span><span class="java_plain">lang</span><span class="java_separator">.</span><span class="java_plain">annotation</span><span class="java_separator">.</span><span class="java_type">RetentionPolicy</span><span class="java_separator">.</span><span class="java_operator">*</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;java</span><span class="java_separator">.</span><span class="java_plain">lang</span><span class="java_separator">.</span><span class="java_plain">annotation</span><span class="java_separator">.</span><span class="java_type">Documented</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;java</span><span class="java_separator">.</span><span class="java_plain">lang</span><span class="java_separator">.</span><span class="java_plain">annotation</span><span class="java_separator">.</span><span class="java_type">Retention</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;java</span><span class="java_separator">.</span><span class="java_plain">lang</span><span class="java_separator">.</span><span class="java_plain">annotation</span><span class="java_separator">.</span><span class="java_type">Target</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_type">Constraint</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_type">Payload</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_plain">@</span><span class="java_type">Target</span><span class="java_separator">(</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span><span class="java_plain">&nbsp;METHOD</span><span class="java_separator">,</span><span class="java_plain">&nbsp;FIELD</span><span class="java_separator">,</span><span class="java_plain">&nbsp;ANNOTATION_TYPE&nbsp;</span><span class="java_separator">})</span>
+<!--  --><br/><span class="java_plain">@</span><span class="java_type">Retention</span><span class="java_separator">(</span><span class="java_plain">RUNTIME</span><span class="java_separator">)</span>
+<!--  --><br/><span class="java_plain">@</span><span class="java_type">Constraint</span><span class="java_separator">(</span><span class="java_plain">validatedBy&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;</span><span class="java_type">CheckCaseValidator</span><span class="java_separator">.</span><span class="java_keyword">class</span><span class="java_separator">)</span>
+<!--  --><br/><span class="java_plain">@</span><span class="java_type">Documented</span>
+<!--  --><br/><span class="java_keyword">public</span><span class="java_plain">&nbsp;@</span><span class="java_keyword">interface</span><span class="java_plain">&nbsp;</span><span class="java_type">CheckCase</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">String</span><span class="java_plain">&nbsp;message</span><span class="java_separator">()</span><span class="java_plain">&nbsp;</span><span class="java_keyword">default</span><span class="java_plain">&nbsp;</span><span class="java_literal">&quot;{com.mycompany.constraints.checkcase}&quot;</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">Class</span><span class="java_operator">&lt;?&gt;</span><span class="java_separator">[]</span><span class="java_plain">&nbsp;groups</span><span class="java_separator">()</span><span class="java_plain">&nbsp;</span><span class="java_keyword">default</span><span class="java_plain">&nbsp;</span><span class="java_separator">{};</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">Class</span><span class="java_operator">&lt;?</span><span class="java_plain">&nbsp;</span><span class="java_keyword">extends</span><span class="java_plain">&nbsp;</span><span class="java_type">Payload</span><span class="java_operator">&gt;</span><span class="java_separator">[]</span><span class="java_plain">&nbsp;payload</span><span class="java_separator">()</span><span class="java_plain">&nbsp;</span><span class="java_keyword">default</span><span class="java_plain">&nbsp;</span><span class="java_separator">{};</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">CaseMode</span><span class="java_plain">&nbsp;value</span><span class="java_separator">();</span>
+</span>
+<!--  --><br/><span class="java_separator">}</span></pre></div></div><br class="example-break"/><p>An annotation type is defined using the <code class="code">@interface</code>
+      keyword. All attributes of an annotation type are declared in a
+      method-like manner. The specification of the Bean Validation API
+      demands, that any constraint annotation defines</p><div class="itemizedlist"><ul><li><p>an attribute <span class="property">message</span> that returns the
+          default key for creating error messages in case the constraint is
+          violated</p></li><li><p>an attribute <span class="property">groups</span> that allows the
+          specification of validation groups, to which this constraint belongs
+          (see <a class="xref" href="validator-usingvalidator.html#validator-usingvalidator-validationgroups" title="2.3. Validating groups">Section 2.3, “Validating groups”</a>).
+          This must default to an empty array of type
+          <code class="classname">Class&lt;?&gt;</code>.</p></li><li><p>an attribute <code class="classname">payload</code> that can be used
+          by clients of the Bean Validation API to assign custom payload
+          objects to a constraint. This attribute is not used by the API
+          itself. </p><div xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="tip"><h2>Tip</h2><p>An example for a custom payload could be the definition of
+              a severity.</p><pre class="programlisting">public class Severity {
+    public static class Info extends Payload {};
+    public static class Error extends Payload {};
+}
+
+public class ContactDetails {
+    @NotNull(message="Name is mandatory", payload=Severity.Error.class)
+    private String name;
+
+    @NotNull(message="Phone number not specified, but not mandatory", payload=Severity.Info.class)
+    private String phoneNumber;
+
+    // ...
+}</pre><p>Now a client can after the validation of a
+              <code class="classname">ContactDetails</code> instance access the
+              severity of a constraint using
+              <code class="methodname">ConstraintViolation.getConstraintDescriptor().getPayload()</code>
+              and adjust its behaviour depending on the severity.</p></div></li></ul></div><p>Besides those three mandatory attributes
+      (<span class="property">message</span>, <span class="property">groups</span> and
+      <span class="property">payload</span>) we add another one allowing for the
+      required case mode to be specified. The name <span class="property">value</span>
+      is a special one, which can be omitted upon using the annotation, if it
+      is the only attribute specified, as e.g. in
+      <code class="code">@CheckCase(CaseMode.UPPER)</code>.</p><p>In addition we annotate the annotation type with a couple of
+      so-called meta annotations:</p><div class="itemizedlist"><ul><li><p><code class="code">@Target({ METHOD, FIELD, ANNOTATION_TYPE })</code>:
+          Says, that methods, fields and annotation declarations may be
+          annotated with @CheckCase (but not type declarations e.g.)</p></li><li><p><code class="code">@Retention(RUNTIME)</code>: Specifies, that annotations
+          of this type will be available at runtime by the means of
+          reflection</p></li><li><p><code class="code">@Constraint(validatedBy =
+          CheckCaseValidator.class)</code>: Specifies the validator to be used
+          to validate elements annotated with @CheckCase</p></li><li><p><code class="code">@Documented</code>: Says, that the use of
+          <code class="code">@CheckCase</code> will be contained in the JavaDoc of elements
+          annotated with it</p></li></ul></div><div xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="tip"><h2>Tip</h2><p>Hibernate Validator provides support for the validation of
+        method parameters using constraint annotations (see <a class="xref" href="validator-specifics.html#validator-customoptions-methodvalidation" title="8.3. Method validation">Section 8.3, “Method validation”</a>).</p><p>In order to use a custom constraint for parameter validation the
+        <code class="classname">ElementType.PARAMETER</code> must be specified within
+        the <code class="classname">@Target</code> annotation. This is already the
+        case for all constraints defined by the Bean Validation API and also
+        the custom constraints provided by Hibernate Validator.</p></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="validator-customconstraints-validator"/>3.1.2. The constraint
+      validator</h3></div></div></div><p>Next, we need to implement a constraint validator, that's able to
+      validate elements with a <code class="classname">@CheckCase</code> annotation.
+      To do so, we implement the interface
+      <code class="classname">ConstraintValidator</code> as shown below:</p><div class="example"><a id="example-constraint-validator"/><p class="title"><b>Example 3.3. Implementing a constraint validator for the constraint
+        <code class="classname">CheckCase</code></b></p><div class="example-contents"><pre xmlns="" xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="JAVA"><!-- <br/> --><span class="java_keyword">package</span><!-- <br/> --><span class="java_plain">&nbsp;com</span><!-- <br/> --><span class="java_separator">.</span><!-- <br/> --><span class="java_plain">mycompany</span><!-- <br/> --><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_type">ConstraintValidator</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_type">ConstraintValidatorContext</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_keyword">class</span><span class="java_plain">&nbsp;</span><span class="java_type">CheckCaseValidator</span><span class="java_plain">&nbsp;</span><span class="java_keyword">implements</span><span class="java_plain">&nbsp;</span><span class="java_type">ConstraintValidator</span><span class="java_operator">&lt;</span><span class="java_type">CheckCase</span><span class="java_separator">,</span><span class="java_plain">&nbsp;</span><span class="java_type">String</span><span class="java_operator">&gt;</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">private</span><span class="java_plain">&nbsp;</span><span class="java_type">CaseMode</span><span class="java_plain">&nbsp;caseMode</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_type">void</span><span class="java_plain">&nbsp;initialize</span><span class="java_separator">(</span><span class="java_type">CheckCase</span><span class="java_plain">&nbsp;constraintAnnotation</span><span class="java_separator">)</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">this</span><span class="java_separator">.</span><span class="java_plain">caseMode&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;constraintAnnotation</span><span class="java_separator">.</span><span class="java_plain">value</span><span class="java_separator">();</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">}</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_type">boolean</span><span class="java_plain">&nbsp;isValid</span><span class="java_separator">(</span><span class="java_type">String</span><span class="java_plain">&nbsp;object</span><span class="java_separator">,</span><span class="java_plain">&nbsp;</span><span class="java_type">ConstraintValidatorContext</span><span class="java_plain">&nbsp;constraintContext</span><span class="java_separator">)</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">if</span><span class="java_plain">&nbsp;</span><span class="java_separator">(</span><span class="java_plain">object&nbsp;</span><span class="java_operator">==</span><span class="java_plain">&nbsp;</span><span class="java_literal">null</span><span class="java_separator">)</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">return</span><span class="java_plain">&nbsp;</span><span class="java_literal">true</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">if</span><span class="java_plain">&nbsp;</span><span class="java_separator">(</span><span class="java_plain">caseMode&nbsp;</span><span class="java_operator">==</span><span class="java_plain">&nbsp;</span><span class="java_type">CaseMode</span><span class="java_separator">.</span><span class="java_plain">UPPER</span><span class="java_separator">)</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">return</span><span class="java_plain">&nbsp;object</span><span class="java_separator">.</span><span class="java_plain">equals</span><span class="java_separator">(</span><span class="java_plain">object</span><span class="java_separator">.</span><span class="java_plain">toUpperCase</span><span class="java_separator">());</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">else</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">return</span><span class="java_plain">&nbsp;object</span><span class="java_separator">.</span><span class="java_plain">equals</span><span class="java_separator">(</span><span class="java_plain">object</span><span class="java_separator">.</span><span class="java_plain">toLowerCase</span><span class="java_separator">());</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">}</span>
+</span>
+<!--  --><br/><span class="java_separator">}</span></pre></div></div><br class="example-break"/><p>The <code class="classname">ConstraintValidator</code> interface defines
+      two type parameters, which we set in our implementation. The first one
+      specifies the annotation type to be validated (in our example
+      <code class="classname">CheckCase</code>), the second one the type of elements,
+      which the validator can handle (here
+      <code class="classname">String</code>).</p><p>In case a constraint annotation is allowed at elements of
+      different types, a <code class="classname">ConstraintValidator</code> for each
+      allowed type has to be implemented and registered at the constraint
+      annotation as shown above.</p><p>The implementation of the validator is straightforward. The
+      <code class="methodname">initialize()</code> method gives us access to the
+      attribute values of the annotation to be validated. In the example we
+      store the <code class="classname">CaseMode</code> in a field of the validator
+      for further usage.</p><p>In the <code class="methodname">isValid()</code> method we implement the
+      logic, that determines, whether a <code class="classname">String</code> is valid
+      according to a given <code class="classname">@CheckCase</code> annotation or
+      not. This decision depends on the case mode retrieved in
+      <code class="classname">initialize()</code>. As the Bean Validation
+      specification recommends, we consider <code class="code">null</code> values as being
+      valid. If <code class="code">null</code> is not a valid value for an element, it
+      should be annotated with <code class="code">@NotNull</code> explicitly.</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h4 class="title"><a id="d0e2025"/>3.1.2.1. The ConstraintValidatorContext</h4></div></div></div><p><a class="xref" href="validator-customconstraints.html#example-constraint-validator" title="Example 3.3. Implementing a constraint validator for the constraint CheckCase">Example 3.3, “Implementing a constraint validator for the constraint
+        CheckCase”</a> relies on the
+        default error message generation by just returning
+        <code class="constant">true</code> or <code class="constant">false</code> from the
+        <code class="methodname">isValid</code> call. Using the passed
+        <code class="classname">ConstraintValidatorContext</code> object it is
+        possible to either add additional error messages or completely disable
+        the default error message generation and solely define custom error
+        messages. The <code class="classname">ConstraintValidatorContext</code> API is
+        modeled as fluent interface and is best demonstrated with an
+        example:</p><div class="example"><a id="example-constraint-validator-context"/><p class="title"><b>Example 3.4. Use of ConstraintValidatorContext to define custom error
+          messages</b></p><div class="example-contents"><pre xmlns="" xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="JAVA"><!-- <br/> --><span class="java_keyword">package</span><!-- <br/> --><span class="java_plain">&nbsp;com</span><!-- <br/> --><span class="java_separator">.</span><!-- <br/> --><span class="java_plain">mycompany</span><!-- <br/> --><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_type">ConstraintValidator</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_type">ConstraintValidatorContext</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_keyword">class</span><span class="java_plain">&nbsp;</span><span class="java_type">CheckCaseValidator</span><span class="java_plain">&nbsp;</span><span class="java_keyword">implements</span><span class="java_plain">&nbsp;</span><span class="java_type">ConstraintValidator</span><span class="java_operator">&lt;</span><span class="java_type">CheckCase</span><span class="java_separator">,</span><span class="java_plain">&nbsp;</span><span class="java_type">String</span><span class="java_operator">&gt;</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">private</span><span class="java_plain">&nbsp;</span><span class="java_type">CaseMode</span><span class="java_plain">&nbsp;caseMode</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_type">void</span><span class="java_plain">&nbsp;initialize</span><span class="java_separator">(</span><span class="java_type">CheckCase</span><span class="java_plain">&nbsp;constraintAnnotation</span><span class="java_separator">)</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">this</span><span class="java_separator">.</span><span class="java_plain">caseMode&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;constraintAnnotation</span><span class="java_separator">.</span><span class="java_plain">value</span><span class="java_separator">();</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">}</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_type">boolean</span><span class="java_plain">&nbsp;isValid</span><span class="java_separator">(</span><span class="java_type">String</span><span class="java_plain">&nbsp;object</span><span class="java_separator">,</span><span class="java_plain">&nbsp;</span><span class="java_type">ConstraintValidatorContext</span><span class="java_plain">&nbsp;constraintContext</span><span class="java_separator">)</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">if</span><span class="java_plain">&nbsp;</span><span class="java_separator">(</span><span class="java_plain">object&nbsp;</span><span class="java_operator">==</span><span class="java_plain">&nbsp;</span><span class="java_literal">null</span><span class="java_separator">)</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">return</span><span class="java_plain">&nbsp;</span><span class="java_literal">true</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">boolean</span><span class="java_plain">&nbsp;isValid</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">if</span><span class="java_plain">&nbsp;</span><span class="java_separator">(</span><span class="java_plain">caseMode&nbsp;</span><span class="java_operator">==</span><span class="java_plain">&nbsp;</span><span class="java_type">CaseMode</span><span class="java_separator">.</span><span class="java_plain">UPPER</span><span class="java_separator">)</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;isValid&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;object</span><span class="java_separator">.</span><span class="java_plain">equals</span><span class="java_separator">(</span><span class="java_plain">object</span><span class="java_separator">.</span><span class="java_plain">toUpperCase</span><span class="java_separator">());</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">}</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">else</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;isValid&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;object</span><span class="java_separator">.</span><span class="java_plain">equals</span><span class="java_separator">(</span><span class="java_plain">object</span><span class="java_separator">.</span><span class="java_plain">toLowerCase</span><span class="java_separator">());</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">}</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">if</span><span class="java_separator">(</span><span class="java_operator">!</span><span class="java_plain">isValid</span><span class="java_separator">)</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;constraintContext</span><span class="java_separator">.</span><span class="java_plain">disableDefaultConstraintViolation</span><span class="java_separator">();</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;constraintContext</span><span class="java_separator">.</span><span class="java_plain">buildConstraintViolationWithTemplate</span><span class="java_separator">(</span><span class="java_plain">&nbsp;</span><span class="java_literal">&quot;{com.mycompany.constraints.CheckCase.message}&quot;</span><span class="java_plain">&nbsp;&nbsp;</span><span class="java_separator">).</span><span class="java_plain">addConstraintViolation</span><span class="java_separator">();</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">}</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">return</span><span class="java_plain">&nbsp;result</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">}</span>
+</span>
+<!--  --><br/><span class="java_separator">}</span></pre></div></div><br class="example-break"/><p><a class="xref" href="validator-customconstraints.html#example-constraint-validator-context" title="Example 3.4. Use of ConstraintValidatorContext to define custom error messages">Example 3.4, “Use of ConstraintValidatorContext to define custom error
+          messages”</a>
+        shows how you can disable the default error message generation and add
+        a custom error message using a specified message template. In this
+        example the use of the
+        <code class="classname">ConstraintValidatorContext</code> results in the same
+        error message as the default error message generation. </p><div xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="tip"><h2>Tip</h2><p>It is important to end each new constraint violation with
+            <code class="methodname">addConstraintViolation</code>. Only after that
+            the new constraint violation will be created.</p></div><p>In case you are implementing a
+        <code class="classname">ConstraintValidator</code> a class level constraint it
+        is also possible to adjust set the property path for the created
+        constraint violations. This is important for the case where you
+        validate multiple properties of the class or even traverse the object
+        graph. A custom property path creation could look like <a class="xref" href="validator-customconstraints.html#example-custom-error" title="Example 3.5. Adding new ConstraintViolation with custom property path">Example 3.5, “Adding new ConstraintViolation with
+          custom property path”</a>.</p><div class="example"><a id="example-custom-error"/><p class="title"><b>Example 3.5. Adding new <code class="classname">ConstraintViolation</code> with
+          custom property path</b></p><div class="example-contents"><pre xmlns="" xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="JAVA"><!-- <br/> --><span class="java_keyword">public</span><!-- <br/> --><span class="java_plain">&nbsp;</span><!-- <br/> --><span class="java_type">boolean</span><!-- <br/> --><span class="java_plain">&nbsp;isValid</span><!-- <br/> --><span class="java_separator">(</span><!-- <br/> --><span class="java_type">Group</span><!-- <br/> --><span class="java_plain">&nbsp;group</span><!-- <br/> --><span class="java_separator">,</span><!-- <br/> --><span class="java_plain">&nbsp;</span><!-- <br/> --><span class="java_type">ConstraintValidatorContext</span><!-- <br/> --><span class="java_plain">&nbsp;constraintValidatorContext</span><!-- <br/> --><span class="java_separator">)</span><!-- <br/> --><span class="java_plain">&nbsp;</span><!-- <br/> --><span class="java_separator">{</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">boolean</span><span class="java_plain">&nbsp;isValid&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;</span><span class="java_literal">false</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">...</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">if</span><span class="java_separator">(</span><span class="java_operator">!</span><span class="java_plain">isValid</span><span class="java_separator">)</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;constraintValidatorContext</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">.</span><span class="java_plain">buildConstraintViolationWithTemplate</span><span class="java_separator">(</span><span class="java_plain">&nbsp;</span><span class="java_literal">&quot;{my.custom.template}&quot;</span><span class="java_plain">&nbsp;</span><span class="java_separator">)</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">.</span><span class="java_plain">addNode</span><span class="java_separator">(</span><span class="java_plain">&nbsp;</span><span class="java_literal">&quot;myProperty&quot;</span><span class="java_plain">&nbsp;</span><span class="java_separator">).</span><span class="java_plain">addConstraintViolation</span><span class="java_separator">();</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">}</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">return</span><span class="java_plain">&nbsp;isValid</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_separator">}</span>
+</pre></div></div><br class="example-break"/></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="validator-customconstraints-errormessage"/>3.1.3. The error message</h3></div></div></div><p>Finally we need to specify the error message, that shall be used,
+      in case a <code class="classname">@CheckCase</code> constraint is violated. To
+      do so, we add the following to our custom
+      <code class="filename">ValidationMessages.properties</code> (see also <a class="xref" href="validator-usingvalidator.html#section-message-interpolation" title="2.2.4. Message interpolation">Section 2.2.4, “Message interpolation”</a>)</p><div class="example"><a id="d0e2091"/><p class="title"><b>Example 3.6. Defining a custom error message for the
+        <code class="classname">CheckCase</code> constraint</b></p><div class="example-contents"><pre class="programlisting">com.mycompany.constraints.CheckCase.message=Case mode must be {value}.</pre></div></div><br class="example-break"/><p>If a validation error occurs, the validation runtime will use the
+      default value, that we specified for the message attribute of the
+      <code class="classname">@CheckCase</code> annotation to look up the error
+      message in this file.</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="validator-customconstraints-using"/>3.1.4. Using the constraint</h3></div></div></div><p>Now that our first custom constraint is completed, we can use it
+      in the <code class="classname">Car</code> class from the <a class="xref" href="validator-gettingstarted.html" title="Chapter 1. Getting started">Chapter 1, <i>Getting started</i></a> chapter to specify that the
+      <span class="property">licensePlate</span> field shall only contain upper-case
+      strings:</p><div class="example"><a id="example-car-with-checkcase"/><p class="title"><b>Example 3.7. Applying the <code class="classname">CheckCase</code>
+        constraint</b></p><div class="example-contents"><pre xmlns="" xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="JAVA"><!-- <br/> --><span class="java_keyword">package</span><!-- <br/> --><span class="java_plain">&nbsp;com</span><!-- <br/> --><span class="java_separator">.</span><!-- <br/> --><span class="java_plain">mycompany</span><!-- <br/> --><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_plain">constraints</span><span class="java_separator">.</span><span class="java_type">Min</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_plain">constraints</span><span class="java_separator">.</span><span class="java_type">NotNull</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_plain">constraints</span><span class="java_separator">.</span><span class="java_type">Size</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_keyword">class</span><span class="java_plain">&nbsp;</span><span class="java_type">Car</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span class="java_type">NotNull</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">private</span><span class="java_plain">&nbsp;</span><span class="java_type">String</span><span class="java_plain">&nbsp;manufacturer</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span class="java_type">NotNull</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span class="java_type">Size</span><span class="java_separator">(</span><span class="java_plain">min&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;</span><span class="java_literal">2</span><span class="java_separator">,</span><span class="java_plain">&nbsp;max&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;</span><span class="java_literal">14</span><span class="java_separator">)</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span class="java_type">CheckCase</span><span class="java_separator">(</span><span class="java_type">CaseMode</span><span class="java_separator">.</span><span class="java_plain">UPPER</span><span class="java_separator">)</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">private</span><span class="java_plain">&nbsp;</span><span class="java_type">String</span><span class="java_plain">&nbsp;licensePlate</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span class="java_type">Min</span><span class="java_separator">(</span><span class="java_literal">2</span><span class="java_separator">)</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">private</span><span class="java_plain">&nbsp;</span><span class="java_type">int</span><span class="java_plain">&nbsp;seatCount</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_type">Car</span><span class="java_separator">(</span><span class="java_type">String</span><span class="java_plain">&nbsp;manufacturer</span><span class="java_separator">,</span><span class="java_plain">&nbsp;</span><span class="java_type">String</span><span class="java_plain">&nbsp;licencePlate</span><span class="java_separator">,</span><span class="java_plain">&nbsp;</span><span class="java_type">int</span><span class="java_plain">&nbsp;seatCount</span><span class="java_separator">)</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">this</span><span class="java_separator">.</span><span class="java_plain">manufacturer&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;manufacturer</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">this</span><span class="java_separator">.</span><span class="java_plain">licensePlate&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;licencePlate</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">this</span><span class="java_separator">.</span><span class="java_plain">seatCount&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;seatCount</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">}</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_operator">//</span><span class="java_plain">getters&nbsp;and&nbsp;setters&nbsp;</span><span class="java_separator">...</span>
+</span>
+<!--  --><br/><span class="java_separator">}</span></pre></div></div><br class="example-break"/><p>Finally let's demonstrate in a little test that the
+      <code class="classname">@CheckCase</code> constraint is properly
+      validated:</p><div class="example"><a id="d0e2130"/><p class="title"><b>Example 3.8. Testcase demonstrating the <code class="classname">CheckCase</code>
+        validation</b></p><div class="example-contents"><pre xmlns="" xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="JAVA"><!-- <br/> --><span class="java_keyword">package</span><!-- <br/> --><span class="java_plain">&nbsp;com</span><!-- <br/> --><span class="java_separator">.</span><!-- <br/> --><span class="java_plain">mycompany</span><!-- <br/> --><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;</span><span class="java_keyword">static</span><span class="java_plain">&nbsp;org</span><span class="java_separator">.</span><span class="java_plain">junit</span><span class="java_separator">.</span><span class="java_type">Assert</span><span class="java_separator">.</span><span class="java_operator">*</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;java</span><span class="java_separator">.</span><span class="java_plain">util</span><span class="java_separator">.</span><span class="java_type">Set</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_type">ConstraintViolation</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_type">Validation</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_type">Validator</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_type">ValidatorFactory</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;org</span><span class="java_separator">.</span><span class="java_plain">junit</span><span class="java_separator">.</span><span class="java_type">BeforeClass</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;org</span><span class="java_separator">.</span><span class="java_plain">junit</span><span class="java_separator">.</span><span class="java_type">Test</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_keyword">class</span><span class="java_plain">&nbsp;</span><span class="java_type">CarTest</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">private</span><span class="java_plain">&nbsp;</span><span class="java_keyword">static</span><span class="java_plain">&nbsp;</span><span class="java_type">Validator</span><span class="java_plain">&nbsp;validator</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span class="java_type">BeforeClass</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_keyword">static</span><span class="java_plain">&nbsp;</span><span class="java_type">void</span><span class="java_plain">&nbsp;setUp</span><span class="java_separator">()</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">ValidatorFactory</span><span class="java_plain">&nbsp;factory&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;</span><span class="java_type">Validation</span><span class="java_separator">.</span><span class="java_plain">buildDefaultValidatorFactory</span><span class="java_separator">();</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;validator&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;factory</span><span class="java_separator">.</span><span class="java_plain">getValidator</span><span class="java_separator">();</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">}</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span class="java_type">Test</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_type">void</span><span class="java_plain">&nbsp;testLicensePlateNotUpperCase</span><span class="java_separator">()</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">Car</span><span class="java_plain">&nbsp;car&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;</span><span class="java_keyword">new</span><span class="java_plain">&nbsp;</span><span class="java_type">Car</span><span class="java_separator">(</span><span class="java_literal">&quot;Morris&quot;</span><span class="java_separator">,</span><span class="java_plain">&nbsp;</span><span class="java_literal">&quot;dd-ab-123&quot;</span><span class="java_separator">,</span><span class="java_plain">&nbsp;</span><span class="java_literal">4</span><span class="java_separator">);</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">Set</span><span class="java_operator">&lt;</span><span class="java_type">ConstraintViolation</span><span class="java_operator">&lt;</span><span class="java_type">Car</span><span class="java_operator">&gt;&gt;</span><span class="java_plain">&nbsp;constraintViolations&nbsp;</span><span class="java_operator">=</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;validator</span><span class="java_separator">.</span><span class="java_plain">validate</span><span class="java_separator">(</span><span class="java_plain">car</span><span class="java_separator">);</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assertEquals</span><span class="java_separator">(</span><span class="java_literal">1</span><span class="java_separator">,</span><span class="java_plain">&nbsp;constraintViolations</span><span class="java_separator">.</span><span class="java_plain">size</span><span class="java_separator">());</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assertEquals</span><span class="java_separator">(</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_literal">&quot;Case&nbsp;mode&nbsp;must&nbsp;be&nbsp;UPPER.&quot;</span><span class="java_separator">,</span><span class="java_plain">&nbsp;</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;constraintViolations</span><span class="java_separator">.</span><span class="java_plain">iterator</span><span class="java_separator">().</span><span class="java_plain">next</span><span class="java_separator">().</span><span class="java_plain">getMessage</span><span class="java_separator">());</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">}</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span class="java_type">Test</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_type">void</span><span class="java_plain">&nbsp;carIsValid</span><span class="java_separator">()</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">Car</span><span class="java_plain">&nbsp;car&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;</span><span class="java_keyword">new</span><span class="java_plain">&nbsp;</span><span class="java_type">Car</span><span class="java_separator">(</span><span class="java_literal">&quot;Morris&quot;</span><span class="java_separator">,</span><span class="java_plain">&nbsp;</span><span class="java_literal">&quot;DD-AB-123&quot;</span><span class="java_separator">,</span><span class="java_plain">&nbsp;</span><span class="java_literal">4</span><span class="java_separator">);</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">Set</span><span class="java_operator">&lt;</span><span class="java_type">ConstraintViolation</span><span class="java_operator">&lt;</span><span class="java_type">Car</span><span class="java_operator">&gt;&gt;</span><span class="java_plain">&nbsp;constraintViolations&nbsp;</span><span class="java_operator">=</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;validator</span><span class="java_separator">.</span><span class="java_plain">validate</span><span class="java_separator">(</span><span class="java_plain">car</span><span class="java_separator">);</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assertEquals</span><span class="java_separator">(</span><span class="java_literal">0</span><span class="java_separator">,</span><span class="java_plain">&nbsp;constraintViolations</span><span class="java_separator">.</span><span class="java_plain">size</span><span class="java_separator">());</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_separator">}</span>
+<!--  --><br/><span class="java_separator">}</span></pre></div></div><br class="example-break"/></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="validator-customconstraints-compound"/>3.2. Constraint composition</h2></div></div></div><p>Looking at the <span class="property">licensePlate</span> field of the
+    <code class="classname">Car</code> class in <a class="xref" href="validator-customconstraints.html#example-car-with-checkcase" title="Example 3.7. Applying the CheckCase constraint">Example 3.7, “Applying the CheckCase
+        constraint”</a>, we see three constraint
+    annotations already. In complexer scenarios, where even more constraints
+    could be applied to one element, this might become a bit confusing easily.
+    Furthermore, if we had a <span class="property">licensePlate</span> field in
+    another class, we would have to copy all constraint declarations to the
+    other class as well, violating the DRY principle.</p><p>This problem can be tackled using compound constraints. In the
+    following we create a new constraint annotation
+    <code class="classname">@ValidLicensePlate</code>, that comprises the constraints
+    <code class="classname">@NotNull</code>, <code class="classname">@Size</code> and
+    <code class="classname">@CheckCase</code>:</p><div class="example"><a id="d0e2168"/><p class="title"><b>Example 3.9. Creating a composing constraint
+      <code class="classname">ValidLicensePlate</code></b></p><div class="example-contents"><pre xmlns="" xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="JAVA"><!-- <br/> --><span class="java_keyword">package</span><!-- <br/> --><span class="java_plain">&nbsp;com</span><!-- <br/> --><span class="java_separator">.</span><!-- <br/> --><span class="java_plain">mycompany</span><!-- <br/> --><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;</span><span class="java_keyword">static</span><span class="java_plain">&nbsp;java</span><span class="java_separator">.</span><span class="java_plain">lang</span><span class="java_separator">.</span><span class="java_plain">annotation</span><span class="java_separator">.</span><span class="java_type">ElementType</span><span class="java_separator">.</span><span class="java_operator">*</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;</span><span class="java_keyword">static</span><span class="java_plain">&nbsp;java</span><span class="java_separator">.</span><span class="java_plain">lang</span><span class="java_separator">.</span><span class="java_plain">annotation</span><span class="java_separator">.</span><span class="java_type">RetentionPolicy</span><span class="java_separator">.</span><span class="java_operator">*</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;java</span><span class="java_separator">.</span><span class="java_plain">lang</span><span class="java_separator">.</span><span class="java_plain">annotation</span><span class="java_separator">.</span><span class="java_type">Documented</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;java</span><span class="java_separator">.</span><span class="java_plain">lang</span><span class="java_separator">.</span><span class="java_plain">annotation</span><span class="java_separator">.</span><span class="java_type">Retention</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;java</span><span class="java_separator">.</span><span class="java_plain">lang</span><span class="java_separator">.</span><span class="java_plain">annotation</span><span class="java_separator">.</span><span class="java_type">Target</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_type">Constraint</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_type">Payload</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_plain">constraints</span><span class="java_separator">.</span><span class="java_type">NotNull</span><span class="java_separator">;</span>
+<!--  --><br/><span class="java_keyword">import</span><span class="java_plain">&nbsp;javax</span><span class="java_separator">.</span><span class="java_plain">validation</span><span class="java_separator">.</span><span class="java_plain">constraints</span><span class="java_separator">.</span><span class="java_type">Size</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_plain">@</span><span class="java_type">NotNull</span>
+<!--  --><br/><span class="java_plain">@</span><span class="java_type">Size</span><span class="java_separator">(</span><span class="java_plain">min&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;</span><span class="java_literal">2</span><span class="java_separator">,</span><span class="java_plain">&nbsp;max&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;</span><span class="java_literal">14</span><span class="java_separator">)</span>
+<!--  --><br/><span class="java_plain">@</span><span class="java_type">CheckCase</span><span class="java_separator">(</span><span class="java_type">CaseMode</span><span class="java_separator">.</span><span class="java_plain">UPPER</span><span class="java_separator">)</span>
+<!--  --><br/><span class="java_plain">@</span><span class="java_type">Target</span><span class="java_separator">(</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span><span class="java_plain">&nbsp;METHOD</span><span class="java_separator">,</span><span class="java_plain">&nbsp;FIELD</span><span class="java_separator">,</span><span class="java_plain">&nbsp;ANNOTATION_TYPE&nbsp;</span><span class="java_separator">})</span>
+<!--  --><br/><span class="java_plain">@</span><span class="java_type">Retention</span><span class="java_separator">(</span><span class="java_plain">RUNTIME</span><span class="java_separator">)</span>
+<!--  --><br/><span class="java_plain">@</span><span class="java_type">Constraint</span><span class="java_separator">(</span><span class="java_plain">validatedBy&nbsp;</span><span class="java_operator">=</span><span class="java_plain">&nbsp;</span><span class="java_separator">{})</span>
+<!--  --><br/><span class="java_plain">@</span><span class="java_type">Documented</span>
+<!--  --><br/><span class="java_keyword">public</span><span class="java_plain">&nbsp;@</span><span class="java_keyword">interface</span><span class="java_plain">&nbsp;</span><span class="java_type">ValidLicensePlate</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">String</span><span class="java_plain">&nbsp;message</span><span class="java_separator">()</span><span class="java_plain">&nbsp;</span><span class="java_keyword">default</span><span class="java_plain">&nbsp;</span><span class="java_literal">&quot;{com.mycompany.constraints.validlicenseplate}&quot;</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">Class</span><span class="java_operator">&lt;?&gt;</span><span class="java_separator">[]</span><span class="java_plain">&nbsp;groups</span><span class="java_separator">()</span><span class="java_plain">&nbsp;</span><span class="java_keyword">default</span><span class="java_plain">&nbsp;</span><span class="java_separator">{};</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">Class</span><span class="java_operator">&lt;?</span><span class="java_plain">&nbsp;</span><span class="java_keyword">extends</span><span class="java_plain">&nbsp;</span><span class="java_type">Payload</span><span class="java_operator">&gt;</span><span class="java_separator">[]</span><span class="java_plain">&nbsp;payload</span><span class="java_separator">()</span><span class="java_plain">&nbsp;</span><span class="java_keyword">default</span><span class="java_plain">&nbsp;</span><span class="java_separator">{};</span>
+</span>
+<!--  --><br/><span class="java_separator">}</span></pre></div></div><br class="example-break"/><p>To do so, we just have to annotate the constraint declaration with
+    its comprising constraints (btw. that's exactly why we allowed annotation
+    types as target for the <code class="classname">@CheckCase</code> annotation). As
+    no additional validation is required for the
+    <code class="classname">@ValidLicensePlate</code> annotation itself, we don't
+    declare a validator within the <code class="classname">@Constraint </code>meta
+    annotation.</p><p>Using the new compound constraint at the
+    <span class="property">licensePlate</span> field now is fully equivalent to the
+    previous version, where we declared the three constraints directly at the
+    field itself:</p><div class="example"><a id="d0e2191"/><p class="title"><b>Example 3.10. Application of composing constraint
+      <code class="classname">ValidLicensePlate</code></b></p><div class="example-contents"><pre xmlns="" xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="JAVA"><!-- <br/> --><span class="java_keyword">package</span><!-- <br/> --><span class="java_plain">&nbsp;com</span><!-- <br/> --><span class="java_separator">.</span><!-- <br/> --><span class="java_plain">mycompany</span><!-- <br/> --><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_keyword">public</span><span class="java_plain">&nbsp;</span><span class="java_keyword">class</span><span class="java_plain">&nbsp;</span><span class="java_type">Car</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;@</span><span class="java_type">ValidLicensePlate</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_keyword">private</span><span class="java_plain">&nbsp;</span><span class="java_type">String</span><span class="java_plain">&nbsp;licensePlate</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_operator">//</span><span class="java_separator">...</span>
+</span>
+<!--  --><br/><span class="java_separator">}</span></pre></div></div><br class="example-break"/><p>The set of <code class="classname">ConstraintViolations</code> retrieved
+    when validating a <code class="classname">Car</code> instance will contain an
+    entry for each violated composing constraint of the
+    <code class="classname">@ValidLicensePlate</code> constraint. If you rather prefer
+    a single <code class="classname">ConstraintViolation</code> in case any of the
+    composing constraints is violated, the
+    <code class="classname">@ReportAsSingleViolation</code> meta constraint can be
+    used as follows:</p><div class="example"><a id="d0e2215"/><p class="title"><b>Example 3.11. Usage of <code class="classname">@ReportAsSingleViolation</code></b></p><div class="example-contents"><pre xmlns="" xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="JAVA"><!-- <br/> --><span class="java_operator">//</span><!-- <br/> --><span class="java_separator">...</span>
+<!--  --><br/><span class="java_plain">@</span><span class="java_type">ReportAsSingleViolation</span>
+<!--  --><br/><span class="java_keyword">public</span><span class="java_plain">&nbsp;@</span><span class="java_keyword">interface</span><span class="java_plain">&nbsp;</span><span class="java_type">ValidLicensePlate</span><span class="java_plain">&nbsp;</span><span class="java_separator">{</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">String</span><span class="java_plain">&nbsp;message</span><span class="java_separator">()</span><span class="java_plain">&nbsp;</span><span class="java_keyword">default</span><span class="java_plain">&nbsp;</span><span class="java_literal">&quot;{com.mycompany.constraints.validlicenseplate}&quot;</span><span class="java_separator">;</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">Class</span><span class="java_operator">&lt;?&gt;</span><span class="java_separator">[]</span><span class="java_plain">&nbsp;groups</span><span class="java_separator">()</span><span class="java_plain">&nbsp;</span><span class="java_keyword">default</span><span class="java_plain">&nbsp;</span><span class="java_separator">{};</span>
+</span>
+<!--  --><br/><span class="java_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="java_type">Class</span><span class="java_operator">&lt;?</span><span class="java_plain">&nbsp;</span><span class="java_keyword">extends</span><span class="java_plain">&nbsp;</span><span class="java_type">Payload</span><span class="java_operator">&gt;</span><span class="java_separator">[]</span><span class="java_plain">&nbsp;payload</span><span class="java_separator">()</span><span class="java_plain">&nbsp;</span><span class="java_keyword">default</span><span class="java_plain">&nbsp;</span><span class="java_separator">{};</span>
+</span>
+<!--  --><br/><span class="java_separator">}</span></pre></div></div><br class="example-break"/></div></div><HR xmlns=""/><a xmlns="" href=""><p xmlns="http://www.w3.org/1999/xhtml" class="copyright">Copyright © 2009 - 2013 Red Hat, Inc. &amp; Gunnar Morling</p></a><ul class="docnav"><li class="previous"><a accesskey="p" href="validator-usingvalidator.html"><strong>Prev</strong>Chapter 2. Validation step by step</a></li><li class="up"><a accesskey="u" href="#"><strong>Top of page</strong></a></li><li class="home"><a accesskey="h" href="index.html"><strong>Front page</strong></a></li><li class="next"><a accesskey="n" href="validator-xmlconfiguration.html"><strong>Next</strong>Chapter 4. XML configuration</a></li></ul></body></html>

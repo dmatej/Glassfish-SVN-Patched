@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory">Chapter 7. Integration with other frameworks</title><link rel="stylesheet" href="css/hibernate.css" type="text/css"/><meta xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" name="generator" content="DocBook XSL Stylesheets V1.74.0"/><link rel="home" href="index.html" title="Hibernate Validator"/><link rel="up" href="index.html" title="Hibernate Validator"/><link rel="prev" href="validator-metadata-api.html" title="Chapter 6. Metadata API"/><link rel="next" href="validator-specifics.html" title="Chapter 8. Hibernate Validator Specifics"/></head><body><p id="title"><a href="http://www.hibernate.org" class="site_href"><strong>Hibernate.org</strong></a><a href="http://hibernate.org/Documentation/DocumentationOverview" class="doc_href"><strong>Community Documentation</strong></a></p><ul class="docnav"><li class="previous"><a accesskey="p" href="validator-metadata-api.html"><strong>Prev</strong></a></li><li class="next"><a accesskey="n" href="validator-specifics.html"><strong>Next</strong></a></li></ul><div class="chapter" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="validator-integration"/>Chapter 7. Integration with other frameworks</h2></div></div></div><div class="toc"><dl><dt><span class="section"><a href="validator-integration.html#validator-osgi">7.1. OSGi</a></span></dt><dt><span class="section"><a href="validator-integration.html#validator-checkconstraints-db">7.2. Database schema-level validation</a></span></dt><dt><span class="section"><a href="validator-integration.html#validator-checkconstraints-orm">7.3. ORM integration</a></span></dt><dd><dl><dt><span class="section"><a href="validator-integration.html#validator-checkconstraints-orm-hibernateevent">7.3.1. Hibernate event-based validation</a></span></dt><dt><span class="section"><a href="validator-integration.html#d0e3113">7.3.2. JPA</a></span></dt></dl></dd><dt><span class="section"><a href="validator-integration.html#section-presentation-layer">7.4. Presentation layer validation</a></span></dt></dl></div><p>Hibernate Validator is intended to be used to implement multi-layered
+  data validation, where constraints are expressed in a single place (the
+  annotated domain model) and checked in various different layers of the
+  application.</p><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="validator-osgi"/>7.1. OSGi</h2></div></div></div><p>The Hibernate Validator jar file is conform to the OSGi
+    specification and can be used within any OSGi container. The following
+    lists represent the packages imported and exported by Hibernate Validator.
+    The classes within the exported packages are considered part of Hibernate
+    Validator public API.</p><div xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="tip"><h2>Tip</h2><p>The Java Service Provider mechanism used by Bean Validation to
+      automatically discover validation providers doesn't work in an OSGi
+      environment. To solve this, you have to provide a custom
+      <code class="classname">ValidationProviderResolver</code>. See <a class="xref" href="validator-bootstrapping.html#section-validation-provider-resolver" title="5.2. ValidationProviderResolver">Section 5.2, “ValidationProviderResolver”</a></p></div><div class="itemizedlist"><p class="title"><b>Exported packages</b></p><ul><li><p><span class="package">org.hibernate.validator</span></p></li><li><p><span class="package">org.hibernate.validator.cfg.*</span></p></li><li><p><span class="package">org.hibernate.validator.constraints.*</span></p></li><li><p><span class="package">org.hibernate.validator.group</span></p></li><li><p><span class="package">org.hibernate.validator.messageinterpolation</span></p></li><li><p><span class="package">org.hibernate.validator.resourceloading</span></p></li><li><p><span class="package">org.hibernate.validator.spi.*</span></p></li></ul></div><div class="itemizedlist"><p class="title"><b>Imported packages</b></p><ul><li><p><span class="package">javax.persistence.*</span>, [2.0.0,3.0.0),
+        optional</p></li><li><p><span class="package">javax.validation.*</span>, [1.0.0,2.0.0)</p></li><li><p><span class="package">javax.xml.*</span></p></li><li><p><span class="package">javax.el.*</span>, [2.0.0,4.0.0)</p></li><li><p><span class="package">org.xml.sax.*</span></p></li><li><p><span class="package">org.jboss.logging.*</span>, [3.1.0,4.0.0)</p></li><li><p><span class="package">com.fasterxml.classmate.*</span>, 0.8.0</p></li><li><p><span class="package">org.joda.time.*</span>, [1.6.0,2.0.0),
+        optional</p></li><li><p><span class="package">org.jsoup.*</span>, [1.5.2,2.0.0), optional</p></li></ul></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="validator-checkconstraints-db"/>7.2. Database schema-level validation</h2></div></div></div><p>Out of the box, Hibernate Annotations (as of Hibernate 3.5.x) will
+    translate the constraints you have defined for your entities into mapping
+    metadata. For example, if a property of your entity is annotated
+    <code class="literal">@NotNull</code>, its columns will be declared as <code class="literal">not
+    null</code> in the DDL schema generated by Hibernate.</p><p>If, for some reason, the feature needs to be disabled, set
+    <code class="literal">hibernate.validator.apply_to_ddl</code> to
+    <code class="literal">false</code>. See also <a class="xref" href="validator-usingvalidator.html#table-spec-constraints" title="Table 2.2. Bean Validation constraints">Table 2.2, “Bean Validation constraints”</a> and <a class="xref" href="validator-usingvalidator.html#table-custom-constraints" title="Table 2.3. Custom constraints">Table 2.3, “Custom constraints”</a>.</p><p>You can also limit the DDL constraint generation to a subset of the
+    defined constraints by setting the property
+    <span class="property">org.hibernate.validator.group.ddl</span>. The property
+    specifies the comma-separated, fully specified class names of the groups a
+    constraint has to be part of in order to be considered for DDL schema
+    generation.</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="validator-checkconstraints-orm"/>7.3. ORM integration</h2></div></div></div><p>Hibernate Validator integrates with both Hibernate and all pure Java
+    Persistence providers.</p><div xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="tip"><h2>Tip</h2><p>When lazy loaded associations are supposed to be validated it is
+      recommended to place the constraint on the getter of the association.
+      Hibernate replaces lazy loaded associations with proxy instances which
+      get initialized/loaded when requested via the getter. If, in such a
+      case, the constraint is placed on field level the actual proxy instance
+      is used which will lead to validation errors.</p></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="validator-checkconstraints-orm-hibernateevent"/>7.3.1. Hibernate event-based validation</h3></div></div></div><p>Hibernate Validator has a built-in Hibernate event listener -
+      <a class="ulink" href="http://fisheye.jboss.org/browse/Hibernate/core/trunk/annotations/src/main/java/org/hibernate/cfg/beanvalidation/BeanValidationEventListener.java"><code class="classname">org.hibernate.cfg.beanvalidation.BeanValidationEventListener</code></a>
+      - which is part of Hibernate Annotations (as of Hibernate 3.5.x).
+      Whenever a <code class="literal">PreInsertEvent</code>,
+      <code class="literal">PreUpdateEvent</code> or
+      <code class="classname">PreDeleteEvent</code> occurs, the listener will verify
+      all constraints of the entity instance and throw an exception if any
+      constraint is violated. Per default objects will be checked before any
+      inserts or updates are made by Hibernate. Pre deletion events will per
+      default not trigger a validation. You can configure the groups to be
+      validated per event type using the properties
+      <span class="property">javax.persistence.validation.group.pre-persist</span>,
+      <span class="property">javax.persistence.validation.group.pre-update</span> and
+      <span class="property">javax.persistence.validation.group.pre-remove</span>. The
+      values of these properties are the comma-separated, fully specified
+      class names of the groups to validate. <a class="xref" href="validator-integration.html#example-beanvalidationeventlistener-config" title="Example 7.1. Manual configuration of BeanValidationEvenListener">Example 7.1, “Manual configuration of
+        BeanValidationEvenListener”</a> shows the default
+      values for these properties. In this case they could also be
+      omitted.</p><p>On constraint violation, the event will raise a runtime
+      <code class="classname">ConstraintViolationException</code> which contains a set
+      of <code class="literal">ConstraintViolation</code>s describing each
+      failure.</p><p>If Hibernate Validator is present in the classpath, Hibernate
+      Annotations (or Hibernate EntityManager) will use it transparently. To
+      avoid validation even though Hibernate Validator is in the classpath set
+      <span class="property">javax.persistence.validation.mode</span> to
+      <code class="constant">none</code>.</p><div xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="note"><h2>Note</h2><p>If the beans are not annotated with validation annotations,
+          there is no runtime performance cost.</p></div><p>In case you need to manually set the event listeners for Hibernate
+      Core, use the following configuration in
+      <code class="literal">hibernate.cfg.xml</code>:</p><div class="example"><a id="example-beanvalidationeventlistener-config"/><p class="title"><b>Example 7.1. Manual configuration of
+        <code class="classname">BeanValidationEvenListener</code></b></p><div class="example-contents"><pre xmlns="" xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="XML"><!-- XML : generated by JHighlight v1.0 (http://jhighlight.dev.java.net) -->
+<span class="xml_tag_symbols">&lt;</span><span class="xml_tag_name">hibernate-configuration</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;</span><span class="xml_tag_name">session-factory</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...</span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;</span><span class="xml_tag_name">property</span><span class="xml_plain">&nbsp;</span><span class="xml_attribute_name">name</span><span class="xml_tag_symbols">=</span><span class="xml_attribute_value">&quot;javax.persistence.validation.group.pre-persist&quot;</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain">javax.validation.groups.Default</span><span class="xml_tag_symbols">&lt;/</span><span class="xml_tag_name">property</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;</span><span class="xml_tag_name">property</span><span class="xml_plain">&nbsp;</span><span class="xml_attribute_name">name</span><span class="xml_tag_symbols">=</span><span class="xml_attribute_value">&quot;javax.persistence.validation.group.pre-update&quot;</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain">javax.validation.groups.Default</span><span class="xml_tag_symbols">&lt;/</span><span class="xml_tag_name">property</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;</span><span class="xml_tag_name">property</span><span class="xml_plain">&nbsp;</span><span class="xml_attribute_name">name</span><span class="xml_tag_symbols">=</span><span class="xml_attribute_value">&quot;javax.persistence.validation.group.pre-remove&quot;</span><span class="xml_tag_symbols">&gt;&lt;/</span><span class="xml_tag_name">property</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...</span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;</span><span class="xml_tag_name">event</span><span class="xml_plain">&nbsp;</span><span class="xml_attribute_name">type</span><span class="xml_tag_symbols">=</span><span class="xml_attribute_value">&quot;pre-update&quot;</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;</span><span class="xml_tag_name">listener</span><span class="xml_plain">&nbsp;</span><span class="xml_attribute_name">class</span><span class="xml_tag_symbols">=</span><span class="xml_attribute_value">&quot;org.hibernate.cfg.beanvalidation.BeanValidationEventListener&quot;</span><span class="xml_tag_symbols">/&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;/</span><span class="xml_tag_name">event</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;</span><span class="xml_tag_name">event</span><span class="xml_plain">&nbsp;</span><span class="xml_attribute_name">type</span><span class="xml_tag_symbols">=</span><span class="xml_attribute_value">&quot;pre-insert&quot;</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;</span><span class="xml_tag_name">listener</span><span class="xml_plain">&nbsp;</span><span class="xml_attribute_name">class</span><span class="xml_tag_symbols">=</span><span class="xml_attribute_value">&quot;org.hibernate.cfg.beanvalidation.BeanValidationEventListener&quot;</span><span class="xml_tag_symbols">/&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;/</span><span class="xml_tag_name">event</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;</span><span class="xml_tag_name">event</span><span class="xml_plain">&nbsp;</span><span class="xml_attribute_name">type</span><span class="xml_tag_symbols">=</span><span class="xml_attribute_value">&quot;pre-delete&quot;</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;</span><span class="xml_tag_name">listener</span><span class="xml_plain">&nbsp;</span><span class="xml_attribute_name">class</span><span class="xml_tag_symbols">=</span><span class="xml_attribute_value">&quot;org.hibernate.cfg.beanvalidation.BeanValidationEventListener&quot;</span><span class="xml_tag_symbols">/&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;/</span><span class="xml_tag_name">event</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_plain">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="xml_tag_symbols">&lt;/</span><span class="xml_tag_name">session-factory</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+<span class="xml_tag_symbols">&lt;/</span><span class="xml_tag_name">hibernate-configuration</span><span class="xml_tag_symbols">&gt;</span><span class="xml_plain"></span><br />
+</pre></div></div><br class="example-break"/></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h3 class="title"><a id="d0e3113"/>7.3.2. JPA</h3></div></div></div><p>If you are using JPA 2 and Hibernate Validator is in the classpath
+      the JPA2 specification requires that Bean Validation gets enabled. The
+      properties
+      <span class="property">javax.persistence.validation.group.pre-persist</span>,
+      <span class="property">javax.persistence.validation.group.pre-update</span> and
+      <span class="property">javax.persistence.validation.group.pre-remove</span> as
+      described in <a class="xref" href="validator-integration.html#validator-checkconstraints-orm-hibernateevent" title="7.3.1. Hibernate event-based validation">Section 7.3.1, “Hibernate event-based validation”</a> can in this
+      case be configured in <code class="filename">persistence.xml</code>.
+      <code class="filename">persistence.xml</code> also defines a node validation-mode
+      which can be set to <code class="constant">AUTO</code>,
+      <code class="constant">CALLBACK</code>, <code class="constant">NONE</code>. The default is
+      <code class="constant">AUTO</code>.</p><p>In a JPA 1 you will have to create and register Hibernate
+      Validator yourself. In case you are using Hibernate EntityManager you
+      can add a customized version of the
+      <code class="classname">BeanValidationEventListener</code> described in <a class="xref" href="validator-integration.html#validator-checkconstraints-orm-hibernateevent" title="7.3.1. Hibernate event-based validation">Section 7.3.1, “Hibernate event-based validation”</a> to your
+      project and register it manually.</p></div></div><div class="section" lang="en-US"><div class="titlepage"><div><div><h2 class="title"><a id="section-presentation-layer"/>7.4. Presentation layer validation</h2></div></div></div><p>When working with JSF2 or <span class="productname">JBoss Seam</span>™ and
+    Hibernate Validator (Bean Validation) is present in the runtime
+    environment validation is triggered for every field in the application.
+    <a class="xref" href="validator-integration.html#example-jsf2" title="Example 7.2. Usage of Bean Validation within JSF2">Example 7.2, “Usage of Bean Validation within JSF2”</a> shows an example of the f:validateBean tag
+    in a JSF page. For more information refer to the Seam documentation or the
+    JSF 2 specification.</p><div class="example"><a id="example-jsf2"/><p class="title"><b>Example 7.2. Usage of Bean Validation within JSF2</b></p><div class="example-contents"><pre class="programlisting">&lt;h:form&gt;
+  <span class="bold"><strong>&lt;f:validateBean&gt;</strong></span>
+    &lt;h:inputText value=”#{model.property}” /&gt;
+    &lt;h:selectOneRadio value=”#{model.radioProperty}” &gt; ... &lt;/h:selectOneRadio&gt;
+    &lt;!-- other input components here --&gt;
+  <span class="bold"><strong>&lt;/f:validateBean&gt;</strong></span>
+&lt;/h:form&gt;
+</pre></div></div><br class="example-break"/><div xmlns:rf="java:org.jboss.highlight.XhtmlRendererFactory" class="tip"><h2>Tip</h2><p>The integration between JSF 2 and Bean Validation is described in
+      the "Bean Validation Integration" chapter of <a class="ulink" href="http://jcp.org/en/jsr/detail?id=314">JSR-314</a>. It is
+      interesting to know that JSF 2 implements a custom MessageInterpolator
+      to ensure ensure proper localization. To encourage the use of the Bean
+      Validation message facility, JSF 2 will per default only display the
+      generated Bean Validation message. This can, however, be configured via
+      the application resource bundle by providing the following configuration
+      (<em class="parameter"><code>{0}</code></em> is replaced with the Bean Validation message
+      and <em class="parameter"><code>{1}</code></em> is replaced with the JSF component
+      label):</p><pre class="programlisting">javax.faces.validator.BeanValidator.MESSAGE={1}: {0}</pre><p>The default is:</p><pre class="programlisting">javax.faces.validator.BeanValidator.MESSAGE={0}</pre></div></div></div><HR xmlns=""/><a xmlns="" href=""><p xmlns="http://www.w3.org/1999/xhtml" class="copyright">Copyright © 2009 - 2013 Red Hat, Inc. &amp; Gunnar Morling</p></a><ul class="docnav"><li class="previous"><a accesskey="p" href="validator-metadata-api.html"><strong>Prev</strong>Chapter 6. Metadata API</a></li><li class="up"><a accesskey="u" href="#"><strong>Top of page</strong></a></li><li class="home"><a accesskey="h" href="index.html"><strong>Front page</strong></a></li><li class="next"><a accesskey="n" href="validator-specifics.html"><strong>Next</strong>Chapter 8. Hibernate Validator Specifics</a></li></ul></body></html>
