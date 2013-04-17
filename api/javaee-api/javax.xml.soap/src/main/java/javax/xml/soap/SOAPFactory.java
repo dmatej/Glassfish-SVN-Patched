@@ -17,7 +17,7 @@
  * you own identifying information:
  * "Portions Copyrighted [year] [name of copyright owner]"
  * 
- * Copyright 2012 Sun Microsystems Inc. All Rights Reserved
+ * Copyright (c) 2004-2013 Oracle and/or its affiliates. All rights reserved.
  */
 
 package javax.xml.soap;
@@ -51,11 +51,9 @@ public abstract class SOAPFactory {
         "javax.xml.soap.SOAPFactory";
 
     /**
-     * A constant representing the name of the default <code>SOAPFactory</code>
-     * factory class to be used if another cannot be found.
-     * a <code>SOAPFactory</code> implementation class.
+     * Class name of default <code>SOAPFactory</code> implementation.
      */
-    static private final String DEFAULT_SOAP_FACTORY
+    static final String DEFAULT_SOAP_FACTORY
         = "com.sun.xml.internal.messaging.saaj.soap.ver1_1.SOAPFactory1_1Impl";
 
     /**
