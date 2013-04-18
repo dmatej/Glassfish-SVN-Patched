@@ -187,12 +187,12 @@ public class Spec {
         // verify that Implementation-Version == Maven-Version
         if (!getMetadata().getjarImplementationVersion().isEmpty()
                 && !getMetadata().getjarImplementationVersion()
-                .equals(artifact.getVersion().toString())) {
+                .equals(artifact.getAbsoluteVersion())) {
             errors.add(String.format(
                     "WARNING: %s (%s) should be equal to Maven-Version (%s)",
                     Metadata.JAR_IMPLEMENTATION_VERSION,
                     getMetadata().getjarImplementationVersion(),
-                    artifact.getVersion().toString()));
+                    artifact.getAbsoluteVersion()));
         }
         
         // verify that Extension-Name == apiPackage
@@ -202,17 +202,17 @@ public class Spec {
                     Metadata.JAR_EXTENSION_NAME,
                     getMetadata().getJarExtensionName(),
                     apiPackage));
-        }      
+        }
 
         if (!nonFinal) {
             // verify Bundle-Version
             if (!getMetadata().getBundleVersion()
-                    .equals(artifact.getVersion().toString())) {
+                    .equals(artifact.getAbsoluteVersion())) {
                 errors.add(String.format(
                         "WARNING: %s (%s) should be %s",
                         Metadata.BUNDLE_VERSION,
                         metadata.getBundleVersion(),
-                        artifact.getVersion().toString()));
+                        artifact.getAbsoluteVersion()));
             }
             
             if (!getMetadata().getJarSpecificationVersion().equals(specVersion)){
@@ -456,7 +456,7 @@ public class Spec {
                         osgiVersion,
                         apiPackage,
                         specVersion + NONFINAL_BUILD_SEPARATOR_SPEC + specBuild,
-                        artifact.getVersion().toString());
+                        artifact.getAbsoluteVersion());
             }
         } else {
             String symbolicName = implNamespace + "." + apiPackage;
@@ -475,7 +475,7 @@ public class Spec {
                         implVersion,
                         apiPackage,
                         specVersion,
-                        artifact.getVersion().toString());
+                        artifact.getAbsoluteVersion());
             } else {
 
                 //  OSGi Bundle-SymbolicName:	${IMPL_NAMESPACE}.${API_PACKAGE}
@@ -493,7 +493,7 @@ public class Spec {
                         implAv.getMajorVersion() + "." + implAv.getMinorVersion() + NONFINAL_BUILD_SEPARATOR + implBuild,
                         apiPackage,
                         specVersion + NONFINAL_BUILD_SEPARATOR_SPEC + implBuild,
-                        artifact.getVersion().toString());
+                        artifact.getAbsoluteVersion());
             }
         }
         return metadata;

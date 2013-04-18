@@ -107,6 +107,10 @@ public final class Artifact {
     public ArtifactVersion getVersion() {
         return version;
     }
+    
+    public String getAbsoluteVersion(){
+        return stripSnapshotQualifier(version.toString());
+    }
 
     public void setArtifactId(String artifactId) {
         this.artifactId = artifactId;
