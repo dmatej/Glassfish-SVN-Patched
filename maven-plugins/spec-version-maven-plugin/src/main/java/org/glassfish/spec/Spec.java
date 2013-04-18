@@ -194,6 +194,15 @@ public class Spec {
                     getMetadata().getjarImplementationVersion(),
                     artifact.getVersion().toString()));
         }
+        
+        // verify that Extension-Name == apiPackage
+        if (!getMetadata().getJarExtensionName().equals(apiPackage)) {
+            errors.add(String.format(
+                    "WARNING: %s (%s) should be %s",
+                    Metadata.JAR_EXTENSION_NAME,
+                    getMetadata().getJarExtensionName(),
+                    apiPackage));
+        }      
 
         if (!nonFinal) {
             // verify Bundle-Version
@@ -204,6 +213,14 @@ public class Spec {
                         Metadata.BUNDLE_VERSION,
                         metadata.getBundleVersion(),
                         artifact.getVersion().toString()));
+            }
+            
+            if (!getMetadata().getJarSpecificationVersion().equals(specVersion)){
+                errors.add(String.format(
+                        "WARNING: %s (%s) should be %s",
+                        Metadata.JAR_SPECIFICATION_VERSION,
+                        metadata.getJarSpecificationVersion(),
+                        specVersion));
             }
 
             // TODO check BundleSpecVersion == JarSpec
@@ -223,6 +240,17 @@ public class Spec {
                         Metadata.BUNDLE_VERSION,
                         metadata.getBundleVersion(),
                         bundleVersion));
+            }
+            
+            String expectedJarSpecVersion = 
+                    specVersion+NONFINAL_BUILD_SEPARATOR_SPEC+specBuild;
+            if (!getMetadata().getJarSpecificationVersion().equals(
+                    expectedJarSpecVersion)) {
+                errors.add(String.format(
+                        "WARNING: %s (%s) should be %s",
+                        Metadata.JAR_SPECIFICATION_VERSION,
+                        metadata.getJarSpecificationVersion(),
+                        expectedJarSpecVersion));
             }
 
             // TODO check BundleSpecVersion == JarSpec (with no b)
@@ -261,16 +289,6 @@ public class Spec {
                         Metadata.BUNDLE_SYMBOLIC_NAME,
                         getMetadata().getBundleSymbolicName(),
                         symbolicName));
-            }
-
-            // verify that Extension-Name == apiPackage
-            if (!getMetadata().getJarExtensionName().isEmpty()
-                    && !getMetadata().getJarExtensionName().equals(apiPackage)) {
-                errors.add(String.format(
-                        "WARNING: %s (%s) should be %s",
-                        Metadata.JAR_EXTENSION_NAME,
-                        getMetadata().getJarExtensionName(),
-                        apiPackage));
             }
 
             if (jar != null) {
@@ -338,15 +356,6 @@ public class Spec {
                         "WARNING: artifactId (%s) should not end with %s",
                         artifact.getArtifactId(),
                         API_SUFFIX));
-            }
-
-            // verify that Extension-Name == apiPackage
-            if (!getMetadata().getJarExtensionName().equals(apiPackage)) {
-                errors.add(String.format(
-                        "WARNING: %s (%s) should be %s",
-                        Metadata.JAR_EXTENSION_NAME,
-                        getMetadata().getJarExtensionName(),
-                        apiPackage));
             }
 
             // verify that apiPackage starts with javax.
