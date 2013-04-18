@@ -43,6 +43,8 @@ package org.glassfish.annotation.processing.logging;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 
 import javax.annotation.processing.AbstractProcessor;
 import javax.tools.FileObject;
@@ -100,7 +102,8 @@ public abstract class BaseLoggingProcessor extends AbstractProcessor {
         try {
             FileObject rbFileObject = getRBFileObject(rbName, true);
             if (rbFileObject.getLastModified() > 0) {
-                bufferedReader = new BufferedReader(rbFileObject.openReader(true));
+                bufferedReader = new BufferedReader(new InputStreamReader(
+                        rbFileObject.openInputStream()));
                 lrb.load(bufferedReader);                
             }
         } catch (IllegalArgumentException e) {
@@ -125,7 +128,8 @@ public abstract class BaseLoggingProcessor extends AbstractProcessor {
         BufferedWriter bufferedWriter = null; 
         try {
             FileObject rbFileObject = getRBFileObject(rbName, false);
-            bufferedWriter = new BufferedWriter(rbFileObject.openWriter());
+            bufferedWriter = new BufferedWriter(new OutputStreamWriter(
+                    rbFileObject.openOutputStream()));
             lrb.store(bufferedWriter);
         } catch (IllegalArgumentException e) {
             error("Unable to store resource bundle: " +
