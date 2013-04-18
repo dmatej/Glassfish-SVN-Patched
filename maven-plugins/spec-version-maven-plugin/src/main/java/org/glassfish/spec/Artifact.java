@@ -64,7 +64,7 @@ public final class Artifact {
     private static final String[] buildNumberSeparators = new String[] {"m", "b"};
     public static final String SNAPSHOT_QUALIFIER = "SNAPSHOT";
     
-    private static String stripSnapshotQualifier(String qualifier) {
+    public static String stripSnapshotQualifier(String qualifier) {
         if (qualifier != null) {
             if (qualifier.endsWith("-" + SNAPSHOT_QUALIFIER)) {
                 qualifier = qualifier.replace("-" + SNAPSHOT_QUALIFIER, "");

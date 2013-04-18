@@ -512,7 +512,8 @@ public class Spec {
     }
 
     public void setImplVersion(String implVersion) {
-        this.implVersion = implVersion != null ? implVersion : "";
+        this.implVersion = implVersion != null ? 
+                Artifact.stripSnapshotQualifier(implVersion) : "";
     }
 
     public void setSpecVersion(String specVersion) {
@@ -528,7 +529,8 @@ public class Spec {
     }
 
     public void setSpecImplVersion(String specImplVersion) {
-        this.specImplVersion = specImplVersion != null ? specImplVersion : "";
+        this.specImplVersion = specImplVersion != null ? 
+                Artifact.stripSnapshotQualifier(specImplVersion) : "";
     }
 
     public void setNewSpecVersion(String newSpecVersion) {
