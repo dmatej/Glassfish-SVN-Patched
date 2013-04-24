@@ -57,10 +57,12 @@ public class LogDomainsUsageDetector extends BytecodeScanningDetector {
         this.bugReporter = bugReporter;
     }
 
+    @Override
     public void visit(Code code) {
         super.visit(code);
     }
 
+    @Override
     public void sawOpcode(int seen) {
         // Detects the invocation of the LogDomains.getLogger() method
         if (seen == INVOKESTATIC

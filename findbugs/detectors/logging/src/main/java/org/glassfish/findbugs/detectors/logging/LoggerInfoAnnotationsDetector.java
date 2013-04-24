@@ -71,15 +71,22 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
         this.bugReporter = bugReporter;
     }
 
+    @Override
     public void visit(Code code) {
-        super.visit(code);
+        if (DEBUG) {
+            System.out.println("Analyzing method:" + getClassName() + "." + getMethodName());
+        }
         constantsVisited.clear();
+        super.visit(code);
     }
 
     @Override
     public void visit(Field field) {
         super.visit(field);
         String name = field.getName();
+        if (DEBUG) {
+            System.out.println("Analyzing field:" + getClassName() + "." + name);
+        }
         AnnotationEntry[] annotationEntries = field.getAnnotationEntries();
         for (AnnotationEntry annoEntry : annotationEntries) {
             String annoType = annoEntry.getAnnotationType();

@@ -75,6 +75,7 @@ public class DebugLoggingDetector extends BytecodeScanningDetector {
         this.bugReporter = bugReporter;
     }
 
+    @Override
     public void visit(Code code) {
         seenGetStaticLevelAt = Integer.MIN_VALUE;
         seenGuardClauseAt = Integer.MIN_VALUE;
@@ -84,6 +85,7 @@ public class DebugLoggingDetector extends BytecodeScanningDetector {
         super.visit(code);
     }
 
+    @Override
     public void sawOpcode(int seen) {     
         // Detect access to java.util.logging.Level.FINE, FINER or FINEST objects. 
         if (seen == GETSTATIC 

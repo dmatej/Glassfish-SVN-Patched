@@ -59,6 +59,7 @@ public class LoggerMethodParamOrReturnTypeDetector extends
         this.bugReporter = bugReporter;
     }
 
+    @Override
     public void visit(Code code) {
         XMethod method = getXMethod();
         if (method.isSynthetic()) {
@@ -67,7 +68,7 @@ public class LoggerMethodParamOrReturnTypeDetector extends
         String signature = method.getSignature();        
         if (signature.contains("Ljava/util/logging/Logger;")) {
             bugReporter.reportBug(new BugInstance(
-                    "GF_LOGGER_PARAM_OR_RETURN_TYPE", LOW_PRIORITY)
+                    "GF_LOGGER_PARAM_OR_RETURN_TYPE", NORMAL_PRIORITY)
                     .addClassAndMethod(this).addSourceLine(this));
         }
         super.visit(code);
