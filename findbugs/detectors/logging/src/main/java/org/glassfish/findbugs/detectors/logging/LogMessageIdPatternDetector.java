@@ -1,0 +1,209 @@
+/*
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
+ *
+ * Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
+ *
+ * The contents of this file are subject to the terms of either the GNU
+ * General Public License Version 2 only ("GPL") or the Common Development
+ * and Distribution License("CDDL") (collectively, the "License").  You
+ * may not use this file except in compliance with the License.  You can
+ * obtain a copy of the License at
+ * https://glassfish.dev.java.net/public/CDDL+GPL_1_1.html
+ * or packager/legal/LICENSE.txt.  See the License for the specific
+ * language governing permissions and limitations under the License.
+ *
+ * When distributing the software, include this License Header Notice in each
+ * file and include the License file at packager/legal/LICENSE.txt.
+ *
+ * GPL Classpath Exception:
+ * Oracle designates this particular file as subject to the "Classpath"
+ * exception as provided by Oracle in the GPL Version 2 section of the License
+ * file that accompanied this code.
+ *
+ * Modifications:
+ * If applicable, add the following below the License Header, with the fields
+ * enclosed by brackets [] replaced by your own identifying information:
+ * "Portions Copyright [year] [name of copyright owner]"
+ *
+ * Contributor(s):
+ * If you wish your version of this file to be governed by only the CDDL or
+ * only the GPL Version 2, indicate your decision by adding "[Contributor]
+ * elects to include this software in this distribution under the [CDDL or GPL
+ * Version 2] license."  If you don't indicate a single choice of license, a
+ * recipient has the option to distribute your version of this file under
+ * either the CDDL, the GPL Version 2 or to extend the choice of license to
+ * its licensees as provided above.  However, if you add GPL Version 2 code
+ * and therefore, elected the GPL Version 2 license, then the option applies
+ * only if the new code is made subject to such option by the copyright
+ * holder.
+ */
+package org.glassfish.findbugs.detectors.logging;
+
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+
+import org.apache.bcel.classfile.Code;
+import org.apache.bcel.classfile.ConstantString;
+
+import edu.umd.cs.findbugs.BugInstance;
+import edu.umd.cs.findbugs.BugReporter;
+import edu.umd.cs.findbugs.BytecodeScanningDetector;
+
+/**
+ * @author sandeep.shrivastava
+ *
+ */
+public class LogMessageIdPatternDetector extends BytecodeScanningDetector {
+
+    private static final Set<String> EXCLUDED_LEVELS = new HashSet<String>() {
+
+        private static final long serialVersionUID = 6845716234986486398L;
+        {
+            add("FINE");
+            add("FINER");
+            add("FINEST");
+        }
+        
+    };
+
+    private Map<Integer, String> levelsVisited = new HashMap<Integer, String>();
+
+    private Map<Integer, String> constantsVisited = new HashMap<Integer, String>();
+    
+    private BugReporter bugReporter;
+    
+    private int seenALoad_1At = Integer.MIN_VALUE;
+
+    public LogMessageIdPatternDetector(BugReporter bugReporter) {
+        this.bugReporter = bugReporter;
+    }
+
+    @Override
+    public void visit(Code code) {
+        levelsVisited.clear();
+        constantsVisited.clear();
+        seenALoad_1At = Integer.MIN_VALUE;
+        super.visit(code);
+    }
+    
+    @Override
+    public void sawOpcode(int opCode) {
+        
+        if (opCode == ALOAD_1) {
+            seenALoad_1At = getPC();
+        }
+        
+        if (opCode == GETSTATIC 
+                && (getPC() == (seenALoad_1At+1))
+                && "java/util/logging/Level".equals(getClassConstantOperand())
+                ) 
+        {
+            String levelName  = getNameConstantOperand();
+            levelsVisited.put(getPC(), levelName);
+        }
+        
+        if (opCode == LDC && getConstantRefOperand() instanceof ConstantString) {
+            constantsVisited.put(getPC(), getStringConstantOperand());
+        }
+        // Detects the invocation of the Logger.logXXX() methods where the
+        // message ID is not confirming to GlassFish Logging conventions
+        if (opCode == INVOKEVIRTUAL && "java/util/logging/Logger".equals(getClassConstantOperand())) 
+        {
+            String methodName = getNameConstantOperand();
+            String signature = getSigConstantOperand();
+            String levelName = null;
+            String message = null;
+            
+            if (methodName.equals("log") 
+                    && signature.equals("(Ljava/util/logging/Level;Ljava/lang/String;)V")) 
+            {
+               levelName = levelsVisited.get(getPC() - 5);
+               message = constantsVisited.get(getPC() - 2);    
+            }
+
+            if (methodName.equals("log") 
+                    && signature.equals(
+                            "(Ljava/util/logging/Level;Ljava/lang/String;Ljava/lang/Object;)V"))
+            {
+               levelName = levelsVisited.get(getPC() - 7);
+               message = constantsVisited.get(getPC() - 4);    
+            }
+
+            if (methodName.equals("log") 
+                    && signature.equals(
+                            "(Ljava/util/logging/Level;Ljava/lang/String;[Ljava/lang/Object;)V"))
+            {
+               levelName = levelsVisited.get(getPC() - 14);
+               message = constantsVisited.get(getPC() - 11);    
+            }
+
+            if (methodName.equals("log") 
+                    && signature.equals(
+                            "(Ljava/util/logging/Level;Ljava/lang/String;Ljava/lang/Throwable;)V"))
+            {
+               levelName = levelsVisited.get(getPC() - 12);
+               message = constantsVisited.get(getPC() - 9);    
+            }
+            
+            if (methodName.equals("config") 
+                    && signature.equals("(Ljava/lang/String;)V"))
+            {
+               levelName = Level.CONFIG.getName();
+               message = constantsVisited.get(getPC() - 2);    
+            }
+
+            if (methodName.equals("info") 
+                    && signature.equals("(Ljava/lang/String;)V")) 
+            {
+               levelName = Level.INFO.getName();
+               message = constantsVisited.get(getPC() - 2);    
+            }
+
+            if (methodName.equals("warning") 
+                    && signature.equals("(Ljava/lang/String;)V"))
+            {
+               levelName = Level.WARNING.getName();
+               message = constantsVisited.get(getPC() - 2);    
+            }
+
+            if (methodName.equals("severe") 
+                    && signature.equals("(Ljava/lang/String;)V"))
+            {
+               levelName = Level.SEVERE.getName();
+               message = constantsVisited.get(getPC() - 2);    
+            }
+            
+            if(!checkMessagePattern(levelName, message)) {
+                bugReporter.reportBug(new BugInstance(
+                        "GF_INVALID_MSG_ID_PATTERN", HIGH_PRIORITY)
+                        .addClassAndMethod(this).addSourceLine(this));
+            }
+            
+        }
+    }
+
+    private boolean checkMessagePattern(String levelName, String message) 
+    {
+        if (levelName != null && message != null) {
+            if (EXCLUDED_LEVELS.contains(levelName)) {
+                return true;
+            }
+            // Message IDs are expected to be in the form AA-BBB-12345
+            String[] tokens = message.split("-");            
+            if (tokens.length < 3) {
+                return false;
+            }             
+            
+            String messageNumber = tokens[tokens.length-1];
+            if (messageNumber.length() != 5) {
+                return false;
+            }            
+        }
+        return true;
+    }
+    
+}
+    
