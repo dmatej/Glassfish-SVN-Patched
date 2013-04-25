@@ -40,7 +40,9 @@
 package org.glassfish.findbugs.detectors.logging;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.bcel.classfile.AnnotationEntry;
 import org.apache.bcel.classfile.Code;
@@ -52,7 +54,7 @@ import edu.umd.cs.findbugs.BugReporter;
 import edu.umd.cs.findbugs.BytecodeScanningDetector;
 
 /**
- * @author sanshriv
+ * @author sandeep.shrivastava
  * 
  */
 public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
@@ -61,12 +63,36 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
 
     private BugReporter bugReporter;
 
-    private Map<String, String> loggerInfoAnnotations = new HashMap<String, String>();
+    private Map<String, String> annotatedLoggerNames = new HashMap<String, String>();
 
-    private Map<String, String> logMessagesResourceBundleAnnotations = new HashMap<String, String>();
+    private Map<String, String> annotatedResourceBundles = new HashMap<String, String>();
 
     private Map<Integer, String> constantsVisited = new HashMap<Integer, String>();
+    
+    private Map<String, BugInstance> visitedLoggerNames = new HashMap<String, BugInstance>();
+    
+    private Map<String, BugInstance> visitedRBNames = new HashMap<String, BugInstance>();
+    
+    private static final String VALID_LOGGER_PREFIX_PROP = System.getProperty(
+            "findbugs.glassfish.logging.validLoggerPrefixes");
+    
+    private static final Set<String> VALID_LOGGER_PREFIX_SET = new HashSet<String>() {
+        
+        private static final long serialVersionUID = 7628533257784047677L;
 
+        {
+            if (DEBUG) {
+                System.out.println("VALID_LOGGER_PREFIXES="+VALID_LOGGER_PREFIX_PROP);
+            }
+            if (VALID_LOGGER_PREFIX_PROP != null) {
+                String[] tokens = VALID_LOGGER_PREFIX_PROP.split(",");
+                for (String token : tokens) {
+                    add(token);
+                }
+            }
+        }
+    };
+    
     public LoggerInfoAnnotationsDetector(BugReporter bugReporter) {
         this.bugReporter = bugReporter;
     }
@@ -83,25 +109,25 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
     @Override
     public void visit(Field field) {
         super.visit(field);
-        String name = field.getName();
+        String fieldName = getClassName() + "." + field.getName();
         if (DEBUG) {
-            System.out.println("Analyzing field:" + getClassName() + "." + name);
+            System.out.println("Analyzing field:" + getClassName() + "." + fieldName);
         }
         AnnotationEntry[] annotationEntries = field.getAnnotationEntries();
         for (AnnotationEntry annoEntry : annotationEntries) {
             String annoType = annoEntry.getAnnotationType();
             if (annoType
                     .equals("Lorg/glassfish/logging/annotation/LoggerInfo;")) {
-                String value = field.getConstantValue().toString();
-                value = value.substring(1);
-                value = value.substring(0, value.length() - 1);
-                loggerInfoAnnotations.put(name, value);                
+                String loggerName = field.getConstantValue().toString();
+                loggerName = loggerName.substring(1);
+                loggerName = loggerName.substring(0, loggerName.length() - 1);
+                annotatedLoggerNames.put(loggerName, fieldName);                
             } else if (annoType
                     .equals("Lorg/glassfish/logging/annotation/LogMessagesResourceBundle;")) {
-                String value = field.getConstantValue().toString();
-                value = value.substring(1);
-                value = value.substring(0, value.length() - 1);
-                logMessagesResourceBundleAnnotations.put(name, value);
+                String rbName = field.getConstantValue().toString();
+                rbName = rbName.substring(1);
+                rbName = rbName.substring(0, rbName.length() - 1);
+                annotatedResourceBundles.put(rbName, fieldName);
             }
         }
     }
@@ -123,7 +149,7 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
                 if (DEBUG) {
                     System.out.println("Signature="+getSigConstantOperand());
                     System.out.println("class=" + this.getClassName()
-                            + ",loggerInfoAnnotations=" + loggerInfoAnnotations);
+                            + ",loggerInfoAnnotations=" + annotatedLoggerNames);
                 }
                                 
                 if ("(Ljava/lang/String;Ljava/lang/String;)Ljava/util/logging/Logger;".equals(getSigConstantOperand())) 
@@ -134,21 +160,34 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
                     if (DEBUG) {
                         System.out.println("param1=" + param1 + ",param2=" + param2);
                     }
-                    if ((param1 != null && !loggerInfoAnnotations.containsValue(param1)) 
-                            || (param1 == null)) 
-                    {
+                    
+                    if (!validateLoggerName(param1)) {
                         bugReporter.reportBug(new BugInstance(
-                                "GF_MISSING_LOGGER_INFO_ANNOTATION", NORMAL_PRIORITY)
+                                "GF_INVALID_LOGGER_NAME_PREFIX", NORMAL_PRIORITY)
                                 .addClassAndMethod(this).addSourceLine(this));
                     }
-
-                    if ((param2 != null && !logMessagesResourceBundleAnnotations.containsValue(param2)) 
-                            || (param2 == null)) 
+                    
+                    BugInstance bug1 = new BugInstance(
+                            "GF_MISSING_LOGGER_INFO_ANNOTATION", NORMAL_PRIORITY)
+                            .addClassAndMethod(this).addSourceLine(this);
+                    
+                    if (param1 == null) 
                     {
-                        bugReporter.reportBug(new BugInstance(
-                                "GF_MISSING_LOGMESSAGES_RB_ANNOTATION", NORMAL_PRIORITY)
-                                .addClassAndMethod(this).addSourceLine(this));
-                    }  
+                        bugReporter.reportBug(bug1);
+                    } else {
+                        visitedLoggerNames.put(param1, bug1);
+                    }
+                    
+                    BugInstance bug2 = new BugInstance(
+                            "GF_MISSING_LOGMESSAGES_RB_ANNOTATION", NORMAL_PRIORITY)
+                            .addClassAndMethod(this).addSourceLine(this);
+
+                    if (param2 == null)
+                    {
+                        bugReporter.reportBug(bug2);
+                    } else {
+                        visitedRBNames.put(param2, bug2);
+                    }
                     
                 } else if ("(Ljava/lang/String;)Ljava/util/logging/Logger;".equals(getSigConstantOperand())) {
                     int pc = getPC();
@@ -156,16 +195,54 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
                     if (DEBUG) {
                         System.out.println("param1=" + param1);
                     }
-                    if ((param1 != null && !loggerInfoAnnotations.containsValue(param1)) 
-                            || (param1 == null)) 
-                    {
+                    if (!validateLoggerName(param1)) {
                         bugReporter.reportBug(new BugInstance(
-                                "GF_MISSING_LOGGER_INFO_ANNOTATION", NORMAL_PRIORITY)
+                                "GF_INVALID_LOGGER_NAME_PREFIX", NORMAL_PRIORITY)
                                 .addClassAndMethod(this).addSourceLine(this));
-                    }                    
+                    }
+                    BugInstance bug1 = new BugInstance(
+                            "GF_MISSING_LOGGER_INFO_ANNOTATION", NORMAL_PRIORITY)
+                            .addClassAndMethod(this).addSourceLine(this);
+                    if (param1 == null) 
+                    {
+                        bugReporter.reportBug(bug1);
+                    } else {
+                        visitedLoggerNames.put(param1, bug1);
+                    }
                 }
             }
         }
     }
+    
+    private boolean validateLoggerName(String param1) {
+        if (param1 == null || VALID_LOGGER_PREFIX_SET.isEmpty()) {
+            return true;
+        }
+        for (String prefix : VALID_LOGGER_PREFIX_SET) {
+            if (param1.startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void report() {
+        if (DEBUG) {
+            System.out.println("loggerInfoAnnotations="+annotatedLoggerNames);
+        }
+        
+        for (String loggerName : visitedLoggerNames.keySet()) {
+            if (!annotatedLoggerNames.keySet().contains(loggerName)) {
+                bugReporter.reportBug(visitedLoggerNames.get(loggerName));
+            }
+        }
+        
+        for (String rbName : visitedRBNames.keySet()) {
+            if (!annotatedResourceBundles.keySet().contains(rbName)) {
+                bugReporter.reportBug(visitedRBNames.get(rbName));
+            }
+        }        
+    }
+
 
 }
