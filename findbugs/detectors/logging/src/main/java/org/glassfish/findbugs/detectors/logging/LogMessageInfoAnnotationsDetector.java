@@ -45,8 +45,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 
+import org.apache.bcel.classfile.AnnotationEntry;
 import org.apache.bcel.classfile.Code;
 import org.apache.bcel.classfile.ConstantString;
+import org.apache.bcel.classfile.Field;
 
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
@@ -56,7 +58,7 @@ import edu.umd.cs.findbugs.BytecodeScanningDetector;
  * @author sandeep.shrivastava
  *
  */
-public class LogMessageIdPatternDetector extends BytecodeScanningDetector {
+public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector {
 
     private static final Set<String> EXCLUDED_LEVELS = new HashSet<String>() {
 
@@ -69,6 +71,10 @@ public class LogMessageIdPatternDetector extends BytecodeScanningDetector {
         
     };
 
+    private Map<String, String> annotatedLogMessages = new HashMap<String, String>();
+    
+    private Map<String, BugInstance> visitedLogMessages = new HashMap<String, BugInstance>();
+    
     private Map<Integer, String> levelsVisited = new HashMap<Integer, String>();
 
     private Map<Integer, String> constantsVisited = new HashMap<Integer, String>();
@@ -77,8 +83,26 @@ public class LogMessageIdPatternDetector extends BytecodeScanningDetector {
     
     private int seenALoad_1At = Integer.MIN_VALUE;
 
-    public LogMessageIdPatternDetector(BugReporter bugReporter) {
+    public LogMessageInfoAnnotationsDetector(BugReporter bugReporter) {
         this.bugReporter = bugReporter;
+    }
+
+    @Override
+    public void visit(Field field) {
+        super.visit(field);
+        String fieldName = getClassName() + "." + field.getName();
+        AnnotationEntry[] annotationEntries = field.getAnnotationEntries();
+        for (AnnotationEntry annoEntry : annotationEntries) {
+            String annoType = annoEntry.getAnnotationType();
+            if (annoType
+                    .equals("Lorg/glassfish/logging/annotation/LogMessageInfo;")) 
+            {
+                String msgId = field.getConstantValue().toString();
+                msgId = msgId.substring(1);
+                msgId = msgId.substring(0, msgId.length() - 1);
+                annotatedLogMessages.put(msgId, fieldName);                
+            }
+        }
     }
 
     @Override
@@ -180,8 +204,14 @@ public class LogMessageIdPatternDetector extends BytecodeScanningDetector {
                 bugReporter.reportBug(new BugInstance(
                         "GF_INVALID_MSG_ID_PATTERN", HIGH_PRIORITY)
                         .addClassAndMethod(this).addSourceLine(this));
-            }
-            
+            } else {
+                if (levelName != null && !EXCLUDED_LEVELS.contains(levelName)) 
+                {
+                    visitedLogMessages.put(message, new BugInstance(
+                            "GF_MISSING_LOGMESSAGE_INFO_ANNOTATION", HIGH_PRIORITY)
+                            .addClassAndMethod(this).addSourceLine(this));
+                }
+            }            
         }
     }
 
@@ -204,6 +234,17 @@ public class LogMessageIdPatternDetector extends BytecodeScanningDetector {
         }
         return true;
     }
+    
+    public void report() {
+        
+        for (String loggerName : visitedLogMessages.keySet()) {
+            if (!annotatedLogMessages.keySet().contains(loggerName)) {
+                bugReporter.reportBug(visitedLogMessages.get(loggerName));
+            }
+        }
+        
+    }
+    
     
 }
     
