@@ -41,15 +41,24 @@
 
 package org.glassfish.fighterfish.test.util;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleException;
 
 import javax.servlet.ServletContext;
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -168,53 +177,82 @@ public class WebAppBundle {
     //Implementing GLASSFISH-19794
     //Adding a getHttpPostResponse for post request
     public String getHttpPostResponse(String relativePath) throws IOException {
-    	return getHttpResponse(relativePath, "POST", null);
+    	return getHttpResponseUsingHttpClient(relativePath, "POST", null);
     }
     
     //seeing GLASSFISH-20099
     public String getHttpPostResponse(String relativePath, String contentType) throws IOException {
-    	return getHttpResponse(relativePath, "POST", contentType);
+    	return getHttpResponseUsingHttpClient(relativePath, "POST", contentType);
     }
     
     //Implementing GLASSFISH-19794
     //Adding a getHttpGetResponse for get request
     public String getHttpGetResponse(String relativePath) throws IOException {
-        return getHttpResponse(relativePath, "GET", null);
+    	return getHttpResponseUsingHttpClient(relativePath, "GET", null);
     }
     
-    //Implementing GLASSFISH-19794
-    //Common handling logic
-    private String getHttpResponse(String relativePath, String mode, String contentType) throws IOException{
-    	HttpURLConnection connection = null;
-        URL serverAddress = null;
-
-        serverAddress = new URL("http", getHost(), getPort(), contextPath + relativePath);
-        connection = (HttpURLConnection)serverAddress.openConnection();
-        connection.setReadTimeout(60000);
-        //setting Content-Type
-        if (contentType != null){
-        	connection.setRequestProperty("Content-Type", contentType);
+    //Implementing GLASSFISH-20088
+    private String getHttpResponseUsingHttpClient(String relativePath, String mode, String contentType) throws IOException{
+    	String result = null;
+    	DefaultHttpClient httpClient = new DefaultHttpClient();
+    	
+    	try{
+    		//Setting ReadTimeOut For current httpClient
+        	HttpParams httpParameters = new BasicHttpParams();
+        	int readTimeout = 30000; //will improve based on GLASSFISH-19854
+        	HttpConnectionParams.setSoTimeout(httpParameters, readTimeout);
+        	httpClient.setParams(httpParameters);
+        	
+        	URL serverAddress = new URL("http", getHost(), getPort(), contextPath + relativePath);
+        	
+        	HttpRequestBase httpRequest = null;
+        	
+    		if ("GET".endsWith(mode)){
+    			httpRequest = new HttpGet();
+            }else{
+            	//Creating POST Method
+            	httpRequest = new HttpPost();
+            }
+    		
+    		try {
+				httpRequest.setURI(serverAddress.toURI());
+			} catch (URISyntaxException e) {
+				throw new RuntimeException(e);
+			}
+    		
+    		if (contentType != null){
+        		//setting ContentType
+    			httpRequest.setHeader("Content-Type", contentType);
+        	}
+    		
+    		HttpResponse response = httpClient.execute(httpRequest);
+    		
+    		if(response.getStatusLine().getStatusCode() == 404){
+    			throw new FileNotFoundException("Request Resource is not available.");
+    		}
+    		
+    		BufferedReader in = new BufferedReader(
+    	                new InputStreamReader(
+    	                        response.getEntity().getContent()));
+    		
+    		String inputLine;
+    		StringBuilder sb = new StringBuilder();
+            while ((inputLine = in.readLine()) != null) {
+                sb.append(inputLine);
+            }
+            
+            result = sb.toString();
+            
+            in.close();
+    		
+    	}finally {
+            // When HttpClient instance is no longer needed,
+            // shut down the connection manager to ensure
+            // immediate deallocation of all system resources
+    		httpClient.getConnectionManager().shutdown();
         }
-        
-        connection.setRequestMethod(mode);
-             
-        if ("POST".endsWith(mode)){
-        	connection.setDoOutput(true);
-        	connection.getOutputStream().close();
-        }else{
-        	connection.connect();
-        }
 
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(
-                        connection.getInputStream()));
-
-        StringBuilder sb = new StringBuilder();
-        String inputLine;
-        while ((inputLine = in.readLine()) != null) {
-            sb.append(inputLine);
-        }
-        in.close();
-        return sb.toString();
+    	return result;
+    	
     }
 }

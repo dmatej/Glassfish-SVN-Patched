@@ -86,6 +86,8 @@ public class PaxExamConfigurator {
         final Option gfBundle = bundle(new File(gfHome, "modules/glassfish.jar").toURI().toString());
         return options(gfBundle,
                 junitBundles(),
+                mavenBundle().groupId("org.apache.httpcomponents").artifactId("httpclient-osgi").version("4.2.4"),
+                mavenBundle().groupId("org.apache.httpcomponents").artifactId("httpcore-osgi").version("4.2.4"),
                 mavenBundle().groupId("org.glassfish.fighterfish").artifactId("test.util").version(version)
         );
     }
