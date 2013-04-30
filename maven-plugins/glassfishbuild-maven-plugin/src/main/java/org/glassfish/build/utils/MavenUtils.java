@@ -43,13 +43,16 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -70,6 +73,10 @@ import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.project.artifact.ProjectArtifactMetadata;
 import org.apache.maven.shared.artifact.filter.collection.*;
+import org.apache.tools.ant.BuildEvent;
+import org.apache.tools.ant.BuildListener;
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.types.ZipFileSet;
 import org.codehaus.mojo.versions.rewriting.ModifiedPomXMLEventReader;
 import org.codehaus.plexus.archiver.ArchiverException;
 import org.codehaus.plexus.archiver.UnArchiver;
@@ -421,7 +428,20 @@ public class MavenUtils {
         }
         File pomFile = new File(buildDir, pomFileName);
         new DefaultModelWriter().write(pomFile, null, m);
+        
         m.setPomFile(pomFile);
+    }
+    /**
+     * Write the model to the buildDir/${project.build.finalName}.pom
+     * @param m an instance of model
+     * @param buildDir the directory in which to write the pom
+     * @param pomFileName the name of the written pom
+     * @throws IOException
+     */
+    public static byte[] writePom(Model m) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        new DefaultModelWriter().write(baos, null, m);
+        return baos.toByteArray();
     }
     
     /**
@@ -531,6 +551,76 @@ public class MavenUtils {
         }
     }
 
+    public static String getCombinedExcludes(
+            List additionalExcludes,
+            boolean useDefaultExcludes,
+            String[] excludes) {
+
+        List<String> combinedExcludes = new ArrayList<String>();
+
+        if (useDefaultExcludes) {
+            combinedExcludes.addAll(FileUtils.getDefaultExcludesAsList());
+        }
+
+        if (excludes != null && excludes.length > 0) {
+            combinedExcludes.addAll(Arrays.asList(excludes));
+        }
+
+        if (additionalExcludes != null && additionalExcludes.size() > 0) {
+            combinedExcludes.addAll(additionalExcludes);
+        }
+
+        if (combinedExcludes.isEmpty()) {
+            combinedExcludes.addAll(Arrays.asList(new String[]{}));
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        for(int i=0 ; i < combinedExcludes.size(); i++){
+            sb.append(combinedExcludes.get(i));
+            if(i > combinedExcludes.size() -1){
+                sb.append(',');
+            }
+        }
+        return sb.toString();
+    }
+    public static String getCombinedExcludes(
+            List additionalExcludes,
+            boolean useDefaultExcludes,
+            List excludes) {
+        return getCombinedExcludes(additionalExcludes, useDefaultExcludes, (String[]) excludes.toArray(new String[excludes.size()]));
+    }
+    
+    
+    
+    public static String getCombinedIncludes(List additionalIncludes, String[] includes) {
+        List<String> combinedIncludes = new ArrayList<String>();
+
+        if (includes != null && includes.length > 0) {
+            combinedIncludes.addAll(Arrays.asList(includes));
+        }
+
+        if (additionalIncludes != null && additionalIncludes.size() > 0) {
+            combinedIncludes.addAll(additionalIncludes);
+        }
+
+        // If there are no other includes, use the default.
+        if (combinedIncludes.isEmpty()) {
+            combinedIncludes.addAll(Arrays.asList(new String[]{"**/*"}));
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        for(int i=0 ; i < combinedIncludes.size(); i++){
+            sb.append(combinedIncludes.get(i));
+            if(i > combinedIncludes.size() -1){
+                sb.append(',');
+            }
+        }
+        return sb.toString();
+    }   
+    public static String getCombinedIncludes(List additionalIncludes, List includes) {
+        return getCombinedIncludes(additionalIncludes, (String[]) includes.toArray(new String[includes.size()]));
+    }   
+
     /**
      * Get the Dependency set of a given project
      * 
@@ -598,6 +688,33 @@ public class MavenUtils {
                 null,
                 null,
                 null);
+    }
+    
+    /**
+     * Filters a set of artifacts
+     * 
+     * @param artifacts the set of artifacts to filter
+     * @param dependencyArtifacts the set of artifact representing direct dependencies
+     * @return the set of filtered artifacts* 
+     * @throws MojoExecutionException
+     */
+    public static Set<Artifact> excludeTransitive(
+            Set<Artifact> artifacts,
+            Set<Artifact> dependencyArtifacts) throws MojoExecutionException{
+        return filterArtifacts(
+                artifacts,
+                dependencyArtifacts,
+                true, 
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null);        
     }
     
     /**
@@ -679,6 +796,8 @@ public class MavenUtils {
         }
         return artifacts;
     }
+    
+    
 
     /**
      * Unpacks a given file
@@ -798,6 +917,29 @@ public class MavenUtils {
         }
         return result;
     }
+    
+    public static ArtifactResult resolveArtifact(
+            String groupId,
+            String artifactId,
+            String classifier,
+            String type,
+            String version,
+            RepositorySystem repoSystem,
+            RepositorySystemSession repoSession,
+            List<RemoteRepository> remoteRepos) throws MojoExecutionException {
+
+            return resolveArtifact(
+                    new org.sonatype.aether.util.artifact.DefaultArtifact(
+                    groupId,
+                    artifactId,
+                    classifier,
+                    type,
+                    version,
+                    null),
+                    repoSystem,
+                    repoSession,
+                    remoteRepos);
+    }
 
     /**
      * Clean the pattern string for future regexp usage
@@ -835,5 +977,170 @@ public class MavenUtils {
             }
         }
         return Collections.EMPTY_LIST;
+    }
+    
+    private static String listToString(List<String> list) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < list.size(); i++) {
+            sb.append(list.get(i));
+            if (i < list.size() - 1) {
+                sb.append(',');
+            }
+        }
+        return sb.toString();
+    }
+    
+    public static ZipFileSet createZipFileSet(
+            File dir,
+            List<String> includes,
+            List<String> excludes) {
+        
+        return createZipFileSet(
+                dir,
+                listToString(includes),
+                listToString(excludes));
+    }
+    
+    public static ZipFileSet createZipFileSet(
+            File dir,
+            String prefix,
+            List<String> includes,
+            List<String> excludes) {
+        
+        ZipFileSet fset = createZipFileSet(dir, includes, excludes);
+        if (prefix != null && !prefix.isEmpty()) {
+            fset.setPrefix(prefix);
+        }
+        return fset;
+    }
+    
+    public static ZipFileSet createZipFileSet(
+            File dir,
+            String includes,
+            String excludes) {
+        ZipFileSet fset = new ZipFileSet();
+        fset.setDir(dir);
+        fset.setIncludes(includes);
+        fset.setExcludes(excludes);
+        fset.setDescription(
+                String.format(
+                "file set: %s ( excludes: [ %s ], includes: [ %s ])",
+                dir.getAbsolutePath(),
+                excludes,
+                includes));
+        return fset;
+    }
+    public static ZipFileSet createZipFileSet(
+            File dir,
+            String prefix,
+            String includes
+            , String excludes) {
+        ZipFileSet fset = createZipFileSet(dir, includes, excludes);
+        if (prefix != null && !prefix.isEmpty()) {
+            fset.setPrefix(prefix);
+        }
+        return fset;
+    }
+    
+    public static void createZip(
+            Properties props,
+            Log log,
+            String duplicate,
+            List<ZipFileSet> fsets,
+            File target) {
+
+        ZipUtil zipUtil = new ZipUtil();
+        zipUtil.zip(props, log, duplicate, fsets, target);
+    }
+    
+    public static void createZip(
+            Properties props,
+            Log log,
+            String duplicate,
+            ZipFileSet fset,
+            File target) {
+
+        List<ZipFileSet> fsets = new ArrayList<ZipFileSet>();
+        fsets.add(fset);
+        createZip(props, log, duplicate, fsets, target);
+    }
+
+    private static class ZipUtil implements BuildListener {
+
+        private org.apache.tools.ant.taskdefs.Zip zip;
+        private Project antProject;
+        private Log log;
+
+        private ZipUtil() {
+            antProject = new Project();
+            antProject.addBuildListener((BuildListener) this);
+            zip = new org.apache.tools.ant.taskdefs.Zip();
+        }
+
+        private void zip(
+                Properties properties,
+                Log log,
+                String duplicate,
+                List<ZipFileSet> fsets,
+                File target) {
+
+            this.log = log;
+            Iterator it = properties.keySet().iterator();
+            while (it.hasNext()) {
+                String key = (String) it.next();
+                antProject.setProperty(key, properties.getProperty(key));
+            }
+            zip.setProject(antProject);
+            zip.setDestFile(target);
+            org.apache.tools.ant.taskdefs.Zip.Duplicate df =
+                    new org.apache.tools.ant.taskdefs.Zip.Duplicate();
+            df.setValue(duplicate);
+            zip.setDuplicate(df);
+            log.info(String.format("[zip] duplicate: %s", duplicate));
+
+            if (fsets == null){
+                fsets = new ArrayList<ZipFileSet>();
+            }
+            if(fsets.isEmpty()) {
+                ZipFileSet zfs = MavenUtils.createZipFileSet(new File(""), "","");
+                // work around for 
+                // http://issues.apache.org/bugzilla/show_bug.cgi?id=42122
+                zfs.setDirMode("755");
+                zfs.setFileMode("644");
+                fsets.add(zfs);
+            }
+            
+            for(ZipFileSet fset:fsets){
+                zip.addZipfileset(fset);
+                log.info(String.format("[zip] %s", fset.getDescription()));
+            }
+            zip.executeMain();
+        }
+
+        public void buildStarted(BuildEvent event) {
+        }
+
+        public void buildFinished(BuildEvent event) {
+        }
+
+        public void targetStarted(BuildEvent event) {
+        }
+
+        public void targetFinished(BuildEvent event) {
+        }
+
+        public void taskStarted(BuildEvent event) {
+        }
+
+        public void taskFinished(BuildEvent event) {
+        }
+
+        public void messageLogged(BuildEvent event) {
+            if (event.getPriority() < 3) {
+                log.info(String.format("[zip] %s", event.getMessage()));
+            } else {
+                log.debug(String.format("[zip] %s", event.getMessage()));
+            }
+        }
     }
 }

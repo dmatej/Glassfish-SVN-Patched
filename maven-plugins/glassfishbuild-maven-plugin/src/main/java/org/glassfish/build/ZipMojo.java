@@ -42,14 +42,12 @@ package org.glassfish.build;
 
 import com.sun.enterprise.build.DistributionArtifactHandler;
 import java.io.File;
-import java.util.Iterator;
-import java.util.Properties;
+import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.taskdefs.Zip;
-import org.apache.tools.ant.taskdefs.Zip.Duplicate;
+import org.apache.maven.project.MavenProject;
 import org.apache.tools.ant.types.ZipFileSet;
+import org.glassfish.build.utils.MavenUtils;
 
 /**
  * 
@@ -62,8 +60,14 @@ import org.apache.tools.ant.types.ZipFileSet;
  *
  * @author Romain Grecourt
  */
-public class ZipMojo extends AbstractAntMojo {
-
+public class ZipMojo extends AbstractMojo {
+    /**
+     * The maven project.
+     *
+     * @parameter expression="${project}" @required @readonly
+     */
+    protected MavenProject project;
+    
     /**
      * The directory where the zip will be created.
      *
@@ -133,20 +137,8 @@ public class ZipMojo extends AbstractAntMojo {
     
 
     public void execute() throws MojoExecutionException, MojoFailureException {
-
-        Project antProject = new Project();
-        antProject.addBuildListener(this);
         
         this.project.addCompileSourceRoot(null);
-
-        Properties mavenProperties = project.getProperties();
-        Iterator it = mavenProperties.keySet().iterator();
-        while(it.hasNext()){
-            String key = (String) it.next();
-            antProject.setProperty(key, mavenProperties.getProperty(key));
-        }
-        Zip zip = new Zip();
-        zip.setProject(antProject);
 
         // compute the final file name
         StringBuilder finalFileName = new StringBuilder(finalName);
@@ -154,59 +146,17 @@ public class ZipMojo extends AbstractAntMojo {
         finalFileName.append(extension);
         
         File target = new File(outputDirectory, finalFileName.toString());
-        zip.setDestFile(target);
-
-        Duplicate df = new Zip.Duplicate();
-        df.setValue(duplicate);
-        zip.setDuplicate(df);
-        getLog().info("duplicate: " + duplicate);
-
-        if(filesets.length > 0){
-            for(ZipFileSet zfs : filesets){
-                getLog().info("file set : " + zfs.getDir()
-                        + " (excludes: "+displayStringArray(zfs.mergeExcludes(antProject))
-                        + ", includes: "+displayStringArray(zfs.mergeIncludes(antProject))+")");
-                zip.addZipfileset(zfs);
-            }
-        } else {
-            ZipFileSet zfs = new ZipFileSet();
-            zfs.setDir(dir);
-            zfs.setIncludes(includes);
-            zfs.setExcludes(excludes);
-            zfs.setDirMode("755");
-            // work around for http://issues.apache.org/bugzilla/show_bug.cgi?id=42122
-            zfs.setFileMode("644");
-            getLog().info("default file set: " + zfs.getDir()
-                    + " ( excludes: [ "+excludes+" ]"
-                    + ", includes: [ "+includes+" ])");
-
-            zip.addZipfileset(zfs);
-        }
-
-        zip.executeMain();
+        ZipFileSet zfs = MavenUtils.createZipFileSet(dir, includes, excludes);
+        MavenUtils.createZip(
+                project.getProperties(),
+                getLog(),
+                duplicate,
+                zfs,
+                target);
 
         if (attach.booleanValue()) {
             project.getArtifact().setFile(target);
             project.getArtifact().setArtifactHandler(new DistributionArtifactHandler(extension, project.getPackaging()));
         }
-    }
-
-    public static String displayStringArray(String[] strArray){
-        StringBuilder sb = new StringBuilder("[");
-        if (strArray != null) {
-            for(int i=0 ; i<strArray.length ; i++){
-                sb.append(strArray[i]);
-                if(i != strArray.length -1) {
-                    sb.append(", ");
-                }
-            }
-        }
-        sb.append("]");
-        return sb.toString();
-    }
-
-    @Override
-    String prefix() {
-        return "[zip]";
     }
 }
