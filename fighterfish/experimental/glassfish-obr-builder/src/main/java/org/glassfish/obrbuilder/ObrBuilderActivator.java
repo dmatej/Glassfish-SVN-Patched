@@ -63,8 +63,8 @@ public class ObrBuilderActivator implements BundleActivator {
 		String gfModuleRepoPath = context
 				.getProperty(Constants.GF_MODULE_REPOSITORIES);
 
-		//createGFObrRepository(gfModuleRepoPath);
-		createGFObrRepository(gfModuleRepoPath + Constants.OBR_TEST_REPO);
+		createGFObrRepository(gfModuleRepoPath);
+		//createGFObrRepository(gfModuleRepoPath + Constants.OBR_TEST_REPO);
 	}
 
 	public void stop(BundleContext context) throws Exception {
