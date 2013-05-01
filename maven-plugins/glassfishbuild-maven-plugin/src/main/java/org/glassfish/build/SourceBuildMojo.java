@@ -45,11 +45,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.model.Build;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.PluginExecution;
+import org.apache.maven.model.PluginManagement;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -66,7 +69,7 @@ import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.ArtifactResult;
 
 /**
- * Resolves and unpack corresponding sources of project's dependencies
+ * TODO provide some exclusions for compileSourceRoot and resources
  *
  * @goal make-source-bundle
  * @requiresDependencyResolution runtime
@@ -127,12 +130,13 @@ public class SourceBuildMojo extends AbstractMojo {
     
     /**
      * @parameter 
-     * expression="${gfbuild.sourcebuild.skip}"
+     * expression="${gfbuild.sourcebuild.skipSource}"
      * default-value="false"
      */    
-    private boolean skip;
+    private boolean skipSource;
     
-    private static Artifact getArtifactItem(MavenProject p, Xpp3Dom aItem) throws MojoExecutionException {
+    private static Artifact getArtifactItem(MavenProject p, Xpp3Dom aItem) 
+            throws MojoExecutionException {
         if (aItem == null) {
             return null;
         }
@@ -199,25 +203,98 @@ public class SourceBuildMojo extends AbstractMojo {
         return artifactItems;
     }
     
+    private static void skipPlugin(
+            String groupId,
+            String artifactId,
+            String version,
+            Model m,
+            String skipName) {
+        
+        if (m.getBuild() == null) {
+            m.setBuild(new Build());
+        }
+        if (m.getBuild().getPluginManagement() == null) {
+            m.getBuild().setPluginManagement(new PluginManagement());
+        }
+        
+        Map<String, Plugin> plugins =
+                m.getBuild().getPluginManagement().getPluginsAsMap();
+        Plugin p = null;
+        if (plugins != null) {
+            p = plugins.get(groupId + ":" + artifactId);
+        }
+        Xpp3Dom skip = new Xpp3Dom(skipName);
+        skip.setValue("true");
+        Xpp3Dom conf = new Xpp3Dom("configuration");
+        conf.addChild(skip);
+        
+        if (p == null) {
+            p = new Plugin();
+            p.setGroupId(groupId);
+            p.setArtifactId(artifactId);
+            p.setVersion(version);
+        }
+        p.setConfiguration(conf);
+        m.getBuild().getPluginManagement().addPlugin(p);
+    }
+    
     private static void processModel(File pom) throws MojoExecutionException {
         Model m = MavenUtils.readModel(pom);
+        // TODO: build the effective pom
+        
+        // update model to skip various plugin executions
+        skipPlugin(
+                "org.apache.maven.plugins",
+                "maven-gpg-plugin",
+                "1.4",
+                m,
+                "skip");
+        skipPlugin(
+                "org.apache.maven.plugins",
+                "maven-source-plugin",
+                "2.2.1",
+                m,
+                "skipSource");
+        skipPlugin(
+                "org.apache.maven.plugins",
+                "maven-javadoc-plugin",
+                "2.9",
+                m,
+                "skip");
+        skipPlugin(
+                "org.apache.maven.plugins",
+                "maven-surefire-plugin",
+                "2.14.1",
+                m,
+                "skip");
+        skipPlugin(
+                "org.glassfish.build",
+                "glassfishbuild-maven-plugin",
+                "3.2.21-SNAPSHOT",
+                m,
+                "skipSource");
 
-        // update the model to remove relativePath for parent poms
-        if (m.getParent() != null
-                && m.getParent().getRelativePath() != null
-                && !m.getParent().getRelativePath().isEmpty()) {
+        if (m.getParent() != null) {
             m.getParent().setRelativePath("NOTHING");
-            try {
-                String ms = new String(MavenUtils.writePom(m));
-                ms = ms.replaceFirst("<relativePath>NOTHING</relativePath>", "<relativePath/>");
-                FileWriter writer = new FileWriter(pom);
-                writer.write(ms);
-                writer.flush();
-                writer.close();
-            } catch (IOException ex) {
-                throw new MojoExecutionException(ex.getMessage(), ex);
-            }
         }
+        
+        // get the model as String
+        String ms = MavenUtils.modelAsString(m);
+
+        // forcing empty relativePath
+        ms = ms.replaceFirst(
+                "<relativePath>NOTHING</relativePath>",
+                "<relativePath/>");
+        
+        // write the model
+        try {
+            FileWriter writer = new FileWriter(pom);
+            writer.write(ms);
+            writer.flush();
+            writer.close();
+        } catch (IOException ex) {
+            throw new MojoExecutionException(ex.getMessage(), ex);
+        }     
     }
     
     private List<String> processModules(Set<Artifact> dependencies) 
@@ -226,59 +303,69 @@ public class SourceBuildMojo extends AbstractMojo {
         List<String> modules = new ArrayList<String>();
         
         for (Artifact artifact : dependencies) {
-            // resolve sources.type
-            ArtifactResult sourceResult = MavenUtils.resolveArtifact(
-                    artifact.getGroupId(),
-                    artifact.getArtifactId(),
-                    "sources",
-                    artifact.getType(),
-                    artifact.getVersion(),
-                    repoSystem,
-                    repoSession,
-                    remoteRepos);
-
-            String moduleDir =
-                    sourceResult.getArtifact().getArtifactId()
-                    + "-"
-                    + sourceResult.getArtifact().getVersion();
-            File dir = new File(outputDirectory, moduleDir);
-
-            // unpack
-            MavenUtils.unpack(
-                    sourceResult.getArtifact().getFile(),
-                    dir,
-                    "**/*",
-                    "",
-                    false,
-                    getLog(),
-                    archiverManager);
-
-            // lay down the pom.xml
-            File pom = new File(dir, "pom.xml");
-            if (!pom.exists()) {
-                ArtifactResult pomResult = 
-                        MavenUtils.resolveArtifact(
+            try {
+                // resolve sources.type
+                ArtifactResult sourceResult = MavenUtils.resolveArtifact(
                         artifact.getGroupId(),
                         artifact.getArtifactId(),
-                        null,
-                        "pom",
+                        "sources",
+                        artifact.getType(),
                         artifact.getVersion(),
                         repoSystem,
                         repoSession,
                         remoteRepos);
-                try {
-                    FileUtils.copyFile(pomResult.getArtifact().getFile(), pom);
-                } catch (IOException ex) {
-                    throw new MojoExecutionException(ex.getMessage(), ex);
+
+                String moduleDir =
+                        sourceResult.getArtifact().getArtifactId()
+                        + "-"
+                        + sourceResult.getArtifact().getVersion();
+                File dir = new File(outputDirectory, moduleDir);
+
+                // unpack
+                getLog().info("unpacking "+sourceResult.getArtifact().getFile().getName());
+                MavenUtils.unpack(
+                        sourceResult.getArtifact().getFile(),
+                        dir,
+                        "**/*",
+                        "",
+                        true,
+                        getLog(),
+                        archiverManager);
+
+                // lay down the pom.xml
+                File pom = new File(dir, "pom.xml");
+                if (!pom.exists()) {
+                    ArtifactResult pomResult =
+                            MavenUtils.resolveArtifact(
+                            artifact.getGroupId(),
+                            artifact.getArtifactId(),
+                            null,
+                            "pom",
+                            artifact.getVersion(),
+                            repoSystem,
+                            repoSession,
+                            remoteRepos);
+                    try {
+                        FileUtils.copyFile(
+                                pomResult.getArtifact().getFile(),
+                                pom);
+                    } catch (IOException ex) {
+                        throw new MojoExecutionException(ex.getMessage(), ex);
+                    }
                 }
+                processModel(pom);
+                modules.add(moduleDir);
+
+            } catch (MojoExecutionException ex) {
+                getLog().warn("UNABLE to process: " + artifact);
             }
-            processModel(pom);
-            modules.add(moduleDir);
         }
         return modules;
     }
     
-    private void processAggregator(List<String> modules) throws MojoExecutionException{
+    private void processAggregator(List<String> modules) 
+            throws MojoExecutionException{
+        
         // create aggregator
         Model m = new Model();
         m.setGroupId(project.getGroupId());
@@ -296,7 +383,7 @@ public class SourceBuildMojo extends AbstractMojo {
     
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        if (skip) {
+        if (skipSource) {
             getLog().info("Skipping make-source-bundle");
             return;
         }

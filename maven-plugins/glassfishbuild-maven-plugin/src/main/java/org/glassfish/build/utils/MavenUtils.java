@@ -418,7 +418,9 @@ public class MavenUtils {
      * @param pomFileName the name of the written pom
      * @throws IOException
      */
-    public static void writePom(Model m, File buildDir, String pomFileName) throws IOException {
+    public static void writePom(Model m, File buildDir, String pomFileName) 
+            throws IOException {
+        
         if (pomFileName == null) {
             if (m.getBuild() != null && m.getBuild().getFinalName() != null) {
                 pomFileName = m.getBuild().getFinalName() + ".pom";
@@ -438,10 +440,14 @@ public class MavenUtils {
      * @param pomFileName the name of the written pom
      * @throws IOException
      */
-    public static byte[] writePom(Model m) throws IOException {
+    public static String modelAsString(Model m) throws MojoExecutionException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        new DefaultModelWriter().write(baos, null, m);
-        return baos.toByteArray();
+        try{
+            new DefaultModelWriter().write(baos, null, m);
+            return new String(baos.toByteArray());
+        } catch (IOException ex) {
+            throw new MojoExecutionException(ex.getMessage(), ex);
+        }
     }
     
     /**
@@ -451,7 +457,9 @@ public class MavenUtils {
      * @param pomFileName the name of the written pom
      * @throws IOException
      */
-    public static ByteArrayOutputStream writePomToOutputStream(Model m) throws IOException {
+    public static ByteArrayOutputStream writePomToOutputStream(Model m) 
+            throws IOException {
+        
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         new DefaultModelWriter().write(baos, null, m);
         return baos;
@@ -477,7 +485,8 @@ public class MavenUtils {
                 p.getArtifact().getArtifactId(),
                 p.getArtifact().getVersion(),
                 p.getArtifact().getType());
-        artifact.addMetadata(new ProjectArtifactMetadata(artifact, m.getPomFile()));
+        artifact.addMetadata(
+                new ProjectArtifactMetadata(artifact, m.getPomFile()));
 
         try {
             installer.install(m.getPomFile(), artifact, repository);
@@ -527,7 +536,8 @@ public class MavenUtils {
      * @return the resolved version
      */
     public static String getManagedVersion(
-            MavenProject module, String groupId, String artifactId) throws MojoExecutionException {
+            MavenProject module, String groupId, String artifactId) 
+            throws MojoExecutionException {
 
         // 1st look at the dependencyManagement
         for (Dependency d : module.getModel().getDependencyManagement().getDependencies()) {
@@ -587,12 +597,18 @@ public class MavenUtils {
             List additionalExcludes,
             boolean useDefaultExcludes,
             List excludes) {
-        return getCombinedExcludes(additionalExcludes, useDefaultExcludes, (String[]) excludes.toArray(new String[excludes.size()]));
+        return getCombinedExcludes(
+                additionalExcludes,
+                useDefaultExcludes,
+                (String[]) excludes.toArray(new String[excludes.size()]));
     }
     
     
     
-    public static String getCombinedIncludes(List additionalIncludes, String[] includes) {
+    public static String getCombinedIncludes(
+            List additionalIncludes,
+            String[] includes) {
+        
         List<String> combinedIncludes = new ArrayList<String>();
 
         if (includes != null && includes.length > 0) {
@@ -617,8 +633,13 @@ public class MavenUtils {
         }
         return sb.toString();
     }   
-    public static String getCombinedIncludes(List additionalIncludes, List includes) {
-        return getCombinedIncludes(additionalIncludes, (String[]) includes.toArray(new String[includes.size()]));
+    public static String getCombinedIncludes(
+            List additionalIncludes,
+            List includes) {
+        
+        return getCombinedIncludes(
+                additionalIncludes,
+                (String[]) includes.toArray(new String[includes.size()]));
     }   
 
     /**
@@ -928,17 +949,16 @@ public class MavenUtils {
             RepositorySystemSession repoSession,
             List<RemoteRepository> remoteRepos) throws MojoExecutionException {
 
-            return resolveArtifact(
-                    new org.sonatype.aether.util.artifact.DefaultArtifact(
-                    groupId,
-                    artifactId,
-                    classifier,
-                    type,
-                    version,
-                    null),
-                    repoSystem,
-                    repoSession,
-                    remoteRepos);
+        return resolveArtifact(
+                new org.sonatype.aether.util.artifact.DefaultArtifact(
+                groupId,
+                artifactId,
+                classifier,
+                type,
+                version),
+                repoSystem,
+                repoSession,
+                remoteRepos);
     }
 
     /**
@@ -954,13 +974,17 @@ public class MavenUtils {
         return ret;
     }
     
-    public static ModifiedPomXMLEventReader newModifiedPomXER(StringBuilder input) throws XMLStreamException {
+    public static ModifiedPomXMLEventReader newModifiedPomXER(StringBuilder input) 
+            throws XMLStreamException {
+        
         XMLInputFactory inputFactory = XMLInputFactory2.newInstance();
         inputFactory.setProperty(XMLInputFactory2.P_PRESERVE_LOCATION, Boolean.TRUE);
         return new ModifiedPomXMLEventReader(input, inputFactory);
     }
     
-    public static void writeFile(File outFile, StringBuilder input) throws IOException {
+    public static void writeFile(File outFile, StringBuilder input) 
+            throws IOException {
+        
         Writer writer = WriterFactory.newXmlWriter(outFile);
         try {
             IOUtil.copy(input.toString(), writer);
@@ -1030,6 +1054,7 @@ public class MavenUtils {
                 includes));
         return fset;
     }
+    
     public static ZipFileSet createZipFileSet(
             File dir,
             String prefix,
