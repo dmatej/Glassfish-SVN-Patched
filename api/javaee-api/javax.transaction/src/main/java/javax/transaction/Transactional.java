@@ -87,7 +87,6 @@ public @interface Transactional {
      * The TxType element of the Transactional annotation indicates whether a bean method
      * is to be executed within a transaction context.
      */
-    @Nonbinding
     TxType value() default TxType.REQUIRED;
 
     /**
