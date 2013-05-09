@@ -46,7 +46,7 @@ public @interface WebService {
      * <p>
      * <i>This member-value is not allowed on endpoint interfaces.</i>
      *
-     * @specdefault The simple name of the Java class + “Service".
+     * @specdefault The simple name of the Java class + Service".
      */
     String serviceName() default "";
 
@@ -57,7 +57,7 @@ public @interface WebService {
      * <p>
      * <i>This member-value is not allowed on endpoint interfaces.</i>
      *
-     * @specdefault {@code @WebService.name}+”Port”.
+     * @specdefault {@code @WebService.name}+Port.
      *
      * @since 2.0
      */
@@ -76,7 +76,7 @@ public @interface WebService {
     String wsdlLocation() default "";
 
     /**
-     * The complete name of the service endpoint interface defining the service’s abstract Web Service contract.
+     * The complete name of the service endpoint interface defining the serviceï¿½s abstract Web Service contract.
      * <p>
      * This annotation allows the developer to separate the interface contract from the implementation.  If this
      * annotation is present, the service endpoint interface is used to determine the abstract WSDL contract (portType

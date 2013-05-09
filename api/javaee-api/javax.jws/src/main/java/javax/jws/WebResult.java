@@ -25,8 +25,8 @@ import java.lang.annotation.ElementType;
      * element representing the return value.
      *
      * @specdefault
-     *   If the operation is document style and the parameter style is BARE, {@code @WebParam.operationName}+”Response”.<br>
-     *   Otherwise, “return.”
+     *   If the operation is document style and the parameter style is BARE, {@code @WebParam.operationName}+"Response".<br>
+     *   Otherwise, "return."
      */
     String name() default "";
 
@@ -46,7 +46,7 @@ import java.lang.annotation.ElementType;
      * The XML namespace for the return value.
      * <p>
      * Only used if the operation is document style or the return value maps to a header.
-     * If the target namespace is set to “”, this represents the empty namespace.
+     * If the target namespace is set to ï¿½ï¿½, this represents the empty namespace.
      *
      * @specdefault
      *   If the operation is document style, the parameter style is WRAPPED, and the return value does not map to a

@@ -57,7 +57,7 @@ public @interface WebParam {
      * The XML namespace for the parameter.
      * <p>
      * Only used if the operation is document style or the paramater maps to a header.
-     * If the target namespace is set to “”, this represents the empty namespace.
+     * If the target namespace is set to "", this represents the empty namespace.
      *
      * @specdefault
      *   If the operation is document style, the parameter style is WRAPPED, and the parameter does not map to a
