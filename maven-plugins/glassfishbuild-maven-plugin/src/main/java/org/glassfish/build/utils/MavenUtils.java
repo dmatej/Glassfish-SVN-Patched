@@ -43,7 +43,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -66,8 +65,11 @@ import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.building.DefaultModelBuildingRequest;
+import org.apache.maven.model.building.ModelBuilder;
 import org.apache.maven.model.io.DefaultModelReader;
 import org.apache.maven.model.io.DefaultModelWriter;
+import org.apache.maven.model.resolution.ModelResolver;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
@@ -100,6 +102,21 @@ import org.sonatype.aether.resolution.ArtifactResult;
  * @author Romain Grecourt
  */
 public class MavenUtils {
+    
+    public static Model resolveEffectiveModel(
+            ModelBuilder modelBuilder,
+            ModelResolver modelResolver,
+            File pomfile) {
+        
+        try {
+            DefaultModelBuildingRequest mbr = new DefaultModelBuildingRequest();
+            mbr.setPomFile(pomfile);
+            mbr.setModelResolver(modelResolver);
+            return modelBuilder.build(mbr).getEffectiveModel();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }    
     
     /**
      * Reads a given model

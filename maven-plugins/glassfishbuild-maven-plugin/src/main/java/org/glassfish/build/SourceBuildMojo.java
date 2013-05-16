@@ -69,7 +69,6 @@ import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.ArtifactResult;
 
 /**
- * TODO provide some exclusions for compileSourceRoot and resources
  *
  * @goal make-source-bundle
  * @requiresDependencyResolution runtime
@@ -115,27 +114,27 @@ public class SourceBuildMojo extends AbstractMojo {
      * @component
      */
     protected ArchiverManager archiverManager;
-    
     /**
-     * @parameter 
-     * expression="${gfbuild.sourcebuild.outputDirectory}"
+     * @parameter expression="${gfbuild.sourcebuild.outputDirectory}"
      * default-value="${project.build.directory}/sources-bundle"
      */
     private File outputDirectory;
     /**
-     * @parameter 
-     * expression="${gfbuild.sourcebuild.globalIncludes}"
+     * @parameter expression="${gfbuild.sourcebuild.globalIncludes}"
      */
     private List<String> globalIncludes;
-    
     /**
-     * @parameter 
-     * expression="${gfbuild.sourcebuild.skipSource}"
+     * @parameter expression="${gfbuild.sourcebuild.skipSource}"
      * default-value="false"
-     */    
+     */
     private boolean skipSource;
-    
-    private static Artifact getArtifactItem(MavenProject p, Xpp3Dom aItem) 
+    /**
+     * @parameter expression="${gfbuild.sourcebuild.sourcesExcludes}"
+     * default-value="**\/*"
+     */
+    private String sourcesExcludes;
+
+    private static Artifact getArtifactItem(MavenProject p, Xpp3Dom aItem)
             throws MojoExecutionException {
         if (aItem == null) {
             return null;
@@ -147,7 +146,7 @@ public class SourceBuildMojo extends AbstractMojo {
             Xpp3Dom[] v = aItem.getChildren("version");
             if (gId != null && gId.length == 1
                     && aId != null && aId.length == 1) {
-                
+
                 String groupId = gId[0].getValue();
                 if (!groupId.startsWith("org.glassfish")) {
                     return null;
@@ -168,16 +167,16 @@ public class SourceBuildMojo extends AbstractMojo {
         }
         return null;
     }
-    
-    private static Set<Artifact> getArtifactItems(MavenProject p) throws MojoExecutionException{
+
+    private static Set<Artifact> getArtifactItems(MavenProject p) throws MojoExecutionException {
         Set<Artifact> artifactItems = new HashSet<Artifact>();
 
         // scan dependency plugin for possible dependencies
         Plugin dependencyPlugin = p.getPlugin("org.apache.maven.plugins:maven-dependency-plugin");
-        if(dependencyPlugin != null){
-            for(PluginExecution pe : dependencyPlugin.getExecutions()){
+        if (dependencyPlugin != null) {
+            for (PluginExecution pe : dependencyPlugin.getExecutions()) {
                 Xpp3Dom dom = (Xpp3Dom) pe.getConfiguration();
-                if(dom == null){
+                if (dom == null) {
                     continue;
                 }
                 Xpp3Dom[] aItemsNodes = dom.getChildren("artifactItems");
@@ -185,7 +184,7 @@ public class SourceBuildMojo extends AbstractMojo {
                     for (Xpp3Dom aItemsNode : aItemsNodes) {
                         Xpp3Dom[] aItems = aItemsNode.getChildren("artifactItem");
                         for (Xpp3Dom aItem : aItems) {
-                            artifactItems.add(getArtifactItem(p,aItem));
+                            artifactItems.add(getArtifactItem(p, aItem));
                         }
                     }
                 }
@@ -195,39 +194,46 @@ public class SourceBuildMojo extends AbstractMojo {
                 Xpp3Dom[] aItems = dom.getChildren("artifactItems");
                 if (aItems != null && aItems.length > 0) {
                     for (Xpp3Dom aItem : aItems) {
-                        artifactItems.add(getArtifactItem(p,aItem));
+                        artifactItems.add(getArtifactItem(p, aItem));
                     }
                 }
             }
         }
         return artifactItems;
     }
-    
-    private static void skipPlugin(
+
+    private static void addPlugin(
             String groupId,
             String artifactId,
             String version,
             Model m,
-            String skipName) {
-        
+            String... confElts) {
+
         if (m.getBuild() == null) {
             m.setBuild(new Build());
         }
         if (m.getBuild().getPluginManagement() == null) {
             m.getBuild().setPluginManagement(new PluginManagement());
         }
-        
+
         Map<String, Plugin> plugins =
                 m.getBuild().getPluginManagement().getPluginsAsMap();
         Plugin p = null;
         if (plugins != null) {
             p = plugins.get(groupId + ":" + artifactId);
         }
-        Xpp3Dom skip = new Xpp3Dom(skipName);
-        skip.setValue("true");
         Xpp3Dom conf = new Xpp3Dom("configuration");
-        conf.addChild(skip);
-        
+        if (confElts != null && confElts.length > 0) {
+            Xpp3Dom dom;
+            for (int i = 0; i < confElts.length; i = i + 2) {
+                if (i % 2 == 0) {
+                    dom = new Xpp3Dom(confElts[i]);
+                    dom.setValue(confElts[i + 1]);
+                    conf.addChild(dom);
+                }
+            }
+        }
+
         if (p == null) {
             p = new Plugin();
             p.setGroupId(groupId);
@@ -237,47 +243,55 @@ public class SourceBuildMojo extends AbstractMojo {
         p.setConfiguration(conf);
         m.getBuild().getPluginManagement().addPlugin(p);
     }
-    
-    private static void processModel(File pom) throws MojoExecutionException {
+
+    private void processModel(File pom) throws MojoExecutionException {
         Model m = MavenUtils.readModel(pom);
         // TODO: build the effective pom
-        
+
         // update model to skip various plugin executions
-        skipPlugin(
+        addPlugin(
                 "org.apache.maven.plugins",
                 "maven-gpg-plugin",
                 "1.4",
                 m,
-                "skip");
-        skipPlugin(
+                "skip",
+                "true");
+        addPlugin(
                 "org.apache.maven.plugins",
                 "maven-source-plugin",
                 "2.2.1",
                 m,
-                "skipSource");
-        skipPlugin(
+                "skipSource",
+                "true");
+        addPlugin(
                 "org.apache.maven.plugins",
                 "maven-javadoc-plugin",
                 "2.9",
                 m,
-                "skip");
-        skipPlugin(
+                "skip",
+                "true");
+        addPlugin(
                 "org.apache.maven.plugins",
                 "maven-surefire-plugin",
                 "2.14.1",
                 m,
-                "skip");
-        skipPlugin(
+                "skip",
+                "true");
+
+        addPlugin(
                 "org.glassfish.build",
                 "glassfishbuild-maven-plugin",
                 "3.2.21-SNAPSHOT",
                 m,
-                "skipSource");
+                "skipSource",
+                "true",
+                "sourcesExcludes",
+                sourcesExcludes);
 
         if (m.getParent() != null) {
             m.getParent().setRelativePath("NOTHING");
         }
-        
+
         // get the model as String
         String ms = MavenUtils.modelAsString(m);
 
@@ -285,7 +299,7 @@ public class SourceBuildMojo extends AbstractMojo {
         ms = ms.replaceFirst(
                 "<relativePath>NOTHING</relativePath>",
                 "<relativePath/>");
-        
+
         // write the model
         try {
             FileWriter writer = new FileWriter(pom);
@@ -294,14 +308,14 @@ public class SourceBuildMojo extends AbstractMojo {
             writer.close();
         } catch (IOException ex) {
             throw new MojoExecutionException(ex.getMessage(), ex);
-        }     
+        }
     }
-    
-    private List<String> processModules(Set<Artifact> dependencies) 
+
+    private List<String> processModules(Set<Artifact> dependencies)
             throws MojoExecutionException {
 
         List<String> modules = new ArrayList<String>();
-        
+
         for (Artifact artifact : dependencies) {
             try {
                 // resolve sources.type
@@ -322,7 +336,7 @@ public class SourceBuildMojo extends AbstractMojo {
                 File dir = new File(outputDirectory, moduleDir);
 
                 // unpack
-                getLog().info("unpacking "+sourceResult.getArtifact().getFile().getName());
+                getLog().info("unpacking " + sourceResult.getArtifact().getFile().getName());
                 MavenUtils.unpack(
                         sourceResult.getArtifact().getFile(),
                         dir,
@@ -362,10 +376,10 @@ public class SourceBuildMojo extends AbstractMojo {
         }
         return modules;
     }
-    
-    private void processAggregator(List<String> modules) 
-            throws MojoExecutionException{
-        
+
+    private void processAggregator(List<String> modules)
+            throws MojoExecutionException {
+
         // create aggregator
         Model m = new Model();
         m.setGroupId(project.getGroupId());
@@ -378,9 +392,9 @@ public class SourceBuildMojo extends AbstractMojo {
             MavenUtils.writePom(m, outputDirectory);
         } catch (IOException ex) {
             throw new MojoExecutionException(ex.getMessage(), ex);
-        }        
+        }
     }
-    
+
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         if (skipSource) {
@@ -391,37 +405,37 @@ public class SourceBuildMojo extends AbstractMojo {
         // main bundle
         List<ZipFileSet> filesets = getProjectContent();
         List<String> modules = new ArrayList<String>();
-        modules.add(project.getArtifactId()+"-" + project.getArtifact().getVersion());        
-        
+        modules.add(project.getArtifactId() + "-" + project.getArtifact().getVersion());
+
         // get dependencies
         Set<Artifact> dependencies = getArtifactItems(project);
         dependencies.addAll(project.getDependencyArtifacts());
         dependencies = MavenUtils.excludeTransitive(
                 project.getArtifacts(),
-                dependencies);        
-        filesets.add(MavenUtils.createZipFileSet(outputDirectory, "",""));
+                dependencies);
+        filesets.add(MavenUtils.createZipFileSet(outputDirectory, "", ""));
         modules.addAll(processModules(dependencies));
 
         // create aggregator pom
         processAggregator(modules);
-        
+
         // compute final name
         String type = project.getArtifact().getFile().getName();
         int idx = type.lastIndexOf(".");
-        type = type.substring(idx+1);
+        type = type.substring(idx + 1);
         File target = new File(
-                project.getBuild().getDirectory(), 
-                project.getBuild().getFinalName()+"-sources."+type);
-        
+                project.getBuild().getDirectory(),
+                project.getBuild().getFinalName() + "-sources." + type);
+
         MavenUtils.createZip(
                 project.getProperties(),
                 getLog(),
                 "add",
                 filesets,
                 target);
-        
+
         // attached produced artifact
-        Artifact sourceArtifact = 
+        Artifact sourceArtifact =
                 MavenUtils.createArtifact(
                 project.getGroupId(),
                 project.getArtifactId(),
@@ -431,8 +445,8 @@ public class SourceBuildMojo extends AbstractMojo {
         sourceArtifact.setFile(target);
         project.addAttachedArtifact(sourceArtifact);
     }
-    
-    private String getRelativePath(File f){
+
+    private String getRelativePath(File f) {
         String path = f.getAbsolutePath().replaceFirst(
                 project.getBasedir().getAbsolutePath(), "");
         if (path.startsWith("/")) {
@@ -440,15 +454,15 @@ public class SourceBuildMojo extends AbstractMojo {
         }
         return path;
     }
-    
-    protected List<ZipFileSet> getProjectContent() throws MojoExecutionException{
+
+    protected List<ZipFileSet> getProjectContent() throws MojoExecutionException {
         List<ZipFileSet> filesets = new ArrayList<ZipFileSet>();
         String moduleDir = project.getArtifactId()
-                +"-"
+                + "-"
                 + project.getArtifact().getVersion();
-        
+
         // process the pom
-        File pom = new File(outputDirectory,moduleDir+"/pom.xml");
+        File pom = new File(outputDirectory, moduleDir + "/pom.xml");
         try {
             FileUtils.copyFile(project.getFile(), pom);
         } catch (IOException ex) {
@@ -458,8 +472,8 @@ public class SourceBuildMojo extends AbstractMojo {
         filesets.add(
                 MavenUtils.createZipFileSet(
                 outputDirectory,
-                moduleDir+"/**", ""));
-        
+                moduleDir + "/**", ""));
+
         List<String> includes = new ArrayList<String>(globalIncludes);
         List<String> excludes = new ArrayList<String>();
 
@@ -467,10 +481,10 @@ public class SourceBuildMojo extends AbstractMojo {
         for (String s : project.getCompileSourceRoots()) {
             File sourceDirectory = new File(s);
             if (sourceDirectory.exists()) {
-                includes.add(getRelativePath(sourceDirectory)+"/**");
+                includes.add(getRelativePath(sourceDirectory) + "/**");
             }
         }
-        
+
         // resources
         List<Resource> resources = project.getResources();
         if (resources != null && !resources.isEmpty()) {
@@ -480,17 +494,17 @@ public class SourceBuildMojo extends AbstractMojo {
                 if (!sourceDirectory.exists()) {
                     continue;
                 }
-                
+
                 String path = getRelativePath(sourceDirectory);
-                if(resource.getIncludes().isEmpty()){
-                    includes.add(path+"/**");
+                if (resource.getIncludes().isEmpty()) {
+                    includes.add(path + "/**");
                 } else {
-                    for(String s : resource.getIncludes()){
-                        includes.add(path+"/"+s);
+                    for (String s : resource.getIncludes()) {
+                        includes.add(path + "/" + s);
                     }
                 }
-                for(String s : resource.getExcludes()){
-                     excludes.add(path+"/"+s);
+                for (String s : resource.getExcludes()) {
+                    excludes.add(path + "/" + s);
                 }
             }
         }
@@ -501,7 +515,7 @@ public class SourceBuildMojo extends AbstractMojo {
                 moduleDir,
                 includes,
                 excludes));
-        
+
         return filesets;
     }
 }

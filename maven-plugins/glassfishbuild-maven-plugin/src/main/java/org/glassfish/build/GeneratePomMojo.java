@@ -45,6 +45,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.List;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.model.Build;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Developer;
@@ -55,12 +56,20 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.Scm;
+import org.apache.maven.model.building.DefaultModelBuildingRequest;
+import org.apache.maven.model.building.ModelBuilder;
+import org.apache.maven.model.resolution.ModelResolver;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.mojo.versions.api.PomHelper;
+import org.glassfish.build.utils.MavenModelResolver;
 import org.glassfish.build.utils.MavenUtils;
+import org.sonatype.aether.RepositorySystem;
+import org.sonatype.aether.RepositorySystemSession;
+import org.sonatype.aether.impl.RemoteRepositoryManager;
+import org.sonatype.aether.repository.RemoteRepository;
 
 /**
  * Generates a pom from another pom
@@ -181,15 +190,59 @@ public class GeneratePomMojo extends AbstractMojo {
      */
     protected Boolean attach;
     
+    /**
+     * @component
+     */
+    protected ArtifactResolver artifactResolver;
+    
+    /**
+     * @component
+     */
+    protected RemoteRepositoryManager remoteRepositoryManager;
+    
+
+   /**
+     * The entry point to Aether, i.e. the component doing all the work.
+     *
+     * @component
+     */
+    private RepositorySystem repoSystem;
+
+    /**
+     * The current repository/network configuration of Maven.
+     *
+     * @parameter default-value="${repositorySystemSession}"
+     * @readonly
+     */
+    private RepositorySystemSession repoSession;
+
+    /**
+     * The project's remote repositories to use for the resolution of project dependencies.
+     *
+     * @parameter default-value="${project.remoteProjectRepositories}"
+     * @readonly
+     */
+    private List<RemoteRepository> projectRepos;
+    
+    /**
+     * @component
+     */
+    protected ModelBuilder modelBuilder;
+    
     private static boolean validateString(String str){
         return str != null && !str.isEmpty();
-    }
+    }    
 
     public void execute() throws MojoExecutionException, MojoFailureException {
         if(skip.booleanValue()){
             getLog().info("skipping...");
             return;
         }
+        
+        Model effectivePom = MavenUtils.resolveEffectiveModel(
+                modelBuilder,
+                new MavenModelResolver(repoSystem,repoSession,projectRepos),
+                pomFile);
         
         String input;
         try {
@@ -201,7 +254,7 @@ public class GeneratePomMojo extends AbstractMojo {
         
         model.setGroupId(groupId);
         model.setArtifactId(artifactId);
-        model.setVersion(version);
+        model.setVersion(version);  
         model.setDevelopers(devevelopers);
         
         if(parent != null 

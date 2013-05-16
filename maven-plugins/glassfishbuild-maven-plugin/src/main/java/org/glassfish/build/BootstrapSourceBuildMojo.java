@@ -43,6 +43,8 @@ import edu.emory.mathcs.backport.java.util.Arrays;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -51,6 +53,7 @@ import org.apache.maven.project.MavenProject;
 import org.codehaus.plexus.util.FileUtils;
 
 /**
+ * TODO provide some exclusions for compileSourceRoot and resources
  *
  * @goal bootstrap-source-build
  * @phase initialize
@@ -78,10 +81,17 @@ public class BootstrapSourceBuildMojo extends AbstractMojo {
     
     /**
      * @parameter 
-     * expression="${gfbuild.bootstrapsourcebuild.excludes}"
+     * expression="${gfbuild.bootstrapsourcebuild.resourcesExcludes}"
      * default-value="target/**, pom.xml, **\/*.java"
      */
-    private String excludes;
+    private String resourcesExcludes;
+    
+    /**
+     * @parameter 
+     * expression="${gfbuild.bootstrapsourcebuild.sourcesExcludes}"
+     * default-value=""
+     */
+    private String sourcesExcludes;
     
     
     @Override
@@ -96,13 +106,30 @@ public class BootstrapSourceBuildMojo extends AbstractMojo {
             return;
         }
         
+        // sourceExcludes is actually an include pattern for deleting files...
+        try {
+            List<File> toDelete = 
+                    FileUtils.getFiles(project.getBasedir(), sourcesExcludes, "");
+            for(File f : toDelete){
+                if (f.exists()) {
+                    if (f.isDirectory()) {
+                        FileUtils.deleteDirectory(f);
+                    } else {
+                        f.delete();
+                    }
+                }
+            }
+        } catch (IOException ex) {
+            throw new MojoExecutionException(ex.getMessage(), ex);
+        }
+        
         Resource resource = new Resource();
         resource.setDirectory(project.getBasedir().getAbsolutePath());
         resource.setTargetPath(project.getBuild().getOutputDirectory());
-        resource.setExcludes(Arrays.asList(excludes.split(",")));
+        resource.setExcludes(Arrays.asList(resourcesExcludes.split(",")));
         try {
             List<File> resourceFiles =
-                    FileUtils.getFiles(project.getBasedir(), "**", excludes);
+                    FileUtils.getFiles(project.getBasedir(), "**", resourcesExcludes);
             for(File f : resourceFiles){
                 resource.addInclude(f.getAbsolutePath().replace(
                         project.getBasedir()+"/"
