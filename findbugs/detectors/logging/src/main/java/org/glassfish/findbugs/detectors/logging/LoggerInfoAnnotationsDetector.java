@@ -215,7 +215,8 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
     }
     
     private boolean validateLoggerName(String param1) {
-        if (param1 == null || VALID_LOGGER_PREFIX_SET.isEmpty()) {
+        if (param1 == null || param1.isEmpty() || VALID_LOGGER_PREFIX_SET.isEmpty()) 
+        {
             return true;
         }
         for (String prefix : VALID_LOGGER_PREFIX_SET) {
@@ -232,6 +233,9 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
         }
         
         for (String loggerName : visitedLoggerNames.keySet()) {
+            if (loggerName == null || loggerName.isEmpty()) {
+                continue;
+            }
             if (!annotatedLoggerNames.keySet().contains(loggerName)) {
                 bugReporter.reportBug(visitedLoggerNames.get(loggerName));
             }
