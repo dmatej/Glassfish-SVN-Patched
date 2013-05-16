@@ -38,7 +38,7 @@
  * holder.
  */
 
-package com.sun.enterprise.build;
+package org.glassfish.build;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;

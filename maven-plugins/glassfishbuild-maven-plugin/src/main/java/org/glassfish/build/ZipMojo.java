@@ -40,8 +40,8 @@
 
 package org.glassfish.build;
 
-import com.sun.enterprise.build.DistributionArtifactHandler;
 import java.io.File;
+import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -157,6 +157,49 @@ public class ZipMojo extends AbstractMojo {
         if (attach.booleanValue()) {
             project.getArtifact().setFile(target);
             project.getArtifact().setArtifactHandler(new DistributionArtifactHandler(extension, project.getPackaging()));
+        }
+    }
+    
+    private static class DistributionArtifactHandler implements ArtifactHandler {
+
+        private String extension;
+        private String packaging;
+
+        public DistributionArtifactHandler() {
+            extension = "zip";
+            packaging = "glassfish-distribution";
+        }
+
+        public DistributionArtifactHandler(String extension, String packaging) {
+            this.extension = extension;
+        }
+
+        public String getExtension() {
+            return extension;
+        }
+
+        public String getDirectory() {
+            return null;
+        }
+
+        public String getClassifier() {
+            return null;
+        }
+
+        public String getPackaging() {
+            return packaging;
+        }
+
+        public boolean isIncludesDependencies() {
+            return false;
+        }
+
+        public String getLanguage() {
+            return "java";
+        }
+
+        public boolean isAddedToClasspath() {
+            return false;
         }
     }
 }
