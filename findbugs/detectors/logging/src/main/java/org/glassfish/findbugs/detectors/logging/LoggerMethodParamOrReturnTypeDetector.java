@@ -69,9 +69,23 @@ public class LoggerMethodParamOrReturnTypeDetector extends
         if (signature.contains("Ljava/util/logging/Logger;")) {
             bugReporter.reportBug(new BugInstance(
                     "GF_LOGGER_PARAM_OR_RETURN_TYPE", NORMAL_PRIORITY)
-                    .addClassAndMethod(this).addSourceLine(this));
+                    .addClassAndMethod(this));
         }
         super.visit(code);
     }    
+    
+    @Override
+    public void sawOpcode(int seen) {     
+        // Detect the invocation of the Logger.isLoggable() method 
+        if (seen == INVOKEVIRTUAL || seen == INVOKESTATIC) 
+        {
+            String signature = getSigConstantOperand();
+            if (signature.matches("\\(.*Ljava/util/logging/Logger;.*\\).*")) {
+                bugReporter.reportBug(new BugInstance(
+                        "GF_LOGGER_PARAM_OR_RETURN_TYPE", NORMAL_PRIORITY)
+                        .addClassAndMethod(this).addSourceLine(this));                
+            }
+        }
+    }
 
 }
