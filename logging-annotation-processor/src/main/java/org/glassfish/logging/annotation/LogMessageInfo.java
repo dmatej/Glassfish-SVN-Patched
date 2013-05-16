@@ -72,7 +72,7 @@ import java.lang.annotation.Target;
 
 
 @Target({ElementType.FIELD})
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 public @interface LogMessageInfo {
     String message();
     String comment() default "";

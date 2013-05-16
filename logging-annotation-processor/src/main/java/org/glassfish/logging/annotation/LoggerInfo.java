@@ -64,7 +64,7 @@ import java.lang.annotation.Target;
 
 
 @Target({ElementType.FIELD})
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 public @interface LoggerInfo {
     String subsystem();
     String description() default "";
