@@ -39,6 +39,9 @@
  */
 package org.glassfish.findbugs.detectors.logging;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.bcel.classfile.Code;
 
 import edu.umd.cs.findbugs.BugInstance;
@@ -53,6 +56,16 @@ import edu.umd.cs.findbugs.ba.XMethod;
 public class LoggerMethodParamOrReturnTypeDetector extends
         BytecodeScanningDetector {
 
+    private static final Set<String> ALLOWED_CLASSES = new HashSet<String>() {
+        
+        private static final long serialVersionUID = 205639971410062143L;
+
+        {
+            add("org/glassfish/api/logging/LogHelper");
+            add("org/glassfish/api/ActionReport");
+        }
+    };
+    
     private BugReporter bugReporter;
 
     public LoggerMethodParamOrReturnTypeDetector(BugReporter bugReporter) {
@@ -79,11 +92,14 @@ public class LoggerMethodParamOrReturnTypeDetector extends
         // Detect the invocation of the Logger.isLoggable() method 
         if (seen == INVOKEVIRTUAL || seen == INVOKESTATIC) 
         {
-            String signature = getSigConstantOperand();
-            if (signature.matches("\\(.*Ljava/util/logging/Logger;.*\\).*")) {
-                bugReporter.reportBug(new BugInstance(
-                        "GF_LOGGER_PARAM_OR_RETURN_TYPE", NORMAL_PRIORITY)
-                        .addClassAndMethod(this).addSourceLine(this));                
+            String invokedClass = getClassConstantOperand();
+            if (!ALLOWED_CLASSES.contains(invokedClass) ) {
+                String signature = getSigConstantOperand();
+                if (signature.matches("\\(.*Ljava/util/logging/Logger;.*\\).*")) {
+                    bugReporter.reportBug(new BugInstance(
+                            "GF_LOGGER_PARAM_OR_RETURN_TYPE", NORMAL_PRIORITY)
+                            .addClassAndMethod(this).addSourceLine(this));                
+                }         
             }
         }
     }
