@@ -200,15 +200,6 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
                                 "GF_INVALID_LOGGER_NAME_PREFIX", NORMAL_PRIORITY)
                                 .addClassAndMethod(this).addSourceLine(this));
                     }
-                    BugInstance bug1 = new BugInstance(
-                            "GF_MISSING_LOGGER_INFO_ANNOTATION", NORMAL_PRIORITY)
-                            .addClassAndMethod(this).addSourceLine(this);
-                    if (param1 == null) 
-                    {
-                        bugReporter.reportBug(bug1);
-                    } else {
-                        visitedLoggerNames.put(param1, bug1);
-                    }
                 }
             }
         }
