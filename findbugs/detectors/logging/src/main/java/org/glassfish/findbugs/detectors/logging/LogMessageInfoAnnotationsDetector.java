@@ -205,7 +205,7 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
                         "GF_INVALID_MSG_ID_PATTERN", HIGH_PRIORITY)
                         .addClassAndMethod(this).addSourceLine(this));
             } else {
-                if (levelName != null && !EXCLUDED_LEVELS.contains(levelName)) 
+                if (levelName != null && !EXCLUDED_LEVELS.contains(levelName) && message != null && !message.isEmpty()) 
                 {
                     visitedLogMessages.put(message, new BugInstance(
                             "GF_MISSING_LOGMESSAGE_INFO_ANNOTATION", HIGH_PRIORITY)
@@ -217,7 +217,7 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
 
     private boolean checkMessagePattern(String levelName, String message) 
     {
-        if (levelName != null && message != null) {
+        if (levelName != null && message != null && !message.isEmpty()) {
             if (EXCLUDED_LEVELS.contains(levelName)) {
                 return true;
             }
