@@ -87,6 +87,8 @@ public class WebAppBundle {
     private State state;
 
     private CountDownLatch deploymentSignal = new CountDownLatch(1);
+    
+    private int requestReadTimeout = -1; //seeing GLASSFISH-19854
 
     /**
      * A handle to the web application bundle being deployed.
@@ -199,7 +201,7 @@ public class WebAppBundle {
     	try{
     		//Setting ReadTimeOut For current httpClient
         	HttpParams httpParameters = new BasicHttpParams();
-        	int readTimeout = 30000; //will improve based on GLASSFISH-19854
+        	int readTimeout = getRequestReadTimeout(); //seeing GLASSFISH-19854
         	HttpConnectionParams.setSoTimeout(httpParameters, readTimeout);
         	httpClient.setParams(httpParameters);
         	
@@ -252,7 +254,18 @@ public class WebAppBundle {
     		httpClient.getConnectionManager().shutdown();
         }
 
-    	return result;
-    	
+    	return result;   	
+    }
+    
+    //seeing GLASSFISH-19854
+    //offering a method called setRequestReadTimeout() which a test can use to override if it likes to
+    public void setRequestReadTimeout(int requestReadTimeout){
+    	this.requestReadTimeout = requestReadTimeout;
+    }
+    
+    //seeing GLASSFISH-19854
+    private int getRequestReadTimeout(){
+    	return requestReadTimeout > 0 ? requestReadTimeout :
+    		                            (int)Math.min(TestsConfiguration.getInstance().getTimeout(), (long)Integer.MAX_VALUE);
     }
 }
