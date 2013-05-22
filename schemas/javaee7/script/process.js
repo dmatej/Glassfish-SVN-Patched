@@ -211,7 +211,7 @@ function passTwo(outputFilename, reader) {
                 if (lines.length > 0) {
                     if (needsCDATA) {
 			            this.doindent(this.indent);
-                        this.w.print("<![CDATA[[");
+                        this.w.print("<![CDATA[");
                     }
                     this.w.println();
                 }
