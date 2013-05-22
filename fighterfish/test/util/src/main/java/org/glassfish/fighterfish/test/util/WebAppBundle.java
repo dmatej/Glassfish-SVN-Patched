@@ -247,7 +247,11 @@ public class WebAppBundle {
             
             in.close();
     		
-    	}finally {
+    	}catch (java.net.SocketTimeoutException e){
+    		//seeing GLASSFISH-20569
+    		 throw new TimeoutException(e);
+    	}
+    	finally {
             // When HttpClient instance is no longer needed,
             // shut down the connection manager to ensure
             // immediate deallocation of all system resources
