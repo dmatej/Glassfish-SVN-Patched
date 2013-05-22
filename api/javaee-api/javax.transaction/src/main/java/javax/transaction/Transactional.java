@@ -75,7 +75,7 @@ import java.lang.annotation.*;
  * <p>When a class is specified for either of these elements, the designated behavior applies to subclasses
  * of that class as well. If both elements are specified, dontRollbackOn takes precedence.</p>
  *
- * @since JTA1.3
+ * @since JTA1.2
  */
 @Inherited
 @InterceptorBinding
