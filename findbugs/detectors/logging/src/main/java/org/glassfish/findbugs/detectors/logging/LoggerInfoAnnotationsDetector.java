@@ -135,7 +135,7 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
     @Override
     public void sawOpcode(int opCode) {
 
-        if (opCode == LDC && getConstantRefOperand() instanceof ConstantString) {
+        if ((opCode == LDC || opCode == LDC_W)  && getConstantRefOperand() instanceof ConstantString) {
             constantsVisited.put(getPC(), getStringConstantOperand());
         }
 
@@ -156,7 +156,16 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
                 {
                     int pc = getPC();
                     String param1 = constantsVisited.get(pc - 4);
+                    // Account for ldc_w
+                    if (param1 == null) {
+                    	param1 = constantsVisited.get(pc - 6);
+                    }
                     String param2 = constantsVisited.get(pc - 2);
+                    // Account for ldc_w
+                    if (param2 == null) {
+                    	param2 = constantsVisited.get(pc - 3);
+                    }
+                    
                     if (DEBUG) {
                         System.out.println("param1=" + param1 + ",param2=" + param2);
                     }
@@ -199,6 +208,12 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
                         bugReporter.reportBug(new BugInstance(
                                 "GF_INVALID_LOGGER_NAME_PREFIX", NORMAL_PRIORITY)
                                 .addClassAndMethod(this).addSourceLine(this));
+                    }                
+                    if (param1 == null) 
+                    {
+                        bugReporter.reportBug(new BugInstance(
+                            "GF_MISSING_LOGGER_INFO_ANNOTATION", 
+                            LOW_PRIORITY).addClassAndMethod(this).addSourceLine(this));
                     }
                 }
             }
