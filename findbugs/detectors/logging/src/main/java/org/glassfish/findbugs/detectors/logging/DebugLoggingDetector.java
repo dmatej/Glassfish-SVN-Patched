@@ -66,7 +66,7 @@ public class DebugLoggingDetector extends BytecodeScanningDetector {
     
     private int seenGetStaticLevelAt;
     private int seenGuardClauseAt;
-    private int seenALoadAt;
+    private int seenLDCAt;
     private int logBlockStart;
     private int logBlockEnd;
     private String levelName;
@@ -80,7 +80,7 @@ public class DebugLoggingDetector extends BytecodeScanningDetector {
     public void visit(Code code) {
         seenGetStaticLevelAt = Integer.MIN_VALUE;
         seenGuardClauseAt = Integer.MIN_VALUE;
-        seenALoadAt = Integer.MIN_VALUE;
+        seenLDCAt = Integer.MIN_VALUE;
         logBlockStart = 0;
         logBlockEnd = 0;
         levelName = "";
@@ -90,8 +90,8 @@ public class DebugLoggingDetector extends BytecodeScanningDetector {
     @Override
     public void sawOpcode(int seen) {     
         // Detect access to java.util.logging.Level.FINE, FINER or FINEST objects. 
-        if (seen == ALOAD_2) {
-            seenALoadAt = getPC();
+        if (seen == LDC) {
+            seenLDCAt = getPC();
         }
         if (seen == GETSTATIC 
                 && "java/util/logging/Level".equals(getClassConstantOperand())
@@ -123,7 +123,7 @@ public class DebugLoggingDetector extends BytecodeScanningDetector {
         {
             if (getPC() < logBlockStart || getPC() >= logBlockEnd) 
             {
-                if (getPC() == (seenALoadAt+1)) {
+                if (getPC() != (seenLDCAt+2)) {
                     bugReporter.reportBug(new BugInstance(
                             "GF_UNCONDITIONAL_DEBUG_LOGGING", NORMAL_PRIORITY)
                             .addClassAndMethod(this).addSourceLine(this));                    
