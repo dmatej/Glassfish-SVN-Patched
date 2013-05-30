@@ -204,14 +204,21 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
                 bugReporter.reportBug(new BugInstance(
                         "GF_INVALID_MSG_ID_PATTERN", HIGH_PRIORITY)
                         .addClassAndMethod(this).addSourceLine(this));
-            } else {
-                if (levelName != null && !EXCLUDED_LEVELS.contains(levelName) && message != null && !message.isEmpty()) 
-                {
-                    visitedLogMessages.put(message, new BugInstance(
+            } 
+            
+            if (levelName != null && !EXCLUDED_LEVELS.contains(levelName)) 
+            {
+            	if (message == null) {
+            		bugReporter.reportBug(new BugInstance(
                             "GF_MISSING_LOGMESSAGE_INFO_ANNOTATION", HIGH_PRIORITY)
                             .addClassAndMethod(this).addSourceLine(this));
-                }
-            }            
+            	} else if (!message.isEmpty()) {
+                    visitedLogMessages.put(message, new BugInstance(
+                            "GF_MISSING_LOGMESSAGE_INFO_ANNOTATION", HIGH_PRIORITY)
+                            .addClassAndMethod(this).addSourceLine(this));            		
+            	}
+            }
+
         }
     }
 
@@ -237,9 +244,9 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
     
     public void report() {
         
-        for (String loggerName : visitedLogMessages.keySet()) {
-            if (!annotatedLogMessages.keySet().contains(loggerName)) {
-                bugReporter.reportBug(visitedLogMessages.get(loggerName));
+        for (String logMsg : visitedLogMessages.keySet()) {
+            if (!annotatedLogMessages.keySet().contains(logMsg)) {
+                bugReporter.reportBug(visitedLogMessages.get(logMsg));
             }
         }
         
