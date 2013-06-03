@@ -43,6 +43,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.logging.Level;
 
 import org.apache.bcel.classfile.AnnotationEntry;
@@ -75,14 +77,12 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
     
     private Map<String, BugInstance> visitedLogMessages = new HashMap<String, BugInstance>();
     
-    private Map<Integer, String> levelsVisited = new HashMap<Integer, String>();
+    private SortedMap<Integer, String> levelsVisited = new TreeMap<Integer, String>();
 
-    private Map<Integer, String> constantsVisited = new HashMap<Integer, String>();
+    private SortedMap<Integer, String> constantsVisited = new TreeMap<Integer, String>();
     
     private BugReporter bugReporter;
     
-    private int seenALoad_1At = Integer.MIN_VALUE;
-
     public LogMessageInfoAnnotationsDetector(BugReporter bugReporter) {
         this.bugReporter = bugReporter;
     }
@@ -109,19 +109,13 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
     public void visit(Code code) {
         levelsVisited.clear();
         constantsVisited.clear();
-        seenALoad_1At = Integer.MIN_VALUE;
         super.visit(code);
     }
     
     @Override
     public void sawOpcode(int opCode) {
-        
-        if (opCode == ALOAD_1) {
-            seenALoad_1At = getPC();
-        }
-        
+                
         if (opCode == GETSTATIC 
-                && (getPC() == (seenALoad_1At+1))
                 && "java/util/logging/Level".equals(getClassConstantOperand())
                 ) 
         {
@@ -141,35 +135,21 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
             String levelName = null;
             String message = null;
             
-            if (methodName.equals("log") 
-                    && signature.equals("(Ljava/util/logging/Level;Ljava/lang/String;)V")) 
+            if (methodName.equals("log")) 
             {
-               levelName = levelsVisited.get(getPC() - 5);
-               message = constantsVisited.get(getPC() - 2);    
-            }
-
-            if (methodName.equals("log") 
-                    && signature.equals(
-                            "(Ljava/util/logging/Level;Ljava/lang/String;Ljava/lang/Object;)V"))
-            {
-               levelName = levelsVisited.get(getPC() - 7);
-               message = constantsVisited.get(getPC() - 4);    
-            }
-
-            if (methodName.equals("log") 
-                    && signature.equals(
-                            "(Ljava/util/logging/Level;Ljava/lang/String;[Ljava/lang/Object;)V"))
-            {
-               levelName = levelsVisited.get(getPC() - 14);
-               message = constantsVisited.get(getPC() - 11);    
-            }
-
-            if (methodName.equals("log") 
-                    && signature.equals(
-                            "(Ljava/util/logging/Level;Ljava/lang/String;Ljava/lang/Throwable;)V"))
-            {
-               levelName = levelsVisited.get(getPC() - 12);
-               message = constantsVisited.get(getPC() - 9);    
+            	int lastLevelPC = -1;            	
+                if (!levelsVisited.isEmpty()) {
+                	lastLevelPC = levelsVisited.lastKey();
+                	levelName = levelsVisited.get(lastLevelPC);
+                }
+                if (!constantsVisited.isEmpty()) {
+                	for (int constantPC : constantsVisited.keySet()) {
+                		if (lastLevelPC > -1 && constantPC > lastLevelPC) {
+                        	message = constantsVisited.get(constantPC);
+                        	break;
+                		}
+                	}
+                }
             }
             
             if (methodName.equals("config") 
@@ -218,7 +198,7 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
                             .addClassAndMethod(this).addSourceLine(this));            		
             	}
             }
-
+            
         }
     }
 
