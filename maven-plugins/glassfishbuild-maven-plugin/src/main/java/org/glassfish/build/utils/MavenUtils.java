@@ -106,17 +106,30 @@ public class MavenUtils {
     public static Model resolveEffectiveModel(
             ModelBuilder modelBuilder,
             ModelResolver modelResolver,
-            File pomfile) {
-        
+            File pomFile) {
+
         try {
             DefaultModelBuildingRequest mbr = new DefaultModelBuildingRequest();
-            mbr.setPomFile(pomfile);
+            mbr.setPomFile(pomFile);
             mbr.setModelResolver(modelResolver);
             return modelBuilder.build(mbr).getEffectiveModel();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-    }    
+    }
+
+    public static Model resolveEffectiveModel(
+            ModelBuilder modelBuilder,
+            RepositorySystem repoSystem,
+            RepositorySystemSession repoSession,
+            List<RemoteRepository> projectRepos,
+            File pomFile) {
+
+        return MavenUtils.resolveEffectiveModel(
+                modelBuilder,
+                new MavenModelResolver(repoSystem, repoSession, projectRepos),
+                pomFile);
+    } 
     
     /**
      * Reads a given model

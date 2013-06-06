@@ -56,15 +56,12 @@ import org.apache.maven.model.Model;
 import org.apache.maven.model.Organization;
 import org.apache.maven.model.Parent;
 import org.apache.maven.model.Scm;
-import org.apache.maven.model.building.DefaultModelBuildingRequest;
 import org.apache.maven.model.building.ModelBuilder;
-import org.apache.maven.model.resolution.ModelResolver;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.mojo.versions.api.PomHelper;
-import org.glassfish.build.utils.MavenModelResolver;
 import org.glassfish.build.utils.MavenUtils;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.RepositorySystemSession;
@@ -241,7 +238,9 @@ public class GeneratePomMojo extends AbstractMojo {
         
         Model effectivePom = MavenUtils.resolveEffectiveModel(
                 modelBuilder,
-                new MavenModelResolver(repoSystem,repoSession,projectRepos),
+                repoSystem,
+                repoSession,
+                projectRepos,
                 pomFile);
         
         String input;
