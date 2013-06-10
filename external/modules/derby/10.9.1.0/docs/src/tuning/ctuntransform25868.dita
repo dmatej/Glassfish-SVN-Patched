@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctuntransform25868">
+<title>Flattening a subquery into an EXISTS join</title>
+<prolog><metadata>
+<keywords>
+<indexterm>Subqueries<indexterm>flattening of to an EXISTS join</indexterm></indexterm>
+<indexterm>EXISTS join<indexterm>definition</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>An EXISTS join is a join in which the right side of the join needs to be
+probed only once for each outer row. Using such a definition, an EXISTS join
+does not literally use the EXISTS keyword. <ph conref="../conrefs.dita#prod/productshortname"></ph> treats a statement
+as an EXISTS join when there will be at most one matching row from the right
+side of the join for a given row in the outer table.</p>
+<p>A subquery that cannot be flattened into a normal join because of a uniqueness
+condition can be flattened into an EXISTS join if it meets all the requirements
+(see below). Recall the first example from the previous section (<xref href="ctuntransform36368.dita#ctuntransform36368"/>):</p>
+<codeblock><b>SELECT c1 FROM t1 WHERE c1 IN (SELECT c1 FROM t2)</b></codeblock>
+<p>This query could not be flattened into a normal join because such a join
+would return the wrong results. However, this query can be flattened into
+a join recognized internally by the <ph conref="../conrefs.dita#prod/productshortname"></ph> system as an EXISTS join.
+When processing an EXISTS join, <ph conref="../conrefs.dita#prod/productshortname"></ph> knows to stop processing the right
+side of the join after a single row is returned. The transformed statement
+would look something like this:  
+<codeblock><b>SELECT c1 FROM t1, t2
+WHERE t1.c1 = t2.c1
+EXISTS JOIN INTERNAL SYNTAX</b></codeblock></p>
+<p>Requirements for flattening into an EXISTS join:   
+<ul>
+<li>The subquery is not under an OR. </li>
+<li>The subquery type is EXISTS, IN, or ANY. </li>
+<li>The subquery is not in the SELECT list of the outer query block. </li>
+<li>There are no aggregates in the SELECT list of the subquery. </li>
+<li>The subquery does not have a GROUP BY clause. </li>
+<li>The subquery does not have an ORDER BY, result offset, or fetch first
+clause.</li>
+<li>The subquery has a single entry in its FROM list that is a <xref href="ctuntransform13966.dita#ctuntransform13966/rtuntransform41494">base table</xref>. </li>
+<li>None of the predicates in the subquery, including the additional one formed
+between the left side of the subquery operator and the column in the subquery's
+SELECT list (for IN or ANY subqueries), include any subqueries, method calls,
+or field accesses. </li>
+</ul></p>
+<p>When a subquery is flattened into an EXISTS join, the table from the subquery
+is made join-order-dependent on all the tables with which it is correlated.
+This means that a table must appear inner to all the tables on which it is
+join-order-dependent. (In subsequent releases this restrictions can be relaxed.)
+For example:   
+<codeblock><b>SELECT t1.* FROM t1, t2
+WHERE EXISTS (SELECT * FROM t3 WHERE t1.c1 = t3.c1)</b></codeblock></p>
+<p>gets flattened into  
+<codeblock><b>SELECT t1.* FROM t1, t2, t3 WHERE t1.c1 = t3.c1</b></codeblock></p>
+<p>where <i>t3</i> is join order dependent on <i>t1</i>. This means that the possible join orders are (<i>t1</i>, <i>t2</i>, <i>t3</i>), (<i>t1</i>, <i>t3</i>, <i>t2</i>), and (<i>t2</i>, <i>t1</i>, <i>t3</i>).</p>
+</conbody></concept>

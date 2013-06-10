@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqljargmatching" xml:lang="en-us">
+<title>Argument matching</title>
+<prolog><metadata>
+<keywords><indexterm>Argument matching</indexterm><indexterm>CREATE FUNCTION</indexterm><indexterm>CREATE PROCEDURE</indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section>
+
+<p>
+When you declare a function or procedure using CREATE
+FUNCTION/PROCEDURE, <ph conref="../conrefs.dita#prod/productshortname"></ph>
+does not verify whether a matching Java
+method exists. Instead, <ph conref="../conrefs.dita#prod/productshortname"></ph>
+looks for a matching method only when you invoke the
+function or procedure in a later SQL statement. At that time,
+<ph conref="../conrefs.dita#prod/productshortname"></ph>
+searches for a public, static method having the class and method name
+declared in the EXTERNAL NAME clause of the earlier
+CREATE FUNCTION/PROCEDURE statement. Furthermore, the Java types of
+the method's arguments and return value must match the SQL types
+declared in the CREATE FUNCTION/PROCEDURE statement. The
+following may happen:
+</p>
+
+<ul>
+<li><b>Success</b> - If exactly one Java method matches, then
+<ph conref="../conrefs.dita#prod/productshortname"></ph> invokes it.</li>
+<li><b>Ambiguity</b> - <ph conref="../conrefs.dita#prod/productshortname"></ph>
+raises an error if more than one method matches.</li>
+<li><b>Failure</b> - <ph conref="../conrefs.dita#prod/productshortname"></ph>
+also raises an error if no method matches.</li>
+</ul>
+
+<p>
+In mapping SQL data types to Java data types,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> considers the following
+kinds of matches:
+</p>
+
+<ul>
+<li><b>Primitive match</b> -
+<ph conref="../conrefs.dita#prod/productshortname"></ph> looks for a primitive
+Java type corresponding to the SQL type. For instance, SQL INTEGER matches Java
+<i>int</i>.</li>
+<li><b>Wrapper match</b> -
+<ph conref="../conrefs.dita#prod/productshortname"></ph> looks for a wrapper
+class in the <i>java.lang</i> or <i>java.sql</i> packages corresponding to the
+SQL type. For instance, SQL INTEGER matches <i>java.lang.Integer</i>. For a
+user-defined type (UDT),
+<ph conref="../conrefs.dita#prod/productshortname"></ph> looks for the UDT's
+external name class.</li>
+<li><b>Array match</b> - For OUT and INOUT procedure arguments,
+<ph conref="../conrefs.dita#prod/productshortname"></ph>
+looks for an array of the corresponding primitive or wrapper type. For
+instance, an OUT procedure argument of type SQL INTEGER matches
+<i>int[]</i> and <i>Integer[]</i>.</li>
+<li><b>ResultSet match</b> - If a procedure is declared to return <i>n</i>
+RESULT SETS, <ph conref="../conrefs.dita#prod/productshortname"></ph> looks for
+a method whose last <i>n</i> arguments are
+of type <i>java.sql.ResultSet[]</i>.</li>
+</ul>
+
+<p>
+<ph conref="../conrefs.dita#prod/productshortname"></ph> resolves function and
+procedure invocations as follows:
+</p>
+
+<ul>
+<li><b>Function</b> - <ph conref="../conrefs.dita#prod/productshortname"></ph>
+looks for a method whose argument and
+return types are <i>primitive match</i>es or <i>wrapper match</i>es for
+the function's SQL arguments and return value.</li>
+<li><b>Procedure</b> - <ph conref="../conrefs.dita#prod/productshortname"></ph>
+looks for a method which returns void and
+whose argument types match as follows:
+  <ul>
+  <li><i>IN</i> - Method arguments are
+  <i>primitive match</i>es or <i>wrapper match</i>es  for the
+  procedure's IN arguments.</li>
+  <li><i>OUT and INOUT</i> - Method arguments are
+  <i>array match</i>es  for the
+  procedure's OUT and INOUT arguments.</li>
+  </ul>
+In addition, if the procedure returns <i>n</i> RESULT SETS,
+then the last <i>n</i> arguments of the Java method must be of type 
+<i>java.sql.ResultSet[]</i>.</li>
+</ul>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph> provides a tool,
+<codeph>SignatureChecker</codeph>, which can identify any SQL functions or
+procedures in a database that do not follow these argument matching rules. See
+the <ph conref="../conrefs.dita#pub/citutilities"></ph> for details.</p>
+</section>
+
+<section>
+<title>Example of argument matching</title>
+
+<p>
+The following function...
+</p>
+
+<codeblock><b>
+CREATE FUNCTION TO_DEGREES
+( RADIANS DOUBLE )
+RETURNS DOUBLE
+PARAMETER STYLE JAVA
+NO SQL LANGUAGE JAVA
+EXTERNAL NAME 'example.MathUtils.toDegrees'
+</b></codeblock>
+
+<p>
+...would match all of the following methods:
+</p>
+
+<codeblock><b>
+public static double toDegrees( double arg ) {...}
+public static Double toDegrees( double arg ) {...}
+public static double toDegrees( Double arg ) {...}
+public static Double toDegrees( Double arg ) {...}
+</b></codeblock>
+
+<p>
+Note that <ph conref="../conrefs.dita#prod/productshortname"></ph> would raise
+an exception if it found more than one matching method.
+</p>
+
+</section>
+
+
+<section><title>Mapping SQL data types to Java data types</title>
+
+<p>The following table shows how
+<ph conref="../conrefs.dita#prod/productshortname"></ph> maps specific SQL data
+types to Java data types.</p>
+
+<table>
+<title>SQL and Java type correspondence</title>
+<desc>This table lists the SQL datatypes and shows how <ph conref="../conrefs.dita#prod/productshortname"></ph> maps them to Java primitive and wrapper types.</desc>
+<tgroup cols="3" colsep="1" rowsep="1">
+<colspec colname="sqltype" colnum="1" colwidth="33*"/>
+<colspec colname="primitive" colnum="2" colwidth="33*"/>
+<colspec colname="wrapper" colnum="3" colwidth="34*"/>
+
+<thead>
+    <row valign="bottom">
+      <entry colname="sqltype">SQL Type</entry>
+      <entry colname="primitive">Primitive Match</entry>
+      <entry colname="wrapper">Wrapper Match</entry>
+    </row>
+</thead>
+
+<tbody>
+
+    <row>
+      <entry colname="sqltype">BOOLEAN</entry>
+      <entry colname="primitive"><i>boolean</i></entry>
+      <entry colname="wrapper"><i>java.lang.Boolean</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">SMALLINT</entry>
+      <entry colname="primitive"><i>short</i></entry>
+      <entry colname="wrapper"><i>java.lang.Integer</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">INTEGER</entry>
+      <entry colname="primitive"><i>int</i></entry>
+      <entry colname="wrapper"><i>java.lang.Integer</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">BIGINT</entry>
+      <entry colname="primitive"><i>long</i></entry>
+      <entry colname="wrapper"><i>java.lang.Long</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">DECIMAL</entry>
+      <entry colname="primitive">None</entry>
+      <entry colname="wrapper"><i>java.math.BigDecimal</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">NUMERIC</entry>
+      <entry colname="primitive">None</entry>
+      <entry colname="wrapper"><i>java.math.BigDecimal</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">REAL</entry>
+      <entry colname="primitive"><i>float</i></entry>
+      <entry colname="wrapper"><i>java.lang.Float</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">DOUBLE</entry>
+      <entry colname="primitive"><i>double</i></entry>
+      <entry colname="wrapper"><i>java.lang.Double</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">FLOAT</entry>
+      <entry colname="primitive"><i>double</i></entry>
+      <entry colname="wrapper"><i>java.lang.Double</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">CHAR</entry>
+      <entry colname="primitive">None</entry>
+      <entry colname="wrapper"><i>java.lang.String</i></entry>
+    </row>
+
+    <row>
+      <entry colname="sqltype">VARCHAR</entry>
+      <entry colname="primitive">None</entry>
+      <entry colname="wrapper"><i>java.lang.String</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">LONG VARCHAR</entry>
+      <entry colname="primitive">None</entry>
+      <entry colname="wrapper"><i>java.lang.String</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">CHAR FOR BIT DATA</entry>
+      <entry colname="primitive"><i>byte[]</i></entry>
+      <entry colname="wrapper">None</entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">VARCHAR FOR BIT DATA</entry>
+      <entry colname="primitive"><i>byte[]</i></entry>
+      <entry colname="wrapper">None</entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">LONG VARCHAR FOR BIT DATA</entry>
+      <entry colname="primitive"><i>byte[]</i></entry>
+      <entry colname="wrapper">None</entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">CLOB</entry>
+      <entry colname="primitive">None</entry>
+      <entry colname="wrapper"><i>java.sql.Clob</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">BLOB</entry>
+      <entry colname="primitive">None</entry>
+      <entry colname="wrapper"><i>java.sql.Blob</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">DATE</entry>
+      <entry colname="primitive">None</entry>
+      <entry colname="wrapper"><i>java.sql.Date</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">TIME</entry>
+      <entry colname="primitive">None</entry>
+      <entry colname="wrapper"><i>java.sql.Time</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">TIMESTAMP</entry>
+      <entry colname="primitive">None</entry>
+      <entry colname="wrapper"><i>java.sql.Timestamp</i></entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">XML</entry>
+      <entry colname="primitive">None</entry>
+      <entry colname="wrapper">None</entry>
+    </row>
+    
+    <row>
+      <entry colname="sqltype">User-defined type</entry>
+      <entry colname="primitive">None</entry>
+      <entry colname="wrapper">Underlying Java class</entry>
+    </row>
+    
+</tbody>
+</tgroup>
+</table>
+
+</section>
+
+</refbody>
+</reference>

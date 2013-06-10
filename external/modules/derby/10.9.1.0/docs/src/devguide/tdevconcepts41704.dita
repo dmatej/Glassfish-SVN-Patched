@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE task PUBLIC "-//OASIS//DTD DITA Task//EN"
+ "../dtd/task.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<task id="tdevconcepts41704" xml:lang="en-us">
+<title>Naming or accessing the name of a cursor</title>
+<shortdesc>There is no SQL language command to <i>assign</i> a name to a cursor.
+You can use the JDBC <codeph><i>setCursorName</i></codeph> method to assign
+a name to a <codeph><i>ResultSet</i></codeph> that allows positioned updates
+and deletes.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Cursors<indexterm>naming</indexterm></indexterm><indexterm>Cursors<indexterm>accessing
+system-generated names</indexterm></indexterm></keywords>
+</metadata></prolog>
+<taskbody>
+<context> <p>You assign a name to a <codeph><i>ResultSet</i></codeph> with
+the <codeph><i>setCursorName</i></codeph> method of the <codeph><i>Statement</i></codeph> interface.
+You assign the name to a cursor before executing the <codeph><i>Statement</i></codeph> that
+will generate it.</p><codeblock>Statement s3 = conn.createStatement();
+// name the statement so we can reference the result set
+// it generates
+s3.setCursorName("UPDATABLESTATEMENT");
+// we will be able to use the following statement later
+// to access the current row of the cursor
+// a result set needs to be obtained prior to using the
+// WHERE CURRENT syntax
+ResultSet rs = s3.executeQuery("select * from 
+    FlightBookings FOR UPDATE of number_seats");
+PreparedStatement ps2 = conn.prepareStatement(
+    "UPDATE FlightBookings SET number_seats = ? " +
+       "WHERE CURRENT OF UPDATABLESTATEMENT");</codeblock><p>Typically, you
+do not assign a name to the cursor, but let the system generate one for you
+automatically. You can determine the system-generated cursor name of a <i>ResultSet</i> generated
+by a SELECT statement using the <codeph><i>ResultSet</i></codeph> class's <codeph><i>getCursorName</i></codeph> method.</p><codeblock>PreparedStatement ps2 = conn.prepareStatement(
+    "UPDATE employee SET bonus = ? WHERE CURRENT OF "+
+        Updatable.getCursorName());</codeblock></context>
+</taskbody>
+</task>

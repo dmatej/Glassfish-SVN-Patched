@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevspecialtfopttune" xml:lang="en-us">
+<title>Measuring the cost of
+<ph conref="../conrefs.dita#prod/productshortname"></ph>-style table
+functions</title>
+<shortdesc>This topic shows how to measure the cost of a
+<ph conref="../conrefs.dita#prod/productshortname"></ph>-style table
+function.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Functions<indexterm>calculating table function costs</indexterm></indexterm>
+<indexterm>Optimizer<indexterm>calculating table function costs</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+
+<p>
+The following formula describes how to estimate the value returned
+by  <i>VTICosting.getEstimatedCostPerInstantiation()</i>:
+</p>
+
+<p><b>
+C = I * A
+</b></p>
+
+<p>where</p>
+
+<ul>
+<li><b>C</b> = The estimated <b>C</b>ost for creating and running the
+        table function. That is, the value returned by
+<i>VTICosting.getEstimatedCostPerInstantiation()</i>.
+        In general, <b>C</b>ost is a measure of time in milliseconds.</li>
+<li><b>I</b> = The  optimizer's <b>I</b>mprecision. A measure of how skewed the optimizer's estimates tend
+        to be in your particular environment. See below for instructions on how to estimate this <b>I</b>mprecision.</li>
+<li><b>A</b> = The <b>A</b>ctual time in milliseconds which it takes
+        to create and run this table function.</li>
+</ul>
+
+<section> <title>Calculating the optimizer's imprecision</title>
+
+<p>
+We treat optimizer <b>I</b>mprecision as a constant across the
+        runtime environment. The following formula describes it:
+</p>
+
+<p><b>
+I = O / T
+</b></p>
+
+<p>where</p>
+
+<ul>
+<li><b>O</b> = The <b>O</b>ptimizer's estimated cost for a plan.</li>
+<li><b>T</b> = The <b>T</b>otal runtime in milliseconds for the plan.</li>
+</ul>
+
+<p>
+To estimate these values, turn on
+<ph conref="../conrefs.dita#prod/productshortname"></ph> statistics collection
+and run the following experiment several times, averaging the results:
+</p>
+
+<ul>
+<li><b>Select</b> = Select all of the rows from a big table.</li>
+<li><b>Record</b> = In the statistics output, look for the ResultSet
+          which represents the table scan. That scan has a field
+          labelled "optimizer estimated cost". That's <b>O</b>. Now
+          look for the fields in that ResultSet's statistics labelled
+"constructor time", "open time", "next time", and "close time". Add up
+          all of those fields. That total is <b>T</b>.
+</li>
+</ul>
+
+<p>
+For example:
+</p>
+
+<codeblock>
+MAXIMUMDISPLAYWIDTH 7000;
+
+CALL SYSCS_UTIL.SYSCS_SET_RUNTIMESTATISTICS(1);
+CALL SYSCS_UTIL.SYSCS_SET_STATISTICS_TIMING(1);
+
+select * from T;
+
+values SYSCS_UTIL.SYSCS_GET_RUNTIMESTATISTICS();
+</codeblock>
+
+</section>
+
+<section> <title>Calculating the actual runtime cost of a table function</title>
+
+<p>
+The following formula explains how to compute the <b>A</b>ctual
+        runtime cost for the table function:
+</p>
+
+<p><b>
+A =  ( P * N ) + E
+</b></p>
+
+<p>where</p>
+
+<ul>
+<li><b>P</b> = The runtime spent <b>P</b>er row (in milliseconds).</li>
+<li><b>N</b> = The <b>N</b>umber of rows in the table function.</li>
+<li><b>E</b> = The time spent creating an <b>E</b>mpty instance of the
+          table function which has no rows in it. Usually, <b>P * N</b> dwarfs
+          <b>E</b>. That is, the table function instantiation cost is very
+          small compared to the actual cost of looping through the
+          rows. However, for some table functions, <b>E</b> may be significant
+          and may dominate the table function's cost when <b>N</b> is small.</li>
+</ul>
+
+<p>
+You may know that <b>E</b> is basically 0. If so, you can skip this step.
+Otherwise, to estimate <b>E</b>, turn on
+<ph conref="../conrefs.dita#prod/productshortname"></ph> statistics collection
+and run the following experiment several times, averaging the results:
+</p>
+
+<ul>
+<li><b>Short-circuit</b> = Short-circuit the next() method of the
+<i>ResultSet</i>
+returned by your <ph conref="../conrefs.dita#prod/productshortname"></ph>-style
+table function so that it returns
+          <i>false</i> the first time it is called. This makes it
+          appear that the
+<i>ResultSet</i>
+has no rows.
+</li>
+<li><b>Select</b> = Select all of the rows from the table function.</li>
+<li><b>Record</b> = In the statistics output, look for the VTIResultSet
+          which represents the table function scan. Add up
+          the values of the fields in that VTIResultSet's statistics labelled
+"constructor time", "open time", "next time", and "close time".
+          That total is <b>E</b>.
+</li>
+</ul>
+
+<p>
+To estimate <b>P</b>, turn on
+<ph conref="../conrefs.dita#prod/productshortname"></ph> statistics collection
+and run the following experiment several times, averaging the results:
+</p>
+
+<ul>
+<li><b>Select</b> = Select all of the rows from the table function.</li>
+<li><b>Record</b> = In the statistics output, look for the VTIResultSet
+          which represents the table function scan. Add up
+          the values of the fields in that VTIResultSet's statistics labelled
+"constructor time", "open time", "next time", and "close
+          time". Subtract <b>E</b> from the result. Now divide by the
+          value of the field "Rows seen".
+          The result is <b>P</b>.
+</li>
+</ul>
+
+</section>
+
+<section> <title>Computing the value returned by <i>getEstimatedCostPerInstantiation()</i></title>
+
+<p>
+Putting all of this together, the following formula describes the
+        value returned by your
+table function's
+<i>VTICosting.getEstimatedCostPerInstantiation()</i>
+method.
+</p>
+
+<p><b>
+C = O/T * [ ( P * N ) + E ]
+</b></p>
+
+</section>
+
+</conbody>
+</concept>

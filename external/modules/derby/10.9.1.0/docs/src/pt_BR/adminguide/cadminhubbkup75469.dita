@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//IBM//DTD DITA Concept//EN"
+ "../../dtd/concept.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<concept id="cadminhubbkup75469" xml:lang="pt-br">
+<title>Utilização de comandos do sistema operacional com os procedimentos do
+sistema de congelar e descongelar para realizar cópias de segurança em linha</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Procedimento do sistema SYSCS_FREEZE_DATABASE</indexterm>
+<indexterm>Procedimento do sistema SYSCS_UNFREEZE_DATABASE</indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>Normalmente, estes procedimentos são utilizados para acelerar a operação de
+cópia envolvida na cópia de segurança em linha.
+Neste cenário, o <ph conref="adminconrefs.dita#prod/productshortname"></ph>
+não realiza a operação de cópia.
+É utilizado o procedimento SYSCS_UTIL.SYSCS_FREEZE_DATABASE para bloquear o
+banco de dados, e depois realizada a cópia do diretório do banco de dados
+utilizando comandos do sistema operacional.</p>
+<p>Por exemplo, como o comando <i>tar</i> do UNIX utiliza rotinas de cópia de
+arquivo do sistema operacional, e o procedimento
+SYSCS_UTIL.SYSCS_BACKUP_DATABASE utiliza chamada de E/S do Java, com
+sincronização interna adicional para permitir que ocorram atualizações durante
+a cópia de segurança, o comando <i>tar</i> pode gerar cópias de segurança
+mais rapidamente que o procedimento SYSCS_UTIL.SYSCS_BACKUP_DATABASE.</p>
+<p>Para utilizar comandos do sistema operacional para realizar cópias de
+segurança em linha, é chamado o procedimento do sistema
+SYSCS_UTIL.SYSCS_FREEZE_DATABASE.
+O procedimento do sistema SYSCS_UTIL.SYSCS_FREEZE_DATABASE coloca o banco de
+dados em um estado onde este pode ser copiado com segurança.
+Após o banco de dados ter sido copiado, é utilizado o procedimento do sistema
+SYSCS_UTIL.SYSCS_UNFREEZE_DATABASE para continuar trabalhando com o banco
+de dados.
+Somente após SYSCS_UTIL.SYSCS_UNFREEZE_DATABASE ter sido utilizado, as
+transações poderão escrever novamente no banco de dados.
+As operações de leitura podem prosseguir enquanto o banco de dados estiver
+"congelado."</p>
+<note>Para garantir uma cópia de segurança do banco de dados consistente, o
+<ph conref="adminconrefs.dita#prod/productshortname"></ph>
+deverá bloquear os aplicativos que tentarem escrever no banco de dados
+congelado, até que a cópia de segurança esteja completa e o procedimento do
+sistema SYSCS_UTIL.SYSCS_UNFREEZE_DATABASE seja chamado.</note>
+<p>O exemplo a seguir demonstra como os procedimentos de congelar e
+descongelar são utilizados para envolver o comando de cópia do sistema
+operacional:</p>
+<codeblock>public static void backUpDatabaseWithFreeze(Connection conn)
+        throws SQLException
+{
+Statement s = conn.createStatement();
+s.executeUpdate(
+    "CALL SYSCS_UTIL.SYSCS_FREEZE_DATABASE()");
+<b>// Copiar o diretório do banco de dados durante este intervalo</b>
+s.executeUpdate(
+    "CALL SYSCS_UTIL.SYSCS_UNFREEZE_DATABASE()");
+s.close();
+}</codeblock>
+</conbody>
+</concept>

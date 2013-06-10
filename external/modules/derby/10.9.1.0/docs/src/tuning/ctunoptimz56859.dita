@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctunoptimz56859">
+<title>Cost-based ORDER BY sort avoidance</title>
+<prolog><metadata>
+<keywords>
+<indexterm>ORDER BY<indexterm>cost-based avoidance of</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>Usually, sorting requires an extra step to put the data into the right
+order. This extra step can be avoided for data that are already in the right
+order. For example, if a single-table query has an ORDER BY on a single column,
+and there is an index on that column, sorting can be avoided if <ph conref="../conrefs.dita#prod/productshortname"></ph> uses
+the index as the access path.</p>
+<p>Where possible, <ph conref="../conrefs.dita#prod/productshortname"></ph>'s query compiler transforms an SQL statement
+internally into one that avoids this extra step. For information about internal
+transformations, see <xref href="ctuntransform16033.dita#ctuntransform16033"/>. This
+transformation, if it occurs, happens before optimization. After any such
+transformations are made, the optimizer can do its part to help avoid a separate
+sorting step by choosing an already sorted access path. It compares the cost
+of using that path with the cost of sorting. <ph conref="../conrefs.dita#prod/productshortname"></ph> does this for statements
+that use an ORDER BY clause in the following situations:  
+<ul>
+<li>The statements involve tables with indexes that are in the correct order.</li>
+<li>The statements involve scans of unique indexes that are guaranteed to
+return only one row per scan.</li>
+</ul></p>
+<p>ORDER BY specifies a priority of ordering of columns in a result set. For
+example, ORDER BY X, Y means that column <i>X</i> has a more
+significant ordering than column <i>Y</i>.</p>
+<p>The situations that allow <ph conref="../conrefs.dita#prod/productshortname"></ph> to avoid a separate
+ordering step for statements with ORDER BY clauses are:  
+<ul>
+<li>Index scans, which provide the correct order.  
+<codeblock><b><ph>-- covering index</ph>
+SELECT flight_id FROM Flights ORDER BY flight_id</b></codeblock></li>
+<li>The rows from a table when fetched through an index scan.  
+<codeblock><b><ph>-- if <ph conref="../conrefs.dita#prod/productshortname"></ph>  uses the index on orig_airport
+-- to access the data, it can avoid the sort
+-- required by the final ORDER BY</ph>
+SELECT orig_airport, miles
+FROM FLIGHTS
+WHERE orig_airport &lt; 'DDD'
+ORDER BY orig_airport</b></codeblock></li>
+<li>The rows from a join when ordered by the indexed column or columns in
+the outer table.  
+<codeblock><b><b><ph>-- if <ph conref="../conrefs.dita#prod/productshortname"></ph>  chooses Cities as the outer table, it
+-- can avoid a separate sorting step</ph></b>
+SELECT * FROM cities, countries
+WHERE cities.country_ISO_code = countries.country_ISO_code
+AND cities.country_ISO_code &lt; 'DD'
+ORDER BY cities.country_ISO_code</b></codeblock></li>
+<li>Result sets that are guaranteed to return a single row. They are ordered
+on <i>all</i> of their columns (for example, if there are
+equality conditions on all the columns in a unique index, all the columns
+returned for that table can be considered ordered, with any priority of ordering
+of the columns).  
+<codeblock><b><ph>-- query will only return one row, so that row is
+-- "in order" for ANY column</ph>
+SELECT miles
+FROM Flights
+WHERE flight_id = 'US1381' AND segment_number = 2
+ORDER BY miles</b></codeblock></li>
+<li>Any column in a result set that has an equality comparison with a constant.
+The column is considered ordered with no priority to its ordering.   
+<codeblock><b><ph>-- The comparison of segment_number
+-- to a constant means that it is always correctly
+-- ordered. Using the index on (flight_id, segment_number)
+-- as the access path means
+-- that the ordering will be correct for the ORDER BY
+-- clause in this query. The same thing would be true if
+-- flight_id were compared to a constant instead.</ph>
+SELECT segment_number, flight_id
+FROM Flights
+WHERE segment_number=2
+ORDER BY segment_number, flight_id</b></codeblock>
+<p>And because of transitive
+closure, this means that even more complex statements can avoid sorting. For
+example:  
+<codeblock><b><ph>-- transitive closure means that <ph conref="../conrefs.dita#prod/productshortname"></ph>  will
+-- add this clause:
+-- AND countries.country_ISO_code = 'CL', which means
+-- that the ordering column is now compared to a constant,
+-- and sorting can be avoided.</ph>
+SELECT * FROM cities, countries
+WHERE cities.country_ISO_code = 'CL'
+AND cities.country_ISO_code = countries.country_ISO_code
+ORDER BY countries.country_ISO_code</b></codeblock></p>
+<p>For more information
+about transitive closure and other statement transformations, see <xref href="ctuntransform13966.dita#ctuntransform13966"/>.</p></li>
+</ul></p>
+</conbody></concept>

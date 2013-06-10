@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE concept PUBLIC "-//IBM//DTD DITA Concept//EN"
+ "../../dtd/concept.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<concept id="cadminspace21579" xml:lang="pt-br">
+<title>Recuperação do espaço não utilizado</title>
+<shortdesc>As tabelas e índices do
+<ph conref="adminconrefs.dita#prod/productshortname"></ph>
+(algumas vezes chamados de <i>conglomerados</i>) podem conter espaço não
+utilizado, depois de grandes quantidades de dados terem sido excluídas ou
+atualizadas.</shortdesc>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Compressão de tabelas e índices</indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>Isto acontece porque, por padrão, o
+<ph conref="adminconrefs.dita#prod/productshortname"></ph>
+não devolve o espaço não utilizado para o sistema operacional.
+Após a página ter sido alocada para uma tabela ou um índice, o
+<ph conref="adminconrefs.dita#prod/productshortname"></ph>
+não devolve automaticamente a página para o sistema operacional até que a
+tabela ou ou índice seja removido, mesmo que o espaço não seja mais necessário.
+Entretanto, o <ph conref="adminconrefs.dita#prod/productshortname"></ph>
+fornece um mecanismo para recuperar o espaço não utilizado nas tabelas e nos
+seus índices associados.</p>
+<p>Se for determinado que a tabela e seus índices possuem uma quantidade
+significativa de espaço não utilizado, deverá ser utilizado o procedimento
+SYSCS_UTIL.SYSCS_COMPRESS_TABLE, ou o procedimento
+SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE,
+para recuperar o espaço não utilizado.
+O procedimento SYSCS_COMPRESS_TABLE garante recuperar a quantidade máxima de
+espaço livre, às custas de criar temporariamente novas tabelas e índices antes
+do procedimento ser efetivado.
+O procedimento SYSCS_INPLACE_COMPRESS tenta recuperar o espaço dentro da mesma
+tabela, mas não pode garantir que irá recuperar todo o espaço disponível.
+A diferença entre estes procedimentos é que, diferentemente de
+SYSCS_COMPRESS_TABLE, o procedimento SYSCS_INPLACE_COMPRESS não utiliza arquivos
+temporários, e move linhas dentro do mesmo conglomerado.</p>
+<example>
+<p>Como exemplo, após determinar que a tabela VÔOS_DISPONIBILIDADE e seus
+índices relacionados possuem muito espaço não utilizado, este espaço poderá ser
+recuperado através do seguinte comando:</p>
+<codeblock>call SYSCS_UTIL.SYSCS_COMPRESS_TABLE('APP', 'VÔOS_DISPONIBILIDADE', 0);</codeblock>
+<p>O terceiro parâmetro no procedimento SYSCS_UTIL.SYSCS_COMPRESS_TABLE()
+determina se a operação será executada em modo seqüencial ou não seqüencial.
+Se for especificado <codeph>0</codeph> para o terceiro argumento do procedimento,
+a operação executará no modo não seqüencial.
+No modo seqüencial, o <ph conref="adminconrefs.dita#prod/productshortname"></ph>
+comprime a tabela e seus índices seqüencialmente, um de cada vez.
+A compressão seqüencial utiliza menos memória e espaço em disco, mas é mais
+lenta.
+Para forçar a operação executar no modo seqüencial, deverá ser colocado um
+valor diferente de zero do terceiro argumento.
+O exemplo a seguir mostra como forçar o procedimento a executar no modo
+seqüencial:</p>
+<codeblock>call SYSCS_UTIL.SYSCS_COMPRESS_TABLE('APP', 'VÔOS_DISPONIBILIDADE', 1);</codeblock>
+</example>
+<section>Para obter mais informações sobre este comando, deve ser consultado o
+<cite><ph conref="adminconrefs.dita#pub/citref"></ph></cite>.</section>
+</conbody>
+</concept>

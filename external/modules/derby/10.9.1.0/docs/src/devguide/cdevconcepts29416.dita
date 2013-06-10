@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevconcepts29416" xml:lang="en-us">
+<title>Using auto-commit</title>
+<shortdesc>A new connection to a <ph conref="../conrefs.dita#prod/productshortname"></ph> database
+is in auto-commit mode by default, as specified by the JDBC standard.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Auto-commit<indexterm>using</indexterm></indexterm></keywords>
+</metadata></prolog>
+<conbody>
+<p>Auto-commit mode means that when a statement is completed, the method <i>commit</i> is
+called on that statement automatically. Auto-commit in effect makes every
+SQL statement a transaction. The commit occurs when the statement completes
+or the next statement is executed, whichever comes first. In the case of a
+statement returning a forward only <codeph><i>ResultSet</i></codeph>, the statement completes
+when the last row of the <codeph><i>ResultSet</i></codeph> has been retrieved
+or the <codeph><i>ResultSet</i></codeph> has been closed explicitly. In the case
+of a statement returning a scrollable <codeph><i>ResultSet</i></codeph>, the
+statement completes only when the <codeph><i>ResultSet</i></codeph> has been
+closed explicitly.</p>
+<p>Some applications might prefer to work with <ph conref="../conrefs.dita#prod/productshortname"></ph> in
+auto-commit mode; some might prefer to work with auto-commit turned off. You
+should be aware of the implications of using either model.</p>
+<p>You should be aware of the following when you use auto-commit:</p>
+<ul>
+<li><i>Cursors</i>   <p>You cannot use auto-commit if you do any positioned
+updates or deletes (that is, an update or delete statement with a WHERE CURRENT
+OF clause) on cursors which have the
+<codeph><i>ResultSet.CLOSE_CURSORS_AT_COMMIT</i></codeph> holdability value
+set.</p><p>Auto-commit automatically closes cursors that are
+explicitly opened with the
+<codeph><i>ResultSet.CLOSE_CURSORS_AT_COMMIT</i></codeph> value, when you do any
+in-place updates or deletes.</p><p>An updatable cursor declared to be held
+across commit (this is the default value) can execute updates and issue multiple
+commits before closing the cursor. After an explicit or implicit commit, a
+holdable forward-only cursor must be repositioned with a call to the
+<codeph><i>next</i></codeph> method before it can accessed again. In this state,
+the only other valid operation besides calling <codeph><i>next</i></codeph> is
+calling <codeph><i>close</i></codeph>.</p></li>
+<li><i>Database-side JDBC routines (routines using nested connections)</i> 
+<p>You cannot execute functions within SQL statements if those functions
+perform a commit or rollback on the current connection. Since in auto-commit
+mode all SQL statements are implicitly committed, <ph conref="../conrefs.dita#prod/productshortname"></ph> turns
+off auto-commit during execution of database-side routines and turns it
+back on when the statement completes.</p><p>Routines that use nested connections
+are not permitted to turn auto-commit on or off.</p></li>
+<li><i>Table-level locking and the SERIALIZABLE isolation level</i>   <p>When
+an application uses table-level locking and the SERIALIZABLE isolation level,
+all statements that access tables hold at least shared table locks. Shared
+locks prevent other transactions that update data from accessing the table.
+A transaction holds a lock on a table until the transaction commits. <i>So
+even a SELECT statement holds a shared lock on a table until its connection
+commits and a new transaction begins. </i></p></li>
+</ul>
+<p>The following table summarizes how applications behave with auto-commit on
+or off.</p>
+<table frame="all">
+<title>Application behavior with auto-commit on or off</title>
+<desc>This table lists several kinds of applicaton behavior and shows what happens with auto-commit on and with auto-commit off.</desc>
+<tgroup cols="3" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="40*"/>
+<colspec colname="2" colnum="2" colwidth="30*"/>
+<colspec colname="3" colnum="3" colwidth="30*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Topic</entry>
+<entry colname="2">Auto-Commit On</entry>
+<entry colname="3">Auto-Commit Off</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">Transactions</entry>
+<entry colname="2">Each statement is a separate transaction.</entry>
+<entry colname="3">Commit() or rollback() completes a transaction.</entry>
+</row>
+<row>
+<entry colname="1">Database-side JDBC routines (routines that use nested connections)</entry>
+<entry colname="2">Auto-commit is turned off.</entry>
+<entry colname="3">Works (no explicit commits or rollbacks are allowed).</entry>
+</row>
+<row>
+<entry colname="1">Updatable cursors</entry>
+<entry colname="2">Works for holdable cursors; does not work for non-holdable cursors.</entry>
+<entry colname="3">Works.</entry>
+</row>
+<row>
+<entry colname="1">Multiple connections accessing the same data</entry>
+<entry colname="2">Works.</entry>
+<entry colname="3">Works. Lower concurrency when applications use SERIALIZABLE
+isolation mode and table-level locking.</entry>
+</row>
+<row>
+<entry colname="1">Updatable ResultSets</entry>
+<entry colname="2">Works.</entry>
+<entry colname="3">Works.</entry>
+</row>
+<row>
+<entry colname="1">Savepoints</entry>
+<entry colname="2">Does not work.</entry>
+<entry colname="3">Works.</entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+</conbody>
+</concept>

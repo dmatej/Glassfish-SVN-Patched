@@ -1,0 +1,49 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj33520" xml:lang="ja">
+<title>MIN関数</title>
+<prolog><metadata>
+<keywords><indexterm>MIN aggregate function</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>MINは集約関数で、全行に渡る式の最小値を求めます。
+(<xref href="rrefsqlj33923.dita#rrefsqlj33923"></xref>を参照してください。)
+MINは組み込みのデータ型に対してのみ適用可能です。(これにはCHAR、VARCHAR、DATE、TIME等が含まれます。)</p></section>
+<refsyn><title>構文</title> <codeblock><b>MIN ( [ DISTINCT | ALL ] <i>式</i> )</b></codeblock> 
+<p>
+DISTINCTとALLという限定詞には、重複を取り除いたり、重複を残す働きがあります。しかしこれらの限定詞はMIN式では効果がありません。
+<i><xref href="rrefselectexpression.dita#rrefselectexpression">選択式</xref></i>には限定詞は唯一つしか書くことができません。
+例えば次の問合せは許されません。<codeblock><b>SELECT COUNT (DISTINCT flying_time), MIN (DISTINCT miles)
+FROM Flights</b></codeblock></p> 
+<p>この<i>式</i>には複数の列への参照や式を書くことができます。しかし、副問合せや他の集約を書くことはできません。
+式は組込みのデータ型として評価されなければならず、従ってメソッドを呼ぶなら組込みのデータ型に評価されなければなりません。(例えば、<i>java.lang.Integer</i>や<i>int</i>を返すメソッドであるなら、INTEGERと評価されます。)もし式がNULLと評価されるのであれば、その値は集約にて無視されます。</p> 
+<p>型により最小値を決める規則は異なります。CHAR、VARCHARでは、MINの評価結果は値の末尾にある空白文字数に影響されます。
+例えば'z'と'z 'が列に記録されていたとして、どちらの値が最小値として返されるかを決める方法はありません。なぜならば文字列の比較にて空白文字は無視されるからです。</p> 
+<p>結果のデータ型は処理する式のデータ型と同じです。(オーバーフローすることはありません。)</p> </refsyn>
+<example> <codeblock><b><ph>-- 有効ではありません。</ph>
+SELECT DISTINCT flying_time, MIN(DISTINCT miles) from Flights
+<ph>-- 有効です。</ph>
+SELECT COUNT(DISTINCT flying_time), MIN(DISTINCT miles) from Flights
+<ph>-- 最も若い日付を探します。</ph>
+SELECT MIN (flight_date) FROM FlightAvailability;</b></codeblock> </example>
+</refbody>
+</reference>
+

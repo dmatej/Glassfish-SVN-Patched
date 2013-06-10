@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefaltertablecompress" xml:lang="en-us">
+<title>SYSCS_UTIL.SYSCS_COMPRESS_TABLE system procedure</title>
+<prolog><metadata>
+<keywords><indexterm>compressing tables</indexterm><indexterm>system procedures<indexterm>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>Use the <codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</codeph> system
+procedure to reclaim unused, allocated space in a table and its indexes. Typically,
+unused allocated space exists when a large amount of data is deleted from
+a table, or indexes are updated. By default, <ph conref="../conrefs.dita#prod/productshortname"></ph> does
+not return unused space to the operating system. For example, once a page
+has been allocated to a table or index, it is not automatically returned to
+the operating system until the table or index is destroyed. <codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</codeph> allows
+you to return unused space to the operating system.</p><p>The <codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</codeph> system
+procedure updates statistics on all indexes as part of the index rebuilding
+process.</p></section>
+<section><title>Syntax</title> <codeblock><b>SYSCS_UTIL.SYSCS_COMPRESS_TABLE (IN SCHEMANAME VARCHAR(128), 
+IN TABLENAME VARCHAR(128), IN SEQUENTIAL SMALLINT)</b></codeblock> <dl><dlentry>
+<dt>SCHEMANAME</dt>
+<dd>An input argument of type VARCHAR(128) that specifies the schema of the
+table. Passing a null will result in an error. </dd>
+</dlentry><dlentry>
+<dt>TABLENAME</dt>
+<dd>An input argument of type VARCHAR(128) that specifies the table name of
+the table. The string must exactly match the case of the table name, and the
+argument of "Fred" will be passed to SQL as the delimited identifier 'Fred'.
+ Passing a null will result in an error.</dd>
+</dlentry><dlentry>
+<dt>SEQUENTIAL</dt>
+<dd>A non-zero input argument of type SMALLINT will force the operation to
+run in sequential mode, while an argument of 0 will force the operation not
+to run in sequential mode. Passing a null will result in an error.</dd>
+</dlentry></dl></section>
+<section><title>Execute privileges</title>
+<p>If authentication and SQL authorization are both enabled, all users have
+execute privileges on this procedure. However, in order for the procedure to run
+successfully on a given table, the user must be the owner of either the
+<xref href="rrefattrib26867.dita#rrefattrib26867">database</xref> or the
+schema in which the table resides. See "Enabling user authentication" and
+"Setting the SQL standard authorization mode" in the
+<ph conref="../conrefs.dita#pub/citdevelop"></ph> for more information.</p>
+</section>
+<section><title>SQL example</title> <p>To compress a table called CUSTOMER
+in a schema called US, using the SEQUENTIAL option:</p> <codeblock><b>call SYSCS_UTIL.SYSCS_COMPRESS_TABLE('US', 'CUSTOMER', 1)</b></codeblock></section>
+<section><title>Java example</title> <p>To compress a table called CUSTOMER
+in a schema called US, using the SEQUENTIAL option:</p> <codeblock>CallableStatement cs = conn.prepareCall
+("CALL SYSCS_UTIL.SYSCS_COMPRESS_TABLE(?, ?, ?)");
+cs.setString(1, "US");
+cs.setString(2, "CUSTOMER");
+cs.setShort(3, (short) 1);
+cs.execute();</codeblock></section>
+<section><p>If the SEQUENTIAL parameter is not specified, <ph conref="../conrefs.dita#prod/productshortname"></ph> rebuilds
+all indexes concurrently with the base table. If you do not specify the SEQUENTIAL
+argument, this procedure can be memory-intensive and use a lot of temporary
+disk space (an amount equal to approximately two times the used space plus
+the unused, allocated space). This is because <ph conref="../conrefs.dita#prod/productshortname"></ph> compresses
+the table by copying active rows to newly allocated space (as opposed to shuffling
+and truncating the existing space). The extra space used is returned to the
+operating system on COMMIT.</p></section>
+<section><p>When SEQUENTIAL is specified, <ph conref="../conrefs.dita#prod/productshortname"></ph> compresses
+the base table and then compresses each index sequentially. Using SEQUENTIAL
+uses less memory and disk space, but is more time-intensive. Use the SEQUENTIAL
+argument to reduce memory and disk space usage. </p></section>
+<section><p><codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</codeph> cannot release
+any permanent disk space back to the operating system until a COMMIT is issued.
+This means that the space occupied by both the base table and its indexes
+cannot be released. Only the disk space that is temporarily claimed by an
+external sort can be returned to the operating system prior to a COMMIT. <note
+type="tip">We recommend that you issue the <codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</codeph> system
+procedure in the auto-commit mode. </note></p><note>This procedure acquires
+an exclusive table lock on the table being compressed. All statement plans
+dependent on the table or its indexes are invalidated. For information on
+identifying unused space, see the <cite><ph conref="../conrefs.dita#pub/citadmin"></ph></cite>.</note></section>
+</refbody>
+</reference>

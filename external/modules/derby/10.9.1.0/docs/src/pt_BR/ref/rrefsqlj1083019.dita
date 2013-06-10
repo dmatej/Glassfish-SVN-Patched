@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<reference id="rrefsqlj1083019" xml:lang="pt-br">
+<title>Onde são permitidos parâmetros dinâmicos</title>
+<refbody>
+<section>
+<p>Os parâmetros dinâmicos podem ser utilizados em qualquer lugar da expressão
+onde seu tipo de dado pode ser facilmente deduzido.
+<ol>
+<li>É permitido o uso como primeiro operando do BETWEEN, se o segundo ou o
+terceiro operando não for um parâmetro dinâmico.
+O tipo de dado do primeiro operando é assumido como sendo o tipo de dado do
+parâmetro que não é dinâmico, ou o resultado da união dos tipos do segundo e do
+terceiro operandos, se estes dois não forem parâmetros dinâmicos.
+<codeblock><b>WHERE ? BETWEEN DATE('1996-01-01') AND ?
+<ph>-- tipos assumidos como sendo DATE</ph></b>
+</codeblock></li>
+<li>É permitido o uso como segundo ou terceiro operando do BETWEEN.
+O tipo de dado é assumido como sendo o tipo de dado do operando à esquerda.
+<codeblock><b>WHERE DATE('1996-01-01') BETWEEN ? AND ?
+<ph>-- tipos assumidos como sendo DATE</ph></b>
+</codeblock></li>
+<li id="sqlj30695">É permitido o uso como operando à esquerda da lista IN
+se pelo menos um item da lista não for um parâmetro dinâmico.
+O tipo de dado do operando à esquerda é assumido como sendo o resultado da
+união dos tipos de dado dos parâmetros não dinâmicos da lista.
+<codeblock><b>WHERE ? NOT IN (?, ?, 'Santiago')
+<ph>-- tipos assumidos como sendo CHAR</ph></b>
+</codeblock></li>
+<li>É permitido o uso na lista de valores do predicado IN, se o primeiro
+operando não for um parâmetro dinâmico, ou seu tipo foi determinado pela
+regra anterior.
+O tipo dos parâmetros dinâmicos que aparecem na lista de valores é assumido
+como sendo o tipo do operando à esquerda.
+<codeblock><b>WHERE <b><i>ColunaPontoFlutuante</i></b> IN (?, ?, ?)
+<ph>-- tipos assumidos como sendo FLOAT</ph></b>
+</codeblock></li>
+<li id="sqlj18960">Para os operadores binários +, -, *, /, AND, OR, &lt;, &gt;,
+=, &lt;&gt;, &lt;= e &gt;=, é permitido o uso do parâmetro dinâmico como um
+dos operandos, mas não os dois.
+Seu tipo de dado é obtido a partir do tipo do outro lado.
+<codeblock><b>WHERE ? &lt; CURRENT_TIMESTAMP
+<ph>-- tipo assumido como sendo TIMESTAMP</ph></b>
+</codeblock></li>
+<li>A utilização em CAST é sempre permitida, porque CAST fornece tipo de dado
+ao parâmetro dinâmico.
+<codeblock><b>CALL valueOf(CAST (? AS VARCHAR(10)))</b>
+</codeblock></li>
+<li>É permitido o uso nos dois lados do operador LIKE.
+Quando utilizado no lado esquerdo, o tipo de dado do parâmetro dinâmico é
+definido como sendo o tipo de dado do operando à direita, mas com o comprimento
+máximo permitido para o tipo de dado.
+Quando utilizado no lado direito, o tipo de dado é assumido como sendo do
+mesmo comprimento e tipo de dado do operando à esquerda
+(LIKE é permitido nos tipos de dado CHAR e VARCHAR;
+para obter mais informações deve ser consultado
+<xref href="rrefsqlj40899.dita#rrefsqlj40899"></xref>).
+<codeblock><b>WHERE ? LIKE 'Santi%'
+<ph>-- tipo assumido como sendo CHAR com comprimento igual a
+-- java.lang.Integer.MAX_VALUE</ph></b>
+</codeblock></li>
+<li>O parâmetro ?, sem mais nada, é permitido em apenas um dos lados do operador
+||, ou seja, "? || ?" não é permitido.
+O tipo do parâmetro ? de um dos lados do operador || é determinado pelo tipo
+da expressão do outro lado do operador ||.
+Se a expressão do outro lado for do tipo de dado CHAR ou VARCHAR, o tipo do
+parâmetro será VARCHAR com o comprimento máximo permitido para o tipo de dado.
+Se a expressão do outro lado for do tipo de dado CHAR FOR BIT DATA ou
+VARCHAR FOR BIT DATA, o tipo de dado do parâmetro será VARCHAR FOR BIT DATA
+com o comprimento máximo permitido para o tipo de dado.
+<codeblock><b>SELECT coluna_bit || ?
+FROM tabela_usuario
+<ph>-- tipo assumido como sendo CHAR FOR BIT DATA
+-- com o comprimento especificado para coluna_bit</ph></b>
+</codeblock></li>
+<li><indexterm>? (parâmetro dinâmico)<indexterm>usado em expressão condicional</indexterm></indexterm>
+Em uma expressão condicional, que utiliza ?, também é permitida a utilização
+do parâmetro dinâmico (que também é representado por ?).
+O tipo do parâmetro dinâmico como primeiro operando é assumido como sendo
+booleano.
+Com relação ao segundo e terceiro operandos, somente um dos dois pode ser um
+parâmetro dinâmico, e seu tipo é assumido como sendo o mesmo do outro operando
+(ou seja, o terceiro e segundo operando, respectivamente).
+ <codeblock><b>SELECT c1 IS NULL ? ? : c1
+<ph>-- permite especificar o valor "padrão" em tempo de execução
+-- o parâmetro dinâmico é assumido como tendo o tipo de c1
+-- não podem haver parâmetros dinâmicos dos dois lados dos :</ph></b>
+</codeblock></li>
+<li>É permitido usar parâmetro dinâmico como item da lista de valores ou da
+lista de seleção da instrução INSERT.
+O tipo do parâmetro dinâmico é assumido como sendo o tipo da coluna de destino.
+O parâmetro ?, sem mais nada, não é permitido na lista de seleção, inclusive na
+lista de seleção da subconsulta, a menos que exista uma coluna correspondente
+em UNION, INTERSECT ou EXCEPT
+(consulte o nº
+<xref href="rrefsqlj1083019.dita#rrefsqlj1083019/sqlj20756">16</xref>, abaixo)
+que não seja dinâmica.
+<codeblock><b>INSERT INTO t VALUES (?)
+<ph>-- o parâmetro dinâmico é assumido como sendo
+-- do tipo da única coluna da tabela t</ph>
+INSERT INTO t SELECT ?
+FROM t2
+<ph>-- não é permitido</ph></b>
+</codeblock></li>
+<li>O parâmetro ? na comparação com uma subconsulta recebe seu tipo a partir
+da expressão sendo selecionada na subconsulta. Por exemplo:
+<codeblock><b>SELECT *
+FROM tab1
+WHERE ? = (SELECT x FROM tab2)
+
+SELECT *
+FROM tab1
+WHERE ? = ANY (SELECT x FROM tab2)
+<ph>-- Nos dois casos, o tipo do parâmetro dinâmico é
+-- assumido como sendo o mesmo tipo de tab2.x.</ph></b>
+</codeblock></li>
+<li>É permitido usar parâmetro dinâmico como o valor em uma instrução UPDATE.
+O tipo do parâmetro dinâmico é assumido como sendo o tipo da coluna na tabela
+de destino.
+<codeblock><b>UPDATE t2 SET c2 =? <ph>-- o tipo é assumido como sendo o tipo de c2</ph></b>
+</codeblock></li>
+<li>Não é permitido parâmetro dinâmico como operando dos operadores unários
+- e +.</li>
+<li>LENGTH permite parâmetro dinâmico.
+O tipo é assumido como sendo o comprimento máximo do tipo VARCHAR.
+<codeblock><b>SELECT LENGTH(?)</b>
+</codeblock></li>
+<li>Comparações qualificadas.
+<codeblock><b>? = SOME (SELECT 1 FROM t)
+<ph>-- é válido. O parâmetro dinâmico é assumido como sendo do tipo INTEGER</ph>
+1 = SOME (SELECT ? FROM t)
+<ph>-- é válido. O parâmetro dinâmico é assumido como sendo do tipo INTEGER</ph></b>
+</codeblock></li>
+<li id="sqlj20756">É permitido usar parâmetro dinâmico para representar uma
+coluna se aparecer em uma expressão UNION, INTERSECT ou EXCEPT;
+O <ph conref="refconrefs.dita#prod/productshortname"></ph> pode inferir
+o tipo de dado a partir da coluna correspondente na expressão.
+<codeblock><b>SELECT ?
+FROM t
+UNION SELECT 1
+FROM t
+<ph>-- o parâmetro dinâmico é assumido como sendo INT</ph>
+VALUES 1 UNION VALUES ?
+<ph>-- o parâmetro dinâmico é assumido como sendo INT</ph></b>
+</codeblock>
+</li>
+<li>É permitido parâmetro dinâmico como operando à esquerda de uma expressão IS,
+sendo assumido como booleano.</li>
+</ol></p>
+</section>
+<section>
+<p>Uma vez que o tipo de dado do parâmetro dinâmico tenha sido
+determinado baseado na expressão onde se encontra, esta expressão pode estar
+em qualquer lugar onde normalmente seria permitida se não incluísse o
+parâmetro dinâmico.
+Por exemplo, acima foi dito que o parâmetro dinâmico não poderia ser utilizado
+como operando do - unário.
+Entretanto, pode aparecer em expressões que são operandos do menos unário, como:
+<codeblock><b>- (1+?)</b>
+</codeblock>
+</p>
+</section>
+<section>
+<p>O parâmetro dinâmico é assumido como sendo do tipo INTEGER
+(porque o outro operando operador binário + é do tipo INT).
+Como se sabe seu tipo, é permitido como operando do - unário.</p>
+</section>
+</refbody>
+</reference>

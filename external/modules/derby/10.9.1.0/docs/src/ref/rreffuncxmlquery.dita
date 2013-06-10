@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either XMLEXISTSress or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rreffuncxmlquery" xml:lang="en-us">
+<title>XMLQUERY operator</title>
+<shortdesc>XMLQUERY is a SQL/XML operator that you can use to query XML values
+in SQL.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>XMLQUERY operator</indexterm><indexterm>operators<indexterm>XMLQUERY</indexterm></indexterm>
+<indexterm>XML<indexterm>operators, XMLQUERY</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>The XMLQUERY operator has two arguments, an XML query expression
+and a <ph conref="../conrefs.dita#prod/productshortname"></ph> XML value.</p></section>
+<refsyn><title>Syntax</title><codeblock><b>XMLQUERY ( <varname>xquery-string-literal</varname>
+    PASSING BY REF <varname>xml-value-expression</varname> 
+    [ RETURNING SEQUENCE [ BY REF ] ]
+    EMPTY ON EMPTY
+    )</b></codeblock><dl><dlentry>
+<dt><codeph>xquery-string-literal</codeph></dt>
+<dd>Must be specified as a string literal. If this argument is specified as
+a parameter, an expression that is not a literal, or a literal that is not
+a string (for example an integer),<ph conref="../conrefs.dita#prod/productshortname"></ph> throws
+an error. The <codeph>xquery-string-literal</codeph> argument must also be
+an XPath expression that is supported by Apache Xalan. <ph conref="../conrefs.dita#prod/productshortname"></ph> uses
+Apache Xalan to evaluate all XML query expressions. Because Xalan does not
+support full XQuery, neither does <ph conref="../conrefs.dita#prod/productshortname"></ph>.
+If Xalan is unable to compile or execute the query argument, <ph conref="../conrefs.dita#prod/productshortname"></ph> catches
+the error that is thrown by Xalan and throws the error as a SQLException.
+For more on XPath and XQuery expressions, see these Web sites: <xref format="html"
+href="http://www.w3.org/TR/xpath">http://www.w3.org/TR/xpath</xref> and <xref
+format="html" href="http://www.w3.org/TR/xquery/">http://www.w3.org/TR/xquery/</xref>.</dd>
+</dlentry><dlentry>
+<dt><codeph>xml-value-expression</codeph></dt>
+<dd>Must be an XML data value and must constitute a well-formed SQL/XML document.
+The <codeph>xml-value-expression</codeph> argument cannot be a parameter.
+ <ph conref="../conrefs.dita#prod/productshortname"></ph> does not perform
+implicit parsing nor casting of XML values, so use of strings or any other
+data type results in an error.  If the argument is a sequence that is returned
+by a <ph conref="../conrefs.dita#prod/productshortname"></ph> XMLQUERY operation,
+the argument is accepted if it is a sequence of exactly one node that is a
+document node. Otherwise <ph conref="../conrefs.dita#prod/productshortname"></ph> throws
+an error. </dd>
+</dlentry><dlentry>
+<dt>BY REF</dt>
+<dd>Optional keywords that describe the only value passing mechanism supported
+by <ph conref="../conrefs.dita#prod/productshortname"></ph>. Since BY REF
+is also the default passing mechanism, the XMLQUERY operator behaves the same
+whether the keywords are present or not. For more information on passing mechanisms,
+see the SQL/XML specification.</dd>
+</dlentry><dlentry>
+<dt>RETURNING SEQUENCE</dt>
+<dd>Optional keywords that describe the only XML type returned by the <ph
+conref="../conrefs.dita#prod/productshortname"></ph> XMLQUERY operator. Since
+SEQUENCE is also the default return type, the XMLQUERY operator behaves the
+same whether the keywords are present or not. For more information on the
+different XML return types, see the SQL/XML specification.</dd>
+</dlentry><dlentry>
+<dt>EMPTY ON EMPTY</dt>
+<dd>Required keywords that describe the way in which XMLQUERY handles an empty
+result sequence. The XMLQUERY operator returns an empty sequence exactly as
+the sequence is.  The XMLQUERY operator does not convert the empty sequence
+to a null value.  When an empty result sequence is serialized, the result
+is an empty string. <ph conref="../conrefs.dita#prod/productshortname"></ph> does
+not consider an empty result sequence to be a well-formed XML document.</dd>
+</dlentry></dl><p>The result of the XMLQUERY operator is a value of type XML.
+The result represents a sequence of XML nodes or values. Atomic values, such
+as strings, can be part of the result sequence. The result of an XMLQUERY
+operator is not guaranteed to represent a well-formed XML document and it
+might not be possible to insert the result of an XMLQUERY operator into an
+XML column. To store the result in an XML column, the result must be a sequence
+with exactly one item in the sequence and the item must be a well-formed document
+node. The result can be viewed only in serialized form by explicitly using
+the <xref href="rreffuncxmlserialize.dita#rreffuncxmlserialize"></xref>. </p></refsyn>
+<section><title>Examples</title><p>In the <codeph>x_table</codeph> table,
+to search the XML column <codeph>xcol</codeph> and return the students that
+have an age attribute that is greater than 20, use the following statement:<codeblock>SELECT ID,
+    XMLSERIALIZE(
+        XMLQUERY('<varname>//student[@age>20]</varname>' PASSING BY REF <varname>xcol</varname> EMPTY ON EMPTY)
+    AS VARCHAR(50))
+FROM <varname>x_table</varname>
+
+</codeblock>The result set for this query contains a row for every row in <codeph>x_table</codeph>,
+regardless of whether or not the XMLQUERY operator actually returns results.</p><p>In
+the <codeph>x_table</codeph> table, to search the XML column <codeph>xcol</codeph> and
+return the ages for any students named BC, use the following statement:<codeblock>SELECT ID, 
+    XMLSERIALIZE(
+        XMLQUERY('<varname>string(//student[text() = "BC"]/@age</varname>)' PASSING BY REF <varname>xcol</varname> EMPTY ON EMPTY)
+    AS VARCHAR(50))
+FROM <varname>x_table</varname>
+WHERE
+    XMLEXISTS('<varname>//student[text() = "BC"]</varname>' PASSING BY REF <varname>xcol</varname>)
+</codeblock> The result set for this query contains a row for only the rows
+in <codeph>x_table</codeph> that have a student whose name is BC.</p></section>
+<section><title>Usage note</title><p><ph conref="../conrefs.dita#prod/productshortname"></ph> requires
+that a JAXP parser (such as Apache Xerces) and Apache Xalan are listed
+in the Java classpath for the XML functions to work.  If either the JAXP parser
+or Xalan is missing from the classpath,  attempts to use the XMLQUERY operator
+will result in an error. In some situations, you may need to take steps to place
+the parser and Xalan in your classpath. See "XML data types and operators" in
+the <ph conref="../conrefs.dita#pub/citdevelop"></ph> for details.</p></section>
+</refbody>
+</reference>

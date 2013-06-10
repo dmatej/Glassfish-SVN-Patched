@@ -1,0 +1,336 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<project name="derby.docs" default="usage" basedir=".">
+  <property file="${basedir}/docs.properties"/>
+
+  <target name="usage">
+    <echo message="For pdf output, run &quot;ant pdf&quot;"/>
+    <echo message="For html output with frames, run &quot;ant html&quot;"/>
+    <echo message="For output in all formats in all idioms, run &quot;ant all&quot;"/>
+    <echo message="For Brazilian Portuguese output, run &quot;ant pt_BR.usage&quot;"/>
+  </target>
+
+  <target name="all" depends="html,pdf,pt_BR,ja_JP"/>
+
+  <!-- targets that build all formats of each manual. -->
+  <target name="adminguide" depends="init,html.adminguide,pdf.adminguide"/>
+  <target name="devguide" depends="init,html.devguide,pdf.devguide"/>
+  <target name="getstart" depends="init,html.getstart,pdf.getstart"/>
+  <target name="ref" depends="init,html.ref,pdf.ref"/>
+  <target name="tools" depends="init,html.tools,pdf.tools"/>
+  <target name="tuning" depends="init,html.tuning,pdf.tuning"/>
+
+  <target name="html" depends="init,html.getstart,html.tools,html.devguide,html.adminguide,html.ref,html.tuning"/>
+
+  <target name="init" depends="check.dita,unpack.dita">
+    <available classname="org.apache.fop.tools.anttasks.Fop"
+               property="hasFOP"/>
+    <copy todir="${basedir}/src/dtd">
+      <fileset dir="${dita.dtd.dir}"/>
+    </copy>
+    <copy file="${dita.lib.dir}/dita2fo-shell.xsl" todir="${dita.dir}/xsl"/>
+    <copy file="${dita.lib.dir}/topicmerge.xsl" todir="${dita.dir}/xsl"/>
+    <copy file="${dita.lib.dir}/topic2fo-shell.xsl" todir="${dita.dir}/xsl"/>
+    <copy file="${dita.lib.dir}/dita2fo-titles.xsl" todir="${dita.dir}/xsl/xslfo"/>
+    <copy file="${dita.lib.dir}/dita2fo-elems.xsl" todir="${dita.dir}/xsl/xslfo"/>
+    <copy file="${dita.lib.dir}/topic2foImpl.xsl" todir="${dita.dir}/xsl/xslfo"/>
+    <copy file="${dita.lib.dir}/domains2fo.xsl" todir="${dita.dir}/xsl/xslfo"/>
+    <copy file="${dita.lib.dir}/dita2fo-links.xsl" todir="${dita.dir}/xsl/xslfo"/>
+    <copy file="${dita.lib.dir}/dita2fo-subroutines.xsl" todir="${dita.dir}/xsl/xslfo"/>
+    <copy file="${dita.lib.dir}/index.html" todir="${dita.dir}/resource"/>
+    <copy file="${dita.lib.dir}/dita2htmlImpl.xsl" todir="${dita.dir}/xsl/xslhtml" overwrite="true"/>
+    <copy file="${dita.lib.dir}/map2htmtoc.xsl" todir="${dita.dir}/xsl" overwrite="true"/>
+    <mkdir dir="${dita.temp.dir}"/>
+    <copy todir="${dita.output.dir}/images">
+      <fileset dir="${dita.src.dir}/images"/>
+    </copy>
+  </target>
+
+  <target name="check.dita">
+    <available file="${dita.dir}" property="dita.available"/>
+  </target>
+
+  <target name="unpack.dita" unless="dita.available">
+    <unjar src="${dita.zip}" dest="${basedir}"/>
+  </target>
+ 
+ <target name="html.getstart" depends="init">
+    <antcall target="html.dita">
+      <param name="manual.name" value="getstart"/>
+      <param name="manual.ditamap" value="getstartderby.ditamap"/>
+      <param name="manual.title" value="Getting Started with Derby"/>
+    </antcall>
+  </target>
+
+  <target name="html.tools" depends="init">
+    <antcall target="html.dita">
+      <param name="manual.name" value="tools"/>
+      <param name="manual.ditamap" value="derbytools.ditamap"/>
+      <param name="manual.title" value="Derby Tools and Utilities Guide"/>
+    </antcall>
+  </target>
+
+  <target name="html.adminguide" depends="init">
+    <antcall target="html.dita">
+      <param name="manual.name" value="adminguide"/>
+      <param name="manual.ditamap" value="derbyadmin.ditamap"/>
+      <param name="manual.title" value="Derby Server and Administration Guide"/>
+    </antcall>
+  </target>
+
+  <target name="html.devguide" depends="init">
+    <antcall target="html.dita">
+      <param name="manual.name" value="devguide"/>
+      <param name="manual.ditamap" value="derbydev.ditamap"/>
+      <param name="manual.title" value="Derby Developer's Guide"/>
+    </antcall>
+  </target>
+
+  <!-- the ref guide has cross-references to the dev guide, so the dev guide must be preprocessed first -->
+  <target name="html.ref" depends="init,preprocess-devguide">
+    <antcall target="html.dita">
+      <param name="manual.name" value="ref"/>
+      <param name="manual.ditamap" value="refderby.ditamap"/>
+      <param name="manual.title" value="Derby Reference Manual"/>
+    </antcall>
+  </target>
+
+  <target name="html.tuning" depends="init">
+    <antcall target="html.dita">
+      <param name="manual.name" value="tuning"/>
+      <param name="manual.ditamap" value="tuningderby.ditamap"/>
+      <param name="manual.title" value="Tuning Derby"/>
+    </antcall>
+  </target>
+
+  <target name="html.dita">
+    <!-- replace tokens with release variables -->
+    <antcall target="preprocess"/>
+
+    <!-- build to temp directory, then move the files over to the correct -->
+    <!-- directory name, prepending the Apache License as we go.          -->
+    <mkdir dir="${dita.dir}/temp"/>
+    <mkdir dir="${basedir}/out/${manual.name}temp"/>
+    <!-- DERBY-4999: Must specify encoding when filter-copying files,
+         otherwise files may be garbled if the default encoding isn't
+         the same as the encoding actually used in the file. Assume
+         all files are UTF-8. -->
+    <copy encoding="UTF-8" todir="${basedir}/out/${manual.name}temp">
+      <fileset dir="${dita.dir}/resource"
+               includes="index.html,*.css"/>
+      <filterchain>
+        <tokenfilter>
+          <replaceregex pattern="Web Sample" replace="${manual.title}"/>
+          <replaceregex pattern="SAMPLE" replace="${manual.name}"/>
+        </tokenfilter>
+      </filterchain>
+    </copy>
+			
+    <ant dir="${dita.dir}" antfile="conductor.xml" target="dita2xhtml" inheritAll="true">
+      <property name="args.input" value="${temp.source}${file.separator}${manual.name}${file.separator}${manual.ditamap}"/>
+      <property name="output.dir" value="${basedir}${file.separator}out${file.separator}${manual.name}temp"/>
+      <property name="args.xhtml.toc" value="toc"/>
+    </ant>
+    <!-- move any remaining files over -->
+    <move todir="${basedir}/out/${manual.name}">
+      <fileset dir="${basedir}/out/${manual.name}temp"/>
+    </move>
+  </target>
+
+  <target name="pdf" depends="init,pdf.getstart,pdf.tools,pdf.devguide,pdf.adminguide,pdf.ref,pdf.tuning"/>
+
+  <target name="pdf.getstart" depends="init">
+    <antcall target="pdf.dita">
+      <param name="manual.name" value="getstart"/>
+      <param name="manual.ditamap" value="getstartderby.ditamap"/>
+    </antcall>
+  </target>
+
+  <target name="pdf.tools" depends="init">
+    <antcall target="pdf.dita">
+      <param name="manual.name" value="tools"/>
+      <param name="manual.ditamap" value="derbytools.ditamap"/>
+    </antcall>
+  </target>
+
+  <target name="pdf.adminguide" depends="init">
+    <antcall target="pdf.dita">
+      <param name="manual.name" value="adminguide"/>
+      <param name="manual.ditamap" value="derbyadmin.ditamap"/>
+    </antcall>
+  </target>
+
+  <target name="pdf.devguide" depends="init">
+    <antcall target="pdf.dita">
+      <param name="manual.name" value="devguide"/>
+      <param name="manual.ditamap" value="derbydev.ditamap"/>
+    </antcall>
+  </target>
+
+  <!-- the ref guide has cross-references to the dev guide, so the dev guide must be preprocessed first -->
+  <target name="pdf.ref" depends="init,preprocess-devguide">
+    <antcall target="pdf.dita">
+      <param name="manual.name" value="ref"/>
+      <param name="manual.ditamap" value="refderby.ditamap"/>
+    </antcall>
+  </target>
+
+  <target name="pdf.tuning" depends="init">
+    <antcall target="pdf.dita">
+      <param name="manual.name" value="tuning"/>
+      <param name="manual.ditamap" value="tuningderby.ditamap"/>
+    </antcall>
+  </target>
+    
+  <target name="pdf.dita">
+    <!-- replace tokens with release variables -->
+    <antcall target="preprocess"/>
+
+    <mkdir dir="${dita.dir}/temp"/>
+    <mkdir dir="${dita.output.dir}/${manual.name}"/>
+    <copy todir="${dita.output.dir}/${manual.name}">
+      <fileset dir="${dita.src.dir}/${manual.name}" includes="*.jpg,*.gif"/>
+    </copy>
+    <ant dir="${dita.dir}" antfile="conductor.xml" target="dita2pdf" inheritAll="true">
+      <property name="args.input" value="${temp.source}${file.separator}${manual.name}${file.separator}${manual.ditamap}"/>
+      <property name="output.dir" value="${basedir}${file.separator}out${file.separator}${manual.name}"/>
+    </ant>
+  </target>
+
+  <!-- Preprocess the devguide source, which the ref manual depends on -->
+  <target name="preprocess-devguide">
+    <antcall target="preprocess">
+      <param name="manual.name" value="devguide"/>
+    </antcall>
+  </target>
+
+  <!-- Preprocess source, replacing ant variables with release-specific constants -->
+  <target name="preprocess">
+    <mkdir dir="${temp.source}"/>
+    <mkdir dir="${temp.source}${file.separator}${manual.name}"/>
+
+    <antcall target="preprocess-copy">
+      <param name="source.dir" value="${dita.src.dir}"/>
+      <param name="target.dir" value="${temp.source}"/>
+      <param name="inclusions" value="*.dita"/>
+    </antcall>
+
+    <antcall target="preprocess-copy">
+      <param name="source.dir" value="${dita.src.dir}${file.separator}${manual.name}"/>
+      <param name="target.dir" value="${temp.source}${file.separator}${manual.name}"/>
+      <param name="inclusions" value="*.dita,*.ditamap"/>
+    </antcall>
+
+  </target>
+
+  <!-- Copy files, replacing ant variables with release-specific constants -->
+  <target name="preprocess-copy">
+    <!-- DERBY-4999: Must specify encoding when filter-copying files,
+         otherwise files may be garbled if the default encoding isn't
+         the same as the encoding actually used in the file. Assume
+         all files are UTF-8. -->
+    <copy encoding="UTF-8" todir="${target.dir}">
+      <fileset dir="${source.dir}" includes="${inclusions}"/>
+      <filterset>
+        <filter token="COPYRIGHT_YEAR" value="${copyright.year}"/>
+        <filter token="RELEASE_ID_SHORT" value="${release.id.short}"/>
+      </filterset>
+    </copy>
+  </target>
+
+  <target name="clean">
+    <delete dir="${dita.output.dir}"/>
+    <delete dir="${dita.temp.dir}"/>
+    <delete dir="${temp.source}"/>
+    <delete dir="${pipeline.devguide}"/>
+  </target>
+
+  <target name="clobber" depends="clean">
+    <delete dir="${dita.dir}"/>
+  </target>
+
+  <!-- Brazilian Portuguese manuals -->
+
+  <target name="pt_BR" depends="init,pt_BR_image,pt_BR.html,pt_BR.pdf"/>
+ 
+  <target name="pt_BR_image">
+    <copy todir="${dita.output.dir}/pt_BR/images">
+      <fileset dir="${dita.src.dir}/images"/>
+    </copy>
+  </target>
+
+  <target name="pt_BR.html" depends="init">
+    <ant dir="src/pt_BR" target="pt_BR.adminguide.html"/>
+    <ant dir="src/pt_BR" target="pt_BR.getstart.html"/>
+    <ant dir="src/pt_BR" target="pt_BR.ref.html"/>
+  </target>
+
+  <target name="pt_BR.pdf" depends="init">
+    <ant dir="src/pt_BR" target="pt_BR.adminguide.pdf"/>
+    <ant dir="src/pt_BR" target="pt_BR.getstart.pdf"/>
+    <ant dir="src/pt_BR" target="pt_BR.ref.pdf"/>
+  </target>
+
+  <target name="pt_BR.adminguide" depends="init">
+    <ant dir="src/pt_BR" target="pt_BR.adminguide.html"/>
+  </target>
+
+  <target name="pt_BR.getstart" depends="init">
+    <ant dir="src/pt_BR" target="pt_BR.getstart.html"/>
+  </target>
+
+  <target name="pt_BR.ref" depends="init">
+    <ant dir="src/pt_BR" target="pt_BR.ref.html"/>
+  </target>
+
+  <target name="pt_BR.usage">
+    <ant dir="src/pt_BR" target="usage"/>
+  </target>
+    
+  <!-- Japanese Japanese manuals -->
+  <target name="ja_JP" depends="init,ja_JP_image,ja_JP.html,ja_JP.pdf"/>
+
+  <target name="ja_JP_image">
+    <copy todir="${dita.output.dir}/ja_JP/images">
+      <fileset dir="${dita.src.dir}/images"/>
+    </copy>
+  </target>
+
+  <target name="ja_JP.html" depends="init">
+    <ant dir="src/ja_JP" target="ja_JP.getstart.html"/>
+    <ant dir="src/ja_JP" target="ja_JP.ref.html"/>
+  </target>
+  
+  <target name="ja_JP.pdf" depends="init">
+    <ant dir="src/ja_JP" target="ja_JP.getstart.pdf"/>
+    <ant dir="src/ja_JP" target="ja_JP.ref.pdf"/>
+  </target>
+
+  <target name="ja_JP.getstart" depends="init">
+    <ant dir="src/ja_JP" target="ja_JP.getstart.html"/>
+  </target>
+
+  <target name="ja_JP.ref" depends="init">
+    <ant dir="src/ja_JP" target="ja_JP.ref.html"/>
+  </target>
+
+  <target name="ja_JP.usage">
+    <ant dir="src/ja_JP" target="usage"/>
+  </target>
+
+</project>

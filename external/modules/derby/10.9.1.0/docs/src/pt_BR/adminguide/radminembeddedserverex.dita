@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//IBM//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<reference id="radminembeddedserverex" xml:lang="pt-br">
+<title>Exemplo de servidor incorporado</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Exemplo de servidor incorporado</indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>O <i>Network Server</i> pode ser inicializado automaticamente em outra
+<i>thread</i> quando o
+<ph conref="adminconrefs.dita#prod/productshortname"></ph>
+é inicializado, definindo a propriedade <i>derby.drda.startNetworkServer</i>
+(consulte <xref href="tadminconfigsettingnetwrokserverproperties.dita#tadminconfigsettingnetwrokserverproperties"></xref>),
+ou pode ser inicializado utilizando um programa.
+O exemplo a seguir mostra como inicializar o <i>Network Server</i> utilizando um
+programa:</p>
+</section>
+<example> <codeblock>import org.apache.derby.drda.NetworkServerControl;
+import java.net.InetAddress;
+NetworkServerControl servidor = new NetworkServerControl
+        (InetAddress.getByName("localhost"),1527);
+servidor.start(null);</codeblock>
+</example>
+<section>
+<p>O programa que inicializa o <i>Network Server</i> pode acessar o banco de
+dados usando tanto o <i>driver</i> incorporado quanto o <i>driver</i> cliente
+da rede.
+A tentativa da estrutura servidora de inicializar o <i>driver</i> de JDBC local
+é ignorada, porque o mesmo já foi inicializado dentro da JVM do aplicativo.
+A estrutura servidora simplesmente acessa a instância do
+<ph conref="adminconrefs.dita#prod/productshortname"></ph>
+que já está inicializada.
+Não há conflito entre o aplicativo e a estrutura servidora.</p>
+</section>
+<section>
+<p>O cliente remoto pode então conectar através do <i>driver</i> cliente do
+<ph conref="adminconrefs.dita#prod/productshortname"></ph>:</p>
+</section>
+<section>
+<p> <codeblock>String nsURL="jdbc:derby://localhost:1527/amostra";
+java.util.Properties props = new java.util.Properties();
+props.put("user","usr");
+props.put("password","pwd");
+
+Class.forName("org.apache.derby.jdbc.ClientDriver").newInstance();
+Connection conn = DriverManager.getConnection(nsURL, props);
+
+/*interagir com o <ph conref="adminconrefs.dita#prod/productshortname"></ph>*/
+Statement s = conn.createStatement();
+
+ResultSet rs = s.executeQuery(
+"SELECT * FROM RESERVAS_HOTEL");</codeblock></p>
+</section>
+</refbody>
+</reference>

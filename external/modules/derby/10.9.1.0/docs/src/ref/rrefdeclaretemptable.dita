@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefdeclaretemptable" xml:lang="en-us">
+<title>DECLARE GLOBAL TEMPORARY TABLE statement</title>
+<shortdesc>The DECLARE GLOBAL TEMPORARY TABLE statement defines a temporary
+table for the current connection. </shortdesc>
+<prolog><metadata>
+<keywords><indexterm>DECLARE GLOBAL TEMPORARY TABLE statement</indexterm>
+<indexterm>tables<indexterm>temporary</indexterm></indexterm><indexterm><indexterm>SQL
+statements</indexterm>DECLARE GLOBAL TEMPORARY TABLE</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section><p>These tables do not reside in the system catalogs and are not
+persistent. Temporary tables exist only during the connection that declared
+them and cannot be referenced outside of that connection. When the connection
+closes, the rows of the table are deleted, and the in-memory description of
+the temporary table is dropped.</p></section>
+<section><p>Temporary tables are useful when: <ul>
+<li>The table structure is not known before using an application.</li>
+<li>Other users do not need the same table structure.</li>
+<li>Data in the temporary table is needed while using the application.</li>
+<li>The table can be declared and dropped without holding the locks on the
+system catalog.</li>
+</ul></p></section>
+<section><title>Syntax</title> <codeblock><b>DECLARE GLOBAL TEMPORARY TABLE <i><xref
+href="rrefdeclaretemptable.dita#rrefdeclaretemptable/tempcoltablename">table-Name</xref></i>
+    { column-definition [ , column-definition ] * }
+[ ON COMMIT {DELETE | PRESERVE} ROWS ]  
+NOT LOGGED [ON ROLLBACK DELETE ROWS]
+ </b></codeblock></section>
+<section id="tempcoltablename"><title>table-Name</title><p>Names the temporary
+table. If a schema-Name other than SESSION is specified, an error will occur
+(SQLSTATE 428EK). If the schema-Name is not specified, SESSION is assigned.
+Multiple connections can define declared global temporary tables with the
+same name because each connection has its own unique table descriptor for
+it.</p><p>Using SESSION as the schema name of a physical table will not cause
+an error, but is discouraged. The SESSION schema name should be reserved for
+the temporary table schema.</p></section>
+<section id="tempcolcolumndef"><title>column-definition</title><p>See <xref
+href="rrefsqlj30540.dita#rrefsqlj30540"></xref> for <codeph>CREATE TABLE</codeph> for
+more information on <codeph>column-definition</codeph>. <codeph>DECLARE GLOBAL
+TEMPORARY TABLE</codeph> does not allow <codeph>generated-column-spec</codeph> in
+the <codeph>column-definition</codeph>.</p></section>
+<section id="rreftemptabledatatype"><title>Data type</title><p>Supported data
+types are: <ul>
+<li>BIGINT</li>
+<li>CHAR</li>
+<li>DATE</li>
+<li>DECIMAL</li>
+<li>DOUBLE</li>
+<li>DOUBLE PRECISION</li>
+<li>FLOAT</li>
+<li>INTEGER</li>
+<li>NUMERIC</li>
+<li>REAL</li>
+<li>SMALLINT</li>
+<li>TIME</li>
+<li>TIMESTAMP</li>
+<li>VARCHAR</li>
+</ul></p></section>
+<section id="rreftemptableoncommit"><title>ON COMMIT</title><p>Specifies the
+action taken on the global temporary table when a COMMIT operation is performed.</p></section>
+<section><title>DELETE ROWS</title><p>All rows of the table will be deleted
+if no hold-able cursor is open on the table. This is the default value for
+ON COMMIT. If you specify ON ROLLBACK DELETE ROWS, this will delete all the
+rows in the table only if the temporary table was used. ON COMMIT DELETE ROWS
+will delete the rows in the table even if the table was not used (if the table
+does not have hold-able cursors open on it). </p></section>
+<section><title>PRESERVE ROWS</title><p>The rows of the table will be preserved.</p></section>
+<section id="rreftemptablenotlogged"><title>NOT LOGGED</title><p>Specifies
+the action taken on the global temporary table when a rollback operation is
+performed. When a ROLLBACK (or ROLLBACK TO SAVEPOINT) operation is performed,
+if the table was created in the unit of work (or savepoint), the table will
+be dropped. If the table was dropped in the unit of work (or savepoint), the
+table will be restored with no rows.</p></section>
+<section><title>ON ROLLBACK DELETE ROWS</title> <p>This is the default value
+for NOT LOGGED. NOT LOGGED [ON ROLLBACK DELETE ROWS ]] specifies the action
+that is to be taken on the global temporary table when a ROLLBACK or (ROLLBACK
+TO SAVEPOINT) operation is performed. If the table data has been changed,
+all the rows will be deleted.</p></section>
+<section><title>Examples</title><codeblock><b>set schema myapp;
+
+create table t1(c11 int, c12 date);
+
+declare global temporary table SESSION.t1(c11 int) not logged;</b>
+-- The SESSION qualification is redundant here because temporary 
+-- tables can only exist in the SESSION schema. 
+
+<b>declare global temporary table t2(c21 int) not logged;</b> 
+-- The temporary table is not qualified here with SESSION because temporary 
+-- tables can only exist in the SESSION schema.
+
+<b>insert into SESSION.t1 values (1); </b>
+-- SESSION qualification is mandatory here if you want to use 
+-- the temporary table, because the current schema is "myapp."
+
+<b>select * from t1;</b> 
+-- This select statement is referencing the "myapp.t1" physical 
+-- table since the table was not qualified by SESSION.
+
+</codeblock> <note>Temporary tables can be declared only in the SESSION schema.
+You should never declare a physical schema with the SESSION name.</note><p>The
+following is a list of DB2 UDB DECLARE GLOBAL TEMPORARY TABLE functions that
+are not supported by <ph conref="../conrefs.dita#prod/productshortname"></ph>: <ul>
+<li>IDENTITY column-options </li>
+<li>IDENTITY attribute in copy-options</li>
+<li>AS (fullselect) DEFINITION ONLY</li>
+<li>NOT LOGGED ON ROLLBACK PRESERVE ROWS</li>
+<li>IN tablespace-name</li>
+<li>PARTITIONING KEY</li>
+<li>WITH REPLACE </li>
+</ul> </p></section>
+<section><title>Restrictions on Declared Global Temporary Tables</title> <p><ph
+conref="../conrefs.dita#prod/productshortname"></ph> does not support the
+following features on temporary tables. Some of these features are specific
+to temporary tables and some are specific to <ph conref="../conrefs.dita#prod/productshortname"></ph>.</p><p>Temporary
+tables cannot be specified in the following statements: <ul>
+<li>ALTER TABLE </li>
+<li>CREATE INDEX</li>
+<li>CREATE SYNONYM</li>
+<li>CREATE TRIGGER</li>
+<li>CREATE VIEW</li>
+<li>GRANT</li>
+<li>LOCK TABLE</li>
+<li>RENAME</li>
+<li>REVOKE</li>
+</ul></p><p>You cannot use the following features with temporary tables:</p><ul>
+<li>Synonyms, triggers and views on SESSION schema tables (including physical
+tables and temporary tables) </li>
+<li>Caching statements that reference SESSION schema tables and views</li>
+<li>Temporary tables cannot be specified in referential constraints and primary
+keys</li>
+<li>Temporary tables cannot be referenced in a triggered-SQL-statement</li>
+<li>Check constraints on columns</li>
+<li>Generated-column-spec</li>
+<li>Importing into temporary tables</li>
+</ul> <p>If a statement that performs an insert, update, or delete to the
+temporary table encounters an error, all the rows of the temporary table are
+deleted.</p><p>The following data types cannot be used with Declared Global
+Temporary Tables: <ul>
+<li>BLOB</li>
+<li>CHAR FOR BIT DATA</li>
+<li>CLOB</li>
+<li>LONG VARCHAR</li>
+<li>LONG VARCHAR FOR BIT DATA</li>
+<li>VARCHAR FOR BIT DATA</li>
+<li>XML</li>
+</ul></p></section>
+</refbody>
+</reference>

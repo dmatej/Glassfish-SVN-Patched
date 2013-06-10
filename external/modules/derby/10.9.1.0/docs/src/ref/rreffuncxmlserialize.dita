@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either XMLEXISTSress or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rreffuncxmlserialize" xml:lang="en-us">
+<title>XMLSERIALIZE operator</title>
+<shortdesc>XMLSERIALIZE is a SQL/XML operator that you can use to convert
+an XML type to a character type. There is no other way to convert the type
+of a <ph conref="../conrefs.dita#prod/productshortname"></ph> XML value.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>XMLSERIALIZE operator</indexterm><indexterm>operators<indexterm>XMLSERIALIZE</indexterm></indexterm>
+<indexterm>XML<indexterm>operators, XMLSERIALIZE</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <note type="attention">Serialization is performed based on the SQL/XML
+serialization rules. These rules, combined with the fact that <ph conref="../conrefs.dita#prod/productshortname"></ph> supports
+only a subset of the XMLSERIALIZE syntax, dictate that the results of an XMLSERIALIZE
+operation are not guaranteed to be in-tact copies of the original XML text.
+For example, assume that <codeph>[xString]</codeph> is a textual representation
+of a well-formed XML document.  You issue the following statements:<codeblock>INSERT INTO <varname>x_table</varname> (<varname>id</varname>, <varname
+>xcol</varname>)
+    VALUES (3, XMLPARSE(DOCUMENT '<varname>[xString]</varname>' PRESERVE WHITESPACE));
+
+SELECT id, XMLSERIALIZE(<varname>xcol</varname> AS VARCHAR(100))
+    FROM <varname>x_table</varname> WHERE id = 3;
+</codeblock><p>There is no guarantee that the result of the XMLSERIALIZE operator
+will be identical to the original <codeph>[xString]</codeph> representation.
+Certain transformations can occur as part of XMLSERIALIZE processing, and
+those transformations are defined in the SQL/XML specification.  In some cases
+the result of XMLSERIALIZE might actually be the same as the original textual
+representation, but that is not guaranteed. </p><p>When an XMLSERIALIZE operator
+is specified as part of the top-level result set for a query, the result can
+be accessed from JDBC by using whatever JDBC getXXX methods are allowed on
+the <codeph>string-data-type</codeph> argument that is included in the XMLSERIALIZE
+syntax.  If you attempt to select the contents of an XML value from a top-level
+result set without using the XMLSERIALIZE operator, <ph conref="../conrefs.dita#prod/productshortname"></ph> throws
+an error. <ph conref="../conrefs.dita#prod/productshortname"></ph> does not
+implicitly serialize XML values.</p></note></section>
+<refsyn><title>Syntax</title><codeblock><b>XMLSERIALIZE ( <varname>xml-value-expression</varname> AS <varname>string-data-type</varname> )</b></codeblock
+><dl><dlentry>
+<dt><codeph>xml-value-expression</codeph></dt>
+<dd>Can be any Derby XML value, including an XML result sequence generated
+by the XMLQUERY operator. The <codeph>xml-value-expression</codeph> argument
+cannot be a parameter.  <p></p></dd>
+</dlentry><dlentry>
+<dt><codeph>string-data-type</codeph></dt>
+<dd>Must be a SQL character string type, such as CHAR, VARCHAR, LONG VARCHAR,
+or CLOB.  If you specify a type that is not a valid character string type, <ph
+conref="../conrefs.dita#prod/productshortname"></ph> throws an error.</dd>
+</dlentry></dl></refsyn>
+<section><title>Examples</title><p>In the <codeph>x_table</codeph> table,
+to display the contents of the <codeph>xcol</codeph> XML column, use this
+statement:<codeblock>SELECT ID, 
+    XMLSERIALIZE(
+    <varname>xcol</varname> AS CLOB) 
+FROM <varname>x_table</varname></codeblock>To retrieve the results from JDBC,
+you can use the JDBC getCharacterStream() or getString() method.</p><p>To
+display the results of an XMLQUERY operation, use the following statement:<codeblock>SELECT ID, 
+    XMLSERIALIZE(
+        XMLQUERY('<varname>//student[@age>20]</varname>' 
+           PASSING BY REF <varname>xcol</varname> EMPTY ON EMPTY)
+    AS VARCHAR(50))
+FROM <varname>x_table</varname></codeblock></p></section>
+<section><title>Usage note</title><p><ph conref="../conrefs.dita#prod/productshortname"></ph> requires
+that a JAXP parser (such as Apache Xerces) and Apache Xalan are listed
+in the Java classpath for the XML functions to work.  If either the JAXP parser
+or Xalan is missing from the classpath, attempts to use the XMLSERIALIZE operator
+will result in an error. In some situations, you may need to take steps to place
+the parser and Xalan in your classpath. See "XML data types and operators" in
+the <ph conref="../conrefs.dita#pub/citdevelop"></ph> for details.</p></section>
+</refbody>
+</reference>

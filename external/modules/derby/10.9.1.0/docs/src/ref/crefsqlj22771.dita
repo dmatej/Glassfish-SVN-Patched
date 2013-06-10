@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<concept id="crefsqlj22771" xml:lang="en-us">
+<title>Interaction with the dependency system</title>
+<conbody>
+<p><indexterm>Dependencies<indexterm>internal tracking of</indexterm></indexterm><indexterm>Prepared
+statements<indexterm>tracking of dependencies</indexterm></indexterm><ph conref="../conrefs.dita#prod/productshortname"></ph> internally
+tracks the dependencies of prepared statements, which are SQL statements that
+are precompiled before being executed. Typically they are prepared (precompiled)
+once and executed multiple times.</p>
+<p>Prepared statements depend on the dictionary objects and statements they
+reference. (Dictionary objects include tables, columns, constraints, indexes,
+views, and triggers.) Removing or modifying the dictionary objects or statements
+on which they depend invalidates them internally, which means that <ph conref="../conrefs.dita#prod/productshortname"></ph> will
+automatically try to recompile the statement when you execute it. If the statement
+fails to recompile, the execution request fails. However, if you take some
+action to restore the broken dependency (such as restoring the missing table),
+you can execute the same prepared statement, because <ph conref="../conrefs.dita#prod/productshortname"></ph> will
+recompile it automatically at the next execute request.</p>
+<p>Statements depend on one another-an UPDATE WHERE CURRENT statement depends
+on the statement it references. Removing the statement on which it depends
+invalidates the UPDATE WHERE CURRENT statement.</p>
+<p>In addition, prepared statements prevent execution of certain DDL statements
+if there are open results sets on them.</p>
+<p>Manual pages for each statement detail what actions would invalidate that
+statement, if prepared.  </p>
+<p>Here is an example using the <ph conref="../conrefs.dita#prod/productshortname"></ph> tool
+ij:   <codeblock>ij&gt; <b>CREATE TABLE mytable (mycol INT);</b>
+0 rows inserted/updated/deleted
+ij&gt; <b>INSERT INTO mytable VALUES (1), (2), (3);</b>
+3 rows inserted/updated/deleted
+-- this example uses the ij command prepare,
+-- which prepares a statement
+ij&gt; <b>prepare p1 AS 'INSERT INTO MyTable VALUES (4)';</b>
+-- p1 depends on mytable;
+ij&gt; <b>execute p1;</b>
+1 row inserted/updated/deleted
+-- <ph conref="../conrefs.dita#prod/productshortname"></ph>  executes it without recompiling
+ij&gt; <b>CREATE INDEX i1 ON mytable(mycol);</b>
+0 rows inserted/updated/deleted
+-- p1 is temporarily invalidated because of new index
+ij&gt; <b>execute p1;</b>
+1 row inserted/updated/deleted
+-- <ph conref="../conrefs.dita#prod/productshortname"></ph>  automatically recompiles p1 and executes it
+ij&gt; <b>DROP TABLE mytable;</b>
+0 rows inserted/updated/deleted
+-- <ph conref="../conrefs.dita#prod/productshortname"></ph>  permits you to drop table
+-- because result set of p1 is closed
+-- however, the statement p1 is temporarily invalidated
+ij&gt; <b>CREATE TABLE mytable (mycol INT);</b>
+0 rows inserted/updated/deleted
+ij&gt; <b>INSERT INTO mytable VALUES (1), (2), (3);</b>
+3 rows inserted/updated/deleted
+ij&gt; <b>execute p1;</b>
+1 row inserted/updated/deleted
+-- Because p1 is invalid, <ph conref="../conrefs.dita#prod/productshortname"></ph>  tries to recompile it
+-- before executing.
+-- It is successful and executes.
+ij&gt; <b>DROP TABLE mytable;</b>
+0 rows inserted/updated/deleted
+-- statement p1 is now invalid,
+-- and this time the attempt to recompile it
+-- upon execution will fail
+ij&gt; <b>execute p1;</b>
+ERROR 42X05: Table/View 'MYTABLE' does not exist.</codeblock></p>
+</conbody>
+</concept>
+

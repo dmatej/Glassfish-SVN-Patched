@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj40506" xml:lang="ja">
+<title>LOCK TABLE 文</title>
+<prolog><metadata>
+<keywords><indexterm>LOCK TABLE statement</indexterm><indexterm><indexterm>SQL
+statements</indexterm>LOCK TABLE</indexterm><indexterm>tables<indexterm>locking</indexterm></indexterm>
+<indexterm>lock escalation<indexterm>by user</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> 
+<p>LOCK TABLE文により明示的に、表に共有あるいは排他のロックをかけることができます。
+表へのロックは現在のトランザクションが終了するまでの間、続きます。</p>
+<p>表をロックできるのは、<xref href="rrefattrib26867.dita#rrefattrib26867">データベースの所有者</xref>と表の所有者です。</p>
+<p>明示的な表へのロックは次の場合に便利です。<ul>
+<li>表の複数行へのロックによるオーバーヘッドを避ける時。(言い換えればユーザ自ら、ロックエスカレーションを行う時。)</li>
+<li>デッドロックを避ける時</li>
+</ul></p>
+<p>この文でシステム表にロックをかけることはできません。</p></section>
+<refsyn><title>構文</title> <codeblock><b>LOCK TABLE <i><xref href="rreftablename.dita#rreftablename">表名</xref></i> IN { SHARE | EXCLUSIVE } MODE</b
+></codeblock>
+<p>いずれのモードであっても、トランザクションは表をロックした後、それ以上の行ごとのロックを得ることはできません。例えば、情報を読むためにトランザクションが<codeph>Flights</codeph>という表の全体を共有モードでロックした後、ある文にて行を更新するために特定の行への排他ロックを必要としたとします。しかしながら、既に<codeph>Flights</codeph>表へのロックがあるため、排他ロックも表毎となる必要があります。</p>
+<p>他の接続が表に対して既にロックをかけているため、その表へのロックが取得できない場合、デッドロックのタイムアウト時間が経過した後、文への例外が発生します。(<i>SQLState</i> X0X02)</p> </refsyn>
+<example><title>例</title>
+<p>行毎のロックが多量に発生することを避けるため、共有モードで<codeph>Flights</codeph>という表全体へのロックを行うには以下の文を使います。
+<codeblock>LOCK TABLE Flights IN SHARE MODE;
+SELECT *
+FROM Flights
+WHERE orig_airport &gt; 'OOO';
+</codeblock></p>
+<p>複数のUPDATE文を発行するトランザクションが一つあるとします。
+個々の文はわずかな行毎のロックしか必要としないので、トランザクションはロックを表毎に変更しません。しかしUPDATE文の数が多いので、取得と開放が行われるロックの延べ数は多くなり、デッドロックになりかねません。
+このようなトランザクションでは、最初に排他モードで表をロックします。
+例を以下に示します。<codeblock>LOCK TABLE FlightAvailability IN EXCLUSIVE MODE;
+UPDATE FlightAvailability
+SET economy_seats_taken = (economy_seats_taken + 2)
+WHERE flight_id = 'AA1265' AND flight_date = DATE('2004-03-31');
+
+UPDATE FlightAvailability
+SET economy_seats_taken = (economy_seats_taken + 2)
+WHERE flight_id = 'AA1265' AND flight_date = DATE('2004-04-11'); 
+
+UPDATE FlightAvailability
+SET economy_seats_taken = (economy_seats_taken + 2)
+WHERE flight_id = 'AA1265' AND flight_date = DATE('2004-04-12');
+
+UPDATE FlightAvailability
+SET economy_seats_taken = (economy_seats_taken + 2)
+WHERE flight_id = 'AA1265' AND flight_date = DATE('2004-04-15');
+</codeblock></p>
+<p>トランザクションが表を更新する前に、その表をみる必要がある場合、デッドロックを避けるため、表に排他ロックをかけます。
+例:<codeblock>LOCK TABLE Maps IN EXCLUSIVE MODE;
+SELECT MAX(map_id) + 1 FROM Maps;
+-- INSERT INTO Maps . . .</codeblock></p> </example>
+</refbody>
+</reference>

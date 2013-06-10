@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="radminjmxcode" xml:lang="en-us">
+<title>Using custom Java code to access the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> MBeans</title>
+<prolog><metadata>
+<keywords><indexterm>Java Management Extensions (JMX) technology</indexterm>
+<indexterm>JMX<indexterm>using custom Java code</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section>
+<p>In addition to using a tool like JConsole, you can also access the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> MBeans from a Java
+application. How to do this may depend on how you configure the JVM that is
+running <ph conref="../conrefs.dita#prod/productshortname"></ph>, how you
+configure user authentication and authorization, or the host(s) from which you
+want to access the MBeans.</p>
+<p>This section has some example code to help you get started. You will find the
+JMX classes you need in the packages <codeph>javax.management</codeph> and
+<codeph>javax.management.remote</codeph>.</p>
+<p>You do not need any <ph conref="../conrefs.dita#prod/productshortname"></ph>
+libraries in the JMX client application's classpath (unless MBean proxies are
+used).</p>
+</section>
+<section id="connmbeanserver"><title>Connecting to the MBean Server</title>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph> will attempt to
+register its MBeans with the platform MBean server of the JVM running the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> system (embedded or
+Network Server). The following examples assume that you have configured the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> JVM to enable remote
+JMX, which means that you have set a port number
+(<codeph>com.sun.management.jmxremote.port</codeph>) to be used by the JMX
+Server Connector.</p>
+<p>The examples below assume that the port configured for remote JMX is 9999,
+that the host name of the host running
+<ph conref="../conrefs.dita#prod/productshortname"></ph> is
+<codeph>example.com</codeph>, and that this host is reachable from the
+client host. (This host name is fictitious, and is used for example purposes
+only.)</p>
+<p>The following example code shows how to connect to the MBean Server when
+JMX security has been disabled:</p>
+<codeblock>    JMXServiceURL url = new JMXServiceURL(
+            "service:jmx:rmi:///jndi/rmi://example.com:9999/jmxrmi");
+    JMXConnector jmxc = JMXConnectorFactory.connect(url, null);
+    MBeanServerConnection mbeanServerConn = 
+        jmxc.getMBeanServerConnection();</codeblock>
+<p>The following code shows how to connect to the MBean server when JMX
+password authentication is enabled (the default):</p>
+<codeblock>    JMXServiceURL url = new JMXServiceURL(
+            "service:jmx:rmi:///jndi/rmi://example.com:9999/jmxrmi");
+    // Assuming the following JMX credentials: 
+    //  username=controlRole, password=derby
+    String[] credentials = new String[] { "controlRole" , "derby" };
+    HashMap&lt;String,Object> env = new HashMap&lt;String,Object>();
+    // Set credentials (jmx.remote.credentials, 
+    //  see JMX Remote API 1.0 spec section 3.4)
+    env.put(JMXConnector.CREDENTIALS, credentials);
+    // if the server's RMI registry is protected with SSL/TLS (JDK 6)
+    //  (com.sun.management.jmxremote.registry.ssl=true), the following
+    //  entry must be included:
+    //env.put("com.sun.jndi.rmi.factory.socket", 
+    //    new SslRMIClientSocketFactory());  // uncomment if needed
+
+    // Connect to the server
+    JMXConnector jmxc = JMXConnectorFactory.connect(url, env);
+    MBeanServerConnection mbeanServerConn = 
+        jmxc.getMBeanServerConnection();</codeblock>
+<p><note>Not specifying <codeph>SslRMIClientSocketFactory</codeph> when required
+may result in the error message <codeph>java.rmi.ConnectIOException: non-JRMP
+server at remote endpoint</codeph>.</note></p>
+</section>
+<section><title>Creating a ManagementMBean</title>
+<p>The only <ph conref="../conrefs.dita#prod/productshortname"></ph> MBean that
+can be created by a JMX client is the <codeph>ManagementMBean</codeph>. This
+MBean is useful for controlling
+<ph conref="../conrefs.dita#prod/productshortname"></ph> management (for
+example, enabling and disabling management or MBeans), and to obtain information
+such as the system identifier (which may be needed to specify MBeans later).</p>
+<p>If you create such an MBean from your application, and if
+<ph conref="../conrefs.dita#prod/productshortname"></ph> has already registered
+a <codeph>ManagementMBean</codeph> instance, the new MBean cannot have the same
+object name as the <codeph>ManagementMBean</codeph> already registered with the
+server. It is therefore recommended to use a different object name domain
+(that is, different from <codeph>example.com</codeph>) and/or a different
+<codeph>type</codeph> key property value (different from
+<codeph>Management</codeph>).</p>
+<p>The following example code shows how to create and register a new
+<codeph>ManagementMBean</codeph> with the MBean server:</p>
+<codeblock>    ObjectName mgmtObjName = new ObjectName("com.example.app", 
+                   "type", "DerbyManagement");
+    try {
+        ObjectInstance mgmtObj = 
+            mbeanServerConn.createMBean("example.com.mbeans.Management", 
+                mgmtObjName);
+    } catch (InstanceAlreadyExistsException e) {
+        // A management MBean with this object name already exists!
+    }</codeblock>
+</section>
+<section><title>Activating
+<ph conref="../conrefs.dita#prod/productshortname"></ph> management</title>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph> attempts to activate
+its JMX management service by default, so it will usually be active unless you
+explicitly deactivate it, providing that
+<ph conref="../conrefs.dita#prod/productshortname"></ph> has permissions to
+perform the activation. If
+<ph conref="../conrefs.dita#prod/productshortname"></ph> management is not
+active, you will not be able to access any MBeans except the
+<codeph>ManagementMBean</codeph>.</p>
+<p>By accessing the <codeph>ManagementActive</codeph> attribute of the
+<codeph>ManagementMBean</codeph>, you can check whether the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> JMX management service
+is active or not. The following example code performs this check and activates
+the <ph conref="../conrefs.dita#prod/productshortname"></ph> management service
+if it is not already active:</p>
+<codeblock>    // assuming we already have a reference to the
+    //  ManagementMBean's object name
+    Boolean active = (Boolean) 
+        mbeanServerConn.getAttribute(mgmtObjName, "ManagementActive");
+    if (!active.booleanValue()) {
+        // start management
+        mbeanServerConn.invoke(mgmtObjName, "startManagement", 
+            new Object[0], new String[0]);
+    }</codeblock>
+</section>
+<section><title>Obtaining the system identifier</title>
+<p>The system identifier is a unique <codeph>String</codeph> that distinguishes
+one running <ph conref="../conrefs.dita#prod/productshortname"></ph> system from
+another. All MBeans that are instantiated by
+<ph conref="../conrefs.dita#prod/productshortname"></ph> include the system
+identifier in their object names.</p>
+<p>One way to access an MBean is to fully specify its object name when
+contacting the MBean server. For this, you need to know the current system
+identifier. (Alternative ways to access MBeans include querying the MBean server
+for all MBeans, or for MBeans whose object names match a specific pattern.)</p>
+<p>The following example shows how to obtain the system identifier by accessing
+a <codeph>ManagementMBean</codeph>:</p>
+<codeblock>    // assuming we already have a reference to the 
+    //  ManagementMBean's object name
+    String systemID = (String) mbeanServerConn.getAttribute(mgmtObjName, 
+        "SystemIdentifier");</codeblock>
+<p>The following example shows how to obtain the system identifier from a
+<ph conref="../conrefs.dita#prod/productshortname"></ph> MBean's object
+name:</p>
+<codeblock>    // assuming we already have a reference to the ObjectName
+    //  of an MBean registered by Derby, for example the
+    //  Derby-registered ManagementMBean
+    String systemID = derbyMgmtObjectName.getKeyProperty("system");</codeblock>
+</section>
+<section><title>Accessing a specific
+<ph conref="../conrefs.dita#prod/productshortname"></ph>-registered MBean</title>
+<p>In the previous examples, you have already seen how to read a single MBean
+attribute, and how to invoke an MBean operation. In order to do this, you
+usually need a reference to the MBean's <codeph>ObjectName</codeph>.</p>
+<p>If you consult the API documentation for the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> MBeans at
+<xref format="html"
+href="http://db.apache.org/derby/javadoc/publishedapi/jdbc4/"
+scope="external">http://db.apache.org/derby/javadoc/publishedapi/jdbc4/</xref>
+and obtain the system identifier of the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> system you are
+accessing through JMX, you have all the information you need to be able to
+instantiate a <codeph>javax.management.ObjectName</codeph> object directly, by
+fully specifying its <codeph>String</codeph> representation (see the
+<codeph>ObjectName</codeph> API documentation for details).</p>
+<p>The following example code shows how to obtain a reference to the
+<codeph>VersionMBean</codeph> for <codeph>derby.jar</codeph>:</p>
+<codeblock>    // Assuming we already know the system identifier 
+    // (see examples above), systemID.
+    // A list of key properties is available is each MBean's Javadoc API.
+    Hashtable&lt;String, String> keyProps = new Hashtable&lt;String, String>();
+    keyProps.put("type", "Version");
+    keyProps.put("jar", "derby.jar");
+    keyProps.put("system", systemID);
+    // MBeans registered by Derby always belong to the 
+    //  "org.apache.derby" domain
+    ObjectName versionObjectName = 
+        new ObjectName("org.apache.derby", keyProps);
+
+    // we can now use the object name to read an attribute
+    String versionString = 
+        (String) mbeanServerConn.getAttribute(versionObjectName, 
+            "VersionString");
+    System.out.println("VersionString: " + versionString);</codeblock>
+<p>The output would look something like this:</p>
+<codeblock>VersionString: 10.9.1.1 - (1305115)</codeblock>
+</section>
+</refbody>
+</reference>

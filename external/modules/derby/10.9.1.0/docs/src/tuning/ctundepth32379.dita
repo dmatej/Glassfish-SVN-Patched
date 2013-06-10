@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="ctundepth32379" xml:lang="en-us">
+<title>Using the statement cache</title>
+<prolog><metadata>
+<keywords><indexterm>Compilation<indexterm>avoiding by using PreparedStatements</indexterm></indexterm>
+<indexterm>Prepared statements<indexterm>performance benefits of</indexterm></indexterm>
+<indexterm>Statement cache<indexterm>performance benefits of</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>The statement cache is enabled by default. You can use it to avoid extra
+compilation overhead:   <ul>
+<li>Your application can use <i>PreparedStatements</i> instead of <i>Statements</i>.
+  <p><i>PreparedStatements</i> are JDBC objects that you prepare (compile)
+once and execute multiple times. See the figure below. If your application
+executes statements that are almost but not exactly alike, use <i>PreparedStatements</i>,
+which can contain dynamic or IN parameters. Instead of using the literals
+for changing parameters, use question marks (?) as placeholders for such parameters.
+Provide the values when you execute the statement.</p></li>
+</ul></p>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph> supports the
+<i>ParameterMetaData</i> interface. This interface describes the number, type, and properties
+of prepared statement parameters. See the <cite><ph conref="../conrefs.dita#pub/citdevelop"></ph></cite> for
+more information.</p>
+<p>A connection need only compile a <i>PreparedStatement</i> once. Subsequent
+executions can use the same statement execution plan even if the parameter
+values are different, as shown in the following figure.
+(<i>PreparedStatements</i> are not shared across connections.)</p>
+<fig expanse="column" id="ctundepth42475"><title>Prepared statements and the
+statement cache</title>
+<image href="pstmt_os.gif" placement="break"><alt>This figure shows multiple executions of the same PreparedStatement over a single connection. The single PreparedStatement object uses the same statement execution plan and statement cache.</alt></image>
+</fig><ul>
+<li>Even if your statement uses <i>Statements</i> instead of <i>PreparedStatements</i>, <ph
+conref="../conrefs.dita#prod/productshortname"></ph> can reuse the statement
+execution plan for the statements from the statement cache. Statements from
+any connection can share the same statement execution plan, avoiding compilation,
+by using the single-statement cache. The statement cache maintains statement
+plans across connections. It does not, however, maintain them across reboots.
+See the figure below. <p>When, in the same database, an application submits
+an SQL <i>Statement</i> that exactly matches one already in the cache, <ph
+conref="../conrefs.dita#prod/productshortname"></ph> grabs the statement from
+the cache, even if the <i>Statement</i> has already been closed by the application.</p> <p>To
+match exactly with a statement already in the cache, the SQL <i>Statement</i> must
+meet the following requirements:</p> <ul>
+<li>The text must match exactly</li>
+<li>The current schema must match</li>
+<li>The Unicode flag that the statement was compiled under must match the
+current connection's flag</li>
+</ul></li>
+</ul>
+<note type="remember">If your application executes statements that are almost
+but not exactly alike, it is more efficient to use <i>PreparedStatements</i> with
+dynamic or IN parameters.  </note>
+<p>The following figure shows how
+<ph conref="../conrefs.dita#prod/productshortname"></ph> can reuse a statement
+execution plan that is already in the statement cache when the SQL text matches
+a prior statement <i>exactly</i>, even when the statement is executed from a
+different connection. <i>PreparedStatements</i> are much more efficient,
+however.</p>
+<fig expanse="column" id="ctundepth12523"><title>Statements and the statement
+cache</title>
+<image href="stmt_os.gif" placement="break"><alt>This figure shows how Derby can reuse a statement execution plan that is already in the statement cache, even when the statement is executed from a different connection. The figure shows three executions of two similar statements over two different database connections. Each database connection has its own statement cache. One statement is "SELECT * FROM mytable WHERE id = ?". The other statement is "SELECT * FROM mytable WHERE id = 2". The statement that uses the dynamic parameter is executed on both Connection One and Connection Two. When it is executed the second time, on Connection Two, it can use the statement execution plan that is already in the statement cache of Connection One. The version that does not use a dynamic parameter is executed on Connection Two only and uses the statement cache for Connection Two.</alt></image>
+</fig>
+<p>The <i>derby.language.statementCacheSize</i> property controls the number of
+precompiled statements which
+<ph conref="../conrefs.dita#prod/productshortname"></ph> keeps in its statement
+cache. Consider raising this number if statement preparation is taking too much
+time. See the <ph conref="../conrefs.dita#pub/citref"></ph> for more information
+on this property.</p>
+<p>A multithreaded database application that frequently alternates select and
+update statements can encounter deadlocks when a prepared statement becomes
+invalid or outdated. If your application becomes deadlocked under these
+circumstances, you can work around this problem by setting the value of the
+<i>derby.language.statementCacheSize</i> property to zero.</p>
+</conbody>
+</concept>

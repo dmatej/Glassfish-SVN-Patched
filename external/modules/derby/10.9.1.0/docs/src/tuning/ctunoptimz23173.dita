@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctunoptimz23173">
+<title>Join strategies</title>
+<prolog><metadata>
+<keywords>
+<indexterm>Join strategies</indexterm>
+<indexterm>Nested loop join strategy</indexterm>
+<indexterm>Hash join strategy</indexterm>
+<indexterm>Hash joins<indexterm>requirements for</indexterm></indexterm>
+<indexterm>Optimizable equijoins<indexterm>definition</indexterm></indexterm>
+<indexterm>Equijoins<indexterm>optimizable</indexterm></indexterm>
+<indexterm>Hash joins<indexterm>use of memory</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>The most common join strategy in <ph conref="../conrefs.dita#prod/productshortname"></ph> is called a <i>nested loop</i>. For each qualifying row in the outer table, <ph conref="../conrefs.dita#prod/productshortname"></ph> uses
+the appropriate access path (index or table) to find the matching rows in
+the inner table.</p>
+<p>Another type of join in <ph conref="../conrefs.dita#prod/productshortname"></ph> is called a <i>hash</i> join. For joins of this type, <ph conref="../conrefs.dita#prod/productshortname"></ph> constructs a hash table representing
+all the selected columns of the inner table. For each qualifying row in the
+outer table, <ph conref="../conrefs.dita#prod/productshortname"></ph> does a quick lookup on the hash table to get the
+inner table data. <ph conref="../conrefs.dita#prod/productshortname"></ph> has to scan the inner table or index only once,
+to build the hash table.</p>
+<p>Nested loop joins are preferable in most situations.</p>
+<p>Hash joins are preferable in situations in which the inner table values
+are unique and there are many qualifying rows in the outer table. Hash joins
+require that the statement's WHERE clause be an optimizable equijoin:
+ 
+<ul>
+<li>It must use the = operator to compare column(s) in the outer table to
+column(s) in the inner table.</li>
+<li>References to columns in the inner table must be simple column references.
+Simple column references are described in <xref href="ctunoptimz24840.dita#ctunoptimz24840"/>.</li>
+</ul></p>
+<p>The hash table for a hash join is held in memory and if it gets big enough,
+it will spill to the disk. The optimizer makes a very rough
+estimate of the amount of memory required to make the hash table. If it estimates
+that the amount of memory required would exceed the system-wide limit of memory
+use for a table, the optimizer chooses a nested loop join instead. </p>
+<p>If memory use is not a problem for your environment, set this property
+to a high number; allowing the optimizer the maximum flexibility in considering
+a join strategy queries involving large queries leads to better performance.
+It can also be set to smaller values for more limited environments.  
+<note><ph conref="../conrefs.dita#prod/productshortname"></ph> allows multiple columns as hash keys.</note></p>
+</conbody></concept>

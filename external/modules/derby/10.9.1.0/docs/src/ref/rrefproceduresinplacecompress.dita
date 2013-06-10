@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefproceduresinplacecompress" xml:lang="en-us">
+<title>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE system procedure</title>
+<prolog><metadata>
+<keywords><indexterm>reclaiming unused space</indexterm><indexterm>system
+procedures<indexterm>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>Use the <codeph>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</codeph> system
+procedure to reclaim unused, allocated space in a table and its indexes. Typically,
+unused allocated space exists when a large amount of data is deleted from
+a table and there has not been any subsequent inserts to use the space created
+by the deletes. By default, <ph conref="../conrefs.dita#prod/productshortname"></ph> does
+not return unused space to the operating system. For example, once a page
+has been allocated to a table or index, it is not automatically returned to
+the operating system until the table or index is destroyed. <codeph>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</codeph> allows
+you to return unused space to the operating system.</p><p>This system procedure
+can be used to force three levels of in-place compression of a SQL table: <codeph>PURGE_ROWS</codeph>, <codeph>DEFRAGMENT_ROWS</codeph>,
+and <codeph>TRUNCATE_END</codeph>. Unlike <codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE()</codeph>,
+all work is done in place in the existing table/index.</p></section>
+<section><title>Syntax</title><codeblock><b>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE(
+		IN SCHEMANAME VARCHAR(128),
+		IN TABLENAME VARCHAR(128),
+		IN PURGE_ROWS SMALLINT,
+		IN DEFRAGMENT_ROWS SMALLINT,
+		IN TRUNCATE_END SMALLINT )</b></codeblock> <dl><dlentry>
+<dt>SCHEMANAME</dt>
+<dd>An input argument of type VARCHAR(128) that specifies the schema of the
+table. Passing a null will result in an error. </dd>
+</dlentry><dlentry>
+<dt>TABLENAME</dt>
+<dd>An input argument of type VARCHAR(128) that specifies the table name of
+the table. The string must exactly match the case of the table name, and the
+argument of "Fred" will be passed to SQL as the delimited identifier 'Fred'.
+ Passing a null will result in an error.</dd>
+</dlentry><dlentry>
+<dt>PURGE_ROWS</dt>
+<dd>If PURGE_ROWS is set to a non-zero value, then a single pass is made through
+the table which will purge committed deleted rows from the table. This space
+is then available for future inserted rows, but remains allocated to the table.
+As this option scans every page of the table, its performance is linearly
+related to the size of the table.</dd>
+</dlentry><dlentry>
+<dt>DEFRAGMENT_ROWS</dt>
+<dd>If DEFRAGMENT_ROWS is set to a non-zero value, then a single defragment
+pass is made which will move existing rows from the end of the table towards
+the front of the table. The goal of defragmentation is to empty a set of pages
+at the end of the table which can then be returned to the operating system
+by the TRUNCATE_END option. It is recommended to only run DEFRAGMENT_ROWS
+if also specifying the TRUNCATE_END option. The DEFRAGMENT_ROWS option scans
+the whole table and needs to update index entries for every base table row
+move, so the execution time is linearly related to the size of the table.</dd>
+</dlentry><dlentry>
+<dt>TRUNCATE_END</dt>
+<dd>If TRUNCATE_END is set to a non-zero value, then all contiguous pages
+at the end of the table will be returned to the operating system. Running
+the PURGE_ROWS and/or DEFRAGMENT_ROWS options may increase the number of pages
+affected. This option by itself performs no scans of the table. </dd>
+</dlentry></dl></section>
+<section><title>Execute privileges</title>
+<p>If authentication and SQL authorization are both enabled, all users have
+execute privileges on this procedure. However, in order for the procedure to run
+successfully on a given table, the user must be the owner of either the
+<xref href="rrefattrib26867.dita#rrefattrib26867">database</xref> or the
+schema in which the table resides. See "Enabling user authentication" and
+"Setting the SQL standard authorization mode" in the
+<ph conref="../conrefs.dita#pub/citdevelop"></ph> for more information.</p>
+</section>
+<section><title>SQL example</title><p>To compress a table called CUSTOMER
+in a schema called US, using all available compress options:<codeblock><b>call SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE('US', 'CUSTOMER', 1, 1, 1);</b
+></codeblock></p><p>To return the empty free space at the end of the same
+table, the following call will run much quicker than running all options but
+will likely return much less space:<codeblock><b>call SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE('US', 'CUSTOMER', 0, 0, 1);</b></codeblock></p></section>
+<section><title>Java example</title><p>To compress a table called CUSTOMER
+in a schema called US, using all available compress options:<codeblock>CallableStatement cs = conn.prepareCall
+("CALL SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE(?, ?, ?, ?, ?)");
+cs.setString(1, "US");
+cs.setString(2, "CUSTOMER");
+cs.setShort(3, (short) 1);
+cs.setShort(4, (short) 1);
+cs.setShort(5, (short) 1);
+cs.execute();</codeblock></p><p>To return the empty free space at the end
+of the same table, the following call will run much quicker than running all
+options but will likely return much less space:<codeblock>CallableStatement cs = conn.prepareCall
+("CALL SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE(?, ?, ?, ?, ?)");
+cs.setString(1, "US");
+cs.setString(2, "CUSTOMER");
+cs.setShort(3, (short) 0);
+cs.setShort(4, (short) 0);
+cs.setShort(5, (short) 1);
+cs.execute();</codeblock></p></section>
+<section><p><note type="tip">We recommend that you issue the <codeph>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</codeph> system
+procedure in the auto-commit mode. </note><note>This procedure acquires an
+exclusive table lock on the table being compressed. All statement plans dependent
+on the table or its indexes are invalidated. For information on identifying
+unused space, see the <cite><ph conref="../conrefs.dita#pub/citadmin"></ph></cite>.</note></p></section>
+</refbody>
+</reference>

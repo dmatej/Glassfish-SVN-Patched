@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctunoptimz22111">
+<title>The MIN() and MAX() optimizations</title>
+<prolog><metadata>
+<keywords>
+<indexterm>MIN() optimization</indexterm>
+<indexterm>MAX() optimization</indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>The optimizer knows that it can avoid iterating through all the source
+rows in a result to compute a MIN() or MAX() aggregate when data are already
+in the right order. When data are guaranteed to be in the right order, <ph conref="../conrefs.dita#prod/productshortname"></ph> can
+go immediately to the smallest (minimum) or largest (maximum) row.</p>
+<p>The following conditions must be true:  
+<ul>
+<li>The MIN() or MAX() is the only entry in the SELECT list.</li>
+<li>The MIN() or MAX() is on a simple column reference, not on an expression.</li>
+<li>For MAX(), there must not be a WHERE clause.</li>
+<li>For MIN():  
+<ul>
+<li>The referenced table is the outermost table in the optimizer's chosen
+join order for the query block.</li>
+<li>The optimizer chose an index containing the referenced column as the access
+path.</li>
+<li>The referenced column is the first key column in that index OR the referenced
+column is a key column in that index and equality predicates exist on all
+key columns prior to the simple column reference in that index.</li>
+</ul></li>
+</ul></p>
+<p>For example, the optimizer can use this optimization for the following
+queries (if the optimizer uses the appropriate indexes as the access paths):
+ 
+<codeblock><b><ph>-- index on orig_airport</ph>
+SELECT MIN(orig_airport)
+FROM Flights
+<ph>-- index on orig_airport</ph>
+SELECT MAX(orig_airport)
+FROM Flights
+<ph>-- index on orig_airport</ph>
+SELECT miles 
+FROM Flights 
+WHERE orig_airport = (SELECT MIN(orig_airport)
+FROM Flights)
+<ph>-- index on segment_number, flight_id</ph>
+SELECT MIN(segment_number) 
+FROM Flights 
+WHERE flight_id = 'AA1111' 
+SELECT * 
+FROM Flights 
+WHERE segment_number = (SELECT MIN(segment_number) 
+FROM Flights 
+WHERE flight_id = 'AA1111')</b></codeblock></p>
+<p>The optimizer decides whether to implement the optimization after choosing
+the plan for the query. The optimizer does not take this optimization into
+account when costing the plan.</p>
+</conbody></concept>

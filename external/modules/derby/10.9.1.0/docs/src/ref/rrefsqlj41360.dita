@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj41360" xml:lang="en-us">
+<title>SELECT statement</title>
+<prolog><metadata>
+<keywords><indexterm>SELECT statement</indexterm><indexterm>ORDER BY clause<indexterm>needed
+to guarantee order of results</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<refsyn><title>Syntax</title> <codeblock><b><i><xref href="rrefsqlj21571.dita#rrefsqlj21571">Query</xref></i>
+[<i><xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY clause</xref></i>]
+[<i><xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">result offset clause</xref></i>]
+[<i><xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">fetch first clause</xref></i>]
+[<i><xref href="rrefsqlj31783.dita#rrefsqlj31783">FOR UPDATE clause</xref></i>]
+[WITH {RR|RS|CS|UR}]</b></codeblock></refsyn>
+<section> <p>A SELECT statement consists of a query with an optional <xref
+href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY clause</xref>, an optional <xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">result offset clause</xref>, an optional <xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">fetch first clause</xref>, an optional <xref href="rrefsqlj31783.dita#rrefsqlj31783">FOR UPDATE clause</xref> and optionally isolation level.
+The SELECT statement is so named because the typical first word of the query
+construct is SELECT. (<i>Query</i> includes the VALUES expression and UNION, INTERSECT, and EXCEPT
+expressions as well as SELECT expressions).</p> <p>The <xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY clause</xref> guarantees
+the ordering of the <i>ResultSet</i>. 
+The <xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">result offset clause</xref> and the
+<xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">fetch first clause</xref> can be used to fetch only a subset of the
+otherwise selected rows, possibly with an offset into the result set. 
+
+The <xref href="rrefsqlj31783.dita#rrefsqlj31783">FOR UPDATE clause</xref> makes
+the result set's cursor updatable. The SELECT statement supports the FOR FETCH
+ONLY clause. The FOR FETCH ONLY clause is synonymous with the FOR READ ONLY
+clause.</p> <p>You can set the isolation level in a
+SELECT statement using the WITH {RR|RS|CS|UR} syntax.</p>
+<p>For queries that do not select a specific column from the tables involved in
+the SELECT statement (for example, queries that use <codeph>COUNT(*)</codeph>),
+the user must have at least one column-level SELECT privilege or table-level
+SELECT privilege. See <xref href="rrefsqljgrant.dita#rrefsqljgrant"></xref>
+for more information.</p></section>
+
+<example><title>Example</title> <codeblock><b><ph>-- lists the names of the expression 
+-- SAL+BONUS+COMM as TOTAL_PAY and
+-- orders by the new name TOTAL_PAY</ph>
+SELECT FIRSTNME, SALARY+BONUS+COMM AS TOTAL_PAY
+     FROM EMPLOYEE
+     ORDER BY TOTAL_PAY
+<ph>-- creating an updatable cursor with a FOR UPDATE clause 
+-- to update the start date (PRSTDATE) and the end date (PRENDATE)
+-- columns in the PROJECT table</ph>
+SELECT PROJNO, PRSTDATE, PRENDATE
+      FROM PROJECT
+      FOR UPDATE OF PRSTDATE, PRENDATE
+<ph>-- set the isolation level to RR for this statement only </ph>
+SELECT * 
+FROM Flights 
+WHERE flight_id BETWEEN 'AA1111' AND 'AA1112' 
+WITH RR</b></codeblock> <p>A SELECT statement returns a <i>ResultSet</i>.
+A <i>cursor</i> is a pointer to a specific row in <i>ResultSet</i>. In Java
+applications, all <i>ResultSets</i>  have an underlying associated SQL
+cursor, often referred to as the result set's cursor. The cursor can
+be updatable, that is, you can update or delete rows as you step through the <i>ResultSet</i> if
+the SELECT statement that generated it and its underlying query meet cursor
+updatability requirements, as detailed below. The FOR UPDATE clause can be used 
+to ensure a compilation check that the SELECT statement meets the requiremments 
+of a updatable cursors, or to limit the columns that can be updated.   
+<note>The ORDER BY clause
+allows you to order the results of the SELECT. Without the ORDER BY clause,
+the results are returned in random order.</note></p> </example>
+<section id="sqlj15384"><title>Requirements for updatable cursors and updatable
+ResultSets</title>
+<p>Only simple, single-table SELECT cursors 
+can be updatable. The SELECT statement for updatable ResultSets
+has the same syntax as the SELECT statement for updatable cursors. To generate
+updatable cursors:   <ul>
+<li>The SELECT statement must not include an ORDER BY clause.</li>
+<li>The underlying <i>Query</i> must be a <i><xref href="rrefselectexpression.dita#rrefselectexpression">SelectExpression</xref>.</i></li>
+<li>The <i><xref href="rrefselectexpression.dita#rrefselectexpression">SelectExpression</xref></i> in
+the underlying Query must not include:   <ul>
+<li>DISTINCT</li>
+<li>Aggregates</li>
+<li>GROUP BY clause</li>
+<li>HAVING clause</li>
+<li>ORDER BY clause</li>
+</ul></li>
+<li>The FROM clause in the underlying <i>Query</i> must not have:   <ul>
+<li>more than one table in its FROM clause</li>
+<li>anything other than one table name</li>
+<li><i><xref href="rrefselectexpression.dita#rrefselectexpression">SelectExpression</xref>s</i></li>
+<li>subqueries</li>
+</ul></li>
+<li>If the underlying <i>Query</i> has a WHERE clause, the WHERE clause must not
+have subqueries.</li>
+</ul></p> 
+<note>Cursors are read-only by default. To produce an updatable 
+cursor besides meeting the requirements listed above, the concurrency mode for 
+the ResultSet must be <codeph>ResultSet.CONCUR_UPDATABLE</codeph> or the SELECT 
+statement must have FOR UPDATE in the FOR clause 
+(see <xref href="rrefsqlj31783.dita#rrefsqlj31783"></xref>).</note>
+<p>There is no SQL language statement to <i>assign</i> a name to
+a cursor. Instead, one can use the JDBC API to assign names to cursors or retrieve
+system-generated names. For more information, see "Naming or accessing the
+name of a cursor" in the
+<cite><ph conref="../conrefs.dita#pub/citdevelop"></ph></cite>.</p>
+</section>
+<section><title>Statement dependency system</title> <p>The SELECT depends
+on all the tables and views named in the query and the conglomerates (units
+of storage such as heaps and indexes) chosen for access paths on those tables.
+CREATE INDEX does not invalidate a prepared SELECT statement. A DROP INDEX
+statement invalidates a prepared SELECT statement if the index is an access
+path in the statement. If the SELECT includes views, it also depends on the
+dictionary objects on which the view itself depends (see <xref href="rrefsqlj15446.dita#rrefsqlj15446"></xref>).</p> <p>Any
+prepared UPDATE WHERE CURRENT or DELETE WHERE CURRENT statement against a
+cursor of a SELECT depends on the SELECT. Removing a SELECT through a <i>java.sql.Statement.close </i>request
+invalidates the UPDATE WHERE CURRENT or DELETE WHERE CURRENT.</p> <p>The SELECT
+depends on all aliases used in the query. Dropping an alias invalidates a
+prepared SELECT statement if the statement uses the alias.</p> </section>
+</refbody>
+</reference>
+

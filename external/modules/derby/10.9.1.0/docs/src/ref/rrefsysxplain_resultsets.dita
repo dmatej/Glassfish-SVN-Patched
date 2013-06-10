@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsysxplain_resultsets" xml:lang="en-us">
+<title>SYSXPLAIN_RESULTSETS system table</title>
+<shortdesc>The SYSXPLAIN_RESULTSETS table captures information about each
+result set which is part of a statement that has been executed using
+RUNTIMESTATISTICS with XPLAIN style.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>system tables<indexterm>SYSXPLAIN_RESULTSETS</indexterm></indexterm>
+<indexterm>XPLAIN style statistics<indexterm>SYSXPLAIN_RESULTSETS system table</indexterm></indexterm>
+<indexterm>SYSXPLAIN_RESULTSETS system table</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+    <section><p>See "Working with RunTimeStatistics" in
+         <ph conref="../conrefs.dita#pub/cittuning"></ph> for information
+         on how to configure this.
+        </p>
+        <p>
+            Most statements have at least one result set associated with
+            them, and some complex statements may have many result sets
+            associated with them. Some statements, for example DDL statements
+            such as CREATE TABLE, have no result sets associated with them.
+        </p>
+        <p>
+            Each row in this table describes a particular result set used
+            by a particular statement. Rows
+            in this table are typically joined with rows in
+            SYSXPLAIN_STATEMENTS during analysis:</p>
+<codeblock>select st.stmt_text, rs.op_identifier 
+    from my_stats.sysxplain_statements st
+    join my_stats.sysxplain_resultsets rs
+        on st.stmt_id = rs.stmt_id</codeblock>
+            <p>Rows in this table are added
+                automatically when 
+                <ph conref="../conrefs.dita#prod/productshortname"></ph>
+                has been configured appropriately. The
+            rows remain in the table until you delete them or drop the table.
+                </p>
+<p>The following table shows the contents of the SYSXPLAIN_RESULTSETS system
+table.</p>
+<table>
+<title>SYSXPLAIN_RESULTSETS system table</title>
+<desc>For each column in the SYSXPLAIN_RESULTSETS system table, this table provides its data type, its length in bytes, whether it is nullable, and a description of its contents.</desc>
+<tgroup cols="5" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="31*"/>
+<colspec colname="2" colnum="2" colwidth="17*"/>
+<colspec colname="3" colnum="3" colwidth="11*"/>
+<colspec colname="4" colnum="4" colwidth="12*"/>
+<colspec colname="5" colnum="5" colwidth="29*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Column Name</entry>
+<entry colname="2">Type</entry>
+<entry colname="3">Length</entry>
+<entry colname="4">Nullable</entry>
+<entry colname="5">Contents</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">RS_ID</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">36</entry>
+<entry colname="4">false</entry>
+<entry colname="5">A unique identifier for this particular row.</entry>
+</row>
+<row>
+<entry colname="1">OP_IDENTIFIER</entry>
+<entry colname="2">VARCHAR</entry>
+<entry colname="3">32,672</entry>
+<entry colname="4">false</entry>
+<entry colname="5">A code indicating what type of result set these statistics
+    are for.
+    Common result set types include TABLESCAN, INDEXSCAN, and PROJECTION.</entry>
+</row>
+<row>
+<entry colname="1">OP_DETAILS</entry>
+<entry colname="2">VARCHAR</entry>
+<entry colname="3">32,672</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Additional string information which varies for each
+    different type of result set. Interpreting this information currently
+    requires reading the
+    <ph conref="../conrefs.dita#prod/productshortname"></ph>
+    source code to know what values are being displayed here.</entry>
+</row>
+<row>
+<entry colname="1">NO_OPENS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Number of times this result set was opened during
+execution of the containing statement.</entry>
+</row>
+<row>
+<entry colname="1">NO_INDEX_UPDATES</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The number of index updates performed by this
+    result set. This value is NULL for result sets used by queries, but may have
+    a non-zero value for modification statements such as INSERT, UPDATE, or
+    DELETE.</entry>
+</row>
+<row>
+<entry colname="1">LOCK_MODE</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">2</entry>
+<entry colname="4">true</entry>
+<entry colname="5">A code indicating the locking level that was used
+    for this result set: <i>'EX'</i> for exclusive table-level locking,
+<i>'SH'</i> for share table-level locking, 
+<i>'IX</i>' for exclusive row-level locking, or
+<i>'IS'</i> for share row-level locking.</entry>
+</row>
+<row>
+<entry colname="1">LOCK_GRANULARITY</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">1</entry>
+<entry colname="4">true</entry>
+<entry colname="5">A code indicating the locking granularity that
+    was used for this result set: <i>'T'</i> for table-level locking, or 
+<i>'R'</i> for row-level locking.</entry>
+</row>
+<row>
+<entry colname="1">PARENT_RS_ID</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">36</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The result sets for a particular statement are
+    arranged in a parent-child tree structure. The output rows from one
+    result set are delivered as the input rows to its parent. This column
+    stores the identifier of the parent result set. For the outermost
+    result set in a particular statement, this column is NULL. Note that sometimes
+    there are multiple result sets with the same parent result set (that is,
+    some nodes have multiple children): for example, a UNION result set will have
+    two child result sets, representing the two sets of rows which are UNIONed
+together.</entry>
+</row>
+<row>
+<entry colname="1">EST_ROW_COUNT</entry>
+<entry colname="2">DOUBLE</entry>
+<entry colname="3">52</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The optimizer's estimate of the total number of rows
+    for this result set.</entry>
+</row>
+<row>
+<entry colname="1">EST_COST</entry>
+<entry colname="2">DOUBLE</entry>
+<entry colname="3">52</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The optimizer's estimated cost for this result set.
+    The value indicates the number of milliseconds that the optimizer
+    estimates it will take to process this result set.</entry>
+</row>
+<row>
+<entry colname="1">AFFECTED_ROWS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">This column is non-null only for INSERT, UPDATE, and
+    DELETE result sets. For those result sets, this column holds the number of
+rows which were inserted, updated, or deleted, respectively.</entry>
+</row>
+<row>
+<entry colname="1">DEFERRED_ROWS</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">1</entry>
+<entry colname="4">true</entry>
+<entry colname="5">This column is only non-null for INSERT, UPDATE, and
+    DELETE result sets. For those result sets, this column holds <i>'Y'</i> if
+    the INSERT/UPDATE/DELETE is being performed using deferred change semantics,
+    and holds <i>'N'</i> otherwise. Deferred change semantics are used
+    when self-referencing is taking place.</entry>
+</row>
+<row>
+<entry colname="1">INPUT_ROWS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">This column is used for SORT, AGGREGATE, and GROUPBY
+    result sets, and indicates the number of rows that were input to the
+result set, and thus were sorted by the sorter.</entry>
+</row>
+<row>
+<entry colname="1">SEEN_ROWS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">For join and set nodes, this is the number of rows
+    seen by the "left" side of the processing. For aggregate, group, sort,
+    normalize, materialize, and certain other nodes, this is the number of
+    rows seen.</entry>
+</row>
+<row>
+<entry colname="1">SEEN_ROWS_RIGHT</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">For join and set nodes, this is the number of rows
+    seen by the "right" side of the processing. For example, in the statement
+<codeblock>select country 
+  from countries 
+union 
+select country 
+  from countries 
+  where region = 'Africa'</codeblock>
+the UNION result set has SEEN_ROWS = 6 and SEEN_ROWS_RIGHT = 19.
+</entry>
+</row>
+<row>
+<entry colname="1">FILTERED_ROWS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">This column holds the number of rows which were
+eliminated from the result set during processing.</entry>
+</row>
+<row>
+<entry colname="1">RETURNED_ROWS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">This column holds the number of rows which were
+    returned by the result set to its caller. Generally speaking, the number
+    of returned rows is the number of rows INPUT or SEEN, minus the number
+of rows FILTERED.</entry>
+</row>
+<row>
+<entry colname="1">EMPTY_RIGHT_ROWS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">This column is used for left outer joins, and, if not null,
+    holds the number of empty rows which had to be constructed because no
+existing rows met the join criteria.</entry>
+</row>
+<row>
+<entry colname="1">INDEX_KEY_OPT</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">1</entry>
+<entry colname="4">true</entry>
+<entry colname="5">This column records when the Index Key Optimization is
+    used. The Index Key Optimization is a special optimization which occurs when
+    a query references the MAX or MIN value of a column which happens to have an
+    index, and so the MIN or MAX computation can be performed by fetching the
+    first or last, respectively, entry in the index, as in:
+<codeblock>select max(country_iso_code) 
+  from countries</codeblock></entry>
+</row>
+<row>
+<entry colname="1">SCAN_RS_ID</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">36</entry>
+<entry colname="4">true</entry>
+<entry colname="5">If this resultset is one of the resultset types which
+    performs a scan of a table or index, this column contains the id value
+    which identifies the particular row in SYSXPLAIN_SCAN_PROPS that
+    describes the statistics related to the scan behavior.</entry>
+</row>
+<row>
+<entry colname="1">SORT_RS_ID</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">36</entry>
+<entry colname="4">true</entry>
+<entry colname="5">If this resultset is one of the resultset types which
+    performs a sort of a table or index, this column contains the id value
+    which identifies the particular row in SYSXPLAIN_SORT_PROPS that
+    describes the statistics related to the sort behavior. The most common
+    situations which involve sorting of the data are when processing the
+ORDER BY and GROUP BY clauses.</entry>
+</row>
+<row>
+<entry colname="1">STMT_ID</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">36</entry>
+<entry colname="4">false</entry>
+<entry colname="5">This column will contain the ID value which identifies
+    the particular statement for which this result set was executed. Note that
+    there may be multiple result sets executed for a single statement, so a join
+    between the SYSXPLAIN_STATEMENTS table and the SYSXPLAIN_RESULTSETS table
+may retrieve multiple rows.</entry>
+</row>
+<row>
+<entry colname="1">TIMING_ID</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">36</entry>
+<entry colname="4">true</entry>
+<entry colname="5">If statistics timings were not being captured, this column
+    will have a NULL value. If statistics timings were being captured, this
+    column will contain the id value which can be used as a foreign key to join
+    with the SYSXPLAIN_RESULTSET_TIMINGS row which has the timing information
+for this resultset.</entry>
+</row>
+</tbody>
+</tgroup>
+</table></section>
+</refbody>
+</reference>

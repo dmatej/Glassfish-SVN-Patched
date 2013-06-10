@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rtoolsijcomref30679" xml:lang="en-us">
+<title>Execute command</title>
+<prolog><metadata>
+<keywords><indexterm>Execute command</indexterm><indexterm>Prepared statements<indexterm>executing</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<refsyn><title>Syntax</title> <codeblock><b>EXECUTE { <i>SQLString</i> | <i><xref href="rtoolsijcomref40155.dita#rtoolsijcomref40155">PreparedStatementIdentifier</xref></i> }
+[ USING { <i><xref href="rtoolsijcomref34110.dita#rtoolsijcomref34110">String</xref></i> | <i><xref href="rtoolsijcomref40155.dita#rtoolsijcomref40155">Identifier</xref></i> } ]</b></codeblock> </refsyn>
+<section><title>Description</title> <p>Has several uses:   <ul>
+<li>To execute an SQL command entered as <i>SQLString</i>, using the Execute <i>String</i> style.
+The String is passed to the connection without further examination or processing
+by <codeph>ij</codeph>. <i>Normally, you execute SQL commands directly, not
+with the Execute command</i>.</li>
+<li>To execute a named command identified by <i>PreparedStatementIdentifier</i>.
+This must be previously prepared with the <codeph>ij</codeph>&nbsp;<xref href="rtoolsijcomref12333.dita#rtoolsijcomref12333">Prepare</xref> command.</li>
+<li>To execute either flavor of command when that command contains dynamic
+parameters, specify the values in the Using portion of the command. In this
+style, the <i>SQLString</i> or previously prepared <i>PreparedStatementIdentifier</i> is
+executed using the values supplied as <i>String</i> or <i>Identifier</i>.
+The <i>Identifier</i> in the USING clause must have a result set as its result.
+Each row of the result set is applied to the input parameters of the command
+to be executed, so the number of columns in the Using's result set must match
+the number of input parameters in the Execute's
+statement. The results of each execution of the Execute statement
+are displayed as they are made. If the Using's result set contains no rows,
+the Execute's
+statement is not executed.   <p>When auto-commit mode is on, the Using's result
+set is closed upon the first execution of the Execute statement.
+To ensure multiple-row execution of the Execute command,
+use the <xref href="rtoolsijcomref25753.dita#rtoolsijcomref25753">Autocommit</xref> command
+to turn auto-commit off.</p></li>
+</ul></p> </section>
+<example><title>Examples</title> <codeblock>ij&gt;<b> autocommit off;</b>
+ij&gt; <b>prepare menuInsert as 'INSERT INTO menu VALUES (?, ?, ?)';</b>
+ij&gt;<b> execute menuInsert using 'VALUES
+    (''entree'', ''lamb chop'', 14),
+    (''dessert'', ''creme brulee'', 6)';</b>
+1 row inserted/updated/deleted
+1 row inserted/updated/deleted
+ij&gt; <b>commit;</b> </codeblock> 
+<codeblock>ij&gt; <b>connect 'jdbc:derby:firstdb;create=true';</b>
+ij&gt; <b>create table firsttable (id int primary key,
+    name varchar(12));</b>
+0 rows inserted/updated/deleted
+ij&gt; <b>insert into firsttable values 
+    (10,'TEN'),(20,'TWENTY'),(30,'THIRTY');</b>
+3 rows inserted/updated/deleted
+ij&gt; <b>select * from firsttable;</b>
+ID         |NAME        
+------------------------
+10         |TEN         
+20         |TWENTY      
+30         |THIRTY      
+
+3 rows selected
+ij&gt; <b>connect 'jdbc:derby:seconddb;create=true';</b>
+ij(CONNECTION1)&gt; <b>create table newtable (newid int primary key, 
+    newname varchar(12));</b>
+0 rows inserted/updated/deleted
+ij(CONNECTION1)&gt; <b>prepare src@connection0 as 'select * from firsttable';</b>
+ij(CONNECTION1)&gt; <b>autocommit off;</b>
+ij(CONNECTION1)&gt; <b>execute 'insert into newtable(newid, newname) 
+    values(?,?)' using src@connection0;</b>
+1 row inserted/updated/deleted
+1 row inserted/updated/deleted
+1 row inserted/updated/deleted
+ij(CONNECTION1)&gt; <b>commit;</b>
+ij(CONNECTION1)&gt; <b>select * from newtable;</b>
+NEWID      |NEWNAME     
+------------------------
+10         |TEN         
+20         |TWENTY      
+30         |THIRTY      
+
+3 rows selected
+ij(CONNECTION1)&gt; <b>show connections;</b>
+CONNECTION0 -   jdbc:derby:firstdb
+CONNECTION1* -  jdbc:derby:seconddb
+ij(CONNECTION1)&gt; <b>disconnect connection0;</b>
+ij&gt; </codeblock>
+</example>
+</refbody>
+</reference>

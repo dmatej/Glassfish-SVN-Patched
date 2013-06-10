@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../../dtd/concept.dtd">
+<concept id="crefjavbclobnot" xml:lang="pt-br">
+<title>Notas</title>
+<conbody>
+<p>O mecanismo normal de bloqueio do
+<ph conref="refconrefs.dita#prod/productshortname"></ph>
+(bloqueios compartilhados) impede que outras transações atualizem ou excluam
+um item do banco de dados para o qual o objeto <i>java.sql.Blob</i> ou
+<i>java.sql.Clob</i> seja um ponteiro.
+Entretanto, em alguns casos, o mecanismo de bloqueio instantâneo do
+<ph conref="refconrefs.dita#prod/productshortname"></ph>
+pode admitir um período de tempo onde a coluna subjacente a
+<i>java.sql.Blob</i> ou <i>java.sql.Clob</i> fique desprotegida.
+Uma chamada subseqüente ao método <i>getBlob/getClob</i>, ou
+<i>java.sql.Blob</i>/<i>java.sql.Clob</i>, pode causar um comportamento
+indefinido.</p>
+<p>Além disso, não há nada que impeça a transação que mantém
+<i>java.sql.Blob</i>/<i>java.sql.Clob</i> (ao contrário das outras transações)
+atualizar a linha subjacente (O mesmo problema existe com os métodos
+<i>getXXXStream</i>).
+Os aplicativos devem ser programados para impedir atualizações no objeto
+subjacente, enquanto houver um <i>java.sql.Blob</i>/<i>java.sql.Clob</i>
+aberto para o objeto; se isto não for feito, pode resultar em um comportamento
+indefinido.</p>
+<p>Não deve ser chamado mais de um método <i>getXXX</i> de <i>ResultSet</i>
+para a mesma coluna, se um dos métodos for um dos seguintes:
+<ul>
+<li><i>getBlob</i></li>
+<li><i>getClob</i></li>
+<li><i>getAsciiStream</i></li>
+<li><i>getBinaryStream</i></li>
+<li><i>getUnicodeStream</i></li>
+</ul>
+</p>
+<p>Estes métodos compartilham o mesmo fluxo subjacente; chamar mais de um
+destes métodos para a mesma coluna pode resultar em um comportamento indefinido.
+Por exemplo:
+<codeblock expanse="column"><b>ResultSet rs = s.executeQuery("SELECT text FROM CLOBS WHERE i = 1");
+while (rs.next()) {
+    aclob=rs.getClob(1);
+    ip = rs.getAsciiStream(1);
+}</b>
+</codeblock>
+</p>
+<p>Os fluxos que tratam colunas longas não são seguros quanto a <i>thread</i>.
+Isto significa que se for decidido abrir várias <i>threads</i>, e acessar o
+fluxo a partir de cada uma das <i>threads</i>, o comportamento resultante será
+indefinido.</p>
+<p>OS Clobs não são afetados pelo idioma.</p>
+</conbody>
+</concept>

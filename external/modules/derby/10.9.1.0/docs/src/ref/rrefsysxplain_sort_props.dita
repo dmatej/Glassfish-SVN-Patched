@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsysxplain_sort_props" xml:lang="en-us">
+<title>SYSXPLAIN_SORT_PROPS system table</title>
+<shortdesc>The SYSXPLAIN_SORT_PROPS table captures information about row sorting
+actions which occurred during statements that were executed using
+RUNTIMESTATISTICS with XPLAIN style.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>system tables<indexterm>SYSXPLAIN_SORT_PROPS</indexterm></indexterm>
+<indexterm>XPLAIN style statistics<indexterm>SYSXPLAIN_SORT_PROPS system table</indexterm></indexterm>
+<indexterm>SYSXPLAIN_SORT_PROPS system table</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+    <section><p>See "Working with RunTimeStatistics" in
+         <ph conref="../conrefs.dita#pub/cittuning"></ph> for information
+         on how to configure this.</p>
+<p>Rows in this table are typically joined with rows in
+            SYSXPLAIN_STATEMENTS and SYSXPLAIN_RESULTSETS during analysis.</p>
+<codeblock>select s.stmt_text, rs.op_identifier, 
+       srt.no_input_rows, srt.no_output_rows
+    from my_stats.sysxplain_sort_props srt,
+         my_stats.sysxplain_resultsets rs,
+         my_stats.sysxplain_statements s
+    where rs.stmt_id = s.stmt_id and rs.sort_rs_id = srt.sort_rs_id</codeblock>
+            <p>Rows in this table are added
+                automatically when
+                <ph conref="../conrefs.dita#prod/productshortname"></ph>
+                has been configured appropriately. The
+          rows remain in the table until you delete them or drop the table.</p>
+<p>The following table shows the contents of the SYSXPLAIN_SORT_PROPS system
+table.</p>
+<table>
+<title>SYSXPLAIN_SORT_PROPS system table</title>
+<desc>For each column in the SYSXPLAIN_SORT_PROPS system table, this table provides its data type, its length in bytes, whether it is nullable, and a description of its contents.</desc>
+<tgroup cols="5" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="31*"/>
+<colspec colname="2" colnum="2" colwidth="17*"/>
+<colspec colname="3" colnum="3" colwidth="11*"/>
+<colspec colname="4" colnum="4" colwidth="12*"/>
+<colspec colname="5" colnum="5" colwidth="29*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Column Name</entry>
+<entry colname="2">Type</entry>
+<entry colname="3">Length</entry>
+<entry colname="4">Nullable</entry>
+<entry colname="5">Contents</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">SORT_RS_ID</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">36</entry>
+<entry colname="4">false</entry>
+<entry colname="5">A unique identifier for this row. Matches the corresponding
+    value of SORT_RS_ID in the my_stats.SYSXPLAIN_RESULTSETS row for the result set
+which required this sort to be performed.</entry>
+</row>
+<row>
+<entry colname="1">SORT_TYPE</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">2</entry>
+<entry colname="4">true</entry>
+<entry colname="5">A code indicating the type of sort that was performed.
+    The code values include <i>'IN'</i> for an internal sort, and <i>'EX'</i>
+    for an external sort. An internal sort is one which was entirely
+    performed in-memory and did not overflow to any temporary files, while an
+external sort used one or more external files.</entry>
+</row>
+<row>
+<entry colname="1">NO_INPUT_ROWS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Number of rows which were provided to the sorter.</entry>
+</row>
+<row>
+<entry colname="1">NO_OUTPUT_ROWS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Number of rows which were returned by the sorter.
+    Note that this may be fewer rows than were input, for example when
+    the sorter is performing GROUP BY processing or is eliminating
+    duplicates.</entry>
+</row>
+<row>
+<entry colname="1">NO_MERGE_RUNS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Number of merge runs which were provided. This value
+    will be NULL for an internal sort, but for an external sort it
+    indicates how many times the intermediate sort files were merged together.
+    External sorts are far more expensive than internal sorts, and each
+    additional merge run that an external sort must perform adds
+    considerably more to the overhead of the sort.</entry>
+</row>
+<row>
+<entry colname="1">MERGE_RUN_DETAILS</entry>
+<entry colname="2">VARCHAR</entry>
+<entry colname="3">32,672</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Additional information about the size of the merge runs.
+This value will be NULL for an internal sort.</entry>
+</row>
+<row>
+<entry colname="1">ELIMINATE_DUPLICATES</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">1</entry>
+<entry colname="4">true</entry>
+<entry colname="5">A code indicating whether or not this sort
+    eliminated duplicates from the input. Valid values are <i>'Y'</i> and
+    <i>'N'</i>.
+    This column only applies for a sort which was NOT performing GROUP BY
+    aggregation; for GROUP BY sorts this column is always NULL. See the
+    DISTINCT_AGGREGATE column for the corresponding information for
+    aggregating sorts.
+</entry>
+</row>
+<row>
+<entry colname="1">IN_SORT_ORDER</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">1</entry>
+<entry colname="4">true</entry>
+<entry colname="5">A code indicating whether or not the rows which were
+    input to the sorter were already in sort order, which can happen if
+    the rows were retrieved by using an index, or if an earlier phase of
+    processing had already sorted the data. The code is <i>'Y'</i> if the
+rows are already in sorted order, and <i>'N'</i> otherwise.</entry>
+</row>
+<row>
+<entry colname="1">DISTINCT_AGGREGATE</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">1</entry>
+<entry colname="4">true</entry>
+<entry colname="5">A code indicating whether the aggregation process
+was computing distinct aggregates or not. Valid values are <i>'Y'</i> and
+<i>'N'</i>.</entry>
+</row>
+</tbody>
+</tgroup>
+</table></section>
+</refbody>
+</reference>

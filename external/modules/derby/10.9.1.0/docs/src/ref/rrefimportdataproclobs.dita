@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefimportdataproclobs" xml:lang="en-us">
+<title>SYSCS_UTIL.SYSCS_IMPORT_DATA_LOBS_FROM_EXTFILE system procedure</title>
+<shortdesc>Use the <codeph>SYSCS_UTIL.SYSCS_IMPORT_DATA_LOBS_FROM_EXTFILE</codeph> system
+procedure to import data to a subset of columns in a table, where the LOB
+data is stored in a separate file. The main import file contains all of the
+other data and a reference to the location of the LOB data. </shortdesc>
+<refbody>
+<section><title>Syntax</title><codeblock>SYSCS_UTIL.SYSCS_IMPORT_DATA_LOBS_FROM_EXTFILE (
+   IN SCHEMANAME VARCHAR(128), 
+   IN TABLENAME VARCHAR(128), 
+   IN INSERTCOLUMNS VARCHAR(32672), 
+   IN COLUMNINDEXES VARCHAR(32672),
+   IN FILENAME VARCHAR(32672), 
+   IN COLUMNDELIMITER CHAR(1), 
+   IN CHARACTERDELIMITER CHAR(1), 
+   IN CODESET VARCHAR(128), 
+   IN REPLACE SMALLINT)
+   )
+</codeblock><p>The import utility looks in the main import file for a reference
+to the location of the LOB data.</p><dl><dlentry>
+<dt>SCHEMANAME</dt>
+<dd>Specifies the schema of the table. You can specify a NULL value to use
+the default schema name. The <parmname>SCHEMANAME</parmname> parameter takes
+an input argument that is a VARCHAR(128) data type.</dd>
+</dlentry><dlentry>
+<dt>TABLENAME</dt>
+<dd>Specifies the name of the table into which the data is to be imported.
+This table cannot be a system table or a declared temporary table. The string
+must exactly match case of the table name. Specifying a NULL value results
+in an error. The <parmname>TABLENAME</parmname> parameter takes an input argument
+that is a VARCHAR(128) data type.</dd>
+</dlentry><dlentry>
+<dt>INSERTCOLUMNS</dt>
+<dd>Specifies the comma separated column names of the table into which the
+data will be imported. You can specify a NULL value to import into all columns
+of the table. The <parmname>INSERTCOLUMNS</parmname> parameter takes an input
+argument that is a VARCHAR(32672) data type.</dd>
+</dlentry><dlentry>
+<dt>COLUMNINDEXES</dt>
+<dd>Specifies the comma separated column indexes (numbered from one) of the
+input data fields that will be imported. You can specify a NULL value to use
+all input data fields in the file. The <parmname>COLUMNINDEXES</parmname> parameter
+takes an input argument that is a VARCHAR(32672) data type.</dd>
+</dlentry><dlentry>
+<dt>FILENAME</dt>
+<dd>Specifies the name of the file that contains the data to be imported.
+If the path is omitted, the current working directory is used. The specified
+location of the file should refer to the server side location if using the
+Network Server. Specifying a NULL value results in an error. The <parmname>fileName</parmname> parameter
+takes an input argument that is a VARCHAR(32672) data type.</dd>
+</dlentry><dlentry>
+<dt>COLUMNDELIMITER</dt>
+<dd>Specifies a column delimiter. The specified character is used in place
+of a comma to signify the end of a column. You can specify a NULL value to
+use the default value of a comma. The <parmname>COLUMNDELIMITER</parmname> parameter
+takes an input argument that is a CHAR(1) data type.</dd>
+</dlentry><dlentry>
+<dt>CHARACTERDELIMITER</dt>
+<dd>Specifies a character delimiter. The specified character is used in place
+of double quotation marks to enclose a character string. You can specify a
+NULL value to use the default value of a double quotation mark. The <parmname>CHARACTERDELIMITER</parmname> parameter
+takes an input argument that is a CHAR(1) data type.</dd>
+</dlentry><dlentry>
+<dt>CODESET</dt>
+<dd>Specifies the code set of the data in the input file. The code set name
+should be one of the Java-supported character encoding sets. Data is converted
+from the specified code set to the database code set (UTF-8). You can specify
+a NULL value to interpret the data file in the same code set as the JVM in
+which it is being executed. The <parmname>CODESET</parmname> parameter takes
+an input argument that is a VARCHAR(128) data type.</dd>
+</dlentry><dlentry>
+<dt>REPLACE</dt>
+<dd>A non-zero value for the replace parameter will import in REPLACE mode,
+while a zero value will import in INSERT mode. REPLACE mode deletes all existing
+data from the table by truncating the table and inserts the imported data.
+The table definition and the index definitions are not changed. You can only
+import with REPLACE mode if the table already exists. INSERT mode adds the
+imported data to the table without changing the existing table data. Specifying
+a NULL value results in an error. The <parmname>REPLACE</parmname> parameter
+takes an input argument that is a SMALLINT data type.</dd>
+</dlentry></dl><p>If you create a schema, table, or column name as a non-delimited
+identifier, you must pass the name to the import procedure using all uppercase
+characters. If you created a schema, table, or column name as a delimited
+identifier, you must pass the name to the import procedure using the same
+case that was used when it was created.</p></section>
+<section><title>Execute privileges</title>
+<p>If authentication and SQL authorization are both enabled, only the
+<xref href="rrefattrib26867.dita#rrefattrib26867">database owner</xref> has
+execute privileges on this procedure by default. See "Enabling user
+authentication" and "Setting the SQL standard authorization mode" in the
+<ph conref="../conrefs.dita#pub/citdevelop"></ph> for more information. The
+database owner can grant access to other users. The user must also have INSERT
+privileges on the table.</p>
+</section>
+<section><title>Usage</title><p>This procedure will read the LOB data using
+the reference that is stored in the main import file. The format of the reference
+to the LOB stored in the main import file must be <codeph>lobsFileName.Offset.length/</codeph>. </p><ul>
+<li><codeph>Offset</codeph> is position in the external file in bytes</li>
+<li><codeph>length</codeph> is the size of the LOB column data in bytes</li>
+</ul><p>For additional information on using this procedure, see the section
+"Importing and exporting data" in the
+<ph conref="../conrefs.dita#pub/citadmin"></ph>.</p></section>
+<section><title>Example importing data into specific columns, using a separate
+import file for the LOB data</title>The following example shows how to import
+data into several columns of the STAFF table. The STAFF table includes a LOB
+column in a sample database. The import file <codeph>staff.del</codeph> is
+a delimited data file. The <codeph>staff.del</codeph> file contains references
+that point to a separate file which contains the LOB data. The data in the
+import file is formatted using double quotation marks (") as the string delimiter
+and a comma (,) as the  column delimiter. The data will be appended to the
+existing data  in the STAFF table.  <codeblock>CALL SYSCS_UTIL.SYSCS_IMPORT_DATA_LOBS_FROM_EXTFILE
+    (null, 'STAFF', 'NAME,DEPT,SALARY,PICTURE', '2,3,4,6',
+    'c:\data\staff.del', ',','"','UTF-8',  0);</codeblock></section>
+</refbody>
+</reference>

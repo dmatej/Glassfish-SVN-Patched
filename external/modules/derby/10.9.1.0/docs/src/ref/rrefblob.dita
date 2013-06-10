@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefblob" xml:lang="en-us">
+<title>BLOB data type</title>
+<prolog><metadata>
+<keywords><indexterm>BLOB data type</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>A BLOB (binary large object) is a varying-length binary string
+that can be up to 2,147,483,647 characters long. Like other binary types,
+BLOB strings are not associated with a code page. In addition, BLOB strings
+do not hold character data.</p><p>The length is given in bytes for BLOB unless
+one of the suffixes K, M, or G is given, relating to the multiples of 1024,
+1024*1024, 1024*1024*1024 respectively. </p><note>Length is specified in bytes
+for BLOB.</note></section>
+<refsyn><title>Syntax</title><codeblock><b>
+{ BLOB | BINARY LARGE OBJECT } [ ( <i>length</i> [{K |M |G }] ) ]
+</b></codeblock> </refsyn>
+<section><title>Default</title><p>A BLOB without a specified length is defaulted
+to two gigabytes (2,147,483,647).</p> </section>
+<section><title>Corresponding compile-time Java type</title><p><i>java.sql.Blob</i></p> </section>
+<section><title>JDBC metadata type (java.sql.Types)</title><p>BLOB</p><p>Use
+the <i>getBlob</i> method on the <i>java.sql.ResultSet</i> to retrieve a BLOB
+handle to the underlying data.</p> </section>
+<section><title>Related information</title>
+<p>See <xref href="rrefjdbc96386.dita#rrefjdbc96386"></xref>.</p>
+</section>
+<example><title>Examples</title>
+<codeblock><b><ph>create table pictures(name varchar(32) not null primary key, pic blob(16M));
+</ph>
+-- find all logotype pictures
+select length(pic), name from pictures where name like '%logo%';
+
+-- find all image doubles (blob comparisons)
+select a.name as double_one, b.name as double_two
+from pictures as a, pictures as b
+where a.name &lt; b.name
+and a.pic = b.pic
+order by 1,2;</b></codeblock> 
+<p>Using an INSERT statement to put BLOB data into a table has some limitations
+if you need to cast a long string constant to a BLOB. (See
+<xref href="rrefstringlimits.dita#rrefstringlimits"></xref>.) You may be better
+off using a binary stream, as in the following code fragment.</p>
+<codeblock>        String url = "jdbc:derby:blobby;create=true";
+        Connection conn = DriverManager.getConnection(url);
+
+        Statement s = conn.createStatement();
+        s.executeUpdate(
+            "CREATE TABLE images (id INT, img BLOB)");
+
+        // - first, create an input stream
+        InputStream fin = new FileInputStream("image.jpg");
+
+        PreparedStatement ps = conn.prepareStatement(
+            "INSERT INTO images VALUES (?, ?)");
+        ps.setInt(1, 1477);
+
+        // - set the value of the input parameter to the input stream
+        ps.setBinaryStream(2, fin);
+        ps.execute();
+
+        // --- reading the columns
+        ResultSet rs = s.executeQuery(
+            "SELECT img FROM images WHERE id = 1477");
+        byte buff[] = new byte[1024];
+
+        while (rs.next()) {
+            Blob ablob = rs.getBlob(1);
+            File newfile = new File("newimage.jpg");
+
+            InputStream is = ablob.getBinaryStream();
+
+            FileOutputStream fos = 
+                new FileOutputStream(newfile);
+
+            for (int b = is.read(buff); b != -1; b = is.read(buff)) {
+                fos.write(buff, 0, b);
+            }
+
+            is.close();
+            fos.close();
+        }
+        s.close();
+        ps.close();
+        rs.close();
+        conn.close();</codeblock></example>
+</refbody>
+</reference>

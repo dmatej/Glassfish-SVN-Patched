@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevconcepts22641" xml:lang="en-us">
+<title>Scrollable result sets</title>
+<shortdesc>JDBC provides two types of result sets that allow
+you to scroll in either direction or to move the cursor to a
+particular row. <ph conref="../conrefs.dita#prod/productshortname"></ph> supports one of
+these types: scrollable insensitive result sets
+(<codeph>ResultSet.TYPE_SCROLL_INSENSITIVE</codeph>).
+</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>result set</indexterm><indexterm>Scrollable cursors</indexterm><indexterm>ResultSets<indexterm>scrollable insensitive</indexterm></indexterm><indexterm>Cursors<indexterm>scrollable insensitive</indexterm></indexterm></keywords>
+</metadata></prolog>
+<conbody>
+<section>
+
+<p>When you use a result set of type of type
+<codeph>ResultSet.TYPE_SCROLL_INSENSITIVE</codeph>, <ph
+conref="../conrefs.dita#prod/productshortname"></ph> materializes rows
+from the first one in the result set up to the one with the biggest
+row number as the rows are requested. The materialized rows will be
+backed to disk if necessary, to avoid excessive memory usage. 
+</p>
+
+<p>
+Insensitive result sets, in contrast to sensitive result sets,
+cannot see changes made by others on the rows which have been
+materialized. <ph conref="../conrefs.dita#prod/productshortname"></ph>
+allows updates of scrollable insensitive result sets; see <xref
+href="rdevconceptssur.dita#visibility">Visibility of changes</xref>,
+which also explains visibility of own changes.
+</p>
+
+<p>
+<note>
+<ph conref="../conrefs.dita#prod/productshortname"></ph> does not
+support result sets of type <codeph>ResultSet.TYPE_SCROLL_SENSITIVE</codeph>.
+</note>
+</p>
+
+
+<codeblock><b>//autocommit does not have to be off because even if 
+//we accidentally scroll past the last row, the implicit commit
+//on the the statement will not close the result set because result sets
+//are held over commit by default</b>
+conn.setAutoCommit(false);
+Statement s4 = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, 
+                                    ResultSet.CONCUR_READ_ONLY);
+s4.execute("set schema 'SAMP'");
+ResultSet scroller=s4.executeQuery(
+    "SELECT sales_person, region, sales FROM sales " +
+    "WHERE sales &gt; 8 ORDER BY sales DESC");
+if (scroller.first()) { // One row is now materialized
+    System.out.println("The sales rep who sold the highest number" +
+                       " of sales is " +
+                       scroller.getString("SALES_PERSON"));
+} else {
+    System.out.println("There are no rows.");
+}
+scroller.beforeFirst();
+scroller.afterLast();   // By calling afterlast(), all rows will be materialized
+scroller.absolute(3);
+if (!scroller.isAfterLast()) {
+    System.out.println("The employee with the third highest number " +
+                       "of sales is " +
+                       scroller.getString("SALES_PERSON") + ", with " +
+                       scroller.getInt("SALES") + " sales");
+}
+if (scroller.isLast()) {
+    System.out.println("There are only three rows.");
+}
+if (scroller.last()) {
+    System.out.println("The least highest number " +
+                       "of sales of the top three sales is: " +
+                       scroller.getInt("SALES"));
+}
+scroller.close();
+s4.close();
+conn.commit()
+conn.close();
+System.out.println("Closed connection");</codeblock>
+</section>
+</conbody>
+</concept>

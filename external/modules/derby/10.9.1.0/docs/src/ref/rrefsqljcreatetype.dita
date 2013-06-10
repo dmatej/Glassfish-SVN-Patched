@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqljcreatetype" xml:lang="en-us">
+<title>CREATE TYPE statement</title>
+<prolog><metadata>
+<keywords><indexterm>CREATE TYPE statement</indexterm>
+<indexterm>SQL statements<indexterm>CREATE TYPE</indexterm></indexterm>
+<indexterm>user-defined types<indexterm>creating</indexterm></indexterm>
+<indexterm>data types<indexterm>user-defined</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>
+The CREATE TYPE statement creates a user-defined type (UDT). A UDT is a
+serializable Java class whose instances are stored in columns. The class must
+implement the <i>java.io.Serializable</i> interface.</p></section>
+<refsyn><title>Syntax</title>
+<codeblock><b>CREATE TYPE [ <i><xref 
+href="rrefschemaname.dita#rrefschemaname">schemaName</xref>.</i> ] <i><xref
+href="crefsqlj34834.dita#crefsqlj34834">SQL92Identifier</xref></i>
+EXTERNAL NAME <i>singleQuotedJavaClassName</i>
+LANGUAGE JAVA</b></codeblock>
+<p>The type name is composed of an optional <i>schemaName</i> and a
+<i>SQL92Identifier</i>. If a <i>schemaName</i> is not provided, the current
+schema is the default schema. If a qualified type name is specified, the schema
+name cannot begin with SYS.</p>
+<p>If the Java class does not implement <i>java.io.Serializable</i>, or if it is
+not public and visible on the classpath,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> raises an exception
+when preparing statements which refer to the UDT.</p>
+<p>A UDT cannot be cast explicitly to any other type, and no other type can be
+cast to a UDT.</p>
+<p>A UDT has no ordering. This means that you cannot compare and sort UDTs. You
+cannot use them in expressions involving the <codeph>&lt;</codeph>,
+<codeph>=</codeph>, <codeph>&gt;</codeph>, IN, BETWEEN, and LIKE operators. You
+cannot use UDTs in aggregates, DISTINCT expressions, and GROUP/ORDER BY clauses.
+You cannot build indexes on them.</p>
+<p>You can use subtypes in UDTs. That is, if you use the CREATE TYPE statement
+to bind a class named C to a UDT, you can populate that UDT value with an
+instance of any subclass of C.</p>
+</refsyn>
+<example><title>Example</title>
+<codeblock><b>CREATE TYPE price
+EXTERNAL NAME 'com.example.types.Price'
+LANGUAGE JAVA</b></codeblock>
+</example>
+<section><title>Using user-defined types</title>
+<p>You can create tables and views with columns that have UDTs. For example:</p>
+<codeblock><b>CREATE TABLE order
+(
+    orderID INT GENERATED ALWAYS AS IDENTITY,
+    customerID INT REFERENCES customer( customerID ),
+    totalPrice typeSchema.price
+);</b></codeblock>
+<p>Although UDTs have no natural order, you can use generated columns to provide
+useful sort orders:</p>
+<codeblock><b>ALTER TABLE order 
+  ADD COLUMN normalizedValue DECIMAL( 31, 5 ) GENERATED ALWAYS AS 
+    ( convert( 'EUR', TIMESTAMP('2005-01-01 09:00:00'), totalPrice ) );
+CREATE INDEX normalizedOrderPrice ON order( normalizedValue );</b></codeblock>
+<p>You can use factory functions to construct UDTs. For example:
+</p>
+<codeblock><b>INSERT INTO order( customerID, totalPrice )
+  VALUES ( 12345, 
+           makePrice( 'USD', 
+                      CAST( 9.99 AS DECIMAL( 31, 5 ) ), 
+                      TIMESTAMP('2009-10-16 14:24:43') ) );</b></codeblock>
+<p>Once a UDT column has been populated, you can use it in other INSERT and
+UPDATE statements. For example:</p>
+<codeblock><b>INSERT INTO backOrder SELECT * from order;
+
+UPDATE order SET totalPrice = ( SELECT todaysDiscount FROM discount );
+UPDATE order SET totalPrice = adjustForInflation( totalPrice );</b></codeblock>
+<p>Using functions, you can access fields inside UDTs in a SELECT statement:</p>
+<codeblock><b>SELECT getCurrencyCode( totalPrice ) from order;</b></codeblock>
+<p>You can use JDBC API <i>setObject()</i> and <i>getObject()</i> methods to
+store and retrieve values of UDTs. For example:</p>
+<codeblock><b>PreparedStatement ps = conn.prepareStatement( "SELECT * from order" );
+ResultSet rs = ps.executeQuery();
+
+while( rs.next() )
+{
+    int    orderID = rs.getInt( 1 );
+    int    customerID = rs.getInt( 2 );
+    Price  totalPrice = (Price) rs.getObject( 3 );
+    ...
+}</b></codeblock>
+</section>
+</refbody>
+</reference>

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="cadminappsclienttracing" xml:lang="en-us">
+<title>Network client tracing</title>
+<shortdesc>The <ph conref="../conrefs.dita#prod/productshortname"></ph> Network
+client provides a tracing facility to collect JDBC trace information and view
+protocol flows.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Network Client tracing</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section><p>There are various ways to obtain trace output. However, the easiest
+way to obtain trace output is to use the <codeph>traceFile=<i>path</i></codeph> attribute
+on the URL in <codeph>ij</codeph>. The following example shows all tracing
+going to the file <codeph>trace.out</codeph> from an <codeph>ij</codeph> session.<codeblock>ij>connect 'jdbc:derby://localhost:1527/mydb;
+create=true;traceFile=trace.out;user=user1;password=secret4me';</codeblock></p>
+<p>To append trace information to the specified file, use the
+<codeph>traceFileAppend=true</codeph> URL attribute in addition to 
+<codeph>traceFile=<i>path</i></codeph>.</p>
+<p>For more information, see "traceFile=path attribute" and "traceFileAppend=true
+attribute" in the <ph conref="../conrefs.dita#pub/citref"></ph>.</p></section>
+<section><title>Implementing ClientDataSource tracing</title><p>You can use
+one of three methods to collect tracing data while obtaining connections from
+the ClientDataSource:<ul>
+<li>Use the <codeph>setLogWriter(java.io.PrintWriter)</codeph> method of ClientDataSource
+and set the <codeph>PrintWriter</codeph> to a non-null value.</li>
+<li>Use the <codeph>setTraceFile(String filename)</codeph> method of ClientDataSource.</li>
+<li>Use the <codeph>setTraceDirectory(String dirname)</codeph> method of ClientDataSource
+to trace each connection flow in its own file for programs that have multiple
+connections.</li>
+</ul></p></section>
+<section><title>Implementing DriverManager tracing</title><p>Use one of the
+following two options to enable and collect tracing information while obtaining
+connections using the DriverManager:<ul>
+<li>Use the <codeph>setLogWriter(java.io.PrintWriter)</codeph> method of DriverManager
+and set the <codeph>PrintWriter</codeph> to a non null-value.</li>
+<li>Use the <codeph>traceFile=<i>path</i></codeph> or <codeph>traceDirectory=<i>path</i></codeph> URL
+attributes to set these properties prior to creating the connection with the <codeph>DriverManager.getConnection()</codeph> method.
+For more information, see "traceFile=path attribute" and "traceDirectory=path
+attribute" in the <ph conref="../conrefs.dita#pub/citref"></ph>.</li>
+</ul></p></section>
+<section><title>Changing the default trace level</title><p>The default trace
+level is <codeph>ClientDataSource.TRACE_ALL</codeph>. You can choose the tracing
+level by calling the <codeph>setTraceLevel(int level)</codeph> method or by
+setting the <codeph>traceLevel=<i>value</i></codeph> URL attribute:</p>
+<codeblock>String url = "jdbc:derby://samplehost.example.com:1528/mydb" +
+ ";traceFile=/u/user1/trace.out" +
+ ";traceLevel=" +
+ org.apache.derby.jdbc.ClientDataSource.TRACE_PROTOCOL_FLOWS;
+DriverManager.getConnection(url,"user1","secret4me");</codeblock>
+<p>The following table shows the tracing levels you can set.</p>
+<table>
+<title>Available tracing levels and values</title>
+<desc>This table lists the network client tracing levels and their values.</desc>
+<tgroup cols="2" colsep="1" rowsep="1">
+<colspec colname="col1" colnum="1" colwidth="166*"/>
+<colspec colname="col2" colnum="2" colwidth="30*"/>
+<thead>
+<row valign="bottom">
+<entry colname="col1">Trace Level</entry>
+<entry colname="col2">Value</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_NONE</entry>
+<entry colname="col2">0x0</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_CONNECTION_CALLS</entry>
+<entry colname="col2">0x1</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_STATEMENT_CALLS</entry>
+<entry colname="col2">0x2</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_RESULT_SET_CALLS</entry>
+<entry colname="col2">0x4</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE _DRIVER_CONFIGURATION</entry>
+<entry colname="col2">0x10</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_CONNECTS</entry>
+<entry colname="col2">0x20</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_PROTOCOL_FLOWS</entry>
+<entry colname="col2">0x40</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE _RESULT_SET_META_DATA</entry>
+<entry colname="col2">0x80</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE _PARAMETER_META_DATA</entry>
+<entry colname="col2">0x100</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_DIAGNOSTICS</entry>
+<entry colname="col2">0x200</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_XA_CALLS</entry>
+<entry colname="col2">0x800</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_ALL</entry>
+<entry colname="col2">0xFFFFFFFF;</entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+<p>To specify more than one trace level, use one of the following
+techniques:</p>
+<ul>
+<li>Use bitwise OR operators ( | ) with two or more trace values. For example,
+to trace PROTOCOL flows and connection calls, specify this value for traceLevel:
+<codeblock>TRACE_PROTOCOL_FLOWS | TRACE_CONNECTION_CALLS</codeblock></li>
+<li>Use a bitwise complement operator ( ~ ) with a trace value to specify
+all except a certain trace. For example, to trace everything except PROTOCOL
+flows, specify this value for traceLevel:
+<codeblock>~TRACE_PROTOCOL_FLOWS</codeblock></li>
+</ul>
+<p>For more information, see "traceLevel=value attribute" in the
+<ph conref="../conrefs.dita#pub/citref"></ph>.</p></section>
+</refbody>
+</reference>

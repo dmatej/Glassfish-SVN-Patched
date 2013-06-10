@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rtuntransform582" xml:lang="en-us">
+<title>Simple IN predicate transformations</title>
+<shortdesc></shortdesc>
+<prolog><metadata>
+<keywords><indexterm>IN transformations</indexterm><indexterm>Internal transformation
+of statements<indexterm>IN predicates</indexterm></indexterm><indexterm>IN
+predicate transformations</indexterm><indexterm>probe predicate</indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>A <term>simple</term> IN list predicate is a predicate where the
+left operand is a <xref href="ctuntransform13966.dita#ctuntransform13966/rtuntransform13785">simple
+column reference</xref> and the IN list is composed entirely of constants
+or parameter markers. The following are examples of simple IN predicates:</p><codeblock>    orig_airport IN ('ABQ', 'AKL', 'DSM')
+
+    orig_airport IN (?, ?, ?)
+
+    orig_airport IN ('ABQ', ?, ?, 'YYZ') </codeblock></section>
+<section><title>Probe predicates</title><p><ph conref="../conrefs.dita#prod/productshortname"></ph> transforms
+each IN list predicate into an equality predicate whose right operand is a
+parameter marker that is created internally. This internal equality predicate
+is called a <term>probe predicate</term>. Each of the above examples of simple
+IN predicates is transformed into the following probe predicate:</p><codeblock>    orig_airport = ?</codeblock><p>Probe
+predicates are treated differently than normal equality predicates. Probe
+predicates are processed in a special way during query optimization and execution. </p><p>During
+optimization, <ph conref="../conrefs.dita#prod/productshortname"></ph> analyzes
+the probe predicate to determine if the probe predicate is useful for limiting
+the number of rows retrieved from disk. For a probe predicate to be useful,
+both of the following requirements must be true:</p><ol>
+<li>There must be an index defined on the table that the column reference
+belongs to, and the column reference must be the first column in the index.
+In the example above, <codeph>orig_airport</codeph> is the column reference.</li>
+<li>The estimated cost of an access path that uses the probe predicate and
+one of the corresponding indexes must be less than the estimated cost of any
+other access paths calculated by the optimizer.  Typically, this means that
+the number of values in the IN list is significantly fewer than the number
+of rows in the table that the column reference belongs to.</li>
+</ol><p>If both of these requirements are met, <ph conref="../conrefs.dita#prod/productshortname"></ph> will
+use the probe predicate at query execution to <i>probe</i> the underlying
+index for values in the IN list. In other words, the right operand of the
+probe predicate (the parameter) becomes a place-holder into which <ph conref="../conrefs.dita#prod/productshortname"></ph> plugs
+the different values from the IN list. Then for each value, <ph conref="../conrefs.dita#prod/productshortname"></ph> reads
+the matching rows from the index.</p><p>If either of the two requirements
+is not satisfied, <ph conref="../conrefs.dita#prod/productshortname"></ph> discards
+the internal probe predicate and executes the query using the original IN
+list predicate.</p></section>
+<section><title>Examples</title><p>The following query is submitted to <ph
+conref="../conrefs.dita#prod/productshortname"></ph>:</p><codeblock>SELECT flights.orig_airport, cities.city_name 
+    FROM flights, cities
+    WHERE flights.orig_airport IN ('ABQ', 'DSM', 'YYZ')
+        AND flights.orig_airport = cities.airport   </codeblock><p>The Derby
+optimizer transforms this query internally into:     </p><codeblock>SELECT flights.orig_airport, cities.city_name
+    FROM flights, cities
+    WHERE flights.orig_airport = ?
+        AND flights.orig_airport = cities.airport   </codeblock><p>In this
+transformed query <codeph>flights.orig_airport = ?</codeph> is an internal
+probe predicate.</p><p>There is an index on the <codeph>org_airport</codeph> column
+in the <codeph>flights</codeph> table. If the estimated cost of probing that
+index for the three values (ABQ, DSM, YYZ) is less than the cost of accessing
+the <codeph>flights</codeph> table in some other way, <ph conref="../conrefs.dita#prod/productshortname"></ph> will
+perform probing on the index at query execution. This approach ensures that <ph
+conref="../conrefs.dita#prod/productshortname"></ph> reads only the necessary
+rows from the <ph conref="../conrefs.dita#prod/productshortname"></ph> table.</p><p>At
+a higher level, the approach by <ph conref="../conrefs.dita#prod/productshortname"></ph> to
+use index probing for IN lists is an internal way of evaluating the transformed
+predicate multiple times. The predicate is evaluated one time for each value
+in the IN list.</p><p>From a JDBC perspective, <ph conref="../conrefs.dita#prod/productshortname"></ph> is
+logically (but not actually) performing the following statements and then
+combining the three result sets (rs1, rs2, and rs3) : <codeblock>PreparedStatement ps = conn.prepareStatement(
+    "select flights.orig_airport, cities.city_name " +
+    "from flights, cities " +
+    "where flights.orig_airport = ? " +
+        "and flights.orig_airport = cities.airport ");
+
+ps.setString(1, "ABQ");
+rs1 = ps.executeQuery();
+
+ps.setString(1, "DSM");
+rs2 = ps.executeQuery();
+
+ps.setString(1, "YYZ");
+rs3 = ps.executeQuery();
+
+</codeblock></p><p>From an SQL perspective, <ph conref="../conrefs.dita#prod/productshortname"></ph> is
+logically (but not actually) performing the following statement:</p><codeblock>SELECT flights.orig_airport, cities.city_name
+    FROM flights, cities
+    WHERE flights.orig_airport = 'ABQ'
+        AND flights.orig_airport = cities.airport
+
+UNION ALL
+
+SELECT flights.orig_airport, cities.city_name
+    FROM flights, cities
+    WHERE flights.orig_airport = 'DSM'
+        AND flights.orig_airport = cities.airport
+
+UNION ALL
+
+SELECT flights.orig_airport, cities.city_name
+    FROM flights, cities
+    WHERE flights.orig_airport = 'YYZ'
+        AND flights.orig_airport = cities.airport
+    </codeblock><p>In the above SQL example, for each subquery the equality
+predicate limits the number of rows read from the <codeph>flights</codeph> table
+so that the process avoids having to read unnecessary rows from disk. </p><p>The
+larger the <codeph>flights</codeph> table, the more time <ph conref="../conrefs.dita#prod/productshortname"></ph> will
+save by probing the index for the relatively few IN list values. </p><p>By
+using probe predicates, regardless of how large the base table is, <ph conref="../conrefs.dita#prod/productshortname"></ph> only
+has to probe the index a maximum of N times, where N is the size of the IN
+list. If N is significantly less than the number of rows in the table, or
+is significantly less than the number of rows between the minimum value and
+the maximum value in the IN list, selective probing ensures that <ph conref="../conrefs.dita#prod/productshortname"></ph> does
+not spend time reading unnecessary rows from disk.</p></section>
+</refbody>
+</reference>

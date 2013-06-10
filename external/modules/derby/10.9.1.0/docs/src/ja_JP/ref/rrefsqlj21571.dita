@@ -1,0 +1,113 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj21571" xml:lang="en-us">
+<title>問合せ</title>
+<prolog><metadata>
+<keywords><indexterm>UNION</indexterm><indexterm>UNION ALL</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>問合せにより、既存表や表に組込みの定数を基にして、仮想的な表が作られます。</p></section>
+<refsyn><title>Syntax</title><codeblock><b>{
+    ( <i>Query</i> ) |
+<i>    Query</i> INTERSECT [ ALL | DISTINCT ] <i>Query</i> |
+<i>    Query</i> EXCEPT [ ALL | DISTINCT ] <i>Query</i> |
+<i>    Query</i> UNION [ ALL | DISTINCT ] <i>Query</i> |
+<i>    <xref href="rrefselectexpression.dita#rrefselectexpression">選択式</xref></i> | <i><xref
+href="rrefsqlj11277.dita#rrefsqlj11277">VALUES式</xref></i>
+}</b></codeblock>
+<p>問合せの前後に任意で括弧を置くことができます。また、INTERSECT、EXCEPT、UNION演算子の評価順を括弧を使って変えることができます。INTERSECTを除きこれらの演算子は、括弧がなければ左から右に評価されます。INTERSECTはUNIONあるいはEXCEPTより前に評価されます。</p></refsyn>
+<section><title>UNION、INTERSECT、EXCEPT ALLにおける結果の重複</title>
+<p>ALLとDISTINCTというキーワードにより処理結果から重複を取り除くか否かが決まります。
+DISTINCTというキーワードがあれば、結果に重複行はありません。ALLというキーワードがあれば、入力によって結果に重複行がある場合があります。既定はDISTINCTなので、ALLかDISTINCTか指定しなければ重複は取り除かれます。例えばUNIONの場合は、両方の問合せの全行を元に一時的な<i>ResultSet</i>を生成したのち、重複行を取り除いてから結果を返します。これがUNION ALLならば、両方の問合せの全行が返されます。</p>
+<p> 左表にある重複した行の数をL、右表にある左表と同じ内容で重複した行の数をRとすると、どの操作を行うかにより、結果表にある重複した行の数は次のようにきまります。(ALLが指定されたとします。)
+<ul>
+<li>UNION: ( L + R )。</li>
+<li>EXCEPT: ( L – R )と0(零)のうち大きいほう</li>
+<li>INTERSECT: LとRのうち小さいほう</li>
+</ul></p></section>
+<example><title>例</title><codeblock><b><ph>-- 選択式 </ph>
+SELECT *
+FROM ORG
+
+<ph>-- 副問合せ </ph>
+SELECT *
+FROM (SELECT CLASS_CODE FROM CL_SCHED) AS CS
+
+-- 副問合せ
+SELECT *
+FROM (SELECT CLASS_CODE FROM CL_SCHED) AS CS (CLASS_CODE)
+
+<ph>-- UNIONにより
+-- ORGという表にある全行の
+-- DEPTNUMBとMANAGERという列に加え、
+-- (1,2)と(3,4)を返す。
+-- なお、DEPTNUMBとMANAGERはsmallint型の列である。</ph>
+SELECT DEPTNUMB, MANAGER 
+FROM ORG
+UNION ALL
+VALUES (1,2), (3,4)
+
+<ph>-- 値の式</ph>
+VALUES (1,2,3)</b>
+<b>
+-- EMPLOYEEという表にて部署番号(WORKDEPT)が'E'で始まる社員および、
+-- EMP_ACTという表にてプロジェクト番号(PROJNO)が
+-- 'MA2100'、'MA2110'あるいは'MA2112'のプロジェクトにアサインされている社員の
+-- 社員番号(EMPNO)を一覧する。
+SELECT EMPNO
+     FROM EMPLOYEE
+     WHERE WORKDEPT LIKE 'E%'
+  UNION
+  SELECT EMPNO
+     FROM EMP_ACT
+     WHERE PROJNO IN('MA2100', 'MA2110', 'MA2112')</b>
+<b>-- 前の例と同じ内容の問合せを行い、EMPLOYEEという表から得た行には'emp'、
+-- EMP_ACTという表から得た行には'emp_act'という"タグ"をつける。
+-- どちらの表から来たかをあらわす"タグ"があるので、
+-- この問合せは前の問合せとは違い、同じEMPNOを一回より多く返すことがある。
+SELECT EMPNO, 'emp'
+     FROM EMPLOYEE
+     WHERE WORKDEPT LIKE 'E%'
+  UNION
+  SELECT EMPNO, 'emp_act' FROM EMP_ACT
+     WHERE PROJNO IN('MA2100', 'MA2110', 'MA2112')</b>
+<b>-- 前の例とほぼ同じ内容の問合せである。
+-- UNION ALLが指定されたので重複は取り除かれなくなる。
+SELECT EMPNO
+      FROM EMPLOYEE
+      WHERE WORKDEPT LIKE 'E%'
+  UNION ALL
+  SELECT EMPNO
+     FROM EMP_ACT
+     WHERE PROJNO IN('MA2100', 'MA2110', 'MA2112')</b>
+<b>-- 前の例とほぼ同じ内容の問合せである。
+-- いずれの表にもいない二人の社員を加えて、
+-- その行に"new"というタグをつけた。
+ SELECT EMPNO, 'emp'
+     FROM EMPLOYEE
+     WHERE WORKDEPT LIKE 'E%'
+  UNION
+  SELECT EMPNO, 'emp_act'
+     FROM EMP_ACT
+     WHERE PROJNO IN('MA2100', 'MA2110', 'MA2112')
+  UNION
+     VALUES ('NEWAAA', 'new'), ('NEWBBB', 'new')</b></codeblock> </example>
+</refbody>
+</reference>

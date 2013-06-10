@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctunstats849000">
+<title>Queries with an unknown search condition</title>
+<prolog><metadata>
+<keywords>
+<indexterm>Selectivity<indexterm>definition</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>Queries sometimes have an unknown search condition, such as in the case
+when the statement's WHERE clause involves dynamic parameters that are
+known only at execution time and not at compilation time, or when the statement
+involves a join. For example:  
+<codeblock><b><ph>-- dynamic parameters</ph>
+SELECT *
+FROM Flights
+WHERE orig_airport = ?
+
+rollback
+<ph>-- joins</ph>
+SELECT * FROM Countries, Cities
+WHERE Countries.country_ISO_code = Cities.country_ISO_code
+<ph>
+-- complex search conditions</ph>
+SELECT * FROM Countries
+WHERE region = (select region from Countries where country = 'Spain')</b></codeblock></p>
+<p>In the above SELECT statements, the optimizer cannot get enough useful
+information from the index about how many rows will be returned by a particular
+access path. However, it can often make a good guess by looking at a table's <i>selectivity</i> for a particular WHERE clause.</p>
+<p>Selectivity refers to the fraction of rows that will be returned from the
+table for the particular WHERE clause. The optimizer multiplies the number
+of rows in the table by the <i>selectivity</i> for a particular
+operation. For example, if the selectivity for a particular search operation
+is .10, and the table contains 100 rows, the optimizer estimates that the
+operation will return 10 rows. (This is not exact; it is just a good guess.)
+ </p>
+</conbody></concept>

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj40774" xml:lang="en-us">
+<title>INSERT statement</title>
+<prolog><metadata>
+<keywords><indexterm>INSERT statement</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p><indexterm>Read-write VTIs<indexterm>and INSERTs</indexterm></indexterm>An
+INSERT statement creates a row or rows and stores them in the named table.
+The number of values assigned in an INSERT statement must be the same as the
+number of specified or implied columns.</p>
+<p>Whenever you insert into a table which has generated columns,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> calculates the values
+of those columns.</p></section>
+<refsyn><title>Syntax</title> <codeblock><b>INSERT INTO table-Name
+    [ (<i><xref href="rrefsimplecolumnname.dita#rrefsimplecolumnname">Simple-column-Name</xref></i> [ , <i><xref
+href="rrefsimplecolumnname.dita#rrefsimplecolumnname">Simple-column-Name</xref></i>]* ) ]
+          Query [ <i><xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY clause</xref></i> ]
+                [ <i><xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">result offset clause</xref></i> ]
+                [ <i><xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">fetch first clause</xref></i> ]
+</b></codeblock> <p><i>Query</i> can be:   <ul>
+<li>A <i><xref href="rrefselectexpression.dita#rrefselectexpression">SelectExpression</xref></i></li>
+<li>A single-row or multiple-row VALUES expression
+<p>Single-row and multiple-row VALUES expressions
+can include the keyword DEFAULT. Specifying DEFAULT for a column inserts the
+column's default value into the column. Another way to insert the default
+value into the column is to omit the column from the column list and only
+insert values into other columns in the table. For more information, see <xref
+href="rrefsqlj11277.dita#rrefsqlj11277"></xref>.</p>
+<p>The DEFAULT literal is the only value which you can directly
+insert into a generated column.</p></li>
+<li>UNION expressions</li>
+</ul></p>
+<p>When you want insertion to happen with a specific ordering (for example, in
+conjunction with auto-generated keys), it can be useful to specify an ORDER BY
+clause on the result set to be inserted.</p>
+<p>If the Query is a VALUES expression, it cannot contain or be followed by an
+ORDER BY, result offset, or fetch first clause. However, if the VALUES
+expression does not contain the DEFAULT keyword, the VALUES clause can be put
+in a subquery and ordered, as in the following statement:</p>
+<codeblock><b>INSERT INTO t SELECT * FROM (VALUES 'a','c','b') t ORDER BY 1;</b></codeblock>
+<p>For more information about Query, see <xref href="rrefsqlj21571.dita#rrefsqlj21571"></xref>.</p> </refsyn>
+<example><title>Examples</title> <codeblock><b>INSERT INTO COUNTRIES
+      VALUES ('Taiwan', 'TW', 'Asia')
+
+-- Insert a new department into the DEPARTMENT table,
+-- but do not assign a manager to the new department
+INSERT INTO DEPARTMENT (DEPTNO, DEPTNAME, ADMRDEPT)
+	VALUES ('E31', 'ARCHITECTURE', 'E01')
+<ph>-- Insert two new departments using one statement 
+-- into the DEPARTMENT table as in the previous example, 
+-- but do not assign a manager to the new department.</ph>
+INSERT INTO DEPARTMENT (DEPTNO, DEPTNAME, ADMRDEPT)
+	VALUES ('B11', 'PURCHASING', 'B01'),
+	('E41', 'DATABASE ADMINISTRATION', 'E01')
+<ph>--  Create a temporary table MA_EMP_ACT with the 
+-- same columns as the EMP_ACT table. 
+-- Load MA_EMP_ACT with the rows from the EMP_ACT
+-- table with a project number (PROJNO) 
+-- starting with the letters 'MA'.</ph>
+CREATE TABLE MA_EMP_ACT 
+    (
+	EMPNO CHAR(6)  NOT NULL, 
+	PROJNO CHAR(6)  NOT NULL, 
+	ACTNO SMALLINT  NOT NULL, 
+	EMPTIME DEC(5,2), 
+	EMSTDATE DATE, 
+	EMENDATE  DATE
+    );
+
+INSERT INTO MA_EMP_ACT
+	SELECT * FROM EMP_ACT
+	WHERE SUBSTR(PROJNO, 1, 2) = 'MA';
+<ph>-- Insert the DEFAULT value for the LOCATION column</ph>
+INSERT INTO DEPARTMENT
+      VALUES ('E31', 'ARCHITECTURE', '00390', 'E01', DEFAULT)
+
+<ph>-- Create an AIRPORTS table and insert into it
+-- some of the fields from the CITIES table, with the airport
+-- codes sorted alphabetically</ph>
+CREATE TABLE AIRPORTS (
+  AIRPORT_ID INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY
+    PRIMARY KEY,
+  AIRPORT VARCHAR(3),
+  CITY VARCHAR(24) NOT NULL,
+  COUNTRY VARCHAR(26) NOT NULL
+);
+
+INSERT INTO AIRPORTS (AIRPORT, CITY, COUNTRY)
+  SELECT AIRPORT, CITY_NAME, COUNTRY FROM CITIES
+  ORDER BY AIRPORT;
+</b></codeblock> </example>
+<section><title>Statement dependency system</title> <p>The INSERT
+statement depends on the table being inserted into, all of the conglomerates
+(units of storage such as heaps or indexes) for that table, and any other
+table named in the statement. Any statement that creates or drops an index or
+a constraint for the target table of a prepared INSERT statement invalidates
+the prepared INSERT statement.</p> </section>
+</refbody>
+</reference>
+

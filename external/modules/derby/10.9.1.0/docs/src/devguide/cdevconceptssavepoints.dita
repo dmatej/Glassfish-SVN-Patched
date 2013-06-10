@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevconceptssavepoints" xml:lang="en-us">
+<title>Using savepoints</title>
+<shortdesc>The <i>Savepoint</i> interface contains
+methods to set, release, or roll back a transaction to designated savepoints.
+Once a savepoint has been set, the transaction can be rolled back to that
+savepoint without affecting preceding work. Savepoints provide finer-grained
+control of transactions by marking intermediate points within a transaction.
+</shortdesc>
+<prolog><metadata>
+<keywords>
+<indexterm>java.sql.Savepoint</indexterm><indexterm>Savepoints (JDBC)</indexterm>
+<indexterm>Savepoints<indexterm>setting and rollong back</indexterm></indexterm>
+<indexterm>Savepoints<indexterm>releasing</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<section><title>Setting and rolling back to a savepoint</title>
+<p>The <i>Connection.setSavepoint</i> method sets a savepoint within the current
+transaction. The <i>Connection.rollback</i> method is overloaded to take a
+savepoint argument.</p>
+<p>The code example below inserts a row into a table, sets the savepoint
+<codeph>svpt1</codeph>, and then inserts a second row. When the transaction is
+later rolled back to <codeph>svpt1</codeph>, the second insertion is undone, but
+the first insertion remains intact. In other words, when the transaction is
+committed, only the row containing '1' will be added to TABLE1.
+<codeblock expanse="column"><b>conn.setAutoCommit(false); // Autocommit must be off to use savepoints.
+Statement stmt = conn.createStatement();
+int rows = stmt.executeUpdate("INSERT INTO TABLE1 (COL1) VALUES(1)");
+// set savepoint
+Savepoint svpt1 = conn.setSavepoint("S1");
+rows = stmt.executeUpdate("INSERT INTO TABLE1 (COL1) VALUES (2)");
+...
+conn.rollback(svpt1);
+...
+conn.commit();</b></codeblock></p>
+</section>
+<section><title>Releasing a savepoint </title>
+<p>The method <i>Connection.releaseSavepoint</i> takes a <i>Savepoint</i> object
+as a parameter and removes it from the current transaction. Once a savepoint
+has been released, attempting to reference it in a rollback operation will
+cause an <i>SQLException</i> to be thrown.</p>
+<p>Any savepoints that have been created in a transaction are automatically
+released and become invalid when the transaction is committed or when the
+entire transaction is rolled back.</p>
+<p>Rolling a transaction back to a savepoint automatically releases and makes
+invalid any other savepoints created after the savepoint in question.</p>
+</section>
+<section><title>Rules for savepoints</title>
+<p>The savepoint cannot be set within a batch of statements to enable partial
+recovery. If a savepoint is set any time before the method <i>executeBatch</i>
+is called, it is set before any of the statements that have been added to the
+batch are executed.</p>
+<p>A savepoint can be reused after it has been released explicitly (by issuing a
+release of the savepoint) or implicitly (by issuing a connection
+commit/rollback to that savepoint or to a savepoint declared earlier than that
+savepoint).</p>
+<p>It is possible to nest savepoints, but only in an embedded environment.</p>
+</section>
+</conbody>
+</concept>

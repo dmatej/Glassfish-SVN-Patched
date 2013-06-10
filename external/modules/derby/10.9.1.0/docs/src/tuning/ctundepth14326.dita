@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="ctundepth14326" xml:lang="en-us">
+<title>Shielding users from Derby class-loading events</title>
+<prolog><metadata>
+<keywords><indexterm>Class loading<indexterm>when it occurs in Derby</indexterm><indexterm>how
+to minimize impact of</indexterm></indexterm></keywords>
+</metadata></prolog>
+<conbody>
+<p>JVMs tend to load classes as they are needed, which means the first time
+you need a class in a piece of software, it takes longer to use.</p>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph> has three clear
+cases when a lot of class loading occurs:   <ul>
+<li><i>When the system boots</i>   <p>The system boots when you load the embedded
+driver, <i>org.apache.derby.</i><i>jdbc.EmbeddedDriver</i>. In a server framework,
+the system boots when you start the server framework. Booting <ph conref="../conrefs.dita#prod/productshortname"></ph> loads
+basic <ph conref="../conrefs.dita#prod/productshortname"></ph> classes.</p></li>
+<li><i>When the first database boots</i>   <p>Booting the first database loads
+some more <ph conref="../conrefs.dita#prod/productshortname"></ph> classes.
+The default behavior is that the first database boots when the first connection
+is made to it. You can also configure the system to boot databases at startup.
+Depending on your application, one or the other might be preferable. </p></li>
+<li><i>When you compile the first query</i>   <p>Compiling the first query
+loads additional classes.</p></li>
+</ul></p>
+<p>For any of these events, you can control the impact they have on users
+by starting them in separate threads while other tasks are occurring.</p>
+<p>In addition, if you are using <i>PreparedStatements</i>, prepare them in
+a separate thread in the background while other tasks are occurring.</p>
+<section><title>Tuning tips for multi-user systems</title>
+<ul>
+<li>For concurrency, use row-level locking and the READ_COMMITTED isolation
+level.</li>
+<li>For read-only applications, use table-level locking and the READ_COMMITTED
+isolation level.</li>
+<li>Boot databases at startup to minimize the impact of connecting.</li>
+</ul>
+</section>
+<section><title>Tuning tips for single-user systems</title>
+<ul>
+<li><ph conref="../conrefs.dita#prod/productshortname"></ph> boots when you
+first load the embedded JDBC driver (<i>org.apache.derby.</i><i>jdbc.EmbeddedDriver</i>).
+Load this driver during the least time-sensitive portion of your program,
+such as when it is booting or when you are waiting for user input. For server
+frameworks, the driver is loaded automatically when the server boots.</li>
+<li>Boot the database at connection (the default behavior), not at startup.
+Connect in a background thread if possible.</li>
+<li>Turn off row-level locking and use READ_COMMITTED isolation level.</li>
+</ul>
+</section>
+</conbody>
+</concept>

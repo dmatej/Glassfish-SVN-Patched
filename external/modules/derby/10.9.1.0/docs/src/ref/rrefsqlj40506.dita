@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj40506" xml:lang="en-us">
+<title>LOCK TABLE statement</title>
+<prolog><metadata>
+<keywords><indexterm>LOCK TABLE statement</indexterm><indexterm><indexterm>SQL
+statements</indexterm>LOCK TABLE</indexterm><indexterm>tables<indexterm>locking</indexterm></indexterm>
+<indexterm>lock escalation<indexterm>by user</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>The LOCK TABLE statement allows you to explicitly acquire a shared
+or exclusive table lock on the specified table. The table lock lasts until
+the end of the current transaction. </p><p>To lock a table, you must either
+be the 
+<xref href="rrefattrib26867.dita#rrefattrib26867">database owner</xref>
+or the table owner.</p><p>Explicitly locking a table
+is useful to:   <ul>
+<li>Avoid the overhead of multiple row locks on a table (in other words, user-initiated
+lock escalation)</li>
+<li>Avoid deadlocks</li>
+</ul></p><p>You cannot lock system tables with this statement.</p></section>
+<refsyn><title>Syntax</title> <codeblock><b>LOCK TABLE <i><xref href="rreftablename.dita#rreftablename">table-Name</xref></i> IN { SHARE | EXCLUSIVE } MODE</b
+></codeblock><p>After a table is locked in either mode, a transaction does
+not acquire any subsequent row-level locks on a table.  For example, if a
+transaction locks the entire <codeph>Flights</codeph> table in share mode
+in order to read data, a particular statement might need to lock a particular
+row in exclusive mode in order to update the row. However, the previous table-level
+lock on the <codeph>Flights</codeph> table forces the exclusive lock to be
+table-level as well.</p><p>If the specified lock cannot be acquired because
+another connection already holds a lock on the table, a statement-level exception
+is raised (<i>SQLState</i> X0X02) after the deadlock timeout period.</p> </refsyn>
+<example><title>Examples</title><p>To lock the entire <codeph>Flights</codeph> table
+in share mode to avoid a large number of row locks, use the following statement:<codeblock>LOCK TABLE Flights IN SHARE MODE;
+SELECT *
+FROM Flights
+WHERE orig_airport &gt; 'OOO';
+</codeblock></p><p>You have a transaction with multiple UPDATE statements.
+Since each of the individual statements acquires only a few row-level locks,
+the transaction will not automatically upgrade the locks to a table-level
+lock. However, collectively the UPDATE statements acquire and release a large
+number of locks, which might result in deadlocks. For this type of transaction,
+you can acquire an exclusive table-level lock at the beginning of the transaction. For
+example:<codeblock>LOCK TABLE FlightAvailability IN EXCLUSIVE MODE;
+UPDATE FlightAvailability
+SET economy_seats_taken = (economy_seats_taken + 2)
+WHERE flight_id = 'AA1265' AND flight_date = DATE('2004-03-31');
+
+UPDATE FlightAvailability
+SET economy_seats_taken = (economy_seats_taken + 2)
+WHERE flight_id = 'AA1265' AND flight_date = DATE('2004-04-11'); 
+
+UPDATE FlightAvailability
+SET economy_seats_taken = (economy_seats_taken + 2)
+WHERE flight_id = 'AA1265' AND flight_date = DATE('2004-04-12');
+
+UPDATE FlightAvailability
+SET economy_seats_taken = (economy_seats_taken + 2)
+WHERE flight_id = 'AA1265' AND flight_date = DATE('2004-04-15');
+</codeblock></p><p>If a transaction needs to look at a table before updating
+the table, acquire an exclusive lock before selecting to avoid deadlocks.
+For example:<codeblock>LOCK TABLE Maps IN EXCLUSIVE MODE;
+SELECT MAX(map_id) + 1 FROM Maps;
+-- INSERT INTO Maps . . .</codeblock></p> </example>
+</refbody>
+</reference>

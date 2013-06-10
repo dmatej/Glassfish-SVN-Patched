@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevspecial29620" xml:lang="en-us">
+<title>Database-side JDBC routines and nested connections</title>
+<shortdesc>Most database-side JDBC routines need to share the same transaction
+space as the statements that called them.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Nested connections<indexterm>getting</indexterm></indexterm>
+<indexterm>Database-side JDBC routines<indexterm>using nested connections</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>The reasons for this are:</p>
+<ul>
+<li>to avoid blocking and deadlocks</li>
+<li>to ensure that any updates done from within the routine are atomic with
+the outer transaction</li>
+</ul>
+<p>In order to use the same transaction, the routine must use the same connection
+as the parent SQL statement in which the routine was executed. Connections
+re-used in this way are called <i>nested connections</i>.</p>
+<p>Use the connection URL <i>jdbc:default:connection</i> to re-use the current <i>Connection</i>.</p>
+<p>The database donnection URL <i>jdbc:default:connection</i> allows a Java method
+to get the <i>Connection</i> of the SQL statement that called it. This is
+the standard (SQL standard, Part 13, SQL Routines and Java) mechanism to obtain
+the nested connection object. The method would get a <i>Connection</i>
+as follows:</p>
+<codeblock>Connection conn = DriverManager.getConnection(
+    "jdbc:default:connection");</codeblock>
+<p>URL attributes are not supported as part of this connection URL. Any URL
+attributes specified in a Properties object, user name, or password that are
+passed to a <i>java.sql.DriverManager.getConnection()</i> call will be ignored.</p>
+<p>Loading a JDBC driver in a database-side routine is not required.</p>
+</conbody>
+</concept>

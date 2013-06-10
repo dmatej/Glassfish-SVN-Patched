@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either XMLEXISTSress or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rreffuncxmlexists" xml:lang="en-us">
+<title>XMLEXISTS operator</title>
+<shortdesc>XMLEXISTS is an SQL/XML operator that you can use to query XML
+values in SQL.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>XMLEXISTS operator</indexterm><indexterm>operators<indexterm>XMLEXISTS</indexterm></indexterm>
+<indexterm>XML<indexterm>operators, XMLEXISTS</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>The XMLEXISTS operator has two arguments, an XML query expression
+and a <ph conref="../conrefs.dita#prod/productshortname"></ph> XML value.</p> </section>
+<refsyn><title>Syntax</title><codeblock><b>XMLEXISTS ( <varname>xquery-string-literal</varname>
+    PASSING BY REF <varname>xml-value-expression</varname> [ BY REF ] )
+</b></codeblock><dl><dlentry>
+<dt><codeph>xquery-string-literal</codeph></dt>
+<dd>Must be specified as a string literal. If this argument is specified as
+a parameter, an expression that is not a literal, or a literal that is not
+a string (for example an integer), <ph conref="../conrefs.dita#prod/productshortname"></ph> throws
+an error. The <codeph>xquery-string-literal</codeph> argument must also be
+an XPath expression that is supported by Apache Xalan. <ph conref="../conrefs.dita#prod/productshortname"></ph> uses
+Apache Xalan to evaluate all XML query expressions. Because Xalan does not
+support full XQuery, neither does <ph conref="../conrefs.dita#prod/productshortname"></ph>.
+ If Xalan is unable to compile or execute the query argument, <ph conref="../conrefs.dita#prod/productshortname"></ph> catches
+the error that is thrown by Xalan and throws the error as a SQLException.
+For more on XPath and XQuery expressions, see these Web sites: <xref format="html"
+href="http://www.w3.org/TR/xpath">http://www.w3.org/TR/xpath</xref> and <xref
+format="html" href="http://www.w3.org/TR/xquery/">http://www.w3.org/TR/xquery/</xref>.</dd>
+</dlentry><dlentry>
+<dt><codeph>xml-value-expression</codeph></dt>
+<dd>Must be an XML data value and must constitute a well-formed SQL/XML document.
+The <codeph>xml-value-expression</codeph> argument cannot be a parameter.
+ <ph conref="../conrefs.dita#prod/productshortname"></ph> does not perform
+implicit parsing nor casting of XML values, so use of strings or any other
+data type results in an error.  If the argument is a sequence that is returned
+by the <ph conref="../conrefs.dita#prod/productshortname"></ph> <xref href="rreffuncxmlquery.dita#rreffuncxmlquery"></xref>,
+the argument is accepted if it is a sequence of exactly one node that is a
+document node. Otherwise <ph conref="../conrefs.dita#prod/productshortname"></ph> throws
+an error.</dd>
+</dlentry><dlentry>
+<dt>BY REF</dt>
+<dd>Optional keywords that describe the only value passing mechanism supported
+by <ph conref="../conrefs.dita#prod/productshortname"></ph>.  Since BY REF
+is also the default passing mechanism, the XMLEXISTS operator behaves the
+same whether the keywords are present or not. For more information on passing
+mechanisms, see the SQL/XML specification.</dd>
+</dlentry></dl></refsyn>
+<section><title>Operator results and combining with other operators</title><p>The
+result of the XMLEXISTS operator is a SQL boolean value that is based on the
+results from evaluating the <codeph>xquery-string-literal</codeph> against
+the <codeph>xml-value-expression</codeph>.  The XMLEXISTS operator returns:<dl>
+<dlentry>
+<dt>UNKNOWN</dt>
+<dd>When the <codeph>xml-value-expression</codeph> is null.</dd>
+</dlentry><dlentry>
+<dt>TRUE</dt>
+<dd>When the evaluation of the specified query expression against the specified
+xml-value returns a non-empty sequence of nodes or values.</dd>
+</dlentry><dlentry>
+<dt>FALSE</dt>
+<dd>When evaluation of the specified query expression against the specified
+xml-value returns an empty sequence.</dd>
+</dlentry></dl></p><p>The XMLEXISTS operator does not return the actual results
+from the evaluation of the query.  You must use the XMLQUERY operator to retrieve
+the actual results.</p><p>Since the result of the XMLEXISTS operator is an
+SQL boolean data type, you can use the XMLEXISTS operator wherever a boolean
+function is allowed. For example, you can use the XMLEXISTS operator as a
+check constraint in a table declaration or as a predicate in a WHERE clause.</p></section>
+<section><title>Examples</title><p>In the <codeph>x_table</codeph> table,
+to determine if the <codeph>xcol</codeph> XML column for each row has an element
+called <codeph>student</codeph> with an <codeph>age</codeph> attribute equal
+to 20, use this statement:<codeblock>SELECT id, XMLEXISTS('<varname>//student[@age=20]</varname>' PASSING BY REF <varname>xcol</varname>) 
+    FROM <varname>x_table</varname></codeblock></p><p>In the <codeph>x_table</codeph> table,
+to return the ID for every row whose <codeph>xcol</codeph> XML column is non-null
+and contains the element <codeph>/roster/student</codeph>, use this statement:<codeblock>SELECT id FROM <varname>x_table</varname> WHERE XMLEXISTS('<varname
+>/roster/student</varname>' PASSING BY REF <varname>xcol</varname>)</codeblock></p><p>You
+can create the <codeph>x_table</codeph> table with a check constraint that
+limits which XML values can be inserted into the <codeph>xcol</codeph> XML
+column. In this example, the constraint is that the column has at least one <codeph>student</codeph> element
+with an <codeph>age</codeph> attribute with a value that is less than 25.
+To create the table, use this statement:<codeblock>CREATE TABLE <varname>x_table</varname> ( id INT, <varname>xcol</varname> XML CHECK (XMLEXISTS ('<varname
+>//student[@age &lt; 25]</varname>' PASSING BY REF <varname>xcol</varname>)) )</codeblock></p></section>
+<section><title>Usage note</title><p><ph conref="../conrefs.dita#prod/productshortname"></ph> requires
+that a JAXP parser (such as Apache Xerces) and Apache Xalan are listed
+in the Java classpath for the XML functions to work.  If either the JAXP parser
+or Xalan is missing from the classpath, attempts to use the XMLEXISTS operator
+will result in an error. In some situations, you may need to take steps to place
+the parser and Xalan in your classpath. See "XML data types and operators" in
+the <ph conref="../conrefs.dita#pub/citdevelop"></ph> for details.</p></section>
+</refbody>
+</reference>

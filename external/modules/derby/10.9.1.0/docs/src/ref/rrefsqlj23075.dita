@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj23075" xml:lang="en-us">
+<title>Boolean expressions</title>
+<prolog><metadata>
+<keywords><indexterm>Boolean expressions</indexterm><indexterm>Boolean operators<indexterm>part
+of WHERE clause</indexterm></indexterm><indexterm>AND boolean operator</indexterm>
+<indexterm>OR boolean operator</indexterm><indexterm>NOT boolean operator</indexterm>
+<indexterm>Comparison boolean operators</indexterm><indexterm>IS NULL boolean
+operator</indexterm><indexterm>IS NOT NULL boolean operator</indexterm><indexterm>LIKE
+boolean operator</indexterm><indexterm>LIKE<indexterm>escape character for</indexterm></indexterm>
+<indexterm>BETWEEN boolean operator</indexterm><indexterm>IN boolean operator</indexterm>
+<indexterm>EXISTS boolean operator</indexterm><indexterm>Quantified comparison
+boolean operator</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section><p>Boolean expressions are allowed in WHERE clauses and in check
+constraints. Boolean expressions in check constraints have limitations not
+noted here; see <xref href="rrefsqlj13590.dita#rrefsqlj13590"></xref> for
+more information. Boolean expressions in a WHERE clause have a highly liberal
+syntax; see <xref href="rrefsqlj33602.dita#rrefsqlj33602">WHERE clause</xref>,
+for example.</p></section>
+<section><p>A boolean expression can include a boolean operator or operators.
+These operators are listed in the following table.</p>
+<table frame="all" id="sqlj34517">
+<title>SQL Boolean operators</title>
+<desc>This table lists, describes, and provides the syntax for the SQL Boolean operators.</desc>
+<tgroup cols="3" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="25*"/>
+<colspec colname="2" colnum="2" colwidth="45*"/>
+<colspec colname="3" colnum="3" colwidth="30*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Operator</entry>
+<entry colname="2">Explanation and Example</entry>
+<entry colname="3">Syntax</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">AND, OR, NOT</entry>
+<entry colname="2">Evaluate any operand(s) that are boolean expressions   <codeblock><b>(orig_airport = 'SFO') OR
+    (dest_airport = 'GRU')
+<ph>    -- returns true</ph></b></codeblock></entry>
+<entry colname="3"> <codeblock><b>{
+<b><i>  Expression</i></b> AND
+<b><i>    Expression </i></b>|
+<b><i>  Expression</i></b> OR
+<b><i>    Expression</i></b> |
+  NOT <b><i>Expression</i></b>
+}</b></codeblock></entry>
+</row>
+<row>
+<entry colname="1">Comparisons </entry>
+<entry colname="2">&lt;, =, &gt;, &lt;=, &gt;=, &lt;&gt; are applicable to
+all of the built-in types.   <codeblock><b>DATE('1998-02-26') &lt;
+    DATE('1998-03-01')
+<ph>-- returns true</ph></b></codeblock>
+<note><ph conref="../conrefs.dita#prod/productshortname"></ph> also accepts
+the != operator, which is not included in the SQL standard.</note></entry>
+<entry colname="3"> <codeblock><b><b><i>Expression</i></b>
+{
+  &lt; |
+  = |
+  &gt; |
+  &lt;= |
+  &gt;= |
+  &lt;&gt;
+}
+<b><i>Expression</i></b></b></codeblock></entry>
+</row>
+<row>
+<entry colname="1">IS NULL, IS NOT NULL</entry>
+<entry colname="2">Test whether the result of an expression is null or not.
+  <codeblock><b>WHERE MiddleName IS NULL</b></codeblock></entry>
+<entry colname="3"> <codeblock><b><b><i>Expression</i></b> IS [ NOT ]
+  NULL</b></codeblock></entry>
+</row>
+<row>
+<entry colname="1">LIKE</entry>
+<entry colname="2">Attempts to match a character expression to a character
+pattern, which is a character string that includes one or more wildcards.
+  <p>% matches any number (zero or more) of characters in the corresponding
+position in first character expression.</p>  <p>_ matches one character in
+the corresponding position in the character expression.</p>  <p>Any other
+character matches only that character in the corresponding position in the
+character expression.   <codeblock><b>city LIKE 'Sant_'</b></codeblock></p>  <p>To
+treat % or _ as constant characters, escape the character with an optional
+escape character, which you specify with the ESCAPE clause.   <codeblock><b>SELECT a FROM tabA WHERE a 
+LIKE '%=_' ESCAPE '='</b></codeblock></p><note>When LIKE comparisons are used, <ph
+conref="../conrefs.dita#prod/productshortname"></ph> compares one character
+at a time for non-metacharacters. This is different than the way <ph conref="../conrefs.dita#prod/productshortname"></ph> processes
+= comparisons. The comparisons with the = operator compare the entire character
+string on left side of the = operator with the entire character string on
+the right side of the = operator. For more information, see <b>Character-based
+collation in <ph conref="../conrefs.dita#prod/productshortname"></ph></b> in
+the <ph conref="../conrefs.dita#pub/citdevelop"></ph>.</note></entry>
+<entry colname="3"> <codeblock><b><b><i>CharacterExpression</i></b>
+  [ NOT ] LIKE
+<b><i>  CharacterExpression
+  WithWildCard</i></b>
+  [ ESCAPE
+
+'<b><i>escapeCharacter</i></b>']</b></codeblock></entry>
+</row>
+<row>
+<entry colname="1">BETWEEN</entry>
+<entry colname="2">Tests whether the first operand is between the second and
+third operands. The second operand must be less than the third operand. Applicable
+only to types to which &lt;= and &gt;= can be applied.   <codeblock><b>WHERE booking_date BETWEEN
+    DATE('1998-02-26') AND
+    DATE('1998-03-01')</b></codeblock></entry>
+<entry colname="3"> <codeblock><b><b><i>Expression</i></b> [ NOT ]
+BETWEEN <b><i>Expression</i></b>
+  AND <b><i>Expression</i></b></b></codeblock></entry>
+</row>
+<row>
+<entry colname="1">IN</entry>
+<entry colname="2">Operates on table subquery or list of values. Returns TRUE
+if the left expression's value is in the result of the table subquery or in
+the list of values. Table subquery can return multiple rows but must return
+a single column.   <codeblock><b>WHERE booking_date NOT IN
+    (SELECT booking_date FROM
+HotelBookings WHERE rooms_available = 0)</b></codeblock></entry>
+<entry colname="3"> <codeblock><b>{
+<b><i>  Expression</i></b> [ NOT ]
+    IN
+    <b><i><xref href="rreftablesubquery.dita#rreftablesubquery">TableSubquery</xref></i></b> |
+<b><i>  Expression</i></b> [ NOT ]
+    IN ( <b><i>Expression</i></b>
+    [, <b><i>Expression</i></b> ]* )
+}</b></codeblock></entry>
+</row>
+<row>
+<entry colname="1">EXISTS</entry>
+<entry colname="2">Operates on a table subquery. Returns TRUE if the table
+subquery returns any rows, and FALSE if it returns no rows. A table subquery
+can return multiple columns and rows.   <codeblock><b>WHERE EXISTS
+  (SELECT *
+  FROM Flights
+  WHERE dest_airport = 'SFO'
+  AND orig_airport = 'GRU')</b></codeblock></entry>
+<entry colname="3"> <codeblock><b>[NOT] EXISTS <b><i><xref href="rreftablesubquery.dita#rreftablesubquery">TableSubquery</xref></i></b></b></codeblock
+></entry>
+</row>
+<row>
+<entry colname="1">Quantified comparison</entry>
+<entry colname="2">A quantified comparison is a comparison operator (&lt;,
+=, &gt;, &lt;=, &gt;=, &lt;&gt;) with ALL or ANY or SOME applied.   <p>Operates
+on table subqueries, which can return multiple rows but must return a single
+column. </p>  <p>If ALL is used, the comparison must be true for all values
+returned by the table subquery. If ANY or SOME is used, the comparison must
+be true for at least one value of the table subquery. ANY and SOME are equivalent.
+  <codeblock><b>WHERE normal_rate &lt; ALL
+(SELECT budget/550 FROM Groups) </b></codeblock></p></entry>
+<entry colname="3"> <codeblock><b><b><i>Expression</i></b>
+  ComparisonOperator
+  {
+    ALL |
+    ANY |
+    SOME
+  }
+  <b><i><xref href="rreftablesubquery.dita#rreftablesubquery">TableSubquery</xref></i></b></b></codeblock></entry>
+</row>
+</tbody>
+</tgroup>
+</table></section>
+</refbody>
+</reference>

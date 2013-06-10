@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevcsecure24458" xml:lang="en-us">
+<title>Authorization identifiers, user authentication, and user authorization</title>
+<shortdesc>When working with both user authentication and user authorization,
+you need to understand how user names are treated by each system.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Users<indexterm>and schemas</indexterm></indexterm><indexterm>Schemas<indexterm>and
+users</indexterm></indexterm></keywords>
+</metadata></prolog>
+<conbody>
+<p>If an external authentication system is used, the conversion of the user's
+name to an authorization identifier does not happen until <i>after</i> authentication
+has occurred but <i>before</i> user authorization. Imagine, for example, a
+user named Fred.</p>
+<ul>
+<li>Within the user authentication system, Fred is known as <i>FRed</i>. Your
+external user authorization service is case-sensitive, so Fred must always
+type his name that way.   <codeblock>Connection conn = DriverManager.getConnection(
+    "jdbc:derby:myDB", "FRed", "flintstone");</codeblock></li>
+<li>Within the <ph conref="../conrefs.dita#prod/productshortname"></ph> user
+authorization system, Fred becomes a case-insensitive authorization identifier.
+Fred is known as <i>FRED</i>.</li>
+</ul>
+<p>Let's take a second example, where Fred has a slightly different name within
+the user authentication system.</p>
+<ul>
+<li>Within the user authentication system, Fred is known as <i>Fred!</i>.
+You must now put double quotes around the name, because it is not a valid <codeph><i>SQL92Identifier</i></codeph>.
+(<ph conref="../conrefs.dita#prod/productshortname"></ph> knows to remove
+the double quotes when passing the name to the external authentication system.)
+  <codeblock>Connection conn = DriverManager.getConnection(
+    "jdbc:derby:myDB", "\"Fred!\"", "flintstone");</codeblock></li>
+<li>Within the <ph conref="../conrefs.dita#prod/productshortname"></ph> user
+authorization system, <i>Fred</i> becomes a case-sensitive authorization identifier.
+Fred is known as <i>Fred!</i>.</li>
+</ul>
+<p>As shown in the first example, your external authentication system may
+be case-sensitive, whereas the authorization identifier within <ph conref="../conrefs.dita#prod/productshortname"></ph> may
+not be. If your authentication system allows two distinct users whose names
+differ by case, delimit all user names within the connection request to make
+all user names case-sensitive within the <ph conref="../conrefs.dita#prod/productshortname"></ph> system.
+In addition, you must also delimit user names that do not conform to <i>SQL92Identifier</i> rules
+with double quotes.</p>
+</conbody>
+</concept>

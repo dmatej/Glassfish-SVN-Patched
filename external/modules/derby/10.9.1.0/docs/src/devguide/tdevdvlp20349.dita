@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE task PUBLIC "-//OASIS//DTD DITA Task//EN"
+ "../dtd/task.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<task id="tdevdvlp20349" xml:lang="en-us">
+<title>Shutting down the system</title>
+<shortdesc>In an embedded environment, when an application shuts down, it
+should first shut down <ph conref="../conrefs.dita#prod/productshortname"></ph>.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Shutting down the system</indexterm></keywords>
+</metadata></prolog>
+<taskbody>
+<context> <p>If the application that started the embedded <ph conref="../conrefs.dita#prod/productshortname"></ph> quits
+but leaves the Java Virtual Machine (JVM) running, <ph conref="../conrefs.dita#prod/productshortname"></ph> continues
+to run and is available for database connections.</p><p>In an embedded system,
+the application shuts down the <ph conref="../conrefs.dita#prod/productshortname"></ph> system
+by issuing the following JDBC call:</p><codeblock>DriverManager.getConnection("jdbc:derby:;shutdown=true");</codeblock><p>Shutdown
+commands always raise <i>SQLExceptions</i>.</p><p>When a <ph conref="../conrefs.dita#prod/productshortname"></ph> system
+shuts down, a message goes to the log file:</p>
+<codeblock>----------------------------------------------------------------
+Wed Mar 02 17:08:36 EST 2011: Shutting down Derby engine
+----------------------------------------------------------------
+Wed Mar 02 17:08:36 EST 2011:
+Shutting down instance a816c00e-012e-789c-116d-000000bbdd88 on 
+database directory C:\sampledb with class loader 
+sun.misc.Launcher$AppClassLoader@11b86e7 
+----------------------------------------------------------------</codeblock>
+<p>Typically,
+an application using an embedded <ph conref="../conrefs.dita#prod/productshortname"></ph> engine
+shuts down <ph conref="../conrefs.dita#prod/productshortname"></ph> just before
+shutting itself down. However, an application can shut down <ph conref="../conrefs.dita#prod/productshortname"></ph> and
+later restart it in the same JVM session. To restart <ph conref="../conrefs.dita#prod/productshortname"></ph> successfully,
+the application needs to reload <i>org.apache.derby.jdbc.EmbeddedDriver</i> as
+follows:</p>
+<codeblock>Class.forName(org.apache.derby.jdbc.EmbeddedDriver).newInstance();</codeblock>
+<p>Loading the embedded driver starts
+<ph conref="../conrefs.dita#prod/productshortname"></ph>.</p>
+<p>The JDBC specification does not recommend calling
+<codeph>newInstance()</codeph>, but adding a <codeph>newInstance()</codeph> call
+guarantees that <ph conref="../conrefs.dita#prod/productshortname"></ph> will be
+booted on any JVM.</p>
+<note>If your application will need to restart
+<ph conref="../conrefs.dita#prod/productshortname"></ph>, you can add the
+attribute <i>deregister=false</i> to the connection URL to avoid having to
+reload the embedded driver:
+<codeblock>DriverManager.getConnection("jdbc:derby:;shutdown=true;deregister=false");</codeblock>
+</note>
+<p>It is also possible to shut down a single database instead of the entire <ph
+conref="../conrefs.dita#prod/productshortname"></ph> system. See <xref href="tdevdvlp40464.dita#tdevdvlp40464"></xref>.
+You can reboot a database in the same <ph conref="../conrefs.dita#prod/productshortname"></ph> session
+after shutting it down.</p></context>
+</taskbody>
+</task>

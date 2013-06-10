@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefselectexpression" xml:lang="en-us">
+<title>SelectExpression</title>
+<prolog><metadata>
+<keywords><indexterm>Select expression</indexterm><indexterm>DISTINCT clause<indexterm>part
+of SelectExpression</indexterm><indexterm>* as wildcard in SQL SELECT</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>A <i>SelectExpression</i> is the basic SELECT-FROM-WHERE construct
+used to build a table value based on filtering and projecting values from
+other tables.</p></section>
+<refsyn><title>Syntax</title> <codeblock><b>SELECT [ DISTINCT | ALL ] <i>SelectItem</i> [ , <i>SelectItem </i>]*
+<i><xref href="rrefsqlj21583.dita#rrefsqlj21583">FROM clause</xref></i>
+[ <i><xref href="rrefsqlj33602.dita#rrefsqlj33602">WHERE clause</xref> </i>]
+[ <i><xref href="rrefsqlj32654.dita#rrefsqlj32654">GROUP BY clause</xref></i> ]
+[ <i><xref href="rrefsqlj14854.dita#rrefsqlj14854">HAVING clause</xref></i> ]
+[ <i><xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY clause</xref></i> ]
+[ <i><xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">result offset clause</xref></i> ]
+[ <i><xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">fetch first clause</xref></i> ]
+</b></codeblock>
+<p><b>SelectItem:</b></p> <codeblock><b>{
+    * |
+    { <i><xref href="rreftablename.dita#rreftablename">table-Name</xref></i> | <i><xref
+href="rrefcorrelationname.dita#rrefcorrelationname">correlation-Name</xref></i> } .* |
+    <i>Expression</i> [AS <i><xref href="rrefsimplecolumnname.dita#rrefsimplecolumnname">Simple-column-Name</xref> </i>]
+}</b></codeblock> <p>The SELECT clause contains a list of expressions and
+an optional quantifier that is applied to the results of the <xref href="rrefsqlj21583.dita#rrefsqlj21583">FROM
+clause</xref> and the <xref href="rrefsqlj33602.dita#rrefsqlj33602">WHERE
+clause</xref>. If DISTINCT is specified, only one copy of any row value is
+included in the result. Nulls are considered duplicates of one another for
+the purposes of DISTINCT. If no quantifier, or ALL, is specified, no rows
+are removed from the result in applying the SELECT clause (ALL is the default).</p> <p>A<i> SelectItem</i> projects
+one or more result column values for a table result being constructed in a <i>SelectExpression</i>.</p> 
+<p>For queries that do not select a specific column from the tables involved in
+the <i>SelectExpression</i> (for example, queries that use
+<codeph>COUNT(*)</codeph>), the user must have at least one column-level SELECT
+privilege or table-level SELECT privilege. See
+<xref href="rrefsqljgrant.dita#rrefsqljgrant"></xref> for more information.</p>
+<p>The
+result of the <xref href="rrefsqlj21583.dita#rrefsqlj21583">FROM clause</xref> is
+the cross product of the FROM items. The <xref href="rrefsqlj33602.dita#rrefsqlj33602">WHERE
+clause</xref> can further qualify this result.</p> <p>The WHERE clause causes
+rows to be filtered from the result based on a boolean expression. Only rows
+for which the expression evaluates to TRUE are returned in the result.</p> <p>The
+GROUP BY clause groups rows in the result into subsets that have matching
+values for one or more columns. GROUP BY clauses are typically used with aggregates.</p> <p>If
+there is a GROUP BY clause, the SELECT clause must contain <i>only</i> aggregates
+or grouping columns. If you want to include a non-grouped column in the SELECT
+clause, include the column in an aggregate expression. For example:   <codeblock><b>-- List head count of each department, 
+-- the department number (WORKDEPT), and the average departmental salary
+-- (SALARY) for all departments in the EMPLOYEE table. 
+-- Arrange the result table in ascending order by average departmental
+-- salary.
+SELECT COUNT(*),WORK_DEPT,AVG(SALARY)
+     FROM EMPLOYEE
+     GROUP BY WORK_DEPT
+     ORDER BY 3</b></codeblock></p> <p>If there is no GROUP BY clause, but
+a <i>SelectItem</i> contains an aggregate not in a subquery, the query is
+implicitly grouped. The entire table is the single group.</p> <p>The HAVING
+clause restricts a grouped table, specifying a search condition (much like
+a WHERE clause) that can refer only to grouping columns or aggregates from
+the current scope. The HAVING clause is applied to each group of the grouped
+table. If the HAVING clause evaluates to TRUE, the row is retained for further
+processing. If the HAVING clause evaluates to FALSE or NULL, the row is discarded.
+If there is a HAVING clause but no GROUP BY, the table is implicitly grouped
+into one group for the entire table.</p>
+<p>The ORDER BY clause allows you to specify the order in which rows appear in
+the result set. In subqueries, the ORDER BY clause is meaningless unless it is
+accompanied by one or both of the result offset and fetch first clauses or in
+conjunction with the ROW_NUMBER function.</p>
+<p>The result offset clause provides a way to skip the N first rows in a result
+set before starting to return any rows. The fetch first clause, which can be
+combined with the result offset clause if desired, limits the number of rows
+returned in the result set.</p>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph> processes
+a <i>SelectExpression</i> in the following order:   <ul>
+<li>FROM clause</li>
+<li>WHERE clause</li>
+<li>GROUP BY (or implicit GROUP BY)</li>
+<li>HAVING clause</li>
+<li>ORDER BY clause</li>
+<li>Result offset clause</li>
+<li>Fetch first clause</li>
+<li>SELECT clause</li>
+</ul></p> <p>The result of a <i>SelectExpression</i> is always a table.</p> <p>When
+a query does not have a FROM clause (when you are constructing a value, not
+getting data out of a table), you use a VALUES expression, not a <i>SelectExpression</i>.
+For example:   <codeblock><b>VALUES CURRENT_TIMESTAMP</b></codeblock></p> <p>See <xref
+href="rrefsqlj11277.dita#rrefsqlj11277"></xref>.</p> </refsyn>
+<section id="sqlj38441"><title>The * wildcard</title> <p>* expands to all
+columns in the tables in the associated FROM clause.</p> <p><i><xref href="rreftablename.dita#rreftablename">table-Name</xref>.*</i> and <i><xref
+href="rrefcorrelationname.dita#rrefcorrelationname">correlation-Name</xref>.*</i> expand
+to all columns in the identified table. That table must be listed in the associated
+FROM clause.</p> </section>
+<section><title>Naming columns</title> <p>You can name a <i>SelectItem</i> column
+using the AS clause. If a column of a <i>SelectItem</i> is not a simple <i>ColumnReference</i> expression
+or named with an AS clause, it is given a generated unique name.</p><p>These
+column names are useful in several cases:   <ul>
+<li>They are made available on the JDBC <i>ResultSetMetaData</i>.</li>
+<li>They are used as the names of the columns in the resulting table when
+the <i>SelectExpression</i> is used as a table subquery in a FROM clause.</li>
+<li>They are used in the ORDER BY clause as the column names available for
+sorting.</li>
+</ul></p> </section>
+<example><title>Examples</title>
+<codeblock><b><ph>-- This example shows SELECT-FROM-WHERE
+-- with an ORDER BY clause
+-- and correlation-Names for the tables.</ph>
+SELECT CONSTRAINTNAME, COLUMNNAME 
+    FROM SYS.SYSTABLES t, SYS.SYSCOLUMNS col,
+    SYS.SYSCONSTRAINTS cons, SYS.SYSCHECKS checks 
+  WHERE t.TABLENAME = 'FLIGHTS' 
+    AND t.TABLEID = col.REFERENCEID 
+    AND t.TABLEID = cons.TABLEID 
+    AND cons.CONSTRAINTID = checks.CONSTRAINTID 
+  ORDER BY CONSTRAINTNAME
+<ph>-- This example shows the use of the DISTINCT clause</ph>
+SELECT DISTINCT ACTNO
+    FROM EMP_ACT
+<ph>-- This example shows how to rename an expression
+-- Using the EMPLOYEE table, list the department number (WORKDEPT) and 
+-- maximum departmental salary (SALARY) renamed as BOSS 
+-- for all departments whose maximum salary is less than the 
+-- average salary in all other departments.</ph>
+SELECT WORKDEPT AS DPT, MAX(SALARY) AS BOSS 
+    FROM EMPLOYEE EMP_COR 
+    GROUP BY WORKDEPT 
+    HAVING MAX(SALARY) &lt; (SELECT AVG(SALARY)
+                          FROM EMPLOYEE
+                          WHERE NOT WORKDEPT = EMP_COR.WORKDEPT) 
+    ORDER BY BOSS</b>
+</codeblock> </example>
+</refbody>
+</reference>

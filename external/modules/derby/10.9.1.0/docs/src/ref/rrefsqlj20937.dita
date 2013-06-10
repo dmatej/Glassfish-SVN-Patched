@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj20937" xml:lang="en-us">
+<title>CREATE INDEX statement</title>
+<prolog><metadata>
+<keywords><indexterm>CREATE INDEX statement</indexterm><indexterm>Descending
+indexes</indexterm><indexterm>Indexes<indexterm>created in descending order</indexterm></indexterm>
+<indexterm>Backing indexes<indexterm>created automatically to enforce primary
+key, unique, and foreign key constraints</indexterm></indexterm><indexterm>Indexes<indexterm>automatic
+creation of for primary key, unique, and foreign key constraints</indexterm></indexterm>
+<indexterm>Indexes<indexterm>specifying page size for</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section id="i1013640"> <p id="sqlj31027">A CREATE INDEX statement creates
+an index on a table. Indexes can be on one or more columns in the table.</p></section>
+<refsyn><title>Syntax</title><codeblock><b>CREATE [UNIQUE] INDEX <i><xref
+href="rrefindexname.dita#rrefindexname">index-Name</xref></i>
+ON <i><xref href="rreftablename.dita#rreftablename">table-Name</xref></i> ( <i><xref
+href="rrefsimplecolumnname.dita#rrefsimplecolumnname">Simple-column-Name</xref></i> [ ASC | DESC ]
+    [ , <i><xref href="rrefsimplecolumnname.dita#rrefsimplecolumnname">Simple-column-Name</xref></i> [ ASC | DESC ]] * )</b></codeblock><p>The
+maximum number of columns for an index key in <ph conref="../conrefs.dita#prod/productshortname"></ph> is
+16.</p><p>An index name cannot exceed 128 characters.</p><p>A column must
+not be named more than once in a single CREATE INDEX statement. Different
+indexes can name the same column, however.</p><p><ph conref="../conrefs.dita#prod/productshortname"></ph> can
+use indexes to improve the performance of data manipulation statements (see <cite><ph
+conref="../conrefs.dita#pub/cittuning"></ph></cite>). In addition, UNIQUE
+indexes provide a form of data integrity checking.</p><p>Index names are unique
+within a schema. (Some database systems allow different tables in a single
+schema to have indexes of the same name, but <ph conref="../conrefs.dita#prod/productshortname"></ph> does
+not.) Both index and table are assumed to be in the same schema if a schema
+name is specified for one of the names, but not the other. If schema names
+are specified for both index and table, an exception will be thrown if the
+schema names are not the same. If no schema name is specified for either table
+or index, the current schema is used.</p><p>By default, <ph conref="../conrefs.dita#prod/productshortname"></ph> uses
+the ascending order of each column to create the index. Specifying ASC after
+the column name does not alter the default behavior. The DESC keyword after
+the column name causes <ph conref="../conrefs.dita#prod/productshortname"></ph> to
+use descending order for the column to create the index. Using the descending
+order for a column can help improve the performance of queries that require
+the results in mixed sort order or descending order and for queries that select
+the minimum or maximum value of an indexed column.</p><p>If a qualified index
+name is specified, the schema name cannot begin with <codeph>SYS</codeph>.</p> </refsyn>
+<section id="sqlj27363"><title>Indexes and constraints</title><p>Unique, primary
+key, and foreign key constraints generate indexes that enforce or "back" the
+constraint (and are thus sometimes called <i>backing indexes</i>). If a column
+or set of columns has a UNIQUE or PRIMARY KEY constraint on it, you can not
+create an index on those columns. <ph conref="../conrefs.dita#prod/productshortname"></ph> has
+already created it for you with a system-generated name. System-generated
+names for indexes that back up constraints are easy to find by querying the
+system tables if you name your constraint. Adding a PRIMARY KEY or UNIQUE
+constraint when an existing UNIQUE index exists on the same set of columns
+will result in two physical indexes on the table for the same set of columns.
+One index is the original UNIQUE index and one is the backing index for the
+new constraint.</p><p>To find out the name of the index that backs a constraint
+called FLIGHTS_PK:</p><codeblock><b>SELECT CONGLOMERATENAME FROM SYS.SYSCONGLOMERATES,
+SYS.SYSCONSTRAINTS WHERE
+SYS.SYSCONGLOMERATES.TABLEID = SYSCONSTRAINTS.TABLEID 
+AND CONSTRAINTNAME = 'FLIGHTS_PK'</b></codeblock> </section>
+<example> <codeblock><b>CREATE INDEX OrigIndex ON Flights(orig_airport);
+<b>-- money is usually ordered from greatest to least,
+-- so create the index using the descending order</b>
+CREATE INDEX PAY_DESC ON SAMP.EMPLOYEE (SALARY);
+<ph>-- use a larger page size for the index</ph>
+call SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY('derby.storage.pageSize','8192');
+CREATE INDEX IXSALE ON SAMP.SALES (SALES);
+call SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY('derby.storage.pageSize',NULL);
+</b></codeblock> </example>
+<section><title>Page size and key size</title><note>The size of the key columns
+in an index must be equal to or smaller than half the page size.  If the length
+of the key columns in an existing row in a table is larger than half the page
+size of the index, creating an index on those key columns for the table will
+fail. This error only occurs when creating an index if an existing row in
+the table fails the criteria. After an index is created, inserts may fail
+if the size of their associated key exceeds the criteria.</note> </section>
+<section><title>Statement dependency system</title><p>Prepared statements
+that involve SELECT, INSERT, UPDATE, UPDATE WHERE CURRENT, DELETE, and DELETE
+WHERE CURRENT on the table referenced by the CREATE INDEX statement are invalidated
+when the index is created. Open cursors on the table are not affected.</p> </section>
+</refbody>
+</reference>

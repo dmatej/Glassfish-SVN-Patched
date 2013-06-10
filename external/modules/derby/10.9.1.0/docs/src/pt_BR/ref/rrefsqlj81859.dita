@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<reference id="rrefsqlj81859" xml:lang="pt-br">
+<title>Instrução ALTER TABLE</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Instrução ALTER TABLE</indexterm>
+<indexterm>Compressão de tabelas</indexterm>
+<indexterm>Tabelas<indexterm>alteração</indexterm><indexterm>compressão</indexterm></indexterm>
+<indexterm>Colunas<indexterm>adição</indexterm></indexterm>
+<indexterm>Restrições<indexterm>adição</indexterm><indexterm>remoção</indexterm><indexterm>compressão</indexterm></indexterm>
+<indexterm>Padrões<indexterm>adiçã</indexterm><indexterm>remoção</indexterm></indexterm>
+<indexterm>Adição de colunas</indexterm>
+<indexterm>Adição de restrições</indexterm>
+<indexterm>Remoção de restrições</indexterm>
+<indexterm>Padrões<indexterm>definição</indexterm></indexterm>
+<indexterm>Tabelas<indexterm>alteraçao da granularidade do bloqueio</indexterm></indexterm>
+<indexterm>Tipos de dado<indexterm>modificação</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>A instrução ALTER TABLE permite:
+<ul>
+<li>adicionar coluna à tabela</li>
+<li>adicionar restrição à tabela</li>
+<li>remover da tabela uma restrição existente</li>
+<li>aumentar o comprimento de coluna VARCHAR, CHAR VARYING e CHARACTER VARYING</li>
+<li>sobrepor o bloqueio no nível de linha para a tabela (ou remover a sobreposição)</li>
+</ul>
+</p>
+</section>
+<section>
+<title>Sintaxe</title>
+<codeblock><b>ALTER TABLE <i><xref href="rreftablename.dita#rreftablename">nome-da-tabela</xref></i>
+{
+    ADD COLUMN <i><xref href="rrefsqlj81859.dita#rrefsqlj81859/rrefaltercolumndef">definição-da-coluna</xref></i> |
+    ADD <i><xref href="rrefsqlj13590.dita#rrefsqlj13590">CONSTRAINT cláusula</xref></i> |
+    DROP { PRIMARY KEY | FOREIGN KEY nome-da-restrição | UNIQUE  nome-da-restrição |
+           CHECK nome-da-restrição | CONSTRAINT nome-da-restrição }
+    ALTER <i><xref href="rrefsqlj81859.dita#rrefsqlj81859/rrefsqlj37860">alteração-da-coluna</xref></i> |
+    LOCKSIZE { ROW | TABLE }
+}</b>
+</codeblock></section>
+<example id="rrefaltercolumndef">
+<title>definição-da-coluna</title>
+<codeblock><b><i><xref href="rrefsimplecolumnname.dita#rrefsimplecolumnname">nome-de-coluna-simples</xref></i> <i>tipo-de-dado</i>
+[ <i><xref href="rrefsqlj16095.dita#rrefsqlj16095">restrição no nível-de-coluna</xref></i> ]*
+[ [ WITH ] DEFAULT {<i>ExpressãoConstante</i> | NULL } ]</b>
+</codeblock>
+</example>
+<example id="rrefsqlj37860">
+<title>alteração-da-coluna</title>
+<codeblock><b><i>nome-da-coluna</i> SET DATA TYPE VARCHAR(inteiro) |
+<i>nome-da-coluna</i> SET INCREMENT BY constante-inteira</b>
+</codeblock>
+</example>
+<section>
+<p>Na alteração-da-coluna, SET INCREMENT BY constante-inteira especifica
+o intervalo entre valores consecutivos da coluna de identidade.
+O próximo valor a ser gerado para a coluna de identidade será determinado a
+partir do último valor atribuído e o incremento a ser aplicado.
+A coluna deve ter sido definida com o atributo IDENTITY.</p>
+<p>ALTER TABLE não afeta nenhuma visão que faz referência à tabela sendo
+alterada.
+Isto inclui as visões que possuem "*" na lista do SELECT.
+Estas visões devem ser removidas e recriadas para que retornem a nova coluna.</p>
+</section>
+<section>
+<title>Adição de colunas</title>
+<p>A sintaxe para a
+<i><xref href="rrefsqlj81859.dita#rrefsqlj81859/rrefaltercolumndef">definição-da-coluna</xref></i>
+de uma nova coluna é a mesma que para a coluna na instrução CREATE TABLE.
+Isto significa que pode ser colocada uma restrição de coluna para a nova coluna
+na instrução ALTER TABLE ADD COLUMN.
+Entretanto, somente pode ser adicionada uma coluna com a restrição NOT NULL
+a uma tabela existente se for fornecido um valor padrão; caso contrário,
+é lançada uma exceção ao ser executada a instrução ALTER TABLE.</p>
+<p>Assim como em CREATE TABLE, se a definição da coluna incluir uma restrição
+de unicidade ou de chave primária, a coluna não poderá conter valores nulos e,
+portanto, também deve ser especificado o atributo NOT NULL (SQLState 42831).</p>
+<note>Se a tabela possuir um gatilho de UPDATE sem uma lista de colunas
+explícita, adicionar uma coluna à tabela adicionará esta coluna à lista de
+colunas de atualização implícita sobre a qual o gatilho está definido, e todas
+as referências a variáveis de transição serão invalidadas para que incluam a
+nova coluna.</note>
+</section>
+<section>
+<title>Adição de restrições</title>
+<p>ALTER TABLE ADD CONSTRAINT adiciona restrição no nível-de-tabela a uma
+tabela existente.
+Pode ser adicionado através de ALTER TABLE qualquer tipo de restrição
+no nível-de-tabela suportado.
+Existem as seguintes limitações para adicionar restrição a uma tabela
+existente:
+<ul>
+<li>Ao adicionar uma restrição de chave estrangeira ou de verificação a uma
+tabela existente, o
+<ph conref="refconrefs.dita#prod/productshortname"></ph>
+verifica a tabela para ter certeza que as linhas existentes satisfazem a
+restrição.
+Se alguma linha for inválida, o
+<ph conref="refconrefs.dita#prod/productshortname"></ph>
+lançará uma exceção de instrução, e a restrição não será adicionada.</li>
+<li>Todas as colunas incluídas na chave primária devem conter dados não nulos
+e serem únicas.
+<p>ALTER TABLE ADD UNIQUE e PRIMARY KEY dispõem de um método resumido para
+definir uma chave primária formada por uma única coluna.
+Se for especificado PRIMARY KEY na definição da coluna C, o efeito será o mesmo
+de especificar a cláusula PRIMARY KEY(C) como uma cláusula em separado.
+A coluna não pode conter valores nulos, portanto o atributo NOT NULL
+também deve ser especificado.</p>
+</li>
+</ul>
+</p>
+<p>Para obter informações sobre a sintaxe das restrições deve ser consultada a
+<xref href="rrefsqlj13590.dita#rrefsqlj13590"></xref>.
+Ao se adicionar restrições com a sintaxe ALTER TABLE ADD CONSTRAINT, deve ser
+utilizada a sintaxe para restrição no nível-de-tabela.</p>
+</section>
+<section>
+<title>Remoção de restrições</title>
+<p>ALTER TABLE DROP CONSTRAINT remove uma restrição de uma tabela existente.
+Para remover uma restrição sem nome, deve ser especificado o nome gerado para a
+restrição armazenado em <i>SYS.SYSCONSTRAINTS</i> na forma de um identificador
+delimitado.</p>
+<p>A remoção da restrição de chave primária, de unicidade ou de chave
+estrangeira remove o índice físico que impõe a restrição (também conhecido
+por <i>índice de apoio</i>).</p>
+</section>
+<section>
+<title>Modificação de colunas</title>
+<p>A <i><xref href="rrefsqlj81859.dita#rrefsqlj81859/rrefsqlj37860">alteração-da-coluna</xref></i>
+permite alterar a coluna especificada das seguintes maneiras:
+<ul>
+<li>Aumentar o comprimento de uma coluna VARCHAR existente.
+Pode ser utilizado CHARACTER VARYING ou CHAR VARYING como sinônimo para a
+palavra chave VARCHAR.
+<p>Para aumentar o comprimento de uma coluna deste tipo, deve ser especificado
+o tipo de dado e o novo tamanho após o nome da coluna.</p>
+<p>Não é permitido diminuir o tamanho ou mudar o tipo de dado.
+Não é permitido aumentar o comprimento de uma coluna que faz parte de uma
+chave primária ou chave de unicidade referenciada por uma restrição de chave
+estrangeira, ou que seja parte de uma restrição de chave estrangeira.</p>
+</li>
+<li>Especificação do intervalo entre valores consecutivos da coluna de identidade.
+<p>Para definir o intervalo entre valores consecutivos da coluna de identidade
+deve ser especificada uma constante-inteira.
+A coluna deve ter sido definida anteriormente com o atributo IDENTITY
+(SQLState 42837).
+Caso existam linhas na tabela, os valores na coluna para a qual o padrão para
+SET INCREMENT foi adicionado não mudam.</p>
+</li>
+</ul>
+</p>
+</section>
+<section>
+<title>Definição de padrão</title>
+<p>Pode ser especificado um valor padrão para a nova coluna.
+O valor padrão é o valor inserido na coluna se não for especificado nenhum
+outro valor.
+Quando não é especificado explicitamente, o valor padrão da coluna é NULL.
+Se for especificado valor padrão para uma nova coluna, as linhas existentes
+na tabela receberão o valor padrão na nova coluna.</p>
+<p>Para obter mais informações sobre valor padrão deve ser consultada a
+<xref href="rrefsqlj24513.dita#rrefsqlj24513"></xref>.</p>
+</section>
+<section>
+<title>Alteração da granularidade do bloqueio da tabela</title>
+<p>A cláusula LOCKSIZE permite sobrepor o bloqueio no nível-de-linha para uma
+determinada tabela, se o sistema utilizar a definição padrão de bloqueio no
+nível-de-linha (Se o sistema estiver definido com bloqueio no nível-de-tabela,
+não será possível alterar a granularidade do bloqueio, embora o
+<ph conref="refconrefs.dita#prod/productshortname"></ph>
+permita utilizar a cláusula LOCKSIZE nesta situação sem lançar uma exceção).
+Para sobrepor o bloqueio no nível-de-linha de uma determinada tabela,
+deve ser definido o bloqueio da tabela como TABLE.
+Se a tabela tiver sido criada com a granularidade de bloqueio no
+nível-de-tabela, o bloqueio poderá passar a ser no nível-de-linha especificando
+ROW na cláusula LOCKSIZE da instrução ALTER TABLE.
+Para obter informações sobre porque algumas vezes esta alteração é útil, deve
+ser consultado o
+<cite><ph conref="refconrefs.dita#pub/cittuning"></ph></cite>.</p>
+</section>
+<section>
+<title>Exemplos</title>
+<codeblock><b><ph>-- Adicionar uma nova coluna com restrição no
+-- nível-de-coluna a uma tabela existente.
+-- Se a tabela tiver alguma linha será lançada uma exceção,
+-- uma vez que a nova coluna será inicializada com NULL
+-- em todas as linhas da tabela.
+</ph>
+ALTER TABLE CIDADES ADD COLUMN REGIÃO VARCHAR(26)
+CONSTRAINT NOVA_RESTRIÇÃO CHECK (REGIÃO IS NOT NULL);
+
+<ph>-- Adicionar uma restrição de unicidade a uma tabela existente.
+-- Será lançada uma exceção se forem encontradas chaves duplicadas.
+</ph>
+ALTER TABLE SAMP.DEPARTAMENTOS
+ADD CONSTRAINT NOVA_UNICIDADE UNIQUE (NUM_DEP);
+
+<ph>-- Adicionar uma restrição de chave estrangeira à
+-- tabela cidades. Cada linha de cidades é verificada
+-- para ter certeza que satisfaz a restrição.
+-- Se alguma linha não satisfizer a restrição, a
+-- restrição não será adicionada
+</ph>
+ALTER TABLE CIDADES ADD CONSTRAINT FK_PAÍSES
+FOREIGN KEY (PAÍS) REFERENCES PAÍSES (PAÍS);
+
+<ph>-- Adicionar uma restrição de chave primária à tabela.
+-- Primeiro, criar a tabela.</ph>
+CREATE TABLE ATIVIDADES (ID_CIDADE INT NOT NULL,
+ESTAÇÃO CHAR(2), ATIVIDADE VARCHAR(32) NOT NULL);
+
+<ph>-- Não será possível adicionar esta restrição se as
+-- colunas que compõem a chave primária possuírem
+-- dados nulos ou valores duplicados.</ph>
+ALTER TABLE ATIVIDADES ADD PRIMARY KEY (ID_CIDADE, ATIVIDADE);
+
+<ph>-- Remover a restrição de chave primária da tabela cidades.</ph>
+ALTER TABLE CIDADES DROP CONSTRAINT PK_CIDADES;
+
+<ph>-- Remover a restrição de chave estrangeira da tabela cidades.</ph>
+ALTER TABLE CIDADES DROP CONSTRAINT FK_PAÍSES;
+
+<ph>-- Adicionar a coluna NUM_DEP com valor padrão igual a 1.</ph>
+ALTER TABLE SAMP.ATIV_EMP ADD COLUMN NUM_DEP INT DEFAULT 1;
+
+<ph>-- Aumentar o comprimento da coluna VARCHAR.</ph>
+ALTER TABLE SAMP.EMP_FOTO ALTER FORMATO_FOTO SET DATA TYPE VARCHAR(30);
+
+<ph>-- Alterar a granularidade do bloqueio da tabela.</ph>
+ALTER TABLE SAMP.VENDAS LOCKSIZE TABLE;</b>
+</codeblock>
+</section>
+<section>
+<title>Resultados</title>
+<p>A instrução ALTER TABLE faz com que todas as instruções que dependem da tabela
+sendo alterada sejam recompiladas antes de sua próxima execução.
+A instrução ALTER TABLE não é permitida caso existam cursores abertos fazendo
+referência à tabela sendo alterada.</p>
+</section>
+</refbody>
+</reference>

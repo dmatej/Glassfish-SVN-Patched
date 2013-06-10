@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevcsecure36595" xml:lang="en-us">
+<title>User authorizations</title>
+<shortdesc>When you specify user authorizations, <ph conref="../conrefs.dita#prod/productshortname"></ph> verifies
+that a user has been granted permission to access a system, database, object,
+or SQL action. </shortdesc>
+<prolog><metadata>
+<keywords><indexterm>user authorizations<indexterm>overview</indexterm></indexterm>
+<indexterm>authorizations<indexterm>users, overview</indexterm><indexterm>properties<indexterm>derby.database.defaultConnectionMode</indexterm></indexterm
+><indexterm>properties<indexterm>derby.database.sqlAuthorization</indexterm></indexterm><indexterm>properties<indexterm>derby.database.fullAccessUsers</indexterm
+></indexterm><indexterm>properties<indexterm>derby.database.readOnlyAccessUsers</indexterm></indexterm><indexterm>derby.database.defaultConnectionMode
+property<indexterm>description</indexterm></indexterm><indexterm>derby.database.sqlAuthorization
+property<indexterm>description</indexterm></indexterm></indexterm><indexterm>derby.database.fullAccessUsers
+property<indexterm>description</indexterm></indexterm><indexterm>derby.database.readOnlyAccessUsers
+property<indexterm>description</indexterm></indexterm><indexterm>user authorizations<indexterm>changing
+properties</indexterm></indexterm></keywords>
+</metadata></prolog>
+<conbody>
+<p>There are two types of user authorization in
+<ph conref="../conrefs.dita#prod/productshortname"></ph>, connection
+authorization and SQL authorization:</p>
+<ul>
+<li><term>Connection authorization</term> specifies the coarse-grained access
+that users have to connect to a system or database.</li>
+<li><term>SQL authorization</term> controls the fine-grained permissions that
+users have on database objects or for SQL actions.</li>
+</ul>
+<p>You can set the user authorization properties in
+<ph conref="../conrefs.dita#prod/productshortname"></ph> as system-level
+properties or database-level properties.</p>
+<p>Set system-level user authorizations when you are developing applications,
+or when you want to specify a secure default authorization for all users to
+connect to all of the databases in the system.</p>
+<note type="attention">If you use NATIVE authentication, fine-grained SQL
+authorization is automatically enabled, and by default, all users enjoy full
+coarse-grained access to the database. In this situation, fine-grained SQL
+authorization cannot be turned off. However, you can still adjust coarse-grained
+access to the database.</note>
+<section><title>User authorization properties</title>
+<p>There are several properties that you can set to control database-level
+user authorizations. Some of the properties are general properties that set the
+access mode for all users. Other properties are user specific properties that
+set the type of access for specific user IDs.</p>
+<p>The following properties affect authorization:<ul>
+<li>The <codeph>derby.database.sqlAuthorization</codeph> property enables
+SQL standard authorization. Use the <codeph>derby.database.sqlAuthorization</codeph> property
+to specify if object owners can grant and revoke permission for users to perform
+SQL actions on database objects. The default setting for the <codeph>derby.database.sqlAuthorization</codeph> property
+is <varname>FALSE</varname>. When the <codeph>derby.database.sqlAuthorization</codeph> property
+is set to <varname>TRUE</varname>, object owners can use the GRANT and REVOKE
+SQL statements to set the user permissions for specific database objects or
+for specific SQL actions.</li>
+<li>The <codeph>derby.database.defaultConnectionMode</codeph> property controls
+the default coarse-grained access mode. This property specifies the
+default connection access that users have when they connect to the database. If
+you do not explicitly set the
+<codeph>derby.database.defaultConnectionMode</codeph> property, the default
+coarse-grained connection authorization for a database is
+<varname>fullAccess</varname>, which is read-write access.</li>
+<li>The <codeph>derby.database.fullAccessUsers</codeph> and
+<codeph>derby.database.readOnlyAccessUsers</codeph> properties
+are additional coarse-grained access properties. These properties can be used to
+specify the user IDs that have read-write access and read-only access to a
+database.</li>
+</ul></p>
+<p>If you do not specify the coarse-grained user authorizations for a specific
+user ID, that user ID inherits the database's default coarse-grained connection
+authorization.</p>
+<note type="tip">If you set the <codeph>derby.database.defaultConnectionMode</codeph> property
+to <varname>noAccess</varname> or <varname>readOnlyAccess</varname>, you should
+allow at least one user read-write access. Otherwise, depending on the default
+connection authorization you specify, you will configure the database so that
+it cannot be accessed or changed.</note>
+</section>
+<section><title>How user authorization properties work together</title>
+<p>The <codeph>derby.database.defaultConnectionMode</codeph> property
+and the <codeph>derby.database.sqlAuthorization</codeph> property work together.
+The default settings for these properties allow anyone to access and drop
+the database objects that you create. You can change the default access mode
+by specifying different settings for these properties.<ul>
+<li>When the <codeph>derby.database.sqlAuthorization</codeph> property is
+<varname>FALSE</varname>,
+the ability to read from or write to database objects is determined by the
+setting for the <codeph>derby.database.defaultConnectionMode</codeph> property.
+If the <codeph>derby.database.defaultConnectionMode</codeph> property is set
+to <varname>readOnlyAccess</varname>, users can access all of the database
+objects but they cannot update or drop the objects. </li>
+<li>When the <codeph>derby.database.sqlAuthorization</codeph> property is 
+<varname>TRUE</varname>,
+the ability to read from or write to database objects is further restricted
+to the owner of the database objects. The owner must grant permission for
+others to access the database objects. No one but the owner of an object or
+the
+<xref href="cdevcsecureDbOwner.dita#cdevcsecureDbOwner">database owner</xref>
+can drop the object. </li>
+<li>The coarse-grained access mode specified for the
+<codeph>derby.database.defaultConnectionMode</codeph> property
+supplements the permissions that are granted by the owner of a database object.
+For example, if a user is granted INSERT privileges on a table but the user
+only has read-only connection authorization, the user cannot insert data into
+the table.</li>
+</ul></p></section>
+<section><title>Changes to connection authorization settings</title>
+<p>Connection
+authorization properties are fixed for the duration of a connection. If you
+change the connection authorization properties during a connection, those
+changes are not in affect until you establish a new connection.</p></section>
+</conbody>
+</concept>

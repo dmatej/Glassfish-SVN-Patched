@@ -1,0 +1,68 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either XMLEXISTSress or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rreffuncxmlserialize" xml:lang="ja">
+<title>XMLSERIALIZE 演算子</title>
+<shortdesc>XMLSERIALIZEはXML型の情報を文字型の情報に変換するSQL/XML演算子です。これは<ph conref="../conrefs.dita#prod/productshortname"></ph> XML値を変換する唯一の方法です。</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>XMLSERIALIZE operator</indexterm><indexterm>operators<indexterm>XMLSERIALIZE</indexterm></indexterm>
+<indexterm>XML<indexterm>operators, XMLSERIALIZE</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <note type="attention">直列化はSQL/XMLの直列化規則に沿います。
+<ph conref="../conrefs.dita#prod/productshortname"></ph>はXMLSERIALIZEの構文の一部しかサポートしないこともあいまって、XMLSERIALIZE演算子の結果が元のXMLと全く同じであることは保障されせん。
+例えば、<codeph>[xString]</codeph>が整形式のXML文書を表す文字表現であるとして、次の文が発行されたとします。<codeblock>INSERT INTO <varname>x_table</varname> (<varname>id</varname>, <varname
+>xcol</varname>)
+    VALUES (3, XMLPARSE(DOCUMENT '<varname>[xString]</varname>' PRESERVE WHITESPACE));
+
+SELECT id, XMLSERIALIZE(<varname>xcol</varname> AS VARCHAR(100))
+    FROM <varname>x_table</varname> WHERE id = 3;
+</codeblock><p>このときXMLSERIALIZE演算子の結果が、元の<codeph>[xString]</codeph>の値と同じである保障はありません。
+XMLSERIALIZEの処理にてSQL/XMLの仕様に沿って何らかの変更が起きる可能性があります。
+XMLSERIALIZEの結果が元の文字表現と同じであることもありますが、同じであることは保障されません。</p>
+<p>問合せの最上位の結果セットにXMLSERIALIZE演算子が書かれた場合、XMLSERIALIZEにて<codeph>文字情報型</codeph>引数で指定した型に適用できるJDBCの全てのgetXXXメソッドによって結果を得ることができます。XMLSERIALIZE演算子を使わずにXMLの値を最上位の結果セットで取得しようとすると、<ph conref="../conrefs.dita#prod/productshortname"></ph>はエラーを挙げます。
+<ph conref="../conrefs.dita#prod/productshortname"></ph>はXML値を暗黙裡に直列化しません。</p></note></section>
+<refsyn><title>構文</title><codeblock><b>XMLSERIALIZE ( <varname>xml値式</varname> AS <varname>文字情報型</varname> )</b></codeblock
+><dl><dlentry>
+<dt><codeph>xml値式</codeph></dt>
+<dd>あらゆるDerby XML値を取ることができます。XMLQUERYによる結果のXMLの結果の並びでもかまいません。<codeph>xml値式</codeph>にパラメータを指定することはできません。<p></p></dd>
+</dlentry><dlentry>
+<dt><codeph>文字情報型</codeph></dt>
+<dd>CHAR、VARCHAR、LONG VARCHARあるいはCLOB等の、SQLの文字列型を指定しなければなりません。
+有効な文字列型が指定されなかった場合、<ph
+conref="../conrefs.dita#prod/productshortname"></ph>はエラーを挙げます。</dd>
+</dlentry></dl></refsyn>
+<section><title>例</title>
+<p><codeph>x_table</codeph>表にて、<codeph>xcol</codeph>XML列の値を表示するには、次の文を書きます。<codeblock>SELECT ID, 
+    XMLSERIALIZE(
+    <varname>xcol</varname> AS CLOB) 
+FROM <varname>x_table</varname></codeblock>
+JDBCを使ってこの結果を取り出すためには、JDBCのgetCharacterStream()やgetString()メソッドを使うことができます。</p>
+<p>XMLQUERY演算子の結果を表示するには、次の文を書きます。<codeblock>SELECT ID, 
+    XMLSERIALIZE(
+        XMLQUERY('<varname>//student[@age>20]</varname>' 
+           PASSING BY REF <varname>xcol</varname> EMPTY ON EMPTY)
+    AS VARCHAR(50))
+FROM <varname>x_table</varname></codeblock></p></section>
+<section><title>利用上の覚書</title>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph>にてXML機能が動作するには、Apache XercesのようなJAXP構文解析器とApache XalanがJavaのクラスパスに記述されている必要があります。クラスパスに記述がなかった場合、XMLSERIALIZEを使ったときにエラーが発生します。</p></section>
+</refbody>
+</reference>
+

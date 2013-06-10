@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../../dtd/concept.dtd">
+<concept id="crefjavsavesetroll" xml:lang="pt-br">
+<title>Definir e desfazer até um ponto de salvamento</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Pontos de salvamento<indexterm>definir e desfazer</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>A API do JDBC 3.0 adiciona o método <i>Connection.setSavepoint</i>,
+que define um ponto de salvamento na transação corrente.
+O método <i>Connection.rollback</i> foi sobrecarregado para receber o argumento
+ponto de salvamento.
+Para obter mais informações deve ser consultado
+<i><xref href="rrefjdbc27734.dita#rrefjdbc27734"></xref></i>.</p>
+<p>O código do exemplo abaixo insere uma linha na tabela, define o ponto de
+salvamento <codeph>svpt1</codeph>, e insere uma segunda linha.
+Quando mais tarde a transação é desfeita até <codeph>svpt1</codeph>,
+a segunda inserção é desfeita, mas a primeira inserção permanece intacta.
+Em outras palavras, quando a transação é efetivada somente a linha contendo '1'
+é adicionada à TABELA1.
+<codeblock expanse="column">// A auto-efetivação deve estar desativada
+// para utilizar pontos de salvamento.
+<b>conn.setAutoCommit(false);
+Statement stmt = conn.createStatement();
+int rows = stmt.executeUpdate("INSERT INTO TABELA1 (COL1) VALUES(1)");
+<ph>// definir o ponto de salvamento</ph>
+Savepoint svpt1 = conn.setSavepoint("S1");
+rows = stmt.executeUpdate("INSERT INTO TABELA1 (COL1) VALUES (2)");
+...
+conn.rollback(svpt1);
+...
+conn.commit();</b>
+</codeblock>
+</p>
+</conbody>
+</concept>

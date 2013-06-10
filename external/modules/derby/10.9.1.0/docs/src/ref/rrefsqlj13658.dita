@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj13658" xml:lang="en-us">
+<title>ORDER BY clause</title>
+<prolog><metadata>
+<keywords><indexterm>ORDER BY clause<indexterm>syntax</indexterm></indexterm>
+<indexterm>ASC<indexterm>implied in ORDER BY clause</indexterm></indexterm>
+<indexterm>DESC<indexterm>optional element of ORDER BY clause</indexterm></indexterm>
+<indexterm>ORDER BY clause<indexterm>affecting cursors</indexterm></indexterm>
+<indexterm>ORDER BY clause<indexterm>specifying expressions</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>The ORDER BY clause is an optional element of the following:
+<ul>
+<li>A <xref href="rrefsqlj41360.dita#rrefsqlj41360">SELECT statement</xref></li> 
+<li>A <i><xref href="rrefselectexpression.dita#rrefselectexpression"></xref></i></li>
+<li>A <xref href="rrefsqlj11277.dita#rrefsqlj11277">VALUES expression</xref></li>
+<li>A <i><xref href="rrefscalarsubquery.dita#rrefscalarsubquery"></xref></i></li>
+<li>A <i><xref href="rreftablesubquery.dita#rreftablesubquery"></xref></i></li> 
+</ul></p>
+<p>It can also be used in an
+<xref href="rrefsqlj40774.dita#rrefsqlj40774">INSERT statement</xref> or a
+<xref href="rrefsqlj15446.dita#rrefsqlj15446">CREATE VIEW statement</xref>.</p>
+<p>An ORDER BY clause allows you to specify the order in which rows appear in
+the result set. In subqueries, the ORDER BY clause is meaningless unless it is
+accompanied by one or both of the
+<xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">result offset and
+fetch first clauses</xref> or in conjunction with the
+<xref href="rreffuncrownumber.dita#rreffuncrownumber"></xref>, since there is no
+guarantee that the order is retained in the outer result set. It is permissible
+to combine ORDER BY on the outer query with ORDER BY in subqueries.</p>
+</section>
+<refsyn><title>Syntax</title><codeblock><b>ORDER BY { <i><xref href="rrefcolumnname.dita#rrefcolumnname"></xref></i> | <i>ColumnPosition</i> | <i
+>Expression</i> }
+    [ ASC | DESC ]
+    [ NULLS FIRST | NULLS LAST ]
+    [ , <i><xref href="rrefcolumnname.dita#rrefcolumnname"></xref></i> | <i>ColumnPosition</i> | <i>Expression</i> 
+    [ ASC | DESC ]
+    [ NULLS FIRST | NULLS LAST ]
+    ] * </b></codeblock><dl><dlentry>
+<dt>column-Name</dt>
+<dd>Refers to the names visible from the <varname>SelectItems</varname> in
+the underlying query of the <xref href="rrefsqlj41360.dita#rrefsqlj41360"></xref>.
+The column-Name that you specify in the ORDER BY clause does not need to be
+the SELECT list.</dd>
+</dlentry><dlentry>
+<dt>ColumnPosition</dt>
+<dd>An integer that identifies the number of the column in the <varname>SelectItems</varname> in
+the underlying query of the <xref href="rrefsqlj41360.dita#rrefsqlj41360"></xref>. <parmname>ColumnPosition</parmname> must
+be greater than 0 and not greater than the number of columns in the result
+table. In other words, if you want to order by a column, that column must
+be specified in the SELECT list.</dd>
+</dlentry><dlentry>
+<dt>Expression</dt>
+<dd>A sort key expression, such as numeric, string, and datetime expressions. <i>Expression</i> can
+also be a row value expression such as a scalar subquery or case expression.
+ </dd>
+</dlentry><dlentry>
+<dt>ASC</dt>
+<dd>Specifies that the results should be returned in ascending order. If the
+order is not specified, ASC is the default.</dd>
+</dlentry><dlentry>
+<dt>DESC</dt>
+<dd>Specifies that the results should be returned in descending order.</dd>
+</dlentry>
+<dlentry>
+<dt>NULLS FIRST</dt>
+<dd>Specifies that NULL values should be returned before non-NULL values.</dd>
+</dlentry>
+<dlentry>
+<dt>NULLS LAST</dt>
+<dd>Specifies that NULL values should be returned after non-NULL values.</dd>
+</dlentry>
+</dl>
+</refsyn>
+<section><title>Notes</title><ul>
+<li>If SELECT DISTINCT is specified or if the SELECT statement contains a
+GROUP BY clause, the ORDER BY columns must be in the SELECT list. </li>
+<li>An ORDER BY clause prevents a SELECT statement from being an updatable
+cursor. For more information, see <xref href="rrefsqlj41360.dita#rrefsqlj41360/sqlj15384"></xref>.
+</li>
+<li>If the null ordering is not specified then the handling of the null
+    values is:
+    <ul>
+        <li>NULLS LAST if the sort is ASC</li>
+        <li>NULLS FIRST if the sort is DESC</li>
+    </ul>
+</li>
+<li>If neither ascending nor descending order is specified, and the null
+    ordering is also not specified, then both defaults are used and thus
+    the order will be ascending with NULLS LAST.
+</li>
+</ul></section>
+<example><title>Example using a correlation name</title><p>You can sort the
+result set by a correlation name, if the correlation name is specified in
+the select list. For example, to return from the CITIES database all of the
+entries in the CITY_NAME and COUNTRY columns, where the COUNTRY column has
+the correlation name NATION, you specify this SELECT statement:</p><codeblock>SELECT CITY_NAME, COUNTRY AS NATION 
+    FROM CITIES 
+    ORDER BY NATION
+</codeblock> </example>
+<example><title>Example using a numeric expression</title><p>You can sort
+the result set by a numeric expression, for example:<codeblock>SELECT name, salary, bonus FROM employee 
+   ORDER BY salary+bonus</codeblock>In this example, the salary and bonus
+columns are DECIMAL data types.</p></example>
+<example><title>Example using a function</title><p>You can sort the result
+set by invoking a function, for example:<codeblock>SELECT i, len FROM measures 
+   ORDER BY sin(i) 
+</codeblock></p></example>
+<example>
+    <title>Example specifying null ordering</title>
+    <p>
+        You can specify the position of NULL values using
+        the null ordering specification:
+        <codeblock>SELECT * FROM t1 ORDER BY c1 DESC NULLS LAST</codeblock>
+    </p>
+</example>
+</refbody>
+</reference>

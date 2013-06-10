@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefselectexpression" xml:lang="ja">
+<title>選択式</title>
+<prolog><metadata>
+<keywords><indexterm>Select expression</indexterm><indexterm>DISTINCT clause<indexterm>part
+of SelectExpression</indexterm><indexterm>* as wildcard in SQL SELECT</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section> <p><i>選択式</i>のSELECT-FROM-WHEREからなる記述に基づいて、射影と絞込みにより表群から新たに表の値を得ることができます。</p></section>
+<refsyn><title>構文</title> <codeblock><b>SELECT [ DISTINCT | ALL ] <i>選択項目</i> [ , <i>選択項目</i>]*
+<i><xref href="rrefsqlj21583.dita#rrefsqlj21583"></xref></i>
+[ <i><xref href="rrefsqlj33602.dita#rrefsqlj33602">WHERE 節</xref> </i>]
+[ <i><xref href="rrefsqlj32654.dita#rrefsqlj32654">GROUP BY 節</xref></i> ]
+[ <i><xref href="rrefsqlj14854.dita#rrefsqlj14854">HAVING 節</xref></i> ]</b></codeblock> <p><b>選択項目:</b></p> <codeblock><b>{
+    * |
+    { <i><xref href="rreftablename.dita#rreftablename">表名</xref></i> | <i><xref
+href="rrefcorrelationname.dita#rrefcorrelationname">相関名</xref></i> } .* |
+    <i>式</i> [AS <i><xref href="rrefsimplecolumnname.dita#rrefsimplecolumnname">単純列名</xref> </i>]
+}</b></codeblock> 
+<p>SELECT節には、式の一覧および<xref href="rrefsqlj21583.dita#rrefsqlj21583">FROM節</xref>と<xref href="rrefsqlj33602.dita#rrefsqlj33602">WHERE節</xref>の結果に適用される数量詞があります。
+DISTINCTが指定された場合、重複は取り除かれ同じ値を持つ行は一つしかありません。ここでNULL値同士は同じ値と扱われます。もし数量詞がないかALLなら、結果にて行の値が重複しても取り除かれません。(既定はALLなのです。)</p> 
+<p><i>選択項目</i>により一つ以上の結果の列が、<i>検索式</i>で得られる結果の表に射影されます。</p> 
+<p><xref href="rrefsqlj21583.dita#rrefsqlj21583">FROM節</xref>の記述により、節に書かれた項目の直積が結果として生成されます。さらに<xref href="rrefsqlj33602.dita#rrefsqlj33602">WHERE節</xref>により、その結果は限定されます。</p> 
+<p>WHERE節では真偽式に従い、行が絞り込まれます。式が真と評価された行だけが結果として返されます。</p> 
+<p>GROUP BY節により、一つあるいはそれ以上の列の間で同じ値を持つ行が分類されまとめられます。GROUP BY節は多くの場合、集約が併せて使われます。</p> 
+<p>GROUP BY節がある場合、SELECT節には集約か分類列だけ置くことができます。もし分類の列以外の列をSELECT節に起きたい場合、その列を集約式の中においてください。例を挙げます。<codeblock>
+<b>
+-- 員数、部署番号(WORKDEPT)、部の平均賃金(SALARY)、
+-- をEMPLOYEEという表にある全ての部署毎に一覧する。
+-- 結果は部の平均賃金ごとに昇順で並べられる。
+SELECT WORKDEPT, AVG(SALARY)
+     FROM EMPLOYEE
+     GROUP BY WORKDEPT
+     ORDER BY 1</b></codeblock></p> 
+<p>GROUP BY節がないにもかかわらず、<i>選択項目</i>に副問い合わせにはない集約がある場合、問合せは暗黙に分類されます。そのとき表全体が一つに分類されます。</p> 
+<p>HAVING節に書かれた(WHERE節と同様の)検索条件より、分類された表が絞り込まれます。この検索条件は分類列あるいは可視である集約のみ参照することができます。HAVING節は表から分類された後の情報に適用されます。HAVING節が評価されて真であった場合、その行は残って以降の処理が行われます。一方でHAVING節が評価されて偽あるいはNULLであった場合、その行は破棄されます。もしHAVING節があるにもかかわらず、GROUP BY節がない場合、暗黙に表全体が一つに分類されます。</p> <p><ph conref="../conrefs.dita#prod/productshortname"></ph> は<i>選択式</i>を次の順番で処理します。<ul>
+<li>FROM 節</li>
+<li>WHERE 節</li>
+<li>GROUP BY (または暗黙のGROUP BY)</li>
+<li>HAVING 節</li>
+<li>SELECT 節</li>
+</ul></p> <p><i>選択式</i>の結果は常に表です。</p>
+<p>問合せにFROM節がない場合(表から情報を取得するのではなく、値を構成する場合)、<i>選択式</i>ではなく、VALUES式を使います。
+例:   <codeblock><b>VALUES CURRENT_TIMESTAMP</b></codeblock></p> 
+<p><xref
+href="rrefsqlj11277.dita#rrefsqlj11277"></xref>を参照してください。</p> </refsyn>
+<section id="sqlj38441"><title>ワイルドカードの*</title> 
+<p>*によりFROM節にある表の全列が展開されます。</p> <p><i><xref href="rreftablename.dita#rreftablename">表名</xref>.*</i> や <i><xref
+href="rrefcorrelationname.dita#rrefcorrelationname">相関名</xref>.*</i> により、その表の全列が展開されます。その表はFROM節になければなりません。</p> </section>
+<section><title>列への命名</title> 
+<p>AS節を使って<i>選択項目</i>の列に名前をつける事ができます。もし<i>選択項目</i>が単なる<i>列参照</i>ではないかあるいは、AS節で名前がつけられていない場合、自動生成された名前が与えられます。</p>
+<p>こういった列の名前は、さまざまな場合で便利に使うことができます。<ul>
+<li>JDBCの<i>ResultSetMetaData</i>にて利用可能です。</li>
+<li>FROM節の副問い合わせにて、その<i>選択式</i>が使われた場合、結果表の列名として使われます。</li>
+<li>ORDER BY節にて並び替えを行う列の名前として使われます。</li>
+</ul></p> </section>
+<example> <codeblock><b>
+<ph>-- この例はORDER BY節、表への相関名、
+-- SELECT-FROM-WHEREを示します。</ph>
+SELECT CONSTRAINTNAME, COLUMNNAME 
+FROM SYS.SYSTABLES t, SYS.SYSCOLUMNS col,
+SYS.SYSCONSTRAINTS cons, SYS.SYSCHECKS checks 
+WHERE t.TABLENAME = 'FLIGHTS' AND t.TABLEID = col.
+REFERENCEID AND t.TABLEID = cons.TABLEID 
+AND cons.CONSTRAINTID = checks.CONSTRAINTID 
+ORDER BY CONSTRAINTNAME
+<ph>-- この例はDISTINCT節の使い方を示します。</ph>
+SELECT DISTINCT ACTNO
+FROM EMP_ACT
+<ph>-- この例は式に名前を与える方法を示します。
+-- EMPLOYEEという表から、最も高い給料が他の全部署の給料の平均より安い部署の、
+-- 部署番号(WORKDEPT)、BOSSという名前を与えた部署の最も高い給料(SALARY)を
+-- 一覧します。</ph>
+SELECT WORKDEPT AS DPT, MAX(SALARY) AS BOSS 
+	FROM EMPLOYEE EMP_COR 
+	GROUP BY WORKDEPT 
+	HAVING MAX(SALARY) &lt; (SELECT AVG(SALARY)
+				FROM EMPLOYEE
+				WHERE NOT WORKDEPT = EMP_COR.WORKDEPT) 
+	ORDER BY BOSS</b></codeblock> </example>
+</refbody>
+</reference>

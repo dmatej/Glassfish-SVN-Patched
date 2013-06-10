@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE task PUBLIC "-//OASIS//DTD DITA Task//EN"
+ "../dtd/task.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<task id="tdevcsecureunencrypteddb" xml:lang="en-us">
+<title>Encrypting an existing unencrypted database</title>
+<shortdesc>You can encrypt an unencrypted <ph conref="../conrefs.dita#prod/productshortname"></ph> database
+by specifying attributes on the connection URL when you boot the database.
+The attributes that you specify depend on how you want the database encrypted.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>encrypting databases<indexterm>existing unencrypted databases</indexterm></indexterm>
+<indexterm>databases<indexterm>encrypting, existing unencrypted</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<taskbody>
+<prereq><ul>
+<li>If the database is configured with log archival, you must disable log
+archival and perform a shutdown before you can encrypt the database. </li>
+<li>If there are any global transaction that are in the prepared state after
+recovery, the database cannot be encrypted.</li>
+</ul></prereq>
+<context><p>When you encrypt an existing, unencrypted database, you can specify
+whether the database should be encrypted using a boot password or an external
+encryption key.  You can also specify the <i>encryptionProvider</i> attribute
+and the <i>encryptionAlgorithm</i> attribute on the connection URL. The database
+is configure with the specified encryption attributes and all of the existing
+data in the database is encrypted. </p><p>Encrypting a database is a time
+consuming process because it involves encrypting all of the existing data
+in the database. If the process is interrupted before completion, all the
+changes are rolled back the next time that the database is booted. If the
+interruption occurs immediately after the database is encrypted but before
+the connection is returned to the application, you might not be able to boot
+the database without the boot password or external encryption key. In these
+rare circumstances, you should try to boot the database with the boot password
+or the external encryption key. </p><note othertype="Recommendation" type="other">Ensure
+that you have enough free disk space before you encrypt a database. In addition
+to the disk space required for the current size of the database, temporary
+disk space is required to store the old version of the data to restore the
+database back to it's original state if the encryption is interrupted or returns
+errors. All of the temporary disk space is released back to the operating
+system after the database is encrypted.</note><p>To encrypt an existing unencrypted
+database:</p></context>
+<steps>
+<step><cmd>Specify the <i>dataEncryption=true</i> attribute and either the <i>encryptionKey</i> attribute
+or the <i>bootPassword</i> attribute in a URL and boot the database.</cmd>
+<stepxmp>For example, to encrypt the <codeph>salesdb</codeph> database with
+the boot password <codeph>abc1234xyz</codeph>, specify the following attributes
+in the URL:<codeblock>jdbc:derby:salesdb;dataEncryption=true;bootPassword=abc1234xyz </codeblock></stepxmp>
+<info>
+  <p>
+  If <xref href="cdevcsecure36127.dita#cdevcsecure36127">authentication</xref>
+  and
+  <xref href="cdevcsecure36595.dita#cdevcsecure36595">SQL authorization</xref>
+  are both enabled, the credentials of the 
+  <xref href="cdevcsecureDbOwner.dita#cdevcsecureDbOwner">database owner</xref>
+  must be supplied as well, since encryption is a restricted operation.
+</p>
+</info>
+<info><p>
+If you disabled log archival before you encrypted the database, create
+a new backup of the database after the database is encrypted. For more
+information, see the section "Backing up and restoring databases" in the
+<ph conref="../conrefs.dita#pub/citadmin"></ph>, particularly "Roll-forward
+recovery".</p></info></step>
+</steps>
+</taskbody>
+</task>

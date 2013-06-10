@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rdevprocsqle" xml:lang="en-us">
+<title>Example of processing SQLExceptions</title>
+<shortdesc>A single error can generate more than one <i>SQLException</i>.
+Use a loop and the <codeph><i>getNextException</i></codeph> method to process
+all <codeph><i>SQLExceptions</i></codeph> in the chain. In many cases, the
+second exception in the chain is the pertinent one.</shortdesc>
+<prolog></prolog>
+<refbody>
+<section><p>The following is an example:</p></section>
+<example> <codeblock>catch (Throwable e) {
+    System.out.println("exception thrown:");
+    errorPrint(e);
+}
+static void errorPrint(Throwable e) {
+    if (e instanceof SQLException) 
+        SQLExceptionPrint((SQLException)e);
+    else
+        System.out.println("A non-SQL error: " + e.toString());
+}
+static void SQLExceptionPrint(SQLException sqle) {
+    while (sqle != null) {
+        System.out.println("\n---SQLException Caught---\n");
+        System.out.println("SQLState:   " + (sqle).getSQLState());
+        System.out.println("Severity: " + (sqle).getErrorCode());
+        System.out.println("Message:  " + (sqle).getMessage()); 
+        sqle.printStackTrace();  
+        sqle = sqle.getNextException();
+    }
+}</codeblock></example>
+<section><p>
+If your application runs on JDK 1.4 or higher, then the <i>SQLException</i>
+may wrap another, triggering exception, like an <i>IOException</i>. To inspect
+this additional, wrapped error, call the <i>SQLException</i>'s <i>getCause</i> method.
+</p></section>
+<section><p>See also "<ph conref="../conrefs.dita#prod/productshortname"></ph> Exception
+Messages and SQL States", in the <cite><ph conref="../conrefs.dita#pub/citref"></ph></cite>.</p></section>
+</refbody>
+</reference>

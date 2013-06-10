@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevbabejgjd" xml:lang="en-us">
+<title>Granting permissions to Derby</title>
+<shortdesc>This section discusses which permissions should be granted to <ph
+conref="../conrefs.dita#prod/productshortname"></ph> (the code base
+<codeph>derby.jar</codeph>).</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Permissions<indexterm>granting to Derby</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>See "Default Policy Implementation and Policy File Syntax" at
+<xref format="html"
+href="http://docs.oracle.com/javase/7/docs/technotes/guides/security/PolicyFiles.html"
+scope="external">http://docs.oracle.com/javase/7/docs/technotes/guides/security/PolicyFiles.html</xref>
+for more information about creating policy files.</p>
+<section><title>Mandatory permissions</title><dl><dlentry>
+<dt>permission java.lang.RuntimePermission createClassLoader</dt>
+<dd>Mandatory. It allows <ph conref="../conrefs.dita#prod/productshortname"></ph> to
+execute SQL queries and supports loading class files from jar files stored
+in the database.</dd>
+</dlentry><dlentry>
+<dt>permission java.util.PropertyPermission "derby.*", "read"</dt>
+<dd>Allows <ph conref="../conrefs.dita#prod/productshortname"></ph> to read
+individual <ph conref="../conrefs.dita#prod/productshortname"></ph> properties
+set in the JVM machine's system set. If the action is denied, properties in the JVM machine's
+system set are ignored.</dd>
+</dlentry><dlentry>
+<dt>permission java.util.PropertyPermission "derby.storage.jvmInstanceId",
+"write"</dt>
+<dd>This property is used by Derby to prevent the accidental boot of the database
+by two class loaders. If the database is booted by two class loaders, database
+corruption can occur. 
+If write permission for this property is not granted, a message is printed
+to the log file which indicates that the <ph conref="../conrefs.dita#prod/productshortname"></ph> database
+is not protected from dual boot and possible corruption.</dd>
+</dlentry></dl></section>
+<section><title>Database access permissions</title><dl><dlentry>
+<dt>permission java.io.FilePermission "directory${/}/-", "read,write,delete"</dt>
+<dd>Allows <ph conref="../conrefs.dita#prod/productshortname"></ph> to manage
+files within the database that maps to the directory specified. For read-only
+databases, only the "read" action needs to be granted.</dd>
+</dlentry></dl></section>
+<section><title>Optional permissions</title><dl><dlentry>
+<dt>permission java.io.FilePermission "${derby.system.home}", "read,write"</dt>
+<dd>Allows <ph conref="../conrefs.dita#prod/productshortname"></ph> to determine
+the system directory when set by <i>derby.system.home </i>and create it if
+needed. If the system directory already exists then only the "read" permission
+needs to be granted.</dd>
+</dlentry><dlentry>
+<dt>permission java.util.PropertyPermission "user.dir", "read"</dt>
+<dd>Permits access to the system directory value if <i>derby.system.home</i> is
+not set or no permission has been granted to read the <i>derby.system.home</i> property.</dd>
+</dlentry><dlentry>
+<dt>permission java.util.PropertyPermission "sun.arch.data.model", "read"</dt>
+<dd>If set by the JVM, this is the definite answer to whether the system is 32 or 64 bit.</dd>
+</dlentry><dlentry>
+<dt>permission java.util.PropertyPermission "os.arch", "read"</dt>
+<dd>Used by <ph conref="../conrefs.dita#prod/productshortname"></ph> to determine if the
+system is 32 or 64 bit, if the system property <i>sun.arch.data.model</i> isn't set by
+the JVM. <ph conref="../conrefs.dita#prod/productshortname"></ph> has to recognize the value of
+<i>os.arch</i> to determine if the system is 32 or 64 bit, and if the value isn't recognized
+a heuristic will be used instead.</dd>
+</dlentry><dlentry>
+<dt>permission java.io.FilePermission "${derby.system.home}${/}derby.properties",
+"read"</dt>
+<dd>Allows <ph conref="../conrefs.dita#prod/productshortname"></ph> to read
+the system properties file from the system directory.</dd>
+</dlentry><dlentry>
+<dt>permission java.io.FilePermission "${derby.system.home}${/}derby.log",
+"read,write,delete"</dt>
+<dt>permission java.io.FilePermission "${user.dir}${/}derby.log", "read,write,delete";</dt>
+<dd>Only one of these permissions is needed. Permits the application to read,
+write, and delete to the <ph conref="../conrefs.dita#prod/productshortname"></ph> log
+file, unless the log has been re-directed. (See the <i>derby.stream.error</i> properties
+in the <ph conref="../conrefs.dita#pub/citref"></ph> for more
+information.) If one of the requested valid actions is denied, the <ph conref="../conrefs.dita#prod/productshortname"></ph> log
+will be <codeph>java.lang.System.err</codeph>.</dd>
+</dlentry><dlentry>
+<dt>permission java.security.SecurityPermission "getPolicy"</dt>
+<dd>You need this permission if you want to change the security policy on
+the fly and reload it into a running system. Given this permission, a DBA
+can reload the policy file by calling the <codeph>SYSCS_UTIL.SYSCS_RELOAD_SECURITY_POLICY</codeph> system
+procedure. For more information, see the section which describes this procedure
+in the <ph conref="../conrefs.dita#pub/citref"></ph>. </dd>
+</dlentry><dlentry>
+<dt>permission java.lang.RuntimePermission "setContextClassLoader"</dt>
+<dd>Allows <ph conref="../conrefs.dita#prod/productshortname"></ph> to set the context class loader for long running threads to null to avoid potential for class loader leaks in application server environments when the application server starts <ph conref="../conrefs.dita#prod/productshortname"></ph> in a custom class loader. </dd>
+</dlentry><dlentry>
+<dt>permission java.lang.RuntimePermission "getClassLoader"</dt>
+<dd> This permission is also needed when setting the context class loader to avoid class loader leaks. The class loader for the parent is saved and set to null before creation of the thread and restored afterwards. </dd>
+</dlentry><dlentry>
+<dt>permission java.lang.RuntimePermission "getStackTrace";</dt>
+<dt>permission java.lang.RuntimePermission "modifyThreadGroup";</dt>
+<dd>These two permissions are needed to allow extended diagnostics, specifically
+the stack traces of all threads, to be dumped to <i>derby.log</i> on severe
+errors and when the <i>derby.stream.error.extendedDiagSeverityLevel</i> property
+is set. See the documentation of this property in the
+<ph conref="../conrefs.dita#pub/citref"></ph> for details.</dd>
+</dlentry><dlentry>
+<dt>permission javax.management.MBeanServerPermission "createMBeanServer";</dt>
+<dd>Allows <ph conref="../conrefs.dita#prod/productshortname"></ph> to create an
+MBean server. If the JVM running
+<ph conref="../conrefs.dita#prod/productshortname"></ph> supports the platform
+MBean server, <ph conref="../conrefs.dita#prod/productshortname"></ph> will
+automatically try to create such a server if it does not already exist. For
+details, see "Using Java Management Extensions (JMX) technology" in the
+<ph conref="../conrefs.dita#pub/citadmin"></ph>.</dd>
+</dlentry><dlentry>
+<dt>permission javax.management.MBeanPermission "org.apache.derby.*#[org.apache.derby:*]","registerMBean,unregisterMBean";</dt>
+<dd>Allows <ph conref="../conrefs.dita#prod/productshortname"></ph> to register
+and unregister its (JMX) MBeans. Such MBeans are associated with the domain
+<codeph>org.apache.derby</codeph>, which is also the prefix of the fully
+qualified class name of all
+<ph conref="../conrefs.dita#prod/productshortname"></ph> MBeans. For more
+information about the <ph conref="../conrefs.dita#prod/productshortname"></ph>
+MBeans, refer to the public API (Javadoc) documentation of the package
+<codeph>org.apache.derby.mbeans</codeph> and its subpackages. It is possible to fine-tune
+this permission, for example in order to allow access only to certain MBeans.
+To fine-tune this permission, see the API documentation for
+<codeph>javax.management.MBeanPermission</codeph>
+or the JMX Instrumentation and Agent Specification.
+</dd>
+</dlentry><dlentry>
+<dt>permission javax.management.MBeanTrustPermission "register";</dt>
+<dd>Trusts <ph conref="../conrefs.dita#prod/productshortname"></ph> code to be
+the source of MBeans and to register these in the MBean server.</dd>
+</dlentry><dlentry>
+<dt>permission java.net.SocketPermission "localhost:389", "connect,resolve";</dt>
+<dd>Allows <ph conref="../conrefs.dita#prod/productshortname"></ph> code to
+contact the LDAP server to perform authentication. This permission must be
+granted to <codeph>derby.jar</codeph>. Port 389 is the default LDAP port.</dd>
+</dlentry><dlentry>
+<dt>permission java.sql.SQLPermission "callAbort";</dt>
+<dd>Allows <ph conref="../conrefs.dita#prod/productshortname"></ph> code to call
+the <codeph>java.sql.Connection.abort</codeph> method. This permission must be
+granted both to the <ph conref="../conrefs.dita#prod/productshortname"></ph>
+JDBC driver (by granting it to <codeph>derby.jar</codeph> and
+<codeph>derbyclient.jar</codeph>) and to the application code that calls
+<codeph>Connection.abort()</codeph>. Do not grant this permission to application
+code unless you are certain that only superusers can invoke the code.</dd>
+</dlentry>
+</dl> </section>
+<section><title>Combining permissions</title><p>You might grant one <i>FilePermission</i> that
+encompasses several or all of the permissions instead of separately granting
+a number of the more specific permissions. For example:<codeblock>permission java.io.FilePermission "${derby.system.home}/-", "read,write,delete";</codeblock>
+This allows the <ph conref="../conrefs.dita#prod/productshortname"></ph> engine
+complete access to the system directory and any databases contained in the
+system directory.</p></section>
+</conbody>
+</concept>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rdevexudclass" xml:lang="en-us">
+<title>Example of setting a user-defined class</title>
+<shortdesc>A very simple example of a class that implements the <i>org.apache.derby.authentication.UserAuthenticator </i> interface.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>user-defined classes<indexterm>setting</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<example> <codeblock>import org.apache.derby.authentication.UserAuthenticator;
+import java.io.FileInputStream;
+import java.util.Properties;
+import java.sql.SQLException;
+<b>/**
+  * A simple example of a specialized Authentication scheme.
+  * The system property 'derby.connection.requireAuthentication'
+  * must be set
+  * to true and 'derby.authentication.provider' must
+  * contain the full class name of the overriden authentication
+  * scheme,  i.e., the name of this class.
+  *
+  * @see org.apache.derby.authentication.UserAuthenticator 
+  */</b>
+
+public class MyAuthenticationSchemeImpl implements
+UserAuthenticator {
+    private static final String USERS_CONFIG_FILE = "myUsers.cfg";
+    private static Properties usersConfig;
+
+   <b> // Constructor
+    // We get passed some Users properties if the 
+    //authentication service could not set them as 
+    //part of System properties.
+    //</b>
+    public MyAuthenticationSchemeImpl() {
+    }
+<b>    /* static block where we load the users definition from a
+users configuration file.*/</b>
+
+    static {
+<b>       /* load users config file as Java properties
+        File must be in the same directory where
+        <ph conref="../conrefs.dita#prod/productshortname"></ph>  gets started.
+       (otherwise full path must be specified) */</b>
+       FileInputStream in = null;
+       usersConfig = new Properties();
+       try {
+           in = new FileInputStream(USERS_CONFIG_FILE);
+           usersConfig.load(in);
+           in.close();
+       } catch (java.io.IOException ie) {
+           // No Config file. Raise error message
+           System.err.println(
+             "WARNING: Error during Users Config file
+retrieval");
+           System.err.println("Exception: " + ie);
+       }
+    }
+<b>    /**
+     * Authenticate the passed-in user's credentials.
+     * A more complex class could make calls
+     * to any external users directory.
+     *
+     * @param userName               The user's name
+     * @param userPassword           The user's password 
+     * @param databaseName           The database 
+     * @param infoAdditional jdbc connection info.
+     * @exception SQLException on failure
+     */</b>
+    public boolean authenticateUser(String userName,
+     String userPassword,
+     String databaseName,
+     Properties info)
+       throws SQLException 
+    {
+ <b>      /* Specific Authentication scheme logic.
+        If user has been authenticated, then simply return.
+        If user name and/or password are invalid, 
+        then raise the appropriate exception.
+            
+       This example allows only users defined in the
+       users config properties object.
+
+       Check if the passed-in user has been defined for the system.
+       We expect to find and match the property corresponding to
+       the credentials passed in. */</b>
+       if (userName == null)
+          <b> // We do not tolerate 'guest' user for now.
+       </b>    return false;
+<b>       //
+       // Check if user exists in our users config (file)
+       // properties set.
+       // If we did not find the user in the users config set, then
+       // try to find if the user is defined as a System property.
+       //</b>
+       String actualUserPassword;
+       actualUserPassword = usersConfig.getProperty(userName);
+       if (actualUserPassword == null)
+           actualUserPassword = System.getProperty(userName);
+       if (actualUserPassword == null)
+            <b>// no such passed-in user found</b>
+            return false;
+            <b>// check if the password matches</b>
+       if (!actualUserPassword.equals(userPassword))
+       return false;
+       <b>// Now, check if the user is a valid user of the database</b>
+       if (databaseName != null)
+       {
+             <b>/* if database users restriction lists present, then check 
+            if there is one for this database and if so, 
+            check if the user is a valid one of that database.
+            For this example, the only user we authorize in database
+            DarkSide is user 'DarthVader'. This is the only database
+            users restriction list we have for this example.
+            We authorize any valid (login) user to access the
+            OTHER databases in the system.
+            Note that database users ACLs could be set in the same
+            properties file or a separate one and implemented as you
+            wish. */</b>
+            <b>//</b>
+           if (databaseName.equals("DarkSide")) {
+              <b>// check if user is a valid one.</b>
+              if (!userName.equals("DarthVader"))
+                  <b>// This user is not a valid one of the passed-in</b>
+                  return false;
+           }
+       }
+       <b>// The user is a valid one in this database</b>
+       return true;
+    }
+}</codeblock></example>
+</refbody>
+</reference>

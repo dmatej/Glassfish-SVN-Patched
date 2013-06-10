@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqljoffsetfetch" xml:lang="en-us">
+
+<title>The result offset and fetch first clauses</title>
+
+<prolog>
+  <metadata>
+    <keywords>
+      <indexterm>result offset clause</indexterm>
+      <indexterm>fetch first clause</indexterm>
+    </keywords>
+  </metadata>
+</prolog>
+
+<refbody>
+<section> 
+  <p> The <i>result offset clause</i> provides a way to skip the N
+    first rows in a result set before starting to return any
+    rows. The <i>fetch first clause</i>, which can be combined with
+    the <i>result offset clause</i> if desired, limits the number of rows
+    returned in the result set. The <i>fetch first clause</i> can
+    sometimes be useful for retrieving only a few rows from an
+    otherwise large result set, usually in combination with an ORDER BY
+    clause. The use of this clause can give efficiency benefits. In
+    addition, it can make programming the application simpler.
+  </p> 
+</section>
+
+<refsyn>
+  <title>Syntax</title> 
+  <codeblock><b>OFFSET { <i>integer-literal</i> | ? } {ROW | ROWS}
+    </b></codeblock> 
+
+  <codeblock><b>FETCH { FIRST | NEXT } [<i>integer-literal</i> | ? ] {ROW | ROWS} ONLY
+    </b></codeblock> 
+<p>
+ROW is synonymous with ROWS and FIRST is synonymous with NEXT.
+</p>
+
+<p>
+For the <i>result offset clause</i>, the value of the integer literal (or the
+dynamic parameter <codeph>?</codeph>) must be equal to
+0 (default if the clause is not given), or positive. If it is larger
+than the number of rows in the underlying result set, no rows are
+returned.
+</p>
+
+<p>
+For the <i>fetch first clause</i>, the value of the literal (or the dynamic
+parameter <codeph>?</codeph>) must be 1 or
+higher. The literal can be omitted, in which case it defaults to 1. If
+the clause is omitted entirely, all rows (or those rows remaining if
+a <i>result offset clause</i> is also given) will be returned.
+</p>
+</refsyn>
+<example><title>Examples</title>
+  <codeblock><b>-- Fetch the first row of T
+SELECT * FROM T FETCH FIRST ROW ONLY
+
+-- Sort T using column I, then fetch rows 11 through 20 of the sorted
+--   rows (inclusive)
+SELECT * FROM T ORDER BY I OFFSET 10 ROWS FETCH NEXT 10 ROWS ONLY
+
+-- Skip the first 100 rows of T
+-- If the table has fewer than 101 records, an empty result set is
+--   returned
+SELECT * FROM T OFFSET 100 ROWS
+
+-- Use of ORDER BY and FETCH FIRST in a subquery
+SELECT DISTINCT A.ORIG_AIRPORT, B.FLIGHT_ID FROM 
+   (SELECT FLIGHT_ID, ORIG_AIRPORT 
+       FROM FLIGHTS 
+       ORDER BY ORIG_AIRPORT DESC 
+       FETCH FIRST 40 ROWS ONLY) 
+    AS A, FLIGHTAVAILABILITY AS B 
+   WHERE A.FLIGHT_ID = B.FLIGHT_ID
+
+JDBC (using a dynamic parameter):
+PreparedStatement p = 
+    con.prepareStatement("SELECT * FROM T ORDER BY I OFFSET ? ROWS");
+p.setInt(1, 100);
+ResultSet rs = p.executeQuery();
+</b></codeblock>
+<note>
+Make sure to specify the ORDER BY clause if you
+expect to retrieve a sorted result set.
+If you do not use an ORDER BY clause, the result set that is retrieved will
+typically have the order in which the records were inserted.</note> </example>
+</refbody>
+</reference>

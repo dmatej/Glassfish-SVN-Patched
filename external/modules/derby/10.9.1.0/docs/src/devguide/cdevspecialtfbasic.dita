@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevspecialtfbasic" xml:lang="en-us">
+<title>Overview of
+<ph conref="../conrefs.dita#prod/productshortname"></ph>-style table
+functions</title>
+<shortdesc>A <ph conref="../conrefs.dita#prod/productshortname"></ph>-style
+table function is a method which returns a JDBC <i>ResultSet</i>.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Functions<indexterm>table function overview</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>Most of the <i>ResultSet</i> methods can be
+written as stubs which simply raise exceptions. However, the
+<ph conref="../conrefs.dita#prod/productshortname"></ph>-style table function
+must implement the following <i>ResultSet</i> methods:</p>
+<ul>
+<li><i>next()</i></li>
+<li><i>close()</i></li>
+<li><i>wasNull()</i></li>
+<li><i>getXXX()</i> - When invoking a
+<ph conref="../conrefs.dita#prod/productshortname"></ph>-style table
+function at runtime, <ph conref="../conrefs.dita#prod/productshortname"></ph>
+calls a <i>getXXX()</i>
+        method on each referenced column. The particular <i>getXXX()</i>
+        method is based on the column's data type
+        as declared in the <codeph>CREATE FUNCTION</codeph> statement.
+<xref href="cdevspecialtfgetxxx.dita#cdevspecialtfgetxxx"></xref>
+explains how <ph conref="../conrefs.dita#prod/productshortname"></ph> selects an
+appropriate <i>getXXX()</i> method.
+However, nothing prevents application code from calling other <i>getXXX()</i>
+        methods on the <i>ResultSet</i>. The returned <i>ResultSet</i>
+needs to implement the <i>getXXX()</i> methods which
+<ph conref="../conrefs.dita#prod/productshortname"></ph> will call as well
+        as all <i>getXXX()</i> methods which the application will call.
+</li>
+</ul>
+
+<p>
+A <ph conref="../conrefs.dita#prod/productshortname"></ph>-style table function
+is materialized by a public static method which returns a <i>ResultSet</i>:
+</p>
+
+<codeblock>
+public static ResultSet read() {...}
+</codeblock>
+
+<p>
+The public static method is then bound to a
+<ph conref="../conrefs.dita#prod/productshortname"></ph> function name:
+</p>
+
+<codeblock>
+CREATE FUNCTION externalEmployees
+()
+RETURNS TABLE
+(
+  employeeId    INT,
+  lastName      VARCHAR( 50 ),
+  firstName     VARCHAR( 50 ),
+  birthday      DATE
+)
+LANGUAGE JAVA
+PARAMETER STYLE DERBY_JDBC_RESULT_SET
+READS SQL DATA
+EXTERNAL NAME 'com.example.hrSchema.EmployeeTable.read'
+</codeblock>
+
+<p>
+To invoke a table function, wrap it in a TABLE constructor in the FROM list of a
+query. Note that the table alias (in this example "s") is a required part of the
+syntax:
+</p>
+
+<codeblock>
+INSERT INTO employees
+  SELECT s.*
+    FROM TABLE (externalEmployees() ) s;
+</codeblock>
+
+<p>
+With a normal table function, you must select its entire contents. You can,
+however, write a restricted table function that lets you limit the rows and
+columns you select. A restricted table function can improve performance greatly.
+See <xref href="cdevspecialtfrestr.dita#cdevspecialtfrestr"></xref> for details.
+</p>
+
+</conbody>
+</concept>

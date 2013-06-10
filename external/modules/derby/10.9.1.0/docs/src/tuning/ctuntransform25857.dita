@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="ctuntransform25857" xml:lang="en-us">
+<title>Materialization</title>
+<shortdesc><term>Materialization</term> means that a subquery is evaluated
+only once. There are several types of subqueries that can be materialized.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>subqueries<indexterm>materialization</indexterm></indexterm>
+<indexterm><indexterm>materialization</indexterm>subqueries</indexterm></keywords>
+</metadata></prolog>
+<conbody>
+<section><title>Expression subqueries that are not correlated</title><p>A
+subquery can be materialized if it is a noncorrelated expression subquery.
+A correlated subquery is one that references columns in the outer query, and
+so has to be evaluated for each row in the outer query.</p><p>For example:
+   <codeblock><b>SELECT * FROM Staff WHERE id = (SELECT MAX(manager) FROM Org)</b></codeblock></p><p>In
+this statement, the subquery needs to be evaluated only once.</p><p>This type
+of subquery must return only one row. If evaluating the subquery causes a
+cardinality violation (if it returns more than one row), an exception is thrown
+when the subquery is run. </p><p>Subquery materialization is detected before
+optimization, which allows the <ph conref="../conrefs.dita#prod/productshortname"></ph> optimizer
+to see a materialized subquery as an unknown constant value. The comparison
+is therefore optimizable. </p><p>The original statement is transformed into
+the following two statements:    <codeblock><b><i>constant</i></b> = SELECT MAX(manager) FROM Org
+SELECT * FROM Staff
+WHERE id = <b><i>constant</i></b></codeblock></p><p>The second statement is
+optimizable.</p></section>
+<section><title>Subqueries that cannot be flattened</title><p>Materialization
+of a subquery can also occur when the subquery is nonflattenable and there
+is an equijoin between the subquery and another FROM table in the query. </p><p>For
+example:   <codeblock>SELECT i, a  FROM t1, 
+   (SELECT DISTINCT a FROM T2) x1  
+WHERE t1.i = x1.a AND t1.i in (1, 3, 5, 7) </codeblock>In this example, the
+subquery x1 is noncorrelated because it does not reference any of the columns
+from the outer query. The subquery is nonflattenable because of the DISTINCT
+keyword. <ph conref="../conrefs.dita#prod/productshortname"></ph> does not
+flatten DISTINCT subqueries. This subquery is eligible for materialization.
+Since there is an equijoin predicate between the subquery x1 and the table
+t1 (namely, t1.i = x1.a), the <ph conref="../conrefs.dita#prod/productshortname"></ph> optimizer
+will consider performing a hash join between t1 and x1 (with x1 as the inner
+operand). If that approach yields the best cost, <ph conref="../conrefs.dita#prod/productshortname"></ph> materializes
+the subquery x1 to perform the hash join. The subquery is evaluated only a
+single time and the results are stored in an in-memory hash table. <ph conref="../conrefs.dita#prod/productshortname"></ph> then
+executes the join using the in-memory result set for x1.</p></section>
+</conbody>
+</concept>

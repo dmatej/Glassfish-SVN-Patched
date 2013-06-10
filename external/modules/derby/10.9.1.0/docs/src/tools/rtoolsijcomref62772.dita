@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "../dtd/reference.dtd">
+<reference xml:lang="en-us" id="rtoolsijcomref62772">
+<title>Get Scroll Insensitive Cursor command</title>
+<prolog><metadata>
+<keywords><indexterm>Get Scroll Insensitive Cursor command</indexterm><indexterm>Cursors<indexterm>working with</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog><refbody>
+<refsyn><title>Syntax</title>
+<codeblock><b>GET SCROLL INSENSITIVE [WITH {HOLD|NOHOLD}]
+   CURSOR <b><i><xref href="rtoolsijcomref40155.dita#rtoolsijcomref40155">Identifier</xref></i></b> AS
+   <b><i><xref href="rtoolsijcomref34110.dita#rtoolsijcomref34110">String</xref></i></b></b></codeblock>
+<p>WITH HOLD is the default attribute of the cursor. For a non-holdable cursor,
+use the WITH NOHOLD option.</p>
+</refsyn>
+<section><title>Description</title>
+<p>Creates a scrollable insensitive cursor with the name of the <i>Identifier</i>. It does this by issuing a <i>createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE,
+ResultSet.CONCUR_READ_ONLY</i>) call and then executing the statement with a <i>java.sql.StatementExecuteQuery</i> request on the value of
+the String.
+</p>
+<p>If the <i>String</i> is a statement that does not generate
+a result set, the behavior of the underlying database determines whether an
+empty result set or an error is issued. If there is an error in executing
+the statement, no cursor is created.</p>
+<p><codeph>ij</codeph> sets the cursor name using a <i>java.sql.Statement.setCursorName </i>request. Behavior with respect to duplicate cursor names is controlled
+by the underlying database. <ph conref="../conrefs.dita#prod/productshortname"></ph> does not allow multiple open cursors
+with the same name.</p>
+<p>Once a scrollable cursor has been created, you can use the following commands
+to work with the result set:  
+<ul>
+<li><xref href="rtoolsijcomref94092.dita#rtoolsijcomref94092"/></li>
+<li><xref href="rtoolsijcomref11943.dita#rtoolsijcomref11943"/></li>
+<li><xref href="rtoolsijcomref79286.dita#rtoolsijcomref79286"/></li>
+<li><xref href="rtoolsijcomref24423.dita#rtoolsijcomref24423"/></li>
+<li><xref href="rtoolsijcomref61708.dita#rtoolsijcomref61708"/></li>
+<li><xref href="rtoolsijcomref53869.dita#rtoolsijcomref53869"/></li>
+<li><xref href="rtoolsijcomref11128.dita#rtoolsijcomref11128"/></li>
+<li><xref href="rtoolsijcomref44032.dita#rtoolsijcomref44032"/></li>
+<li><xref href="rtoolsijcomref97975.dita#rtoolsijcomref97975"/></li>
+</ul></p>
+</section>
+<example><title>Examples</title>
+<codeblock>ij&gt; <b>autocommit off;</b>
+ij&gt; <b>get scroll insensitive cursor scrollCursor as
+    'SELECT * FROM menu';</b>
+ij&gt; <b>absolute 5 scrollCursor;</b>
+COURSE    |ITEM                |PRICE
+-----------------------------------------------
+entree    |lamb chop           |14
+ij&gt; <b>after last scrollcursor;</b>
+No current row
+ij&gt; <b>before first scrollcursor;</b>
+No current row
+ij&gt; <b>first scrollcursor;</b>
+COURSE    |ITEM                |PRICE
+-----------------------------------------------
+entree    |lamb chop           |14
+ij&gt; <b>last scrollcursor;</b>
+COURSE    |ITEM                |PRICE
+-----------------------------------------------
+dessert   |creme brulee        |6
+ij&gt; <b>previous scrollcursor;</b>
+COURSE    |ITEM                |PRICE
+-----------------------------------------------
+entree    |lamb chop           |14
+ij&gt; <b>relative 1 scrollcursor;</b>
+COURSE    |ITEM                |PRICE
+-----------------------------------------------
+dessert   |creme brulee        |6
+ij&gt;&gt;<b>previous scrollcursor;</b>
+COURSE    |ITEM                |PRICE
+-----------------------------------------------
+dessert   |creme brulee        |6
+ij&gt; <b>next scrollcursor;</b>
+COURSE    |ITEM                |PRICE
+-----------------------------------------------
+dessert   |creme brulee        |6
+</codeblock>
+<codeblock>
+ij&gt; <b>connect 'jdbc:derby:memory:dummy;create=true;user=john'
+    as john_conn;</b>
+ij&gt; <b>create table john_tbl(c int);</b>
+0 rows inserted/updated/deleted
+ij&gt; <b>insert into john_tbl values(1),(2),(3);</b>
+3 rows inserted/updated/deleted
+ij&gt; <b>connect 'jdbc:derby:memory:dummy;user=fred' as fred_conn;</b>
+ij(FRED_CONN)&gt; <b>get scroll insensitive cursor john_cursor@john_conn 
+    as 'select * from john_tbl';</b>
+ij(FRED_CONN)&gt; <b>next john_cursor@john_conn;</b>
+C          
+-----------
+1          
+ij(FRED_CONN)&gt; <b>getcurrentrownumber john_cursor@john_conn;</b>
+1
+ij(FRED_CONN)&gt; <b>last john_cursor@john_conn;</b>
+C          
+-----------
+3          
+ij(FRED_CONN)&gt; <b>previous john_cursor@john_conn;</b>
+C          
+-----------
+2          
+ij(FRED_CONN)&gt; <b>first john_cursor@john_conn;</b>
+C          
+-----------
+1          
+ij(FRED_CONN)&gt; <b>after last john_cursor@john_conn;</b>
+No current row
+ij(FRED_CONN)&gt; <b>before first john_cursor@john_conn;</b>
+No current row
+ij(FRED_CONN)&gt; <b>relative 2 john_cursor@john_conn;</b>
+C          
+-----------
+2          
+ij(FRED_CONN)&gt; <b>absolute 1 john_cursor@john_conn;</b>
+C          
+-----------
+1          
+ij(FRED_CONN)&gt; <b>close john_cursor@john_conn;</b>
+ij(FRED_CONN)&gt; <b>disconnect all;</b>
+ij&gt;
+</codeblock>
+</example></refbody></reference>

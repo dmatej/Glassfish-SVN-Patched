@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "../dtd/reference.dtd">
+<reference xml:lang="en-us" id="rrefproper37341">
+<title>derby.authentication.ldap.searchFilter</title>
+<prolog><metadata>
+<keywords><indexterm>derby.authentication.ldap.searchfilter</indexterm>
+<indexterm>LDAP<indexterm>configuring</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog><refbody>
+<section><title>Function</title>
+<p>Specifies the search filter to use to determine what constitutes a user
+(and other search predicate) for
+<ph conref="../conrefs.dita#prod/productshortname"></ph> searches for a full DN
+during user authentication.</p>
+<p>If you set this property to <i>derby.user</i>,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> looks for cached full
+DNs for users that you have defined with the
+<i><xref href="rrefproper27355.dita#rrefproper27355">derby.user.UserName</xref></i>
+property. For other users,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> performs a search using
+the <i>default</i> search filter.</p>
+<p>For more information about LDAP user authentication, see "LDAP directory
+service" in the <ph conref="../conrefs.dita#pub/citdevelop"></ph>.</p>
+</section>
+<refsyn><title>Syntax</title>
+<codeblock><b>derby.authentication.ldap.searchFilter=
+    {<i> searchFilter</i> | derby.user)</b></codeblock>
+</refsyn>
+<section><title>Default</title>
+<codeblock><b>(&amp;(objectClass=inetOrgPerson)(uid=<i>userName</i>))</b></codeblock>
+<note><ph conref="../conrefs.dita#prod/productshortname"></ph> automatically
+uses the filter you specify with ((uid=<i>userName</i>)) unless you include
+%USERNAME% in the definition. You might want to use %USERNAME% if your user DNs
+map the user name to something other than <i>uid </i>(for example,
+<i>user</i>).</note>
+</section>
+<example><title>Example</title>
+<codeblock><b><ph>-- system-wide properties</ph>
+derby.authentication.ldap.searchFilter=objectClass=person
+<ph>## people in the marketing department
+## <ph conref="../conrefs.dita#prod/productshortname"></ph> automatically adds (uid=&lt;userName&gt;)</ph>
+derby.authentication.ldap.searchFilter=(&amp;(ou=Marketing)
+    (objectClass=person))
+<ph>## all people but those in marketing
+## <ph conref="../conrefs.dita#prod/productshortname"></ph> automatically adds (uid=&lt;userName&gt;)</ph>
+derby.authentication.ldap.searchFilter=(&amp;(!(ou=Marketing)
+    (objectClass=person))
+<ph>## map %USERNAME% to user, not <i>uid</i></ph>
+derby.authentication.ldap.searchFilter=(&amp;((ou=People)
+(user=%USERNAME%))
+<ph>## cache user DNs locally and use the default for others</ph>
+derby.authentication.ldap.searchFilter=derby.user
+
+<ph>-- database-wide property</ph>
+CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY(
+    'derby.authentication.ldap.searchFilter',
+    'objectClass=person')</b></codeblock>
+</example>
+<section><title>Dynamic or static</title>
+<p>Static. For system-wide properties, you must reboot
+<ph conref="../conrefs.dita#prod/productshortname"></ph> for the change to take
+effect. For database-wide properties, you must reboot the database for the
+change to take effect.</p>
+</section></refbody></reference>

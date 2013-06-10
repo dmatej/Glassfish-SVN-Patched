@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevconcepts15366" xml:lang="en-us">
+<title>Isolation levels and concurrency</title>
+<shortdesc><ph conref="../conrefs.dita#prod/productshortname"></ph> provides
+four transaction isolation levels. Setting the transaction isolation level
+for a connection allows a user to specify how severely the user's transaction
+should be isolated from other transactions.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Transaction anomalies in generic database systems<indexterm>description</indexterm></indexterm>
+<indexterm>Dirty reads<indexterm>definition</indexterm></indexterm><indexterm>Nonrepeatable
+reads<indexterm>definition</indexterm></indexterm><indexterm>Phantom reads<indexterm>definition</indexterm></indexterm>
+<indexterm>TRANSACTION_SERIALIZABLE isolation level</indexterm><indexterm>TRANSACTION_REPEATABLE
+_READ isolation level</indexterm><indexterm>TRANSACTION_READ _COMMITTED isolation
+level</indexterm><indexterm>TRANSACTION_READ _UNCOMMITTED isolation level</indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>For example, it allows you to specify whether transaction A is allowed
+to make changes to data that have been viewed by transaction B before transaction
+B has committed.</p>
+<p>A connection determines its own isolation level, so JDBC provides an application
+with a way to specify a level of transaction isolation. It specifies four
+levels of transaction isolation. The higher the transaction isolation, the
+more care is taken to avoid conflicts; avoiding conflicts sometimes means
+locking out transactions. Lower isolation levels thus allow greater concurrency.</p>
+<p>Inserts, updates, and deletes always behave the same no matter what the
+isolation level is. Only the behavior of select statements varies.</p>
+<p>To set isolation levels you can use the JDBC <i>Connection.setTransactionIsolation</i> method
+or the SQL SET ISOLATION statement.</p>
+<p>If there is an active transaction, the network client driver always commits 
+the active transaction, whether you use the JDBC 
+<i>Connection.setTransactionIsolation</i> method or the SQL SET ISOLATION 
+statement. It does this even if the method call or statement does not actually 
+change the isolation level (that is, if it sets the isolation level to its 
+current value). The embedded driver also always commits the active transaction 
+if you use the SET ISOLATION statement. However, if you use the 
+<i>Connection.setTransactionIsolation</i> method, the embedded driver commits 
+the active transaction only if the call to <i>Connection.setTransactionIsolation</i> 
+actually changes the isolation level.</p>
+<p>The names of the isolation levels are
+different, depending on whether you use a JDBC method or SQL statement. The
+following table shows the equivalent names for isolation levels whether they are
+set through the JDBC method or an SQL statement.</p>
+<table frame="all">
+<title>Mapping of JDBC transaction isolation levels to
+<ph conref="../conrefs.dita#prod/productshortname"></ph> isolation
+levels</title>
+<desc>This table lists the JDBC isolation levels and shows how they map to SQL isolation levels.</desc>
+<tgroup cols="2" colsep="1" rowsep="1">
+<colspec colname="colspec0" colnum="1" colwidth="67*"/>
+<colspec colname="colspec1" colnum="2" colwidth="33*"/>
+<thead>
+<row valign="bottom">
+<entry colname="colspec0">Isolation Levels for JDBC</entry>
+<entry colname="colspec1">Isolation Levels for SQL</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="colspec0">Connection.TRANSACTION_READ_UNCOMMITTED (ANSI level
+0)</entry>
+<entry colname="colspec1">UR, DIRTY READ, READ UNCOMMITTED </entry>
+</row>
+<row>
+<entry colname="colspec0">Connection.TRANSACTION_READ_COMMITTED (ANSI level
+1) </entry>
+<entry colname="colspec1">CS, CURSOR STABILITY, READ COMMITTED</entry>
+</row>
+<row>
+<entry colname="colspec0">Connection.TRANSACTION_REPEATABLE_READ (ANSI level
+2) </entry>
+<entry colname="colspec1">RS</entry>
+</row>
+<row>
+<entry colname="colspec0">Connection.TRANSACTION_SERIALIZABLE (ANSI level
+3) </entry>
+<entry colname="colspec1">RR, REPEATABLE READ, SERIALIZABLE </entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+<p>These levels allow you to avoid particular kinds of transaction anomalies,
+which are described in the following table.</p>
+<table frame="all" id="cdevconcepts17741">
+<title>Transaction anomalies</title>
+<desc>This table lists several kinds of transaction anomalies and gives an example of each.</desc>
+<tgroup cols="2" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="50*"/>
+<colspec colname="2" colnum="2" colwidth="50*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Anomaly</entry>
+<entry colname="2">Example</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1"><i>Dirty Reads</i> <p>A dirty read happens when a transaction
+reads data that is being modified by another transaction that has not yet
+committed.</p></entry>
+<entry colname="2">Transaction A begins.   <codeblock>UPDATE employee SET salary = 31650
+WHERE empno = '000090'</codeblock> Transaction B begins.   <codeblock>SELECT * FROM employee</codeblock> (Transaction
+B sees data updated by transaction A. Those updates have not yet been committed.)</entry>
+</row>
+<row>
+<entry colname="1"><i>Nonrepeatable Reads</i> <p>Nonrepeatable reads happen when
+a query returns data that would be different if the query were repeated within
+the same transaction. Nonrepeatable reads can occur when other transactions
+are modifying data that a transaction is reading.</p></entry>
+<entry colname="2">Transaction A begins.   <codeblock>SELECT * FROM employee
+WHERE empno = '000090' </codeblock> Transaction B begins.   <codeblock>UPDATE employee SET salary = 30100
+WHERE empno = '000090'</codeblock> (Transaction B updates rows viewed by transaction
+A before transaction A commits.) If Transaction A issues the same SELECT statement,
+the results will be different.</entry>
+</row>
+<row>
+<entry colname="1"><i>Phantom Reads</i> <p>Records that appear in a set being read
+by another transaction. Phantom reads can occur when other transactions insert
+rows that would satisfy the WHERE clause of another transaction's statement.</p></entry>
+<entry colname="2">Transaction A begins.   <codeblock>SELECT * FROM employee
+ WHERE salary &gt; 30000 </codeblock> Transaction B begins.  <codeblock>INSERT INTO employee
+(empno, firstnme, midinit,
+lastname, job,
+salary) VALUES ('000350', 'NICK',
+'A','GREEN','LEGAL COUNSEL',35000)</codeblock> Transaction B inserts a row
+that would satisfy the query in Transaction A if it were issued again.</entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+<p>The transaction isolation level is a way of specifying whether these transaction
+anomalies are allowed. The transaction isolation level thus affects the quantity
+of data locked by a particular transaction. In addition, a DBMS's locking
+schema might also affect whether these anomalies are allowed. A DBMS can lock
+either the entire table or only specific rows in order to prevent transaction
+anomalies.</p>
+<p>The following table shows which anomalies are possible under the various
+locking schemas and isolation levels.</p>
+<table frame="all">
+<title>When transaction anomalies are possible</title>
+<desc>This table lists the JDBC isolation levels and shows which transaction anomalies can occur with table-level and row-level locking.</desc>
+<tgroup cols="3" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="50*"/>
+<colspec colname="2" colnum="2" colwidth="25*"/>
+<colspec colname="3" colnum="3" colwidth="25*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Isolation Level</entry>
+<entry colname="2">Table-Level Locking</entry>
+<entry colname="3">Row-Level Locking</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">TRANSACTION_READ_UNCOMMITTED</entry>
+<entry colname="2">Dirty reads, nonrepeatable reads, and phantom reads possible</entry>
+<entry colname="3">Dirty reads, nonrepeatable reads, and phantom reads possible</entry>
+</row>
+<row>
+<entry colname="1">TRANSACTION_READ_COMMITTED</entry>
+<entry colname="2">Nonrepeatable reads and phantom reads possible</entry>
+<entry colname="3">Nonrepeatable reads and phantom reads possible</entry>
+</row>
+<row>
+<entry colname="1">TRANSACTION_REPEATABLE_READ</entry>
+<entry colname="2">Phantom reads not possible because entire table is locked</entry>
+<entry colname="3">Phantom reads possible</entry>
+</row>
+<row>
+<entry colname="1">TRANSACTION_SERIALIZABLE</entry>
+<entry colname="2">None</entry>
+<entry colname="3">None</entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+<p>The following <i>java.sql.Connection</i> isolation levels are supported:</p>
+<ul>
+<li><codeph>TRANSACTION_SERIALIZABLE</codeph> <p><codeph>RR</codeph>, <codeph>SERIALIZABLE</codeph>,
+or <codeph>REPEATABLE READ</codeph> from SQL.</p> <p><i>TRANSACTION_SERIALIZABLE</i> means
+that <ph conref="../conrefs.dita#prod/productshortname"></ph> treats the transactions
+as if they occurred serially (one after the other) instead of concurrently. <ph
+conref="../conrefs.dita#prod/productshortname"></ph> issues locks to prevent
+all the transaction anomalies listed in <xref href="cdevconcepts15366.dita#cdevconcepts15366/cdevconcepts17741"></xref> from
+occurring. The type of lock it issues is sometimes called a <i>range lock</i>.</p></li>
+<li><codeph>TRANSACTION_REPEATABLE_READ</codeph>   <p><codeph>RS</codeph> from
+SQL.</p> <p><i>TRANSACTION_REPEATABLE_READ</i> means that <ph conref="../conrefs.dita#prod/productshortname"></ph> issues
+locks to prevent only dirty reads and nonrepeatable reads, but not phantoms.
+It does not issue range locks for selects.</p></li>
+<li><codeph>TRANSACTION_READ_COMMITTED</codeph>  <p><codeph>CS</codeph> or <codeph>CURSOR
+STABILITY</codeph> from SQL.</p> <p><i>TRANSACTION_READ_COMMITTED</i> means
+that <ph conref="../conrefs.dita#prod/productshortname"></ph> issues locks
+to prevent only dirty reads, not all the transaction anomalies listed in <xref
+href="cdevconcepts15366.dita#cdevconcepts15366/cdevconcepts17741"></xref>.</p>
+<p><i>TRANSACTION_READ_COMMITTED</i> is
+the default isolation level for transactions.</p></li>
+<li><codeph>TRANSACTION_READ_UNCOMMITTED</codeph>   <p><codeph>UR</codeph>, <codeph>DIRTY
+READ</codeph>, or <codeph>READ UNCOMMITTED</codeph> from SQL.</p> <p>For a
+SELECT INTO, FETCH with a read-only cursor, full select used in an INSERT,
+full select/subquery in an UPDATE/DELETE, or scalar full select (wherever
+used), READ UNCOMMITTED allows:</p> <ul>
+<li>Any row that is read during the unit of work to be changed by other application
+processes.</li>
+<li>Any row that was changed by another application process to be read even
+if the change has not been committed by the application process.</li>
+</ul><p>For other operations, the rules that apply to READ COMMITTED also
+apply to READ UNCOMMITTED.</p></li>
+</ul>
+</conbody>
+</concept>

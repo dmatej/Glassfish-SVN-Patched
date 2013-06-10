@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either XMLEXISTSress or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rreffuncxmlparse" xml:lang="en-us">
+<title>XMLPARSE operator</title>
+<shortdesc>XMLPARSE is a SQL/XML operator that you use to parse a character
+string expression into a <ph conref="../conrefs.dita#prod/productshortname"></ph> XML
+value.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>XMLPARSE operator</indexterm><indexterm>operators<indexterm>XMLPARSE</indexterm></indexterm>
+<indexterm>XML<indexterm>operators, XMLPARSE</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>You can use the result of this operator temporarily or you can
+store the result permanently in <ph conref="../conrefs.dita#prod/productshortname"></ph> XML
+columns.  Whether temporary or permanent, you can use the XML value as an
+input to the other <ph conref="../conrefs.dita#prod/productshortname"></ph> XML
+operators, such as <xref href="rreffuncxmlexists.dita#rreffuncxmlexists">XMLEXISTS</xref> and <xref
+href="rreffuncxmlquery.dita#rreffuncxmlquery">XMLQUERY</xref>.</p> </section>
+<refsyn><title>Syntax</title><codeblock><b>XMLPARSE (DOCUMENT <varname>string-value-expression</varname> PRESERVE WHITESPACE)</b></codeblock><dl>
+<dlentry>
+<dt>DOCUMENT </dt>
+<dd> <p>Required keyword that describes the type of XML input that <ph conref="../conrefs.dita#prod/productshortname"></ph> can
+parse.  <ph conref="../conrefs.dita#prod/productshortname"></ph> can only
+parse string expressions that constitute well-formed XML documents.  This
+is because <ph conref="../conrefs.dita#prod/productshortname"></ph> uses a
+JAXP parser to parse all string values.  The JAXP parser expects the string-value-expression
+to constitute a well-formed XML document. If the string does not constitute
+a well-formed document, JAXP throws an error.  <ph conref="../conrefs.dita#prod/productshortname"></ph> catches
+the error and throws the error as a SQLException.</p></dd>
+</dlentry><dlentry>
+<dt><codeph>string-value-expression</codeph></dt>
+<dd>Any expression that evaluates to a SQL character type, such as CHAR, VARCHAR,
+LONG VARCHAR, or CLOB.  The <codeph>string-value-expression</codeph> argument
+can also be a parameter. You must use the CAST function when you specify the
+parameter to indicate the type of value that is bound into the parameter. <ph
+conref="../conrefs.dita#prod/productshortname"></ph> must verify that the
+parameter is the correct data type before the value is parsed as an XML document.
+ If a parameter is specified without the CAST function, or if the CAST is
+to a non-character datatype, <ph conref="../conrefs.dita#prod/productshortname"></ph> throws
+an error.</dd>
+</dlentry><dlentry>
+<dt>PRESERVE WHITESPACE</dt>
+<dd>Required keywords that describe how <ph conref="../conrefs.dita#prod/productshortname"></ph> handles
+whitespace between consecutive XML nodes. When the PRESERVE WHITESPACE keywords
+are used, <ph conref="../conrefs.dita#prod/productshortname"></ph> preserves
+whitespace as dictated by the SQL/XML rules for preserving whitespace.</dd>
+</dlentry></dl><p>For more information on what constitutes a well-formed XML
+document, see the following specification: <xref format="html" href="http://www.w3.org/TR/REC-xml/#sec-well-formed">http://www.w3.org/TR/REC-xml/#sec-well-formed </xref
+>.</p><p><note type="restriction">The SQL/XML standard dictates that the argument
+to the XMLPARSE operator can also be a binary string.  However, <ph conref="../conrefs.dita#prod/productshortname"></ph> only
+supports character string input for the XMLPARSE operator.</note></p></refsyn>
+<section><title>Examples</title><p>To insert a simple XML document into the <codeph>xcol</codeph> XML
+column in the <codeph>x_table</codeph> table, use the following statement: <codeblock>INSERT INTO <varname>x_table</varname> VALUES 
+    (<varname>1</varname>, 
+    XMLPARSE(DOCUMENT '
+        &lt;roster>
+          &lt;student age="18">AB&lt;/student>
+          &lt;student age="23">BC&lt;/student>
+          &lt;student>NOAGE&lt;/student>
+        &lt;/roster>'
+      PRESERVE WHITESPACE)
+    )
+</codeblock></p><p>To insert a large XML document into the <codeph>xcol</codeph> XML
+column in the <codeph>x_table</codeph> table, from JDBC use the following
+statement: <codeblock>INSERT INTO <varname>x_table</varname> VALUES 
+    (<varname>2</varname>, 
+    XMLPARSE (DOCUMENT CAST (? AS CLOB) PRESERVE WHITESPACE)
+    )
+</codeblock>You should bind into the statement using the setCharacterStream()
+method, or any other JDBC setXXX method that works for the CAST target type.</p></section>
+<section><title>Usage note</title><p><ph conref="../conrefs.dita#prod/productshortname"></ph> requires
+that a JAXP parser (such as Apache Xerces) and Apache Xalan are listed
+in the Java classpath for the XML functions to work.  If either the JAXP parser
+or Xalan is missing from the classpath, attempts to use the XMLPARSE operator
+will result in an error. In some situations, you may need to take steps to place
+the parser and Xalan in your classpath. See "XML data types and operators" in
+the <ph conref="../conrefs.dita#pub/citdevelop"></ph> for details.</p></section>
+</refbody>
+</reference>

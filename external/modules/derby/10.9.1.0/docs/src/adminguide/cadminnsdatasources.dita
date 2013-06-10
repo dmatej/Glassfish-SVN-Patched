@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cadminnsdatasources" xml:lang="en-us">
+<title>Accessing the Network Server by using a DataSource object</title>
+<shortdesc>The Network Server supports the 
+<ph conref="../conrefs.dita#prod/productshortname"></ph> Network
+Client driver <codeph>DataSource</codeph> classes
+<codeph>org.apache.derby.jdbc.ClientDataSource</codeph> and
+<codeph>org.apache.derby.jdbc.ClientConnectionPoolDataSource</codeph>
+on all supported Java SE platforms.
+</shortdesc>
+<prolog><metadata><keywords>
+<indexterm>DataSource objects<indexterm>and Network Server</indexterm></indexterm>
+<indexterm>Network Server<indexterm>using DataSource objects</indexterm></indexterm>
+</keywords></metadata></prolog>
+<conbody>
+<p>If your client runs on the Java SE 6 platform, and if you want to use 
+<codeph>DataSource</codeph> methods specific to the JDBC 4 API, use the
+<codeph>DataSource</codeph> classes named
+<codeph>org.apache.derby.jdbc.ClientDataSource40</codeph> and
+<codeph>org.apache.derby.jdbc.ClientConnectionPoolDataSource40</codeph>.</p>
+<p>
+If your client is running on the Java SE 6 platform, all connection objects 
+returned from the <codeph>DataSource</codeph> will be JDBC 4 connection objects,
+whether or not you are using a <codeph>DataSource</codeph> whose name ends in
+"40".
+</p>
+<section><title>Using statement caching</title>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph> supports JDBC
+statement caching, which can improve the performance of applications that use
+<codeph>PreparedStatement</codeph> or <codeph>CallableStatement</codeph>
+objects. Statement caching avoids the performance penalty incurred by going over
+the network from the client to the server to prepare a statement that has
+already been prepared on the same connection.</p>
+<p>To use statement caching, you must use an
+<codeph>org.apache.derby.jdbc.ClientConnectionPoolDataSource</codeph> or an
+<codeph>org.apache.derby.jdbc.ClientConnectionPoolDataSource40</codeph> object.
+After you instantiate this object, perform these steps:</p>
+<ol>
+<li>Specify the desired size of your statement cache by calling the
+<codeph>setMaxStatements</codeph> method on the <codeph>DataSource</codeph>
+object, specifying an argument greater than zero.</li>
+<li>Call the <codeph>getPooledConnection</codeph> method on the
+<codeph>DataSource</codeph> object to obtain a
+<codeph>javax.sql.PooledConnection</codeph> object (a physical
+connection).</li>
+<li>Call the <codeph>javax.sql.PooledConnection.getConnection</codeph> method
+to obtain a <codeph>java.sql.Connection</codeph> object (a logical
+connection).</li>
+</ol>
+<p>After you obtain a connection, use either prepared statements or callable
+statements to interact with the database. Close each statement to return it to
+the cache after you finish using it. The statements you create are held in the
+cache on the client side and reused when needed.</p>
+<p>See
+<xref href="radminnsdatasourcexmp.dita#radminnsdatasourcexmp/stmtcacheexmp"></xref>
+for a code example.</p>
+<p>Use of the JDBC statement cache makes each physical connection use more
+memory. The amount depends on how many statements the connection is allowed to
+cache and how many statements are actually cached.</p>
+<p>If you enable JDBC statement caching, error handling changes slightly. Some
+errors that previously appeared when the <codeph>prepareStatement</codeph>
+method was executed may now appear during statement execution. For example,
+suppose you query a table using a prepared statement that is then cached. If the
+table is deleted, the prepared statement that queries the table is not
+invalidated. If the query is prepared again on the same connection, the cached
+object is fetched from the cache, and the <codeph>prepareStatement</codeph> call
+seems to have succeeded, although the statement has not actually been prepared.
+When the prepared statement is executed, the error is detected on the server
+side, and the client is notified.</p>
+</section>
+</conbody>
+</concept>

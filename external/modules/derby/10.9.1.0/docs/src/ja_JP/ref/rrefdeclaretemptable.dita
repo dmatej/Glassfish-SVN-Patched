@@ -1,0 +1,149 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefdeclaretemptable" xml:lang="ja">
+<title>DECLARE GLOBAL TEMPORARY TABLE 文</title>
+<shortdesc>The DECLARE GLOBAL TEMPORARY TABLE statement defines a temporary
+table for the current connection. </shortdesc>
+<prolog><metadata>
+<keywords><indexterm>DECLARE GLOBAL TEMPORARY TABLE statement</indexterm>
+<indexterm>tables<indexterm>temporary</indexterm></indexterm><indexterm><indexterm>SQL
+statements</indexterm>DECLARE GLOBAL TEMPORARY TABLE</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section><p>これらの表はシステムカタログにあるものではなく永続的なものではありません。一時表は作成した接続の期間のみ存在して、他の接続から参照することはできません。接続が閉じるとき、
+表中の行は削除され、一時表に関するメモリ上の記述は破棄されます。</p></section>
+<section><p>一時表は以下のような場合に便利です。<ul>
+<li>表の構造がアプリケーションを使う前では分からない場合</li>
+<li>他のユーザが同様な構造の表を必要としない場合</li>
+<li>アプリケーションを使っている場合のみ、一時表の情報が必要な場合</li>
+<li>システムカタログにロックを持たずに、表の定義と破棄が可能な場合</li>
+</ul></p></section>
+<section><title>構文</title> <codeblock><b>DECLARE GLOBAL TEMPORARY TABLE <i><xref
+href="rrefdeclaretemptable.dita#rrefdeclaretemptable/tempcoltablename">表名</xref></i>
+    { 列定義 [ , 列定義 ] * }
+[ ON COMMIT {DELETE | PRESERVE} ROWS ]  
+NOT LOGGED [ON ROLLBACK DELETE ROWS]
+ </b></codeblock></section>
+<section id="tempcoltablename"><title>表名</title>
+<p>一時表の名前です。SESSION以外のスキーマ名が指定された場合、エラーが発生します。(SQLSTATE 428EK)
+スキーマ名が指定されなかった場合、SESSIONがあてられます。
+複数の接続で同じ名前の一時表を作ることができます。なぜならそれぞれの接続は個々に一意な表の記述子を持つからです。</p>
+<p>SESSIONを永続的な表のスキーマとして使ってもエラーにはなりませんが推奨しません。
+SESSIONというスキーマ名は一時表のスキーマ用に予約されています。</p></section>
+<section id="tempcolcolumndef"><title>列定義</title>
+<p><codeph>列定義</codeph>の詳細については<xref
+href="rrefsqlj30540.dita#rrefsqlj30540"></xref>の<codeph>CREATE TABLE</codeph>を参照してください。
+<codeph>DECLARE GLOBAL
+TEMPORARY TABLE</codeph>では<codeph>列定義</codeph>に<codeph>発番列仕様</codeph>は不可能です。</p></section>
+<section id="rreftemptabledatatype"><title>データ型</title>
+<p>可能なデータ型は以下のとおりです。<ul>
+<li>BIGINT</li>
+<li>CHAR</li>
+<li>DATE</li>
+<li>DECIMAL</li>
+<li>DOUBLE</li>
+<li>DOUBLE PRECISION</li>
+<li>FLOAT</li>
+<li>INTEGER</li>
+<li>NUMERIC</li>
+<li>REAL</li>
+<li>SMALLINT</li>
+<li>TIME</li>
+<li>TIMESTAMP</li>
+<li>VARCHAR</li>
+</ul></p></section>
+<section id="rreftemptableoncommit"><title>ON COMMIT</title>
+<p>COMMITが行われたときのアクションを指定します。</p></section>
+<section><title>DELETE ROWS</title>
+<p>表に開いたカーソルが無ければ、表中の全ての行が削除されます。これはON COMMITの既定です。
+もしON ROLLBACK DELETE ROWSを指定した場合は、一時表が使われた場合のみ全ての行が削除されます。
+ON COMMIT DELETE ROWSを指定した場合は、一時表が使われなかった場合でも表の行が削除されます(開いたカーソルが無かった場合です。)。</p></section>
+<section><title>PRESERVE ROWS</title><p>表の行は留め置かれます。</p></section>
+<section id="rreftemptablenotlogged"><title>NOT LOGGED</title>
+<p>
+トランザクションがロールバックされたとき、一時表に行われるアクションを指定します。
+ROLLBACK(あるいはROLLBACK TO SAVEPOINT)が行われると、作業単位(もしくはセーブポイント)にて表が作られていれば、その表は破棄されます。もし作業単位(もしくはセーブポイント)にて表が破棄された場合、行のない表が復元されます。</p></section>
+<section><title>ON ROLLBACK DELETE ROWS</title> 
+<p>これはNOT LOGGEDの既定です。NOT LOGGED [ON ROLLBACK DELETE ROWS ]]により、ROLLBACKあるいはROLLBACK TO SAVEPOINTが行われたとき一時表に行われる処理が指定されます。もし表の情報が変更されていれば、全行が削除されます。</p></section>
+<section><title>例</title><codeblock><b>set schema myapp;
+
+create table t1(c11 int, c12 date);
+
+declare global temporary table SESSION.t1(c11 int) not logged;</b>
+-- 一時表はSESSIONスキーマにしか置かれないので、
+-- SESSIONによる限定は冗長です。
+<b>declare global temporary table t2(c21 int) not logged;</b> 
+-- 一時表はSESSIONスキーマにしか置かれないので、
+-- この例ではSESSIONにより限定しません。
+
+<b>insert into SESSION.t1 values (1); </b>
+-- 現在のスキーマが"myapp."なので、一時表を使うにはSESSIONによる限定が必須です。
+
+<b>select * from t1;</b> 
+-- 表がSESSIONにより限定されていないので、
+-- このselect文の"myapp.t1"は実表を参照します。
+
+</codeblock> <note>一時表はSESSIONスキーマにのみ定義できます。
+ユーザはSESSIONという名前の実スキーマを定義するべきではありません。</note>
+<p>次のDB2 UDBにて可能なDECLARE GLOBAL TEMPORARY TABLE関数は、<ph conref="../conrefs.dita#prod/productshortname"></ph>にて使えません。<ul>
+<li>IDENTITY column-options </li>
+<li>IDENTITY attribute in copy-options</li>
+<li>AS (fullselect) DEFINITION ONLY</li>
+<li>NOT LOGGED ON ROLLBACK PRESERVE ROWS</li>
+<li>IN tablespace-name</li>
+<li>PARTITIONING KEY</li>
+<li>WITH REPLACE </li>
+</ul> </p></section>
+<section><title>Declared Global Temporary Tablesの制限事項</title> 
+<p><ph
+conref="../conrefs.dita#prod/productshortname"></ph>では一時表に次の機能を提供していません。
+これらの機能の幾つかは一時表特有のものであり、幾つかは<ph conref="../conrefs.dita#prod/productshortname"></ph>特有のものです。</p>
+<p>以下の文では一時表を指定できません。<ul>
+<li>ALTER TABLE </li>
+<li>CREATE INDEX</li>
+<li>CREATE SYNONYM</li>
+<li>CREATE TRIGGER</li>
+<li>CREATE VIEW</li>
+<li>GRANT</li>
+<li>LOCK TABLE</li>
+<li>RENAME</li>
+<li>REVOKE</li>
+</ul></p>
+<p>一時表には次の機能を使えません。</p><ul>
+<li>SESSIONスキーマにある表(実表と一時表を含みます)への別名、トリガ、ビュー</li>
+<li>SESSIONスキーマにある表を参照する文のキャッシュ</li>
+<li>一時表は外部キー制約や主キー制約で指定できない。</li>
+<li>トリガされるSQL文では一時表を参照できません。</li>
+<li>列のチェック制約</li>
+<li>発番列仕様</li>
+<li>一時表へのインポート</li>
+</ul> <p>一時表への挿入、更新、削除の文にてエラーが起きた場合、一時表の全ての行は削除されます。</p>
+<p>一時表にて以下のデータ型は利用できません。<ul>
+<li>BLOB</li>
+<li>CHAR FOR BIT DATA</li>
+<li>CLOB</li>
+<li>LONG VARCHAR</li>
+<li>LONG VARCHAR FOR BIT DATA</li>
+<li>VARCHAR FOR BIT DATA</li>
+<li>XML</li>
+</ul></p></section>
+</refbody>
+</reference>

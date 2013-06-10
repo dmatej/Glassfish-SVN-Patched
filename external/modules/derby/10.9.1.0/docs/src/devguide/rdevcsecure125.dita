@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rdevcsecure125" xml:lang="en-us">
+<title>Setting LDAP user authentication properties in a client/server environment</title>
+<shortdesc>In this example, <ph conref="../conrefs.dita#prod/productshortname"></ph> is
+running in a user-designed application server.</shortdesc>
+<prolog></prolog>
+<refbody>
+<section><p><ph conref="../conrefs.dita#prod/productshortname"></ph> provides
+the user authentication, not the application server. The server is running
+in a secure environment, the application server encrypts the passwords, and
+a database administrator is available. The administrator configures security
+using system-level properties in the <i>derby.properties</i> file and has
+protected this file with operating system tools. <ph conref="../conrefs.dita#prod/productshortname"></ph> connects
+to an existing LDAP directory service within the enterprise to authenticate
+users.</p></section>
+<section><p>The default access mode for all databases is set to <i>fullAccess</i> (the
+default).</p></section>
+<section><p>The <i>derby.properties</i> file for the server includes the following
+entries:</p></section>
+<example> <codeblock><b># turn on user authentication</b>
+derby.connection.requireAuthentication=true
+<b># set the authentication provider to an external LDAP server</b>
+derby.authentication.provider=LDAP
+<b># the host name and port number of the LDAP server</b>
+derby.authentication.server=godfrey:389
+<b># the search base for user names</b>
+derby.authentication.ldap.searchBase=o=oakland.example.com
+<b># explicitly show the access mode for databases (this is default)</b>
+derby.database.defaultConnectionMode=fullAccess</codeblock></example>
+<section><p>With these settings, all users must be authenticated by the LDAP
+server in order to access any <ph conref="../conrefs.dita#prod/productshortname"></ph> databases.</p></section>
+<section><p>The database administrator has determined that one database, <i>accountingDB</i>,
+has additional security needs. Within a connection to that database, the database
+administrator uses database-wide properties (which override properties set
+in the <i>derby.properties</i> file) to limit access to this database. Only
+the users <i>prez</i>, <i>cfo</i>, and <i>numberCruncher</i> have full (read-write)
+access to this database, and only <i>clerk1</i> and <i>clerk2</i> have read-only
+access to this database. No other users can access the database.</p></section>
+<example> <codeblock><b>CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY(
+    'derby.database.defaultConnectionMode', 'noAccess')
+
+CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY(
+    'derby.database.fullAccessUsers',
+    'prez,cfo,numberCruncher')
+
+CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY(
+    'derby.database.readOnlyAccessUsers', 'clerk1,clerk2')</b></codeblock></example>
+<section><p>The database administrator then requires all current users to
+disconnect and re-connect. These property changes do not go into effect for
+current connections. The database administrator can force current users to
+reconnect by shutting down the database</p></section>
+</refbody>
+</reference>

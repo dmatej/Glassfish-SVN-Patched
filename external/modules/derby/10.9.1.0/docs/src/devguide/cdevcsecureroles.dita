@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevcsecureroles" xml:lang="en-us">
+<title>Using SQL roles</title>
+<shortdesc>When the SQL standard authorization mode is enabled, object owners
+can use the SQL roles facility to administer privileges.</shortdesc>
+<prolog><metadata>
+<keywords>
+<indexterm>access control system<indexterm>SQL2003</indexterm></indexterm>
+<indexterm>SQL standard authorization mode<indexterm>SQL roles</indexterm></indexterm>
+<indexterm>SQL roles<indexterm>using</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>SQL roles are useful for administering privileges when a database has many
+users. Roles provide a more powerful way to grant privileges to users' sessions
+than to grant privileges to each user of the database, which easily becomes
+tedious and error-prone when many users are involved. Roles do not in and of
+themselves give better database security, but used correctly, they facilitate
+better security. Only the
+<xref href="cdevcsecureDbOwner.dita#cdevcsecureDbOwner">database owner</xref>
+can create, grant, revoke, and drop roles. However, object owners can grant and
+revoke privileges for those objects to and from roles, as well as to and from
+individual users and PUBLIC (all users).</p>
+<note><ph conref="../conrefs.dita#prod/productshortname"></ph> implements a
+subset of SQL roles. The fact that only the database owner can create, grant,
+revoke, and drop roles is an implementation restriction.</note>
+<section id="rolecreategrant"><title>Creating and granting roles</title>
+<p>Roles are available only when SQL authorization mode is enabled (that is,
+when the property <codeph>derby.database.sqlAuthorization</codeph> is set to
+<codeph>TRUE</codeph>).</p>
+<p>Old databases must be (hard) upgraded to at least Release 10.5 before roles
+can be used.</p>
+<p>If SQL authorization mode is enabled, the database owner can use the
+CREATE ROLE statement to create roles. The database owner can then use the GRANT
+statement to grant a role to one or more users, to PUBLIC, or to another role.
+</p>
+<p>A role A <i>contains</i> another role B if role B is granted to role A, or is
+contained in a role C granted to role A. Privileges granted to a contained role
+are inherited by the containing roles. So the set of privileges identified by
+role A is the union of the privileges granted to role A and the privileges
+granted to any contained roles of role A.</p>
+<p>For example, suppose the database owner issued the following statements:</p>
+<codeblock>  create role reader;
+  create role updater;
+  create role taskLeaderA;
+  create role taskLeaderB;
+  create role projectLeader;
+  grant reader to updater;
+  grant updater to taskLeaderA;
+  grant updater to taskLeaderB;
+  grant taskLeaderA to projectLeader;
+  grant taskLeaderB to projectLeader;
+</codeblock>
+<p>The roles would then have the following containment relationships:</p>
+<ul>
+<li>The <codeph>projectLeader</codeph> role contains the
+<codeph>taskLeaderA</codeph> and <codeph>taskLeaderB</codeph> roles.</li>
+<li>The <codeph>taskLeaderA</codeph> and <codeph>taskLeaderB</codeph> roles both
+contain the <codeph>updater</codeph> role.</li>
+<li>The <codeph>updater</codeph> role contains the <codeph>reader</codeph>
+role.</li>
+</ul>
+<p>In this case, the <codeph>projectLeader</codeph> role contains all the other
+roles and has all their privileges. If the database owner then revokes
+<codeph>updater</codeph> from <codeph>taskLeaderA</codeph>,
+<codeph>projectLeader</codeph> still contains that role through
+<codeph>taskLeaderB</codeph>.</p>
+<p>The SYSCS_DIAG.CONTAINED_ROLES diagnostic table function can be used to
+determine the set of contained roles for a role.</p>
+<p>Cycles are not permitted in role grants. That is, if a role contains another
+role, you cannot grant the container role to the contained role. For example,
+the following statement would not be permitted:</p>
+<codeblock>grant projectLeader to updater;</codeblock>
+</section>
+<section><title>Setting roles</title>
+<p>When a user first connects to
+<ph conref="../conrefs.dita#prod/productshortname"></ph>, no role is set, and
+the CURRENT_ROLE function returns null. During a session, the user can call the
+SET ROLE statement to set the current role for that session. The role can be
+any role that has been granted to the session's current user or to PUBLIC. To
+unset the current role, call SET ROLE with an argument of NONE. At any time
+during a session, there is always a current user, but there is a current role
+only if SET ROLE has been called with an argument other than NONE. If a current
+role is not set, the session has only the privileges granted to the user
+directly or to PUBLIC.</p>
+<p>For example, if the database owner created and granted the roles shown in the
+previous session, a user would have to issue a SET ROLE statement to have them
+take effect. Suppose a user issued the following statement:</p>
+<codeblock>SET ROLE taskLeaderA;</codeblock>
+<p>Assuming that the database owner had granted the <codeph>taskLeaderA</codeph>
+role to the user, the user would be allowed to set the role as shown and would
+have all the privileges granted to the <codeph>taskLeaderA</codeph>,
+<codeph>updater</codeph>, and <codeph>reader</codeph> roles.</p>
+<p>To retrieve the current role identifier in SQL, call the CURRENT_ROLE
+function.</p>
+<p>Within stored procedures and functions that contain SQL, the
+  current role depends on whether the routine executes with invoker's
+  rights or with definer's rights, as specified by the EXTERNAL SECURITY clause in
+  the CREATE FUNCTION or CREATE PROCEDURE statements in
+  the <ph conref="../conrefs.dita#pub/citref"></ph>. During execution,
+  the current user and current role are kept on an authorization stack
+  which is pushed during a stored routine call.
+</p>
+
+<p>Within routines that execute with invoker's rights, the following
+applies: initially, inside a nested connection, the current role is
+set to that of the calling context. So is the current user. Such
+routines may set any role granted to the invoker or to PUBLIC.</p>
+
+<p>Within routines that execute with definer's rights, the following
+applies: initially, inside a nested connection, the current role is
+NULL, and the current user is that of the definer. Such routines may
+set any role granted to the definer or to PUBLIC.
+</p>
+<p>
+Upon return from the stored procedure or function, the authorization
+stack is popped, so the current role of the calling context is not
+affected by any setting of the role inside the called procedure or
+function.  If the stored procedure opens more than one nested
+connection, these all share the same (stacked) current role (and user)
+state. Any dynamic result set passed out of a stored procedure sees
+the current role (or user) of the nested context.
+</p>
+</section>
+<section><title>Granting privileges to roles</title>
+<p>Once a role has been created, both the database owner and the object owner
+can grant privileges on tables and routines to that role. You can grant the same
+privileges to roles that you can grant to users. Granting a privilege to a role
+implicitly grants privileges to all roles that contain that role. For example,
+if you grant delete privileges on a table to <codeph>updater</codeph>, every
+user in the <codeph>updater</codeph>, <codeph>taskLeaderA</codeph>,
+<codeph>taskLeaderB</codeph>, and <codeph>projectLeader</codeph> role will also
+have delete privileges on that table, but users in the <codeph>reader</codeph>
+role will not.</p>
+</section>
+<section><title>Revoking privileges from a role</title>
+<p>Either the database owner or the object owner can revoke privileges from a
+role.</p>
+<p>When a privilege is revoked from a role A, that privilege is no longer held
+by role A, unless A otherwise inherits that privilege from a contained role.</p>
+<p>If a privilege to an object is revoked from role A, a session will lose that
+privilege if it has a current role set to A or a role that contains A, unless
+one or more of the following is true:</p>
+<ul>
+<li>The privilege is granted directly to the current user</li>
+<li>The privilege is granted to PUBLIC</li>
+<li>The privilege is also granted to another role B in the current role's set of
+contained roles</li>
+<li>The session's current user is the database owner or the object owner</li>
+</ul>
+</section>
+<section><title>Revoking roles</title>
+<p>The database owner can use the REVOKE statement to revoke a role from a user,
+from PUBLIC, or from another role.</p>
+<p>When a role is revoked from a user, that session can no longer keep that
+role, nor can it take on that role in a SET ROLE statement, unless the role is
+also granted to PUBLIC. If that role is the current role of an existing session,
+the current privileges of the session lose any extra privileges obtained through
+setting that role.</p>
+<p>The default drop behavior is CASCADE. Therefore, all persistent objects
+(constraints, views and triggers) that rely on that role are dropped. Although
+there may be other ways of fulfilling that privilege at the time of the revoke,
+any dependent objects are still dropped. This is an implementation limitation.
+Any prepared statement that is potentially affected will be checked again on the
+next execute. A result set that depends on a role will remain open even if that
+role is revoked from a user.</p>
+<p>When a role is revoked from a role, the default drop behavior is also
+CASCADE. Suppose you revoke role A from role B. Revoking the role will have the
+effect of revoking all additional applicable privileges obtained through A from
+B. Roles that contain B will also lose those privileges, unless A is still
+contained in some other role C granted to B, or the privileges come through some
+other role. See
+<xref href="cdevcsecureroles.dita#cdevcsecureroles/rolecreategrant"></xref>
+for an example.</p>
+</section>
+<section><title>Dropping roles</title>
+<p>Only the database owner can drop a role. To drop a role, use the DROP ROLE
+statement.</p>
+<p>Dropping a role effectively revokes all grants of this role to users and
+other roles.</p>
+</section>
+<section><title>Further information</title>
+<p>For details on the following statements, functions, and system table related
+to roles, see the <ph conref="../conrefs.dita#pub/citref"></ph>.
+<ul>
+<li>CREATE ROLE statement</li>
+<li>SET ROLE statement</li>
+<li>DROP ROLE statement</li>
+<li>GRANT statement</li>
+<li>REVOKE statement</li>
+<li>CURRENT_ROLE function</li>
+<li>SYSCS_DIAG.CONTAINED_ROLES table function</li>
+<li>SYSROLES system table</li>
+</ul></p>
+</section>
+</conbody>
+</concept>

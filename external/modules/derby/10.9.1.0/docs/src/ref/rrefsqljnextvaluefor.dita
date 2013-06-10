@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqljnextvaluefor" xml:lang="en-us">
+<title>NEXT VALUE FOR expression</title>
+<prolog><metadata>
+<keywords><indexterm>NEXT VALUE FOR expression</indexterm>
+<indexterm>expressions<indexterm>NEXT VALUE FOR</indexterm></indexterm>
+<indexterm>sequence generators<indexterm>obtaining next value</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>The NEXT VALUE FOR expression retrieves the next value from a
+sequence generator that was created with a
+<xref href="rrefsqljcreatesequence.dita#rrefsqljcreatesequence"></xref>.</p></section>
+<refsyn><title>Syntax</title>
+<codeblock><b>NEXT VALUE FOR <i><xref href="rrefsqljnextvaluefor.dita#rrefsqljnextvaluefor/rrefsqljnvfsequencename">sequenceName</xref></i></b></codeblock>
+<p>If this is the first use of the sequence generator, the generator returns its
+START value. Otherwise, the INCREMENT value is added to the previous value
+returned by the sequence generator. The data type of the value is the
+<i>dataType</i> specified for the sequence generator.</p>
+<p>If the sequence generator wraps around, then one of the following happens:</p>
+<ul>
+<li>If the sequence generator was created using the CYCLE keyword, the sequence
+generator is reset to its START value.</li>
+<li>If the sequence generator was created with the default NO CYCLE behavior,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> throws an exception.
+</li></ul>
+<p>In order to retrieve the next value of a sequence generator, you or your
+session's current role must have USAGE privilege on the generator.</p>
+<p>A NEXT VALUE FOR expression may occur in the following places:</p>
+<ul>
+<li><xref href="rrefsqlj41360.dita#rrefsqlj41360">SELECT statement</xref>:
+As part of the expression defining a returned column in a SELECT list</li>
+<li><xref href="rrefsqlj11277.dita#rrefsqlj11277">VALUES expression</xref>:
+As part of the expression defining a column in a row constructor (VALUES
+expression)</li>
+<li><xref href="rrefsqlj26498.dita#rrefsqlj26498">UPDATE statement</xref>;
+As part of the expression defining the new value to which a column is being
+set</li>
+</ul>
+<p>Only one NEXT VALUE FOR expression is allowed per sequence per statement.</p>
+<p>The NEXT VALUE FOR expression is not allowed in any statement which has a
+DISTINCT or ORDER BY expression.</p>
+<p>The next value of a sequence generator is not affected by whether the user
+commits or rolls back a transaction which invoked the sequence generator.</p>
+<p></p>
+<p>A NEXT VALUE expression may not appear in any of these situations:</p>
+<ul>
+<li>CASE expression</li>
+<li>WHERE clause</li>
+<li>ORDER BY clause</li>
+<li>Aggregate expression</li>
+<li>ROW_NUMBER function</li>
+<li>DISTINCT select list</li>
+</ul>
+</refsyn>
+<section id="rrefsqljnvfsequencename"><title>sequenceName</title>
+<codeblock><b>[ <i><xref 
+href="rrefschemaname.dita#rrefschemaname">schemaName</xref>.</i> ] <i><xref
+href="crefsqlj34834.dita#crefsqlj34834">SQL92Identifier</xref></i></b></codeblock>
+<p>If <i>schemaName</i> is not provided, the current schema is the default
+schema. If a qualified sequence name is specified, the schema name cannot
+begin with SYS.</p></section>
+<example><title>Examples</title>
+<codeblock><b>VALUES (NEXT VALUE FOR order_id);</b></codeblock>
+<codeblock><b>INSERT INTO re_order_table
+  SELECT NEXT VALUE FOR order_id, order_date, quantity
+  FROM orders
+  WHERE back_order = 1;</b></codeblock>
+<codeblock><b>UPDATE orders
+  SET oid = NEXT VALUE FOR order_id
+  WHERE expired = 1;</b></codeblock>
+</example>
+</refbody>
+</reference>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefjdbc96386" xml:lang="en-us">
+<title>Mapping of java.sql.Blob and java.sql.Clob interfaces</title>
+<prolog><metadata>
+<keywords><indexterm>java.sql.Blob interface</indexterm><indexterm>java.sql.Clob interface</indexterm>
+<indexterm>BLOB data type</indexterm><indexterm>CLOB data type</indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>In the JDBC API, <i>java.sql.Blob</i> is the mapping for the SQL BLOB
+(binary large object) type; <i>java.sql.Clob</i> is the mapping for the SQL
+CLOB (character large object) type. BLOB and CLOB objects are collectively
+referred to as LOBs (large objects).</p></section>
+<section><p>The <ph conref="../conrefs.dita#prod/productshortname"></ph>
+implementation of the <i>java.sql.Blob</i> and <i>java.sql.Clob</i> interfaces
+is LOCATOR-based, meaning that the implementation provides a logical pointer to
+a LOB rather than a complete copy of the object. Also,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> does not materialize a
+LOB when you use the BLOB or CLOB data type. You can, however, call methods on
+a <i>java.sql.Blob</i> and <i>java.sql.Clob</i> object to materialize it
+(that is, to retrieve the entire object or parts of it).</p>
+<p>You can access a LOB column only once within a row, by invoking a getter
+method on it.</p></section>
+<section><p>To use the <i>java.sql.Blob</i> and <i>java.sql.Clob</i> features:   <ul>
+<li>Use the SQL BLOB type for columns which hold very large binary values.</li>
+<li>Use the SQL CLOB type for columns which hold very large string values.</li>
+<li>Use the <i>getBlob</i> and <i>getClob</i> methods of the
+<i>java.sql.ResultSet</i> interface to retrieve a LOB using its locator.
+You can then materialize all or part of the LOB by calling <i>Blob</i> and
+<i>Clob</i> methods. Alternatively, you can call the <i>ResultSet.getBytes</i>
+method to materialize a BLOB, and you can call the <i>ResultSet.getString</i>
+method to materialize a CLOB.</li>
+</ul></p></section>
+<section><p>Casting between strings and BLOBs is not recommended
+because casting is platform- and database-dependent. See
+<xref href="rrefsqlj33562.dita#rrefsqlj33562"></xref> for more
+information.</p></section>
+<section><p>As with other character datatypes,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> treats CLOBs as unicode
+strings and writes them to disk using UTF8 encoding. With a Java database like
+<ph conref="../conrefs.dita#prod/productshortname"></ph>, you do not need to
+worry about character sets and codepages.</p></section>
+<section><title>Restrictions on BLOB and CLOB objects (LOB-types)</title><p><ul>
+<li>LOB-types cannot be compared for equality (=) and non-equality (!=, &lt;&gt;).</li>
+<li>LOB-typed values are not orderable, so &lt;, &lt;=, &gt;, &gt;= tests
+are not supported.</li>
+<li>LOB-types cannot be used in indices or as primary key columns.</li>
+<li>DISTINCT, GROUP BY, and ORDER BY clauses are also prohibited on LOB-types.</li>
+<li>LOB-types cannot be involved in implicit casting as other base-types.</li>
+</ul></p></section>
+<section><p><b>Recommendation:</b> Because the lifespan of a <i>java.sql.Blob</i> or <i>java.sql.Clob</i> ends
+when the transaction commits, turn off auto-commit with the <i>java.sql.Blob</i> or <i>java.sql.Clob</i> features.</p></section>
+<section>
+<p>The following table describes features of <i>java.sql.Blob</i> methods that
+are specific to <ph conref="../conrefs.dita#prod/productshortname"></ph>.</p>
+<table frame="all">
+<title>Implementation notes on <i>java.sql.Blob</i> methods</title>
+<desc>This table describes the implementation-specific features of <i>java.sql.Blob</i> methods, providing the return type and signature for each method.</desc>
+<tgroup cols="3" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="14*"/>
+<colspec colname="2" colnum="2" colwidth="36*"/>
+<colspec colname="3" colnum="3" colwidth="50*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Returns</entry>
+<entry colname="2">Signature</entry>
+<entry colname="3">Implementation Notes</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1"><i>byte[]</i></entry>
+<entry colname="2"><i>getBytes(long pos, int length)</i></entry>
+<entry colname="3">Exceptions are raised if <i>pos</i> &lt; 1, if <i>pos</i> is
+larger than the length of the <i>Blob</i>, or if <i>length</i> &lt;= 0.</entry>
+</row>
+<row>
+<entry colname="1"><i>long</i></entry>
+<entry colname="2"><i>position(byte[] pattern, long start)</i></entry>
+<entry colname="3">Exceptions are raised if <i>pattern</i> == null, if <i>start</i> &lt;
+1, or if <i>pattern</i> is an array of length 0. </entry>
+</row>
+<row>
+<entry colname="1"><i>long</i></entry>
+<entry colname="2"><i>position(Blob pattern, long start)</i></entry>
+<entry colname="3">Exceptions are raised if <i>pattern</i> == null, if <i>start</i> &lt;
+1, if <i>pattern</i> has length 0, or if an exception is thrown when trying
+to read the first byte of <i>pattern</i>.</entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+<p>The following table describes features of <i>java.sql.Clob</i> methods that
+are specific to <ph conref="../conrefs.dita#prod/productshortname"></ph>.</p>
+<table frame="all">
+<title>Implementation notes on <i>java.sql.Clob</i> methods</title>
+<desc>This table describes the implementation-specific features of <i>java.sql.Clob</i> methods, providing the return type and signature for each method.</desc>
+<tgroup cols="3" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="14*"/>
+<colspec colname="2" colnum="2" colwidth="36*"/>
+<colspec colname="3" colnum="3" colwidth="50*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Returns</entry>
+<entry colname="2">Signature</entry>
+<entry colname="3">Implementation Notes</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1"><i>String</i></entry>
+<entry colname="2"><i>getSubString(long pos, int length)</i></entry>
+<entry colname="3">Exceptions are raised if <i>pos</i> &lt; 1, if <i>pos</i> is
+larger than the length of the<i> Clob</i>, or if length &lt;= 0.   </entry>
+</row>
+<row>
+<entry colname="1"><i>long</i></entry>
+<entry colname="2"><i>position(Clob searchstr, long start) </i></entry>
+<entry colname="3">Exceptions are raised if <i>searchStr</i> == null or <i>start</i> &lt;
+1, if <i>searchStr </i>has length 0, or if an exception is thrown when trying
+to read the first char of <i>searchStr.</i></entry>
+</row>
+<row>
+<entry colname="1"><i>long</i></entry>
+<entry colname="2"><i>position(String searchstr, long start) </i></entry>
+<entry colname="3">Exceptions are raised if <i>searchStr</i> == null or start &lt;
+1, or if the pattern is an empty string. </entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+</section>
+</refbody>
+</reference>

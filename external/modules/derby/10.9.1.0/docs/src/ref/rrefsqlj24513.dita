@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj24513" xml:lang="en-us">
+<title>CREATE TABLE statement</title>
+<prolog><metadata>
+<keywords><indexterm>CREATE TABLE statement</indexterm><indexterm><indexterm>SQL
+statements</indexterm>CREATE TABLE</indexterm><indexterm>tables<indexterm>creating</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>A CREATE TABLE statement creates a table. Tables contain columns
+and constraints, rules to which data must conform. Table-level constraints
+specify a column or columns. Columns have a data type and can specify column
+constraints (column-level constraints).</p><p>The table owner and the 
+<xref href="rrefattrib26867.dita#rrefattrib26867">database owner</xref>
+automatically gain the following privileges on the table and are able
+to grant these privileges to other users:<ul>
+<li>INSERT</li>
+<li>SELECT</li>
+<li>REFERENCES</li>
+<li>TRIGGER</li>
+<li>UPDATE</li>
+</ul>These privileges cannot be revoked from the table and database owners.</p><p>For
+information about constraints, see <xref href="rrefsqlj13590.dita#rrefsqlj13590"></xref>.</p><p>You
+can specify a default value for a column. A default value is the value to
+be inserted into a column if no other value is specified. If not explicitly
+specified, the default value of a column is NULL. See <xref href="rrefsqlj30540.dita#rrefsqlj30540/sqlj64478"></xref>.</p><p>You
+can specify storage properties such as page size for a table by calling the <codeph>SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY</codeph> system
+procedure.</p><p>If a qualified table name is specified, the schema name cannot
+begin with <i>SYS</i>.</p></section>
+<refsyn><title>Syntax</title>
+    <p>There are two different variants of the CREATE TABLE statement,
+        depending on whether you are specifying the column definitions and
+        constraints, or whether you are modeling the columns after the
+        results of a query expression:</p>
+    <codeblock><b>CREATE TABLE <i><xref href="rreftablename.dita#rreftablename">table-Name</xref></i></b>
+  {
+      ( {<i><xref href="rrefsqlj30540.dita#rrefsqlj30540">column-definition</xref></i> | <i><xref
+href="rrefsqlj42154.dita#rrefsqlj42154">Table-level constraint</xref></i>}
+      [ , {<i><xref href="rrefsqlj30540.dita#rrefsqlj30540">column-definition</xref></i> | <i><xref
+              href="rrefsqlj42154.dita#rrefsqlj42154">Table-level constraint</xref></i>} ] * )
+  |
+      [ ( <i><xref href="rrefsimplecolumnname.dita#rrefsimplecolumnname">column-name</xref></i> [ , <i><xref href="rrefsimplecolumnname.dita#rrefsimplecolumnname">column-name</xref></i> ] * ) ]
+      <b>AS</b> <i>query-expression</i>
+      <b>WITH NO DATA</b>
+   }
+</codeblock></refsyn>
+<example><title>Example</title><codeblock><b>CREATE TABLE HOTELAVAILABILITY
+     (HOTEL_ID INT NOT NULL, BOOKING_DATE DATE NOT NULL,
+	ROOMS_TAKEN INT DEFAULT 0, PRIMARY KEY (HOTEL_ID, BOOKING_DATE));
+<ph>-- the table-level primary key definition allows you to
+-- include two columns in the primary key definition</ph>
+PRIMARY KEY (hotel_id, booking_date))
+<ph>-- assign an identity column attribute to an INTEGER
+-- column, and also define a primary key constraint
+-- on the column</ph>
+CREATE TABLE PEOPLE
+	(PERSON_ID INT NOT NULL GENERATED ALWAYS AS IDENTITY
+	CONSTRAINT PEOPLE_PK PRIMARY KEY, PERSON VARCHAR(26));
+<ph>-- assign an identity column attribute to a SMALLINT
+-- column with an initial value of 5 and an increment value
+-- of 5.</ph>
+CREATE TABLE GROUPS
+	(GROUP_ID SMALLINT NOT NULL GENERATED ALWAYS AS IDENTITY 
+	(START WITH 5, INCREMENT BY 5), ADDRESS VARCHAR(100), PHONE VARCHAR(15));</b></codeblock><note>For
+more examples of CREATE TABLE statements using the various constraints, see <xref
+href="rrefsqlj13590.dita#rrefsqlj13590"></xref>.</note> </example>
+<section><title>CREATE TABLE ... AS ... </title>
+    <p>With the alternate form of the CREATE TABLE statement, the column
+        names and/or the column data types can be specified by providing
+        a query. The columns in the query result are used as a model for
+        creating the columns in the new table.</p>
+<p>If no column names are specified for the new table, then all the columns
+    in the result of the query expression are used to create same-named
+    columns in the new table, of the corresponding data type(s).
+    If one or more column names are specified
+    for the new table, then the same number of columns must be present in
+    the result of the query expression; the data types of those columns are
+    used for the corresponding columns of the new table.</p>
+<p>The WITH NO DATA clause specifies that the data rows which result
+    from evaluating the query expression are not used; only the names and
+    data types of the columns in the query result are used. The
+    WITH NO DATA clause <b>must</b> be specified; in a future release,
+    Derby may be modified to allow the WITH DATA clause to be provided,
+    which would indicate that the results of the query expression should
+    be inserted into the newly-created table. In the current release, however,
+    only the WITH NO DATA form of the statement is accepted.</p>
+</section>
+<example><title>Example</title>
+    <codeblock><b>
+<ph>-- create a new table using all the columns and data types 
+-- from an existing table:</ph>
+CREATE TABLE T3 AS SELECT * FROM T1 WITH NO DATA;
+<ph>-- create a new table, providing new names for the columns, but
+-- using the data types from the columns of an existing table:</ph>
+CREATE TABLE T3 (A,B,C,D,E) AS SELECT * FROM T1 WITH NO DATA;
+<ph>-- create a new table, providing new names for the columns,
+-- using the data types from the indicated columns of an existing table:</ph>
+CREATE TABLE T3 (A,B,C) AS SELECT V,DP,I FROM T1 WITH NO DATA;
+<ph>-- This example shows that the columns in the result of the
+-- query expression may be unnamed expressions, but their data
+-- types can still be used to provide the data types for the
+-- corresponding named columns in the newly-created table:</ph>
+CREATE TABLE T3 (X,Y) AS SELECT 2*I,2.0*F FROM T1 WITH NO DATA;
+</b></codeblock>
+</example>
+</refbody>
+</reference>

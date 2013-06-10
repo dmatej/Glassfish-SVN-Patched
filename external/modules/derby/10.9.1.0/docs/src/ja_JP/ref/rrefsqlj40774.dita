@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj40774" xml:lang="ja">
+<title>INSERT 文</title>
+<prolog><metadata>
+<keywords><indexterm>INSERT statement</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p><indexterm>Read-write VTIs<indexterm>and INSERTs</indexterm></indexterm>
+INSERT文により一つ以上の行を作成して、指定した名前の表に格納できます。
+INSERT文で指定された値の数は、指定された列あるいは暗示された列の数と同じでなければなりません。</p></section>
+<refsyn><title>構文</title> <codeblock><b>INSERT INTO 表名
+    [ (<i><xref href="rrefsimplecolumnname.dita#rrefsimplecolumnname">単純列名</xref></i> [ , <i><xref
+href="rrefsimplecolumnname.dita#rrefsimplecolumnname">単純列名</xref></i>]* ) ]
+	  問合せ</b></codeblock> <p><i>問合せには</i>以下のいずれかをとることができます。
+<ul>
+<li><i><xref href="rrefselectexpression.dita#rrefselectexpression">選択式</xref></i></li>
+<li>VALUES一覧</li>
+<li>複数行VALUES式<p>単一行あるいは複数行の一覧には、DEFAULTというキーワードを含めることができます。列にDEFAULTを指定すると、その列には既定値が挿入されます。列に既定値を挿入する場合、列の一覧にてその列を省略して、表のほかの列に値を挿入することもできます。詳細については<xref
+href="rrefsqlj11277.dita#rrefsqlj11277">VALUES式</xref>を参照してください。</p></li>
+<li>UNION式</li>
+</ul></p> <p>問合せの詳細については、<xref href="rrefsqlj21571.dita#rrefsqlj21571"></xref>を参照してください。</p> </refsyn>
+<example> <codeblock><b>INSERT INTO COUNTRIES
+      VALUES ('Taiwan', 'TW', 'Asia')
+
+-- DEPARTMENTという表に新しい部署を挿入します。
+-- ただし、新しい部署に新しい管理者は割り当てません。
+INSERT INTO DEPARTMENT (DEPTNO, DEPTNAME, ADMRDEPT)
+	VALUES ('E31', 'ARCHITECTURE', 'E01')
+<ph>-- 2つの新しい部署を一つの文で前と同じようにDEPARTMENTという表に挿入します。
+-- ただし、新しい部署に新しい管理者は割り当てません。</ph>
+INSERT INTO DEPARTMENT (DEPTNO, DEPTNAME, ADMRDEPT)
+	VALUES ('B11', 'PURCHASING', 'B01'),
+	('E41', 'DATABASE ADMINISTRATION', 'E01')
+<ph>--  EMP_ACTと同じ列を持つ、MA_EMP_ACTという
+-- 一時表を作ります。
+-- MA_EMP_ACTにEMP_ACTという表から、
+-- プロジェクト番号(PROJNO)が'MA'という文字で始まる行をロードします。</ph>
+CREATE TABLE MA_EMP_ACT 
+    (
+	EMPNO CHAR(6)  NOT NULL, 
+	PROJNO CHAR(6)  NOT NULL, 
+	ACTNO SMALLINT  NOT NULL, 
+	EMPTIME DEC(5,2), 
+	EMSTDATE DATE, 
+	EMENDATE  DATE
+    );
+
+INSERT INTO MA_EMP_ACT
+	SELECT * FROM EMP_ACT
+	WHERE SUBSTR(PROJNO, 1, 2) = 'MA';
+<ph>-- LOCATIONという列にDEFAULTの値を挿入します。</ph>
+INSERT INTO DEPARTMENT
+      VALUES ('E31', 'ARCHITECTURE', '00390', 'E01', DEFAULT)
+</b></codeblock> </example>
+<section><title>文の依存</title> 
+<p>INSERT 文は挿入先の表や、その表の全てのコングロマリット(ヒープや索引などの記録の単位です。)や、文中のその他の表に依存します。準備されたINSERT文の対象表にて、索引や制約を作成したり破棄したりすると、その準備されたINSERT文は無効となります。</p> </section>
+</refbody>
+</reference>
+

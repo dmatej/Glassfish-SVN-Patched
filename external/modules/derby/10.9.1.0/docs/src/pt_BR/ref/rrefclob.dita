@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<reference id="rrefclob" xml:lang="pt-br">
+<title>CLOB</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Tipo de dado CLOB</indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>O valor CLOB (objeto grande caractere) pode ter comprimento de até
+2.147.483.647 caracteres.
+O CLOB é utilizado para armazenar dados baseados em caractere UNICODE, como
+documentos grandes em qualquer conjunto de caracteres.</p>
+<p>O comprimento do CLOB é especificado em caracteres, a menos que seja
+especificado um dos sufixos K, M ou G, relacionados aos múltiplos
+1024, 1024*1024 e 1024*1024*1024, respectivamente.</p>
+<note>O comprimento do CLOB é especificado em caracteres (UNICODE).</note>
+</section>
+<refsyn>
+<title>Sintaxe</title>
+<codeblock><b>{CLOB |CHARACTER LARGE OBJECT}(comprimento [{{K |M |G}]))</b></codeblock>
+<p>Tipo Java correspondente em tempo de compilação</p>
+<p>java.sql.Clob</p>
+<p>Tipo do metadado do JDBC (java.sql.Types)</p>
+<p>CLOB</p>
+</refsyn>
+<section>
+<title>Tipo do metadado do JDBC</title>
+<p><i>java.sql.Clob</i></p>
+</section>
+<section>
+<title>Tipo do metadado do JDBC (java.sql.Types)</title>
+<p>CLOB</p>
+<p>No <i>java.sql.ResultSet</i> é utilizado o método <i>getClob</i>
+para obter um tratador de CLOB para os dados subjacentes.</p>
+</section>
+<section>
+<title>Informação relacionada</title>
+<p>Consulte <xref href="rrefjdbc96386.dita#rrefjdbc96386"></xref>.</p>
+</section>
+<example>
+<codeblock>import java.sql.*;
+
+public class clob
+{
+        public static void main(String[] args) {
+                try {
+                        String url = "jdbc:derby:clobberyclob;create=true";
+
+                        Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance();
+                        Connection conn = DriverManager.getConnection(url);
+
+            Statement s = conn.createStatement();
+            s.executeUpdate("CREATE TABLE documents (id INT, text CLOB(64 K))");
+            conn.commit();
+
+            // --- adicionar um arquivo
+            java.io.File file = new java.io.File("asciifile.txt");
+            int fileLength = (int) file.length();
+
+            // - primeiro, criar um fluxo de entrada
+            java.io.InputStream fin = new java.io.FileInputStream(file);
+            PreparedStatement ps = conn.prepareStatement("INSERT
+            INTO documents VALUES (?, ?)");
+            ps.setInt(1, 1477);
+
+            // - definir o valor do parâmetro de entrada para o fluxo de entrada
+            ps.setAsciiStream(2, fin, fileLength);
+            ps.execute();
+            conn.commit();
+
+            // --- ler as colunas
+            ResultSet rs = s.executeQuery("SELECT text FROM documents
+             WHERE id = 1477");
+            while (rs.next()) {
+                java.sql.Clob aclob = rs.getClob(1);
+                java.io.InputStream ip = rs.getAsciiStream(1);
+                int c = ip.read();
+                while (c &gt; 0) {
+                    System.out.print((char)c);
+                    c = ip.read();
+                }
+                System.out.print("\n");
+                // ...
+            }
+        } catch (Exception e) {
+            System.out.println("Erro! "+e);
+        }
+    }
+}</codeblock>
+</example>
+</refbody>
+</reference>

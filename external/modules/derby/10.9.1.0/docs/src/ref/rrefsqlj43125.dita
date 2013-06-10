@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj43125" xml:lang="en-us">
+<title>CREATE TRIGGER statement</title>
+<prolog><metadata>
+<keywords><indexterm>CREATE TRIGGER statement</indexterm><indexterm>SQL statements<indexterm>CREATE
+TRIGGER</indexterm></indexterm><indexterm>triggers<indexterm>creating</indexterm></indexterm>
+<indexterm>triggers<indexterm>defining when they fire</indexterm></indexterm>
+<indexterm>triggers<indexterm>database events</indexterm></indexterm><indexterm>triggers<indexterm>referencing
+clause</indexterm><indexterm>referencing old and new values</indexterm></indexterm>
+<indexterm>triggers<indexterm>statement versus row triggers</indexterm></indexterm>
+<indexterm>triggers<indexterm>triggered-SQL-statement</indexterm></indexterm>
+<indexterm>triggers<indexterm>order of execution</indexterm></indexterm><indexterm>triggers<indexterm>recursion</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>A trigger defines a set of actions that are executed when a database
+event occurs on a specified table. A <i>database event</i> is a delete, insert,
+or update operation. For example, if you define a trigger for a delete on
+a particular table, the trigger's action occurs whenever someone deletes a
+row or rows from the table.</p><p>Along with constraints, triggers can help
+enforce data integrity rules with actions such as cascading deletes or updates.
+Triggers can also perform a variety of functions such as issuing alerts, updating
+other tables, sending e-mail, and other useful actions.</p><p>You can define
+any number of triggers for a single table, including multiple triggers on
+the same table for the same event.</p><p>You can create a trigger in any schema
+where you are the schema owner. To create a trigger on a table that you do
+not own, you must be granted the TRIGGER privilege on that table. The 
+<xref href="rrefattrib26867.dita#rrefattrib26867">database owner</xref>
+can also create triggers on any table in any schema.</p>
+<p>A trigger operates with the privileges of the owner of the trigger. See
+"Using SQL standard authorization" and "Privileges on views, triggers, and
+constraints" in the <ph conref="../conrefs.dita#pub/citdevelop"></ph> for
+details.</p>
+<p>The trigger
+does not need to reside in the same schema as the table on which the trigger
+is defined.</p><p>If a qualified trigger name is specified, the schema name
+cannot begin with <i>SYS</i>.</p></section>
+<refsyn id="syn001"><title>Syntax</title><codeblock><b>CREATE TRIGGER <i><xref
+href="rreftriggername.dita#rreftriggername">TriggerName</xref></i>
+{ AFTER | NO CASCADE BEFORE } 
+{ INSERT | DELETE | UPDATE [ OF <i>column-Name</i> [, <i><xref href="rrefcolumnname.dita#rrefcolumnname">column-Name</xref></i>]* ] }
+ON <i><xref href="rreftablename.dita#rreftablename">table-Name</xref></i>
+[ <i><xref href="rrefsqlj89752.dita#rrefsqlj89752">ReferencingClause</xref></i> ]
+[ FOR EACH { ROW | STATEMENT } ] [ MODE DB2SQL ] 
+<i><xref href="rrefsqlj43125.dita#rrefsqlj43125/i1149821">Triggered-SQL-statement</xref></i></b></codeblock> </refsyn>
+<section><title>Before or after: when triggers fire</title> <p>Triggers are
+defined as either <i>Before</i> or <i>After</i> triggers. <ul>
+<li><i>Before</i> triggers fire before the statement's changes are applied
+and before any constraints have been applied. Before triggers can be either
+row or statement triggers (see <xref href="rrefsqlj43125.dita#rrefsqlj43125/sqlj54276"></xref>).</li>
+<li><i>After</i> triggers fire after all constraints have been satisfied and
+after the changes have been applied to the target table. <i>After</i> triggers
+can be either row or statement triggers (see <xref href="rrefsqlj43125.dita#rrefsqlj43125/sqlj54276"></xref>).</li>
+</ul></p> </section>
+<section><title>Insert, delete, or update: what causes the trigger to fire</title> <p>A
+trigger is fired by one of the following database events, depending on how
+you define it (see <xref href="rrefsqlj43125.dita#rrefsqlj43125/syn001"></xref> above):
+  <ul>
+<li>INSERT</li>
+<li>UPDATE</li>
+<li>DELETE</li>
+</ul></p> <p>You can define any number of triggers for a given event on a
+given table. For update, you can specify columns.</p> </section>
+<section id="sqlj67748"><title>Referencing old and new values: the referencing
+clause</title> <p>Many triggered-SQL-statements need to refer to data that
+is currently being changed by the database event that caused them to fire.
+The triggered-SQL-statement might need to refer to the new (post-change or
+"after") values. </p> <p><ph conref="../conrefs.dita#prod/productshortname"></ph> provides
+you with a number of ways to refer to data that is currently being changed
+by the database event that caused the trigger to fire. Changed data can be
+referred to in the triggered-SQL-statement using <i>transition variables</i> or <i>transition
+tables</i>. The referencing clause allows you to provide a correlation name
+or alias for these transition variables by specifying OLD/NEW AS <i>correlation-Name </i>.</p> <p>For
+example, if you add the following clause to the trigger definition:   <codeblock><b>REFERENCING OLD AS DELETEDROW</b></codeblock></p> <p>you
+can then refer to this correlation name in the triggered-SQL-statement:   <codeblock><b>DELETE FROM HotelAvailability WHERE hotel_id = DELETEDROW.hotel_id</b
+></codeblock></p> <p>The OLD and NEW transition variables map to a <i>java.sql.ResultSet</i> with
+a single row.   <note>Only row triggers (see <xref href="rrefsqlj43125.dita#rrefsqlj43125/sqlj54276"></xref>)
+can use the transition variables. INSERT row triggers cannot reference an
+OLD row. DELETE row triggers cannot reference a NEW row.</note></p> <p>For
+statement triggers, transition <i>tables</i> serve as a table identifier for
+the triggered-SQL-statement or the trigger qualification. The referencing
+clause allows you to provide a correlation name or alias for these transition
+tables by specifying OLD_TABLE/NEW_TABLE AS correlation-Name</p> <p>For example:
+  <codeblock><b>REFERENCING OLD_TABLE AS DeletedHotels</b></codeblock></p> <p>allows
+you to use that new identifier (<i>DeletedHotels</i>) in the triggered-SQL-statement:
+  <codeblock><b>DELETE FROM HotelAvailability WHERE hotel_id IN
+    (SELECT hotel_id FROM DeletedHotels)</b></codeblock></p> <p>The old and
+new transition tables map to a <i>java.sql.ResultSet</i> with cardinality
+equivalent to the number of rows affected by the triggering event.   <note>Only
+statement triggers (see <xref href="rrefsqlj43125.dita#rrefsqlj43125/sqlj54276"></xref>)
+can use the transition tables. INSERT statement triggers cannot reference
+an OLD table. DELETE statement triggers cannot reference a NEW table.</note></p> <p>The
+referencing clause can designate only one new correlation or identifier and
+only one old correlation or identifier. Row triggers cannot designate an identifier
+for a transition table and statement triggers cannot designate a correlation
+for transition variables.  </p> </section>
+<section id="sqlj54276"><title>Statement versus row triggers</title> <p>You
+have the option to specify whether a trigger is a <i>statement trigger</i> or a <i>row trigger</i>.
+If it is not specified in the CREATE TRIGGER statement via FOR EACH clause, then the trigger is  
+a <i>statement trigger</i> by default.
+  <ul>
+<li><i>statement triggers</i>   <p>A statement trigger fires once per triggering
+event and regardless of whether any rows are modified by the insert, update,
+or delete event.</p></li>
+<li><i>row triggers</i>   <p>A row trigger fires once for each row affected
+by the triggering event. If no rows are affected, the trigger does not fire.</p></li>
+</ul> <note>An update that sets a column value to the value that it originally
+contained (for example, UPDATE T SET C = C) causes a row trigger to fire,
+even though the value of the column is the same as it was prior to the triggering
+event.</note></p> </section>
+<section id="i1149821"><title>Triggered-SQL-statement</title> <p>The action
+defined by the trigger is called the triggered-SQL-statement (in <xref href="rrefsqlj43125.dita#rrefsqlj43125/syn001"></xref> above,
+see the last line). It has the following limitations:   <ul>
+<li>It must not contain any dynamic parameters (?).</li>
+<li>It must not create, alter, or drop the table upon which the trigger is
+defined.</li>
+<li>It must not add an index to or remove an index from the table on which
+the trigger is defined.</li>
+<li>It must not add a trigger to or drop a trigger from the table upon which
+the trigger is defined.</li>
+<li>It must not commit or roll back the current transaction or change the
+isolation level.</li>
+<li>Before triggers cannot have INSERT, UPDATE or DELETE statements as their
+action.</li>
+<li>Before triggers cannot call procedures that modify SQL data as their action.</li>
+<li>The NEW variable of a Before trigger cannot reference a generated column.
+</li>
+</ul></p><p>The triggered-SQL-statement can reference database objects other
+than the table upon which the trigger is declared. If any of these database
+objects is dropped, the trigger is invalidated. If the trigger cannot be successfully
+recompiled upon the next execution, the invocation throws an exception and
+the statement that caused it to fire will be rolled back.</p><p>For more information
+on triggered-SQL-statements, see the <cite><ph conref="../conrefs.dita#pub/citdevelop"></ph></cite>.</p> </section>
+<section><title>Order of execution</title> <p>When a database event occurs
+that fires a trigger, <ph conref="../conrefs.dita#prod/productshortname"></ph> performs
+actions in this order:   <ul>
+<li>It fires <i>No Cascade Before</i> triggers.</li>
+<li>It performs constraint checking (primary key, unique key, foreign key,
+check).</li>
+<li>It performs the insert, update, or delete.</li>
+<li>It fires <i>After</i> triggers.</li>
+</ul></p> <p>When multiple triggers are defined for the same database event
+for the same table for the same trigger time (before or after), triggers are
+fired in the order in which they were created.</p> </section>
+<example><title>Examples</title>
+<codeblock><b><ph>-- Statements and triggers:
+</ph>
+CREATE TRIGGER t1 NO CASCADE BEFORE UPDATE ON x
+  FOR EACH ROW MODE DB2SQL
+  values app.notifyEmail('Jerry', 'Table x is about to be updated'); 
+
+CREATE TRIGGER FLIGHTSDELETE
+  AFTER DELETE ON FLIGHTS
+  REFERENCING OLD_TABLE AS DELETEDFLIGHTS
+  FOR EACH STATEMENT 
+  DELETE FROM FLIGHTAVAILABILITY WHERE FLIGHT_ID IN
+  (SELECT FLIGHT_ID FROM DELETEDFLIGHTS);
+
+CREATE TRIGGER FLIGHTSDELETE3
+  AFTER DELETE ON FLIGHTS
+  REFERENCING OLD AS OLD
+  FOR EACH ROW 
+  DELETE FROM FLIGHTAVAILABILITY WHERE FLIGHT_ID = OLD.FLIGHT_ID;
+</b></codeblock> <note>You can find more examples in the <cite><ph conref="../conrefs.dita#pub/citdevelop"></ph></cite>.</note> </example>
+<section><title>Trigger recursion</title> <p>The maximum trigger recursion
+depth is 16.</p> </section>
+<section><title>Related information</title> <p>Special system functions that
+return information about the current time or current user are evaluated when
+the trigger fires, not when it is created. Such functions include:   <ul>
+<li><xref href="rrefsqlj34177.dita#rrefsqlj34177"></xref></li>
+<li><xref href="rrefsqlj33772.dita#rrefsqlj33772"></xref></li>
+<li><xref href="rrefsqlj15866.dita#rrefsqlj15866"></xref></li>
+<li><xref href="rrefsqlj42324.dita#rrefsqlj42324"></xref></li>
+<li><xref href="rrefsqlj25228.dita#rrefsqlj25228"></xref></li>
+<li><xref href="rrefsqlj42476.dita#rrefsqlj42476"></xref></li>
+</ul></p> </section>
+</refbody>
+</reference>

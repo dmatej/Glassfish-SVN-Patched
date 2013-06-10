@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="radminjmxenablepolicy" xml:lang="en-us">
+<title>Fine-grained authorization using a security policy</title>
+<prolog><metadata>
+<keywords><indexterm>Java Management Extensions (JMX) technology</indexterm>
+<indexterm>JMX<indexterm>using a security policy</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section>
+<p>When you start the Network Server from the command line, it installs a
+security manager and a basic security policy by default. This policy includes
+the required permissions to allow JMX users to access the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> MBeans if JMX user
+authentication is disabled. If JMX user authentication is enabled, you may need
+to grant additional permissions to specific users (JMXPrincipals).</p>
+<p>The <codeph>NetworkServerMBean</codeph>'s <codeph>ping</codeph> operation
+requires the <codeph>derbynet.jar</codeph> file to be granted an additional
+permission that is not included in the default security policy:</p>
+<codeblock>// If the server is listening on the loopback interface only (default)
+permission java.net.SocketPermission "localhost", "connect,resolve";
+
+// If the server's network interface setting (-h or derby.drda.host) is
+//   non-default
+// Note: Allows outbound connections to any host!
+permission java.net.SocketPermission "*", "connect,resolve";</codeblock>
+<p>If you are using a custom security policy, refer to the public API of
+the <ph conref="../conrefs.dita#prod/productshortname"></ph> MBeans at
+<xref format="html"
+href="http://db.apache.org/derby/javadoc/publishedapi/jdbc4/"
+scope="external">http://db.apache.org/derby/javadoc/publishedapi/jdbc4/</xref>
+and to the <ph conref="../conrefs.dita#prod/productshortname"></ph> security
+policy file template
+(<codeph>$DERBY_HOME/demo/templates/server.policy</codeph>) for details about
+the permissions you may need to set to allow or restrict specific JMX access.
+This recommendation also applies if you are running
+<ph conref="../conrefs.dita#prod/productshortname"></ph> embedded with a
+security manager installed.</p>
+<p>See <xref href="tadminnetservrun.dita#tadminnetservrun"></xref> for more
+information about security policy files.</p>
+<p>Some example permissions are included in the following code. These
+permissions are not necessarily suitable for any particular application or
+environment; some customization is probably needed. Only permissions relating to the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> JMX features have been
+included in the code. Additional permissions are needed for use of
+<ph conref="../conrefs.dita#prod/productshortname"></ph>.</p>
+<codeblock>//
+// permissions for the user/principal "controlRole", for all codebases:
+//
+grant principal javax.management.remote.JMXPrincipal "controlRole" {
+
+  // Derby system permissions (what is the user allowed to do?)
+  //  See API docs for SystemPermission and the specific MBeans for 
+  //  details.
+  permission org.apache.derby.security.SystemPermission "jmx", "control";
+  permission org.apache.derby.security.SystemPermission "engine", 
+      "monitor";
+  permission org.apache.derby.security.SystemPermission "server", 
+      "monitor,control";
+
+  // MBean permissions (which mbeans and associated actions should be
+  //  allowed for this user?)
+  //  Target name format is: className#member[objectName], where
+  //   objectName is: domain:keyProperties
+  //  Asterisk (*) means "all". See MBeanPermission API docs for details.
+  permission javax.management.MBeanPermission 
+      "org.apache.derby.mbeans.*#*[org.apache.derby:*]", "getAttribute";
+  permission javax.management.MBeanPermission 
+      "org.apache.derby.mbeans.JDBCMBean#acceptsURL[org.apache.derby:*]",
+      "invoke";
+  permission javax.management.MBeanPermission 
+"org.apache.derby.mbeans.drda.NetworkServerMBean#ping[org.apache.derby:*]",
+      "invoke";
+  permission javax.management.MBeanPermission 
+      "org.apache.derby.mbeans.ManagementMBean#*[org.apache.derby:*]", 
+      "invoke";
+
+  // Extra permissions for application controlled ManagementMBean:
+  //   Not needed if you do not intend to create/register your own
+  //   Derby Management MBean.
+  //   Wildcards (*) allow all domains, key properties and MBean members.
+  //   You may want to be more specific here.
+  permission javax.management.MBeanPermission 
+      "org.apache.derby.mbeans.Management#-[*:*]", 
+      "instantiate,registerMBean,unregisterMBean";
+  permission javax.management.MBeanPermission 
+      "org.apache.derby.mbeans.Management#*[*:*]", "invoke";
+
+  //
+  // jconsole:
+  //  - most of these permissions are needed to let JConsole query the 
+  //    MBean server and display information about Derby's mbeans as well
+  //    as some default platform MBeans/MXBeans.
+  //  - if you don't use JConsole, but query the MBean server from your
+  //    JMX client app, some of these permissions may be needed.
+  permission javax.management.MBeanPermission 
+      "org.apache.derby.mbeans.*#-[org.apache.derby:*]", 
+      "getMBeanInfo,queryNames,isInstanceOf";
+  permission javax.management.MBeanPermission 
+      "sun.management.*#-[java.*:*]", 
+      "getMBeanInfo,isInstanceOf,queryNames";
+  permission javax.management.MBeanPermission 
+      "sun.management.*#*[java.*:*]", "getAttribute,invoke";
+  permission javax.management.MBeanPermission 
+      "sun.management.*#-[com.sun.management*:*]", 
+      "getMBeanInfo,isInstanceOf,queryNames";
+  permission javax.management.MBeanPermission 
+      "com.sun.management.*#-[java.*:*]", 
+      "getMBeanInfo,isInstanceOf,queryNames";
+  permission javax.management.MBeanPermission 
+      "com.sun.management.*#*[java.*:*]", "getAttribute,invoke";
+  permission javax.management.MBeanPermission "java.*#-[java.*:*]", 
+      "getMBeanInfo,isInstanceOf,queryNames";
+  permission javax.management.MBeanPermission 
+"javax.management.MBeanServerDelegate#-[JMImplementation:type=MBeanServerDelegate]", 
+      "getMBeanInfo,isInstanceOf,queryNames,addNotificationListener";
+  permission java.net.SocketPermission "*", "resolve";
+  permission java.util.PropertyPermission "java.class.path", "read";
+  permission java.util.PropertyPermission "java.library.path", "read";
+  permission java.lang.management.ManagementPermission "monitor";
+  // end jconsole
+};
+
+
+grant codeBase "${derby.install.url}derby.jar"
+{
+  // Allows Derby to create an MBeanServer:
+  //
+  permission javax.management.MBeanServerPermission "createMBeanServer";
+
+  // Allows access to Derby's built-in MBeans, within the domain 
+  //  org.apache.derby. Derby must be allowed to register and unregister
+  //  these MBeans.
+  // It is possible to allow access only to specific MBeans, attributes,
+  //  or operations. To fine-tune this permission, see the API doc of 
+  //  javax.management.MBeanPermission or the JMX Instrumentation and
+  //  Agent Specification. 
+  //
+  permission javax.management.MBeanPermission 
+      "org.apache.derby.*#[org.apache.derby:*]", 
+      "registerMBean,unregisterMBean";
+
+  // Trusts Derby code to be a source of MBeans and to register these in
+  // the MBean server.
+  //
+  permission javax.management.MBeanTrustPermission "register";
+
+  // Gives permission for JMX to be used against Derby.
+  // If JMX user authentication is being used, a whole set of
+  //  fine-grained permissions needs to be granted to allow specific
+  //  users access to MBeans and actions they perform (see JMXPrincipal
+  //  permissions above).
+  // Needed to allow access to all actions related to MBeans in the
+  // org.apache.derby.mbeans package.
+  //
+  permission org.apache.derby.security.SystemPermission "jmx", "control";
+  permission org.apache.derby.security.SystemPermission "engine", 
+      "monitor";
+  permission org.apache.derby.security.SystemPermission "server", 
+      "monitor";
+
+  // add additonal derby.jar related permissions here...
+};
+
+
+grant codeBase "${derby.install.url}derbynet.jar"
+{
+  // Accept connections from any host (only localhost access is required
+  //  for JMX).
+  //
+  permission java.net.SocketPermission "*", "accept"; 
+
+  // For outbound MBean operations such as NetworkServerMBean's ping:
+  // The wildcard "*" is to allow pings to both localhost and any other
+  //  server host.
+  //
+  permission java.net.SocketPermission "*", "connect,resolve"; 
+
+  // Gives permission for JMX to be used against Derby.
+  // If JMX user authentication is being used, a whole set of
+  //  fine-grained permissions need to be granted to allow specific users
+  //  access to MBeans and actions they perform (see JMXPrincipal
+  //  permissions above).
+  // Needed to allow access to all actions related to the 
+  //  NetworkServerMBean.
+  //
+  permission org.apache.derby.security.SystemPermission "server", 
+      "control,monitor";
+
+  // add additonal derbynet.jar related permissions here...</codeblock>
+<p>In the example above, the system property <codeph>derby.install.url</codeph>
+is used to tell the security manager/policy implementation where to find the
+codebases <codeph>derby.jar</codeph> and <codeph>derbynet.jar</codeph>. Using a
+property provides flexibility; however, you may avoid the use of such a property
+by specifying the full codebase URLs directly in the policy file. The value of
+this property may be specified on the command line, as shown below:</p>
+<codeblock>-Dderby.install.url=file:/home/user/derby/10.9.1/lib/</codeblock>
+<p>or</p>
+<codeblock>-Dderby.install.url=file:/C:/derby/10.9.1/lib/</codeblock>
+<p>For more information about policy files, granting permissions, and property
+expansion, see "Default Policy Implementation and Policy File Syntax" at
+<xref format="html"
+href="http://docs.oracle.com/javase/7/docs/technotes/guides/security/PolicyFiles.html"
+scope="external">http://docs.oracle.com/javase/7/docs/technotes/guides/security/PolicyFiles.html</xref>
+and "Policy File Creation and Management" at
+<xref format="html"
+href="http://docs.oracle.com/javase/7/docs/technotes/guides/security/PolicyGuide.html"
+scope="external">http://docs.oracle.com/javase/7/docs/technotes/guides/security/PolicyGuide.html</xref>.
+</p>
+</section>
+<section><title>Debugging permission issues</title>
+<p>Dealing with security managers, policy files and permissions is not always
+easy. Sometimes an action you want to perform fails due to some security or
+permission issue that you do not understand. The following tip may help.</p>
+<p>When you start the JVM that is being protected by the security manager, add a
+<codeph>java.security.debug</codeph> flag to see detailed output related to
+security policy and permission usage. For a list of valid options, use the
+following command:</p>
+<codeblock><b>java -Djava.security.debug=help</b></codeblock>
+<p>For example, you could use the following option when you start the Network
+Server from the command line:</p>
+<codeblock>-Djava.security.debug=access:failure</codeblock>
+<p>This option will print information to the console that allows you to learn
+specifically which permissions are granted and which are missing when a failure
+occurs. Due to the amount of output generated when you set the debug flag, it
+may be wise to store the output in a file and search through it afterwards.</p>
+<p>For example, to find out details about a missing permission, search for the
+text "access denied" in the output, and you will see something like the
+following:</p>
+<codeblock>access: access denied 
+    (org.apache.derby.security.SystemPermission engine monitor)
+java.lang.Exception: Stack trace
+   at java.lang.Thread.dumpStack(Thread.java:1158)
+   ...
+   at org.apache.derby.iapi.services.info.Version.getVersionString
+       (Unknown Source)
+...</codeblock>
+<p>The above example output shows that the <codeph>derby.jar</codeph> code base
+was missing the following permission as the JMX client was accessing the
+<codeph>VersionString</codeph> attribute of the <codeph>VersionMBean</codeph>
+for <codeph>derby.jar</codeph>:</p>
+<codeblock>org.apache.derby.security.SystemPermission "engine", "monitor";</codeblock>
+<p></p>
+</section>
+</refbody>
+</reference>

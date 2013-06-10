@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj15446" xml:lang="en-us">
+<title>CREATE VIEW statement</title>
+<prolog><metadata>
+<keywords><indexterm>CREATE VIEW statement</indexterm><indexterm><indexterm>SQL
+statements</indexterm>CREATE VIEW</indexterm><indexterm>views<indexterm>creating</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>Views are virtual tables formed by a query. A view is a dictionary
+object that you can use until you drop it. Views are not updatable.</p><p>If
+a qualified view name is specified, the schema name cannot begin with <i>SYS</i>.</p>
+<p>A view operates with the privileges of the owner of the view. See "Using SQL
+standard authorization" and "Privileges on views, triggers, and constraints" in
+the <ph conref="../conrefs.dita#pub/citdevelop"></ph> for details.</p>
+<p>The
+view owner automatically gains the SELECT privilege on the view. The SELECT
+privilege cannot be revoked from the view owner. The 
+<xref href="rrefattrib26867.dita#rrefattrib26867">database owner</xref>
+automatically
+gains the SELECT privilege on the view and is able to grant this privilege
+to other users. The SELECT privilege cannot be revoked from the database owner.</p><p>The
+view owner can only grant the SELECT privilege to other users if the view
+owner also owns the underlying objects. </p><p>If the underlying objects that
+the view references are not owned by the view owner, the view owner must be
+granted the appropriate privileges. For example, if the authorization ID <codeph>user2</codeph> attempts
+to create a view called <codeph>user2.v2</codeph> that references table <codeph>user1.t1</codeph> and
+function <codeph>user1.f_abs()</codeph>, then <codeph>user2</codeph> must
+have the SELECT privilege on table <codeph>user1.t1</codeph> and the EXECUTE
+privilege on function <codeph>user1.f_abs()</codeph>. </p><p>The privilege
+to grant the SELECT privilege cannot be revoked. If a required privilege on
+one of the underlying objects that the view references is revoked, then the
+view is dropped.</p></section>
+<refsyn><title>Syntax</title> <codeblock><b>CREATE VIEW <i><xref href="rrefviewname.dita#rrefviewname">view-Name</xref></i>
+    [ ( <i><xref href="rrefsimplecolumnname.dita#rrefsimplecolumnname">Simple-column-Name</xref></i> [, <i><xref
+href="rrefsimplecolumnname.dita#rrefsimplecolumnname">Simple-column-Name</xref></i>] * ) ]
+AS <i><xref href="rrefsqlj21571.dita#rrefsqlj21571">Query</xref></i> [ <i><xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY clause</xref></i> ]
+         [ <i><xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">result offset clause</xref></i> ]
+         [ <i><xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">fetch first clause</xref></i> ]
+</b></codeblock> <p>A
+view definition can contain an optional view column list to explicitly name
+the columns in the view. If there is no column list, the view inherits the
+column names from the underlying query. All columns in a view must be uniquely
+named.</p> </refsyn>
+<example><title>Examples</title> <codeblock><b>CREATE VIEW SAMP.V1 (COL_SUM, COL_DIFF)
+	AS SELECT COMM + BONUS, COMM - BONUS
+	FROM SAMP.EMPLOYEE;
+
+CREATE VIEW SAMP.VEMP_RES (RESUME)
+	AS VALUES 'Delores M. Quintana', 'Heather A. Nicholls', 'Bruce Adamson';
+
+CREATE VIEW SAMP.PROJ_COMBO 
+	(PROJNO, PRENDATE, PRSTAFF, MAJPROJ) 
+	AS SELECT PROJNO, PRENDATE, PRSTAFF, MAJPROJ
+	FROM SAMP.PROJECT UNION ALL 
+SELECT PROJNO, EMSTDATE, EMPTIME, EMPNO 
+	FROM SAMP.EMP_ACT 
+	WHERE EMPNO IS NOT NULL;</b></codeblock> </example>
+<section><title>Statement dependency system</title> <p>View definitions are
+dependent on the tables and views referenced within the view definition. DML
+(data manipulation language) statements that contain view references depend
+on those views, as well as the objects in the view definitions that the views
+are dependent on. Statements that reference the view depend on indexes the
+view uses; which index a view uses can change from statement to statement
+based on how the query is optimized. For example, given:   <codeblock><b>CREATE TABLE T1 (C1 DOUBLE PRECISION);
+
+CREATE FUNCTION SIN (DATA DOUBLE) 
+	RETURNS DOUBLE EXTERNAL NAME 'java.lang.Math.sin'
+	LANGUAGE JAVA PARAMETER STYLE JAVA;
+
+CREATE VIEW V1 (C1) AS SELECT SIN(C1) FROM T1;</b></codeblock></p> <p>the
+following SELECT:   <codeblock><b>SELECT * FROM V1
+</b></codeblock></p> <p>is dependent on view <i>V1</i>, table <i>T1,</i> and
+external scalar function  <i>SIN.</i></p> </section>
+</refbody>
+</reference>

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctun_xplain_style">
+<title>How you use the XPLAIN style</title>
+<prolog><metadata>
+<keywords>
+    <indexterm>XPLAIN style<indexterm>using</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<section><title>Overview</title>
+    <p>
+        XPLAIN style is an enhanced form of RUNTIMESTATISTICS processing
+        which preserves captured statistics information in 
+        <xref href="ctun_xplain_tables.dita#ctun_xplain_tables">database 
+            tables</xref>.
+        Once the statistics have been collected and saved in the 
+        tables, they can be queried for analysis purposes.
+    </p>
+    <p>
+        Note that <ph conref="../conrefs.dita#prod/productshortname"></ph>
+        spells XPLAIN without the initial 'E'. This is done
+        to help distinguish the
+        <ph conref="../conrefs.dita#prod/productshortname"></ph>
+        functionality from the explain
+        functionality that you might be familiar with from commercial DBMS
+        products. The current XPLAIN implementation is optimized for
+        ad-hoc queries and tool support. Furthermore, the explain data
+        is quite extensive to analyze. 
+        <ph conref="../conrefs.dita#prod/productshortname"></ph>
+        tries to implement a
+        compromise between detailed explain information which is
+        almost unreadable by human users and which has to be evaluated
+        with the help of a tool, versus a compact version of explain
+        data which is only applicable for rough investigations but
+        is still browseable by human users. We feel that the information
+        in the XPLAIN system tables is sufficiently detailed to be powerful,
+        but still simple enough to provide useful information to
+        ad-hoc querying during interactive use.
+    </p>
+    <p>
+    To use XPLAIN style, first turn on RUNTIMESTATISTICS using the
+            <codeph>SYSCS_UTIL.SYSCS_SET_RUNTIMESTATISTICS()</codeph> system
+            procedure.</p>
+        <p>Optionally, turn on statistics timing using the
+            <codeph>SYSCS_UTIL.SYSCS_SET_STATISTICS_TIMING</codeph>
+            system procedure.  If you do not turn on statistics timing,
+            you will see the statement execution
+            plan only, and not the timing information.</p>
+        <p>Next, to activate XPLAIN style, use the
+            <codeph>SYSCS_UTIL.SYSCS_SET_XPLAIN_SCHEMA()</codeph> system
+        procedure:</p>
+<codeblock>-- turn on RUNTIMESTATISTICS for connection:
+<b>CALL SYSCS_UTIL.SYSCS_SET_RUNTIMESTATISTICS(1);</b>
+<b>CALL SYSCS_UTIL.SYSCS_SET_STATISTICS_TIMING(1);</b>
+-- Indicate that statistics information should be captured into
+-- database tables in the MYSCHEMA schema:
+<b>CALL SYSCS_UTIL.SYSCS_SET_XPLAIN_SCHEMA('MYSCHEMA');</b>
+--execute queries, step through result sets, perform application processing...
+<b>CALL SYSCS_UTIL.SYSCS_SET_RUNTIMESTATISTICS(0);</b></codeblock>
+<p>Although the syntax is different, the basic steps for working with
+    XPLAIN style are the same in a Java program.</p>
+<p>XPLAIN style is further refined by the use of XPLAIN-only mode. By
+    default, XPLAIN-only mode is off, which means that statements are
+    compiled and executed normally. When XPLAIN-only mode is on, statements
+    are compiled, but not executed. This is useful for investigating what
+    query plan has been selected for a statement, without actually
+    executing the statement. To activate XPLAIN-only mode, use the
+    <codeph>SYSCS_UTIL.SYSCS_SET_XPLAIN_MODE()</codeph> system procedure:</p>
+<codeblock>
+    call SYSCS_UTIL.SYSCS_SET_XPLAIN_MODE(1);
+</codeblock>
+</section>
+<section><title>Examples</title><p>Some examples of usage follow.</p>
+    <p>Retrieve the text of statements
+        which were captured, in order by the time when the statistics were
+    captured:</p>
+<codeblock>
+    select stmt_text, xplain_time from myschema.sysxplain_statements
+    order by xplain_time
+</codeblock>
+<p>Retrieve the text of statements which were captured, showing the
+    statements which took the longest time to execute first:</p>
+<codeblock>
+    select s.stmt_text, st.execute_time from myschema.sysxplain_statements s,
+           myschema.sysxplain_statement_timings st
+    where s.timing_id = st.timing_id
+    order by st.execute_time desc
+</codeblock>
+<p>Show the statements that were executed, together with the result sets
+    that each statement required:</p>
+<codeblock>
+    select st.stmt_text, rs.op_identifier 
+    from myschema.sysxplain_statements st
+    join myschema.sysxplain_resultsets rs
+         on st.stmt_id = rs.stmt_id
+</codeblock>
+<p>Find statements which resulted in an external sort being performed:</p>
+<codeblock>
+    select s.stmt_text, s.stmt_id, rs.op_identifier, srt.no_input_rows
+    from myschema.sysxplain_sort_props srt,
+         myschema.sysxplain_resultsets rs,
+         myschema.sysxplain_statements s
+    where rs.stmt_id = s.stmt_id and rs.sort_rs_id = srt.sort_rs_id
+          and srt.sort_type = 'EX'
+</codeblock>
+<p>Show statements which resulted in a sort, sorted by the number of
+    rows which were sorted by that statement.</p>
+<codeblock>
+    select s.stmt_text, s.stmt_id, rs.op_identifier, srt.no_input_rows
+    from myschema.sysxplain_sort_props srt,
+         myschema.sysxplain_resultsets rs,
+         myschema.sysxplain_statements s
+    where rs.stmt_id = s.stmt_id and rs.sort_rs_id = srt.sort_rs_id
+    order by srt.no_input_rows desc
+</codeblock>
+<p>Find statements which resulted in a tablescan of the COUNTRIES table,
+    and display the number of pages and rows that were visited by each scan:</p>
+<codeblock>
+    select st.stmt_text, sp.no_visited_pages, sp.no_visited_rows 
+    from myschema.sysxplain_scan_props sp, 
+         myschema.sysxplain_resultsets rs, 
+         myschema.sysxplain_statements st 
+    where st.stmt_id = rs.stmt_id and 
+          rs.scan_rs_id = sp.scan_rs_id and 
+          rs.op_identifier = 'TABLESCAN' and 
+          sp.scan_object_name = 'COUNTRIES'
+</codeblock>
+</section>
+</conbody></concept>
+

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj11277" xml:lang="en-us">
+<title>VALUES expression</title>
+<prolog><metadata>
+<keywords><indexterm>VALUES expression</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>The VALUES expression allows construction of a row or a table
+from other values. A VALUES expression can be used in all the places where a
+query can, and thus can be used in any of the following ways:
+<ul>
+<li>As a statement that returns a <i>ResultSet</i></li>
+<li>Within expressions and statements wherever subqueries are permitted</li>
+<li>As the source of values for an INSERT statement (in an INSERT statement, 
+you normally use a VALUES expression when you do not use a 
+<i><xref href="rrefselectexpression.dita#rrefselectexpression"></xref></i>)</li>
+</ul></p> </section>
+<refsyn><title>Syntax</title> <codeblock><b>{
+    VALUES ( <i>Value</i> {, <i>Value</i> }* )
+        [ , ( <i>Value</i> {, <i>Value</i> }* ) ]* |
+    VALUES <i>Value</i> [ , <i>Value</i> ]*
+} [ <i><xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY clause</xref></i> ]
+  [ <i><xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">result offset clause</xref></i> ]
+  [ <i><xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">fetch first clause</xref></i> ]
+</b></codeblock> 
+<p>where <i>Value</i> is defined as</p>
+<codeblock><b><i>Expression</i> | DEFAULT</b></codeblock>
+<p>The first form constructs multi-column rows. The second
+form constructs single-column rows, each expression being the value of the
+column of the row.</p> <p>The DEFAULT keyword is allowed only if the VALUES
+expression is in an INSERT statement. Specifying DEFAULT for a column inserts
+the column's default value into the column. Another way to insert the default
+value into the column is to omit the column from the column list and only
+insert values into other columns in the table.</p>
+<p>A VALUES expression that is used in an INSERT statement cannot use an
+ORDER BY, result offset, or fetch first clause. However, if the VALUES
+expression does not contain the DEFAULT keyword, the VALUES clause can be put
+in a subquery and ordered, as in the following statement:</p>
+<codeblock><b>INSERT INTO t SELECT * FROM (VALUES 'a','c','b') t ORDER BY 1;</b></codeblock>
+</refsyn>
+<example><title>Examples</title><codeblock><b><ph>-- 3 rows of 1 column</ph>
+VALUES (1),(2),(3)
+<ph>-- 3 rows of 1 column</ph>
+VALUES 1, 2, 3 
+<ph>-- 1 row of 3 columns</ph>
+VALUES (1, 2, 3)
+<ph>-- 3 rows of 2 columns</ph>
+VALUES (1,21),(2,22),(3,23)
+<ph>-- using ORDER BY and FETCH FIRST</ph>
+VALUES (3,21),(1,22),(2,23) ORDER BY 1 FETCH FIRST 2 ROWS ONLY
+<ph>-- using ORDER BY and OFFSET</ph>
+VALUES (3,21),(1,22),(2,23) ORDER BY 1 OFFSET 1 ROW
+<ph>-- constructing a derived table</ph>
+VALUES ('orange', 'orange'), ('apple', 'red'),
+('banana', 'yellow')
+<ph>-- Insert two new departments using one statement into the DEPARTMENT table, 
+-- but do not assign a manager to the new department.</ph>
+INSERT INTO DEPARTMENT (DEPTNO, DEPTNAME, ADMRDEPT)
+  VALUES ('B11', 'PURCHASING', 'B01'),
+    ('E41', 'DATABASE ADMINISTRATION', 'E01')
+<ph>-- insert a row with a DEFAULT value for the MAJPROJ column</ph>
+INSERT INTO PROJECT (PROJNO, PROJNAME, DEPTNO, RESPEMP, PRSTDATE, MAJPROJ) 
+VALUES ('PL2101', 'ENSURE COMPAT PLAN', 'B01', '000020', CURRENT_DATE, DEFAULT)
+
+<ph>-- using a built-in function</ph>
+VALUES CURRENT_DATE
+<ph>-- getting the value of an arbitrary expression</ph>
+VALUES (3*29, 26.0E0/3)
+<ph>-- getting a value returned by a built-in function</ph>
+values char(1)
+</b></codeblock> </example>
+</refbody>
+</reference>
+

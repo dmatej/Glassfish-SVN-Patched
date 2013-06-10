@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj15446" xml:lang="en-us">
+<title>CREATE VIEW 文</title>
+<prolog><metadata>
+<keywords><indexterm>CREATE VIEW statement</indexterm><indexterm><indexterm>SQL
+statements</indexterm>CREATE VIEW</indexterm><indexterm>views<indexterm>creating</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>ビューとはクエリにより定義された仮想的な表です。表は破棄するまで利用可能なディクショナリの情報です。ビューは更新できません。</p>
+<p>限定されたビューの名前にて、スキーマ名は<i>SYS</i>で始まってはなりません。</p>
+<p>ビューの所有者は自動的にSELECT権限を得ます。ビューの所有者からSELECT権限を剥奪することはできません。<xref href="rrefattrib26867.dita#rrefattrib26867">データベースの所有者</xref>は自動的にビューへのSELECT権限を持ち、SELECT権限を他のユーザに付与することができます。データベースの所有者からSELECT権限を剥奪することはできません。</p>
+<p>ビューの所有者はビューが参照する情報を所有する場合のみ、他のユーザにSELECT権限を付与することができます。</p><p>ビューの所有者が、ビューが参照する情報を所有していない場合、ビューの所有者は適切な権限を付与されていなければなりません。例えば、<codeph>user2</codeph>という認証識別子が<codeph>user1.t1</codeph>という表と<codeph>user1.f_abs()</codeph>という関数を参照する、<codeph>user2.v2</codeph>というビューを作成する場合、<codeph>user2</codeph>は<codeph>user1.t1</codeph>へのSELECT権限と<codeph>user1.f_abs()へのEXECUTE権限を持たなければなりません。</codeph>. </p>
+<p>SELECT権限を付与する権限は剥奪できません。ビューが参照する情報への必要な権限が剥奪された場合、ビューは破棄されます。</p></section>
+<refsyn><title>構文</title> <codeblock><b>CREATE VIEW <i><xref href="rrefviewname.dita#rrefviewname">ビュー名</xref></i>
+    [ ( <i><xref href="rrefsimplecolumnname.dita#rrefsimplecolumnname">単純列名</xref></i> [, <i><xref
+href="rrefsimplecolumnname.dita#rrefsimplecolumnname">単純列名</xref></i>] * ) ]
+AS <i><xref href="rrefsqlj21571.dita#rrefsqlj21571">問い合わせ</xref></i> </b></codeblock> <p>ビューの定義にビューの列一覧を書くことで、ビューの列に明示的な名前を与えることができます。
+ビューの列一覧がない場合、ビューの列名は元となる問い合わせの列名を引継ぎます。ビューの全列は一意な名前を持たなければなりません。</p> </refsyn>
+<example> <codeblock><b>CREATE VIEW SAMP.V1 (COL_SUM, COL_DIFF)
+	AS SELECT COMM + BONUS, COMM - BONUS
+	FROM SAMP.EMPLOYEE;
+
+CREATE VIEW SAMP.VEMP_RES (RESUME)
+	AS VALUES 'Delores M. Quintana', 'Heather A. Nicholls', 'Bruce Adamson';
+
+CREATE VIEW SAMP.PROJ_COMBO 
+	(PROJNO, PRENDATE, PRSTAFF, MAJPROJ) 
+	AS SELECT PROJNO, PRENDATE, PRSTAFF, MAJPROJ
+	FROM SAMP.PROJECT UNION ALL 
+SELECT PROJNO, EMSTDATE, EMPTIME, EMPNO 
+	FROM SAMP.EMP_ACT 
+	WHERE EMPNO IS NOT NULL;</b></codeblock> </example>
+<section><title>文の依存</title> 
+<p>ビューの定義は参照する表やビューに依存します。
+ビューを参照するDML(data manipulation language)文は、ビューが依存するのと同様に、そのビューに依存します。
+ビューを参照する文は、ビューが利用する索引に依存します。この索引は問い合わせがどのように最適化されるかに応じて文毎に異なります。
+例を以下に挙げます。<codeblock><b>CREATE TABLE T1 (C1 DOUBLE PRECISION);
+
+CREATE FUNCTION SIN (DATA DOUBLE) 
+	RETURNS DOUBLE EXTERNAL NAME 'java.lang.Math.sin'
+	LANGUAGE JAVA PARAMETER STYLE JAVA;
+
+CREATE VIEW V1 (C1) AS SELECT SIN(C1) FROM T1;</b></codeblock></p> 
+<p>文とそれが依存するデータベースの情報を挙げます。
+<codeblock><b>SELECT * FROM V1
+</b></codeblock></p> 
+<p><i>V1</i>というビュー、<i>T1</i>という表、
+外部のスカラー関数の<i>SIN</i></p> </section>
+</refbody>
+</reference>

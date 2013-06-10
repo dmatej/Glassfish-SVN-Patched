@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqljcreatesequence" xml:lang="en-us">
+<title>CREATE SEQUENCE statement</title>
+<prolog><metadata>
+<keywords><indexterm>CREATE SEQUENCE statement</indexterm>
+<indexterm>SQL statements<indexterm>CREATE SEQUENCE</indexterm></indexterm>
+<indexterm>sequence generators<indexterm>creating</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>The CREATE SEQUENCE statement creates a sequence generator, which is
+a mechanism for generating exact numeric values, one at a time.</p>
+<p>The owner of the schema where the sequence generator lives automatically
+gains the USAGE privilege on the sequence generator, and can grant this
+privilege to other users and roles. Only the
+<xref href="rrefattrib26867.dita#rrefattrib26867">database owner</xref> and the
+owner of the sequence generator can grant these USAGE privileges. The USAGE
+privilege cannot be revoked from the schema owner. See 
+<xref href="rrefsqljgrant.dita#rrefsqljgrant"></xref> and
+<xref href="rrefsqljrevoke.dita#rrefsqljrevoke"></xref> for more information.
+</p></section>
+<refsyn><title>Syntax</title>
+<codeblock><b>CREATE SEQUENCE [ <i><xref 
+href="rrefschemaname.dita#rrefschemaname">schemaName</xref>.</i> ] <i><xref
+href="crefsqlj34834.dita#crefsqlj34834">SQL92Identifier</xref></i> [ <i><xref
+href="rrefsqljcreatesequence.dita#rrefsqljcreatesequence/rrefsqljcrseqsequenceelement">sequenceElement</xref></i> ]*</b></codeblock>
+<p>The sequence name is composed of an optional <i>schemaName</i> and a
+<i>SQL92Identifier</i>. If a <i>schemaName</i> is not provided, the current
+schema is the default schema. If a qualified sequence name is specified, the
+schema name cannot begin with SYS.</p></refsyn>
+<section id="rrefsqljcrseqsequenceelement"><title>sequenceElement</title>
+<codeblock><b>{
+  AS <i>dataType</i> 
+  | START WITH <i>signedInteger</i> 
+  | INCREMENT BY <i>signedInteger</i> 
+  | MAXVALUE <i>signedInteger</i> | NO MAXVALUE 
+  | MINVALUE <i>signedInteger</i> | NO MINVALUE 
+  | CYCLE | NO CYCLE 
+}</b></codeblock>
+<p>If specified, the <i>dataType</i> must be an integer type (SMALLINT, INT, or
+BIGINT). If not specified, the default data type is INT.</p>
+<p>If specified, the INCREMENT value is a non-zero number which fits in a
+<i>DataType</i> value. If not specified, the INCREMENT defaults to 1. INCREMENT
+is the step by which the sequence generator advances. If INCREMENT is positive,
+the sequence numbers get larger over time. If INCREMENT is negative, the
+sequence numbers get smaller.</p>
+<p>If specified, MINVALUE must be an integer which fits in a <i>DataType</i>
+value. If MINVALUE is not specified, or if NO MINVALUE is specified, MINVALUE
+defaults to the smallest negative number which fits in a <i>DataType</i> value.
+</p>
+<p>If specified, MAXVALUE may not be greater than the largest positive integer
+that fits in a <i>DataType</i> value. If MAXVALUE is not specified, or if
+NO MAXVALUE is specified, MAXVALUE defaults to the largest positive integer
+which fits in a <i>DataType</i> value. MAXVALUE must be greater than MINVALUE.
+</p>
+<p>The START WITH clause specifies the initial value of the sequence generator.
+This value must fall between MINVALUE and MAXVALUE. If the START WITH clause is
+not specified, the initial value defaults to be:</p>
+<ul><li>MINVALUE if INCREMENT is positive</li>
+<li>MAXVALUE if INCREMENT is negative</li></ul>
+<p>The CYCLE clause controls what happens when the sequence generator exhausts
+its range and wraps around. If CYCLE is specified, the wraparound behavior is to
+reinitialize the sequence generator to its START value. If NO CYCLE is
+specified, <ph conref="../conrefs.dita#prod/productshortname"></ph> throws an
+exception when the generator wraps around. The default behavior is NO CYCLE.</p>
+<p>To retrieve the next value from a sequence generator, use a
+<xref href="rrefsqljnextvaluefor.dita#rrefsqljnextvaluefor">NEXT VALUE FOR
+expression</xref>.
+</p></section>
+
+<section>
+<title>Performance</title>
+<p>
+To boost performance and concurrency,
+<ph conref="../conrefs.dita#prod/productshortname"></ph>
+preallocates ranges of upcoming values for sequences. The lengths of these ranges
+can be configured by adjusting the value of the
+<xref href="rrefproperpreallocator.dita#rrefproperpreallocator">derby.language.sequence.preallocator</xref>
+property.
+</p>
+</section>
+
+<example><title>Examples</title>
+<p>The following statement creates a sequence generator of type INT, with a
+start value of -2147483648 (the smallest INT value). The value increases by 1,
+and the last legal value is the largest possible INT. If NEXT VALUE FOR is
+invoked on the generator again,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> throws an exception.
+</p>
+<codeblock><b>CREATE SEQUENCE order_id;</b></codeblock>
+<p>The following statement creates a sequence of type BIGINT with a start value
+of 3,000,000,000. The value increases by 1, and the last legal value is the
+largest possible BIGINT. If NEXT VALUE FOR is invoked on the generator again,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> throws an exception.
+</p>
+<codeblock><b>CREATE SEQUENCE order_entry_id
+AS BIGINT
+START WITH 3000000000;</b></codeblock>
+</example>
+</refbody>
+</reference>

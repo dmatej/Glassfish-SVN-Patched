@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevconcepts95005" xml:lang="en-us">
+<title>Deadlock detection</title>
+<shortdesc>When a transaction waits more than a specific amount of time to
+obtain a lock (called the deadlock timeout), <ph conref="../conrefs.dita#prod/productshortname"></ph> can
+detect whether the transaction is involved in a deadlock.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Deadlock detection</indexterm></keywords>
+</metadata></prolog>
+<conbody>
+<p>When <ph conref="../conrefs.dita#prod/productshortname"></ph> analyzes
+such a situation for deadlocks it tries to determine how many transactions
+are involved in the deadlock (two or more). Usually aborting one transaction
+breaks the deadlock. <ph conref="../conrefs.dita#prod/productshortname"></ph> must
+pick one transaction as the victim and abort that transaction; it picks the
+transaction that holds the fewest number of locks as the victim, on the assumption
+that transaction has performed the least amount of work. (This may not be
+the case, however; the transaction might have recently been escalated from
+row-level locking to table locking and thus hold a small number of locks even
+though it has done the most work.) </p>
+<p>When <ph conref="../conrefs.dita#prod/productshortname"></ph> aborts the
+victim transaction, it receives a deadlock error (an <i>SQLException</i> with
+an <codeph><i>SQLState</i></codeph> of 40001). The error message gives you
+the transaction IDs, the statements, and the status of locks involved in a
+deadlock situation.</p>
+<codeblock>ERROR 40001: A lock could not be obtained due to a deadlock,
+cycle of locks &amp; waiters is:
+Lock : ROW, DEPARTMENT, (1,14)
+Waiting XID : {752, X} , APP, update department set location='Boise'
+	where deptno='E21'
+Granted XID : {758, X} Lock : ROW, EMPLOYEE, (2,8)
+Waiting XID : {758, U} , APP, update employee set bonus=150 where salary=23840
+Granted XID : {752, X} The selected victim is XID : 752</codeblock>
+<p>For information on configuring when deadlock checking occurs, see <xref
+href="cdevconcepts16400.dita#cdevconcepts16400"></xref>.</p>
+<note>Deadlocks are detected only within a single database. Deadlocks across
+multiple databases are not detected. Non-database deadlocks caused by Java
+synchronization primitives are not detected by <ph conref="../conrefs.dita#prod/productshortname"></ph>.</note>
+</conbody>
+</concept>

@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "reference.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with 
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.-->
+<reference id="rrefsqljrevoke" xml:lang="en-us">
+<title>REVOKE statement </title>
+<shortdesc>Use the REVOKE statement to remove privileges from a specific
+user or role, or from all users, to perform actions on database objects. You can
+also use the REVOKE statement to revoke a role from a user, from PUBLIC, or from
+another role.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>REVOKE statement<indexterm>syntax</indexterm></indexterm>
+<indexterm>SQL statements<indexterm>REVOKE</indexterm></indexterm><indexterm>REVOKE
+statement<indexterm>limitations</indexterm></indexterm><indexterm>privileges<indexterm>tables
+and columns, revoking</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>The following types of privileges can be revoked:<ul>
+<li>Delete data from a specific table.</li>
+<li>Insert data into a specific table.</li>
+<li>Create a foreign key reference to the named table or to a subset of columns
+from a table.</li>
+<li>Select data from a table, view, or a subset of columns in a table.</li>
+<li>Create a trigger on a table.</li>
+<li>Update data in a table or in a subset of columns in a table.</li>
+<li>Run a specified routine (function or procedure).</li>
+<li>Use a sequence generator or a user-defined type.</li>
+</ul></p><p>The
+<codeph><xref href="rrefpropersqlauth.dita#rrefpropersqlauth">derby.database.sqlAuthorization</xref></codeph>
+property must be set to <codeph>true</codeph> before you can use the GRANT
+statement or the REVOKE statement. The
+<codeph>derby.database.sqlAuthorization</codeph> property
+enables SQL Authorization mode.</p><p>You can revoke privileges for an
+object if you are the owner of the object or the  <xref href="rrefattrib26867.dita#rrefattrib26867">database
+owner</xref>.</p><p>The syntax that you use for the REVOKE statement depends
+on whether you are revoking privileges to a schema object or revoking a
+role.</p>
+<p>For more information on using the REVOKE statement, see "Using SQL standard
+authorization" in the <ph conref="../conrefs.dita#pub/citdevelop"></ph>.</p>
+</section>
+<section><title>Syntax for tables</title><codeblock><b>REVOKE <i><xref href="rrefsqljrevoke.dita#rrefsqljrevoke/revokeprivtype">privilege-type</xref
+></i> ON [ TABLE ] { <i><xref href="rreftablename.dita#rreftablename"></xref></i> | <i><xref
+href="rrefviewname.dita#rrefviewname"></xref></i> } FROM <i><xref href="rrefsqljrevoke.dita#rrefsqljrevoke/revokegrantees">grantees</xref></i></b
+></codeblock><p>Revoking a privilege without specifying a column list revokes
+the privilege for all of the columns in the table. </p></section>
+<section><title>Syntax for routines</title><codeblock><b>REVOKE EXECUTE ON { FUNCTION | PROCEDURE } <i><xref
+href="rrefsqljrevoke.dita#rrefsqljrevoke/revokeroutinename">routine-designator</xref></i> FROM <i><xref
+href="rrefsqljrevoke.dita#rrefsqljrevoke/revokegrantees">grantees</xref> </i> RESTRICT</b></codeblock><p>You
+must use the RESTRICT clause on REVOKE statements for routines. The RESTRICT
+clause specifies that the EXECUTE privilege cannot be revoked if the specified
+routine is used in a view, trigger, or constraint, and the privilege is being
+revoked from the owner of the view, trigger, or constraint.</p></section>
+<section id="revokesequencesyn"><title>Syntax for sequence generators</title>
+<codeblock><b>REVOKE USAGE ON SEQUENCE [ <i><xref 
+href="rrefschemaname.dita#rrefschemaname">schemaName</xref>.</i> ] <i><xref
+href="crefsqlj34834.dita#crefsqlj34834">SQL92Identifier</xref></i> FROM <i><xref href="rrefsqljrevoke.dita#rrefsqljrevoke/revokegrantees">grantees</xref></i> RESTRICT</b></codeblock>
+<p>In order to use a sequence generator, you must have the USAGE privilege on
+it. This privilege can be revoked from users and roles. Only RESTRICTed revokes
+are allowed. This means that the REVOKE statement cannot make a view, trigger,
+or constraint unusable by its owner. The USAGE privilege cannot be revoked from
+the schema owner. See
+<xref href="rrefsqljcreatesequence.dita#rrefsqljcreatesequence"></xref> for more
+information.</p>
+<p>The sequence name is composed of an optional <i>schemaName</i> and a
+<i>SQL92Identifier</i>. If a <i>schemaName</i> is not provided, the current
+schema is the default schema. If a qualified sequence name is specified, the
+schema name cannot begin with SYS.</p></section>
+<section id="revoketypesyn"><title>Syntax for user-defined types</title>
+<codeblock><b>REVOKE USAGE ON TYPE  [ <i><xref 
+href="rrefschemaname.dita#rrefschemaname">schemaName</xref>.</i> ] <i><xref
+href="crefsqlj34834.dita#crefsqlj34834">SQL92Identifier</xref></i> FROM <i><xref href="rrefsqljrevoke.dita#rrefsqljrevoke/revokegrantees">grantees</xref></i> RESTRICT</b></codeblock>
+<p>In order to use a user-defined type, you must have the USAGE privilege on
+it. This privilege can be revoked from users and roles. Only RESTRICTed revokes
+are allowed. This means that the REVOKE statement cannot make a view, trigger,
+or constraint unusable by its owner. The USAGE privilege cannot be revoked from
+the schema owner. See
+<xref href="rrefsqljcreatetype.dita#rrefsqljcreatetype"></xref> for more
+information.</p>
+<p>The type name is composed of an optional <i>schemaName</i> and a
+<i>SQL92Identifier</i>. If a <i>schemaName</i> is not provided, the current
+schema is the default schema. If a qualified type name is specified, the schema
+name cannot begin with SYS.</p></section>
+<section><title>Syntax for roles</title>
+<codeblock><b>REVOKE <i><xref href="rrefrolename.dita#rrefrolename">roleName</xref></i> [ {, <i><xref
+href="rrefrolename.dita#rrefrolename">roleName</xref></i> }* ] FROM <i><xref 
+href="rrefsqljrevoke.dita#rrefsqljrevoke/revokegrantees">grantees</xref></i></b></codeblock>
+<p>Only the <xref href="rrefattrib26867.dita#rrefattrib26867">database
+owner</xref> can revoke a role.</p>
+</section>
+<section id="revokeprivtype"><title>privilege-types</title><codeblock><b>  ALL PRIVILEGES |
+  privilege-list </b></codeblock></section>
+<section id="revokeprivlist"><title>privilege-list</title><codeblock><b>  table-privilege {, table-privilege }* </b></codeblock></section>
+<section id="revoketablepriv"><title>table-privilege</title><codeblock><b>  DELETE |
+  INSERT |
+  REFERENCES [<i>column list</i>] |
+  SELECT [<i>column list</i>] |
+  TRIGGER |
+  UPDATE [<i>column list</i>] </b></codeblock></section>
+<section id="revokecollist"><title>column list</title><codeblock><b>  ( column-identifier {, column-identifier}* ) </b></codeblock></section>
+<section><p>Use the ALL PRIVILEGES privilege type to revoke all of the privileges
+from the user or role for the specified table. You can also revoke one or more table
+privileges by specifying a privilege-list.</p><p>Use the DELETE privilege
+type to revoke permission to delete rows from the specified table.</p><p>Use
+the INSERT privilege type to revoke permission to insert rows into the specified
+table.</p><p>Use the REFERENCES privilege type to revoke permission to create
+a foreign key reference to the specified table. If a column list is specified
+with the REFERENCES privilege, the permission is revoked on only the foreign
+key reference to the specified columns.</p><p>Use the SELECT privilege type
+to revoke permission to perform SELECT statements on a table or view. If a
+column list is specified with the SELECT privilege, the permission is revoked
+on only those columns. If no column list is specified, then the privilege
+is valid on all of the columns in the table.</p><p>Use the TRIGGER privilege
+type to revoke permission to create a trigger on the specified table.</p><p>Use
+the UPDATE privilege type to revoke permission to use the UPDATE statement
+on the specified table. If a column list is specified, the privilege is revoked
+only on the specified columns.</p></section>
+<section id="revokegrantees"><title>grantees</title>
+<codeblock><b>{ <i><xref href="rrefrauthid.dita#rrefrauthid">AuthorizationIdentifier</xref></i> | <i><xref href="rrefrolename.dita#rrefrolename">roleName</xref></i> | PUBLIC } 
+[,{ <i><xref href="rrefrauthid.dita#rrefrauthid">AuthorizationIdentifier</xref></i> | <i><xref href="rrefrolename.dita#rrefrolename">roleName</xref></i> | PUBLIC } ] *</b
+></codeblock><p>You can revoke the privileges from specific users or roles or from
+all users. Use the keyword PUBLIC to specify all users. The privileges revoked
+from PUBLIC and from individual users or roles are independent privileges. For example,
+a SELECT privilege on table <codeph>t</codeph> is granted to both PUBLIC and
+to the authorization ID <codeph>harry</codeph>. The SELECT privilege is later
+revoked from the authorization ID <codeph>harry</codeph>, but the authorization
+ID <codeph>harry</codeph> can access the table <codeph>t</codeph> through
+the PUBLIC privilege.</p>
+<p>You can revoke a role from a role, from a user, or from PUBLIC.</p>
+<note type="restriction">You cannot revoke the privileges
+of the owner of an object.</note></section>
+<section id="revokeroutinename"><title>routine-designator</title><codeblock><b>  {
+   <i>qualified-name</i> [ signature ]
+  }</b></codeblock></section>
+<section id="rrefsqljrevseqsequencename"><title>sequenceName</title>
+<codeblock><b>[ <i><xref 
+href="rrefschemaname.dita#rrefschemaname">schemaName</xref>.</i> ] <i><xref
+href="crefsqlj34834.dita#crefsqlj34834">SQL92Identifier</xref></i></b></codeblock>
+<p>If <i>schemaName</i> is not provided, the current schema is the default
+schema. If a qualified sequence name is specified, the schema name cannot
+begin with SYS.</p></section>
+<section>
+  <title>Prepared statements and open result sets/cursors</title>
+  <p>
+    Checking for privileges happens at statement execution time, so
+    prepared statements are still usable after a revoke action. If
+    sufficient privileges are still available for the session,
+    prepared statements will be executed, and for queries, a result
+    set will be returned.
+  </p>
+  <p> Once a result set has been returned to the application (by
+    executing a prepared statement or by direct execution), it
+    will remain accessible even if privileges or roles are revoked in
+    a way that would cause another execution of the same statement to
+    fail.
+  </p>
+</section>
+
+<section><title>Cascading object dependencies</title><p>For views, triggers,
+and constraints, if the privilege on which the object depends on is revoked,
+the object is automatically dropped. <ph conref="../conrefs.dita#prod/productshortname"></ph> does
+not try to determine if you have other privileges that can replace the privileges
+that are being revoked. For more information, see "Using SQL standard
+authorization" and "Privileges on views, triggers, and constraints" in the
+<ph conref="../conrefs.dita#pub/citdevelop"></ph>.</p></section>
+<section><title>Limitations</title><p>The following limitations apply to the
+REVOKE statement:</p><dl><dlentry>
+<dt>Table-level privileges</dt>
+<dd>All of the table-level privilege types for a specified grantee and table
+ID are stored in one row in the SYSTABLEPERMS system table. For example, when <codeph>user2</codeph> is
+granted the SELECT and DELETE privileges on table <codeph>user1.t1</codeph>,
+a row is added to the SYSTABLEPERMS table. The GRANTEE field contains <codeph>user2</codeph> and
+the TABLEID contains <codeph>user1.t1</codeph>. The SELECTPRIV and DELETEPRIV
+fields are set to Y. The remaining privilege type fields are set to N.<p>When
+a grantee creates an object that relies on one of the privilege types, the <ph
+conref="../conrefs.dita#prod/productshortname"></ph> engine tracks the dependency
+of the object on the specific row in the SYSTABLEPERMS table. For example, <codeph>user2</codeph> creates
+the view <codeph>v1</codeph> by using the statement <codeph>SELECT * FROM
+user1.t1</codeph>, the dependency manager tracks the dependency of view <codeph>v1</codeph> on
+the row in SYSTABLEPERMS for GRANTEE(<codeph>user2</codeph>), TABLEID(<codeph>user1.t1</codeph>).
+The dependency manager knows only that the view is dependent on a privilege
+type in that specific row, but does not track exactly which privilege type
+the view is dependent on.</p><p>When a REVOKE statement for a table-level
+privilege is issued for a grantee and table ID, all of the objects that are
+dependent on the grantee and table ID are dropped. For example, if <codeph>user1</codeph> revokes
+the DELETE privilege on table <codeph>t1</codeph> from <codeph>user2</codeph>,
+the row in SYSTABLEPERMS for GRANTEE(<codeph>user2</codeph>), TABLEID(<codeph>user1.t1</codeph>)
+is modified by the REVOKE statement. The dependency manager sends a revoke
+invalidation message to the view <codeph>user2.v1</codeph> and the view is
+dropped even though the view is not dependent on the DELETE privilege for
+GRANTEE(<codeph>user2</codeph>), TABLEID(<codeph>user1.t1</codeph>).</p></dd>
+</dlentry><dlentry>
+<dt>Column-level privileges</dt>
+<dd>Only one type of privilege for a specified grantee and table ID are stored
+in one row in the SYSCOLPERMS system table. For example, when <codeph>user2</codeph> is
+granted the SELECT privilege on table <codeph>user1.t1</codeph> for columns
+c12 and c13, a row is added to the SYSCOLPERMS. The GRANTEE field contains <codeph>user2</codeph>,
+the TABLEID contains <codeph>user1.t1</codeph>, the TYPE field contains <codeph>S</codeph>,
+and the COLUMNS field contains <codeph>c12, c13</codeph>.<p>When a grantee
+creates an object that relies on the privilege type and the subset of columns
+in a table ID, the <ph conref="../conrefs.dita#prod/productshortname"></ph> engine
+tracks the dependency of the object on the specific row in the SYSCOLPERMS
+table. For example, <codeph>user2</codeph> creates the view <codeph>v1</codeph> by
+using the statement <codeph>SELECT c11 FROM user1.t1</codeph>, the dependency
+manager tracks the dependency of view <codeph>v1</codeph> on the row in SYSCOLPERMS
+for GRANTEE(<codeph>user2</codeph>), TABLEID(<codeph>user1.t1</codeph>), TYPE(S).
+The dependency manager knows that the view is dependent on the SELECT privilege
+type, but does not track exactly which columns the view is dependent on.</p><p>When
+a REVOKE statement for a column-level privilege is issued for a grantee, table
+ID, and type, all of the objects that are dependent on the grantee, table
+ID, and type are dropped. For example, if <codeph>user1</codeph> revokes the
+SELECT privilege on column <codeph>c12</codeph> on table <codeph>user1.t1</codeph> from <codeph>user2</codeph>,
+the row in SYSCOLPERMS for GRANTEE(<codeph>user2</codeph>), TABLEID(<codeph>user1.t1</codeph>),
+TYPE(S) is modified by the REVOKE statement. The dependency manager sends
+a revoke invalidation message to the view <codeph>user2.v1</codeph> and the
+view is dropped even though the view is not dependent on the column <codeph>c12</codeph> for
+GRANTEE(<codeph>user2</codeph>), TABLEID(<codeph>user1.t1</codeph>), TYPE(S).</p></dd>
+</dlentry>
+<dlentry>
+<dt>Roles</dt>
+<dd><ph conref="../conrefs.dita#prod/productshortname"></ph> tracks any
+dependencies on the definer's current role for views, constraints, and triggers.
+If privileges were obtainable only via the current role when the object in
+question was defined, that object depends on the current role. The object will
+be dropped if the role is revoked from the defining user or from PUBLIC, as the
+case may be. Also, if a contained role of the current role in such cases is
+revoked, dependent objects will be dropped. Note that dropping may be too
+pessimistic. This is because
+<ph conref="../conrefs.dita#prod/productshortname"></ph> does not currently make
+an attempt to recheck if the necessary privileges are still available in such
+cases.</dd></dlentry></dl></section>
+<example> <title>Revoke examples</title><p>To revoke the SELECT privilege
+on table <codeph>t</codeph> from the authorization IDs <codeph>maria</codeph> and <codeph>harry</codeph>,
+use the following syntax:<codeblock><b>REVOKE SELECT ON TABLE t FROM maria,harry</b> </codeblock></p><p>To
+revoke the UPDATE and TRIGGER privileges on table <codeph>t</codeph> from
+the authorization IDs <codeph>anita</codeph> and <codeph>zhi</codeph>, use
+the following syntax:<codeblock><b>REVOKE UPDATE, TRIGGER ON TABLE t FROM anita,zhi</b> </codeblock></p><p>To
+revoke the SELECT privilege on table <codeph>s.v</codeph> from all users,
+use the following syntax:<codeblock><b>REVOKE SELECT ON TABLE s.v FROM PUBLIC</b></codeblock></p><p>To
+revoke the UPDATE privilege on columns <codeph>c1</codeph> and <codeph>c2</codeph> of
+table <codeph>s.v</codeph> from all users, use the following syntax:<codeblock><b>REVOKE UPDATE (c1,c2) ON TABLE s.v FROM PUBLIC</b></codeblock></p
+><p>To revoke the EXECUTE privilege on procedure <codeph>p</codeph> from the
+authorization ID <codeph>george</codeph>, use the following syntax:</p><codeblock><b>REVOKE EXECUTE ON PROCEDURE p FROM george RESTRICT</b> </codeblock>
+<p>To revoke the role <codeph>purchases_reader_role</codeph> from the
+authorization IDs <codeph>george</codeph> and <codeph>maria</codeph>, use the
+following syntax:</p>
+<codeblock><b>REVOKE purchases_reader_role FROM george,maria</b></codeblock>
+<p>To revoke the SELECT privilege on table <codeph>t</codeph> from the role
+<codeph>purchases_reader_role</codeph>, use the following syntax:</p>
+<codeblock><b>REVOKE SELECT ON TABLE t FROM purchases_reader_role</b></codeblock>
+<p>To revoke the USAGE privilege on the sequence generator
+<codeph>order_id</codeph> from the role <codeph>sales_role</codeph>, use the
+following syntax:</p>
+<codeblock><b>REVOKE USAGE ON SEQUENCE order_id FROM sales_role;</b></codeblock>
+<p>To revoke the USAGE privilege on the user-defined type
+<codeph>price</codeph> from the role <codeph>finance_role</codeph>, use the
+following syntax:</p>
+<codeblock><b>REVOKE USAGE ON TYPE price FROM finance_role;</b></codeblock>
+</example>
+</refbody>
+</reference>

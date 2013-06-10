@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj26498" xml:lang="ja">
+<title>UPDATE文</title>
+<prolog><metadata>
+<keywords><indexterm>UPDATE statement</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<refsyn><title>構文</title> <codeblock><b>{
+    UPDATE <i><xref href="rreftablename.dita#rreftablename">表名</xref></i>
+        SET <i><xref href="rrefcolumnname.dita#rrefcolumnname">列名</xref></i> = <i>値</i>
+        [ , <i><xref href="rrefcolumnname.dita#rrefcolumnname">列名</xref></i> = <i>値</i>} ]*
+        [<i><xref href="rrefsqlj33602.dita#rrefsqlj33602">WHERE節</xref></i>] |
+    UPDATE <i><xref href="rreftablename.dita#rreftablename">表名</xref></i>
+        SET <i><xref href="rrefcolumnname.dita#rrefcolumnname">列名</xref></i> = <i>値</i>
+        [ , <i><xref href="rrefcolumnname.dita#rrefcolumnname">列名</xref></i> = <i>値</i> ]*
+        <i><xref href="rrefsqlj15309.dita#rrefsqlj15309">WHERE CURRENT OF</xref></i>
+}</b></codeblock> 
+<p><varname>値</varname>の定義は以下の通りです。</p>
+<codeblock><b><i>式</i> | DEFAULT</b></codeblock>
+<p>一つ目の書き方は検索による更新といい、WHERE節が真に評価される全行の一つ以上の列を更新します。</p>
+<p>二つ目の書き方は位置による更新といい、更新可能な開いたカーソルの現在行の一つ以上の列を更新します。カーソルを作成するSELECT文の<xref href="rrefsqlj31783.dita#rrefsqlj31783">FOR UPDATE 節</xref>にて列が明示された場合、その列だけが更新可能です。もし列が明示されていないかSELECT文にFOR UPDATE節が無かった場合は、全ての列を更新できます。</p> 
+<p>更新後の値にDEFAULTを指定すると、表にて定義された既定値に列の値が設定されます。</p> </refsyn>
+<example><title>例</title> <codeblock><b>
+<ph>
+-- 'E21'の部署(WORKDEPT)にて管理者以外が一時的に再配属されている。
+-- このことを、EMPLOYEEという表の彼らの仕事(JOB)をNULLに、
+-- 彼らへの支払い(SALARY, BONUS, COMM)を0にしてあらわす。</ph> 
+UPDATE EMPLOYEE
+  SET JOB=NULL, SALARY=0, BONUS=0, COMM=0
+  WHERE WORKDEPT = 'E21' AND JOB &lt;&gt; 'MANAGER'
+
+-- 特定の肩書きを持たない社員を管理者に昇格する。
+UPDATE EMPLOYEE
+	SET JOB = 'MANAGER'
+	WHERE JOB IS NULL;
+<ph>// 全てのプロジェクトの人員配置(PRSTAFF)を1.5増やす。</ph>
+stmt.executeUpdate("UPDATE PROJECT SET PRSTAFF = "
+"PRSTAFF + 1.5" +
+"WHERE CURRENT OF" + ResultSet.getCursorName());
+
+<ph>-- EMPLOYEEという表にて社員番号(EMPNO)が'000290'の社員の仕事(JOB)を、
+-- 既定値であるNULLに更新する。</ph>
+UPDATE EMPLOYEE
+  SET JOB = DEFAULT
+  WHERE EMPNO = '000290'
+</b></codeblock> </example>
+<section><title>文の依存</title> <p>検索による更新の文は、更新しようとしている表や、そのコングロマリット(ヒープや索引などの記録単位)、その制約、WHERE節やSET式に書かれた表に依存します。検索による更新の準備された文の対象表にCREATE INDEXやDROP INDEX文、ALTER TABLE文が実行されると、その文は無効となります。</p> 
+<p>位置による更新の文はカーソルやカーソルが参照する全ての表に依存します。カーソルがまだ開いていなくとも、位置による更新の文をコンパイルすることができます。しかしながらJDBCの<i>close</i>メソッドにより開いたカーソルをなくすと、位置による更新の文は無効となります。</p> 
+<p>
+位置による更新の準備された文の対象表に、CREATE INDEXやDROP INDEX文、ALTER TABLE文が実行されると、その文は無効となります。
+</p> 
+<p>別名を破棄すると、その別名を使っている更新の準備された文は無効になります。</p> 
+<p>更新の対象表にてトリガの破棄や作成が行われると、更新の文は無効になります。</p> </section>
+</refbody>
+</reference>
+

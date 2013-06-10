@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj21571" xml:lang="en-us">
+<title>Query</title>
+<prolog><metadata>
+<keywords><indexterm>UNION</indexterm><indexterm>UNION ALL</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>A query creates a virtual table based on existing tables or constants
+built into tables.</p></section>
+<refsyn><title>Syntax</title><codeblock><b>{
+    ( <i>Query</i> 
+         [ <i><xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY clause</xref></i> ]
+         [ <i><xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">result offset clause</xref></i> ]
+         [ <i><xref href="rrefsqljoffsetfetch.dita#rrefsqljoffsetfetch">fetch first clause</xref></i> ]
+    ) |
+    <i>Query</i> INTERSECT [ ALL | DISTINCT ] <i>Query</i> |
+    <i>Query</i> EXCEPT [ ALL | DISTINCT ] <i>Query</i> |
+    <i>Query</i> UNION [ ALL | DISTINCT ] <i>Query</i> |
+    <i><xref href="rrefselectexpression.dita#rrefselectexpression">SelectExpression</xref></i> | <i><xref
+href="rrefsqlj11277.dita#rrefsqlj11277">VALUES Expression</xref></i>
+}</b></codeblock><p>You can arbitrarily put parentheses around queries, or
+use the parentheses to control the order of evaluation of the INTERSECT, EXCEPT,
+or UNION operations. These operations are evaluated from left to right when
+no parentheses are present, with the exception of INTERSECT operations, which
+would be evaluated before any UNION or EXCEPT operations.</p></refsyn>
+<section><title>Duplicates in UNION, INTERSECT, and EXCEPT ALL results</title><p>The
+ALL and DISTINCT keywords determine whether duplicates are eliminated from
+the result of the operation. If you specify the DISTINCT keyword, then the
+result will have no duplicate rows. If you specify the ALL keyword, then there
+may be duplicates in the result, depending on whether there were duplicates
+in the input.  DISTINCT is the default, so if you don't specify ALL or DISTINCT,
+the duplicates will be eliminated.  For example, UNION builds an intermediate <i>ResultSet</i> with
+all of the rows from both queries and eliminates the duplicate rows before
+returning the remaining rows. UNION ALL returns all rows from both queries
+as the result.</p><p> Depending on which operation is specified, if the number
+of copies of a row in the left table is L and the number of copies of that
+row in the right table is R, then the number of duplicates of that particular
+row that the output table contains (assuming the ALL keyword is specified)
+is:<ul>
+<li>UNION: ( L + R ).</li>
+<li>EXCEPT: the maximum of ( L - R ) and 0 (zero).</li>
+<li>INTERSECT: the minimum of L and R.</li>
+</ul></p></section>
+<example><title>Examples</title><codeblock><b><ph>-- a Select expression </ph>
+SELECT *
+FROM ORG
+
+<ph>-- a subquery </ph>
+SELECT *
+FROM (SELECT CLASS_CODE FROM CL_SCHED) AS CS
+
+-- a subquery
+SELECT *
+FROM (SELECT CLASS_CODE FROM CL_SCHED) AS CS (CLASS_CODE)
+
+<ph>-- a UNION
+-- returns all rows from columns DEPTNUMB and MANAGER 
+-- in table ORG
+-- and (1,2) and (3,4)
+-- DEPTNUMB and MANAGER are smallint columns</ph>
+SELECT DEPTNUMB, MANAGER 
+FROM ORG
+UNION ALL
+VALUES (1,2), (3,4)
+
+<ph>-- a values expression</ph>
+VALUES (1,2,3)
+
+<ph>-- Use of ORDER BY and FETCH FIRST in a subquery</ph>
+SELECT DISTINCT A.ORIG_AIRPORT, B.FLIGHT_ID FROM 
+   (SELECT FLIGHT_ID, ORIG_AIRPORT 
+       FROM FLIGHTS 
+       ORDER BY ORIG_AIRPORT DESC 
+       FETCH FIRST 40 ROWS ONLY) 
+    AS A, FLIGHTAVAILABILITY AS B 
+   WHERE A.FLIGHT_ID = B.FLIGHT_ID</b>
+   
+<b>-- List the employee numbers (EMPNO) of all employees in the EMPLOYEE 
+-- table whose department number (WORKDEPT) either begins with 'E' or 
+-- who are assigned to projects in the EMP_ACT table 
+-- whose project number (PROJNO) equals 'MA2100', 'MA2110', or 'MA2112'
+SELECT EMPNO
+     FROM EMPLOYEE
+     WHERE WORKDEPT LIKE 'E%'
+  UNION
+  SELECT EMPNO
+     FROM EMP_ACT
+     WHERE PROJNO IN('MA2100', 'MA2110', 'MA2112')</b>
+<b>-- Make the same query as in the previous example
+-- and "tag" the rows from the EMPLOYEE table with 'emp' and 
+-- the rows from the EMP_ACT table with 'emp_act'. 
+-- Unlike the result from the previous example, 
+-- this query may return the same EMPNO more than once, 
+-- identifying which table it came from by the associated "tag"
+SELECT EMPNO, 'emp'
+     FROM EMPLOYEE
+     WHERE WORKDEPT LIKE 'E%'
+  UNION
+  SELECT EMPNO, 'emp_act' FROM EMP_ACT
+     WHERE PROJNO IN('MA2100', 'MA2110', 'MA2112')</b>
+<b>-- Make the same query as in the previous example, 
+-- only use UNION ALL so that no duplicate rows are eliminated
+SELECT EMPNO
+      FROM EMPLOYEE
+      WHERE WORKDEPT LIKE 'E%'
+  UNION ALL
+  SELECT EMPNO
+     FROM EMP_ACT
+     WHERE PROJNO IN('MA2100', 'MA2110', 'MA2112')</b>
+<b>-- Make the same query as in the previous example, 
+-- only include an additional two employees currently not in any table
+-- and tag these rows as "new"
+ SELECT EMPNO, 'emp'
+     FROM EMPLOYEE
+     WHERE WORKDEPT LIKE 'E%'
+  UNION
+  SELECT EMPNO, 'emp_act'
+     FROM EMP_ACT
+     WHERE PROJNO IN('MA2100', 'MA2110', 'MA2112')
+  UNION
+     VALUES ('NEWAAA', 'new'), ('NEWBBB', 'new')</b></codeblock> </example>
+</refbody>
+</reference>

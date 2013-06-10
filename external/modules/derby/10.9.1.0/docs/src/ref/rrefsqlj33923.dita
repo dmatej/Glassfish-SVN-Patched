@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj33923" xml:lang="en-us">
+<title>Aggregates (set functions)</title>
+<prolog><metadata>
+<keywords>
+<indexterm>Aggregates<indexterm>and data types</indexterm></indexterm>
+<indexterm>Aggregates<indexterm>requirements for</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>This section describes aggregates (also described as <i>set functions</i> in
+ANSI SQL-92 and as <i>column functions</i> in some database literature). They
+provide a means of evaluating an expression over a set of rows. Whereas the
+other built-in functions operate on a single expression, aggregates operate
+on a set of values and reduce them to a single scalar value. Built-in aggregates
+can calculate the minimum, maximum, sum, count, and average of an expression
+over a set of values as well as count rows.</p></section>
+<section><p>The built-in aggregates can operate on the data types shown in
+the following table.</p>
+<table frame="all">
+<title>Permitted data types for built-in aggregates</title>
+<desc>This table lists the data types that are valid for each of the built-in aggregates.</desc>
+<tgroup cols="2" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="33*"/>
+<colspec colname="2" colnum="2" colwidth="67*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Function Name</entry>
+<entry colname="2">Permitted Data Types</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">COUNT</entry>
+<entry colname="2">All types</entry>
+</row>
+<row>
+<entry colname="1">MIN</entry>
+<entry colname="2">Numeric built-in data types</entry>
+</row>
+<row>
+<entry colname="1">MAX</entry>
+<entry colname="2">Numeric built-in data types</entry>
+</row>
+<row>
+<entry colname="1">AVG</entry>
+<entry colname="2">Numeric built-in data types</entry>
+</row>
+<row>
+<entry colname="1">SUM</entry>
+<entry colname="2">Numeric built-in data types</entry>
+</row>
+</tbody>
+</tgroup>
+</table></section>
+<section><p>Aggregates are permitted only in the following:   <ul>
+<li>A <i>SelectItem</i> in a <i><xref href="rrefselectexpression.dita#rrefselectexpression">SelectExpression</xref>.</i></li>
+<li>A <xref href="rrefsqlj14854.dita#rrefsqlj14854">HAVING clause</xref>.</li>
+<li>An <xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY clause</xref> (using an alias
+name) if the aggregate appears in the result of the relevant query block.
+That is, an alias for an aggregate is permitted in an <xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY clause</xref> if
+and only if the aggregate appears in a <i>SelectItem</i> in a <i><xref href="rrefselectexpression.dita#rrefselectexpression">SelectExpression</xref>.</i></li>
+</ul></p></section>
+<section><p>All expressions in <i>SelectItems</i> in the <i><xref href="rrefselectexpression.dita#rrefselectexpression">SelectExpression</xref></i> must
+be either aggregates or grouped columns (see <xref href="rrefsqlj32654.dita#rrefsqlj32654"></xref>).
+(The same is true if there is a HAVING clause without a GROUP BY clause.)
+This is because the <i>ResultSet</i> of a <i><xref href="rrefselectexpression.dita#rrefselectexpression">SelectExpression</xref></i> must
+be either a scalar (single value) or a vector (multiple values), but not a
+mixture of both. (Aggregates evaluate to a scalar value, and the reference
+to a column can evaluate to a vector.) For example, the following query mixes
+scalar and vector values and thus is not valid:   <codeblock><b><ph>-- not valid</ph>
+SELECT MIN(flying_time), flight_id
+FROM Flights</b></codeblock></p></section>
+<section><p>Aggregates are not allowed on outer references (correlations).
+This means that if a subquery contains an aggregate, that aggregate cannot
+evaluate an expression that includes a reference to a column in the outer
+query block. For example, the following query is not valid because SUM operates
+on a column from the outer query:   <codeblock><b>SELECT c1
+FROM t1
+GROUP BY c1
+HAVING c2 &gt;
+    (SELECT t2.x
+    FROM t2
+    WHERE t2.y = SUM(t1.c3)) </b></codeblock></p></section>
+<section><p>A cursor declared on a <i>ResultSet</i> that includes an aggregate
+in the outer query block is not updatable.</p></section>
+<section><p><ph conref="../conrefs.dita#prod/productshortname"></ph> supports
+the following aggregates:<ul>
+<li><xref href="rrefsqlj32693.dita#rrefsqlj32693"></xref></li>
+<li><xref href="rrefsqlj38716.dita#rrefsqlj38716"></xref></li>
+<li><xref href="rrefsqlj27781.dita#rrefsqlj27781"></xref></li>
+<li><xref href="rrefsqlj33520.dita#rrefsqlj33520"></xref></li>
+<li><xref href="rrefsqlj13083.dita#rrefsqlj13083"></xref></li>
+</ul></p></section>
+</refbody>
+</reference>
+

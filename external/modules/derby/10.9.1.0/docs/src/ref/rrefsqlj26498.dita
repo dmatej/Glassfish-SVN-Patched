@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj26498" xml:lang="en-us">
+<title>UPDATE statement</title>
+<prolog><metadata>
+<keywords><indexterm>UPDATE statement</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<refsyn><title>Syntax</title> <codeblock><b>{
+    UPDATE <i><xref href="rreftablename.dita#rreftablename">table-Name</xref></i> [[AS] correlation-Name]
+        SET <i><xref href="rrefcolumnname.dita#rrefcolumnname">column-Name</xref></i> = <i>Value</i>
+        [ , <i><xref href="rrefcolumnname.dita#rrefcolumnname">column-Name</xref></i> = <i>Value</i>} ]*
+        [<i><xref href="rrefsqlj33602.dita#rrefsqlj33602">WHERE clause</xref></i>] |
+    UPDATE <i><xref href="rreftablename.dita#rreftablename">table-Name</xref></i>
+        SET <i><xref href="rrefcolumnname.dita#rrefcolumnname">column-Name</xref></i> = <i>Value</i>
+        [ , <i><xref href="rrefcolumnname.dita#rrefcolumnname">column-Name</xref></i> = <i>Value</i> ]*
+        <i><xref href="rrefsqlj15309.dita#rrefsqlj15309">WHERE CURRENT OF</xref></i>
+}</b></codeblock> 
+<p>where <varname>Value</varname> is defined as follows:</p>
+<codeblock><b><i>Expression</i> | DEFAULT</b></codeblock>
+<p>The first syntactical form, called a searched update, updates the value of
+one or more columns for all rows of the table for which the WHERE clause evaluates to TRUE.</p>
+<p>The second syntactical form, called a positioned update, updates one or more columns on the
+current row of an open, updatable cursor. If columns were specified in the 
+<xref href="rrefsqlj31783.dita#rrefsqlj31783">FOR UPDATE clause</xref> of the SELECT 
+statement used to generate the cursor, only those columns can be updated. If no columns were specified 
+or the select statement did not include a FOR UPDATE clause, all columns may be updated.</p> 
+<p>Specifying
+DEFAULT for the update value sets the value of the column to the default defined
+for that table.</p>
+<p>The DEFAULT literal is the only value which you can directly assign to a
+generated column. Whenever you alter the value of a column referenced by the
+<i>generation-clause</i> of a generated column,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> recalculates the value
+of the generated column.</p> </refsyn>
+<example><title>Example</title> <codeblock><b><ph>-- All the employees except the manager of
+-- department (WORKDEPT) 'E21' have been temporarily reassigned. 
+-- Indicate this by changing their job (JOB) to NULL and their pay
+-- (SALARY, BONUS, COMM) values to zero in the EMPLOYEE table.</ph> 
+UPDATE EMPLOYEE
+  SET JOB=NULL, SALARY=0, BONUS=0, COMM=0
+  WHERE WORKDEPT = 'E21' AND JOB &lt;&gt; 'MANAGER'
+
+-- PROMOTE the job (JOB) of employees without a specific job title to MANAGER
+UPDATE EMPLOYEE
+	SET JOB = 'MANAGER'
+	WHERE JOB IS NULL;
+<ph>// Increase the project staffing (PRSTAFF) by 1.5 for all projects</ph>
+stmt.executeUpdate("UPDATE PROJECT SET PRSTAFF = "
+"PRSTAFF + 1.5" +
+"WHERE CURRENT OF" + ResultSet.getCursorName());
+
+<ph>-- Change the job (JOB) of employee number (EMPNO) '000290' in the EMPLOYEE table 
+-- to its DEFAULT value which is NULL</ph>
+UPDATE EMPLOYEE
+  SET JOB = DEFAULT
+  WHERE EMPNO = '000290'
+</b></codeblock> </example>
+<section><title>Statement dependency system</title> <p>A searched
+update statement depends on the table being updated, all of its conglomerates
+(units of storage such as heaps or indexes), all of its constraints, and any
+other table named in the WHERE clause or SET expressions. A CREATE or DROP
+INDEX statement or an ALTER TABLE statement for the target table of a prepared
+searched update statement invalidates the prepared searched update statement.</p> <p>The
+positioned update statement depends on the cursor and any tables the cursor
+references. You can compile a positioned update even if the cursor has not
+been opened yet. However, removing the open cursor with the JDBC <i>close</i> method
+invalidates the positioned update.</p> <p>A CREATE or DROP INDEX statement
+or an ALTER TABLE statement for the target table of a prepared positioned
+update invalidates the prepared positioned update statement.</p> <p>Dropping
+an alias invalidates a prepared update statement if the latter statement uses
+the alias.</p> <p>Dropping or adding triggers on the target table of the update
+invalidates the update statement.</p> </section>
+</refbody>
+</reference>
+

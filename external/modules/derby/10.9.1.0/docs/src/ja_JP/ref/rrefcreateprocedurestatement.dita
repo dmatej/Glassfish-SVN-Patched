@@ -1,0 +1,82 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefcreateprocedurestatement" xml:lang="ja">
+<title>CREATE PROCEDURE 文</title>
+<prolog><metadata>
+<keywords><indexterm>CREATE PROCEDURE statement</indexterm><indexterm><indexterm>SQL
+statements</indexterm>CREATE PROCEDURE</indexterm><indexterm>procedures<indexterm>creating</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>CREATE PROCEDURE文によりCALL PROCEDUREで実行可能な、Javaの手続きを作成できます。</p><p>手続きや<xref href="rrefattrib26867.dita#rrefattrib26867">データベースの所有者</xref>は自動的にEXECUTE権限を持つものとされ、また他のユーザに権限を付与することができます。EXECUTE権限は手続きやデータベースの所有者から剥奪できません。</p></section>
+<refsyn><title>構文</title><codeblock><b>CREATE PROCEDURE <i><xref href="rrefcreateprocedurestatement.dita#rrefcreateprocedurestatement/rrefcrproprocedurename"
+>手続名</xref></i> ( [ <xref href="rrefcreateprocedurestatement.dita#rrefcreateprocedurestatement/rrefcrproprocedureparameter">手続きの引数</xref
+>
+   [, <xref href="rrefcreateprocedurestatement.dita#rrefcreateprocedurestatement/rrefcrproprocedureparameter">手続きの引数</xref>] ] * )
+[ <xref href="rrefcreateprocedurestatement.dita#rrefcreateprocedurestatement/rrefcrproprocedureelement">手続きの要素</xref> ] *</b></codeblock
+></refsyn>
+<example id="rrefcrproprocedurename"><title>手続名</title><codeblock><b>[ <i><xref
+href="rrefschemaname.dita#rrefschemaname">スキーマ名</xref>.</i> ] <i><xref
+href="crefsqlj34834.dita#crefsqlj34834">SQL92識別子</xref></i></b></codeblock></example>
+<section><p>スキーマ名が指定されなかった場合、現在のスキーマが既定となります。手続名を限定する場合、スキーマ名はSYSで始まってはなりません。</p></section>
+<example id="rrefcrproprocedureparameter"> <title>手続の引数</title><codeblock><b>[ { IN | OUT | INOUT } ] [ 引数名 ] <i>データ型</i></b></codeblock></example>
+<section><p>引数の既定はINです。引数名は手続にて一意である必要があります。</p>
+<p><i>データ型</i>の構文は<xref href="crefsqlj31068.dita#crefsqlj31068"></xref>に記述されています。</p><note>BLOB、CLOB、LONG VARCHAR、LONG VARCHAR FOR BIT DATAやXMLのようなデータ型はCREATE PROCEDURE文にて引数と定義できません。</note></section>
+<example id="rrefcrproprocedureelement"> <title>手続の要素</title><codeblock><b> { 
+| [ DYNAMIC ] RESULT SETS <i><xref href="rrefsqlj10696.dita#rrefsqlj10696">INTEGER</xref></i>
+| LANGUAGE { JAVA }
+| EXTERNAL NAME <i>string</i>
+| PARAMETER STYLE JAVA
+| { NO SQL | MODIFIES SQL DATA | CONTAINS SQL | READS SQL DATA }
+ }
+</b></codeblock></example>
+<section><title>DYNAMIC RESULT SETS <i>数値</i></title> <p>手続に見積もられる結果の上限を与えます。既定は結果無し(0)です。</p></section>
+<section><title>LANGUAGE</title> <p><b>JAVA</b>- 手続はJavaのクラスにあるpublic staticなメソッドとして呼ばれます。</p></section>
+<section><title>EXTERNAL NAME <i>文字列</i></title> <p><i>文字列</i> により手続が実施されたときのJavaのメソッドが記述されます。これは次の書式となります。<codeblock>クラス名.メソッド名</codeblock>この名前には空白があってはなりません。</p></section>
+<section><title>PARAMETER STYLE</title> <p><b>JAVA</b> - 手続はJavaとSQLルーチンの仕様に沿って、値渡しにより引数を扱います。INOUTおよびOUTの引数は値を呼び出し側に戻せるように、要素を一つだけ持つ配列により渡されます。結果はJavaのメソッドにjava.sql.ResultSet[]の型で追加された、唯一つの要素を持つパラメータにより呼び出し側に戻されます。</p> <p><ph conref="../conrefs.dita#prod/productshortname"></ph> は長い列の型(例えばLong Varchar, BLOB等のことです。)をサポートしません。
+もしこれらの長い列の型のうちの一つを使うと例外が発生します。</p></section>
+<section><title>NO SQL, CONTAINS SQL, READS SQL DATA, MODIFIES SQL DATA </title> <p>
+手続がSQL文を発行するか否か、またするならばどのようなSQL文を発行するかを表します。</p> <dl>
+<dlentry>
+<dt>CONTAINS SQL</dt>
+<dd>読み込みも変更も行わないSQL文を手続に持たせることができることを表します。サポートされていない文では異なるというエラーが発生します。これは既定です。</dd>
+</dlentry><dlentry>
+<dt>NO SQL</dt>
+<dd>手続ではいかなるSQL文も実行できません。</dd>
+</dlentry><dlentry>
+<dt>READS SQL DATA </dt>
+<dd>
+変更を行わないSQL文を手続に持たせることができることをあらわします。サポートされていない文では異なるというエラーが発生します。</dd>
+</dlentry><dlentry>
+<dt>MODIFIES SQL DATA</dt>
+<dd>手続でサポートされていない、あらゆるSQL文を手続から実行できることを表します。</dd>
+</dlentry></dl></section>
+<section><p>手続の要素はどのような順序でも出現することができますが、それぞれの種類の要素は一度までしか現れてはなりません。手続にはこれらの定義が無ければなりません。<ul>
+<li><b>LANGUAGE</b></li>
+<li><b>PARAMETER STYLE</b></li>
+<li><b>EXTERNAL NAME</b></li>
+</ul></p></section>
+<section><title>例</title> <codeblock><b>CREATE PROCEDURE SALES.TOTAL_REVENUE(IN S_MONTH INTEGER,
+IN S_YEAR INTEGER, OUT TOTAL DECIMAL(10,2))
+PARAMETER STYLE JAVA READS SQL DATA LANGUAGE JAVA EXTERNAL NAME 
+'com.acme.sales.calculateRevenueByMonth'</b></codeblock></section>
+</refbody>
+</reference>

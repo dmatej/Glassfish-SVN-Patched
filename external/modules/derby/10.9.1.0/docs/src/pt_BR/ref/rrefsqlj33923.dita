@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<reference id="rrefsqlj33923" xml:lang="pt-br">
+<title>Agregações (funções de conjunto)</title>
+<refbody>
+<section>
+<p>Esta seção descreve as agregações (também descritas como <i>funções de
+conjunto</i> no ANSI SQL-92 e como <i>funções de coluna</i> em algumas
+literaturas sobre banco de dados).
+As agregações fornecem meios de avaliar uma expressão para um conjunto de
+linhas.
+Enquanto as outras funções nativas operam sobre uma única expressão, as
+funções de agregação operam sobre conjuntos de valores reduzindo-os a um
+único valor escalar.
+As agregações nativas podem calcular o valor mínimo, o valor máximo, a soma
+e a média de uma expressão com relação a um conjunto de valores, assim como
+contar linhas.
+Também podem ser criadas agregações do usuário para executar outras funções
+de conjunto, como calcular o desvio padrão.</p>
+</section>
+<section>
+<p><indexterm>Agregações<indexterm>e tipos de dado</indexterm></indexterm>
+As agregações nativas podem operar nos tipos de dado mostrados em
+<xref href="rrefsqlj33923.dita#rrefsqlj33923/sqlj92398"></xref>.
+<table frame="all" id="sqlj92398">
+<title>Tipos de dado permitidos pelas agregações nativas</title>
+<tgroup cols="3" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="20*"/>
+<colspec colname="2" colnum="2" colwidth="20*"/>
+<colspec colname="3" colnum="3"
+colwidth="20*"/>
+<thead>
+<row>
+<entry colname="1"></entry>
+<entry align="left" colname="2" valign="bottom">Todos os tipos</entry>
+<entry align="left" colname="3" valign="bottom">Tipos de dado numéricos nativos</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">COUNT</entry>
+<entry colname="2">X</entry>
+<entry colname="3">X</entry>
+</row>
+<row>
+<entry colname="1">MIN</entry>
+<entry colname="2"></entry>
+<entry colname="3">X</entry>
+</row>
+<row>
+<entry colname="1">MAX</entry>
+<entry colname="2"></entry>
+<entry colname="3">X</entry>
+</row>
+<row>
+<entry colname="1">AVG</entry>
+<entry colname="2"></entry>
+<entry colname="3">X</entry>
+</row>
+<row>
+<entry colname="1">SUM</entry>
+<entry colname="2"></entry>
+<entry colname="3">X</entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+</p>
+</section>
+<section>
+<p><indexterm>Agregações<indexterm>requisitos</indexterm></indexterm>
+As agregações são permitidas apenas:
+<ul>
+<li>No <i>ItemSeleção</i> da
+<i><xref href="rrefselectexpression.dita#rrefselectexpression">ExpressãoSeleção</xref>.</i></li>
+<li>Na <xref href="rrefsqlj14854.dita#rrefsqlj14854">Cláusula HAVING</xref>.</li>
+<li>Na <xref href="rrefsqlj13658.dita#rrefsqlj13658">Cláusula ORDER BY</xref>
+(utilizando um nome aliás) se a agregação aparecer no resultado do bloco de
+consulta relevante.
+Ou seja, é permitido um aliás para uma agregação na
+<xref href="rrefsqlj13658.dita#rrefsqlj13658">Cláusula ORDER BY</xref> se,
+e somente se, a agregação aparecer no <i>ItemSeleção</i> da
+<i><xref href="rrefselectexpression.dita#rrefselectexpression">ExpressãoSeleção</xref>.</i></li>
+</ul>
+</p>
+</section>
+<section>
+<p>Todas as expressões nos <i>ItensSelecionados</i> da
+<i><xref href="rrefselectexpression.dita#rrefselectexpression">ExpressãoSeleção</xref></i>
+devem ser agregações ou colunas agrupadas (consulte a
+<xref href="rrefsqlj32654.dita#rrefsqlj32654"></xref>)
+(O mesmo é verdade se houver uma cláusula HAVING sem uma cláusula GROUP BY).
+Isto se deve ao fato do <i>ResultSet</i> da
+<i><xref href="rrefselectexpression.dita#rrefselectexpression">ExpressãoSeleção</xref></i>
+dever ser um escalar (valor único) ou um vetor (vários valores), mas não a uma
+mistura dos dois (as agregações têm como resultado um valor escalar, e a
+referência a uma coluna pode ter como resultado um vetor).
+Por exemplo, a consulta a seguir mistura valor escalar e vetor e, portanto,
+não é válida:
+<codeblock><b><ph>-- inválido</ph>
+SELECT MIN(TEMPO_VÔO), ID_VÔO
+FROM VÔOS</b>
+</codeblock>
+</p>
+</section>
+<section>
+<p>Não são permitidas agregações em referências externas (correlações).
+Isto significa que se a subconsulta contiver uma agregação, esta agregação
+não poderá avaliar uma expressão que inclua uma referência a uma coluna do bloco
+de consulta externo.
+Por exemplo, a seguinte consulta não é válida porque SUM opera sobre uma
+coluna da consulta externa:
+<codeblock><b>SELECT c1
+FROM t1
+GROUP BY c1
+HAVING c2 &gt;
+    (SELECT t2.x
+    FROM t2
+    WHERE t2.y = SUM(t1.c3)) </b>
+</codeblock>
+</p>
+</section>
+<section>
+<p>O cursor declarado em um <i>ResultSet</i> que inclui uma agregação no
+bloco de consulta externo não é atualizável.</p>
+</section>
+<section>
+<p>Esta seção inclui as seguintes agregações:
+<ul>
+<li><xref href="rrefsqlj32693.dita#rrefsqlj32693"></xref></li>
+<li><xref href="rrefsqlj38716.dita#rrefsqlj38716"></xref></li>
+<li><xref href="rrefsqlj27781.dita#rrefsqlj27781"></xref></li>
+<li><xref href="rrefsqlj33520.dita#rrefsqlj33520"></xref></li>
+<li><xref href="rrefsqlj13083.dita#rrefsqlj13083"></xref></li>
+</ul>
+</p>
+</section>
+</refbody>
+</reference>

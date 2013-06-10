@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj13590" xml:lang="en-us">
+<title>CONSTRAINT clause</title>
+<prolog><metadata>
+<keywords><indexterm>CONSTRAINT clause</indexterm><indexterm>Constraints</indexterm><indexterm>Storage
+properties<indexterm>for indexes backing constraints</indexterm></indexterm><indexterm>Backing
+indexes<indexterm>specifying storage properties for</indexterm></indexterm><indexterm>Tables<indexterm>specifying
+page size for</indexterm><indexterm>specifying properties for</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>A CONSTRAINT clause is an optional part of a <xref href="rrefsqlj24513.dita#rrefsqlj24513">CREATE TABLE statement</xref> or <xref
+href="rrefsqlj81859.dita#rrefsqlj81859">ALTER TABLE statement</xref>. A constraint is a rule to which data
+must conform. Constraint names are optional.</p> <p>A CONSTRAINT can be one
+of the following:   <ul>
+<li><indexterm>Column-level constraints</indexterm><indexterm>Constraints<indexterm>column-level</indexterm></indexterm>a
+column-level constraint   <p>Column-level constraints refer to a single column
+in the table and do not specify a column name (except check constraints).
+They refer to the column that they follow.</p></li>
+<li><indexterm>Table-level constraints</indexterm><indexterm>Constraints<indexterm>table-level</indexterm></indexterm>a
+table-level constraint   <p>Table-level constraints refer to one or more columns
+in the table. Table-level constraints specify the names of the columns to
+which they apply. Table-level CHECK constraints can refer to 0 or more columns
+in the table.</p></li>
+</ul></p> <p><indexterm>Column-level constraints<indexterm>used in CREATE
+TABLE statement</indexterm></indexterm><indexterm>Constraints<indexterm>column-level</indexterm></indexterm>Column
+constraints include:   <ul>
+<li>NOT NULL   <p>Specifies that this column cannot hold NULL values (constraints
+of this type are not nameable).</p></li>
+<li>PRIMARY KEY<indexterm>Primary keys<indexterm>creating</indexterm><indexterm>adding</indexterm></indexterm> 
+ <p>Specifies the column that uniquely identifies a row in the table. The
+identified columns must be defined as NOT NULL. </p> <note>If you attempt
+to add a primary key using ALTER TABLE and any of the columns included in
+the primary key contain null values, an error will be generated and the primary
+key will not be added. See <xref href="rrefsqlj81859.dita#rrefsqlj81859"></xref> for
+more information.</note></li>
+<li>UNIQUE   <p>Specifies that values in the column must be unique.</p></li>
+<li>FOREIGN KEY   <p>Specifies that the values in the column must correspond
+to values in a referenced primary key or unique key column or that they are
+NULL.</p></li>
+<li>CHECK   <p>Specifies rules for values in the column.</p></li>
+</ul></p> <p><indexterm>Table constraints<indexterm>used in CREATE TABLE statement</indexterm></indexterm><indexterm>Constraints<indexterm>table-level</indexterm
+></indexterm>Table constraints include:   <ul>
+<li>PRIMARY KEY<indexterm>Primary keys<indexterm>creating</indexterm><indexterm>adding</indexterm></indexterm> <p>Specifies
+the column or columns that uniquely identify a row in the table. NULL values
+are not allowed.</p></li>
+<li>UNIQUE   <p>Specifies that values in the columns must be unique.</p></li>
+<li>FOREIGN KEY   <p>Specifies that the values in the columns must correspond
+to values in referenced primary key or unique columns or that they are NULL.</p> <note>If
+the foreign key consists of multiple columns, and <i>any</i> column is NULL,
+the whole key is considered NULL. The insert is permitted no matter what is
+on the non-null columns.</note></li>
+<li>CHECK   <p>Specifies a wide range of rules for values in the table.</p></li>
+</ul></p> <p><indexterm>Constraints<indexterm>differences between column-level
+and table-level</indexterm></indexterm>Column constraints and table constraints
+have the same function; the difference is in where you specify them. Table
+constraints allow you to specify more than one column in a PRIMARY KEY, UNIQUE,
+CHECK, or FOREIGN KEY constraint definition. Column-level constraints (except
+for check constraints) refer to only one column.</p>
+<p>A constraint operates with the privileges of the owner of the constraint.
+See "Using SQL standard authorization" and "Privileges on views, triggers, and
+constraints" in the <ph conref="../conrefs.dita#pub/citdevelop"></ph> for
+details.</p>
+</section>
+<refsyn><title>Syntax</title> </refsyn>
+<section><title>Primary key constraints</title> <p><indexterm>Primary
+key constraints</indexterm>A primary
+key defines the set of columns that uniquely identifies rows in a table.</p> <p>When
+you create a primary key constraint, none of the columns included in the primary
+key can have NULL constraints; that is, they must not permit NULL values.</p> <p>ALTER
+TABLE ADD PRIMARY KEY allows you to include existing columns in a primary
+key if they were first defined as NOT NULL. NULL values are not allowed. If
+the column(s) contain NULL values, the system will not add the primary key
+constraint. See <xref href="rrefsqlj81859.dita#rrefsqlj81859"></xref> for more information.</p> <p>A
+table can have at most one PRIMARY KEY constraint.</p> </section>
+<section><title>Unique constraints</title><p><indexterm>Unique constraints</indexterm>
+A UNIQUE constraint defines a set of columns that uniquely identify rows in a
+table only if all the key values are not NULL. If one or more key parts are
+NULL, duplicate keys are allowed. </p>
+<p>For example, if there is a UNIQUE constraint on <codeph>col1</codeph> and
+<codeph>col2</codeph> of a table, the combination of the values held by
+<codeph>col1</codeph> and <codeph>col2</codeph> will be unique as long
+as these values are not NULL. If one of <codeph>col1</codeph> and
+<codeph>col2</codeph> holds a NULL value, there can be another identical row in
+the table.</p>
+<p>A table can have multiple UNIQUE constraints.</p>
+</section>
+<section><title>Foreign key constraints</title> <p><indexterm>Foreign keys</indexterm><indexterm>Referential
+integrity<indexterm>via foreign keys</indexterm></indexterm>Foreign keys provide
+a way to enforce the referential integrity of a database. A foreign key is
+a column or group of columns within a table that references a key in some
+other table (or sometimes, though rarely, the same table). The foreign key
+must always include the columns of which the types exactly match those in
+the referenced primary key or unique constraint.</p> <p>For a table-level
+foreign key constraint in which you specify the columns in the table that
+make up the constraint, you cannot use the same column more than once.</p> <p>If
+there is a column list in the <i>ReferencesSpecification </i>(a list of columns
+in the referenced table), it must correspond either to a unique constraint
+or to a primary key constraint in the referenced table. The <i>ReferencesSpecification</i> can
+omit the column list for the referenced table if that table has a declared
+primary key.</p> <p>If there is no column list in the <i>ReferencesSpecification </i>and
+the referenced table has no primary key, a statement exception is thrown.
+(This means that if the referenced table has only unique keys, you must include
+a column list in the <i>ReferencesSpecification.</i>)</p> <p>A foreign key
+constraint is satisfied if there is a matching value in the referenced unique
+or primary key column. If the foreign key consists of multiple columns, the
+foreign key value is considered NULL if any of its columns contains a NULL.
+  <note>It is possible for a foreign key consisting of multiple columns to
+allow one of the columns to contain a value for which there is no matching
+value in the referenced columns, per the SQL-92 standard. To avoid this situation,
+create NOT NULL constraints on all of the foreign key's columns.</note></p> </section>
+<section><title>Foreign key constraints and DML</title> <p>When you insert
+into or update a table with an enabled foreign key constraint, <ph conref="../conrefs.dita#prod/productshortname"></ph> checks
+that the row does not violate the foreign key constraint by looking up the
+corresponding referenced key in the referenced table. If the constraint is
+not satisfied, <ph conref="../conrefs.dita#prod/productshortname"></ph> rejects
+the insert or update with a statement exception.</p> <p>When you update or
+delete a row in a table with a referenced key (a primary or unique constraint
+referenced by a foreign key), <ph conref="../conrefs.dita#prod/productshortname"></ph> checks
+every foreign key constraint that references the key to make sure that the
+removal or modification of the row does not cause a constraint violation.
+If removal or modification of the row would cause a constraint violation,
+the update or delete is not permitted and <ph conref="../conrefs.dita#prod/productshortname"></ph> throws
+a statement exception.</p> <p><ph conref="../conrefs.dita#prod/productshortname"></ph> performs
+constraint checks at the time the statement is executed, not when the transaction
+commits.</p> </section>
+<section><title>Backing indexes</title> <p><indexterm>Backing indexes<indexterm>created
+automatically to enforce primary key, unique, and foreign key  constraints</indexterm></indexterm><indexterm>Indexes<indexterm>automatic
+creation of for primary key, unique, and foreign key constraints</indexterm></indexterm>UNIQUE,
+PRIMARY KEY, and FOREIGN KEY constraints generate indexes that enforce or
+"back" the constraint (and are sometimes called <i>backing indexes</i>).
+PRIMARY KEY constraints generate unique indexes. FOREIGN KEY constraints
+generate non-unique indexes. UNIQUE constraints generate unique indexes if
+all the columns are non-nullable, and they generate non-unique indexes if
+one or more columns are nullable. Therefore, if a column or set of columns has
+a UNIQUE, PRIMARY KEY, or FOREIGN KEY constraint on it, you do not need to
+create an index on those columns for performance. <ph conref="../conrefs.dita#prod/productshortname"></ph> has
+already created it for you. See <xref href="rrefsqlj20937.dita#rrefsqlj20937/sqlj27363"></xref>.</p>
+<p>These indexes are
+available to the optimizer for query optimization (see <xref href="rrefsqlj20937.dita#rrefsqlj20937"></xref>)
+and have system-generated names.</p> <p>You cannot drop backing indexes with
+a DROP INDEX statement; you must drop the constraint or the table.</p> </section>
+<section><title>Check constraints</title> <p><indexterm>Check constraints</indexterm>A
+check constraint can be used to specify a wide range of rules for the contents
+of a table. A search condition (which is a boolean expression) is specified
+for a check constraint. This search condition must be satisfied for all rows
+in the table. The search condition is applied to each row that is modified
+on an INSERT or UPDATE at the time of the row modification. The entire statement
+is aborted if any check constraint is violated.</p> </section>
+<section id="sqlj57077"><title>Requirements for search condition</title> <p>If
+a check constraint is specified as part of a column-definition, a column reference
+can only be made to the same column. Check constraints specified as part of
+a table definition can have column references identifying columns previously
+defined in the CREATE TABLE statement.</p> <p>The search condition must always
+return the same value if applied to the same values. Thus, it cannot contain
+any of the following:   <ul>
+<li>Dynamic parameters (?)</li>
+<li>Date/Time Functions (CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP)</li>
+<li>Subqueries</li>
+<li>User Functions (such as USER, SESSION_USER, CURRENT_USER)</li>
+</ul></p> </section>
+<section><title>Referential actions</title> <p><indexterm>Referential actions</indexterm><indexterm>Constraint
+clause<indexterm>referential actions in</indexterm></indexterm>You can specify
+an ON DELETE clause and/or an ON UPDATE clause, followed by the appropriate
+action (CASCADE, RESTRICT, SET NULL, or NO ACTION) when defining foreign keys.
+These clauses specify whether <ph conref="../conrefs.dita#prod/productshortname"></ph> should
+modify corresponding foreign key values or disallow the operation, to keep
+foreign key relationships intact when a primary key value is updated or deleted
+from a table.</p> <p>You specify the update and delete rule of a referential
+constraint when you define the referential constraint.</p> <p>The update rule
+applies when a row of either the parent or dependent table is updated. The
+choices are NO ACTION and RESTRICT. </p> <p>When a value in a column of the
+parent table's primary key is updated and the update rule has been specified
+as RESTRICT, <ph conref="../conrefs.dita#prod/productshortname"></ph> checks
+dependent tables for foreign key constraints. If any row in a dependent table
+violates a foreign key constraint, the transaction is rolled back. </p> <p>If
+the update rule is NO ACTION, <ph conref="../conrefs.dita#prod/productshortname"></ph> checks
+the dependent tables for foreign key constraints <i>after</i> all updates
+have been executed but <i>before</i> triggers have been executed. If any row
+in a dependent table violates a foreign key constraint, the statement is rejected.</p> <p>When
+a value in a column of the dependent table is updated, and that value is part
+of a foreign key, NO ACTION is the implicit update rule. NO ACTION means that
+if a foreign key is updated with a non-null value, the update value must match
+a value in the parent table's primary key when the update statement is completed.
+If the update does not match a value in the parent table's primary key, the
+statement is rejected.</p> <p>The delete rule applies when a row of the parent
+table is deleted and that row has dependents in the dependent table of the
+referential constraint. If rows of the dependent table are deleted, the delete
+operation on the parent table is said to be <i>propagated</i> to the dependent
+table. If the dependent table is also a parent table, the action specified
+applies, in turn, to its dependents. </p> <p>The choices are NO ACTION, RESTRICT,
+CASCADE, or SET NULL. SET NULL can be specified only if some column of the
+foreign key allows null values.</p> <p>If the delete rule is:</p> <p>NO ACTION, <ph
+conref="../conrefs.dita#prod/productshortname"></ph> checks the dependent
+tables for foreign key constraints <i>after</i> all deletes have been executed
+but <i>before</i> triggers have been executed. If any row in a dependent table
+violates a foreign key constraint, the statement is rejected.</p> <p>RESTRICT, <ph
+conref="../conrefs.dita#prod/productshortname"></ph> checks dependent tables
+for foreign key constraints. If any row in a dependent table violates a foreign
+key constraint, the transaction is rolled back.</p> <p>CASCADE, the delete
+operation is propagated to the dependent table (and that table's dependents,
+if applicable).</p> <p>SET NULL, each nullable column of the dependent table's
+foreign key is set to null. (Again, if the dependent table also has dependent
+tables, nullable columns in those tables' foreign keys are also set to null.)</p> <p>Each
+referential constraint in which a table is a parent has its own delete rule;
+all applicable delete rules are used to determine the result of a delete operation.
+Thus, a row cannot be deleted if it has dependents in a referential constraint
+with a delete rule of RESTRICT or NO ACTION. Similarly, a row cannot be deleted
+if the deletion cascades to any of its descendants that are dependents in
+a referential constraint with the delete rule of RESTRICT or NO ACTION. </p> <p>Deleting
+a row from the parent table involves other tables. Any table involved in a
+delete operation on the parent table is said to be delete-connected to the
+parent table. The delete can affect rows of these tables in the following
+ways:   <ul>
+<li>If the delete rule is RESTRICT or NO ACTION, a dependent table is involved
+in the operation but is not affected by the operation. (That is, <ph conref="../conrefs.dita#prod/productshortname"></ph> checks
+the values within the table, but does not delete any values.) </li>
+<li>If the delete rule is SET NULL, a dependent table's rows can be updated
+when a row of the parent table is the object of a delete or propagated delete
+operation. </li>
+<li>If the delete rule is CASCADE, a dependent table's rows can be deleted
+when a parent table is the object of a delete. </li>
+<li>If the dependent table is also a parent table, the actions described in
+this list apply, in turn, to its dependents.</li>
+</ul></p> </section>
+<example id="sqljidx6080"><title>Examples</title> <codeblock><b>-- column-level primary key constraint named OUT_TRAY_PK:
+CREATE TABLE SAMP.OUT_TRAY
+	(
+	SENT TIMESTAMP,
+	DESTINATION CHAR(8),
+	SUBJECT CHAR(64) NOT NULL CONSTRAINT OUT_TRAY_PK PRIMARY KEY,
+	NOTE_TEXT VARCHAR(3000) 
+   );
+
+-- the table-level primary key definition allows you to
+-- include two columns in the primary key definition:
+CREATE TABLE SAMP.SCHED 
+	(
+	CLASS_CODE CHAR(7) NOT NULL, 
+	DAY SMALLINT NOT NULL, 
+	STARTING TIME, 
+	ENDING TIME,
+	PRIMARY KEY (CLASS_CODE, DAY)
+	);
+
+-- Use a column-level constraint for an arithmetic check
+-- Use a table-level constraint
+-- to make sure that a employee's taxes does not 
+-- exceed the bonus
+CREATE TABLE SAMP.EMP 
+	(
+	EMPNO CHAR(6) NOT NULL CONSTRAINT EMP_PK PRIMARY KEY,
+	FIRSTNME CHAR(12) NOT NULL,
+	MIDINIT vARCHAR(12) NOT NULL,
+	LASTNAME VARCHAR(15) NOT NULL,
+	SALARY DECIMAL(9,2) CONSTRAINT SAL_CK CHECK (SALARY &gt;= 10000),
+	BONUS DECIMAL(9,2), 
+	TAX DECIMAL(9,2),
+	CONSTRAINT BONUS_CK CHECK (BONUS &gt; TAX)
+	);
+
+-- use a check constraint to allow only appropriate
+-- abbreviations for the meals
+CREATE TABLE FLIGHTS
+	(
+	FLIGHT_ID CHAR(6) NOT NULL ,
+	SEGMENT_NUMBER INTEGER NOT NULL ,
+	ORIG_AIRPORT CHAR(3),
+	DEPART_TIME TIME,
+	DEST_AIRPORT CHAR(3),
+	ARRIVE_TIME TIME,
+	MEAL CHAR(1) CONSTRAINT MEAL_CONSTRAINT 
+	CHECK (MEAL IN ('B', 'L', 'D', 'S')),
+	PRIMARY KEY (FLIGHT_ID, SEGMENT_NUMBER)
+	);
+
+CREATE TABLE METROPOLITAN
+	(
+	HOTEL_ID INT NOT NULL CONSTRAINT HOTELS_PK PRIMARY KEY,
+	HOTEL_NAME VARCHAR(40) NOT NULL,
+	CITY_ID INT CONSTRAINT METRO_FK REFERENCES CITIES
+	);
+
+-- create a table with a table-level primary key constraint
+-- and a table-level foreign key constraint 
+CREATE TABLE FLTAVAIL
+	(
+	FLIGHT_ID CHAR(6) NOT NULL, 
+	SEGMENT_NUMBER INT NOT NULL, 
+	FLIGHT_DATE DATE NOT NULL, 
+	ECONOMY_SEATS_TAKEN INT,
+	BUSINESS_SEATS_TAKEN INT,
+	FIRSTCLASS_SEATS_TAKEN INT, 
+	CONSTRAINT FLTAVAIL_PK PRIMARY KEY (FLIGHT_ID, SEGMENT_NUMBER), 
+	CONSTRAINT FLTS_FK
+	FOREIGN KEY (FLIGHT_ID, SEGMENT_NUMBER)
+	REFERENCES Flights (FLIGHT_ID, SEGMENT_NUMBER)
+	);
+<ph>-- add a unique constraint to a column</ph>
+ALTER TABLE SAMP.PROJECT 
+ADD CONSTRAINT P_UC UNIQUE (PROJNAME);
+
+-- create a table whose city_id column references the
+-- primary key in the Cities table
+-- using a column-level foreign key constraint  
+CREATE TABLE CONDOS
+	(
+	CONDO_ID INT NOT NULL CONSTRAINT hotels_PK PRIMARY KEY,
+	CONDO_NAME VARCHAR(40) NOT NULL,
+	CITY_ID INT CONSTRAINT city_foreign_key
+	REFERENCES Cities ON DELETE CASCADE ON UPDATE RESTRICT
+	);</b></codeblock> </example>
+<section><title>Statement dependency system</title> <p>INSERT
+and UPDATE statements depend on all constraints on the target table. DELETEs
+depend on unique, primary key, and foreign key constraints. These statements
+are invalidated if a constraint is added to or dropped from the target table.</p> </section>
+</refbody>
+</reference>
+

@@ -1,0 +1,84 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefproceduresinplacecompress" xml:lang="ja">
+<title>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLEシステム手続き</title>
+<prolog><metadata>
+<keywords><indexterm>Reclaiming unused space</indexterm><indexterm>system
+procedures<indexterm>SYSCS_INPLAC E_COMPRESS_TABLE</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p><codeph>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</codeph>システム手続きを使って、表や索引に割り当てられた未使用の領域を回収することができます。
+未利用の割り当てられた領域が存在する典型的な状況は、表から大規模な情報が情報が削除された後、それで空いた領域を使う情報が挿入されていない場合です。
+既定では<ph conref="../conrefs.dita#prod/productshortname"></ph>は未使用の領域を基本ソフト(OS)に返却しません。例えば表や索引に割り当てられたページは、表や索引が破棄されるまでは基本ソフト(OS)に返却されません。
+<codeph>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</codeph>により使われていない領域を基本ソフト(OS)に返却することができます。</p>
+<p>このシステム手続きにより、三種類の圧縮をSQL表の記録された領域にて行います。 その三種類とは<codeph>PURGE_ROWS</codeph>、<codeph>DEFRAGMENT_ROWS</codeph>それと
+<codeph>TRUNCATE_END</codeph>です。また<codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE()</codeph>とは異なり、既存の表および索引が記録された領域だけを使って全処理が行われます。</p></section>
+<section><title>構文</title><codeblock><b>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE(
+		IN SCHEMANAME VARCHAR(128),
+		IN TABLENAME VARCHAR(128),
+		IN PURGE_ROWS SMALLINT,
+		IN DEFRAGMENT_ROWS SMALLINT,
+		IN TRUNCATE_END SMALLINT )</b></codeblock> <dl><dlentry>
+<dt>SCHEMANAME</dt>
+<dd>この引数はVARCHAR(128)型の値をとり、表のあるスキーマを指定します。空の値を渡すとエラーとなります。</dd>
+</dlentry><dlentry>
+<dt>TABLENAME</dt>
+<dd>この引数はVARCHAR(128)型の値をとり、表の表名を指定します。文字列と表名は、大文字小文字も一致していなければならず、"Fred"と引数にとれば、SQLのレベルでデリミトされた識別子の'Fred'となります。
+空の値を渡すとエラーとなります。</dd>
+</dlentry><dlentry>
+<dt>PURGE_ROWS</dt>
+<dd>PURGE_ROWSが0以外の値であった場合、表全体が一度走査されて、表から削除とコミットが完了した行が取り除かれます。こうして空いた領域は、以降の行の挿入にて利用できますが、表に割り当てられたままとなります。
+このオプションをとる場合は表の全ページが走査されるので、パフォーマンスは表のサイズに正比例します。</dd>
+</dlentry><dlentry>
+<dt>DEFRAGMENT_ROWS</dt>
+<dd>DEFRAGMENT_ROWSが0以外の値であった場合、表にある行を後方から前方に移動する、断片化解消の走査が一度行われます。
+この断片化解消の走査は、表の末尾にあるページを空にしようとします。こうしてできた空のページは、続いてTRUNCATE_ENDを指定して基本ソフト(OS)に返却可能となります。
+TRUNCATE_ENDを指定する時は、DEFRAGMENT_ROWSを指定する事をお勧めします。
+DEFRAGMENT_ROWSが指定されると、表の全体が走査され、移動した表の全行について索引が更新されます。従って実行時間は表のサイズに正比例します。</dd>
+</dlentry><dlentry>
+<dt>TRUNCATE_END</dt>
+<dd>TRUNCATE_ENDが0以外の値であった場合、表の末尾にある隣接したページを基本ソフト(OS)に返却しようとします。PURGE_ROWSとDEFRAGMENT_ROWSの両方あるいは片方を同時に指定することで、処理の対象となるページ数を増やす事ができます。この処理自身は表の走査は行われません。</dd>
+</dlentry></dl></section>
+<section><title>SQLの例</title>
+<p>USというスキーマにあるCUSTOMERという表を圧縮するために、全ての圧縮処理を指定します。<codeblock><b>call SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE('US', 'CUSTOMER', 1, 1, 1);</b
+></codeblock></p>
+<p>同じ表の末尾にある空き領域を返すなら、全ての処理を指定するより次のように呼び出す方が、処理が短時間で済みます。しかし返却される領域は少なくなるでしょう。<codeblock><b>call SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE('US', 'CUSTOMER', 0, 0, 1);</b></codeblock></p></section>
+<section><title>Javaの例</title>
+<p>USというスキーマにあるCUSTOMERという表を圧縮するために、全ての圧縮処理を指定します。<codeblock>CallableStatement cs = conn.prepareCall
+("CALL SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE(?, ?, ?, ?, ?)");
+cs.setString(1, "US");
+cs.setString(2, "CUSTOMER");
+cs.setShort(3, (short) 1);
+cs.setShort(4, (short) 1);
+cs.setShort(5, (short) 1);
+cs.execute();</codeblock></p><p>同じ表の末尾にある空き領域を返すなら、全ての処理を指定するより次のように呼び出す方が、処理が短時間で済みます。しかし返却される領域は少なくなるでしょう。<codeblock>CallableStatement cs = conn.prepareCall
+("CALL SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE(?, ?, ?, ?, ?)");
+cs.setString(1, "US");
+cs.setString(2, "CUSTOMER");
+cs.setShort(3, (short) 0);
+cs.setShort(4, (short) 0);
+cs.setShort(5, (short) 1);
+cs.execute();</codeblock></p></section>
+<section><p><note type="tip">SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE手続きは、自動コミットモードで実行する事をお勧めします。</note>
+<note>この手続きは圧縮する表に排他表ロックを必要とします。表やその索引へのあらゆる文の計画は無効となります。利用されていない領域を識別する方法については、<cite><ph conref="../conrefs.dita#pub/citadmin"></ph></cite>を参照してください。</note></p></section>
+</refbody>
+</reference>

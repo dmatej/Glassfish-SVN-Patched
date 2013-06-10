@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefattribderegister" xml:lang="en-us">
+<title>deregister=false attribute</title>
+<prolog><metadata>
+<keywords><indexterm>deregister=false database connection URL
+attribute</indexterm>
+<indexterm>embedded driver<indexterm>deregistering</indexterm></indexterm>
+<indexterm>driver<indexterm>deregistering embedded</indexterm></indexterm>
+<indexterm>attributes<indexterm>deregister</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><title>Function</title>
+<p>If set to <i>true</i> (the default), deregisters the embedded
+JDBC driver from the <i>DriverManager</i> after a shutdown, so that the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> classes can be
+garbage-collected.</p>
+<p>You initially register the embedded driver by doing one of the following:</p>
+<ul>
+<li>Call the method
+<i>Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance()</i>.
+This mechanism works on all Java Virtual Machines (JVMs) from JDK 1.4 up.</li>
+<li>Set <i>-Djdbc.drivers=org.apache.derby.jdbc.EmbeddedDriver</i> when you
+boot the <ph conref="../conrefs.dita#prod/productshortname"></ph> engine's VM,
+then call
+<i><xref href="rrefjdbc34565.dita#rrefjdbc34565">DriverManager.getConnection()</xref></i>.
+This mechanism also works on all JVMs from JDK 1.4 up.</li>
+<li>Simply call <i>DriverManager.getConnection()</i>. This mechanism works only
+on JDK 6 and up.</li>
+</ul>
+<p>Once the embedded driver is registered, you can shut down the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> engine by using the
+<i><xref href="rrefattrib16471.dita#rrefattrib16471">shutdown=true</xref></i>
+connection URL attribute. If you also specify <i>deregister=false</i> with the
+shutdown URL, the following will happen:</p>
+<ul>
+<li>The embedded driver will remain registered.</li>
+<li>The <ph conref="../conrefs.dita#prod/productshortname"></ph> classes will
+<b>not</b> be garbage-collected.</li>
+<li>You can get a <ph conref="../conrefs.dita#prod/productshortname"></ph>
+connection just by issuing a call to <i>DriverManager.getConnection()</i>. That
+is, you <b>do not</b> need to first call
+<i>Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance()</i>.</li>
+</ul>
+<p>In contrast, if you use the default setting of <i>deregister=true</i> when
+you shut down the database, the following will happen:</p>
+<ul>
+<li>The embedded driver will be deregistered.</li>
+<li>The <ph conref="../conrefs.dita#prod/productshortname"></ph> classes will be
+garbage-collected.</li>
+<li>You will have to call
+<i>Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance()</i> before
+you obtain a new <ph conref="../conrefs.dita#prod/productshortname"></ph>
+connection.</li>
+</ul>
+<p>This attribute has no meaning if it is used with the network driver.</p>
+</section>
+<section><title>Combining with other attributes</title>
+<p>This attribute is valid only when issued in conjunction with the 
+<i>shutdown=true</i> attribute.</p>
+</section>
+<example><title>Example</title>
+<codeblock><b>-- shut down salesDB and deregister the driver
+jdbc:derby:salesDB;shutdown=true
+-- shut down salesDB, but do not deregister the driver
+jdbc:derby:salesDB;shutdown=true;deregister=false
+</b></codeblock>
+</example>
+</refbody>
+</reference>

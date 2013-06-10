@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevspecialtfoptimizer" xml:lang="en-us">
+<title>Optimizer support for
+<ph conref="../conrefs.dita#prod/productshortname"></ph>-style table
+functions</title>
+<shortdesc>This topic explains how to fine-tune the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> optimizer's decision
+about where to place a table function in the join order.</shortdesc>
+<prolog><metadata>
+<keywords>
+<indexterm>functions<indexterm>costing table functions</indexterm></indexterm>
+<indexterm>Optimizer<indexterm>costing table functions</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+
+<p>
+By default, the <ph conref="../conrefs.dita#prod/productshortname"></ph>
+optimizer makes the following assumptions about a table function:
+</p>
+
+<ul>
+<li><b>Expensive</b> - It is expensive to create and loop through the
+        rows of the table function. This makes it likely that the optimizer will
+      place the table function in an outer slot of the join
+        order so that it will not be looped through often.</li>
+<li><b>Repeatable</b> - The table function can be instantiated
+        multiple times with the same results. This is probably true
+        for most table functions. However, some
+table functions may open read-once streams. If the optimizer knows that a
+        table function is repeatable, then the optimizer can place
+        the table function in an inner slot where the function can be
+        invoked multiple times. If a table function is not
+        repeatable, then the optimizer must either place it in the
+        outermost slot or invoke the function once and store its contents in
+        a temporary table.</li>
+</ul>
+
+<p>
+The user can override this optimizer behavior by giving the optimizer
+      more information. Here's how to do this:
+</p>
+
+<ul>
+<li><b>No-arg constructor</b> - The table function's class
+        must have a public constructor whose signature has no arguments.</li>
+<li><b>VTICosting</b> - The class must also implement
+<i>org.apache.derby.vti.VTICosting</i>. This involves
+implementing the following methods as described in
+<xref href="cdevspecialtfopttune.dita#cdevspecialtfopttune"></xref>
+and
+<xref href="cdevspecialtfoptexample.dita#cdevspecialtfoptexample"></xref>:
+  <ul>
+  <li><i>getEstimatedCostPerInstantiation()</i> - This method estimates the
+            cost of invoking the table function and looping
+            through its rows. The returned value adds together
+            two estimates:
+    <ul>
+    <li>Empty table - This is the cost of invoking the
+    table function, even if it contains 0 rows. See the description of variable <b>E</b>
+    in <xref href="cdevspecialtfopttune.dita#cdevspecialtfopttune"></xref>.</li>
+    <li>Scanning - This is the cost of looping through all of the
+    rows returned by the table function. See the calculation of <b>P*N</b>
+    in <xref href="cdevspecialtfopttune.dita#cdevspecialtfopttune"></xref>.</li>
+    </ul>
+  </li>
+  <li><i>getEstimatedRowCount()</i> - This guesses the number of rows
+            returned by invoking the table function.</li>
+  <li><i>supportsMultipleInstantiations()</i> - This returns false if
+            the table function
+returns different results when invoked more than once.
+  </li>
+  </ul>
+</li>
+</ul>
+
+</conbody>
+</concept>
