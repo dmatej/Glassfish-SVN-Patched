@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2009-2010 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -42,7 +42,6 @@ package org.glassfish.osgiweb;
 
 import com.sun.enterprise.web.*;
 import com.sun.faces.spi.ConfigurationResourceProvider;
-import org.apache.naming.resources.FileDirContext;
 import org.glassfish.api.deployment.DeploymentContext;
 import org.glassfish.hk2.classmodel.reflect.Types;
 import org.glassfish.web.loader.WebappClassLoader;
@@ -115,21 +114,10 @@ public class OSGiWebModuleDecorator implements WebModuleDecorator
                     populateFacesInformation(module, bctx, sc);
                 }
 
-                // Let's install a customized dir context that does not allow static contents from
-                // OSGI-OPT and OSGI-INF directories as required by the OSGi WAB spec.
-                module.setResources(new FileDirContext(){
-                    @Override
-                    protected File file(String name) {
-                        final String s = name.toUpperCase();
-                        if (s.startsWith("/OSGI-INF/") || s.startsWith("/OSGI-OPT/")) {
-                            logger.logp(Level.FINE, "OSGiWebModuleDecorator", "file",
-                                    "Forbidding access to resource called {0}", new Object[]{name});
-                            return null;
-                        } else {
-                            return super.file(name);
-                        }
-                    }
-                });
+                // For whatever reason, web container sets resources inside StandardContext.start() if
+                //  resources is null. So, we have to set it to OSGiWebDirContext in OSGiWebModuleDecorator
+                //  in addition to setting it in WABClassLoader.
+                module.setResources(new OSGiWebDirContext());
             }
         }
     }

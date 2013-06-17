@@ -40,13 +40,12 @@
 
 package org.glassfish.osgiweb;
 
-import org.apache.naming.resources.FileDirContext;
+import org.apache.naming.resources.WebDirContext;
 import org.glassfish.osgijavaeebase.OSGiArchiveHandler;
 import org.glassfish.osgijavaeebase.OSGiDeploymentContext;
 import org.glassfish.osgijavaeebase.BundleClassLoader;
 import org.glassfish.internal.api.Globals;
 import org.glassfish.internal.api.ClassLoaderHierarchy;
-import org.glassfish.web.loader.ResourceEntry;
 import org.glassfish.web.loader.WebappClassLoader;
 import org.glassfish.api.ActionReport;
 import org.glassfish.api.admin.ServerEnvironment;
@@ -136,6 +135,8 @@ class OSGiWebDeploymentContext extends OSGiDeploymentContext {
          * c) JSPC relies on getURLs() methods so that it can discover TLDs in the web app. Setting up
          * repositories and jar files ensures that WebappClassLoader's getURLs() method will
          * return appropriate URLs for JSPC to work.
+         * d) set a specialized FileDirContext object that restricts access to OSGI-INF and OSGI-OPT resources of a WAB
+         * as required by the OSGi WAB spec.
          *
          * It overrides loadClass(), getResource() and getResources() as opposed to
          * their findXYZ() equivalents so that the OSGi export control mechanism
@@ -209,10 +210,12 @@ class OSGiWebDeploymentContext extends OSGiDeploymentContext {
         public WABClassLoader(ClassLoader parent) {
             super(parent);
             setDelegate(true); // we always delegate. The default is false in WebappClassLoader!!!
-            FileDirContext r = new FileDirContext();
-            File base = getSourceDir();
-            r.setDocBase(base.getAbsolutePath());
 
+            File base = getSourceDir();
+            // Let's install a customized dir context that does not allow static contents from
+            // OSGI-OPT and OSGI-INF directories as required by the OSGi WAB spec.
+            WebDirContext r = new OSGiWebDirContext();
+            r.setDocBase(base.getAbsolutePath());
             setResources(r);
 
             // add WEB-INF/classes/ and WEB-INF/lib/*.jar to repository list, because many legacy code
@@ -230,12 +233,9 @@ class OSGiWebDeploymentContext extends OSGiDeploymentContext {
                             }
                         }))
                 {
-                    //[TangYong]fixing GLASSFISH-19696
-                	JarFile jarFile = null;
                     try {
-                    	jarFile = new JarFile(file);
-                    	addJar(file.getPath().substring(baseFileLen), jarFile, file);
-                    	jarFile.close();
+                    	addJar(file.getPath().substring(baseFileLen), new JarFile(file), file);
+                        // jarFile is closed by WebappClassLoader.stop()
                     } catch (Exception e) {
                         // Catch and ignore any exception in case the JAR file
                         // is empty.
@@ -245,39 +245,6 @@ class OSGiWebDeploymentContext extends OSGiDeploymentContext {
             setWorkDir(getScratchDir("jsp")); // We set the same working dir as set in WarHandler
         }
 
-        @Override
-        public URL getResourceFromJars(String name) {
-            // We override this method, because both DefaultServlet and StandardContext call this API to find
-            // static resources in WEB-INF/lib/*.jar. If we don't override, the default implementation in
-            // WebappClassLoader will find the resource via bundle class loader and that won't be acceptable to
-            // DefaultServlet or StandardContext.
-            assert(name.startsWith("META-INF/resources/"));
-            // META-INF/resources punch-in
-            if (name.startsWith("META-INF/resources/")) {
-                URL url = super.findResource(name);
-                if (url != null) {
-                    // Locating the repository for special handling in the case
-                    // of a JAR
-                    ResourceEntry entry = resourceEntries.get(name);
-                    try {
-                        String repository = entry.codeBase.toString();
-                        if ((repository.endsWith(".jar"))
-                                && !(name.endsWith(".class"))
-                                && !(name.endsWith(".jar"))) {
-                            // Copy binary content to the work directory if not present
-                            File resourceFile = new File(loaderDir, name);
-                            url = resourceFile.toURI().toURL();
-                        }
-                    } catch (Exception e) {
-                        // Ignore
-                    }
-                    return url;
-                }
-            } else {
-                return super.getResourceFromJars(name);
-            }
-            return null;
-        }
     }
 
     /**
