@@ -73,7 +73,7 @@ public abstract class AbstractCopyright {
     private static Pattern njcpat;
     // find a valid copyright line
     protected static Pattern ypat =
-	Pattern.compile("Copyright (\\(c\\) )?([-0-9, ]+) [A-Z]");
+	Pattern.compile("Copyright (\\(c\\) )?([-0-9, ]+) (by )?[A-Z]");
     // find the ending "*/" line
     private static Pattern endPat = Pattern.compile(" *\\*/");
     // find a secondary license (e.g., Apache)
