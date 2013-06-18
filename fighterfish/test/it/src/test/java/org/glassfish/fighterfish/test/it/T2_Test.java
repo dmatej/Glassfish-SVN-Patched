@@ -734,7 +734,7 @@ public class T2_Test extends AbstractTestObject {
 
             String location = "mvn:org.apache.felix/org.apache.felix.webconsole/3.1.2/jar";
             Bundle bundle = tc.installBundle(location);
-            String location2 = "mvn:org.glassfish.main.osgi-platforms/felix-webconsole-extension/4.0-SNAPSHOT/jar";
+            String location2 = "mvn:org.glassfish.main.osgi-platforms/felix-webconsole-extension/4.0.1-SNAPSHOT/jar";
             Bundle bundle2 = tc.installBundle(location2);
 
             bundle.start();
