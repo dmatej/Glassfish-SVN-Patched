@@ -56,15 +56,13 @@ import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 import org.osgi.service.http.HttpService;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.*;
 import java.net.URI;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.jar.JarInputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -717,6 +715,7 @@ public class T2_Test extends AbstractTestObject {
         logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         Bundle httpServiceBundle = null;
+        Bundle bundle2 = null;
         try {
             HttpService httpService = OSGiUtil.getService(ctx, HttpService.class);
             if (httpService == null) {
@@ -733,10 +732,22 @@ public class T2_Test extends AbstractTestObject {
             logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "httpService = {0}", new Object[]{httpService});
 
             String location = "mvn:org.apache.felix/org.apache.felix.webconsole/3.1.2/jar";
-            Bundle bundle = tc.installBundle(location);
             String location2 = "mvn:org.glassfish.main.osgi-platforms/felix-webconsole-extension/4.0.1-SNAPSHOT/jar";
-            Bundle bundle2 = tc.installBundle(location2);
-
+            Bundle bundle = tc.installBundle(location);
+            // See GlASSFISH-20646: We need to install web-console-extension with a location that has AllPermission.
+            // Since TestContext does not expose such an API, we have to install it ourselves and remember to uninstall
+            // it when the test is done.
+            InputStream is2 = null;
+            try {
+                is2 = new URL(location2).openStream();
+                final String installLocation2 = System.getProperty("com.sun.aas.installRootURI") + "modules/autostart/felix-web-console-extension.jar";
+                logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "Installing bundle from {0} at location  {1}",
+                        new Object[]{location2, installLocation2});
+                bundle2 = ctx.installBundle(location2, is2);
+                logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "Installed {0}", new Object[]{bundle2});
+            } finally {
+                if (is2 != null) is2.close();
+            }
             bundle.start();
             bundle2.start();
             Authenticator.setDefault(new Authenticator() {
@@ -775,6 +786,10 @@ public class T2_Test extends AbstractTestObject {
             in.close();
             logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "Response Body = {0}", new Object[]{stringBuilder.toString()});
         } finally {
+            if (bundle2 != null) {
+                bundle2.uninstall();
+                logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_12975", "Uninstalled {0}", new Object[]{bundle2});
+            }
             tc.destroy();
             if (httpServiceBundle != null) {
                 httpServiceBundle.stop(Bundle.STOP_TRANSIENT);
