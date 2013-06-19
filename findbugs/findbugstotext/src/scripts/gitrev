@@ -2,7 +2,7 @@
 #
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
-# Copyright (c) 2010-2013 Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
 #
 # The contents of this file are subject to the terms of either the GNU
 # General Public License Version 2 only ("GPL") or the Common Development
@@ -40,50 +40,6 @@
 #
 
 #
-# svnowner - convert from line number back to person who last changed that line
+# gitrev - show most recent revision
 #
-#	input is of the form "file: line: text",
-#	output is of the form "owner: file: line: text".
-#
-perl -e '
-
-$tmp = "/tmp/co" . $$;
-
-line: while (<>) {
-	#if (/^\s/ || !/\S+:\s*\d+:/) {
-        #	next line;
-	#}
-	chop;	# strip newline
-	($file, $lineno, $text) = split(/:/, $_, 3);
-#	if (! -r $file) {
-#		unlink $tmp;
-#		die "cant open $file\n";
-#	}
-	if ($file ne $curfile ) {
-		$curfile = $file;
-		$fileok = 0;
-		# need -v option; otherwise svn 1.7 truncates user name
-		if (-r $file &&
-			(system("svn annotate --non-interactive " .
-				"--trust-server-cert -v $file >$tmp " .
-				"2>/dev/null </dev/null") / 256 == 0)) {
-			$fileok = 1;
-		}
-	}
-	if ($fileok) {
-		if ($lineno <= 0 ) { 
-			$lineno = 1;
-		}
-		$fline = `sed -n ${lineno}p $tmp`;
-		chop $fline;
-		#s/[0-9.]+ *\(([^ ]+) .*/\1/;
-		($owner = $fline) =~ s/[0-9.]+ *([^ ]+) .*/\1/;
-		$owner =~ s/^\s+//;
-	} else {
-		$owner =  "UNKNOWN";
-	}
-        
-	printf "%s: %s\n", $owner, $_;
-}
-unlink $tmp;
-'
+git log -n 1 | head -1 | sed -e 's/commit //'

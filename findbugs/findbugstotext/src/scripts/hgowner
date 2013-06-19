@@ -40,50 +40,46 @@
 #
 
 #
-# svnowner - convert from line number back to person who last changed that line
+# hgowner - convert from line number back to person who last changed that line
 #
 #	input is of the form "file: line: text",
 #	output is of the form "owner: file: line: text".
 #
 perl -e '
 
-$tmp = "/tmp/co" . $$;
-
 line: while (<>) {
-	#if (/^\s/ || !/\S+:\s*\d+:/) {
-        #	next line;
-	#}
 	chop;	# strip newline
 	($file, $lineno, $text) = split(/:/, $_, 3);
-#	if (! -r $file) {
-#		unlink $tmp;
-#		die "cant open $file\n";
-#	}
 	if ($file ne $curfile ) {
 		$curfile = $file;
 		$fileok = 0;
-		# need -v option; otherwise svn 1.7 truncates user name
-		if (-r $file &&
-			(system("svn annotate --non-interactive " .
-				"--trust-server-cert -v $file >$tmp " .
-				"2>/dev/null </dev/null") / 256 == 0)) {
-			$fileok = 1;
+		undef @owners;
+		if (-r $file) {
+			$st = 
+			open(ANN, "hg annotate -u -v $file " .
+				"2>/dev/null </dev/null |");
+			$i = 1;
+			while ($o = <ANN>) {
+				chop $o;
+				$o =~ s/\s*(.*):.*/\1/;
+				if ($o =~ /<.*>/) {
+					$o =~ s/.*<(.*)>.*/\1/;
+				}
+				$owners[$i++] = $o;
+			}
+			close ANN;
+			$fileok = !$?;
 		}
 	}
 	if ($fileok) {
 		if ($lineno <= 0 ) { 
 			$lineno = 1;
 		}
-		$fline = `sed -n ${lineno}p $tmp`;
-		chop $fline;
-		#s/[0-9.]+ *\(([^ ]+) .*/\1/;
-		($owner = $fline) =~ s/[0-9.]+ *([^ ]+) .*/\1/;
-		$owner =~ s/^\s+//;
+		$owner = $owners[$lineno];
 	} else {
 		$owner =  "UNKNOWN";
 	}
         
 	printf "%s: %s\n", $owner, $_;
 }
-unlink $tmp;
 '

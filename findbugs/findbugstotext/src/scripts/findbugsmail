@@ -90,8 +90,9 @@ then
 	(cd $script_dir; fbpost "$TIMESTAMP" "$PROJECT" START)
 fi
 cd $ws_dir
-REV=`svn info . | sed -n -e '/^Revision: /s///p'`
+REV=`scmrev`
 find [a-z]* -xdev -name .svn -prune -o -name .m2 -prune \
+	-name .git -prune -o -name .hg -prune \
 	-o -name findbugsXml.xml -print | \
 while read file
 do
@@ -100,7 +101,7 @@ do
 	pdir=`dirname "$dir"`
 	java -jar $script_dir/FindbugsToText.jar < "$file" | \
 		sed -e "s;^;$pdir/src/main/java/;" | \
-		$script_dir/svnowner
+		$script_dir/scmowner
 done | $TEE | \
 (cd $script_dir; eval ./fbnag -T "$TIMESTAMP" -r "$REV" $FBNARGS)
 if $LOG

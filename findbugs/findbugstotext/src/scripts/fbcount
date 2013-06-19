@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/bash
 #
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
@@ -40,50 +40,51 @@
 #
 
 #
-# svnowner - convert from line number back to person who last changed that line
+# Count the number of errors in each findbugsXml.xml file.
 #
-#	input is of the form "file: line: text",
-#	output is of the form "owner: file: line: text".
+# Usage: fbcount [-i xml-file-list] [-v]
+#	-i file	get list of findbugsXml.xml files from file
+#	-v	verbose
 #
-perl -e '
 
-$tmp = "/tmp/co" . $$;
+FINDBUGSTOTEXT=/net/bat-sca/repine/export2/hudson/tools/findbugs-tool-latest/FindbugsToText.jar
+PATH=/net/bat-sca/repine/export2/hudson/tools/findbugs-tool-latest:$PATH
 
-line: while (<>) {
-	#if (/^\s/ || !/\S+:\s*\d+:/) {
-        #	next line;
-	#}
-	chop;	# strip newline
-	($file, $lineno, $text) = split(/:/, $_, 3);
-#	if (! -r $file) {
-#		unlink $tmp;
-#		die "cant open $file\n";
-#	}
-	if ($file ne $curfile ) {
-		$curfile = $file;
-		$fileok = 0;
-		# need -v option; otherwise svn 1.7 truncates user name
-		if (-r $file &&
-			(system("svn annotate --non-interactive " .
-				"--trust-server-cert -v $file >$tmp " .
-				"2>/dev/null </dev/null") / 256 == 0)) {
-			$fileok = 1;
-		}
-	}
-	if ($fileok) {
-		if ($lineno <= 0 ) { 
-			$lineno = 1;
-		}
-		$fline = `sed -n ${lineno}p $tmp`;
-		chop $fline;
-		#s/[0-9.]+ *\(([^ ]+) .*/\1/;
-		($owner = $fline) =~ s/[0-9.]+ *([^ ]+) .*/\1/;
-		$owner =~ s/^\s+//;
-	} else {
-		$owner =  "UNKNOWN";
-	}
-        
-	printf "%s: %s\n", $owner, $_;
-}
-unlink $tmp;
-'
+USAGE="fbcount [-i xml-file-list] [-v]"
+fblist=
+e=true
+
+while getopts :i:v i
+do
+	case $i in
+	i)	fblist=$OPTARG;;
+	v)	e=echo;;
+	'?')	echo "$USAGE"; exit 2;;
+	esac
+done
+shift `expr $OPTIND - 1`
+
+until [ -f pom.xml -o . -ef / -o . -ef "$HOME" ]
+do
+	cd ..
+done
+
+#MAVEN_OPTS=-Xmx512m mvn findbugs:findbugs
+(
+if [ -n "$fblist" ]
+then
+	cat "$fblist"
+else
+	find [a-z]* -xdev -name .svn -prune -o -name .m2 -prune \
+		-o -name findbugsXml.xml -print
+fi
+) | \
+while read file
+do
+	$e "Process errors in $file..."
+	dir=`dirname "$file"`
+	pdir=`dirname "$dir"`
+	$e "Directory: $pdir"
+	cnt=`java -jar $FINDBUGSTOTEXT < "$file" | wc -l`
+	echo "$pdir	$cnt"
+done
