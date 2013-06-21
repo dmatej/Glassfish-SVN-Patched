@@ -56,12 +56,17 @@ line: while (<>) {
 		undef @owners;
 		if (-r $file) {
 			$st = 
-			open(ANN, "git blame -e $file " .
+			open(ANN, "git blame -p $file " .
 				"2>/dev/null </dev/null |");
 			$i = 1;
+			$email = "UNKNOWN";
 			while ($o = <ANN>) {
-				chop $o;
-				($owners[$i++] = $o) =~ s/.*<([^\s]*)>.*/\1/;
+				if ($o =~ /^committer-mail/) {
+					chop $o;
+					($email = $o) =~ s/.*<(.*)>.*/\1/;
+				} elsif ($o =~ /^\t/) {
+					$owners[$i++] = $email;
+				}
 			}
 			close ANN;
 			$fileok = !$?;
