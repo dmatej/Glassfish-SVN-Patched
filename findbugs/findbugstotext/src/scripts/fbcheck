@@ -49,8 +49,7 @@
 #	-v	verbose
 #
 
-TMP=/tmp/findbugs.cnt.$$
-NTMP=/tmp/findbugs.cnt.$$.new
+TMP=/tmp/fbcheck.$$
 
 # Where these scripts normally reside
 FINDBUGSDIR=/net/bat-sca/repine/export2/hudson/tools/findbugs-tool-latest
@@ -62,35 +61,40 @@ PATH=/net/bat-sca/repine/export2/hudson/tools/findbugs-tool-latest:$PATH
 # Since we're reading the file using NFS and writing it using scp,
 # there's an asymmetry here.
 #
-# The file containing the recorded error counts
-STATFILE=$FINDBUGSDIR/stats/$JOB_NAME/findbugs.cnt
-# The location to copy the new error counts to, to replace the above file
-DESTSTATFILE=$DESTFINDBUGSDIR/stats/$JOB_NAME/findbugs.cnt
+# The directory containing the recorded error counts
+FBHISTDIR=$FINDBUGSDIR/stats/$JOB_NAME
+# The location to copy the new error counts to
+FBHISTDIRDEST=$DESTFINDBUGSDIR/stats/$JOB_NAME
 # The host to copy to
 DESTHOST=gf-hudson
-# The command to use to copy the file
-COPY="scp -q $NTMP $DESTHOST:$DESTSTATFILE"
-# The command to use to make the directory for the file
-MKDIR="ssh $DESTHOST mkdir -p `dirname $DESTSTATFILE`"
+# The command to use to copy the cnt file
+COPYCNT="scp -q $TMP/findbugs.new $DESTHOST:$FBHISTDIRDEST/findbugs.cnt"
+# The command to use to copy the errs file
+COPYERRS="scp -q $TMP/findbugs.errs $DESTHOST:$FBHISTDIRDEST/findbugs.errs"
+# The command to use to make the directory
+MKDIR="ssh $DESTHOST mkdir -p $FBHISTDIRDEST"
 # Following for testing...
-#STATFILE=$HOME/findbugs.cnt
-#DESTSTATFILE=$STATFILE
-#COPY="cp $NTMP $DESTSTATFILE"
-#MKDIR="mkdir -p `dirname $DESTSTATFILE`"
+#FBHISTDIR=$HOME
+#FBHISTDIRDEST=$HOME
+#COPYCNT="cp $TMP/findbugs.new $FBHISTDIR/findbugs.cnt"
+#COPYERRS="cp $TMP/findbugs.errs $FBHISTDIR/findbugs.errs"
+#MKDIR="mkdir -p $FBHISTDIR"
 
-trap "rm -f $TMP $NTMP" 0 1 2 15
+trap "rm -rf $TMP" 0 1 2 15
+mkdir $TMP
 
 USAGE="fbcheck [-i findbugs-count-file] [-v]"
 fblist=
 e=true
-v=0
 mkdir=false
+errs=0
+modules=0
 
 while getopts :i:v i
 do
 	case $i in
 	i)	fblist=$OPTARG;;
-	v)	e=echo; v=1;;
+	v)	e=echo;;
 	'?')	echo "$USAGE"; exit 2;;
 	esac
 done
@@ -101,22 +105,24 @@ then
 	cd $1	# change to workspace directory
 fi
 
-if [ -f $STATFILE ]
+if [ -f $FBHISTDIR/findbugs.cnt ]
 then
-	# snapshot the stat file to make sure it doesn't change
-	# while we're using it
-	cp $STATFILE $TMP
-	if ! grep END $TMP > /dev/null
+	# snapshot the files to make sure they don't change
+	# while we're using them
+	cp $FBHISTDIR/findbugs.cnt $TMP
+	cp $FBHISTDIR/findbugs.errs $TMP
+	if ! grep END $TMP/findbugs.cnt > /dev/null
 	then
 		# XXX - should try a few times
-		echo Stat file corrupt!!!
+		echo "FAIL: $FBHISTDIR/findbugs.cnt file corrupt!!!"
 		exit 1
 	fi
-# make sure the directory exist in case there's an NFS failure
+# make sure the parent directory exists in case there's an NFS failure
 elif [ -d $FINDBUGSDIR ]
 then
 	# start with an empty file
-	echo END >$TMP
+	echo END >$TMP/findbugs.cnt
+	> $TMP/findbugs.errs
 	mkdir=true
 else
 	echo "FAIL: can't access $FINDBUGSDIR"
@@ -129,57 +135,72 @@ then
 else
 	fbcount
 fi
-) | tee $NTMP | (cat "$TMP" -) | awk '
+) | tee $TMP/findbugs.new | (cat "$TMP/findbugs.cnt" -) | awk '
 BEGIN {
-	verbose = '$v';
-	errs = 0;
-	modules = 0;
 	history = 1;	# start by reading historical stats
 }
 {
 	if (history)
 		stat[$1] = $2;
 	else {
-	if (stat[$1] == "") {
-		if (verbose)
-			print "Module " $1 " new, " $2 " errors"
-	} else if ($2 == stat[$1]) {
-		if (verbose)
-			print "Module " $1 " no change, " $2 " errors"
-	} else if ($2 < stat[$1]) {
-		if (verbose)
-			print "Module " $1 " reduced, " $2 " errors"
-	} else {
-		print "Module " $1 " errors increased from " stat[$1] " to " $2
-		errs++
-	}
-	modules++
+	    if (stat[$1] == "")
+		    print $1, "-", $2;
+	    else
+		    print $1, stat[$1], $2;
 	}
 }
 /END/	{
 	history = 0;	# switch to processing current stats
 }
-END {
-	if (modules == 0) {
-		print "No modules found!!!"
-		exit 1
-	}
-	exit errs
-}
-'
-stat=$?
-if [ $stat -eq 0 ]
+' > $TMP/diff
+while read module old new
+do
+	modules=`expr $modules + 1`
+	if [ "x$old" = "x-" ]
+	then
+		$e "Module $module is new with $new errors"
+		old=0
+	fi
+	if [ "$new" -gt "$old" ]
+	then
+		if $mkdir
+		then
+			:	# everything is new
+		else
+			echo "Module $module increased from $old to $new errors"
+			errs=`expr $errs + 1`
+			echo "Changes in errors:"
+			echo "$module/target/findbugsXml.xml" > $TMP/file
+			grep "^$module/" $TMP/findbugs.errs > $TMP/old
+			fbcat -i $TMP/file > $TMP/new
+			diff $TMP/old $TMP/new | grep '^[<>]'
+		fi
+	elif [ "$new" -eq "$old" ]
+	then
+		$e "Module $module unchanged with $old errors"
+	else
+		$e "Module $module reduced from $old to $new errors"
+	fi
+done < $TMP/diff
+if [ $modules -eq 0 ]
 then
-	# success!  update the stat file
+	echo "FAIL: No modules!!!"
+	exit 1
+fi
+if [ $errs -eq 0 ]
+then
+	# success!  update the files
 	$e SUCCESS!
-	echo END >> $NTMP
+	echo END >> $TMP/findbugs.new
 	if $mkdir
 	then
 		$MKDIR
 	fi
-	$COPY
+	fbcat > $TMP/findbugs.errs
+	$COPYCNT
+	$COPYERRS
 	exit	# use exit code of previous command
 else
-	echo "FAIL: $stat modules with increased FindBugs errors"
+	echo "FAIL: $errs modules with increased FindBugs errors"
 	exit 1
 fi
