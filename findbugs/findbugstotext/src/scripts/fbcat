@@ -46,6 +46,7 @@
 #	-o	show owner of error too
 #	-m	send mail to owner
 #	-i file	get list of findbugsXml.xml files from file
+#	-a	show all lines for each error, not just the first line
 #	-v	verbose
 #
 
@@ -83,14 +84,16 @@ USAGE="fbcat [-o] [-m] [-i xml-file-list] [-v]"
 getowner=cat
 mail=cat
 fblist=
+showall=
 e=true
 
-while getopts :omi:v i
+while getopts :omi:av i
 do
 	case $i in
 	o)	getowner=scmowner;;
 	m)	mail=fbnag; getowner=scmowner;;
 	i)	fblist=$OPTARG;;
+	a)	showall="-a";;
 	v)	e=echo;;
 	'?')	echo "$USAGE"; exit 2;;
 	esac
@@ -119,7 +122,7 @@ do
 	dir=`dirname "$file"`
 	pdir=`dirname "$dir"`
 	$e "Directory: $pdir"
-	java -jar $FINDBUGSTOTEXT < "$file" | \
+	java -jar $FINDBUGSTOTEXT $showall < "$file" | \
 		findsrc "$pdir" | \
 		$getowner | \
 		MAILPROG=nagmail $mail
