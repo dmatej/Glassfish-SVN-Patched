@@ -182,7 +182,7 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
             
             if(!checkMessagePattern(levelName, message)) {
                 bugReporter.reportBug(new BugInstance(
-                        "GF_INVALID_MSG_ID_PATTERN", HIGH_PRIORITY)
+                        "GF_INVALID_MSG_ID_PATTERN", NORMAL_PRIORITY)
                         .addClassAndMethod(this).addSourceLine(this));
             } 
             
@@ -190,11 +190,11 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
             {
             	if (message == null) {
             		bugReporter.reportBug(new BugInstance(
-                            "GF_MISSING_LOGMESSAGE_INFO_ANNOTATION", HIGH_PRIORITY)
+                            "GF_MISSING_LOGMESSAGE_INFO_ANNOTATION", NORMAL_PRIORITY)
                             .addClassAndMethod(this).addSourceLine(this));
             	} else if (!message.isEmpty()) {
                     visitedLogMessages.put(message, new BugInstance(
-                            "GF_MISSING_LOGMESSAGE_INFO_ANNOTATION", HIGH_PRIORITY)
+                            "GF_MISSING_LOGMESSAGE_INFO_ANNOTATION", NORMAL_PRIORITY)
                             .addClassAndMethod(this).addSourceLine(this));            		
             	}
             }
