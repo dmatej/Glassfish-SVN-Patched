@@ -3,7 +3,7 @@
 
     DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
-    Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+    Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
 
     The contents of this file are subject to the terms of either the GNU
     General Public License Version 2 only ("GPL") or the Common Development
@@ -41,22 +41,22 @@
 
 -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-			    http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <parent>
-	<groupId>net.java</groupId>
-	<artifactId>jvnet-parent</artifactId>
-	<version>1</version>
+        <groupId>net.java</groupId>
+        <artifactId>jvnet-parent</artifactId>
+        <version>4</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.glassfish.findbugs</groupId>
     <artifactId>all</artifactId>
     <version>1.1-SNAPSHOT</version>
     <packaging>pom</packaging>
+    
     <name>GlassFish FindBugs project</name>
     <description>GlassFish FindBugs resources and tools</description>
+    
     <scm>
         <connection>scm:svn:https://svn.java.net/svn/glassfish~svn/trunk/findbugs</connection>
         <developerConnection>scm:svn:https://svn.java.net/svn/glassfish~svn/trunk/findbugs</developerConnection>
@@ -116,18 +116,47 @@
     </mailingLists>
 
     <organization>
-	<name>Oracle</name>
-	<url>http://www.oracle.com</url>
+        <name>Oracle</name>
+        <url>http://www.oracle.com</url>
     </organization>
-
+    
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <release.arguments></release.arguments>
+    </properties>
+        
     <modules>
-	<module>exclude-list</module>
-	<module>findbugstotext</module>
-	<module>detectors</module>
+        <module>exclude-list</module>
+        <module>findbugstotext</module>
+        <module>detectors</module>
     </modules>
 
     <build>
-	<defaultGoal>install</defaultGoal>
+        <defaultGoal>install</defaultGoal>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>2.0.2</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.4.3</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.jvnet.jaxb2.maven2</groupId>
+                    <artifactId>maven-jaxb2-plugin</artifactId>
+                    <version>0.8.1</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>        
         <plugins>
             <plugin>
                 <groupId>org.glassfish.copyright</groupId>
@@ -137,7 +166,83 @@
                     <excludeFile>copyright-exclude</excludeFile>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <configuration>
+                    <mavenExecutorId>forked-path</mavenExecutorId>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <arguments>-Prelease ${release.arguments}</arguments>
+                    <preparationGoals>clean install</preparationGoals>
+                    <goals>clean verify deploy</goals>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
-
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.10</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>2.5</version>
+            </dependency>            
+        </dependencies>
+    </dependencyManagement>
+    
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.1.2</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>2.9</version>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>1.1</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>    
 </project>
