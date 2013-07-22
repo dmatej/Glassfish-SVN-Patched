@@ -48,6 +48,7 @@ import org.apache.bcel.classfile.AnnotationEntry;
 import org.apache.bcel.classfile.Code;
 import org.apache.bcel.classfile.ConstantString;
 import org.apache.bcel.classfile.Field;
+import org.apache.bcel.classfile.JavaClass;
 
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
@@ -73,6 +74,8 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
     
     private Map<String, BugInstance> visitedRBNames = new HashMap<String, BugInstance>();
     
+    private boolean ignoreClass = false;
+
     private static final String VALID_LOGGER_PREFIX_PROP = System.getProperty(
             "findbugs.glassfish.logging.validLoggerPrefixes");
     
@@ -98,6 +101,18 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
     }
 
     @Override
+    public void visit(JavaClass javaClass) {
+        super.visit(javaClass);
+        String superClassName = javaClass.getSuperclassName();
+        if (superClassName.equals("com.sun.enterprise.admin.cli.CLICommand")) {
+            ignoreClass = true;
+        }
+        if(javaClass.getPackageName().startsWith("com.sun.enterprise.admin.cli")) {
+            ignoreClass = true;
+        }
+    }
+
+    @Override
     public void visit(Code code) {
         if (DEBUG) {
             System.out.println("Analyzing method:" + getClassName() + "." + getMethodName());
@@ -109,6 +124,9 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
     @Override
     public void visit(Field field) {
         super.visit(field);
+        if (ignoreClass) {
+            return;
+        }
         String fieldName = getClassName() + "." + field.getName();
         if (DEBUG) {
             System.out.println("Analyzing field:" + getClassName() + "." + fieldName);
@@ -134,7 +152,9 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
 
     @Override
     public void sawOpcode(int opCode) {
-
+        if (ignoreClass) {
+            return;
+        }
         if ((opCode == LDC || opCode == LDC_W)  && getConstantRefOperand() instanceof ConstantString) {
             constantsVisited.put(getPC(), getStringConstantOperand());
         }
@@ -213,7 +233,7 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
                     {
                         bugReporter.reportBug(new BugInstance(
                             "GF_MISSING_LOGGER_INFO_ANNOTATION", 
-                            LOW_PRIORITY).addClassAndMethod(this).addSourceLine(this));
+                            NORMAL_PRIORITY).addClassAndMethod(this).addSourceLine(this));
                     }
                 }
             }
@@ -237,7 +257,9 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
         if (DEBUG) {
             System.out.println("loggerInfoAnnotations="+annotatedLoggerNames);
         }
-        
+        if (ignoreClass) {
+            return;
+        }
         for (String loggerName : visitedLoggerNames.keySet()) {
             if (loggerName == null || loggerName.isEmpty()) {
                 continue;
@@ -253,6 +275,5 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
             }
         }        
     }
-
 
 }

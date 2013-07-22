@@ -51,6 +51,7 @@ import org.apache.bcel.classfile.AnnotationEntry;
 import org.apache.bcel.classfile.Code;
 import org.apache.bcel.classfile.ConstantString;
 import org.apache.bcel.classfile.Field;
+import org.apache.bcel.classfile.JavaClass;
 
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
@@ -73,6 +74,8 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
         
     };
 
+    private static final boolean DEBUG = false;
+
     private Map<String, String> annotatedLogMessages = new HashMap<String, String>();
     
     private Map<String, BugInstance> visitedLogMessages = new HashMap<String, BugInstance>();
@@ -83,13 +86,33 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
     
     private BugReporter bugReporter;
     
+    private boolean ignoreClass = false;
+    
     public LogMessageInfoAnnotationsDetector(BugReporter bugReporter) {
         this.bugReporter = bugReporter;
+    }
+    
+    @Override
+    public void visit(JavaClass javaClass) {
+        super.visit(javaClass);
+        String superClassName = javaClass.getSuperclassName();
+        if (DEBUG) {
+            System.out.println("Superclass="+superClassName);
+        }
+        if (superClassName.equals("com.sun.enterprise.admin.cli.CLICommand")) {
+            ignoreClass = true;
+        }
+        if(javaClass.getPackageName().startsWith("com.sun.enterprise.admin.cli")) {
+            ignoreClass = true;
+        }
     }
 
     @Override
     public void visit(Field field) {
         super.visit(field);
+        if (ignoreClass) {
+            return;
+        }
         String fieldName = getClassName() + "." + field.getName();
         AnnotationEntry[] annotationEntries = field.getAnnotationEntries();
         for (AnnotationEntry annoEntry : annotationEntries) {
@@ -114,7 +137,9 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
     
     @Override
     public void sawOpcode(int opCode) {
-                
+        if (ignoreClass) {
+            return;
+        }                
         if (opCode == GETSTATIC 
                 && "java/util/logging/Level".equals(getClassConstantOperand())
                 ) 
@@ -223,7 +248,9 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
     }
     
     public void report() {
-        
+        if (ignoreClass) {
+            return;
+        }
         for (String logMsg : visitedLogMessages.keySet()) {
             if (!annotatedLogMessages.keySet().contains(logMsg)) {
                 bugReporter.reportBug(visitedLogMessages.get(logMsg));
