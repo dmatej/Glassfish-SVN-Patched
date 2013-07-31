@@ -77,7 +77,7 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
     private boolean ignoreClass = false;
 
     private static final String VALID_LOGGER_PREFIX_PROP = System.getProperty(
-            "findbugs.glassfish.logging.validLoggerPrefixes");
+            "findbugs.glassfish.logging.validLoggerPrefixes", "javax.enterprise");
     
     private static final Set<String> VALID_LOGGER_PREFIX_SET = new HashSet<String>() {
         
