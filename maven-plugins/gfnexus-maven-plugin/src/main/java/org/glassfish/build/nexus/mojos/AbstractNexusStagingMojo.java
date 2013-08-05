@@ -65,14 +65,6 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
      */
     private List<StagingRepo> stagingRepos;
 
-    /**
-     * Staging profile
-     *
-     * @required
-     * @parameter expression="${stagingProfile}"
-     */
-    private String stagingProfile;
-
     private MavenArtifactInfo refArtifact;
 
     protected Repo stagingRepo;
@@ -112,7 +104,7 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
                     artifact.getFile());
 
             try {
-                stagingRepo = nexusClient.getStagingRepo(stagingProfile, refArtifact);
+                stagingRepo = nexusClient.getStagingRepo(repo.getProfile(), refArtifact);
                 nexusMojoExecute();
             } catch (NexusClientException ex) {
                 if (!ignoreFailures) {

@@ -437,6 +437,9 @@ public class NexusClientImpl implements NexusClient {
         logger.info(" ");
         logger.info("-- searching for the staging repository --");
 
+        if (stagingProfileRepositories == null)
+            refreshStagingRepos();
+
         for (StagingProfileRepo repo : stagingProfileRepositories) {
             if (repo.getProfileName().equals(stagingProfile)
                     && repo.getUserId().equals(restClient.getUsername())) {
