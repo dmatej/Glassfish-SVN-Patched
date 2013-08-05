@@ -41,12 +41,10 @@ package org.glassfish.build.nexus.mojos;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.DefaultArtifact;
-import org.apache.maven.artifact.handler.DefaultArtifactHandler;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
-import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.glassfish.nexus.client.NexusClientException;
@@ -58,15 +56,14 @@ import org.glassfish.nexus.client.beans.Repo;
  * @author romano
  */
 public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
-
     /**
      * Coordinates of the reference artifact used to verify repositories
      * groupId:artifactId:version
      *
      * @required
-     * @parameter expression="${referenceCoordinates}"
+     * @parameter expression="${stagingRepos}"
      */
-    private String referenceCoordinates;
+    private List<StagingRepo> stagingRepos;
 
     /**
      * Staging profile
@@ -80,33 +77,6 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
 
     protected Repo stagingRepo;
 
-    private static Artifact parseCoordinates(String coordinates,String projectVersion) throws MojoFailureException{
-        String[] referenceCoordinatesTokens = coordinates.split(":");
-
-        if(referenceCoordinatesTokens.length < 2){
-            throw new MojoFailureException("unable to parse referenceArtifact");
-        }
-
-        String version = projectVersion;
-        if(referenceCoordinatesTokens.length > 2){
-            version = referenceCoordinatesTokens[2];
-        }
-        
-        String packaging = "jar";
-        if(referenceCoordinatesTokens.length > 3){
-            packaging = referenceCoordinatesTokens[3];
-        }
-
-        return new DefaultArtifact(
-                referenceCoordinatesTokens[0],
-                referenceCoordinatesTokens[1],
-                VersionRange.createFromVersion(version),
-                "runtime",
-                packaging,
-                null,
-                new DefaultArtifactHandler(packaging));
-    }
-
     public URL getRepoURL() throws MalformedURLException {
         String nexusURL = project.getModel().getDistributionManagement().getRepository().getUrl();
         return new URL(nexusURL.replaceAll("/service/local/staging/deploy/maven2", ""));
@@ -114,36 +84,40 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
     
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-
-        Artifact artifact = 
-                parseCoordinates (referenceCoordinates,project.getVersion());
+        // init
+        createNexusClient(null, null, null, null);
         
-        try {
-            artifactResolver.resolve(artifact,
-                    project.getRemoteArtifactRepositories(),
-                    localRepository);
-        } catch (ArtifactResolutionException ex) {
-            throw new MojoFailureException(ex.getMessage(), ex);
-        } catch (ArtifactNotFoundException ex) {
-            throw new MojoFailureException(ex.getMessage(), ex);
-        }
+        for (StagingRepo repo : stagingRepos) {
+            Artifact artifact = repo.getRefArtifact(project.getVersion());
+            if(artifact == null){
+                continue;
+            }
+            try {
+                artifactResolver.resolve(
+                        artifact,
+                        project.getRemoteArtifactRepositories(),
+                        localRepository);
+            } catch (ArtifactResolutionException ex) {
+                throw new MojoFailureException(ex.getMessage(), ex);
+            } catch (ArtifactNotFoundException ex) {
+                throw new MojoFailureException(ex.getMessage(), ex);
+            }
 
-        refArtifact = new MavenArtifactInfo(
-                artifact.getGroupId(),
-                artifact.getArtifactId(),
-                artifact.getVersion(),
-                artifact.getClassifier(),
-                artifact.getType(),
-                artifact.getFile());
+            refArtifact = new MavenArtifactInfo(
+                    artifact.getGroupId(),
+                    artifact.getArtifactId(),
+                    artifact.getVersion(),
+                    artifact.getClassifier(),
+                    artifact.getType(),
+                    artifact.getFile());
 
-        try {
-            createNexusClient(null, null, null, null);
-
-            stagingRepo = nexusClient.getStagingRepo(stagingProfile, refArtifact);
-            nexusMojoExecute();
-        } catch (NexusClientException ex) {
-            if (!ignoreFailures) {
-                throw ex;
+            try {
+                stagingRepo = nexusClient.getStagingRepo(stagingProfile, refArtifact);
+                nexusMojoExecute();
+            } catch (NexusClientException ex) {
+                if (!ignoreFailures) {
+                    throw ex;
+                }
             }
         }
     }

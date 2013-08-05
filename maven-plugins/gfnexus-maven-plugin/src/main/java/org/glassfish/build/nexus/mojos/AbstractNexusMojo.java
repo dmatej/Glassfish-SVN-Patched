@@ -55,7 +55,6 @@ import org.glassfish.nexus.client.NexusClient;
 import org.glassfish.nexus.client.NexusClientException;
 import org.glassfish.nexus.client.NexusClientImpl;
 import org.glassfish.nexus.client.RestClient;
-import org.glassfish.nexus.client.logging.CustomHandler;
 import org.glassfish.nexus.client.logging.CustomPrinter;
 
 /**
