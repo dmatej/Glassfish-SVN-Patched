@@ -42,8 +42,13 @@ package org.glassfish.build.nexus.mojos;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Properties;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.model.DistributionManagement;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.Repository;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -61,7 +66,7 @@ import org.glassfish.nexus.client.logging.CustomPrinter;
  *
  * @author romano
  */
-public abstract class AbstractNexusMojo extends AbstractMojo{
+public abstract class AbstractNexusMojo extends AbstractMojo {
 
     /**
      * The maven project.
@@ -92,7 +97,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
      * @readonly
      */
     protected ArtifactRepository localRepository;
-
+    
     /**
      * @parameter expression="${ignoreFailures}" default-value="false"
      */
@@ -150,11 +155,65 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
         createNexusClient(null, null, null, null);
     }
     
-    protected void createNexusClient(URL repoURL, String repoId, String username, String password) throws MojoFailureException, MojoExecutionException{
+    private static URL getRepoUrlFromModel(Model m) throws MojoExecutionException {
+         DistributionManagement dm = m.getDistributionManagement();
+         if(dm == null)
+             return null;
+         Repository r = dm.getRepository();
+         if(r == null)
+             return null;
+         String u = r.getUrl();
+         if(u == null)
+             return null;
         try {
+            return new URL(u.replaceAll("/service/local/staging/deploy/maven2", ""));
+        } catch (MalformedURLException ex) {
+            throw new MojoExecutionException(ex.getMessage(),ex);
+        }
+    }
+    
+    private static String getRepoIdFromModel(Model m) throws MojoExecutionException {
+         DistributionManagement dm = m.getDistributionManagement();
+         if(dm == null)
+             return null;
+         Repository r = dm.getRepository();
+         if(r == null)
+             return null;
+         return r.getId();
+    }
+    
+    protected void createNexusClient(URL repoURL, String repoId, String username, String password) throws MojoFailureException, MojoExecutionException {
+            
+            // if supplied repoURL is null, try to resolve it from model
             if(repoURL == null){
-                String distroURL = project.getModel().getDistributionManagement().getRepository().getUrl();
-                repoURL = new URL(distroURL.replaceAll("/service/local/staging/deploy/maven2", ""));
+                repoURL = getRepoUrlFromModel(project.getModel());
+            }
+            // can't continue further
+            if(repoURL == null){
+                throw new MojoFailureException(
+                        "unable to get repo URL from distributionManagement");
+            }
+            
+            // if supplied repoId is null, try to resolve from model
+            if(repoId == null){
+                repoId = getRepoIdFromModel(project.getModel());
+            }
+            // can't continue further
+            if(repoId == null){
+                throw new MojoFailureException(
+                        "unable to get repo Id from distributionManagement");
+            }
+            
+            if(username == null && password == null){
+                Server server = settings.getServer(repoId);
+                if(server == null){
+                    throw new MojoFailureException(
+                            String.format(
+                            "unable to retrieve the server entry for '%s' in settings.xml",
+                            repoId));
+                }
+                username = server.getUsername();
+                password = server.getPassword();
             }            
             
             String proxyHost = null;
@@ -175,16 +234,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
                 }
             }
             
-            if(repoId == null){
-                repoId = project.getModel().getDistributionManagement().getRepository().getId();
-            }
-            
-            if(username == null && username == null){
-                Server server = settings.getServer(repoId);
-                username = server.getUsername();
-                password = server.getPassword();
-            }
-
+        try {
             nexusClient = NexusClientImpl.init(
                     new RestClient(
                         proxyHost, proxyPort,
@@ -194,8 +244,6 @@ public abstract class AbstractNexusMojo extends AbstractMojo{
                     ,repoURL.toString()
                     ,new NexusClientLoggerHandler());
         } catch (NexusClientException ex){
-            throw new MojoExecutionException(ex.getMessage(),ex);
-        } catch (MalformedURLException ex) {
             throw new MojoExecutionException(ex.getMessage(),ex);
         }
     }

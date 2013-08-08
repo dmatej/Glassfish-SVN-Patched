@@ -42,6 +42,8 @@ package org.glassfish.build.nexus.mojos;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
@@ -65,19 +67,46 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
      */
     private List<StagingRepo> stagingRepos;
 
+    /**
+     * @parameter expression="${nexusRepoUrl}"
+     * @readonly
+     */
+    protected String nexusRepoUrl = null;
+    
+    /**
+     * @parameter expression="${nexusRepoId}"
+     * @readonly
+     */
+    protected String nexusRepoId = null;
+    
+    /**
+     * @parameter expression="${nexusRepoUsername}"
+     * @readonly
+     */
+    protected String nexusRepoUsername = null;
+    
+    /**
+     * @parameter expression="${nexusRepoPassword}"
+     * @readonly
+     */
+    protected String nexusRepoPassword = null;
+    
     private MavenArtifactInfo refArtifact;
 
-    protected Repo stagingRepo;
+    protected Repo stagingRepo;    
 
-    public URL getRepoURL() throws MalformedURLException {
-        String nexusURL = project.getModel().getDistributionManagement().getRepository().getUrl();
-        return new URL(nexusURL.replaceAll("/service/local/staging/deploy/maven2", ""));
-    }
-    
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         // init
-        createNexusClient(null, null, null, null);
+        try {
+            createNexusClient(
+                    new URL(nexusRepoUrl),
+                    nexusRepoId,
+                    nexusRepoUsername,
+                    nexusRepoPassword);
+        } catch (MalformedURLException ex) {
+            throw new MojoExecutionException(ex.getMessage(),ex);
+        }
         
         for (StagingRepo repo : stagingRepos) {
             Artifact artifact = repo.getRefArtifact(project.getVersion());
