@@ -257,9 +257,6 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
         if (DEBUG) {
             System.out.println("loggerInfoAnnotations="+annotatedLoggerNames);
         }
-        if (ignoreClass) {
-            return;
-        }
         for (String loggerName : visitedLoggerNames.keySet()) {
             if (loggerName == null || loggerName.isEmpty()) {
                 continue;

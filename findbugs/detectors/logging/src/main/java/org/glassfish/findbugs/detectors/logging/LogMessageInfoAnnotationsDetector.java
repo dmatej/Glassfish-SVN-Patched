@@ -148,7 +148,7 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
             levelsVisited.put(getPC(), levelName);
         }
         
-        if (opCode == LDC && getConstantRefOperand() instanceof ConstantString) {
+        if ((opCode == LDC || opCode == LDC_W)&& getConstantRefOperand() instanceof ConstantString) {
             constantsVisited.put(getPC(), getStringConstantOperand());
         }
         // Detects the invocation of the Logger.logXXX() methods where the
@@ -248,9 +248,6 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
     }
     
     public void report() {
-        if (ignoreClass) {
-            return;
-        }
         for (String logMsg : visitedLogMessages.keySet()) {
             if (!annotatedLogMessages.keySet().contains(logMsg)) {
                 bugReporter.reportBug(visitedLogMessages.get(logMsg));
