@@ -42,11 +42,6 @@ package org.glassfish.build.nexus.mojos;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.apache.maven.artifact.Artifact;
-import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
-import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.glassfish.nexus.client.NexusClientException;
@@ -91,49 +86,31 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
      */
     protected String nexusRepoPassword = null;
     
-    private MavenArtifactInfo refArtifact;
-
     protected Repo stagingRepo;    
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        // init
+        
+        
+        URL u;
         try {
-            createNexusClient(
-                    new URL(nexusRepoUrl),
-                    nexusRepoId,
-                    nexusRepoUsername,
-                    nexusRepoPassword);
+            u = new URL(nexusRepoUrl);
         } catch (MalformedURLException ex) {
             throw new MojoExecutionException(ex.getMessage(),ex);
         }
         
+        // init
+        createNexusClient(u, nexusRepoId, nexusRepoUsername, nexusRepoPassword);
+
         for (StagingRepo repo : stagingRepos) {
-            Artifact artifact = repo.getRefArtifact(project.getVersion());
-            if(artifact == null){
-                continue;
-            }
             try {
-                artifactResolver.resolve(
-                        artifact,
-                        project.getRemoteArtifactRepositories(),
-                        localRepository);
-            } catch (ArtifactResolutionException ex) {
-                throw new MojoFailureException(ex.getMessage(), ex);
-            } catch (ArtifactNotFoundException ex) {
-                throw new MojoFailureException(ex.getMessage(), ex);
-            }
-
-            refArtifact = new MavenArtifactInfo(
-                    artifact.getGroupId(),
-                    artifact.getArtifactId(),
-                    artifact.getVersion(),
-                    artifact.getClassifier(),
-                    artifact.getType(),
-                    artifact.getFile());
-
-            try {
-                stagingRepo = nexusClient.getStagingRepo(repo.getProfile(), refArtifact);
+                stagingRepo = nexusClient.getStagingRepo(
+                        repo.getProfile(),
+                        repo.getRefArtifact(
+                        project.getVersion(),
+                        artifactResolver,
+                        localRepository,
+                        project.getRemoteArtifactRepositories()));
                 nexusMojoExecute();
             } catch (NexusClientException ex) {
                 if (!ignoreFailures) {

@@ -39,10 +39,17 @@
  */
 package org.glassfish.build.nexus.mojos;
 
+import java.util.List;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
+import org.apache.maven.artifact.resolver.ArtifactResolutionException;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.versioning.VersionRange;
+import org.apache.maven.plugin.MojoFailureException;
+import org.glassfish.nexus.client.beans.MavenArtifactInfo;
 
 /**
  *
@@ -51,6 +58,12 @@ import org.apache.maven.artifact.versioning.VersionRange;
 public class StagingRepo {
     String ref;
     String profile;
+    private MavenArtifactInfo artifactInfo;
+    private Artifact artifact;
+
+    protected MavenArtifactInfo getArtifactInfo() {
+        return artifactInfo;
+    }
 
     public String getProfile() {
         return profile;
@@ -94,8 +107,32 @@ public class StagingRepo {
                 null,
                 new DefaultArtifactHandler(packaging));
     }
-    
-    public Artifact getRefArtifact(String version)   {
-        return parseCoordinates(ref, version);
+
+    public MavenArtifactInfo getRefArtifact(
+            String version,
+            ArtifactResolver resolver,
+            ArtifactRepository localRepository,
+            List<ArtifactRepository> remoteRepositories) throws MojoFailureException {
+
+        if (this.artifactInfo == null) {
+
+            Artifact a = parseCoordinates(ref, version);
+            try {
+                resolver.resolve(a, remoteRepositories, localRepository);
+            } catch (ArtifactResolutionException ex) {
+                throw new MojoFailureException(ex.getMessage(), ex);
+            } catch (ArtifactNotFoundException ex) {
+                throw new MojoFailureException(ex.getMessage(), ex);
+            }
+
+            this.artifactInfo = new MavenArtifactInfo(
+                    a.getGroupId(),
+                    a.getArtifactId(),
+                    a.getVersion(),
+                    a.getClassifier(),
+                    a.getType(),
+                    a.getFile());
+        }
+        return this.artifactInfo;
     }
 }
