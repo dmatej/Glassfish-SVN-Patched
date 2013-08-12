@@ -64,41 +64,37 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
 
     /**
      * @parameter expression="${nexusRepoUrl}"
-     * @readonly
      */
     protected String nexusRepoUrl = null;
-    
+
     /**
      * @parameter expression="${nexusRepoId}"
-     * @readonly
      */
     protected String nexusRepoId = null;
-    
+
     /**
      * @parameter expression="${nexusRepoUsername}"
-     * @readonly
      */
     protected String nexusRepoUsername = null;
-    
+
     /**
      * @parameter expression="${nexusRepoPassword}"
-     * @readonly
      */
     protected String nexusRepoPassword = null;
-    
-    protected Repo stagingRepo;    
+
+    protected Repo stagingRepo;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        
-        
-        URL u;
+
+
+        URL u = null;
         try {
             u = new URL(nexusRepoUrl);
         } catch (MalformedURLException ex) {
-            throw new MojoExecutionException(ex.getMessage(),ex);
+            getLog().error("Error in resolving nexusRepoUrl: " + ex.getMessage(), ex);
         }
-        
+
         // init
         createNexusClient(u, nexusRepoId, nexusRepoUsername, nexusRepoPassword);
 
