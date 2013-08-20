@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
  * 
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -41,12 +41,17 @@ package org.glassfish.module.maven.commandsecurityplugin;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.Mojo;
@@ -77,6 +82,8 @@ public class PrintMojo extends CommonMojo {
     private final static String OUTPUT_INDENT_PROP_NAME = "org.glassfish.command.security.output.indent";
     private final static String IS_ANY_OUTPUT_NAME = "org.glassfish.command.security.isAnyOutput";
     
+    private final static String OVERRIDE_FILE = "commandSecurityOverride.txt";
+    
     /**
      * Output type
      * Can be "summary" or "wiki" or "csv"
@@ -98,6 +105,8 @@ public class PrintMojo extends CommonMojo {
     
     Map<String,TypeProcessorImpl.Inhabitant> configBeans;
     
+    private OverrideManager om;
+    
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         isAnyOutput = getOrSet(IS_ANY_OUTPUT_NAME, isAnyOutput);
@@ -106,6 +115,7 @@ public class PrintMojo extends CommonMojo {
         typeProcessor.execute();
         configBeans = typeProcessor.configBeans();
         
+        om = initOverrideManager();
         final OutputFormatter outputFormatter = chooseOutputFormatter(outputType);
         pw = getPrintWriter();
         indent = getAndAdjustIndent();
@@ -123,9 +133,9 @@ public class PrintMojo extends CommonMojo {
                     outputFormatter.postOpen();
                     isAnyOutputThisModule = true;
                 }
-                outputFormatter.printCommandInfo(info);
+                outputFormatter.printCommandInfo(om.adjust(info));
             } else {
-                getLog().info("info.name() was null in project " + project.getName() + " for type " + info.className());
+                getLog().debug("info.name() was null in project " + project.getName() + " for type " + info.className());
             }
         }
         outputFormatter.preClose();
@@ -149,6 +159,12 @@ public class PrintMojo extends CommonMojo {
         }
         restoreIndent(indent);
         pw.flush();
+    }
+    
+    private OverrideManager initOverrideManager()  {
+        final File overrideFile = new File(project.getBasedir(), OVERRIDE_FILE);
+        return new OverrideManager(overrideFile, getLog());
+        
     }
     
     private boolean isLastProject() {

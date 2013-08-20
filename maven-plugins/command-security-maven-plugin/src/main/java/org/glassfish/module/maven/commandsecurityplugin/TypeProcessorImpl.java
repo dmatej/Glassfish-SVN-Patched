@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
  * 
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -55,6 +55,7 @@ import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.glassfish.hk2.utilities.DescriptorImpl;
 import org.glassfish.module.maven.commandsecurityplugin.CommandAuthorizationInfo.Param;
+import org.objectweb.asm.Type;
 
 /**
  * Verifies that all inhabitants in the module that are commands also take care
@@ -80,7 +81,8 @@ public class TypeProcessorImpl implements TypeProcessor {
     private static final String PROCESSED_MODULES_NAME = "org.glassfish.api.admin.processedModules";
     private static final String CONFIG_BEANS_NAME = "org.glassfish.api.admin.configBeans";
     
-    private static final String INHABITANTS_PATH = "META-INF/hk2-locator/default";
+    private static final String INHABITANTS_PATHS_PREFIX = "META-INF/hk2-locator/";
+    private static final String[] INHABITANTS_PATHS = {"default", "tenant-scoped"};
     
 //    private static final Pattern INHABITANT_DESCR_PATTERN = Pattern.compile("(\\w+)=([^:]+)(?:\\:(.+))*");
     private static final Pattern INHABITANT_IMPL_CLASS_PATTERN = Pattern.compile("\\[([^\\]]+)\\]");
@@ -110,6 +112,16 @@ public class TypeProcessorImpl implements TypeProcessor {
             new HashSet<String>(Arrays.asList(GENERIC_CREATE_COMMAND,
             GENERIC_DELETE_COMMAND,
             GENERIC_LIST_COMMAND));
+    
+    private static final List<String> EXTENSION_INTERNAL_NAMES = new ArrayList<String>(Arrays.asList(
+            "com/sun/enterprise/config/serverbeans/DomainExtension", 
+            "com/sun/enterprise/config/serverbeans/ConfigExtension",
+            "com/oracle/cloudlogic/tenantmanager/entity/TenantExtension", 
+            "com/sun/enterprise/config/serverbeans/ApplicationExtension",
+            "com/oracle/cloudlogic/tenantmanager/entity/TenantEnvironmentExtension"));
+    
+    private static final String CONFIG_BEAN_NAME = "org.jvnet.hk2.config.ConfigBean";
+    private static final String CONFIG_BEAN_PROXY_NAME = "org.jvnet.hk2.config.ConfigBeanProxy";
     
     private static final Map<String,String> genericCommandNameToAction = 
             initCommandNameToActionMap();
@@ -254,20 +266,31 @@ public class TypeProcessorImpl implements TypeProcessor {
     }
     
     private void loadConfigBeansFromJar(final URL url) throws MalformedURLException, IOException {
-        final URL inhabitantsURL;
-        if (url.getPath().endsWith(".jar")) {
-            inhabitantsURL = new URL("jar:file:" + url.getPath() + "!/" + INHABITANTS_PATH);
-        } else {
-            inhabitantsURL = new URL(url, INHABITANTS_PATH);
-        }
-        final InputStream is;
-        try {
-            is = new BufferedInputStream(inhabitantsURL.openStream());
-        } catch (FileNotFoundException ex) {
-            // This must means that the JAR does not contain an inhabitants file.  Continue.
-            return;
-        }
+        for (String inhabitantsPath : INHABITANTS_PATHS) {
+            final String fullPath = INHABITANTS_PATHS_PREFIX + inhabitantsPath;
+            final String fullURL;
+            final URL inhabitantsURL;
+            if (url.getPath().endsWith(".jar")) {
+                fullURL = "jar:file:" + url.getPath() + "!/" + fullPath;
+                inhabitantsURL = new URL(fullURL);
+            } else {
+                fullURL = fullPath;
+                inhabitantsURL = new URL(url, fullURL);
+            }
             
+        
+            try {
+                
+                loadConfigBeans(url, inhabitantsURL);
+            } catch (FileNotFoundException ex) {
+                // This must means that the JAR does not contain an inhabitants file.  Continue.
+                continue;
+            }
+        }
+    }
+
+    private void loadConfigBeans(final URL url, final URL inhabitantsURL) throws IOException {
+        final InputStream is = new BufferedInputStream(inhabitantsURL.openStream());
         /*
          * As a side effect, findInhabitantsInModule adds config beans in the
          * specified input to configBeans.
@@ -512,8 +535,12 @@ public class TypeProcessorImpl implements TypeProcessor {
     
     
     private List<Inhabitant> findInhabitantsInModule() throws IOException {
-        final File inhabFile = new File(buildDir, INHABITANTS_PATH);
-        return findInhabitantsInModule(inhabFile);
+        final List<Inhabitant> inhabitants = new ArrayList<Inhabitant>();
+        for (String inhabitantsPath : INHABITANTS_PATHS) {
+            final File inhabFile = new File(buildDir, inhabitantsPath);
+            inhabitants.addAll(findInhabitantsInModule(inhabFile));
+        }
+        return inhabitants;
     }
     
     private List<Inhabitant> findInhabitantsInModule(final File inhabFile) throws FileNotFoundException, IOException {
@@ -561,7 +588,7 @@ public class TypeProcessorImpl implements TypeProcessor {
             inhabitant.serviceName = di.getName();
             inhabitant.methodListActual = getFirstIfAny(di.getMetadata(), "MethodListActual");
             inhabitant.methodName = getFirstIfAny(di.getMetadata(), "MethodName");
-            inhabitant.parentConfigured = getFirstIfAny(di.getMetadata(), "ParentConfigured");
+            inhabitant.parentConfigured = getParentConfigured(di);
             if (inhabitant.methodName != null) {
                 getLog().debug("Recognized generic command " + inhabitant.serviceName);
                 inhabitant.action = genericCommandNameToAction.get(inhabitant.className);
@@ -592,8 +619,17 @@ public class TypeProcessorImpl implements TypeProcessor {
                 Inhabitant configBean = configBeans.get(configBeanClassName);
                 if (configBean == null) {
                     configBean = new Inhabitant(configBeanClassName);
-                    configBeans.put(configBeanClassName, configBean);
                 }
+                /*
+                 * Handle the parent.
+                 */
+                if (configBean.parent == null) {
+                    Inhabitant parent = findParent(configBean);
+                    if (parent != null) {
+                        configBean.parent = parent;
+                    }
+                }
+                configBeans.put(configBeanClassName, configBean);
 
                 /*
                  * Search for and process child elements.
@@ -639,6 +675,69 @@ public class TypeProcessorImpl implements TypeProcessor {
             result.add(inhabitant);
         }
         return result;
+    }
+    
+    private Inhabitant findParent(final Inhabitant cb) {
+        if (cb.parent != null) {
+            return cb.parent;
+        }
+        final String parentName = getParentNameFromByteCode(cb.className);
+        if (parentName != null) {
+            Inhabitant parent = configBeans.get(parentName);
+            if (parent == null) {
+                parent = new Inhabitant(parentName);
+            }
+            configBeans.put(parentName, parent);
+            return parent;
+        }
+        return null;
+    }
+    
+    private String getParentConfigured(final DescriptorImpl di) {
+        String parentConfigured = getFirstIfAny(di.getMetadata(), "ParentConfigured");
+        if (parentConfigured == null && 
+                (di.getAdvertisedContracts().contains(CONFIG_BEAN_NAME)
+                 || di.getAdvertisedContracts().contains(CONFIG_BEAN_PROXY_NAME))) {
+            List<String> targets = di.getMetadata().get("target");
+            if (targets != null && targets.size() > 0) {
+                parentConfigured = getParentNameFromByteCode(targets.get(0));
+            }
+        }
+        return parentConfigured;
+    }
+    
+    private String getParentNameFromByteCode(final String className) {
+        String result = null;
+        InputStream is = null;
+        try {
+            is = loader.getResourceAsStream(className.replace('.', '/') + ".class");
+            if (is == null) {
+                return null;
+            }
+            final TypeAnalyzer ta = new TypeAnalyzer(is, knownCommandTypes, this);
+            ta.run();
+            /*
+             * If the bean extends one of the xxxExtension interfaces then
+             * make the xxx this bean's parent.
+             */
+            for (String extensionName : EXTENSION_INTERNAL_NAMES) {
+                if (ta.interfaces().contains(extensionName)) {
+                    Type t = Type.getObjectType(extensionName);
+                    return t.getClassName();
+                }
+            }
+            return result;
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            try {
+                if (is != null) {
+                    is.close();
+                }
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
     }
     
     private String getFirstIfAny(final Map<String,List<String>> map, final String key) {
@@ -1061,14 +1160,21 @@ public class TypeProcessorImpl implements TypeProcessor {
         String fullPath() {
             final StringBuilder path = new StringBuilder();
             for (Inhabitant i = (configBeanForCommand != null ? configBeanForCommand : this); i != null; i = i.parent) {
-                if (path.length() > 0) {
+                if (path.length() > 0 && path.charAt(0) != '/') {
                     path.insert(0, '/');
                 }
                 final Inhabitant p = i.parent;
                 if (p != null) {
                     Child childForThisInh = null;
                     if (p.children != null && ((childForThisInh = p.children.get(i.className)) != null)) {
-                        path.insert(0, childForThisInh.subpathInParent);
+                        if (childForThisInh.subpathInParent.equals("*") && path.length() > 0) {
+                            path.replace(0, 0, "");
+                            if (path.substring(0,1).equals("//")) {
+                                path.replace(0, 0, "");
+                            }
+                        } else {
+                            path.insert(0, childForThisInh.subpathInParent);
+                        }
                     } else {
                         path.insert(0, Util.convertName(Util.lastPart(i.className)));
                     }

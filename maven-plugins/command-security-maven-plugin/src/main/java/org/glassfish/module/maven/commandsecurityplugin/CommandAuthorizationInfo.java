@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
  * 
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -65,8 +65,12 @@ public class CommandAuthorizationInfo {
     private String fullPath = "";
     private String genericAction = "";
     private Delegate delegate = null;
+    private boolean isDomainChild = false;
     
     private final List<ResourceAction> resourceActionPairs = new ArrayList<ResourceAction>();
+    
+    private static final List<String> GENERIC_ACTIONS_USING_FULL_GENERIC_SUBPATH = 
+            new ArrayList<String>(Arrays.asList(new String[] {"read", "update", "delete"}));
     
     public void setDelegate(final String delegateClassName) {
         delegate = new Delegate(delegateClassName);
@@ -85,6 +89,11 @@ public class CommandAuthorizationInfo {
         return resourceActionPairs;
     }
     
+    public void overrideResourceActions(final List<ResourceAction> newPairs) {
+        resourceActionPairs.clear();
+        resourceActionPairs.addAll(newPairs);
+    }
+    
     public String genericSubpath(final String separator) {
         if (genericMethodListActual == null || genericMethodListActual.isEmpty()) {
             return "";
@@ -93,19 +102,28 @@ public class CommandAuthorizationInfo {
     }
     
     public String genericSubpathPerAction(final String separator) {
+        /*
+         * Initial subpath is collection-name/type-name.  That happens to be 
+         * what we want for 'create' but we'll adjust it for other operations.
+         */
         String subpath = genericSubpath(separator);
-        if (genericAction.equals("create")) {
-            subpath = subpath.substring(0, subpath.lastIndexOf('/'));
+        
+        if (GENERIC_ACTIONS_USING_FULL_GENERIC_SUBPATH.contains(genericAction)) {
+            subpath = subpath + separator + "$name";
         } else if (genericAction.equals("list")) {
+            /*
+             * 'list' uses the collection only.
+             */
             subpath = subpath.substring(0, subpath.lastIndexOf('/'));
         }
+        /*
+         * If 
+         */
         return subpath;
     }
     
     public String adjustedGenericAction() {
-        if (genericAction.equals("create")) {
-            return "update";
-        } else if (genericAction.equals("list")) {
+        if (genericAction.equals("list")) {
             return "read";
         }
         return genericAction;

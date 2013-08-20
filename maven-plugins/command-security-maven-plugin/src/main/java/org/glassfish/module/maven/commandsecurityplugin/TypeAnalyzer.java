@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  * 
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
  * 
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -46,6 +46,7 @@ import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -84,6 +85,9 @@ public class TypeAnalyzer {
     private final static String ADMIN_COMMAND_INTERNAL_NAME = "org/glassfish/api/admin/AdminCommand"; // interface
     private final static String CLI_COMMAND_INTERNAL_NAME = "com/sun/enterprise/admin/cli/CLICommand";  // class
     
+    private final static String DOMAIN_EXTENSION_INTERNAL_NAME = "com/sun/enterprise/config/serverbeans/DomainExtension";
+    private final static String DOMAIN_INTERNAL_NAME = "com/sun/enterprise/config/serverbeans/Domain";
+    
     private final static String LINE_SEP = System.getProperty("line.separator");
     
 //    private static final Collection<String> COMMAND_BASE_INTERFACE_NAMES = 
@@ -103,6 +107,8 @@ public class TypeAnalyzer {
     
     private ServiceAnnotationScanner service;
     private SupplementalAnnotationScanner supplemental;
+   
+    private CommandScanner cs;
         
     
 //    TypeAnalyzer(final File classFile, final TypeProcessor typeProcessor) throws FileNotFoundException {
@@ -130,7 +136,7 @@ public class TypeAnalyzer {
     void run() throws FileNotFoundException, IOException {
         try {
             final ClassReader classReader = new ClassReader(classStream);
-            final CommandScanner cs = new CommandScanner();
+            cs = new CommandScanner();
             classReader.accept(cs, ClassReader.SKIP_CODE + ClassReader.SKIP_DEBUG + ClassReader.SKIP_FRAMES);
             isCommand = cs.isCommand();
 //            if (cs.isCommand()) {
@@ -142,6 +148,10 @@ public class TypeAnalyzer {
                 classStream.close();
             }
         }
+    }
+    
+    List<String> interfaces() {
+        return (cs == null ? Collections.EMPTY_LIST : cs.interfaces);
     }
     
     /**
@@ -173,6 +183,8 @@ public class TypeAnalyzer {
         private String superName;
         private String className;
         
+        private List<String> interfaces;
+        
         CommandScanner() {
             super(Opcodes.ASM4);
         }
@@ -183,6 +195,10 @@ public class TypeAnalyzer {
         
         CommandAuthorizationInfo commandInfo() {
             return commandAuthInfo;
+        }
+        
+        List<String> interfaces() {
+            return interfaces;
         }
         
         @Override
@@ -204,6 +220,7 @@ public class TypeAnalyzer {
                 trace.append(LINE_SEP).append("  Starting to analyze class ").append(name);
             }
             this.superName = superName;
+            this.interfaces = new ArrayList<String>(Arrays.asList(interfaces));
             isCommand = isExtensionOrImplementationOfCommandType(name, interfaces);
             
             commandAuthInfo = new CommandAuthorizationInfo();
