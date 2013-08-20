@@ -537,7 +537,8 @@ public class TypeProcessorImpl implements TypeProcessor {
     private List<Inhabitant> findInhabitantsInModule() throws IOException {
         final List<Inhabitant> inhabitants = new ArrayList<Inhabitant>();
         for (String inhabitantsPath : INHABITANTS_PATHS) {
-            final File inhabFile = new File(buildDir, inhabitantsPath);
+            final String fullPath = INHABITANTS_PATHS_PREFIX + inhabitantsPath;
+            final File inhabFile = new File(buildDir, fullPath);
             inhabitants.addAll(findInhabitantsInModule(inhabFile));
         }
         return inhabitants;
