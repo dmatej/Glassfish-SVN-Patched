@@ -219,22 +219,9 @@ public class LoggerInfoAnnotationsDetector extends BytecodeScanningDetector {
                     }
                     
                 } else if ("(Ljava/lang/String;)Ljava/util/logging/Logger;".equals(getSigConstantOperand())) {
-                    int pc = getPC();
-                    String param1 = constantsVisited.get(pc - 2);
-                    if (DEBUG) {
-                        System.out.println("param1=" + param1);
-                    }
-                    if (!validateLoggerName(param1)) {
-                        bugReporter.reportBug(new BugInstance(
-                                "GF_INVALID_LOGGER_NAME_PREFIX", NORMAL_PRIORITY)
-                                .addClassAndMethod(this).addSourceLine(this));
-                    }                
-                    if (param1 == null) 
-                    {
-                        bugReporter.reportBug(new BugInstance(
-                            "GF_MISSING_LOGGER_INFO_ANNOTATION", 
-                            NORMAL_PRIORITY).addClassAndMethod(this).addSourceLine(this));
-                    }
+                    bugReporter.reportBug(new BugInstance(
+                            "GF_MISSING_LOGMESSAGES_RB_ANNOTATION", NORMAL_PRIORITY)
+                            .addClassAndMethod(this).addSourceLine(this));
                 }
             }
         }
