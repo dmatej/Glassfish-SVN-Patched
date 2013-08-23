@@ -43,6 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.bcel.classfile.Code;
+import org.apache.bcel.classfile.JavaClass;
 
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
@@ -71,9 +72,22 @@ public class DebugLoggingDetector extends BytecodeScanningDetector {
     private int logBlockEnd;
     private String levelName;
     private BugReporter bugReporter;
+    private boolean cliCommandClass = false;
 
     public DebugLoggingDetector(BugReporter bugReporter) {
         this.bugReporter = bugReporter;
+    }
+
+    @Override
+    public void visit(JavaClass javaClass) {
+        super.visit(javaClass);
+        String superClassName = javaClass.getSuperclassName();
+        if (superClassName.equals("com.sun.enterprise.admin.cli.CLICommand")) {
+            cliCommandClass = true;
+        }
+        if(javaClass.getPackageName().startsWith("com.sun.enterprise.admin.cli")) {
+            cliCommandClass = true;
+        }
     }
 
     @Override
@@ -88,7 +102,7 @@ public class DebugLoggingDetector extends BytecodeScanningDetector {
     }
 
     @Override
-    public void sawOpcode(int seen) {     
+    public void sawOpcode(int seen) { 
         // Detect access to java.util.logging.Level.FINE, FINER or FINEST objects. 
         if (seen == LDC) {
             seenLDCAt = getPC();
@@ -124,9 +138,11 @@ public class DebugLoggingDetector extends BytecodeScanningDetector {
             if (getPC() < logBlockStart || getPC() >= logBlockEnd) 
             {
                 if (getPC() != (seenLDCAt+2)) {
-                    bugReporter.reportBug(new BugInstance(
-                            "GF_UNCONDITIONAL_DEBUG_LOGGING", NORMAL_PRIORITY)
-                            .addClassAndMethod(this).addSourceLine(this));                    
+                    if (!(cliCommandClass)) {
+                        bugReporter.reportBug(new BugInstance(
+                                "GF_UNCONDITIONAL_DEBUG_LOGGING", NORMAL_PRIORITY)
+                                .addClassAndMethod(this).addSourceLine(this));                    
+                    }
                 } 
             } else if (!getNameConstantOperand().equals(
                     LEVEL_METHOD_NAME_MAP.get(levelName))) 
