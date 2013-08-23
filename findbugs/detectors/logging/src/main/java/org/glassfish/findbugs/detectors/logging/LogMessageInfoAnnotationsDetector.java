@@ -52,6 +52,7 @@ import org.apache.bcel.classfile.Code;
 import org.apache.bcel.classfile.ConstantString;
 import org.apache.bcel.classfile.Field;
 import org.apache.bcel.classfile.JavaClass;
+import org.apache.bcel.classfile.Method;
 
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
@@ -96,14 +97,16 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
     public void visit(JavaClass javaClass) {
         super.visit(javaClass);
         String superClassName = javaClass.getSuperclassName();
-        if (DEBUG) {
-            System.out.println("Superclass="+superClassName);
-        }
         if (superClassName.equals("com.sun.enterprise.admin.cli.CLICommand")) {
             ignoreClass = true;
         }
         if(javaClass.getPackageName().startsWith("com.sun.enterprise.admin.cli")) {
             ignoreClass = true;
+        }
+        if (DEBUG) {
+            System.out.println("Analyzing class="+javaClass.getClassName() 
+                    + ", superClassName="+superClassName
+                    + ", ignoreClass="+ignoreClass);
         }
     }
 
@@ -129,6 +132,14 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
     }
 
     @Override
+    public void visit(Method method) {
+        if (DEBUG) {
+            System.out.println("Analyzing method="+method.getName());   
+        }
+        super.visit(method);
+    }
+
+    @Override
     public void visit(Code code) {
         levelsVisited.clear();
         constantsVisited.clear();
@@ -148,7 +159,8 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
             levelsVisited.put(getPC(), levelName);
         }
         
-        if ((opCode == LDC || opCode == LDC_W)&& getConstantRefOperand() instanceof ConstantString) {
+        if ((opCode == LDC || opCode == LDC_W) && (getConstantRefOperand() instanceof ConstantString)) 
+        {
             constantsVisited.put(getPC(), getStringConstantOperand());
         }
         // Detects the invocation of the Logger.logXXX() methods where the
@@ -162,7 +174,10 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
             
             if (methodName.equals("log")) 
             {
-            	int lastLevelPC = -1;            	
+                if (DEBUG) {
+                  System.out.println("levelsVisited="+levelsVisited);    
+                }
+            	  int lastLevelPC = -1;            	
                 if (!levelsVisited.isEmpty()) {
                 	lastLevelPC = levelsVisited.lastKey();
                 	levelName = levelsVisited.get(lastLevelPC);
@@ -174,6 +189,9 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
                         	break;
                 		}
                 	}
+                }
+                if (DEBUG) {
+                    System.out.println("levelName="+levelName + ",message="+message);    
                 }
             }
             
@@ -204,35 +222,30 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
                levelName = Level.SEVERE.getName();
                message = constantsVisited.get(getPC() - 2);    
             }
-            
-            if(!checkMessagePattern(levelName, message)) {
-                bugReporter.reportBug(new BugInstance(
-                        "GF_INVALID_MSG_ID_PATTERN", NORMAL_PRIORITY)
-                        .addClassAndMethod(this).addSourceLine(this));
-            } 
-            
+                        
             if (levelName != null && !EXCLUDED_LEVELS.contains(levelName)) 
             {
-            	if (message == null) {
+            	if (message == null) {            	    
             		bugReporter.reportBug(new BugInstance(
                             "GF_MISSING_LOGMESSAGE_INFO_ANNOTATION", NORMAL_PRIORITY)
                             .addClassAndMethod(this).addSourceLine(this));
+                if (DEBUG) {
+                    System.out.println("Reported bug="+new BugInstance(
+                            "GF_MISSING_LOGMESSAGE_INFO_ANNOTATION", NORMAL_PRIORITY).addClassAndMethod(this).addSourceLine(this));    
+                }
             	} else if (!message.isEmpty()) {
                     visitedLogMessages.put(message, new BugInstance(
                             "GF_MISSING_LOGMESSAGE_INFO_ANNOTATION", NORMAL_PRIORITY)
-                            .addClassAndMethod(this).addSourceLine(this));            		
+                            .addClassAndMethod(this).addSourceLine(this)); 
             	}
             }
             
         }
     }
 
-    private boolean checkMessagePattern(String levelName, String message) 
+    private boolean checkMessagePattern(String message) 
     {
-        if (levelName != null && message != null && !message.isEmpty()) {
-            if (EXCLUDED_LEVELS.contains(levelName)) {
-                return true;
-            }
+        if (!message.isEmpty()) {
             // Message IDs are expected to be in the form AA-BBB-12345
             String[] tokens = message.split("-");            
             if (tokens.length < 3) {
@@ -251,11 +264,16 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
         for (String logMsg : visitedLogMessages.keySet()) {
             if (!annotatedLogMessages.keySet().contains(logMsg)) {
                 bugReporter.reportBug(visitedLogMessages.get(logMsg));
+            } else {
+                // Validate the message ID
+                if(!checkMessagePattern(logMsg)) {
+                    bugReporter.reportBug(new BugInstance(
+                            "GF_INVALID_MSG_ID_PATTERN", NORMAL_PRIORITY)
+                            .addClassAndMethod(this).addSourceLine(this));
+                }
             }
         }
-        
-    }
-    
+    }    
     
 }
     
