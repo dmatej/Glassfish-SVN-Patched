@@ -57,6 +57,7 @@ import org.apache.bcel.classfile.Method;
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
 import edu.umd.cs.findbugs.BytecodeScanningDetector;
+import edu.umd.cs.findbugs.FieldAnnotation;
 
 /**
  * @author sandeep.shrivastava
@@ -77,7 +78,9 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
 
     private static final boolean DEBUG = false;
 
-    private Map<String, String> annotatedLogMessages = new HashMap<String, String>();
+    private Set<String> annotatedLogMessages = new HashSet<String>();
+    
+    private Set<BugInstance> invalidMgsIds = new HashSet<BugInstance>();
     
     private Map<String, BugInstance> visitedLogMessages = new HashMap<String, BugInstance>();
     
@@ -116,7 +119,6 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
         if (ignoreClass) {
             return;
         }
-        String fieldName = getClassName() + "." + field.getName();
         AnnotationEntry[] annotationEntries = field.getAnnotationEntries();
         for (AnnotationEntry annoEntry : annotationEntries) {
             String annoType = annoEntry.getAnnotationType();
@@ -126,7 +128,14 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
                 String msgId = field.getConstantValue().toString();
                 msgId = msgId.substring(1);
                 msgId = msgId.substring(0, msgId.length() - 1);
-                annotatedLogMessages.put(msgId, fieldName);                
+                annotatedLogMessages.add(msgId);
+                // Validate the message ID
+                if(!checkMessagePattern(msgId)) {
+                    FieldAnnotation fieldAnno = FieldAnnotation.fromVisitedField(this);
+                    bugReporter.reportBug(new BugInstance(
+                            "GF_INVALID_MSG_ID_PATTERN", NORMAL_PRIORITY).addClass(
+                                    getDottedClassName()).addField(fieldAnno));
+                }
             }
         }
     }
@@ -262,16 +271,13 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
     
     public void report() {
         for (String logMsg : visitedLogMessages.keySet()) {
-            if (!annotatedLogMessages.keySet().contains(logMsg)) {
+            if (!annotatedLogMessages.contains(logMsg)) {
                 bugReporter.reportBug(visitedLogMessages.get(logMsg));
-            } else {
-                // Validate the message ID
-                if(!checkMessagePattern(logMsg)) {
-                    bugReporter.reportBug(new BugInstance(
-                            "GF_INVALID_MSG_ID_PATTERN", NORMAL_PRIORITY)
-                            .addClassAndMethod(this).addSourceLine(this));
-                }
-            }
+            } 
+        }
+        
+        for (BugInstance bug : invalidMgsIds) {
+            bugReporter.reportBug(bug);
         }
     }    
     
