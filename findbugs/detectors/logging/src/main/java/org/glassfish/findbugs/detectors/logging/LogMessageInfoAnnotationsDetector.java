@@ -80,8 +80,6 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
 
     private Set<String> annotatedLogMessages = new HashSet<String>();
     
-    private Set<BugInstance> invalidMgsIds = new HashSet<BugInstance>();
-    
     private Map<String, BugInstance> visitedLogMessages = new HashMap<String, BugInstance>();
     
     private SortedMap<Integer, String> levelsVisited = new TreeMap<Integer, String>();
@@ -274,12 +272,8 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
             if (!annotatedLogMessages.contains(logMsg)) {
                 bugReporter.reportBug(visitedLogMessages.get(logMsg));
             } 
-        }
-        
-        for (BugInstance bug : invalidMgsIds) {
-            bugReporter.reportBug(bug);
-        }
-    }    
+        }        
+    }
     
 }
     
