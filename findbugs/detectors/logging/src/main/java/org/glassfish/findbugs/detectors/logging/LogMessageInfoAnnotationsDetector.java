@@ -132,7 +132,8 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
                     FieldAnnotation fieldAnno = FieldAnnotation.fromVisitedField(this);
                     bugReporter.reportBug(new BugInstance(
                             "GF_INVALID_MSG_ID_PATTERN", NORMAL_PRIORITY).addClass(
-                                    getDottedClassName()).addField(fieldAnno));
+                                    getDottedClassName()).addField(fieldAnno).addSourceLine(
+                                            fieldAnno.getSourceLines()));
                 }
             }
         }
