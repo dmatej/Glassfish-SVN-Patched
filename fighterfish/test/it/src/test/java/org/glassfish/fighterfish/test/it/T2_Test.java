@@ -41,6 +41,8 @@
 
 package org.glassfish.fighterfish.test.it;
 
+import org.glassfish.embeddable.Deployer;
+import org.glassfish.embeddable.GlassFish;
 import org.glassfish.embeddable.GlassFishException;
 import org.glassfish.fighterfish.test.util.*;
 import org.junit.Assert;
@@ -58,11 +60,9 @@ import org.osgi.service.http.HttpService;
 
 import java.io.*;
 import java.net.*;
-import java.net.URI;
 import java.util.Properties;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.jar.JarInputStream;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -823,36 +823,42 @@ public class T2_Test extends AbstractTestObject {
      */
     @Test
     public void test_GLASSFISH_19662() throws GlassFishException, InterruptedException, BundleException, IOException {
-        logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_19662", "ENTRY");
+    	logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_19662", "ENTRY");
         TestContext tc = TestContext.create(getClass());
         try {
         	//firstly, we install sample.uas.api bundle
         	String location = "mvn:org.glassfish.fighterfish/sample.uas.api/1.0.0/jar";
-            Bundle bundle = tc.installBundle(location);
+            tc.installBundle(location);
             
+            GlassFish glassfish = tc.getGlassFish();
+            Deployer deployer = glassfish.getDeployer();
             //secondly, we install sample.uas.simplewabfragment bundle
             location = "mvn:org.glassfish.fighterfish/sample.uas.simplewabfragment/1.0.0/jar";
-            bundle = tc.installBundle(location);
-            
+            String wabfragmentName = deployer.deploy(URI.create(location), "--type=osgi");
+                       
             //finally, we install host bundle called sample.uas.simplewab wab
             location = "mvn:org.glassfish.fighterfish/sample.uas.simplewab/1.0.0/war";
-            bundle = tc.installBundle(location);
-            WebAppBundle wab = new WebAppBundle(ctx, bundle);
-            wab.deploy(getTimeout(), TimeUnit.MILLISECONDS);
+            String wabName = deployer.deploy(URI.create(location), "--type=osgi");
+            
+            Thread.sleep(getTimeout());
             
             //here, for simplicity, I have not installed UserAuthService
-            final String reportJspRequest = "/report.jsp";            
-            final String reportServletRequest = "/ReportServlet";
+            final String reportJspRequest = "http://localhost:8080/uas/report.jsp";            
+            final String reportServletRequest = "http://localhost:8080/uas/ReportServlet";
             final String reportJspSuccessful ="Please click";
             final String reportServletSuccessful ="Service is not yet available";
             
-            String response = wab.getHttpGetResponse(reportJspRequest);
+            String response = URLHelper.getResponse(new URL(reportJspRequest));
             logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_19662", "response = {0}", new Object[]{response});
             assertThat(response, new StringPatternMatcher(reportJspSuccessful));
-            
-            response = wab.getHttpGetResponse(reportServletRequest);
+
+            response = URLHelper.getResponse(new URL(reportServletRequest));
             logger.logp(Level.INFO, "T2_Test", "test_GLASSFISH_19662", "response = {0}", new Object[]{response});
-            assertThat(response, new StringPatternMatcher(reportServletSuccessful));           
+            assertThat(response, new StringPatternMatcher(reportServletSuccessful));
+            
+            deployer.undeploy(wabfragmentName);
+            deployer.undeploy(wabName);
+            
         } finally {
             tc.destroy();
         }
