@@ -67,12 +67,19 @@
             <artifactId>javaee-web-api</artifactId>
         </dependency>
         <!--
-        Add all bundles provisioned by tests so that mvn can download them rathat than pax-url.
-        It allows us to help using staging repo for testing before release of artifacts.
-        It also allows us to avoid nasty proxy issues that aether can't handle.
+        Our tests use mvn: url scheme to directly reference mvn artifacts.
+        pax-url provides necessary url handler. It internally uses aether
+        to resolve artifacts from remote or local repository.
+        The version of pax-url that we currently use uses default repository only.
+        If we want to test with artifacts in staging repo or promoted repo,
+        pax-url can't handle it. See http://comments.gmane.org/gmane.comp.java.ops4j.general/12460
+        for more details.
+        As a work around, we add all bundles provisioned by tests so that 
+        mvn can download them rather than pax-url.
         There is no other reason to add these dependencies here.
-        We should upgrade pax-url to avoid having to add dependencies here because they
-        can affect test classpath and cause nuisance.
+        Since these dependencies appear as surefire classpath and can affect test runtime,
+        we also explicitly configure surefire plugin to exclude them from classpath.
+        We should upgrade pax-url instead of doing such work arounds.
         -->
         <dependency>
             <groupId>org.glassfish.fighterfish</groupId>
@@ -214,6 +221,12 @@
             <artifactId>test.app9</artifactId>
             <version>1.0.0</version>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.primefaces</groupId>
+                    <artifactId>primefaces</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.glassfish.fighterfish</groupId>
@@ -324,23 +337,34 @@
             <type>war</type>
         </dependency>
         <!--
-        Adding the following dependencies causes Felix to bomb because they introduce
+        Adding the following dependency causes Felix to bomb because they introduce
         incompatible versions of jars in surefire plugin classpath. There does not seem
         to be an easy way to prevemt transitive dependencies to be excluded from
-        classpath, so we have commented these two dependencies.
+        classpath, so we have commented this dependency.
         <dependency>
             <groupId>org.apache.felix</groupId>
             <artifactId>org.apache.felix.webconsole</artifactId>
             <version>3.1.2</version>
             <scope>test</scope>
         </dependency>       
+        -->        
         <dependency>
             <groupId>org.glassfish.main.osgi-platforms</groupId>
             <artifactId>felix-webconsole-extension</artifactId>
             <version>4.0.1-b02</version>
             <scope>test</scope>
+            <!-- Exclude the ones that bring in incompatible jars to classpath -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.felix</groupId>
+                    <artifactId>org.apache.felix.webconsole</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.glassfish.main.security</groupId>
+                    <artifactId>security-services</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-        -->        
     </dependencies>
     <build>
         <plugins>
@@ -431,6 +455,11 @@
                         -->
                         <classpathDependencyExcludes>javax:javaee-web-api</classpathDependencyExcludes>
                         <classpathDependencyExcludes>javax:javaee-api</classpathDependencyExcludes>
+                        <!-- We don't need any of these in classpath. These dependencies are only present
+                             so that maven can ensure they are resolved before tests use them. -->
+                        <classpathDependencyExcludes>org.glassfish.main.osgi-platforms:felix-webconsole-extension</classpathDependencyExcludes>
+                        <classpathDependencyExcludes>org.glassfish.fighterfish:test.app*</classpathDependencyExcludes>
+                        <classpathDependencyExcludes>org.glassfish.fighterfish:sample.*</classpathDependencyExcludes>
                     </classpathDependencyExcludes>
                 </configuration>
             </plugin>
