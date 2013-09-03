@@ -98,8 +98,7 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
     public void visit(JavaClass javaClass) {
         super.visit(javaClass);
         ignoreClass = false;
-        String superClassName = javaClass.getSuperclassName();
-        if (superClassName.equals("com.sun.enterprise.admin.cli.CLICommand")) {
+        if (DebugLoggingDetector.isCLICommandClass(javaClass)) {
             ignoreClass = true;
         }
         if(javaClass.getPackageName().startsWith("com.sun.enterprise.admin.cli")) {
@@ -107,7 +106,6 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
         }
         if (DEBUG) {
             System.out.println("Analyzing class="+javaClass.getClassName() 
-                    + ", superClassName="+superClassName
                     + ", ignoreClass="+ignoreClass);
         }
     }

@@ -82,13 +82,26 @@ public class DebugLoggingDetector extends BytecodeScanningDetector {
     public void visit(JavaClass javaClass) {
         super.visit(javaClass);
         cliCommandClass = false;
-        String superClassName = javaClass.getSuperclassName();
-        if (superClassName.equals("com.sun.enterprise.admin.cli.CLICommand")) {
+        if (isCLICommandClass(javaClass)) {
             cliCommandClass = true;
         }
         if(javaClass.getPackageName().startsWith("com.sun.enterprise.admin.cli")) {
             cliCommandClass = true;
         }
+    }
+
+    static boolean isCLICommandClass(JavaClass javaClass) {        
+        try {
+            for (JavaClass jc : javaClass.getSuperClasses()) {
+                String superClassName = jc.getClassName();
+                if (superClassName.equals("com.sun.enterprise.admin.cli.CLICommand")) {
+                    return true;
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+        return false;
     }
 
     @Override
