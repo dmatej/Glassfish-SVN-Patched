@@ -55,11 +55,10 @@ import org.glassfish.nexus.client.beans.MavenArtifactInfo;
  *
  * @author romano
  */
-public class StagingRepo {
+public class StagingRepoConf {
     String ref;
     String profile;
     private MavenArtifactInfo artifactInfo;
-    private Artifact artifact;
 
     protected MavenArtifactInfo getArtifactInfo() {
         return artifactInfo;

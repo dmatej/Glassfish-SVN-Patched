@@ -39,13 +39,10 @@
  */
 package org.glassfish.build.nexus.mojos;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.List;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.glassfish.nexus.client.NexusClientException;
-import org.glassfish.nexus.client.beans.MavenArtifactInfo;
 import org.glassfish.nexus.client.beans.Repo;
 
 /**
@@ -60,7 +57,7 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
      * @required
      * @parameter expression="${stagingRepos}"
      */
-    private List<StagingRepo> stagingRepos;
+    private List<StagingRepoConf> stagingRepos;
 
     /**
      * @parameter expression="${nexusRepoUrl}"
@@ -87,18 +84,8 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
 
-
-        URL u = null;
-        try {
-            u = new URL(nexusRepoUrl);
-        } catch (MalformedURLException ex) {
-            getLog().error("Error in resolving nexusRepoUrl: " + ex.getMessage(), ex);
-        }
-
-        // init
-        createNexusClient(u, nexusRepoId, nexusRepoUsername, nexusRepoPassword);
-
-        for (StagingRepo repo : stagingRepos) {
+        createNexusClient();
+        for (StagingRepoConf repo : stagingRepos) {
             try {
                 stagingRepo = nexusClient.getStagingRepo(
                         repo.getProfile(),

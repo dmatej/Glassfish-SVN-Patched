@@ -44,6 +44,7 @@ import java.net.URL;
 import java.util.Properties;
 import org.apache.maven.artifact.repository.ArtifactRepository;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.model.DeploymentRepository;
 import org.apache.maven.model.DistributionManagement;
 import org.apache.maven.model.Model;
@@ -72,6 +73,15 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
      * @parameter expression="${project}" @required @readonly
      */
     protected MavenProject project;
+    
+    /**
+     * The Maven Session Object
+     *
+     * @parameter expression="${session}"
+     * @required
+     * @readonly
+     */
+    private MavenSession session;    
 
     /**
      * The system settings for Maven. This is the instance resulting from
@@ -124,8 +134,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
         getLog().debug(message);
     }
 
-    private static DeploymentRepository getDeploymentRepositoryFromModel(Model m)
-            throws MojoFailureException{
+    private static DeploymentRepository getDeploymentRepoFromModel(Model m) throws MojoFailureException{
         
         DistributionManagement dm = m.getDistributionManagement();
         if (dm != null) {
@@ -138,31 +147,21 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
                 "unable to get deployment repo from distributionManagement");
     }
     
-    private static URL getRepoUrlFromModel(Model m) 
-            throws MojoExecutionException, MojoFailureException {
+    private static String getRepoUrlFromModel(Model m) throws MojoFailureException {
         
-        DeploymentRepository dr = getDeploymentRepositoryFromModel(m);
+        DeploymentRepository dr = getDeploymentRepoFromModel(m);
         String u = dr.getUrl();
         if (u != null) {
-            URL repoUrl;
-            try {
-                repoUrl = new URL(u.replaceAll("/service/local/staging/deploy/maven2", ""));
-            } catch (MalformedURLException ex) {
-                throw new MojoExecutionException(ex.getMessage(), ex);
-            }
-            if (repoUrl != null) {
-                return repoUrl;
-            }
+               return u;
         }
         throw new MojoFailureException(
                 "unable to get repo URL from distributionManagement");
-        
     }    
     
     private static String getRepoIdFromModel(Model m) 
             throws MojoFailureException {
         
-        DeploymentRepository dr = getDeploymentRepositoryFromModel(m);
+        DeploymentRepository dr = getDeploymentRepoFromModel(m);
         String id = dr.getId();
         if (id != null) {
             return id;
@@ -185,32 +184,55 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
         return server;
     }
     
-    protected void createNexusClient(
-            URL repoURL,
-            String repoId,
-            String username,
-            String password) throws MojoFailureException, MojoExecutionException {
-
-        // if supplied repoURL is null, try to resolve it from model
-        if (repoURL == null) {
-            repoURL = getRepoUrlFromModel(project.getModel());
+    protected void createNexusClient() throws MojoFailureException, MojoExecutionException {
+        // this method resolves requires values with a specific ordering.
+        // 1. plugin parameters
+        String _repoURL = session.getUserProperties().getProperty("nexusRepoUrl");
+        String repoId = session.getUserProperties().getProperty("nexusRepoId");
+        String username = session.getUserProperties().getProperty("nexusRepoUsername");
+        String password = session.getUserProperties().getProperty("nexusRepoPassword");
+        
+        // 2. repoId and repoURL provided as part of altDeploy, if not supplied via plugin param.   
+        String altDeployRepo = session.getUserProperties().getProperty("altDeploymentRepository");
+        if (altDeployRepo != null) {
+            String[] tokens = altDeployRepo.split("::");
+            if (tokens.length == 3) {
+                repoId = tokens[0];
+                _repoURL = tokens[2];
+            }
         }
-
-        // if supplied repoId is null, try to resolve from model
+        
+        // 3. effective-model, using distributionManagement from model    
+        if (_repoURL == null) {
+            _repoURL = getRepoUrlFromModel(project.getModel());
+        }
         if (repoId == null) {
             repoId = getRepoIdFromModel(project.getModel());
         }
 
-        // if supplied username is null
+        // 4. settings.xml to get username and password, if not supplied via plugin param.
         if (username == null) {
             username = getServerFromSettings(settings, repoId).getUsername();
         }
-        
-        // if supplied password is null
         if (password == null) {
             password = getServerFromSettings(settings, repoId).getPassword();
         }
 
+        createNexusClient(_repoURL, repoId, username, password);
+    }
+    
+    protected void createNexusClient(String nexusURL, String repoId, String username, String password) throws MojoFailureException, MojoExecutionException {
+        // convert the string to URL
+        URL repoURL = null;
+        if (nexusURL != null && !nexusURL.isEmpty()) {
+            try {
+                repoURL = new URL(nexusURL.replaceAll("/service/local/staging/deploy/maven2", ""));
+            } catch (MalformedURLException ex) {
+                throw new MojoFailureException("Error in resolving nexusRepoUrl", ex);
+            }
+        }
+                
+        // proxy configuration
         String proxyHost = null;
         int proxyPort = 80;
         for (Proxy proxy : settings.getProxies()) {

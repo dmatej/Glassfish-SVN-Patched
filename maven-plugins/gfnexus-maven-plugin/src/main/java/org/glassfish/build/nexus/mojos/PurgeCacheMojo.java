@@ -39,8 +39,6 @@
  */
 package org.glassfish.build.nexus.mojos;
 
-import java.net.MalformedURLException;
-import java.net.URL;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.glassfish.nexus.client.NexusClientException;
@@ -74,7 +72,7 @@ public class PurgeCacheMojo extends AbstractNexusMojo {
     
     public void execute() throws MojoFailureException, MojoExecutionException {
         try {
-            createNexusClient(new URL(nexusCacheURL),nexusCacheId,null,null);
+            createNexusClient(nexusCacheURL,nexusCacheId,null,null);
 
             StringBuilder sb = new StringBuilder();
             sb.append(project.getGroupId().replace(".", "/"));
@@ -88,12 +86,6 @@ public class PurgeCacheMojo extends AbstractNexusMojo {
         } catch (NexusClientException ex) {
             if (!ignoreFailures) {
                 throw ex;
-            } else {
-                getLog().warn(ex.getMessage());
-            }
-        } catch (MalformedURLException ex) {
-            if (!ignoreFailures) {
-                throw new MojoExecutionException(ex.getMessage(),ex);
             } else {
                 getLog().warn(ex.getMessage());
             }
