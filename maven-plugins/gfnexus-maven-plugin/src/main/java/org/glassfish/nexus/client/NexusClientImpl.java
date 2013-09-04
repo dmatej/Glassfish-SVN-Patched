@@ -189,7 +189,8 @@ public class NexusClientImpl implements NexusClient {
     private Response stagingOperation(
             Operation op,
             String[] repoIds,
-            String profileGroup)
+            String profileGroup,
+            String desc)
             throws NexusClientException {
 
         if (repoIds == null || repoIds.length == 0) {
@@ -200,7 +201,7 @@ public class NexusClientImpl implements NexusClient {
         try {
             Response response = request(STAGING_REPO_BULK_PATH + "/" + op).post(
                         Entity.entity(new StagingOperationRequestData(
-                            new StagingOperationRequest(repoIds, profileGroup, op + " ..."))
+                            new StagingOperationRequest(repoIds, profileGroup, op + " - " +String.valueOf(desc)))
                             ,MediaType.APPLICATION_JSON));
             refreshStagingRepos();
             return response;
@@ -257,23 +258,23 @@ public class NexusClientImpl implements NexusClient {
         return stagingProfileRepositoriesMap.get(repoId);
     }
 
-    public void closeStagingRepo(String... repoIds) throws NexusClientException {
+    public void closeStagingRepo(String desc, String... repoIds) throws NexusClientException {
         logger.info(" ");
         logger.log(Level.INFO,
                 "-- closing {0} --",
                 Arrays.toString(repoIds));
-        handleResponse(stagingOperation(Operation.close, repoIds, null), null);
+        handleResponse(stagingOperation(Operation.close, repoIds, null,desc), null);
     }
 
-    public void dropStagingRepo(String... repoIds) throws NexusClientException {
+    public void dropStagingRepo(String desc, String... repoIds) throws NexusClientException {
         logger.info(" ");
         logger.log(Level.INFO,
                 "-- droping {0} --",
                 Arrays.toString(repoIds));
-        handleResponse(stagingOperation(Operation.drop, repoIds, null), null);
+        handleResponse(stagingOperation(Operation.drop, repoIds, null, desc), null);
     }
 
-    public Repo promoteStagingRepo(String promotionProfile,String... repoIds)
+    public Repo promoteStagingRepo(String promotionProfile,String desc,String... repoIds)
             throws NexusClientException {
 
         logger.info(" ");
@@ -299,7 +300,8 @@ public class NexusClientImpl implements NexusClient {
                             stagingOperation(
                             Operation.promote,
                             repoIds,
-                            profile.getId()), null);
+                            profile.getId(),
+                            desc), null);
 
                     // search the promoted repository
                     StagingProfileRepo repo =

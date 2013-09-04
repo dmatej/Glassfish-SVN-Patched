@@ -78,6 +78,11 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
      * @parameter expression="${nexusRepoPassword}"
      */
     protected String nexusRepoPassword = null;
+    
+    /**
+     * @parameter expression="${message}"
+     */
+    protected String message = null;
 
     protected Repo stagingRepo;
 
@@ -85,6 +90,12 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
 
         createNexusClient();
+        
+        // make sure we use the value provided at command line
+        if(message == null){
+            message = session.getUserProperties().getProperty("nexusRepoUrl");
+        }
+        
         for (StagingRepoConf repo : stagingRepos) {
             try {
                 stagingRepo = nexusClient.getStagingRepo(

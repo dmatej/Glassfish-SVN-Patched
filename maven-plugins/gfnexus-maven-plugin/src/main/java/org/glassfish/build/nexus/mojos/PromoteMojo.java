@@ -76,6 +76,6 @@ public class PromoteMojo extends AbstractNexusStagingMojo{
                         + " is open, use autoClose=true");
             }
         }
-        stagingRepo.promote(promotionProfile);
+        stagingRepo.promote(promotionProfile,message);
     }
 }

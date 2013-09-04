@@ -179,7 +179,7 @@ public class GlassFishPromoteMojo extends AbstractNexusStagingMojo{
         
         // promote the staging repo separetly and initialize the aggregation
         StagingAggregation aggregation = 
-                new StagingAggregation(stagingRepo.promote(promotionProfile));
+                new StagingAggregation(stagingRepo.promote(promotionProfile,message));
         
         // retrieve the full content of the repository
         Set<MavenArtifactInfo> artifactsInfo = stagingRepo.getContent();
@@ -218,7 +218,7 @@ public class GlassFishPromoteMojo extends AbstractNexusStagingMojo{
                     Repo parent;
                     // promote repo sepately if not done...
                     if((parent = repo.getParent()) == null){
-                        parent = repo.promote(promotionProfile);
+                        parent = repo.promote(promotionProfile,message);
                     }
 
                     Repo grandParent;
@@ -234,7 +234,7 @@ public class GlassFishPromoteMojo extends AbstractNexusStagingMojo{
                                 grandParent.drop();
                                 uncles.remove(parent);
                                 aggregation.aggregate(
-                                        new StagingAggregation(uncles).promote(aggregationProfileId));
+                                        new StagingAggregation(uncles).promote(aggregationProfileId,message));
                                 
                             } else {
                                 aggregation.aggregate(grandParent);
@@ -247,6 +247,6 @@ public class GlassFishPromoteMojo extends AbstractNexusStagingMojo{
             }
         }
         
-        aggregation.promote(aggregationProfileId);
+        aggregation.promote(aggregationProfileId,message);
     }
 }

@@ -121,8 +121,8 @@ final public class Repo implements StagingOperation {
         getNexusClient().dropStagingRepo(this.getId());
     }
 
-    public Repo promote(String profile) throws NexusClientException {
-        return getNexusClient().promoteStagingRepo(profile, this.getId());
+    public Repo promote(String profile, String desc) throws NexusClientException {
+        return getNexusClient().promoteStagingRepo(profile, desc, this.getId());
     }
 
     public StagingAggregation aggregate(StagingOperation repo) throws NexusClientException {

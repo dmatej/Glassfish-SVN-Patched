@@ -81,7 +81,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
      * @required
      * @readonly
      */
-    private MavenSession session;    
+    protected MavenSession session;
 
     /**
      * The system settings for Maven. This is the instance resulting from

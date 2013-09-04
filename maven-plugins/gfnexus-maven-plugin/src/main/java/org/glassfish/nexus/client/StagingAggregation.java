@@ -81,10 +81,10 @@ public class StagingAggregation implements StagingOperation {
         getNexusClient().dropStagingRepo("");
     }
 
-    public Repo promote(String profile) throws NexusClientException {
+    public Repo promote(String profile, String desc) throws NexusClientException {
         String[] ids = getIds();
-        if(ids != null || ids.length >0){
-            return getNexusClient().promoteStagingRepo(profile, getIds());
+        if(ids != null && ids.length >0){
+            return getNexusClient().promoteStagingRepo(profile, desc, getIds());
         }
         return null;
     }
