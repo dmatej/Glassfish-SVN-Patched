@@ -466,7 +466,7 @@ public class NexusClientImpl implements NexusClient {
                 }
                 
                 // if the checksum is not null and not empty, the coordinates exist
-                // we always return the staging repo, even if the checsum does not match
+                // we always return the staging repo, even if the checksum does not match
                 // since there can be only one representation of a coordinate
                 if (checksum != null) {
                     if (refChecksum.equals(checksum)) {
