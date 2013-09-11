@@ -63,9 +63,9 @@ public class DropMojo extends AbstractNexusStagingMojo{
         if ((parent = stagingRepo.getParent()) != null) {
             getLog().info("[" + stagingRepo.getId() + "] is a member of [" + parent.getId() + "]");
             if (force) {
-                parent.drop();
+                parent.drop("Force dropping " + message);
             }
         }
-        stagingRepo.drop();
+        stagingRepo.drop(message);
     }
 }

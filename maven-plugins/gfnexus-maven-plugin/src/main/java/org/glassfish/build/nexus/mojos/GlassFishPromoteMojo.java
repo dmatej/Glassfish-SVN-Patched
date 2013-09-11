@@ -168,7 +168,7 @@ public class GlassFishPromoteMojo extends AbstractNexusStagingMojo{
 
         if (stagingRepo.isOpen()) {
             if (autoClose) {
-                stagingRepo.close();
+                stagingRepo.close("Autoclosing " + message);
             } else {
                 throw new MojoFailureException(
                         "staging repository "
@@ -231,7 +231,7 @@ public class GlassFishPromoteMojo extends AbstractNexusStagingMojo{
 
                                 // remove parentfrom previous aggregation
                                 Set<Repo> uncles = grandParent.getGroupTree();
-                                grandParent.drop();
+                                grandParent.drop("Dropping grandparent " + message);
                                 uncles.remove(parent);
                                 aggregation.aggregate(
                                         new StagingAggregation(uncles).promote(aggregationProfileId,message));

@@ -67,7 +67,7 @@ public class PromoteMojo extends AbstractNexusStagingMojo{
     public void nexusMojoExecute() throws NexusClientException, MojoFailureException {
         if (stagingRepo.isOpen()) {
             if (autoClose) {
-                stagingRepo.close();
+                stagingRepo.close("Autoclosing " + message);
 
             } else {
                 throw new MojoFailureException(

@@ -55,7 +55,7 @@ public class CloseMojo extends AbstractNexusStagingMojo {
     @Override
     public void nexusMojoExecute() throws NexusClientException, MojoFailureException {
         if(stagingRepo.isOpen()){
-            stagingRepo.close();
+            stagingRepo.close(message);
         } else {
             throw new MojoFailureException("repository "+stagingRepo.getName()+" is already closed");
         }

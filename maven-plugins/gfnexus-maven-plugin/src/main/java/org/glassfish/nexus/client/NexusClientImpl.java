@@ -258,7 +258,7 @@ public class NexusClientImpl implements NexusClient {
         return stagingProfileRepositoriesMap.get(repoId);
     }
 
-    public void closeStagingRepo(String desc, String... repoIds) throws NexusClientException {
+    public void closeStagingRepo(String desc, String[] repoIds) throws NexusClientException {
         logger.info(" ");
         logger.log(Level.INFO,
                 "-- closing {0} --",
@@ -266,7 +266,7 @@ public class NexusClientImpl implements NexusClient {
         handleResponse(stagingOperation(Operation.close, repoIds, null,desc), null);
     }
 
-    public void dropStagingRepo(String desc, String... repoIds) throws NexusClientException {
+    public void dropStagingRepo(String desc, String[] repoIds) throws NexusClientException {
         logger.info(" ");
         logger.log(Level.INFO,
                 "-- droping {0} --",
@@ -274,7 +274,7 @@ public class NexusClientImpl implements NexusClient {
         handleResponse(stagingOperation(Operation.drop, repoIds, null, desc), null);
     }
 
-    public Repo promoteStagingRepo(String promotionProfile,String desc,String... repoIds)
+    public Repo promoteStagingRepo(String promotionProfile, String desc, String[] repoIds)
             throws NexusClientException {
 
         logger.info(" ");
@@ -523,6 +523,6 @@ public class NexusClientImpl implements NexusClient {
         Repo repo = nexusClient.getStagingRepo(
                 "org-glassfish",
                 new MavenArtifactInfo("groupId", "artifactId", "version", "classifier", "extension", null));
-        repo.close();
+        repo.close("Add some message here");
     }
 }

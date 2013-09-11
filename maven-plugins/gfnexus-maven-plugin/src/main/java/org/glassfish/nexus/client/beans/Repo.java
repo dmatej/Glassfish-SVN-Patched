@@ -113,22 +113,23 @@ final public class Repo implements StagingOperation {
         return writePolicy.equals("ALLOW_WRITE");
     }
 
-    public void close() throws NexusClientException {
-        getNexusClient().closeStagingRepo(this.getId());
+    public void close(String msg) throws NexusClientException {
+        getNexusClient().closeStagingRepo(msg, getIds());
     }
 
-    public void drop() throws NexusClientException {
-        getNexusClient().dropStagingRepo(this.getId());
+    public void drop(String msg) throws NexusClientException {
+        getNexusClient().dropStagingRepo(msg, getIds());
     }
 
-    public Repo promote(String profile, String desc) throws NexusClientException {
-        return getNexusClient().promoteStagingRepo(profile, desc, this.getId());
+    public Repo promote(String profile, String msg) throws NexusClientException {
+        return getNexusClient().promoteStagingRepo(profile, msg, getIds());
     }
 
     public StagingAggregation aggregate(StagingOperation repo) throws NexusClientException {
         return new StagingAggregation(this).aggregate(repo);
     }
 
+    @Override
     public String[] getIds() {
         return new String[]{getId()};
     }

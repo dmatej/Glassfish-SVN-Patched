@@ -47,9 +47,9 @@ import org.glassfish.nexus.client.beans.Repo;
  * @author Romain Grecourt
  */
 public interface StagingOperation {
-    public void close() throws NexusClientException;
-    public void drop() throws NexusClientException;
-    public Repo promote(String profile, String desc) throws NexusClientException;
+    public void close(String msg) throws NexusClientException;
+    public void drop(String msg) throws NexusClientException;
+    public Repo promote(String profile, String msg) throws NexusClientException;
     public String[] getIds();
     public StagingAggregation aggregate(StagingOperation repo) throws NexusClientException;
 }
