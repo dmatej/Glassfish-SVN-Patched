@@ -72,15 +72,18 @@ public class StagingAggregation implements StagingOperation {
         this();
         repos.addAll(repos);
     }
-
+    
+    @Override
     public void close(String msg) throws NexusClientException {
         getNexusClient().closeStagingRepo(msg, getIds());
     }
-
+    
+    @Override
     public void drop(String msg) throws NexusClientException {
         getNexusClient().dropStagingRepo(msg, getIds());
     }
-
+    
+    @Override
     public Repo promote(String profile, String msg) throws NexusClientException {
         String[] ids = getIds();
         if(ids != null && ids.length >0){
@@ -88,7 +91,8 @@ public class StagingAggregation implements StagingOperation {
         }
         return null;
     }
-
+    
+    @Override
     public StagingAggregation aggregate(StagingOperation repo) throws NexusClientException {
         repos.add(repo);
         return this;

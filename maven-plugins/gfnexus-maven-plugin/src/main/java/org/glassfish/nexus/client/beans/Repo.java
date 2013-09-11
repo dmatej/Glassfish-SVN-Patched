@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -108,23 +108,27 @@ final public class Repo implements StagingOperation {
     public String toString() {
         return "Repository{" + "id=" + id + ", name=" + name + '}';
     }
-
+    
     public boolean isOpen(){
         return writePolicy.equals("ALLOW_WRITE");
     }
 
+    @Override
     public void close(String msg) throws NexusClientException {
         getNexusClient().closeStagingRepo(msg, getIds());
     }
 
+    @Override
     public void drop(String msg) throws NexusClientException {
         getNexusClient().dropStagingRepo(msg, getIds());
     }
 
+    @Override
     public Repo promote(String profile, String msg) throws NexusClientException {
         return getNexusClient().promoteStagingRepo(profile, msg, getIds());
     }
 
+    @Override
     public StagingAggregation aggregate(StagingOperation repo) throws NexusClientException {
         return new StagingAggregation(this).aggregate(repo);
     }
