@@ -185,7 +185,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
     }
     
     protected void createNexusClient() throws MojoFailureException, MojoExecutionException {
-        // this method resolves requires values with a specific ordering.
+        // this method resolves required values with a specific ordering.
         // 1. plugin parameters
         String _repoURL = session.getUserProperties().getProperty("nexusRepoUrl");
         String repoId = session.getUserProperties().getProperty("nexusRepoId");
