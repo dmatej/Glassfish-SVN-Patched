@@ -253,14 +253,26 @@ public class LogMessageInfoAnnotationsDetector extends BytecodeScanningDetector 
     private boolean checkMessagePattern(String message) 
     {
         if (!message.isEmpty()) {
-            // Message IDs are expected to be in the form AA-BBB-12345
+            // Message IDs are expected to be in the form AAAA-BBBBBBBBB-12345
             String[] tokens = message.split("-");            
             if (tokens.length < 3) {
                 return false;
-            }             
+            }
             
-            String messageNumber = tokens[tokens.length-1];
-            if (messageNumber.length() != 5) {
+            // Component code cannot exceed 4 chars
+            String token = tokens[0];
+            if (token.length() > 4) {
+                return false;
+            }
+
+            // Subsystem code cannot exceed 9 chars
+            token = tokens[1];
+            if (token.length() > 9) {
+                return false;
+            }
+
+            token = tokens[2];
+            if (token.length() != 5) {
                 return false;
             }            
         }
