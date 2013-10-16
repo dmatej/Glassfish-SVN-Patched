@@ -140,19 +140,12 @@ public class ZipMojo extends AbstractMojo {
         
         this.project.addCompileSourceRoot(null);
 
-        // compute the final file name
-        StringBuilder finalFileName = new StringBuilder(finalName);
-        finalFileName.append('.');
-        finalFileName.append(extension);
-        
-        File target = new File(outputDirectory, finalFileName.toString());
-        ZipFileSet zfs = MavenUtils.createZipFileSet(dir, includes, excludes);
-        MavenUtils.createZip(
+        File target = MavenUtils.createZip(
                 project.getProperties(),
                 getLog(),
                 duplicate,
-                zfs,
-                target);
+                MavenUtils.createZipFileSet(dir, includes, excludes),
+                new File(outputDirectory, finalName + '.' + extension));
 
         if (attach.booleanValue()) {
             project.getArtifact().setFile(target);

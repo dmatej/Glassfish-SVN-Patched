@@ -1097,7 +1097,7 @@ public class MavenUtils {
         return fset;
     }
     
-    public static void createZip(
+    public static File createZip(
             Properties props,
             Log log,
             String duplicate,
@@ -1106,9 +1106,10 @@ public class MavenUtils {
 
         ZipUtil zipUtil = new ZipUtil();
         zipUtil.zip(props, log, duplicate, fsets, target);
+        return target;
     }
     
-    public static void createZip(
+    public static File createZip(
             Properties props,
             Log log,
             String duplicate,
@@ -1117,7 +1118,7 @@ public class MavenUtils {
 
         List<ZipFileSet> fsets = new ArrayList<ZipFileSet>();
         fsets.add(fset);
-        createZip(props, log, duplicate, fsets, target);
+        return createZip(props, log, duplicate, fsets, target);
     }
 
     private static class ZipUtil implements BuildListener {
