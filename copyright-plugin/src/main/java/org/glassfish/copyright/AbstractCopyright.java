@@ -596,6 +596,12 @@ public abstract class AbstractCopyright {
 	    }
 	    copyright.append(line).append('\n');
 	}
+	// strip off one optional trailing blank line, for consistency
+	// with CommonCopyright.readComment.
+	int len = copyright.length();
+	if (len >= 2 && copyright.charAt(len - 1) == '\n' &&
+		copyright.charAt(len - 2) == '\n')
+	    copyright.setLength(len - 1);
 	return copyright.toString();
     }
 
