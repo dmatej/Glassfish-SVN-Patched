@@ -3,7 +3,7 @@
 
     DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 
-    Copyright (c) 1997-2013 Oracle and/or its affiliates. All rights reserved.
+    Copyright (c) 2014 Oracle and/or its affiliates. All rights reserved.
 
     The contents of this file are subject to the terms of either the GNU
     General Public License Version 2 only ("GPL") or the Common Development
@@ -49,20 +49,19 @@
         <version>4</version>
     </parent>
     <groupId>org.glassfish.external</groupId>
-    <artifactId>ldapbp</artifactId>
+    <artifactId>asm-all</artifactId>
     <!--
-        THE VERSION SHOULD BE LDAPBP's version !!!
+        The version should be ASM's version !
         
-        if there is a need for an incremental release, use a qualifier (e.g. 2.0.4-1)
-        under trunk/external/repackaged, version are SNAPSHOT version of the next release!
+        If there is a need for an incremental release, use a qualifier (e.g. 2.0.4-1)
+        under trunk/external/repackaged, versions are SNAPSHOT version of the next release!
     -->
-    <version>1.0-SNAPSHOT</version>
-    
-    <name>LDAPBP repackaged as an OSGI bundle</name>
-    <description>LDAP Booster Pack repackaged as an OSGi bundle</description>
+    <version>3.3</version>
+    <name>asm-all</name>
+    <description>org.objectweb.asm.all version ${asm.version} repackaged as an OSGi bundle</description>
     
     <properties>
-        <ldapbp.version>1.0</ldapbp.version>
+        <asm.version>3.3</asm.version>
         <release.arguments />
     </properties>
     
@@ -76,9 +75,9 @@
     </licenses>
     
     <scm>
-        <connection>scm:svn:https://svn.java.net/svn/glassfish~svn/trunk/external/repackaged/ldapbp</connection>
-        <developerConnection>scm:svn:https://svn.java.net/svn/glassfish~svn/trunk/external/repackaged/ldapbp</developerConnection>
-        <url>https://svn.java.net/svn/glassfish~svn/trunk/external/repackaged/ldapbp</url>
+        <connection>scm:svn:https://svn.java.net/svn/glassfish~svn/trunk/external/repackaged/asm-all</connection>
+        <developerConnection>scm:svn:https://svn.java.net/svn/glassfish~svn/trunk/external/repackaged/asm-all</developerConnection>
+        <url>https://svn.java.net/svn/glassfish~svn/trunk/external/repackaged/asm-all</url>
     </scm>
     
     <mailingLists>
@@ -155,15 +154,87 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>3.1</version>
+                    <!-- 
+                        We don't use sources to build the jar from scratch, but only
+                        for generating proper sources.jar and javadoc.jar
+                        main and test compilation are both disabled
+                    -->                    
+                    <configuration>
+                        <skipMain>true</skipMain>
+                        <skip>true</skip>
+                    </configuration>                    
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
                     <version>2.4</version>
+                    <configuration>
+                        <useDefaultManifestFile>true</useDefaultManifestFile>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.13</version>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
+            <!-- 
+                unpack and attach the sources.jar(s) available
+                This allows us to generate proper sources.jar and javadoc.jar
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>step1-unpack</id>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <artifactItems>
+                               <artifactItem>
+                                    <groupId>asm</groupId>
+                                    <artifactId>asm-debug-all</artifactId>
+                                    <version>${asm.version}</version>
+                                    <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                                </artifactItem>                                
+                                <artifactItem>
+                                    <groupId>asm</groupId>
+                                    <artifactId>asm-debug-all</artifactId>
+                                    <version>${asm.version}</version>
+                                    <classifier>sources</classifier>
+                                    <outputDirectory>${project.build.directory}/sources</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>step2-add-source</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/sources</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -172,72 +243,28 @@
                         <Embed-Dependency>
                             *;scope=compile;inline=true
                         </Embed-Dependency>
-                        <!-- Export everything from the embedded jar 
-                             in the final bundle 
-                        -->
-                        <_exportcontents>*</_exportcontents>
-                        <!-- Exclude unnecessary imports -->
-                        <Import-Package>com.sun.jndi.ldap,!com.sun.jndi.toolkit.corba,!com.sun.security.sasl.preview,!com.sun.security.sasl.util,*</Import-Package>
-                        <!-- !* matches with nothing, so no other class will be included in this bundle,
-                         other than what is specified above -->
+                        <Export-Package>org.objectweb.asm.*;version=${asm.version}; password="GlassFish"; mandatory:=password</Export-Package>
                         <Private-Package>!*</Private-Package>
                     </instructions>
-                    <!-- Maven uses the output directory (target/classes)
-                    rather than the final bundle, when compiling against
-                    projects in the same reactor (ie. the same build).
-                    Since this jar comprises of classes that come from
-                    some other jar and other modules depend on this
-                    artifact, we need to unpack.
-                    -->
-                    <unpackBundle>true</unpackBundle>
                 </configuration>
                 <executions>
                     <execution>
                         <id>osgi-bundle</id>
-                        <phase>package</phase>
+                        <phase>compile</phase>
                         <goals>
-                            <goal>bundle</goal>
+                            <goal>manifest</goal>
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
-            <!-- 
-                We don't use sources to build the jar from scratch, but only
-                for generating proper sources.jar and javadoc.jar
-                We disable default-compile, to make sure we don't compile sources
-            -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>default-compile</id>
-                        <configuration>
-                            <skipMain>true</skipMain>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>default-jar</id>
-                        <configuration>
-                            <skipIfEmpty>true</skipIfEmpty>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+            </plugin>            
         </plugins>
     </build>
     
     <dependencies>
         <dependency>
-            <groupId>com.sun</groupId>
-            <artifactId>ldapbp</artifactId>
-            <version>${ldapbp.version}</version>
+            <groupId>asm</groupId>
+            <artifactId>asm-debug-all</artifactId>
+            <version>${asm.version}</version>
             <optional>true</optional>
         </dependency>
     </dependencies>
