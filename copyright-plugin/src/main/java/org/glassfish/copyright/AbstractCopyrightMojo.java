@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2011-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -175,6 +175,13 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
     protected String alternateTemplateFile;
 
     /**
+     * Update files, or leave updates in file.new?
+     *
+     * @parameter expression="${copyright.update}" default-value="true"
+     */
+    protected boolean update = true;
+
+    /**
      * Log output, initialize this in the execute method.
      */
     protected Log log;
@@ -226,6 +233,7 @@ public abstract class AbstractCopyrightMojo extends AbstractMojo {
 	c.useComma = useComma;
 	c.skipNoSVN = scmOnly;
 	c.doHidden = doHidden;
+	c.dontUpdate = !update;
 
 	if (templateFile != null)
 	    c.correctTemplate = 
