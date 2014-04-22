@@ -2,7 +2,7 @@
 #
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
-# Copyright (c) 2010-2013 Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2010-2014 Oracle and/or its affiliates. All rights reserved.
 #
 # The contents of this file are subject to the terms of either the GNU
 # General Public License Version 2 only ("GPL") or the Common Development
@@ -50,8 +50,9 @@
 #	-v	verbose
 #
 
-FINDBUGSTOTEXT=/net/bat-sca/repine/export2/hudson/tools/findbugs-tool-latest/FindbugsToText.jar
-PATH=/net/bat-sca/repine/export2/hudson/tools/findbugs-tool-latest:$PATH
+TOOLS=/net/gf-hudson/scratch/gf-hudson/export2/hudson/tools/findbugs-tool-latest
+FINDBUGSTOTEXT=$TOOLS/FindbugsToText.jar
+PATH=$TOOLS:$PATH
 
 findsrc() {
 	IFS=:
@@ -100,10 +101,36 @@ do
 done
 shift `expr $OPTIND - 1`
 
-until [ -f pom.xml -o . -ef / -o . -ef "$HOME" ]
+until [ -f pom.xml -o -f build.gradle -o . -ef / -o . -ef "$HOME" ]
 do
 	cd ..
 done
+
+# choose the correct FindBugs XML file name if we're using gradle
+if [ -f build.gradle ]
+then
+	XMLNAME=main.xml
+else
+	XMLNAME=findbugsXml.xml
+fi
+
+if [ -n "$WORK_DIR" -a -n "$DEV_ROOT" ]
+then
+	case "$PWD" in
+	$DEV_ROOT/mod*)
+		# convert source directory name to build directory name
+		mod=${PWD#$DEV_ROOT/mod}
+		cd "${WORK_DIR}/$mod"
+		;;
+	${WORK_DIR}*)
+		# in the right place, just stay here
+		;;
+	*)
+		# don't know where we are, go to the work directory
+		cd "$WORK_DIR"
+		;;
+	esac
+fi
 
 #MAVEN_OPTS=-Xmx512m mvn findbugs:findbugs
 (
@@ -113,7 +140,7 @@ then
 else
 	find [a-z]* -xdev -name .svn -prune -o -name .m2 -prune \
 		-o -name .git -prune -o -name .hg -prune \
-		-o -name findbugsXml.xml -print
+		-o -name "$XMLNAME" -print
 fi
 ) | \
 while read file
@@ -121,6 +148,12 @@ do
 	$e "Process errors in $file..."
 	dir=`dirname "$file"`
 	pdir=`dirname "$dir"`
+	if [ -n "$WORK_DIR" -a -n "$DEV_ROOT" ]
+	then
+		dir="$PWD/$pdir"
+		mod=${dir#$WORK_DIR/}
+		pdir="$DEV_ROOT/mod/$mod"
+	fi
 	$e "Directory: $pdir"
 	java -jar $FINDBUGSTOTEXT $showall < "$file" | \
 		findsrc "$pdir" | \

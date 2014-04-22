@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh 
 #
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
@@ -40,84 +40,73 @@
 #
 
 #
-# Count the number of errors in each findbugsXml.xml file.
+# p4owner - convert from line number back to person who last changed that line
 #
-# Usage: fbcount [-i xml-file-list] [-v]
-#	-i file	get list of findbugsXml.xml files from file
-#	-v	verbose
+#	input is of the form "file: line: text",
+#	output is of the form "owner: file: line: text".
 #
+perl -e '
 
-TOOLS=/net/gf-hudson/scratch/gf-hudson/export2/hudson/tools/findbugs-tool-latest
-FINDBUGSTOTEXT=$TOOLS/FindbugsToText.jar
-PATH=$TOOLS:$PATH
+$tmp = "/tmp/co" . $$;
 
-USAGE="fbcount [-i xml-file-list] [-v]"
-fblist=
-e=true
-
-while getopts :i:v i
-do
-	case $i in
-	i)	fblist=$OPTARG;;
-	v)	e=echo;;
-	'?')	echo "$USAGE"; exit 2;;
-	esac
-done
-shift `expr $OPTIND - 1`
-
-until [ -f pom.xml -o -f build.gradle -o . -ef / -o . -ef "$HOME" ]
-do
-	cd ..
-done
-
-# choose the correct FindBugs XML file name if we're using gradle
-if [ -f build.gradle ]
-then
-	XMLNAME=main.xml
-else
-	XMLNAME=findbugsXml.xml
-fi
-
-if [ -n "$WORK_DIR" -a -n "$DEV_ROOT" ]
-then
-	case "$PWD" in
-	$DEV_ROOT/mod*)
-		# convert source directory name to build directory name
-		mod=${PWD#$DEV_ROOT/mod}
-		cd "${WORK_DIR}/$mod"
-		;;
-	${WORK_DIR}*)
-		# in the right place, just stay here
-		;;
-	*)
-		# don't know where we are, go to the work directory
-		cd "$WORK_DIR"
-		;;
-	esac
-fi
-
-#MAVEN_OPTS=-Xmx512m mvn findbugs:findbugs
-(
-if [ -n "$fblist" ]
-then
-	cat "$fblist"
-else
-	find [a-z]* -xdev -name .svn -prune -o -name .m2 -prune \
-		-o -name "$XMLNAME" -print
-fi
-) | \
-while read file
-do
-	$e "Process errors in $file..."
-	dir=`dirname "$file"`
-	pdir=`dirname "$dir"`
-	if [ -n "$WORK_DIR" -a -n "$DEV_ROOT" ]
-	then
-		dir="$PWD/$pdir"
-		mod=${dir#$WORK_DIR/}
-		pdir="mod/$mod"	# relative to $DEV_ROOT
-	fi
-	$e "Directory: $pdir"
-	cnt=`java -jar $FINDBUGSTOTEXT < "$file" | wc -l`
-	echo "$pdir	$cnt"
-done
+line: while (<>) {
+	#if (/^\s/ || !/\S+:\s*\d+:/) {
+        #	next line;
+	#}
+	chop;	# strip newline
+	($file, $lineno, $text) = split(/:/, $_, 3);
+#	if (! -r $file) {
+#		unlink $tmp;
+#		die "cant open $file\n";
+#	}
+	if ($file ne $curfile ) {
+		$curfile = $file;
+		$fileok = 0;
+		undef @owners;
+		undef @olist;
+		if (-r $file) {
+			# map revisions to owners
+			open(ANN, "p4 filelog -s $file " .
+				"2>/dev/null </dev/null |");
+			$email = "UNKNOWN";
+			while ($o = <ANN>) {
+				@f = split(/\s+/, $o);
+				if ($f[1] =~ /#\d+/) {
+					($rev = $f[1]) =~ s/#//;
+					($owner = $f[8]) =~ s/@.*//;
+					$owners[$rev] = $owner;
+					$olist{$owner} = 1;
+				}
+			}
+			close ANN;
+			$fileok = !$?;
+			# map owners to email addresses
+			open(USERS, "p4 users " . join(" ", keys @olist) . "|");
+			while ($line = <USERS>) {
+			    @f = split(/[\s<>]+/, $line);
+			    $owner_email{$f[0]} = $f[1];
+			}
+			close USERS;
+		}
+		if (-r $file &&
+			(system("p4 annotate -q $file >$tmp " .
+				"2>/dev/null </dev/null") / 256 == 0)) {
+			$fileok = 1;
+		}
+	}
+	if ($fileok) {
+		if ($lineno <= 0 ) { 
+			$lineno = 1;
+		}
+		$fline = `sed -n ${lineno}p $tmp`;
+		chop $fline;
+		($rev = $fline) =~ s/:.*//;
+		$owner = $owner_email{$owners[$rev]};
+	} else {
+		$owner =  "UNKNOWN";
+	}
+        
+	printf "%s: %s\n", $owner, $_;
+}
+unlink $tmp;
+'

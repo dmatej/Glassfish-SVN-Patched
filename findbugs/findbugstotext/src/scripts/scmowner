@@ -2,7 +2,7 @@
 #
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
-# Copyright (c) 2013 Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013-2014 Oracle and/or its affiliates. All rights reserved.
 #
 # The contents of this file are subject to the terms of either the GNU
 # General Public License Version 2 only ("GPL") or the Common Development
@@ -48,6 +48,28 @@
 # determines the SCM system in use and calls the corresponding script
 #
 
+# determine if directory is a p4 workspace
+isp4ws() {
+	if [ -n "$P4CONFIG" ]
+	then
+		if [ -f "$1/$P4CONFIG" ]
+		then
+			return 0
+		else
+			return 1
+		fi
+	elif [ -n "$P4PORT" ]
+	then
+		root=`p4 client -o | awk '/^Root:$/ { print $2; }'`
+		case $1 in
+		$root|$root/*)	return 0;;
+		esac
+		return 1
+	else
+		return 1
+	fi
+}
+
 p=$PWD
 while :
 do
@@ -63,6 +85,10 @@ do
 	then
 		scm=git
 		break
+	elif isp4ws $PWD
+	then
+		scm=p4
+		break;
 	fi
 	if [ . -ef / -o . -ef "$HOME" ]
 	then

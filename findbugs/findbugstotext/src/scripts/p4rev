@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/bin/sh 
 #
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
-# Copyright (c) 2010-2014 Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013-2014 Oracle and/or its affiliates. All rights reserved.
 #
 # The contents of this file are subject to the terms of either the GNU
 # General Public License Version 2 only ("GPL") or the Common Development
@@ -40,84 +40,6 @@
 #
 
 #
-# Count the number of errors in each findbugsXml.xml file.
+# p4rev - show most recent revision
 #
-# Usage: fbcount [-i xml-file-list] [-v]
-#	-i file	get list of findbugsXml.xml files from file
-#	-v	verbose
-#
-
-TOOLS=/net/gf-hudson/scratch/gf-hudson/export2/hudson/tools/findbugs-tool-latest
-FINDBUGSTOTEXT=$TOOLS/FindbugsToText.jar
-PATH=$TOOLS:$PATH
-
-USAGE="fbcount [-i xml-file-list] [-v]"
-fblist=
-e=true
-
-while getopts :i:v i
-do
-	case $i in
-	i)	fblist=$OPTARG;;
-	v)	e=echo;;
-	'?')	echo "$USAGE"; exit 2;;
-	esac
-done
-shift `expr $OPTIND - 1`
-
-until [ -f pom.xml -o -f build.gradle -o . -ef / -o . -ef "$HOME" ]
-do
-	cd ..
-done
-
-# choose the correct FindBugs XML file name if we're using gradle
-if [ -f build.gradle ]
-then
-	XMLNAME=main.xml
-else
-	XMLNAME=findbugsXml.xml
-fi
-
-if [ -n "$WORK_DIR" -a -n "$DEV_ROOT" ]
-then
-	case "$PWD" in
-	$DEV_ROOT/mod*)
-		# convert source directory name to build directory name
-		mod=${PWD#$DEV_ROOT/mod}
-		cd "${WORK_DIR}/$mod"
-		;;
-	${WORK_DIR}*)
-		# in the right place, just stay here
-		;;
-	*)
-		# don't know where we are, go to the work directory
-		cd "$WORK_DIR"
-		;;
-	esac
-fi
-
-#MAVEN_OPTS=-Xmx512m mvn findbugs:findbugs
-(
-if [ -n "$fblist" ]
-then
-	cat "$fblist"
-else
-	find [a-z]* -xdev -name .svn -prune -o -name .m2 -prune \
-		-o -name "$XMLNAME" -print
-fi
-) | \
-while read file
-do
-	$e "Process errors in $file..."
-	dir=`dirname "$file"`
-	pdir=`dirname "$dir"`
-	if [ -n "$WORK_DIR" -a -n "$DEV_ROOT" ]
-	then
-		dir="$PWD/$pdir"
-		mod=${dir#$WORK_DIR/}
-		pdir="mod/$mod"	# relative to $DEV_ROOT
-	fi
-	$e "Directory: $pdir"
-	cnt=`java -jar $FINDBUGSTOTEXT < "$file" | wc -l`
-	echo "$pdir	$cnt"
-done
+p4 changes -m1 //depot/dev/$SRC/...#have | awk '{print $2;}'
