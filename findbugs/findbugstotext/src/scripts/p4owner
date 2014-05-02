@@ -66,13 +66,14 @@ line: while (<>) {
 		undef @olist;
 		if (-r $file) {
 			# map revisions to owners
-			open(ANN, "p4 filelog -s $file " .
+			open(ANN, "p4 filelog -h -i -s $file " .
 				"2>/dev/null </dev/null |");
 			$email = "UNKNOWN";
 			while ($o = <ANN>) {
 				@f = split(/\s+/, $o);
 				if ($f[1] =~ /#\d+/) {
-					($rev = $f[1]) =~ s/#//;
+					#($rev = $f[1]) =~ s/#//;
+					$rev = $f[3];
 					($owner = $f[8]) =~ s/@.*//;
 					$owners[$rev] = $owner;
 					$olist{$owner} = 1;
@@ -81,7 +82,8 @@ line: while (<>) {
 			close ANN;
 			$fileok = !$?;
 			# map owners to email addresses
-			open(USERS, "p4 users " . join(" ", keys @olist) . "|");
+			open(USERS, "p4 users " . join(" ", keys %olist) .
+				" 2>/dev/null |");
 			while ($line = <USERS>) {
 			    @f = split(/[\s<>]+/, $line);
 			    $owner_email{$f[0]} = $f[1];
@@ -89,7 +91,7 @@ line: while (<>) {
 			close USERS;
 		}
 		if (-r $file &&
-			(system("p4 annotate -q $file >$tmp " .
+			(system("p4 annotate -I -q $file >$tmp " .
 				"2>/dev/null </dev/null") / 256 == 0)) {
 			$fileok = 1;
 		}
@@ -102,6 +104,9 @@ line: while (<>) {
 		chop $fline;
 		($rev = $fline) =~ s/:.*//;
 		$owner = $owner_email{$owners[$rev]};
+		if ($owner eq "") {
+			$owner = "UNKNOWN";
+		}
 	} else {
 		$owner =  "UNKNOWN";
 	}
