@@ -2,7 +2,7 @@
 #
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
 #
-# Copyright (c) 2010-2013 Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2010-2014 Oracle and/or its affiliates. All rights reserved.
 #
 # The contents of this file are subject to the terms of either the GNU
 # General Public License Version 2 only ("GPL") or the Common Development
@@ -94,6 +94,13 @@ else
 	PSUB="$REV"
 fi
 
+if [ -f users.bad ]
+then
+	BADUSERS=users.bad
+else
+	BADUSERS=/dev/null
+fi
+
 to_email() {
 	case "$1" in
 	*@*)	echo "$1";;
@@ -108,14 +115,16 @@ echomail() {
 }
 
 cat >$TMP
-sed 's/:.*//' $TMP | sort -u >users
-comm -23 users users.bad >users.ok
-for i in `cat users.ok`
+sed 's/:.*//' $TMP | sort -u >$TMP.users
+comm -23 $TMP.users $BADUSERS >$TMP.users.ok
+for i in `cat $TMP.users.ok`
 do
 	$VERBOSE "Errors for user: $i"
 	if [ -r users.alias ]
 	then
 		alias=`awk '$1 == "'$i'" { print $2; }' <users.alias`
+	else
+		alias=
 	fi
 	if [ -z "$alias" ]; then alias=$i; fi
 	alias=`to_email "$alias"`
@@ -145,7 +154,7 @@ done
 #
 # Send errors for bad users to $OWNER.
 #
-for i in `comm -12 users users.bad`
+for i in `comm -12 $TMP.users $BADUSERS`
 do
 	$VERBOSE "Bad user: $i"
 	grep "^$i:" $TMP | $MAILPROG $MV \
