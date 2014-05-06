@@ -79,9 +79,12 @@ else
 fi
 cd `dirname "$0"`
 script_dir=`pwd`	# get absolute path
+#script_dir=/net/gf-hudson/scratch/gf-hudson/export2/hudson/tools/findbugs-tool-latest
+PATH=$script_dir:$PATH
 
 $VERBOSE "Workspace directory: $ws_dir" >&2
 $VERBOSE "Script directory: $script_dir" >&2
+cd $ws_dir
 
 TIMESTAMP=`date +%Y%m%d%H%M%S`
 if $LOG
@@ -89,21 +92,12 @@ then
 	$VERBOSE "LOG: $TIMESTAMP: $PROJECT: START"
 	(cd $script_dir; fbpost "$TIMESTAMP" "$PROJECT" START)
 fi
-cd $ws_dir
 REV=`scmrev`
-find [a-z]* -xdev -name .svn -prune -o -name .m2 -prune \
-	-name .git -prune -o -name .hg -prune \
-	-o -name findbugsXml.xml -print | \
-while read file
-do
-	$VERBOSE "Processing file: $file" >&2
-	dir=`dirname "$file"`
-	pdir=`dirname "$dir"`
-	java -jar $script_dir/FindbugsToText.jar < "$file" | \
-		sed -e "s;^;$pdir/src/main/java/;" | \
-		$script_dir/scmowner
-done | $TEE | \
+
+fbcat -o | \
+$TEE | \
 (cd $script_dir; eval ./fbnag -T "$TIMESTAMP" -r "$REV" $FBNARGS)
+
 if $LOG
 then
 	$VERBOSE "LOG: $TIMESTAMP: $PROJECT: END"
