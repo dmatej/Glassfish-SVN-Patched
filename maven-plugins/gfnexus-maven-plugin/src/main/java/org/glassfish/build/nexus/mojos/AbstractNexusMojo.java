@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -59,13 +59,12 @@ import org.glassfish.nexus.client.NexusClient;
 import org.glassfish.nexus.client.NexusClientException;
 import org.glassfish.nexus.client.NexusClientImpl;
 import org.glassfish.nexus.client.RestClient;
-import org.glassfish.nexus.client.logging.CustomPrinter;
 
 /**
  *
- * @author romano
+ * @author Romain Grecourt
  */
-public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPrinter {
+public abstract class AbstractNexusMojo extends AbstractMojo {
 
     /**
      * The maven project.
@@ -109,33 +108,14 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
     /**
      * @parameter expression="${ignoreFailures}" default-value="false"
      */
-    protected boolean ignoreFailures;    
+    protected boolean ignoreFailures;
 
     protected NexusClient nexusClient;
 
+    private static DeploymentRepository getDeploymentRepoFromModel(
+            Model m) 
+            throws MojoFailureException{
 
-    @Override
-    public void info(String message) {
-        getLog().debug(message);
-    }
-
-    @Override
-    public void warning(String message) {
-        getLog().warn(message);
-    }
-
-    @Override
-    public void error(String message) {
-        getLog().error(message);
-    }
-
-    @Override
-    public void debug(String message) {
-        getLog().debug(message);
-    }
-
-    private static DeploymentRepository getDeploymentRepoFromModel(Model m) throws MojoFailureException{
-        
         DistributionManagement dm = m.getDistributionManagement();
         if (dm != null) {
             DeploymentRepository r = dm.getRepository();
@@ -147,8 +127,10 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
                 "unable to get deployment repo from distributionManagement");
     }
     
-    private static String getRepoUrlFromModel(Model m) throws MojoFailureException {
-        
+    private static String getRepoUrlFromModel(
+            Model m)
+            throws MojoFailureException {
+
         DeploymentRepository dr = getDeploymentRepoFromModel(m);
         String u = dr.getUrl();
         if (u != null) {
@@ -158,9 +140,10 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
                 "unable to get repo URL from distributionManagement");
     }    
     
-    private static String getRepoIdFromModel(Model m) 
+    private static String getRepoIdFromModel(
+            Model m) 
             throws MojoFailureException {
-        
+
         DeploymentRepository dr = getDeploymentRepoFromModel(m);
         String id = dr.getId();
         if (id != null) {
@@ -170,7 +153,10 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
                 "unable to get repo Id from distributionManagement");
     }
     
-    private static Server getServerFromSettings(Settings s, String repoId) throws MojoFailureException {
+    private static Server getServerFromSettings(
+            Settings s,
+            String repoId) throws MojoFailureException {
+
         if (s == null) {
                 throw new IllegalArgumentException("settings can't be null");
         }
@@ -184,7 +170,9 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
         return server;
     }
     
-    protected void createNexusClient() throws MojoFailureException, MojoExecutionException {
+    protected void createNexusClient() 
+            throws MojoFailureException, MojoExecutionException {
+
         // this method resolves required values with a specific ordering.
         // 1. plugin parameters
         String _repoURL = session.getUserProperties().getProperty("nexusRepoUrl");
@@ -220,18 +208,24 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
 
         createNexusClient(_repoURL, repoId, username, password);
     }
-    
-    protected void createNexusClient(String nexusURL, String repoId, String username, String password) throws MojoFailureException, MojoExecutionException {
+
+    protected void createNexusClient(
+            String nexusURL,
+            String repoId,
+            String username,
+            String password) throws MojoFailureException, MojoExecutionException {
+      
+        if(nexusURL == null || nexusURL.isEmpty()){
+            throw new IllegalArgumentException("nexusURL can't be null or empty");
+        }
         // convert the string to URL
         URL repoURL = null;
-        if (nexusURL != null && !nexusURL.isEmpty()) {
-            try {
-                repoURL = new URL(nexusURL.replaceAll("/service/local/staging/deploy/maven2", ""));
-            } catch (MalformedURLException ex) {
-                throw new MojoFailureException("Error in resolving nexusRepoUrl", ex);
-            }
+        try {
+            repoURL = new URL(nexusURL.replaceAll("/service/local/staging/deploy/maven2", ""));
+        } catch (MalformedURLException ex) {
+            throw new MojoFailureException("Error in resolving nexusRepoUrl", ex);
         }
-                
+
         // proxy configuration
         String proxyHost = null;
         int proxyPort = 80;
@@ -239,7 +233,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
             if (proxy.getProtocol().equals(repoURL.getProtocol())) {
                 proxyHost = proxy.getHost();
                 proxyPort = proxy.getPort();
-                continue;
+                break;
             }
         }
         if (proxyHost == null) {
@@ -256,11 +250,12 @@ public abstract class AbstractNexusMojo extends AbstractMojo implements CustomPr
                     proxyHost, proxyPort,
                     username, password,
                     repoURL.getProtocol().equals("https"),
-                    this);
+                    new RestClientPrinter(getLog()));
+
             nexusClient = NexusClientImpl.init(
                     restClient,
                     repoURL.toString(),
-                    this);
+                    new NexusClientPrinter(getLog()));
             
         } catch (NexusClientException ex) {
             throw new MojoExecutionException(ex.getMessage(), ex);

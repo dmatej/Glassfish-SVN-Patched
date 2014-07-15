@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -85,8 +85,8 @@ import org.glassfish.nexus.client.logging.DefaultRestClientPrinter;
  */
 public class NexusClientImpl implements NexusClient {
 
-    private RestClient restClient;
-    private String nexusUrl;
+    private final RestClient restClient;
+    private final String nexusUrl;
 
     private static final String REPOSITORY_GROUP_PATH = "service/local/repo_groups/";
     private static final String REPOSITORIES_PATH = "service/local/repositories";
@@ -149,10 +149,11 @@ public class NexusClientImpl implements NexusClient {
 
     private void refreshStagingRepos() throws NexusClientException {
 
-        stagingProfileRepositories = Arrays.asList(
-                ((StagingProfileRepos) handleResponse(
+        StagingProfileRepos retVal = 
+                (StagingProfileRepos) handleResponse(
                     get(PROFILES_REPOS_PATH),
-                    StagingProfileRepos.class)).getData());
+                    StagingProfileRepos.class);
+        stagingProfileRepositories = Arrays.asList(retVal.getData());
         stagingProfileRepositoriesMap = new HashMap<String, StagingProfileRepo>();
         for (StagingProfileRepo profileRepo : stagingProfileRepositories) {
             stagingProfileRepositoriesMap.put(profileRepo.getRepositoryId(), profileRepo);
@@ -197,21 +198,23 @@ public class NexusClientImpl implements NexusClient {
             throw new NexusClientException(
                     "repoId list is null or empty, can't perform a staging operation");
         }
-        
+
+        Response response = null;
         try {
-            Response response = request(STAGING_REPO_BULK_PATH + "/" + op).post(
+            response = request(STAGING_REPO_BULK_PATH + "/" + op).post(
                         Entity.entity(new StagingOperationRequestData(
                             new StagingOperationRequest(repoIds, profileGroup, op + " - " +String.valueOf(desc)))
                             ,MediaType.APPLICATION_JSON));
-            refreshStagingRepos();
-            return response;
         } catch (ClientException ex) {
             throw new NexusClientException(ex);
         }
+        refreshStagingRepos();
+        return response;
     }
 
-    private static Object handleResponse(Response r, Class c)
-            throws NexusClientException {
+    private static Object handleResponse(
+            Response r,
+            Class c) throws NexusClientException {
 
         // 400 means failure entity
         if (r.getStatus() == 400) {
@@ -241,7 +244,8 @@ public class NexusClientImpl implements NexusClient {
         if (stagingProfileRepositories == null) {
             refreshStagingRepos();
         }
-        return ((Repos) handleResponse(get(REPOSITORIES_PATH + "/" + repoName), Repos.class)).getData();
+        return ((Repos) handleResponse(get(
+                REPOSITORIES_PATH + "/" + repoName), Repos.class)).getData();
     }
 
     public Set<Repo> getGroupTree(String repoId){
@@ -256,6 +260,16 @@ public class NexusClientImpl implements NexusClient {
 
     public StagingProfileRepo getStagingProfileRepo(String repoId){
         return stagingProfileRepositoriesMap.get(repoId);
+    }
+
+    public StagingProfileRepo getStagingProfileRepo(String repoId, int sleep){
+        if(sleep > 0){
+            try {
+              Thread.sleep(sleep);
+            } catch (InterruptedException ex) {}
+        }
+        refreshStagingRepos();
+        return getStagingProfileRepo(repoId);
     }
 
     public void closeStagingRepo(String desc, String[] repoIds) throws NexusClientException {
@@ -295,24 +309,37 @@ public class NexusClientImpl implements NexusClient {
                             "-- promoting {0} with promotion profile \"{1}\" --",
                             new Object[]{Arrays.toString(repoIds), promotionProfile});
 
-                    // promote
-                    handleResponse(
-                            stagingOperation(
-                            Operation.promote,
-                            repoIds,
-                            profile.getId(),
-                            desc), null);
+                    StagingProfileRepo repo = getStagingProfileRepo(repoIds[0],3000);
 
-                    // search the promoted repository
-                    StagingProfileRepo repo =
-                            stagingProfileRepositoriesMap.get(repoIds[0]);
-                    if (repo != null) {
-                        return new Repo(stagingProfileRepositoriesMap.get(
-                                repo.getParentGroupId()));
+                    if(repo == null){
+                        throw new NexusClientException(
+                            "unable to find the staging repository for id "+Arrays.toString(repoIds));
+                    }
+                    if(repo.isOpen()){
+                        throw new NexusClientException(
+                           "can't promote, repository is still in 'open' state "+Arrays.toString(repoIds));
                     }
 
-                    throw new NexusClientException(
+                    if(repo.getParentGroupId() == null){
+                        // promote if not already promoted
+                        handleResponse(
+                                stagingOperation(
+                                Operation.promote,
+                                repoIds,
+                                profile.getId(),
+                                desc), null);
+                    }
+
+                    repo = getStagingProfileRepo(repoIds[0],5000);
+
+                    if(repo != null
+                            && repo.getParentGroupId() == null){
+                        throw new NexusClientException(
                             "unable to find the promoted repository after promotion");
+                    }
+
+                    return new Repo(stagingProfileRepositoriesMap.get(
+                                repo.getParentGroupId()));
                 }
             }
         }
@@ -350,22 +377,22 @@ public class NexusClientImpl implements NexusClient {
 
         for(ContentItem item : content.getData()){
             // if file
-            if(item.getLeaf().booleanValue()){
+            if(item.getLeaf()){
                 if(item.isValidArtifactFile()){
                     
                     MavenArtifactInfo artifact =
                             ((MavenInfo) handleResponse(
                                 target(root+"/"+item.getRelativePath())
                                     .queryParam("describe", "maven2")
-                                    .request(MediaType.APPLICATION_JSON).get()
-                                ,MavenInfo.class)).getData()[0];
+                                    .request(MediaType.APPLICATION_JSON).get(),
+                                MavenInfo.class)).getData()[0];
 
                     logger.log(Level.INFO, "found {0}", artifact);
                     artifacts.add(artifact);
                 }
             } else {
                 // if directory
-                if(item.getSizeOnDisk().intValue() == -1){
+                if(item.getSizeOnDisk() == -1){
                     scrubRepo(repoId, item.getRelativePath(), artifacts);
                 }
             }
@@ -420,7 +447,7 @@ public class NexusClientImpl implements NexusClient {
         ContentItems repoContent = getRepoContent(repoContentURL, path);
         if (repoContent != null && repoContent.getData() != null) {
             for (ContentItem item : repoContent.getData()) {
-                if (item.getLeaf().booleanValue()) {
+                if (item.getLeaf()) {
 
                     String itemPath = item.getResourceURI().replace(nexusUrl, "");
                     handleResponse(target(itemPath).request().delete(), null);
@@ -455,7 +482,7 @@ public class NexusClientImpl implements NexusClient {
                 sb.append('/');
                 sb.append(refArtifact.getRepositoryRelativePath());
                 sb.append(".sha1");
-                
+
                 String checksum = null;
                 try{
                     checksum = (String) handleResponse(request(sb.toString()).get(),String.class);
@@ -490,7 +517,7 @@ public class NexusClientImpl implements NexusClient {
                 + refArtifact
                 + "\"");
     }
-    
+
     public Repo getStagingRepo(File f) throws NexusClientException {
 
         RepoDetail[] results = ((RepoDetails) handleResponse(
@@ -508,7 +535,7 @@ public class NexusClientImpl implements NexusClient {
         }
         return null;
     }
-    
+
     public static void main(String[] args) {
 
         NexusClient nexusClient = NexusClientImpl.init(
