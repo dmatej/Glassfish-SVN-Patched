@@ -38,19 +38,25 @@ import java.io.Serializable;
  */
 public class SQETestResultPublisher extends Recorder implements Serializable {
 
+    @Extension
+    public static final SQEDescriptorImpl DESCRIPTOR = new SQEDescriptorImpl();
     private final String includes;
     /**
      * Flag to capture if test should be considered as executable TestObject
      */
     boolean considerTestAsTestObject = false;
 
-    public SQETestResultPublisher(String includes, boolean considerTestAsTestObject) {
+    public SQETestResultPublisher(
+            String includes,
+            boolean considerTestAsTestObject) {
+
         this.includes = includes;
         this.considerTestAsTestObject = considerTestAsTestObject;
     }
 
     /**
      * Ant "&lt;fileset @includes="..." /> pattern to specify SQE XML files
+     * @return 
      */
     public String getIncludes() {
         return includes;
@@ -77,12 +83,17 @@ public class SQETestResultPublisher extends Recorder implements Serializable {
             super(s);
         }
     }
-    
+
     @Override
-    public boolean perform(AbstractBuild<?,?> build, Launcher launcher, final BuildListener listener) throws IOException, InterruptedException {
+    public boolean perform(
+            AbstractBuild<?,?> build,
+            Launcher launcher, 
+            final BuildListener listener) 
+            throws IOException, InterruptedException {
+
         // Should always be a Build because isApplicable requires Project type:
         if (!(build instanceof Build)) return true;
-        
+
         listener.getLogger().println("Collecting JWSDP SQE reports");
 
         long _buildTime = build.getTimestamp().getTimeInMillis();
@@ -112,7 +123,7 @@ public class SQETestResultPublisher extends Recorder implements Serializable {
                     int counter=0;
 
                     SAXParser parser = createParser();
-                    
+
                     // archive report files
                     for (String file : includedFiles) {
                         File src = new File(ws, file);
@@ -188,34 +199,6 @@ public class SQETestResultPublisher extends Recorder implements Serializable {
 
     @Override
     public BuildStepDescriptor<Publisher> getDescriptor() {
-        return DescriptorImpl.DESCRIPTOR;
-    }
-
-    public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-        @Extension
-        public static final DescriptorImpl DESCRIPTOR = new DescriptorImpl();
-
-        public DescriptorImpl() {
-            super(SQETestResultPublisher.class);
-        }
-
-        public String getDisplayName() {
-            return "Publish SQE test result report";
-        }
-
-        @Override
-        public String getHelpFile() {
-            return "/plugin/jwsdp-sqe/help.html";
-        }
-
-        @Override
-        public Publisher newInstance(StaplerRequest req, JSONObject formData) {
-            return new SQETestResultPublisher(req.getParameter("sqetest_includes"),(req.getParameter("sqetest_testobject")!=null));
-        }
-
-        @Override
-        public boolean isApplicable(Class<? extends AbstractProject> jobType) {
-            return Project.class.isAssignableFrom(jobType);
-        }
+        return DESCRIPTOR;
     }
 }

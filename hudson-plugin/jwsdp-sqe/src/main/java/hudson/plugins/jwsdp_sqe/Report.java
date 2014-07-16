@@ -43,11 +43,14 @@ public class Report extends TestCollection<Report,Suite> {
 
     /**
      * Loads SQE report file into this {@link Report} object.
+     * @param reportXml
+     * @throws java.io.IOException
+     * @throws org.xml.sax.SAXException
      */
     public void add( File reportXml ) throws IOException, SAXException {
         add(new InputSource(reportXml.toURI().toURL().toExternalForm()));
     }
-    
+
     public void add( InputSource reportXml ) throws IOException, SAXException {
         Digester digester = new Digester();
         digester.setClassLoader(getClass().getClassLoader());
@@ -67,9 +70,10 @@ public class Report extends TestCollection<Report,Suite> {
         digester.addBeanPropertySetter("*/id");
         digester.addBeanPropertySetter("*/name");
         digester.addBeanPropertySetter("*/description");
-        digester.addSetProperties("*/status","value","statusString");  // set attributes. in particular @revision
-        digester.addBeanPropertySetter("*/status","statusMessage");
+        digester.addSetProperties("*/status","value","statusString");
 
+        // set attributes. in particular @revision
+        digester.addBeanPropertySetter("*/status","statusMessage");
         digester.parse(reportXml);
     }
 

@@ -7,7 +7,6 @@ import hudson.tasks.junit.TestResult;
 import hudson.tasks.test.AbstractTestResultAction;
 import org.kohsuke.stapler.StaplerProxy;
 import org.xml.sax.SAXException;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -26,27 +25,27 @@ import java.util.logging.Logger;
 public class SQETestAction extends AbstractTestResultAction<SQETestAction> implements StaplerProxy {
     private transient WeakReference<Report> result;
     private boolean considerTestAsTestObject = false;
-    private int failCount;
-    private int totalCount;
+    private final int failCount;
+    private final int totalCount;
+    private static final Logger logger = Logger.getLogger(SQETestAction.class.getName());
 
     SQETestAction(Build owner, BuildListener listener, boolean considerTestAsTestObject) {
         super(owner);
         this.considerTestAsTestObject = considerTestAsTestObject;
-
         Report r = load(listener);
         totalCount = r.getTotalCount();
         failCount = r.getFailCount();
-
         result = new WeakReference<Report>(r);
     }
 
-    /*package*/ static File getDataDir(AbstractBuild build) {
+    static File getDataDir(AbstractBuild build) {
         return new File(build.getRootDir(), "sun-sqe-result");
     }
 
     public boolean considerTestAsTestObject() {
         return considerTestAsTestObject;
     }
+
     public synchronized Report getResult() {
         if(result==null) {
             Report r = load(null);
@@ -63,6 +62,7 @@ public class SQETestAction extends AbstractTestResultAction<SQETestAction> imple
 
     /**
      * Gets the number of failed tests.
+     * @return 
      */
     public int getFailCount() {
         return failCount;
@@ -70,6 +70,7 @@ public class SQETestAction extends AbstractTestResultAction<SQETestAction> imple
 
     /**
      * Gets the total number of tests.
+     * @return 
      */
     public int getTotalCount() {
         return totalCount;
@@ -85,7 +86,7 @@ public class SQETestAction extends AbstractTestResultAction<SQETestAction> imple
         Report r = new Report(this);
         File[] files = getDataDir(owner).listFiles();
         if(files==null) {
-            logger.log(Level.WARNING, "No test reports found in "+getDataDir(owner));
+            logger.log(Level.WARNING, "No test reports found in {0}", getDataDir(owner));
             return r;
         }
 
@@ -112,6 +113,4 @@ public class SQETestAction extends AbstractTestResultAction<SQETestAction> imple
     public Object getTarget() {
         return getResult();
     }
-
-    private static final Logger logger = Logger.getLogger(SQETestAction.class.getName());
 }
