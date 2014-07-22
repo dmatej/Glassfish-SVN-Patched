@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -43,6 +43,7 @@ import java.util.List;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.glassfish.nexus.client.NexusClientException;
+import org.glassfish.nexus.client.StagingOperation;
 import org.glassfish.nexus.client.beans.Repo;
 
 /**
@@ -84,18 +85,36 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
      */
     protected String message = null;
 
+    /**
+     * @parameter expression="${retryCount}"
+     */
+    protected Integer retryCount = null;
+
+    /**
+     * @parameter expression="${timeout}"
+     */
+    protected Long timeout = null;
+
     protected Repo stagingRepo;
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
 
         createNexusClient();
-        
+
         // make sure we use the value provided at command line
         if(message == null){
-            message = session.getUserProperties().getProperty("nexusRepoUrl");
+            message = session.getUserProperties().getProperty("message");
         }
         
+        if(retryCount == null){
+          retryCount = StagingOperation.DEFAULT_RETRY_COUNT;
+        }
+
+        if(timeout == null){
+          timeout = StagingOperation.DEFAULT_TIMEOUT;
+        }
+
         for (StagingRepoConf repo : stagingRepos) {
             try {
                 stagingRepo = nexusClient.getStagingRepo(

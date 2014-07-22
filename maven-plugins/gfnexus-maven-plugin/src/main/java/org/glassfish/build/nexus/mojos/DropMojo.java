@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -51,7 +51,7 @@ import org.glassfish.nexus.client.beans.Repo;
  * @author Romain Grecourt
  */
 public class DropMojo extends AbstractNexusStagingMojo{
-    
+
    /**
      * @parameter expression="${force}" default-value="true"
      */
@@ -63,9 +63,9 @@ public class DropMojo extends AbstractNexusStagingMojo{
         if ((parent = stagingRepo.getParent()) != null) {
             getLog().info("[" + stagingRepo.getId() + "] is a member of [" + parent.getId() + "]");
             if (force) {
-                parent.drop("Force dropping " + message);
+                parent.drop("Force dropping " + message, retryCount, timeout);
             }
         }
-        stagingRepo.drop(message);
+        stagingRepo.drop(message, retryCount, timeout);
     }
 }

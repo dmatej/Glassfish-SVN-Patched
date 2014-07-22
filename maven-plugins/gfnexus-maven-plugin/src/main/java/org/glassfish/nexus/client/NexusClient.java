@@ -63,7 +63,7 @@ public interface NexusClient {
      * delete all artifacts found under 
      *
      * @param repositoryId
-     * @return The staging repository or null if not found
+     * @param path URI as a string representing what to delete.
      * @throws NexusClientException if any issue occurred during the process
      */
     public void deleteContent(String repositoryId, String path) throws NexusClientException;
@@ -71,7 +71,8 @@ public interface NexusClient {
     /**
      * Search for a reference file in nexus
      *
-     * @param File to search on nexus
+     * @param f a file instance of the reference file to use for identifying 
+     * a staging repository.
      * @return The staging repository hosting that file
      * @throws NexusClientException if any issue occurred during the process
      * or if no staging repository has been found.

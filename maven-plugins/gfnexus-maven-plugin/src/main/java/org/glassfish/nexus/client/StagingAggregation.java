@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -72,19 +72,22 @@ public class StagingAggregation implements StagingOperation {
         this();
         repos.addAll(repos);
     }
-    
+
     @Override
     public void close(String msg) throws NexusClientException {
         getNexusClient().closeStagingRepo(msg, getIds());
     }
-    
+
     @Override
     public void drop(String msg) throws NexusClientException {
         getNexusClient().dropStagingRepo(msg, getIds());
     }
-    
+
     @Override
-    public Repo promote(String profile, String msg) throws NexusClientException {
+    public Repo promote(
+            String profile,
+            String msg) throws NexusClientException {
+
         String[] ids = getIds();
         if(ids != null && ids.length >0){
             return getNexusClient().promoteStagingRepo(profile, msg, getIds());
@@ -93,7 +96,10 @@ public class StagingAggregation implements StagingOperation {
     }
     
     @Override
-    public StagingAggregation aggregate(StagingOperation repo) throws NexusClientException {
+    public StagingAggregation aggregate(
+            StagingOperation repo) 
+            throws NexusClientException {
+
         repos.add(repo);
         return this;
     }
@@ -112,4 +118,46 @@ public class StagingAggregation implements StagingOperation {
         }
         return repoIds;
     }
+
+  public void close(
+          String msg,
+          int retryCount,
+          long timeout) throws NexusClientException {
+
+        getNexusClient().closeStagingRepo(
+                msg,
+                getIds(),
+                retryCount,
+                timeout);
+  }
+
+  public void drop(
+          String msg,
+          int retryCount,
+          long timeout) throws NexusClientException {
+
+        getNexusClient().dropStagingRepo(
+                msg,
+                getIds(),
+                retryCount,
+                timeout);
+  }
+
+  public Repo promote(
+          String profile,
+          String msg,
+          int retryCount,
+          long timeout) throws NexusClientException {
+
+        String[] ids = getIds();
+        if(ids != null && ids.length >0){
+        return getNexusClient().promoteStagingRepo(
+                profile,
+                msg,
+                getIds(),
+                retryCount,
+                timeout);
+        }
+        return null;
+  }
 }

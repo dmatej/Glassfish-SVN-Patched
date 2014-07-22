@@ -158,7 +158,7 @@ public class GlassFishPromoteMojo extends AbstractNexusStagingMojo{
         String repoGroup = null;
         for(RemoteRepository remoteRepo : projectRepos){
             if(remoteRepo.getId().equals(nexusPromotedRepoId)){
-                repoGroup = remoteRepo.getUrl().toString().replaceFirst(nexusClient.getNexusURL()+"content/groups/","");
+                repoGroup = remoteRepo.getUrl().replaceFirst(nexusClient.getNexusURL()+"content/groups/","");
             }
         }
         if(repoGroup == null){

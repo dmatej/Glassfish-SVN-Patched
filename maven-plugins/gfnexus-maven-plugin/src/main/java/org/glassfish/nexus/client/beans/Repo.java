@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -183,4 +183,42 @@ final public class Repo implements StagingOperation {
         }
         return null;
     }
+
+    public void close(
+            String msg,
+            int retryCount,
+            long timeout) throws NexusClientException {
+
+          getNexusClient().closeStagingRepo(
+                  msg,
+                  getIds(),
+                  retryCount,
+                  timeout);
+  }
+
+    public void drop(
+            String msg,
+            int retryCount,
+            long timeout) throws NexusClientException {
+
+          getNexusClient().dropStagingRepo(
+                  msg,
+                  getIds(),
+                  retryCount,
+                  timeout);
+  }
+
+    public Repo promote(
+            String profile,
+            String msg,
+            int retryCount,
+            long timeout) throws NexusClientException {
+
+          return getNexusClient().promoteStagingRepo(
+                  profile,
+                  msg,
+                  getIds(),
+                  retryCount,
+                  timeout);
+  }
 }

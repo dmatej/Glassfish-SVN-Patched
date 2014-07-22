@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012-2013 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -67,8 +67,7 @@ public class PromoteMojo extends AbstractNexusStagingMojo{
     public void nexusMojoExecute() throws NexusClientException, MojoFailureException {
         if (stagingRepo.isOpen()) {
             if (autoClose) {
-                stagingRepo.close("Autoclosing " + message);
-
+                stagingRepo.close("Autoclosing " + message, retryCount, timeout);
             } else {
                 throw new MojoFailureException(
                         "staging repository "
@@ -76,6 +75,6 @@ public class PromoteMojo extends AbstractNexusStagingMojo{
                         + " is open, use autoClose=true");
             }
         }
-        stagingRepo.promote(promotionProfile,message);
+        stagingRepo.promote(promotionProfile,message, retryCount, timeout);
     }
 }

@@ -126,7 +126,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo {
         throw new MojoFailureException(
                 "unable to get deployment repo from distributionManagement");
     }
-    
+
     private static String getRepoUrlFromModel(
             Model m)
             throws MojoFailureException {
@@ -138,8 +138,8 @@ public abstract class AbstractNexusMojo extends AbstractMojo {
         }
         throw new MojoFailureException(
                 "unable to get repo URL from distributionManagement");
-    }    
-    
+    }
+
     private static String getRepoIdFromModel(
             Model m) 
             throws MojoFailureException {
@@ -152,7 +152,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo {
         throw new MojoFailureException(
                 "unable to get repo Id from distributionManagement");
     }
-    
+
     private static Server getServerFromSettings(
             Settings s,
             String repoId) throws MojoFailureException {
@@ -169,7 +169,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo {
         }
         return server;
     }
-    
+
     protected void createNexusClient() 
             throws MojoFailureException, MojoExecutionException {
 
@@ -179,7 +179,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo {
         String repoId = session.getUserProperties().getProperty("nexusRepoId");
         String username = session.getUserProperties().getProperty("nexusRepoUsername");
         String password = session.getUserProperties().getProperty("nexusRepoPassword");
-        
+
         // 2. repoId and repoURL provided as part of altDeploy, if not supplied via plugin param.   
         String altDeployRepo = session.getUserProperties().getProperty("altDeploymentRepository");
         if (altDeployRepo != null) {
@@ -189,8 +189,8 @@ public abstract class AbstractNexusMojo extends AbstractMojo {
                 _repoURL = tokens[2];
             }
         }
-        
-        // 3. effective-model, using distributionManagement from model    
+
+        // 3. effective-model, using distributionManagement from model
         if (_repoURL == null) {
             _repoURL = getRepoUrlFromModel(project.getModel());
         }
@@ -214,7 +214,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo {
             String repoId,
             String username,
             String password) throws MojoFailureException, MojoExecutionException {
-      
+
         if(nexusURL == null || nexusURL.isEmpty()){
             throw new IllegalArgumentException("nexusURL can't be null or empty");
         }
@@ -256,7 +256,7 @@ public abstract class AbstractNexusMojo extends AbstractMojo {
                     restClient,
                     repoURL.toString(),
                     new NexusClientPrinter(getLog()));
-            
+
         } catch (NexusClientException ex) {
             throw new MojoExecutionException(ex.getMessage(), ex);
         }

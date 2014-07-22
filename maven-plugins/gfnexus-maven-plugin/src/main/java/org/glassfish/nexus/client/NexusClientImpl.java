@@ -95,22 +95,80 @@ public class NexusClientImpl implements NexusClient {
     private static final String PROFILES_REPOS_PATH = "/service/local/staging/profile_repositories";
     private static final String SEARCH_PATH = "service/local/lucene/search";
 
-    private static final Logger logger = Logger.getLogger(NexusClientImpl.class.getSimpleName());
-    private static final CustomHandler handler = new CustomHandler();
+    private static final Logger LOGGER = Logger.getLogger(NexusClientImpl.class.getSimpleName());
+    private static final CustomHandler LOGGER_HANDLER = new CustomHandler();
+    private final SyncedClose syncedClose = new SyncedClose();
+    private final SyncedDrop syncedDrop = new SyncedDrop();
+    private final SyncedPromote syncedPromote = new SyncedPromote();
 
     private static NexusClientImpl instance;
     private static List<StagingProfileRepo> stagingProfileRepositories = null;
     private static HashMap<String,StagingProfileRepo> stagingProfileRepositoriesMap;
-    
+
     static {
-        logger.addHandler(handler);
+        LOGGER.addHandler(LOGGER_HANDLER);
     }
 
-    public static NexusClient init(RestClient restClient, String nexusUrl, CustomPrinter p){
-        logger.setUseParentHandlers(false);
-        handler.setPrinter(p);
+    public static NexusClient init(
+            RestClient restClient,
+            String nexusUrl,
+            CustomPrinter p){
+
+        LOGGER.setUseParentHandlers(false);
+        LOGGER_HANDLER.setPrinter(p);
         instance = new NexusClientImpl(restClient, nexusUrl);
         return instance;
+    }
+
+    private interface SyncedOperation {
+      void doOperation(String desc, String[] repoIds, String[] params);
+      Object doReturn(StagingProfileRepo repo);
+      boolean isOperationComplete(StagingProfileRepo repo);
+    }
+
+    private class SyncedClose implements SyncedOperation {
+      public void doOperation(String desc, String[] repoIds, String[] params) {
+        _closeStagingRepo(desc, repoIds);
+      }
+      public Object doReturn(StagingProfileRepo repo) {
+        return null;
+      }
+      public boolean isOperationComplete(StagingProfileRepo repo) {
+        return repo!=null && !repo.isOpen();
+      }
+    }
+
+    private class SyncedPromote implements SyncedOperation {
+      public void doOperation(String desc, String[] repoIds, String[] params) {
+        if(params == null || params.length != 1){
+          throw new IllegalArgumentException(
+                  "params must contain promotion profile");
+        }
+        _promoteStagingRepo(params[0], desc, repoIds);
+      }
+      public Object doReturn(StagingProfileRepo repo) {
+        StagingProfileRepo srepo = 
+                getStagingProfileRepo(repo.getParentGroupId());
+        if(srepo != null){
+          return new Repo(srepo);
+        }
+        return null;
+      }
+      public boolean isOperationComplete(StagingProfileRepo repo) {
+        return repo != null && repo.getParentGroupId() != null;
+      }
+    }
+
+    private class SyncedDrop implements SyncedOperation {
+      public void doOperation(String desc, String[] repoIds, String[] params) {
+        _dropStagingRepo(desc, repoIds);
+      }
+      public Object doReturn(StagingProfileRepo repo) {
+        return null;
+      }
+      public boolean isOperationComplete(StagingProfileRepo repo) {
+        return repo == null;
+      }
     }
 
     public String getNexusURL() {
@@ -129,7 +187,7 @@ public class NexusClientImpl implements NexusClient {
         this.restClient = restClient;
         this.nexusUrl = nexusUrl;
     }
-    
+
     WebTarget target(String path){
         return restClient.getClient().target(nexusUrl).path(path);
     }
@@ -212,6 +270,53 @@ public class NexusClientImpl implements NexusClient {
         return response;
     }
 
+    private Object retry(
+            SyncedOperation r,
+            String desc,
+            String[] repoIds,
+            String extraParams[],
+            int retryCount,
+            long timeout)
+            throws NexusClientException {
+
+      int currentRetryCount = 0;
+      long startTime = System.currentTimeMillis(), currentTimeout = 0;
+      r.doOperation(desc, repoIds, extraParams);
+
+      while(true){
+        if(currentRetryCount > retryCount){
+          throw new NexusClientException("retryCount reached: "+currentRetryCount);
+        }
+        if(currentTimeout > timeout){
+          throw new NexusClientException("timeout reached: "+timeout);
+        }
+
+        refreshStagingRepos();
+        StagingProfileRepo repo = null;
+        boolean operationComplete = true;
+        for(String repoId : repoIds){
+          repo = getStagingProfileRepo(repoId);
+          if(!r.isOperationComplete(repo)){
+            operationComplete = false;
+            break;
+          }
+        }
+        if(operationComplete){
+          return r.doReturn(repo);
+        } else {
+          long currentTime = System.currentTimeMillis();
+          currentTimeout = currentTime - startTime;
+          currentRetryCount ++;
+          LOGGER.log(Level.INFO, 
+                  "State of operation ({0}) isn't verified yet... retrying({1})", 
+                  new Object[]{
+                    r.getClass().getSimpleName(),
+                    currentRetryCount
+                  });
+        }
+      }
+    }
+
     private static Object handleResponse(
             Response r,
             Class c) throws NexusClientException {
@@ -262,37 +367,114 @@ public class NexusClientImpl implements NexusClient {
         return stagingProfileRepositoriesMap.get(repoId);
     }
 
-    public StagingProfileRepo getStagingProfileRepo(String repoId, int sleep){
-        if(sleep > 0){
-            try {
-              Thread.sleep(sleep);
-            } catch (InterruptedException ex) {}
-        }
-        refreshStagingRepos();
-        return getStagingProfileRepo(repoId);
+    public void closeStagingRepo(
+            final String desc,
+            final String[] repoIds,
+            final int retryCount,
+            final long timeout) 
+            throws NexusClientException {
+
+      retry(syncedClose, desc, repoIds, repoIds, retryCount, timeout);
     }
 
-    public void closeStagingRepo(String desc, String[] repoIds) throws NexusClientException {
-        logger.info(" ");
-        logger.log(Level.INFO,
+    public void closeStagingRepo(
+            final String desc,
+            final String[] repoIds) 
+            throws NexusClientException {
+
+      retry(
+              syncedClose,
+              desc, 
+              repoIds,
+              null,
+              StagingOperation.DEFAULT_RETRY_COUNT,
+              StagingOperation.DEFAULT_TIMEOUT);
+    }
+
+    public void dropStagingRepo(
+            final String desc,
+            final String[] repoIds,
+            final int retryCount,
+            final long timeout) 
+            throws NexusClientException {
+
+      retry(syncedDrop,desc, repoIds, null, retryCount, timeout);
+    }
+
+    public void dropStagingRepo(
+            final String desc,
+            final String[] repoIds) 
+            throws NexusClientException {
+
+      retry(
+              syncedDrop,
+              desc, 
+              repoIds,
+              null,
+              StagingOperation.DEFAULT_RETRY_COUNT,
+              StagingOperation.DEFAULT_TIMEOUT);
+    }
+
+    public Repo promoteStagingRepo(
+            final String promotionProfile,
+            final String desc,
+            final String[] repoIds,
+            final int retryCount,
+            final long timeout) 
+            throws NexusClientException {
+
+     return (Repo) retry(
+              syncedPromote,
+              desc,
+              repoIds,
+              new String[]{promotionProfile},
+              retryCount,
+              timeout);
+    }
+ 
+    public Repo promoteStagingRepo(
+            final String promotionProfile,
+            final String desc,
+            final String[] repoIds) 
+            throws NexusClientException {
+
+     return (Repo) retry(
+              syncedPromote,
+              desc,
+              repoIds,
+              new String[]{promotionProfile},
+              StagingOperation.DEFAULT_RETRY_COUNT,
+              StagingOperation.DEFAULT_TIMEOUT);
+    }
+
+    private void _closeStagingRepo(
+            String desc,
+            String[] repoIds) 
+            throws NexusClientException {
+
+        LOGGER.info(" ");
+        LOGGER.log(Level.INFO,
                 "-- closing {0} --",
                 Arrays.toString(repoIds));
         handleResponse(stagingOperation(Operation.close, repoIds, null,desc), null);
     }
 
-    public void dropStagingRepo(String desc, String[] repoIds) throws NexusClientException {
-        logger.info(" ");
-        logger.log(Level.INFO,
+    private void _dropStagingRepo(String desc, String[] repoIds) throws NexusClientException {
+        LOGGER.info(" ");
+        LOGGER.log(Level.INFO,
                 "-- droping {0} --",
                 Arrays.toString(repoIds));
         handleResponse(stagingOperation(Operation.drop, repoIds, null, desc), null);
     }
 
-    public Repo promoteStagingRepo(String promotionProfile, String desc, String[] repoIds)
+    private Repo _promoteStagingRepo(
+            String promotionProfile,
+            String desc,
+            String[] repoIds)
             throws NexusClientException {
 
-        logger.info(" ");
-        logger.log(Level.INFO,
+        LOGGER.info(" ");
+        LOGGER.log(Level.INFO,
                 "-- searching for the promotion profile id of \"{0}\" --",
                 promotionProfile);
 
@@ -304,12 +486,12 @@ public class NexusClientImpl implements NexusClient {
             if (profile.getMode().equals("GROUP")) {
                 if (profile.getName().equals(promotionProfile)) {
 
-                    logger.info(" ");
-                    logger.log(Level.INFO,
+                    LOGGER.info(" ");
+                    LOGGER.log(Level.INFO,
                             "-- promoting {0} with promotion profile \"{1}\" --",
                             new Object[]{Arrays.toString(repoIds), promotionProfile});
 
-                    StagingProfileRepo repo = getStagingProfileRepo(repoIds[0],3000);
+                    StagingProfileRepo repo = getStagingProfileRepo(repoIds[0]);
 
                     if(repo == null){
                         throw new NexusClientException(
@@ -330,16 +512,15 @@ public class NexusClientImpl implements NexusClient {
                                 desc), null);
                     }
 
-                    repo = getStagingProfileRepo(repoIds[0],5000);
-
-                    if(repo != null
-                            && repo.getParentGroupId() == null){
-                        throw new NexusClientException(
-                            "unable to find the promoted repository after promotion");
+                    // try to return the repo or null if not found.
+                    repo = getStagingProfileRepo(repoIds[0]);
+                    if(repo != null && repo.getParentGroupId() != null){
+                        return new Repo(
+                                stagingProfileRepositoriesMap.get(
+                                        repo.getParentGroupId()));
+                    } else {
+                      return null;
                     }
-
-                    return new Repo(stagingProfileRepositoriesMap.get(
-                                repo.getParentGroupId()));
                 }
             }
         }
@@ -349,7 +530,7 @@ public class NexusClientImpl implements NexusClient {
                 + promotionProfile
                 + "\"");
     }
-    
+
     private static StringBuilder getRepoContentURL(String repoId){
         StringBuilder sb = new StringBuilder(REPOSITORIES_PATH);
         sb.append('/');
@@ -359,7 +540,7 @@ public class NexusClientImpl implements NexusClient {
         sb.append('/');
         return sb;
     }
-    
+
     private ContentItems getRepoContent(StringBuilder contentPath, String path){
         ContentItems content =
                 (ContentItems) handleResponse(
@@ -368,9 +549,12 @@ public class NexusClientImpl implements NexusClient {
         return content;
     }
 
-    private void scrubRepo(String repoId, String path, Set<MavenArtifactInfo> artifacts)
+    private void scrubRepo(
+            String repoId,
+            String path,
+            Set<MavenArtifactInfo> artifacts)
             throws NexusClientException {
-        
+
         StringBuilder repoContentURL = getRepoContentURL(repoId);
         String root = repoContentURL.toString();
         ContentItems content = getRepoContent(repoContentURL, path);
@@ -379,7 +563,6 @@ public class NexusClientImpl implements NexusClient {
             // if file
             if(item.getLeaf()){
                 if(item.isValidArtifactFile()){
-                    
                     MavenArtifactInfo artifact =
                             ((MavenInfo) handleResponse(
                                 target(root+"/"+item.getRelativePath())
@@ -387,7 +570,7 @@ public class NexusClientImpl implements NexusClient {
                                     .request(MediaType.APPLICATION_JSON).get(),
                                 MavenInfo.class)).getData()[0];
 
-                    logger.log(Level.INFO, "found {0}", artifact);
+                    LOGGER.log(Level.INFO, "found {0}", artifact);
                     artifacts.add(artifact);
                 }
             } else {
@@ -408,11 +591,12 @@ public class NexusClientImpl implements NexusClient {
         return (items!= null && items.length > 0);
     }
 
-    public Set<MavenArtifactInfo> getArtifactsInRepo(String repoId) 
+    public Set<MavenArtifactInfo> getArtifactsInRepo(
+            String repoId) 
             throws NexusClientException {
-        
-        logger.info(" ");
-        logger.log(Level.INFO
+
+        LOGGER.info(" ");
+        LOGGER.log(Level.INFO
                 , "-- retrieving full content of repository [{0}] --"
                 , repoId);
         
@@ -420,12 +604,12 @@ public class NexusClientImpl implements NexusClient {
         scrubRepo(repoId, "", artifacts);
         return artifacts;
     }
-    
+
     public Set<MavenArtifactInfo> getArtifactsInRepo(String repoId, String path) 
             throws NexusClientException {
         
-        logger.info(" ");
-        logger.log(Level.INFO
+        LOGGER.info(" ");
+        LOGGER.log(Level.INFO
                 , "-- retrieving content of [{0}] in repository [{1}] --"
                 , new Object[]{repoId});
         
@@ -433,12 +617,14 @@ public class NexusClientImpl implements NexusClient {
         scrubRepo(repoId, "", artifacts);
         return artifacts;
     }
-    
-    public void deleteContent(String repoId, String path) 
+
+    public void deleteContent(
+            String repoId,
+            String path) 
             throws NexusClientException {
 
-        logger.info(" ");
-        logger.log(Level.INFO
+        LOGGER.info(" ");
+        LOGGER.log(Level.INFO
                 ,"-- deleting content of [{0}] in repository [{1}]] --"
                 , new Object[]{path, nexusUrl});
 
@@ -452,19 +638,21 @@ public class NexusClientImpl implements NexusClient {
                     String itemPath = item.getResourceURI().replace(nexusUrl, "");
                     handleResponse(target(itemPath).request().delete(), null);
 
-                    logger.log(Level.INFO, "deleted {0}", item.getRelativePath());
+                    LOGGER.log(Level.INFO, "deleted {0}", item.getRelativePath());
                 }
             }
         }
     }
-    
-    public Repo getStagingRepo(String stagingProfile,MavenArtifactInfo refArtifact)
+
+    public Repo getStagingRepo(
+            String stagingProfile,
+            MavenArtifactInfo refArtifact)
             throws NexusClientException {
 
         String refChecksum = checksum(refArtifact.getFile());
 
-        logger.info(" ");
-        logger.info("-- searching for the staging repository --");
+        LOGGER.info(" ");
+        LOGGER.info("-- searching for the staging repository --");
 
         if (stagingProfileRepositories == null)
             refreshStagingRepos();
@@ -487,21 +675,21 @@ public class NexusClientImpl implements NexusClient {
                 try{
                     checksum = (String) handleResponse(request(sb.toString()).get(),String.class);
                 } catch (NexusResponseException ex){
-                    logger.log(Level.INFO,
+                    LOGGER.log(Level.INFO,
                         "[{0}] does not contain the ref artifact",
                         new Object[]{repo.getRepositoryId()});
                 }
-                
+
                 // if the checksum is not null and not empty, the coordinates exist
                 // we always return the staging repo, even if the checksum does not match
                 // since there can be only one representation of a coordinate
                 if (checksum != null) {
                     if (refChecksum.equals(checksum)) {
-                        logger.log(Level.INFO,
+                        LOGGER.log(Level.INFO,
                                 "found staging repository: [{0}]",
                                 new Object[]{repo.getRepositoryId()});
                     } else {
-                        logger.log(Level.WARNING,
+                        LOGGER.log(Level.WARNING,
                                 "[{0}] contains a different version of {1}",
                                 new Object[]{repo.getRepositoryId(), refArtifact});
                     }

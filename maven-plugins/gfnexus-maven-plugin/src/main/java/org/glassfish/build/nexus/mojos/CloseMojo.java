@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -55,7 +55,7 @@ public class CloseMojo extends AbstractNexusStagingMojo {
     @Override
     public void nexusMojoExecute() throws NexusClientException, MojoFailureException {
         if(stagingRepo.isOpen()){
-            stagingRepo.close(message);
+            stagingRepo.close(message, retryCount, timeout);
         } else {
             throw new MojoFailureException("repository "+stagingRepo.getName()+" is already closed");
         }
