@@ -106,7 +106,7 @@ public abstract class AbstractNexusStagingMojo extends AbstractNexusMojo {
         if(message == null){
             message = session.getUserProperties().getProperty("message");
         }
-        
+
         if(retryCount == null){
           retryCount = StagingOperation.DEFAULT_RETRY_COUNT;
         }

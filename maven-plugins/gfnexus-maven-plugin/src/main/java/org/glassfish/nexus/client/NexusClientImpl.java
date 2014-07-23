@@ -308,7 +308,7 @@ public class NexusClientImpl implements NexusClient {
           currentTimeout = currentTime - startTime;
           currentRetryCount ++;
           LOGGER.log(Level.INFO, 
-                  "State of operation ({0}) isn't verified yet... retrying({1})", 
+                  "State of operation ({0}) isn''t verified yet... retrying({1})", 
                   new Object[]{
                     r.getClass().getSimpleName(),
                     currentRetryCount
