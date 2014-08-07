@@ -88,9 +88,9 @@ public class NexusClientImpl implements NexusClient {
     private final RestClient restClient;
     private final String nexusUrl;
 
-    private static final String REPOSITORY_GROUP_PATH = "service/local/repo_groups/";
+    private static final String REPOSITORY_GROUP_PATH = "service/local/repo_groups";
     private static final String REPOSITORIES_PATH = "service/local/repositories";
-    private static final String STAGING_REPO_BULK_PATH = "service/local/staging/bulk/";
+    private static final String STAGING_REPO_BULK_PATH = "service/local/staging/bulk";
     private static final String PROFILES_PATH = "/service/local/staging/profiles";
     private static final String PROFILES_REPOS_PATH = "/service/local/staging/profile_repositories";
     private static final String SEARCH_PATH = "service/local/lucene/search";
@@ -259,7 +259,7 @@ public class NexusClientImpl implements NexusClient {
 
         Response response = null;
         try {
-            response = request(STAGING_REPO_BULK_PATH + "/" + op).post(
+            response = request(STAGING_REPO_BULK_PATH + '/' + op).post(
                         Entity.entity(new StagingOperationRequestData(
                             new StagingOperationRequest(repoIds, profileGroup, op + " - " +String.valueOf(desc)))
                             ,MediaType.APPLICATION_JSON));
@@ -586,7 +586,7 @@ public class NexusClientImpl implements NexusClient {
             throws NexusClientException {
 
         ContentItem[] items = ((ContentItems) handleResponse(
-                get(REPOSITORY_GROUP_PATH+repoGroup+"/"+artifact.getRepositoryRelativePath()),
+                get(REPOSITORY_GROUP_PATH+'/'+repoGroup+"/"+artifact.getRepositoryRelativePath()),
                 ContentItems.class)).getData();
         return (items!= null && items.length > 0);
     }
