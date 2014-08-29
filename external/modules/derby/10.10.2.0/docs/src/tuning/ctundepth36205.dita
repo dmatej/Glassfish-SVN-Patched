@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctundepth36205">
+<title>Prevent the user from issuing expensive queries </title>
+<prolog><metadata>
+<keywords>
+<indexterm>Expensive queries<indexterm>importance of avoiding</indexterm></indexterm>
+<indexterm>Expensive queries<indexterm>how to avoid</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>Some applications have complete control over the queries that they issue;
+the queries are built into the applications. Other applications allow users
+to construct queries by filling in fields on a form. Any time you let users
+construct ad-hoc queries, you risk the possibility that the query a user constructs
+will be one like the following:   
+<codeblock><b>SELECT * FROM ExtremelyHugeTable
+ORDER BY unIndexedColumn</b></codeblock></p>
+<p>This statement has no WHERE clause. It will require a full table scan.
+To make matters worse, <ph conref="../conrefs.dita#prod/productshortname"></ph> will then have to order the data. Most
+likely, the user does not want to browse through all 100,000 rows, and does
+not care whether the rows are all in order.</p>
+<p>Do everything you can to avoid table scans and sorting of large results
+(such as table scans).</p>
+<p>Some things you can do to disallow such runaway queries:  
+<ul>
+<li>Use client-side checking to make sure some minimal fields are always filled
+in. Eliminate or disallow queries that cannot use indexes and are not optimizable.
+In other words, force an optimizable WHERE clause by making sure that the
+columns on which an index is built are included in the WHERE clause of the
+query. Reduce or disallow DISTINCT clauses (which often require sorting) on
+large tables.</li>
+<li>For queries with large results, do not let the database do the ordering.
+Retrieve data in chunks (provide a Next button to allow the user to retrieve
+the next chunk, if desired), and order the data in the application.</li>
+<li>Do not use SELECT DISTINCT to populate lists; instead, maintain a separate
+table of the unique items.</li>
+</ul></p>
+</conbody></concept>

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefattribfailover" xml:lang="en-us">
+<title>failover=true attribute</title>
+<prolog><metadata>
+<keywords><indexterm>failover=true database connection URL
+attribute</indexterm><indexterm>replicating databases<indexterm>forcing
+failover</indexterm></indexterm><indexterm>database
+replication<indexterm>forcing failover</indexterm></indexterm>
+<indexterm>databases<indexterm>attributes, forcing
+failover</indexterm></indexterm>
+<indexterm>attributes<indexterm>failover</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><title>Function</title>
+<p>Stops database replication on the slave system and converts the slave
+database into a normal database.</p>
+<p>If you specify the <i>failover=true</i> attribute on the master, the
+attribute sends the remaining log records to the slave instance and then sends a
+failover message to the slave. The replication functionality and the database
+are then shut down on the master system. If failover is successful, an exception
+with the error code XRE20 is thrown. Hence, when issued on the master, the
+<i>failover=true</i> attribute does not return a valid connection.</p>
+<p>You may specify this attribute on the slave only if the network connection
+between the master and the slave is down.</p>
+<p>When you specify this attribute on the slave, or when a failover message is
+sent as part of the execution of the <i>failover=true</i> attribute on the
+master, all transaction log chunks that have been received from the master are
+written to disk. The slave replication functionality is shut down, and the boot
+process of the database is allowed to complete. The database is now in a
+transaction consistent state, reflecting all transactions whose commit log
+records were received from the master. When issued on the slave, the
+<i>failover=true</i> command returns a valid connection.</p>
+<p>The <ph conref="../conrefs.dita#prod/productshortname"></ph> instance where
+this command is issued must be serving the named database in replication mode.
+</p>
+<p>For more information, see the topics under "Replicating databases" in the
+<ph conref="../conrefs.dita#pub/citadmin"></ph>.</p>
+</section>
+<section><title>Combining with other attributes</title>
+<p>You must specify a database name in the connection URL, either in the
+subprotocol or by using the <i><xref
+href="rrefattrib17246.dita#rrefattrib17246">databaseName=nameofDatabase</xref></i>
+attribute.</p>
+<p>If authentication is turned on, you must also specify
+this attribute in conjunction with the <i><xref
+href="rrefattrib10035.dita#rrefattrib10035">user=userName</xref></i> and
+<i><xref
+href="rrefattrib42686.dita#rrefattrib42686">password=userPassword</xref></i>
+attributes. Authorization for the master database cannot be checked when the
+network connection is down, so the requirement that the user must be the
+database owner is not enforced.</p>
+<p>You may not specify this attribute in conjunction with any attributes not
+mentioned in this section.</p>
+</section>
+<example><title>Examples</title>
+<codeblock><b>-- start failover from master using database name in subprotocol,
+--   authorization
+jdbc:derby:myDB;failover=true;user=mary;password=little88lamb</b></codeblock>
+<codeblock><b>-- start failover using databaseName attribute, no security
+jdbc:derby:;databaseName=myDB;failover=true;</b></codeblock>
+</example>
+</refbody>
+</reference>

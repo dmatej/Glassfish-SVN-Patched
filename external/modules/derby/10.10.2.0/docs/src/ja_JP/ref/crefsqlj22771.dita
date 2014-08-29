@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<concept id="crefsqlj22771" xml:lang="en-us">
+<title>依存関係</title>
+<conbody>
+<p><indexterm>Dependencies<indexterm>internal tracking of</indexterm></indexterm><indexterm>Prepared
+statements<indexterm>tracking of dependencies</indexterm></indexterm><ph conref="../conrefs.dita#prod/productshortname"></ph> は準備済み文の依存関係を追跡します。準備済み文とは実行前にコンパイルされたSQL文の事です。典型的なシナリオとして、これらは準備(プレコンパイル)された後、複数回実行されます。</p>
+<p>準備済み文はディクショナリの情報や、それ自身から参照する他の文に依存します。(ディクショナリの情報とは、表・列・制約・索引・ビュー・トリガのことです。)
+準備済み文が依存しているディクショナリの情報や文が、破棄されたり変更されたりすると、内部的に準備済み文は無効となり、<ph conref="../conrefs.dita#prod/productshortname"></ph>は準備済み文が実行されるとき、自動的に再コンパイルを行おうとします。
+もしこのとき、準備済み文の再コンパイルが失敗すると、実行は失敗します。
+しかしながら、もし何らかの対応を行って(無くなった表を復活させるなどして)失われた依存性を元に戻せるのなら、失敗した準備済み文を成功裏に実行することができます。これは、<ph conref="../conrefs.dita#prod/productshortname"></ph>が再実行が要求されたとき、再コンパイルを自動的に行うからです。</p>
+<p>お互いに依存した文-UPDATE WHERE CURRENT文は参照する文に依存します。依存する文を破棄すると、UPDATE WHERE CURRENT文は無効になります。</p>
+<p>さらに準備済み文の結果がオープンしている場合、ある種のDDL文の実行を妨げます。</p>
+<p>それぞれの文に対応したマニュアルの頁には、その文が準備された場合、どのようなことをすると無効になるのかが書かれています。</p>
+<p>ここに<ph conref="../conrefs.dita#prod/productshortname"></ph>のijというツールを使って例を示します。   <codeblock>ij&gt; <b>CREATE TABLE mytable (mycol INT);</b>
+0 rows inserted/updated/deleted
+ij&gt; <b>INSERT INTO mytable VALUES (1), (2), (3);</b>
+3 rows inserted/updated/deleted
+-- この例ではijのprepareコマンドを使います。
+-- このコマンドにより文が準備されます。
+ij&gt; <b>prepare p1 AS 'INSERT INTO MyTable VALUES (4)';</b>
+-- p1はmytableに依存します;
+ij&gt; <b>execute p1;</b>
+1 row inserted/updated/deleted
+-- <ph conref="../conrefs.dita#prod/productshortname"></ph>は再コンパイルせずに文を実行します。
+ij&gt; <b>CREATE INDEX i1 ON mytable(mycol);</b>
+0 rows inserted/updated/deleted
+-- 新しい索引のため、p1は一時的に無効となります。
+ij&gt; <b>execute p1;</b>
+1 row inserted/updated/deleted
+-- <ph conref="../conrefs.dita#prod/productshortname"></ph>は自動的にp1を再コンパイルして、実行します。
+ij&gt; <b>DROP TABLE mytable;</b>
+0 rows inserted/updated/deleted
+-- <ph conref="../conrefs.dita#prod/productshortname"></ph>では以下のように表を破棄することができます。
+-- これはp1の結果が閉じているからです。
+-- しかしながらp1は一時的に無効となります。
+ij&gt; <b>CREATE TABLE mytable (mycol INT);</b>
+0 rows inserted/updated/deleted
+ij&gt; <b>INSERT INTO mytable VALUES (1), (2), (3);</b>
+3 rows inserted/updated/deleted
+ij&gt; <b>execute p1;</b>
+1 row inserted/updated/deleted
+-- p1は無効となっているので、<ph conref="../conrefs.dita#prod/productshortname"></ph>は実行の前に再コンパイルを行います。
+-- 再コンパイルは成功して、文は実行できます。
+ij&gt; <b>DROP TABLE mytable;</b>
+0 rows inserted/updated/deleted
+-- p1は無効です。
+-- 今度は最コンパイルしようとしても失敗するので、
+-- 実行も失敗です。
+ij&gt; <b>execute p1;</b>
+ERROR 42X05: Table/View 'MYTABLE' does not exist.</codeblock></p>
+</conbody>
+</concept>
+

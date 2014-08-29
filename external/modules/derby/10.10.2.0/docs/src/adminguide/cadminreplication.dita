@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cadminreplication" xml:lang="en-us">
+<title>Replicating databases</title>
+<shortdesc>Replication is an important feature of a robust database management
+system. In <ph conref="../conrefs.dita#prod/productshortname"></ph>, you start
+database replication by using connection URL attributes.</shortdesc>
+<prolog><metadata><keywords>
+<indexterm>replicating databases</indexterm>
+<indexterm>database replication</indexterm>
+</keywords></metadata></prolog>
+<conbody><p>The replication capability of
+<ph conref="../conrefs.dita#prod/productshortname"></ph> has the following
+features:</p>
+<ul>
+<li><b>One master, one slave</b>: A replicated database resides in two locations
+and is managed by two different
+<ph conref="../conrefs.dita#prod/productshortname"></ph> instances. One of these
+<ph conref="../conrefs.dita#prod/productshortname"></ph> instances has the
+<i>master</i> role for this database, and the other has the <i>slave</i> role.
+Typically, the master and slave run on different nodes, but this is not a
+requirement. Together, the master and its associated slave represent a
+<i>replication pair</i>.
+</li>
+<li><b>Roll-forward shipped log</b>: Replication is based on shipping the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> transaction log from
+the master to the slave, and then rolling forward the operations described in
+the log to the slave database.
+</li>
+<li><b>Asymmetry</b>: Only the master processes transactions. The slave
+processes no transactions, not even read operations.
+</li>
+<li><b>Asynchronicity</b>: Transactions are committed on the master without
+waiting for the slave. The shipping of the transaction log to the slave is
+performed regularly, and is completely decoupled from the transaction execution
+at the master. This may lead to a few lost transactions if the master crashes.
+</li>
+<li><b>Shared nothing</b>: Apart from the network line, no hardware is assumed
+to be shared.
+</li>
+<li><b>Replication granularity</b>: The granularity for replication is exactly
+one database. However, one
+<ph conref="../conrefs.dita#prod/productshortname"></ph> instance may have
+different roles for different databases. For example, one
+<ph conref="../conrefs.dita#prod/productshortname"></ph> instance may have the
+following roles, all at the same time:
+<ul>
+<li>The master role for one database D1 replicated to one node</li>
+<li>The slave role for a database D2 replicated from another node</li>
+<li>The normal, non-replicated, role for a database D3</li>
+</ul>
+</li>
+</ul>
+<p>Replication builds on
+<ph conref="../conrefs.dita#prod/productshortname"></ph>'s ability to recover
+from a crash by starting with a backup and rolling forward
+<ph conref="../conrefs.dita#prod/productshortname"></ph>'s transaction log
+files. The master sends log records to the slave using a network connection. The
+slave then writes these log records to its local log and redoes them.
+</p>
+<p>If the master fails, the slave completes the recovery by redoing the log that
+has not already been processed. The state of the slave after this recovery is
+close to the state the master had when it crashed. However, some of the last
+transactions performed on the master may not have been sent to the slave and may
+therefore not be reflected. When the slave has completed the recovery work, it
+is transformed into a normal
+<ph conref="../conrefs.dita#prod/productshortname"></ph> instance that is ready
+to process transactions. For more details, see
+<xref href="cadminreplicfailover.dita#cadminreplicfailover"></xref> and
+<xref href="cadminreplicsecurity.dita#cadminreplicsecurity"></xref>.
+</p>
+<p>Several <ph conref="../conrefs.dita#prod/productshortname"></ph> properties
+allow you to specify the size of the replication log buffers and the intervals
+between log shipments, as well as whether replication messages are logged. See
+the <ph conref="../conrefs.dita#pub/citref"></ph> for details.</p>
+<p>You can perform replication on a database that runs in either embedded mode
+or Network Server mode.
+</p>
+</conbody>
+</concept>

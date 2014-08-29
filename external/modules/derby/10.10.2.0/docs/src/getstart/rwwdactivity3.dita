@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rwwdactivity3" xml:lang="en-us">
+<title>The WwdEmbedded program</title>
+<shortdesc>This section describes the <codeph>WwdEmbedded.java</codeph> program,
+highlighting details specific to accessing a <ph conref="../conrefs.dita#prod/productshortname"></ph> database
+from a JDBC program.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>WwdEmbedded.java program<indexterm>code description</indexterm><indexterm>org.apache.derby.jdbc.EmbeddedDriver</indexterm></indexterm>
+<indexterm>Database<indexterm>shutdown</indexterm></indexterm><indexterm>JDBC</indexterm>
+<indexterm>SQLException</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> Most of the code related to the database activities performed is
+included in this section, but you might find it helpful to open the program
+file and follow along in a text viewer or editor. The <cite>SECTION NAMES</cite> referred
+to in this section can be found in the comments within the program code and
+serve as cross-reference points between this section and the Java program.
+The program uses methods from the <codeph>WwdUtils</codeph> class. The utility
+class code is not described here but is available for review in the file <codeph>WwdUtils.java</codeph>.</section>
+<section><title>Initialize the program</title><p><cite>INITIALIZATION SECTION</cite>:
+The initial lines of code identify the Java packages used in the program,
+then set up the Java class <codeph>WwdEmbedded</codeph> and the <codeph>main</codeph> method
+signature.  Refer to a Java programming guide for information on these program
+constructs.</p> <codeblock>import java.sql.*;
+
+public class WwdEmbedded   
+{
+    public static void main(String[] args)
+   {</codeblock> </section>
+<section><title>Define key variables and objects</title><p><cite>DEFINE VARIABLES
+SECTION</cite>: The initial lines of the <codeph>main</codeph> method define
+the variables and objects used in the  program. This example uses variables
+to store the information needed to connect  to the <ph conref="../conrefs.dita#prod/productshortname"></ph> database.
+The use of variables for this information makes it easy to adapt the program
+to other configurations and other databases.</p><dl><dlentry>
+<dt><codeph>driver</codeph></dt>
+<dd>Stores the name of the <ph conref="../conrefs.dita#prod/productshortname"></ph> embedded
+driver.</dd>
+</dlentry><dlentry>
+<dt><codeph>dbName</codeph></dt>
+<dd>Stores the name of the database.</dd>
+</dlentry><dlentry>
+<dt><codeph>connectionURL</codeph></dt>
+<dd>Stores the <ph conref="../conrefs.dita#prod/productshortname"></ph>  connection
+URL that is used to access the database.</dd>
+</dlentry><dlentry>
+<dt><codeph>createString</codeph></dt>
+<dd>Stores the SQL <codeph>CREATE</codeph> statement for the <codeph>WISH_LIST</codeph> table.</dd>
+</dlentry></dl> <codeblock>String driver = "org.apache.derby.jdbc.EmbeddedDriver";
+String dbName="jdbcDemoDB";
+String connectionURL = "jdbc:derby:" + dbName + ";create=true";
+...
+String createString = "CREATE TABLE WISH_LIST  "
+  +  "(WISH_ID INT NOT NULL GENERATED ALWAYS AS IDENTITY " 
+  ...
+  +  " WISH_ITEM VARCHAR(32) NOT NULL) " ;</codeblock></section>
+<section><title>Start the  <ph conref="../conrefs.dita#prod/productshortname"></ph> engine</title><p><cite>LOAD
+DRIVER SECTION</cite>: Loading the <ph conref="../conrefs.dita#prod/productshortname"></ph> embedded
+JDBC driver starts the <ph conref="../conrefs.dita#prod/productshortname"></ph> database
+engine. The <codeph>try</codeph> and <codeph>catch</codeph> block (the Java
+error-handling construct) catches the exceptions that may occur. A problem
+here is usually due to an incorrect classpath setting.</p>  <codeblock>String driver = "org.apache.derby.jdbc.EmbeddedDriver";
+...
+try {
+    Class.forName(driver); 
+} catch(java.lang.ClassNotFoundException e) {
+  ...
+}</codeblock></section>
+<section><title>Boot the database</title><p><cite>BOOT DATABASE SECTION</cite>:
+The <codeph>DriverManager</codeph> class  loads the database using the <ph
+conref="../conrefs.dita#prod/productshortname"></ph> connection URL stored
+ in the variable <codeph>connectionURL</codeph>. This URL includes the parameter <codeph>;create=true</codeph> so
+that the database will be created if it does not already exist. The primary <codeph>try</codeph> and <codeph>catch</codeph> block
+begins here. This construct handles errors for the database access code.</p> <codeblock>String connectionURL = "jdbc:derby:" + dbName + ";create=true";
+...
+try {
+    conn = DriverManager.getConnection(connectionURL);
+    ...  <i>&lt;most of the program code is contained here></i>
+}  catch (Throwable e)  {   
+   ...
+}</codeblock></section>
+<section><title>Set up program to execute SQL</title> <p><cite>INITIAL SQL
+SECTION</cite>: The program initializes the objects needed to perform subsequent
+SQL operations and checks to see if the required data  table exists.</p> <p>The
+statement object <codeph>s</codeph> is initialized. If the utility method <codeph>WwdUtils.wwdChk4Table</codeph> does
+not find the <codeph>WISH_LIST</codeph> table, the statement object's  <codeph>execute</codeph> method
+creates the table by executing the SQL stored  in the variable <codeph>createString</codeph>.</p> <codeblock>s = conn.createStatement();
+if (! WwdUtils.wwdChk4Table(conn))
+{  
+   System.out.println (" . . . . creating table WISH_LIST");
+   s.execute(createString);
+}</codeblock> <p>The <codeph>INSERT</codeph> statement used to add data to
+the table is bound to the prepared statement object <codeph>psInsert</codeph>.
+The prepared  statement uses the question mark parameter <codeph>?</codeph> to
+represent the data that will be inserted by the user. The program sets the
+actual value to be  inserted later on, before executing the SQL. This is the
+most efficient way to execute SQL statements that will be used multiple times.</p> <codeblock>psInsert = conn.prepareStatement
+   ("insert into WISH_LIST(WISH_ITEM) values (?)");
+</codeblock></section>
+<section><title>Interact with the database</title> <p><cite>ADD / DISPLAY
+RECORD SECTION</cite>: This section uses the utility method <codeph>WwdUtils.getWishItem</codeph> to
+gather information from the user. It then uses the objects set up previously
+to insert the data into the <codeph>WISH_LIST</codeph> table and then display
+all records. A standard <codeph>do</codeph> loop causes the program to repeat
+this series of steps until the user types <codeph>exit</codeph>.  The data-related
+activities performed in this section are as follows:</p> <ul>
+<li><p>The <codeph>setString</codeph> method sets the substitution parameter
+of the <codeph>psInsert</codeph> object to the value typed by the user. Then
+the <codeph>executeUpdate</codeph> method performs the database insert. <codeblock>psInsert.setString(1,answer);
+psInsert.executeUpdate();  
+</codeblock></p></li>
+<li><p>The statement object <codeph>s</codeph> is used to select all the records
+in the <codeph>WISH_LIST</codeph> table and store them in the  <codeph>ResultSet</codeph> named <codeph>myWishes</codeph>. <codeblock>myWishes = s.executeQuery("select ENTRY_DATE, WISH_ITEM 
+               from WISH_LIST order by ENTRY_DATE");
+</codeblock> The <codeph>while</codeph> loop reads each record in turn by
+calling the <codeph>next</codeph> method. The <codeph>getTimestamp</codeph> and <codeph>getString</codeph> methods
+return specific fields in the record in the proper format. The fields are
+displayed using rudimentary formatting. <codeblock>while (myWishes.next())
+{
+    System.out.println("On " + myWishes.getTimestamp(1) +
+       " I wished for " + myWishes.getString(2));
+}</codeblock> Close the <codeph>ResultSet</codeph> to release the memory being
+used. <codeblock>myWishes.close();
+</codeblock></p></li>
+</ul> </section>
+<section><title>Shut down the database</title> <p><cite>DATABASE SHUTDOWN
+SECTION</cite>: If an application starts the <ph conref="../conrefs.dita#prod/productshortname"></ph> engine,
+the application should shut down all databases before exiting. The attribute <codeph>;shutdown=true</codeph> in
+the <ph conref="../conrefs.dita#prod/productshortname"></ph> connection URL
+performs the shutdown. When the <ph conref="../conrefs.dita#prod/productshortname"></ph> engine
+is shutdown, all booted databases will automatically shut down. The shutdown
+process cleans up records in the transaction log to ensure a faster startup
+the next time the database is booted. </p><note type="tip">You can shut down
+individual databases without shutting down the engine by including the database
+name in the connection URL.</note><p>"This section verifies that the embedded
+driver is being used, then issues the shutdown command and catches the shutdown
+exception to confirm that the <ph conref="../conrefs.dita#prod/productshortname"></ph> engine
+shut down cleanly. The shutdown status is displayed before the program exits.</p> <codeblock>if (driver.equals("org.apache.derby.jdbc.EmbeddedDriver")) {
+   boolean gotSQLExc = false;
+   try {
+      DriverManager.getConnection("jdbc:derby:;shutdown=true");
+   } catch (SQLException se)  {
+      if ( se.getSQLState().equals("XJ015") ) {
+         gotSQLExc = true;
+      }
+   }
+   if (!gotSQLExc) {
+      System.out.println("Database did not shut down normally");
+   }  else  {
+      System.out.println("Database shut down normally");
+   }
+}</codeblock> <note type="important"> The XJ015 error (successful shutdown
+of the <ph conref="../conrefs.dita#prod/productshortname"></ph> engine) and
+the 08006 error (successful shutdown of a single database) are the only exceptions
+thrown by <ph conref="../conrefs.dita#prod/productshortname"></ph> that might
+indicate that an operation succeeded. All other exceptions indicate that an
+operation failed. You should check the log file to be certain.</note></section>
+<section><title>The errorPrint and SQLExceptionPrint methods</title><p><cite>DERBY
+EXCEPTION REPORTING CLASSES</cite>: The two methods at the end of the file, <codeph>errorPrint</codeph> and <codeph>SQLExceptionPrint</codeph>,
+are generic exception-reporting methods that can be used with any JDBC program.
+This type of exception handling is required because often multiple exceptions
+(<codeph>SQLException</codeph>) are chained together and then thrown. A <codeph>while</codeph> loop
+is used to report on each error in the chain. The  program starts this process
+by calling the <codeph>errorPrint</codeph> method from the <codeph>catch</codeph> block
+of the code that accesses the database.</p> <codeblock>//  Beginning of the primary catch block: uses errorPrint method
+}  catch (Throwable e)  {   
+   /*    Catch all exceptions and pass them to 
+   **    the exception reporting method   */ 
+   System.out.println(" . . . exception thrown:");
+   errorPrint(e);
+}</codeblock><p>The <codeph>errorPrint</codeph> method prints a stack trace
+for all exceptions except a <codeph>SQLException</codeph>. Each <codeph>SQLException</codeph> is
+passed to the  <codeph>SQLExceptionPrint</codeph> method.</p><codeblock>static void errorPrint(Throwable e) {
+   if (e instanceof SQLException) 
+      SQLExceptionPrint((SQLException)e);
+   else {
+      System.out.println("A non SQL error occured.");
+      e.printStackTrace();
+   }   
+}  // END errorPrint </codeblock> <p>The <codeph>SQLExceptionPrint</codeph> method
+iterates through each of the exceptions on the stack. For each error, the
+method displays the codes, message, and stacktrace.</p> <codeblock>//  Iterates through a stack of SQLExceptions 
+static void SQLExceptionPrint(SQLException sqle) {
+   while (sqle != null) {
+      System.out.println("\n---SQLException Caught---\n");
+      System.out.println("SQLState:   " + (sqle).getSQLState());
+      System.out.println("Severity: " + (sqle).getErrorCode());
+      System.out.println("Message:  " + (sqle).getMessage()); 
+      sqle.printStackTrace();  
+      sqle = sqle.getNextException();
+   }
+}  //  END SQLExceptionPrint</codeblock> <p>To see the output produced by
+this method, type a wish-list item with more  than 32 characters, such as <userinput>I
+wish to see a Java program fail</userinput>.</p> </section>
+</refbody>
+</reference>

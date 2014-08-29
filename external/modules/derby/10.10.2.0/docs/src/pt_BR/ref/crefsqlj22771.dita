@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../../dtd/concept.dtd">
+<concept id="crefsqlj22771" xml:lang="pt-br">
+<title>Interação com o sistema de dependências</title>
+<conbody>
+<p>
+<indexterm>Dependências<indexterm>acompanhamento interno das</indexterm></indexterm>
+<indexterm>Instruções preparadas<indexterm>acompanhamento das dependências</indexterm></indexterm>
+O <ph conref="refconrefs.dita#prod/productshortname"></ph>
+acompanha internamente as dependências das instruções preparadas, que são
+instruções SQL pré-compiladas antes de serem executadas.
+São tipicamente preparadas (pré-compiladas) uma vez, e executadas várias vezes.</p>
+<p>As instruções preparadas dependem de objetos do dicionário, e de instruções
+referenciadas pelas mesmas (Os objetos do dicionário incluem tabelas, colunas,
+restrições, índices, visões e gatilhos).
+A remoção ou modificação de objetos do dicionário ou de instruções que
+a instrução preparada depende a invalida internamente, significando que o
+<ph conref="refconrefs.dita#prod/productshortname"></ph>
+vai tentar recompilar automaticamente a instrução quando esta for executada.
+Se a recompilação da instrução não for bem-sucedida, o pedido de execução
+falhará.
+Entretanto, se for tomada alguma ação para restaurar a dependência quebrada
+(como a restauração da tabela que falta), a instrução preparada poderá ser
+executada, porque o
+<ph conref="refconrefs.dita#prod/productshortname"></ph>
+irá recompilá-la automaticamente no próximo pedido de execução.</p>
+<p>As instruções dependem umas das outras; uma instrução UPDATE WHERE CURRENT
+depende da instrução referenciada.
+Remover a instrução da qual esta depende, invalida a instrução
+UPDATE WHERE CURRENT.</p>
+<p>Além disso, as instruções preparadas não permitem a execução de certas
+instruções de DDL quando existem conjuntos de resultados abertos para as mesmas.</p>
+<p>As páginas do manual de cada instrução detalham quais ações invalidam
+a instrução, caso esteja preparada.</p>
+<p>Abaixo segue um exemplo utilizando a ferramenta ij do
+<ph conref="refconrefs.dita#prod/productshortname"></ph>:
+<codeblock>ij&gt; <b>CREATE TABLE MINHA_TABELA (MINHA_COLUNA INT);</b>
+0 rows inserted/updated/deleted
+ij&gt; <b>INSERT INTO MINHA_TABELA VALUES (1), (2), (3);</b>
+3 rows inserted/updated/deleted
+-- este exemplo utiliza o comando prepare do ij,
+-- que prepara a instrução
+ij&gt; <b>prepare p1 AS 'INSERT INTO MINHA_TABELA VALUES (4)';</b>
+-- p1 depende de MINHA_TABELA;
+ij&gt; <b>execute p1;</b>
+1 row inserted/updated/deleted
+-- O <ph conref="refconrefs.dita#prod/productshortname"></ph>  executa sem recompilar
+ij&gt; <b>CREATE INDEX I1 ON MINHA_TABELA(MINHA_COLUNA);</b>
+0 rows inserted/updated/deleted
+-- p1 está temporariamente inválido por causa do novo índice
+ij&gt; <b>execute p1;</b>
+1 row inserted/updated/deleted
+-- O <ph conref="refconrefs.dita#prod/productshortname"></ph> recompila automaticamente e executa p1
+ij&gt; <b>DROP TABLE MINHA_TABELA;</b>
+0 rows inserted/updated/deleted
+-- O <ph conref="refconrefs.dita#prod/productshortname"></ph>  permite remover a tabela
+-- porque o conjunto de resultados de p1 está fechado,
+-- entretanto a instrução p1 está temporariamente inválida
+ij&gt; <b>CREATE TABLE MINHA_TABELA (MINHA_COLUNA INT);</b>
+0 rows inserted/updated/deleted
+ij&gt; <b>INSERT INTO MINHA_TABELA VALUES (1), (2), (3);</b>
+3 rows inserted/updated/deleted
+ij&gt; <b>execute p1;</b>
+1 row inserted/updated/deleted
+-- Como p1 está inválida, o <ph conref="refconrefs.dita#prod/productshortname"></ph> tenta recompilar
+-- antes de executar.
+-- É bem-sucedido e executa.
+ij&gt; <b>DROP TABLE MINHA_TABELA;</b>
+0 rows inserted/updated/deleted
+-- a instrução p1 agora está inválida,
+-- e desta vez a tentativa de recompilar
+-- na hora de executar vai falhar
+ij&gt; <b>execute p1;</b>
+ERROR 42X05: Table/View 'MINHA_TABELA' does not exist.</codeblock>
+</p>
+</conbody>
+</concept>

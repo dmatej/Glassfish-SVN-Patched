@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<reference id="rrefselectexpression" xml:lang="pt-br">
+<title>ExpressãoSeleção</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Expressão de seleção</indexterm>
+<indexterm>DISTINCT clause<indexterm>parte da ExpressãoSeleção</indexterm>
+<indexterm>* como curinga no SQL SELECT</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>A <i>ExpressãoSeleção</i> é a construção básica SELECT-FROM-WHERE utilizada
+para construir um valor tabela baseado na filtragem e projeção de valores
+de outras tabelas.</p>
+</section>
+<refsyn>
+<title>Sintaxe</title>
+<codeblock><b>SELECT [ DISTINCT | ALL ] <i>ItemSeleção</i> [ , <i>ItemSeleção </i>]*
+<i><xref href="rrefsqlj21583.dita#rrefsqlj21583"></xref></i>
+[ <i><xref href="rrefsqlj33602.dita#rrefsqlj33602">Cláusula WHERE</xref> </i>]
+[ <i><xref href="rrefsqlj32654.dita#rrefsqlj32654">Cláusula GROUP BY</xref></i> ]
+[ <i><xref href="rrefsqlj14854.dita#rrefsqlj14854">Cláusula HAVING</xref></i> ]</b>
+</codeblock> <p><b>ItemSeleção:</b></p> <codeblock><b>{
+    * |
+    { <i><xref href="rreftablename.dita#rreftablename">nome-da-tabela</xref></i> | <i><xref
+href="rrefcorrelationname.dita#rrefcorrelationname">nome-da-correlação</xref></i> } .* |
+    <i>Expressão</i> [AS <i><xref href="rrefsimplecolumnname.dita#rrefsimplecolumnname">nome-de-coluna-simples</xref> </i>]
+}</b>
+</codeblock>
+<p>A cláusula SELECT contém uma lista de expressões e um quantificador opcional
+que é aplicado aos resultados da
+<xref href="rrefsqlj21583.dita#rrefsqlj21583">Cláusula FROM</xref> e da
+<xref href="rrefsqlj33602.dita#rrefsqlj33602">Cláusula WHERE</xref>.
+Se for especificado DISTINCT, somente será incluída no resultado uma cópia de
+qualquer valor linha.
+Os nulos são considerados duplicados entre si para as finalidades do DISTINCT.
+Se não for especificado um quantificador, ou se for especificado ALL, nenhuma
+linha será removida do resultado na aplicação da cláusula SELECT (ALL é o
+padrão).</p>
+<p>O <i>ItemSeleção</i> projeta um ou mais valores coluna de resultado
+na tabela resultado sendo construída na <i>ExpressãoSeleção</i>.</p>
+<p>O resultado da
+<xref href="rrefsqlj21583.dita#rrefsqlj21583">Cláusula FROM</xref>
+é o produto cruzado dos itens do FROM.
+A <xref href="rrefsqlj33602.dita#rrefsqlj33602">Cláusula WHERE</xref>
+pode qualificar ainda mais este resultado.</p>
+<p>A cláusula WHERE faz com que as linhas do resultado sejam filtradas com base
+em expressões booleanas.
+Somente as linhas para as quais a expressão booleana é avaliada como verdade
+são retornadas no resultado.</p>
+<p>A cláusula GROUP BY agrupa as linhas do resultado em subconjuntos que
+possuem valores correspondentes em uma ou mais colunas.
+As cláusulas GROUP BY são utilizadas normalmente com agregações.</p>
+<p>Caso haja uma cláusula GROUP BY, a cláusula SELECT deverá conter
+<i>apenas</i> agregações ou colunas de agrupamento.
+Se for desejado incluir uma coluna não agrupada na cláusula SELECT, esta
+coluna deverá ser incluída em uma expressão de agregação. Por exemplo:
+<codeblock><b>-- Listar o chefe de cada departamento,
+-- o número do departamento (DEP_TRAB),
+-- e o salário médio do departamento (SALÁRIO)
+-- para todos os departamentos na tabela EMPREGADOS.
+-- Organizar a tabela de resultado na ordem ascendente
+-- do salário médio do departamento
+SELECT DEP_TRAB, AVG(SALÁRIO)
+FROM EMPREGADOS
+GROUP BY DEP_TRAB
+ORDER BY 2;</b>
+</codeblock>
+</p>
+<p>Se não houver uma cláusula GROUP BY, mas <i>ItemSeleção</i> contiver uma
+agregação que não esteja em uma subconsulta, a consulta será agrupada
+implicitamente.
+Toda a tabela se torna um único grupo.</p>
+<p>A cláusula HAVING restringe a tabela agrupada, especificando uma condição de
+procura (muito semelhante à cláusula WHERE) que pode fazer referência apenas às
+colunas de agrupamento ou agregações do escopo corrente.
+A cláusula HAVING é aplicada a cada grupo da tabela agrupada.
+Se a cláusula HAVING for avaliada como TRUE, a linha será retida para
+processamento adicional.
+Se a cláusula HAVING for avaliada como FALSE ou NULL, a linha será desprezada.
+Se houver uma cláusula HAVING mas não houver GROUP BY, a tabela será agrupada
+implicitamente em um grupo para toda a tabela.</p>
+<p>O <ph conref="refconrefs.dita#prod/productshortname"></ph>
+processa a <i>ExpressãoSeleção</i> na seguinte ordem:
+<ul>
+<li>Cláusula FROM</li>
+<li>Cláusula WHERE</li>
+<li>GROUP BY (ou GROUP BY implícito)</li>
+<li>Cláusula HAVING</li>
+<li>Cláusula SELECT</li>
+</ul>
+</p>
+<p>O resultado da <i>ExpressãoSeleção</i> é sempre uma tabela.</p>
+<p>Quando a consulta não possui uma cláusula FROM (quando está sendo construído
+um valor, e não obtendo dados de uma tabela), é utilizada a instrução VALUES,
+e não a <i>ExpressãoSeleção</i>.
+Por exemplo:   <codeblock><b>VALUES CURRENT_TIMESTAMP</b>
+</codeblock>
+</p>
+<p>Consulte
+<xref href="rrefsqlj11277.dita#rrefsqlj11277">Expressão VALUES</xref>.</p>
+</refsyn>
+<section id="sqlj38441">
+<title>O curinga *</title>
+<p>O * é expandido como todas as colunas presentes nas tabelas da cláusula FROM
+associada.</p>
+<p><i><xref href="rreftablename.dita#rreftablename">nome-da-tabela</xref>.*</i>
+e
+<i><xref href="rrefcorrelationname.dita#rrefcorrelationname">nome-da-correlação</xref>.*</i>
+são expandidos como todas as colunas da tabela identificada.
+Esta tabela deve estar listada na cláusula FROM associada.</p>
+</section>
+<section>
+<title>Atribuir nomes às colunas</title>
+<p>Pode ser atribuído um nome a uma coluna do <i>ItemSeleção</i> utilizando a
+cláusula AS.
+Quando a <i>ExpressãoSeleção</i> aparece no operador UNION, INTERSECT ou EXCEPT,
+os nomes da primeira <i>ExpressãoSeleção</i> são usados como os nomes das
+colunas no resultado da operação.
+Se uma coluna do <i>ItemSeleção</i> não for uma expressão simples de
+<i>ReferênciaColuna</i>, ou não for dado um nome através da cláusula AS,
+será atribuído para a mesma um nome único gerado.</p>
+<p>Estes nomes de colunas são úteis em vários casos:
+<ul>
+<li>São tornados disponíveis no <i>ResultSetMetaData</i> do JDBC.</li>
+<li>São utilizados como nomes das colunas na tabela resultante, quando a
+<i>ExpressãoSeleção</i> é utilizada como subconsulta de tabela na cláusula
+FROM.</li>
+<li>São utilizados na cláusula ORDER BY como nomes de coluna disponíveis
+para classificação.</li>
+</ul>
+</p>
+</section>
+<example>
+<codeblock><b><ph>-- este exemplo mostra SELECT-FROM-WHERE
+-- com uma cláusula ORDER BY
+-- e nome-da-correlação para as tabelas</ph>
+SELECT CONSTRAINTNAME, COLUMNNAME
+FROM SYS.SYSTABLES t, SYS.SYSCOLUMNS col,
+SYS.SYSCONSTRAINTS cons, SYS.SYSCHECKS checks
+WHERE t.TABLENAME = 'VÔOS'
+AND t.TABLEID = col.REFERENCEID
+AND t.TABLEID = cons.TABLEID
+AND cons.CONSTRAINTID = checks.CONSTRAINTID
+ORDER BY CONSTRAINTNAME;
+
+<ph>-- Este exemplo mostra a utilização da cláusula DISTINCT</ph>
+SELECT DISTINCT NUM_ATIV
+FROM ATIV_EMP;
+
+<ph>-- Este exemplo mostra como mudar o nome de uma expressão.
+-- Utilizando a tabela EMPREGADOS,
+-- listar o número do departamento (DEP_TRAB) e
+-- o maior salário do departamento (SALÁRIO) com nome mudado para BOSS
+-- para todos os departamentos cujo salário máximo seja menor que o
+-- salário médio de todos os outros departamentos.</ph>
+SELECT DEP_TRAB AS DPT, MAX(SALÁRIO) AS BOSS
+FROM EMPREGADOS EMP_COR
+GROUP BY DEP_TRAB
+HAVING MAX(SALÁRIO) &lt; (SELECT AVG(SALÁRIO)
+                          FROM EMPREGADOS
+                          WHERE NOT DEP_TRAB = EMP_COR.DEP_TRAB)
+ORDER BY BOSS;</b>
+</codeblock>
+</example>
+</refbody>
+</reference>

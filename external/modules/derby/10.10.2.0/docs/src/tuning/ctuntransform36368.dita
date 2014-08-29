@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctuntransform36368">
+<title>Flattening a subquery into a normal join</title>
+<prolog><metadata>
+<keywords>
+<indexterm>Subqueries<indexterm>flattening of</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>Subqueries are allowed to return more than one row when used with IN, EXISTS,
+and ANY. However, for each row returned in the outer row, <ph conref="../conrefs.dita#prod/productshortname"></ph> evaluates
+the subquery until it returns one row; it does not evaluate the subquery for
+all rows returned.</p>
+<p>For example, given two tables, <i>t1</i> and <i>t2</i>:</p>
+<codeblock><b>c1</b>
+--
+ 1
+ 2
+ 3
+ 
+<b>c1</b>
+--
+ 2
+ 2
+ 1
+</codeblock>
+<p>and the following query:
+<codeblock><b>SELECT c1 FROM t1 WHERE c1 IN (SELECT c1 FROM t2)</b></codeblock></p>
+<p>the results would be  
+<codeblock>1
+2</codeblock></p>
+<p>Simply selecting <i>t1.c1</i> when simply joining those
+tables has different results:  
+<codeblock><b>SELECT t1.c1 FROM t1, t2 WHERE t1.c1 = t2.c1
+   1
+   2
+   2</b></codeblock></p>
+<p>Statements that include such subqueries can be flattened into joins only
+if the subquery does not introduce any duplicates into the result set (in
+our example, the subquery introduced a duplicate and so cannot simply be flattened
+into a join). If this requirement and other requirements (listed below) are
+met, however, the statement is flattened such that the tables in the subquery's
+FROM list are treated as if they were inner to the tables in the outer FROM
+list.</p>
+<p>For example, the query could have been flattened into a join if <i>c1</i> in <i>t2</i> had a unique index on it. It would not
+have introduced any duplicate values into the result set.</p>
+<p>The requirements for flattening into a normal join are:   
+<ul>
+<li>The subquery is not under an OR. </li>
+<li>The subquery type is EXISTS, IN, or ANY, or it is an expression subquery
+on the right side of a comparison operator. </li>
+<li>The subquery is not in the SELECT list of the outer query block. </li>
+<li>There are no aggregates in the SELECT list of the subquery. </li>
+<li>The subquery does not have a GROUP BY clause. </li>
+<li>The subquery does not have an ORDER BY, result offset, or fetch first
+clause.</li>
+<li>There is a uniqueness condition that ensures that the subquery does not
+introduce any duplicates if it is flattened into the outer query block. </li>
+<li>Each table in the subquery's FROM list (after any view, derived table,
+or subquery flattening) must be a <xref href="ctuntransform13966.dita#ctuntransform13966/rtuntransform41494">base table</xref>.</li>
+<li>If there is a WHERE clause in the subquery, there is at least one table
+in the subquery whose columns are in <xref href="ctuntransform13966.dita#ctuntransform13966/rtuntransform24389">equality predicate</xref>s
+with expressions that do not include any column references from the subquery
+block. These columns must be a superset of the key columns for any unique
+index on the table. For all other tables in the subquery, the columns in equality
+predicates with expressions that do not include columns from the same table
+are a superset of the unique columns for any unique index on the table.</li>
+</ul></p>
+<p>Flattening into a normal join gives the optimizer more options for choosing
+the best query plan. For example, if the following statement:   
+<codeblock><b>SELECT huge.* FROM huge
+WHERE c1 IN (SELECT c1 FROM tiny)</b></codeblock></p>
+<p>can be flattened into  
+<codeblock><b>SELECT huge.* FROM huge, tiny WHERE huge.c1 = tiny.c1</b></codeblock></p>
+<p>the optimizer can choose a query plan that will scan <i>tiny</i> and do a few probes into the huge table instead of scanning the
+huge table and doing a large number of probes into the tiny table. </p>
+<p>Here is an expansion of the example used earlier in this section. Given
+ 
+<codeblock><b>CREATE TABLE t1 (c1 INT)
+CREATE TABLE t2 (c1 INT NOT NULL PRIMARY KEY)
+CREATE TABLE t3 (c1 INT NOT NULL PRIMARY KEY)
+INSERT INTO t1 VALUES (1), (2), (3)
+INSERT INTO t2 VALUES (1), (2), (3)
+INSERT INTO t3 VALUES (2), (3), (4)</b></codeblock></p>
+<p>this query  
+<codeblock><b>SELECT t1.* FROM t1 WHERE t1.c1 IN 
+    (SELECT t2.c1 FROM t2, t3 WHERE t2.c1 = t3.c1)</b></codeblock></p>
+<p>should return the following results:  
+<codeblock>2
+3</codeblock></p>
+<p>The query satisfies all the requirements for flattening into a join, and
+the statement can be transformed into the following one:  
+<codeblock><b>SELECT t1.*
+FROM t1, t2, t3
+WHERE t1.c1 = t2.c1
+AND t2.c1 = t3.c1
+AND t1.c1 = t3.c1</b></codeblock></p>
+<p>The following query:  
+<codeblock><b>SELECT t1.*
+FROM t1 WHERE EXISTS
+(SELECT * FROM t2, t3 WHERE t2.c1 = t3.c1 AND t2.c1 = t1.c1)</b></codeblock></p>
+<p>can be transformed into  
+<codeblock><b>SELECT t1.*
+FROM t1, t2, t3
+WHERE t1.c1 = t2.c1
+AND t2.c1 = t3.c1
+AND t1.c1 = t3.c1</b></codeblock></p>
+</conbody></concept>

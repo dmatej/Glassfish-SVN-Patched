@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsysxplain_resultset_timings" xml:lang="en-us">
+<title>SYSXPLAIN_RESULTSET_TIMINGS system table</title>
+<shortdesc>The SYSXPLAIN_RESULTSET_TIMINGS table captures timing information
+about result set accesses which occurred during statements that were executed
+using RUNTIMESTATISTICS with XPLAIN style.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>system tables<indexterm>SYSXPLAIN_RESULTSET_TIMINGS</indexterm></indexterm>
+<indexterm>XPLAIN style statistics<indexterm>SYSXPLAIN_RESULTSET_TIMINGS system table</indexterm></indexterm>
+<indexterm>SYSXPLAIN_RESULTSET_TIMINGS system table</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+    <section><p>See "Working with RunTimeStatistics" in
+         <ph conref="../conrefs.dita#pub/cittuning"></ph> for information
+         on how to configure this.
+            Note that statistics timing must be configured by calling
+            SYSCS_UTIL.SYSCS_SET_STATISTICS_TIMING(1).
+            Each row in this table describes various timing information
+            for this particular result set in this particular statement.
+            Rows in this table are typically joined with rows in
+            SYSXPLAIN_STATEMENTS and SYSXPLAIN_RESULTSETS during analysis.
+        For example:</p>
+<codeblock>select rs.op_identifier, rst.execute_time
+    from my_stats.sysxplain_resultsets rs,
+         my_stats.sysxplain_resultset_timings rst
+    where rs.stmt_id = ? and
+          rs.timing_id = rst.timing_id
+    order by rst.execute_time desc</codeblock>
+            <p>Rows in this table are added
+            automatically when 
+            <ph conref="../conrefs.dita#prod/productshortname"></ph>
+            has been configured appropriately. The
+            rows remain in the table until you delete them or drop the table.
+                </p>
+<p>The following table shows the contents of the SYSXPLAIN_RESULTSET_TIMINGS
+system table.</p>
+<table>
+<title>SYSXPLAIN_RESULTSET_TIMINGS system table</title>
+<desc>For each column in the SYSXPLAIN_RESULTSET_TIMINGS system table, this table provides its data type, its length in bytes, whether it is nullable, and a description of its contents.</desc>
+<tgroup cols="5" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="31*"/>
+<colspec colname="2" colnum="2" colwidth="17*"/>
+<colspec colname="3" colnum="3" colwidth="11*"/>
+<colspec colname="4" colnum="4" colwidth="12*"/>
+<colspec colname="5" colnum="5" colwidth="29*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Column Name</entry>
+<entry colname="2">Type</entry>
+<entry colname="3">Length</entry>
+<entry colname="4">Nullable</entry>
+<entry colname="5">Contents</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">TIMING_ID</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">36</entry>
+<entry colname="4">false</entry>
+<entry colname="5">A unique ID for this particular row. This column can
+    be used to join against the TIMING_ID column in the
+SYSXPLAIN_RESULTSETS table.</entry>
+</row>
+<row>
+<entry colname="1">CONSTRUCTOR_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The time it took to construct this instance of this
+result set, in milliseconds.</entry>
+</row>
+<row>
+<entry colname="1">OPEN_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The time it took to open this instance of this
+    result set, in milliseconds. Note that if this result set was opened
+    multiple times, this column is the sum of all the individual open times.
+</entry>
+</row>
+<row>
+<entry colname="1">NEXT_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The accumulated time for all the calls to fetch the
+    next row from this result set, in milliseconds,
+    for all the opens of this result set.</entry>
+</row>
+<row>
+<entry colname="1">CLOSE_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The time it took to close this instance of the result
+set, in milliseconds.</entry>
+</row>
+<row>
+<entry colname="1">EXECUTE_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The time for all operations performed by this
+    result set, excluding the time taken by all the children result sets of
+    this result set, in milliseconds.</entry>
+</row>
+<row>
+<entry colname="1">AVG_NEXT_TIME_PER_ROW</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">true</entry>
+<entry colname="5">If there was at least one row returned from this result
+    set, then this value is the NEXT_TIME value divided by the number of rows
+    returned from this result set, which thus is the average time, in
+milliseconds, that it took to retrieve a row from this result set.</entry>
+</row>
+<row>
+<entry colname="1">PROJECTION_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">true</entry>
+<entry colname="5">This value is NULL unless this result set is a
+    PROJECTION result set, in which case this column contains the time,
+    in milliseconds, that it took to perform projection of columns from the
+rows in this result set.</entry>
+</row>
+<row>
+<entry colname="1">RESTRICTION_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">true</entry>
+<entry colname="5">This value is NULL unless this result set is a
+PROJECTION result set, in which case this column contains the time,
+in milliseconds, that it took to perform restriction of rows from the
+rows in this result set.</entry>
+</row>
+<row>
+<entry colname="1">TEMP_CONG_CREATE_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">true</entry>
+<entry colname="5">For result sets which involve a materialization of
+    a temporary intermediate result set, this value is the time it took to
+    create the materialized result set, in milliseconds. This materialization
+    may occur with hash joins where the number of rows in the intermediate
+result is too large to hold in memory.</entry>
+</row>
+<row>
+<entry colname="1">TEMP_CONG_FETCH_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Similar to TEMP_CONG_CREATE_TIME, this value is
+    the time it took to retrieve rows from the materialized result set, in
+milliseconds.</entry>
+</row>
+</tbody>
+</tgroup>
+</table></section>
+</refbody>
+</reference>

@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "reference.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one
+or more contributor license agreements.  See the NOTICE file
+distributed with this work for additional information
+regarding copyright ownership.  The ASF licenses this file
+to you under the Apache License, Version 2.0 (the
+"License"); you may not use this file except in compliance
+with the License.  You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+"AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, either express or implied.  See the License for the
+specific language governing permissions and limitations
+under the License.    
+-->
+<reference id="rrefsqljgrant" xml:lang="ja">
+<title>GRANT 文 </title>
+<shortdesc>GRANT 文を使って、データベースにある情報の操作権限を、指定した一人あるいは全ユーザに与えることができます。</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>GRANT statement</indexterm><indexterm>SQL statements<indexterm>GRANT</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>次の権限を与えることができます。<ul>
+<li>表からの情報の削除</li>
+<li>表への情報の挿入</li>
+<li>表あるいは表にある列の部分集合への外部キー制約の作成</li>
+<li>表やビュー、表にある列の部分集合からの情報の選択</li>
+<li>表へのトリガーの作成</li>
+<li>表あるいは表にある列の部分集合の情報の更新</li>
+<li>関数あるいは手続きの実行</li>
+</ul></p><p>GRANT文を発行する前に、<codeph>derby.database.sqlAuthorization</codeph>属性が<codeph>true</codeph>であることを確認してください。<codeph>derby.database.sqlAuthorization</codeph>属性により、SQL認証が有効になります。</p>
+
+
+<p>ユーザに権限付与が認められている情報であれば、その情報への権限をユーザは与えることができます。
+詳細については、権限を与えようとしている情報に対応したCREATE文の説明文を読んでください。</p>
+<p>GRANT文の書き方は、表に対する権限付与なのか、それともプログラムルーチンに対する権限付与なのかにより、その構文が異なります。</p></section>
+<section><title>表の場合の構文</title><codeblock><b>GRANT <i><xref href="rrefsqljgrant.dita#rrefsqljgrant/grantprivtype">権限タイプ</xref></i
+> ON [TABLE] { <i><xref href="rreftablename.dita#rreftablename"></xref></i> | <i><xref
+href="rrefviewname.dita#rrefviewname"></xref></i> } TO <i><xref href="rrefsqljgrant.dita#rrefsqljgrant/grantgrantees">権限を与えられる人</xref></i></b></codeblock
+></section>
+<section><title>プログラムルーチンの場合の構文</title><codeblock><b>GRANT EXECUTE ON { FUNCTION | PROCEDURE } <i><xref
+href="rrefsqljgrant.dita#rrefsqljgrant/grantroutinename">プログラムルーチンの指示子</xref></i> TO <i><xref
+href="rrefsqljgrant.dita#rrefsqljgrant/grantgrantees">権限を与えられる人</xref></i></b></codeblock></section>
+
+<section id="granttablepriv"><title>表権限</title><codeblock><b>  DELETE |
+  INSERT |
+  REFERENCES [<i>列一覧</i>] |
+  SELECT [<i>列一覧</i>] |
+  TRIGGER |
+  UPDATE [<i>列一覧</i>]
+</b></codeblock></section>
+<section id="grantcollist"><title>列一覧</title><codeblock><b>  ( 列識別子 {, 列識別子}* )
+</b></codeblock></section>
+<section><p>ALL PRIVILEGES権限により指定した表へのすべての権限をユーザに付与します。権限の並びを指定して、表への一つ以上の権限を付与することも可能です。</p>
+<p>DELETE権限により指定した表から行を削除する権限を付与します。</p>
+<p>INSERT権限により指定した表に行を挿入する権限を付与します。</p>
+<p>REFERENCES権限により指定した表への外部キー参照を作成する権限を付与します。REFERENCESに合わせて列並びが指定された場合、指定した列への外部キー参照だけが許可されます。</p>
+<p>SELECT権限により表あるいはビューでSELECT文を行う権限が付与されます。もしSELECT権限で列の並びが指定された場合、それらの列にのみ権限は有効です。列の並びが指定されなかった場合、表の全列について権限は有効です。</p>
+<p>TRIGGER権限により指定した表にトリガを作成する権限が付与されます。</p>
+<p>UPDATE権限により指定した表にUPDATE文を使う権限が付与されます。列の並びが指定された場合、権限は指定された列にのみ有効です。WHERE節のある文で行を更新する場合、更新する行にある列へのSELECT権限も必要です。</p></section>
+
+<section id="grantgrantees"><title>権限を与えられる人</title><codeblock><b>{	<i>認証識別子</i> | PUBLIC } [,{ <i>認証識別子</i> | PUBLIC } ] *</b
+></codeblock><p>特定のユーザまたは全ユーザに権限を与えることができます。
+PUBLIC というキーワードは全ユーザをあらわします。PUBLICが与えられた場合、現存するユーザのみならず、以降に作成されたユーザにも権限が与えられます。
+PUBLICに与えられた権限と、個々のユーザに与えられた権限は、独立しています。
+例えば、<codeph>t</codeph>という表へのSELECT権限が、PUBLICと<codeph>harry</codeph>という認証識別子に対して与えられているとしましょう。この場合は、<codeph>harry</codeph>という認証識別子からSELECT権限が剥奪されたとしても、HarryはPUBLICの権限を通して、<codeph>t</codeph>という表を操作可能です。</p></section>
+<section id="grantroutinename"><title>プログラムルーチンの指示子</title><codeblock><b>{
+	<i>関数名</i> | <i>手続きの名前</i>
+}</b></codeblock></section>
+<example id="grantexamples"><title>例</title><p>tという表へのSELECT権限を<codeph>maria</codeph> と <codeph>harry</codeph>という認証識別子に与えるには、次のように書きます。<codeblock><b>GRANT SELECT ON TABLE t TO maria,harry</b> </codeblock></p>
+<p>tという表へのUPDATEとTRIGGER権限を、<codeph>anita</codeph>と<codeph>zhi</codeph>という認証識別子に与えるには、次のように書きます。<codeblock><b>GRANT UPDATE, TRIGGER ON TABLE t TO anita,zhi</b> </codeblock></p>
+<p>s.vという表へのSELECT権限を全てのユーザに与えるには、次のように書きます。<codeblock><b>GRANT SELECT ON TABLE s.v to PUBLIC</b></codeblock></p
+>
+<p>pという手続きの実行権限を、<codeph>george</codeph>という認証識別子に与えるには、次のように書きます。</p><codeblock><b>GRANT EXECUTE ON PROCEDURE p TO george</b> </codeblock></example>
+</refbody>
+</reference>

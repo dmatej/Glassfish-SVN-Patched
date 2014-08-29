@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//IBM//DTD DITA Concept//EN"
+ "../../dtd/concept.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<concept id="cadminhubbkup01" xml:lang="pt-br">
+<title>Utilização do procedimento de cópia de segurança para realizar cópia de segurança em linha</title>
+<shortdesc>O procedimento SYSCS_UTIL.SYSCS_BACKUP_DATABASE é utilizado para
+criar a cópia de segurança do banco de dados em um local especificado.</shortdesc>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Procedimento de cópia de segurança</indexterm><indexterm>Procedimento do sistema SYSCS_BACKUP_DATABASE()</indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>O procedimento SYSCS_UTIL.SYSCS_BACKUP_DATABASE recebe como argumento uma
+cadeia de caracteres representando o local onde será armazenada a cópia de
+segurança do banco de dados.
+Normalmente é fornecido o caminho completo para o diretório de cópia de
+segurança (os caminhos relativos são interpretados como sendo relativos ao
+diretório corrente, e não ao diretório derby.system.home).</p>
+<p>Por exemplo, para especificar o local de cópia de segurança
+<filepath>c:/minhascopias/2005-06-01</filepath> para um banco de dados que
+se encontra aberto no momento, deve ser utilizada a seguinte declaração
+(são utilizadas barras inclinadas para frente como separadores do caminho
+nos comandos SQL):</p>
+<codeblock><b>CALL SYSCS_UTIL.SYSCS_BACKUP_DATABASE('c:/minhascopias/2005-06-01')</b></codeblock>
+<p>O procedimento <i>SYSCS_UTIL.SYSCS_BACKUP_DATABASE()</i> coloca o banco de
+dados em um estado no qual este pode ser copiado com segurança, depois copia
+o diretório de banco de dados original por completo (incluindo os arquivos de
+dados, arquivos de <i>log</i> de transação em linha e os arquivos <i>jar</i>)
+para o diretório de cópia de segurança especificado.
+Os arquivos que não estão dentro do diretório de banco de dados original
+(por exemplo, <codeph>derby.properties</codeph>) <i>não</i> são copiados.</p>
+<p>O exemplo a seguir mostra como fazer a cópia de segurança de um banco de
+dados em um diretório cujo nome reflete a data corrente:</p>
+<codeblock>public static void backUpDatabase(Connection conn)throws SQLException
+{
+<b>// Obter a data de hoje como como uma cadeia de caracteres:</b>
+java.text.SimpleDateFormat dataHoje =
+   new java.text.SimpleDateFormat("yyyy-MM-dd");
+String diretorioCopia = "c:/minhascopias/" +
+   dataHoje.format((java.util.Calendar.getInstance()).getTime());
+
+CallableStatement cs = conn.prepareCall("CALL SYSCS_UTIL.SYSCS_BACKUP_DATABASE(?)");
+cs.setString(1, diretorioCopia);
+cs.execute();
+cs.close();
+System.out.println("cópia de segurança colocada no diretório "+diretorioCopia);
+}</codeblock>
+<p>Para um banco de dados cuja cópia de segurança foi realizada em 2005-06-01,
+os comandos anteriores copiariam o banco de dados corrente para o diretório
+com o mesmo nome em <i>c:\minhascopias\2005-06-01</i>.</p>
+<p>As transações não efetivadas não aparecem na cópia de segurança do banco de
+dados.</p>
+<note>Não devem ser feitas cópias de segurança de bancos de dados diferentes,
+mas com mesmo nome, no mesmo diretório de cópia de segurança.
+Se já existir um banco de dados com o mesmo nome no diretório de cópia de
+segurança, é assumido como sendo uma versão antiga e sobrescrito.</note>
+<p>O procedimento SYSCS_UTIL.SYSCS_BACKUP_DATABASE emitirá uma mensagem de erro
+se existirem operações não registradas (<i>unlogged</i>) na mesma
+transação do procedimento de cópia de segurança.</p>
+<p>Caso exista no sistema, quando a cópia de segurança iniciar, operações não
+registradas em andamento em outras transações, este procedimento ficará
+bloqueado até que estas transações completem, antes de realizar a cópia de
+segurança.</p>
+<p>O Derby converte, automaticamente, as operações não registradas para o modo
+registrado, quando estas são iniciadas quando a cópia de segurança está em
+andamento (exceto as operações que fazem manutenção de arquivos <i>jar</i> de
+aplicativos no banco de dados).
+Os procedimentos que instalam, substituem e removem arquivos <i>jar</i> no
+banco de dados são bloqueados quando a cópia de segurança está em andamento.</p>
+<p>Se não for desejado que a cópia de segurança fique bloqueada até que
+as operações não registradas em outras transações completem, deve ser
+utilizado o procedimento SYSCS_UTIL.SYSCS_BACKUP_DATABASE_NOWAIT.
+Esse procedimento emite um erro logo no início da cópia de segurança caso
+existam transações em andamento com operações não registradas, em vez de
+aguardar estas transações completarem.</p>
+</conbody>
+</concept>

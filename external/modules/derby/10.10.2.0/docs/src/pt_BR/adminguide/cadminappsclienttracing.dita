@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//IBM//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<reference id="cadminappsclienttracing" xml:lang="pt-br">
+<title>Rastreamento do cliente da rede</title>
+<shortdesc>O cliente da rede do
+<ph conref="adminconrefs.dita#prod/productshortname"></ph>
+fornece facilidade de rastreamento, para coletar informações de
+rastreamento do JDBC e ver os fluxos do protocolo.</shortdesc>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Rastreamento do cliente da rede</indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>Existem várias maneiras de obter saída de rastreamento.
+Entretanto, a maneira mais fácil de obter saída de rastreamento é utilizando o
+atributo <codeph>traceFile</codeph> na URL no <codeph>ij</codeph>.
+O exemplo a seguir mostra o envio de todo o rastreamento para o arquivo
+<codeph>trace.out</codeph>, a partir de uma sessão <codeph>ij</codeph>.
+<codeblock>ij>connect 'jdbc:derby://localhost:1527/meubanco;
+create=true;traceFile=trace.out;user=user1;password=secret4me';</codeblock>
+</p>
+</section>
+<section>
+<title>Implementação do rastreamento do ClientDataSource</title>
+<p>Para coletar dados de rastreamento ao obter conexões usando
+ClientDataSource, pode ser empregado um dos três métodos a seguir:
+<ul>
+<li>Utilizar o método <codeph>setLogWriter(java.io.PrintWriter)</codeph> de
+ClientDataSource, e definir <codeph>PrintWriter</codeph> com um valor não nulo.</li>
+<li>Utilizar o método <codeph>setTraceFile(String filename)</codeph> de ClientDataSource.</li>
+<li>Utilizar o método <codeph>setTraceDirectory(String dirname)</codeph> de
+ClientDataSource para rastrear cada fluxo de conexão em seu próprio arquivo,
+em programas que possuem várias conexões.</li>
+</ul>
+</p>
+</section>
+<section>
+<title>Implementação do rastreamento do DriverManager</title>
+<p>Quando se obtém conexões utilizando o <codeph>DriverManager</codeph>, pode
+ser empregada uma das duas opções a seguir para habilitar a coleta de
+informações de rastreamento:
+<ul>
+<li>Utilizar o método <codeph>setLogWriter(java.io.PrintWriter)</codeph> de
+<codeph>DriverManager</codeph>, e definir <codeph>PrintWriter</codeph> como um
+valor não nulo.</li>
+<li>Utilizar o atributo da URL <codeph>traceFile</codeph> ou
+<codeph>traceDirectory</codeph> para definir uma destas propriedades, antes de
+criar a conexão com o método <codeph>DriverManager.getConnection()</codeph>.</li>
+</ul>
+</p>
+</section>
+<section>
+<title>Alteração do nível de rastreamento padrão</title>
+<p>O nível de rastreamento padrão é <codeph>ClientDataSource.TRACE_ALL</codeph>.
+O nível de rastreamento pode ser escolhido chamando o método
+<codeph>setTraceLevel(int level)</codeph>, ou definindo o atributo da URL
+<codeph>traceLevel</codeph>:
+<codeblock>String url = "jdbc:derby://meuhospedeiro.meudominio.com:1528/meubanco" +
+ ";traceFile=/u/user1/trace.out" +
+ ";traceLevel=" +
+ org.apache.derby.jdbc.ClientDataSource.TRACE_PROTOCOL_FLOWS;
+DriverManager.getConnection(url,"user1","secret4me");</codeblock>
+<table>
+<title>Níveis de rastreamento disponíveis e seus valores</title>
+<tgroup cols="2">
+<colspec colname="col1" colwidth="166*"/>
+<colspec colname="col2" colwidth="30*"/>
+<thead>
+<row valign="bottom">
+<entry colname="col1">Nível de rastreamento</entry>
+<entry colname="col2">Valor</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_NONE</entry>
+<entry colname="col2">0x0</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_CONNECTION_CALLS</entry>
+<entry colname="col2">0x1</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_STATEMENT_CALLS</entry>
+<entry colname="col2">0x2</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_RESULT_SET_CALLS</entry>
+<entry colname="col2">0x4</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE _DRIVER_CONFIGURATION</entry>
+<entry colname="col2">0x10</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_CONNECTS</entry>
+<entry colname="col2">0x20</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_PROTOCOL_FLOWS</entry>
+<entry colname="col2">0x40</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE _RESULT_SET_META_DATA</entry>
+<entry colname="col2">0x80</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE _PARAMETER_META_DATA</entry>
+<entry colname="col2">0x100</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_DIAGNOSTICS</entry>
+<entry colname="col2">0x200</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_XA_CALLS</entry>
+<entry colname="col2">0x800</entry>
+</row>
+<row>
+<entry colname="col1">org.apache.derby.jdbc.ClientDataSource.TRACE_ALL</entry>
+<entry colname="col2">0xFFFFFFFF;</entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+Para especificar mais de um nível de rastreamento, deve ser utilizada uma das
+seguintes técnicas:<ul>
+<li>Utilizar operadores OR bit-a-bit ( | ) entre dois ou mais valores de
+rastreamento.
+Por exemplo, para rastrear os fluxos do protocolo e chamadas de conexão deve
+ser especificado o seguinte valor para traceLevel:
+<codeblock>TRACE_PROTOCOL_FLOWS | TRACE_CONNECTION_CALLS</codeblock>
+</li>
+<li>Utilizar o operador de complemento bit-a-bit ( ~ ) com o valor de
+rastreamento para especificar todos, exceto um determinado rastreamento.
+Por exemplo, para rastrear tudo, exceto os fluxos do protocolo, deve ser
+especificado o seguinte valor para traceLevel:
+<codeblock>~TRACE_PROTOCOL_FLOWS</codeblock></li>
+</ul>
+</p>
+</section>
+</refbody>
+</reference>

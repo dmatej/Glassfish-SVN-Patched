@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevcsecurenativeauth" xml:lang="en-us">
+<title>Using NATIVE authentication</title>
+<shortdesc><ph conref="../conrefs.dita#prod/productshortname"></ph>'s simplest
+authentication mechanism is NATIVE authentication.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>user authentication<indexterm>NATIVE authentication</indexterm></indexterm>
+<indexterm>NATIVE authentication<indexterm>overview</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>When you use NATIVE authentication, user names and encrypted passwords are
+stored in a database. You can specify a dedicated credentials database
+for this purpose, or you can store the credentials in the same database you use
+for your application data. The credentials are stored in the SYSUSERS system
+table of the database.</p>
+<p>To specify NATIVE authentication, specify one of the following values for the
+<codeph>derby.authentication.provider</codeph> property:</p>
+<ul>
+<li>NATIVE:<i>credentialsDB</i>
+<p>This value tells <ph conref="../conrefs.dita#prod/productshortname"></ph> to
+use <i>credentialsDB</i>, a dedicated database, to store user credentials. This
+value must be set by using system-wide Java Virtual Machine (JVM) properties or
+by using the <codeph>derby.properties</codeph> file; it cannot be set in the
+database by using the <codeph>SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY</codeph>
+procedure. When this system-wide value is set, <i>credentialsDB</i> is used to
+authenticate all operations. If an individual database holds credentials for the
+database owner, the global credentials database is used only to authenticate
+system-wide operations such as engine shutdown.</p>
+<p>The value of <i>credentialsDB</i> must be a valid name for a database.</p>
+</li>
+<li>NATIVE:<i>credentialsDB</i>:LOCAL
+<p>This value tells <ph conref="../conrefs.dita#prod/productshortname"></ph> to
+use <i>credentialsDB</i> for system-wide operations, but to use an individual
+database's SYSUSERS system table to authenticate connections to that database.
+This value must be set by using system-wide JVM properties or by using the
+<codeph>derby.properties</codeph> file; it cannot be set in the database by
+using the <codeph>SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY</codeph> system
+procedure.</p>
+</li>
+</ul>
+<section><title>Working with a credentials database</title>
+<p>With NATIVE authentication, a database can become a credentials database
+in any of the following ways:</p>
+<ul>
+<li>When the database is being created, it is identified as the credentials
+database by the system-level property setting
+<codeph>derby.authentication.provider=NATIVE:<i>credentialsDB</i></codeph>.</li>
+<li>When the database is being created, LOCAL authentication of connections is
+specified by the system-level property setting
+<codeph>derby.authentication.provider=NATIVE:<i>credentialsDB</i>:LOCAL</codeph>.</li>
+<li>When the database already exists, the
+<xref href="cdevcsecureDbOwner.dita#cdevcsecureDbOwner">database owner</xref>
+calls the <codeph>SYSCS_UTIL.SYSCS_CREATE_USER</codeph> system procedure to
+store the database owner's credentials in the database. If the database owner
+calls this procedure to store another user's credentials first, an error is
+raised.</li>
+</ul>
+<p>When a database becomes a credentials database, the following things
+happen:</p>
+<ul>
+<li>The value of <codeph>derby.authentication.provider=NATIVE::LOCAL</codeph>
+is stored in the database, marking it as a credentials database.</li>
+<li>From this point forward, the value of
+<codeph>derby.authentication.provider</codeph> cannot be overridden or changed
+for connections to this database.</li>
+<li>If the database is being newly created, the database owner's credentials
+(provided in the connection arguments) are stored in the database's SYSUSERS
+system table.</li>
+<li>All future connections to the database are authenticated against the
+credentials in its SYSUSERS system table.</li>
+</ul>
+</section>
+<section><title>NATIVE authentication and other database properties</title>
+<p>When NATIVE authentication is enabled,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> behaves as if the
+<codeph>derby.connection.requireAuthentication</codeph> and
+<codeph>derby.database.sqlAuthorization</codeph> properties are also set. That
+is, a user name and password must be specified whenever a user connects to a
+database, and object owners control access to database objects. See
+<xref href="cdevcsecure866060.dita#cdevcsecure866060"></xref> for more
+information, and see
+<xref href="rdevcsecurenativeauthex.dita#rdevcsecurenativeauthex"></xref> for an
+example of the use of NATIVE authentication.</p>
+<p>For maximum security, the passwords that users specify when they connect to
+databases have an expiration date that you can modify by using the property
+<codeph>derby.authentication.native.passwordLifetimeMillis</codeph>. The
+password of the database owner never expires. By default, ordinary user
+passwords expire after 31 days.</p>
+<p>If a password is about to expire, or if the database owner's password is
+near what would be the expiration date, 
+<ph conref="../conrefs.dita#prod/productshortname"></ph> issues a warning that
+the password will soon expire (or, in the database owner's case, that the
+password is stale). By default, the warning is issued if the password is due to
+expire in one-eighth of the password's lifetime. For example, if the password
+has a 31-day lifetime, the warning will be issued 3.875 days before the
+expiration date. You can change this proportion by using the property
+<codeph>derby.authentication.native.passwordLifetimeThreshold</codeph>.</p>
+<p>Use the <codeph>derby.authentication.builtin.algorithm</codeph> property to
+change the way passwords are encrypted when they are stored in the SYSUSERS
+system table. The default algorithm is SHA-256. Two related properties are
+<codeph>derby.authentication.builtin.saltLength</codeph> and 
+<codeph>derby.authentication.builtin.iterations</codeph>, which can be used to
+make the hashed passwords harder for attackers to crack.</p></section>
+<section><title>Managing users and passwords</title>
+<p>To manage users and passwords,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> provides a group of
+system procedures:</p>
+<ul>
+<li>To create users for a database, the database owner calls
+<codeph>SYSCS_UTIL.SYSCS_CREATE_USER</codeph>, which takes a user name and
+password as arguments. This procedure can also be executed by a user or role
+to which the database owner has granted sufficient privileges.</li>
+<li>To remove a user, the database owner calls
+<codeph>SYSCS_UTIL.SYSCS_DROP_USER</codeph>, which takes one argument,
+the user name of the user. This procedure can also be executed by a user or role
+to which the database owner has granted sufficient privileges.</li>
+<li>To reset a forgotten or expired password, the database owner calls 
+<codeph>SYSCS_UTIL.SYSCS_RESET_PASSWORD</codeph>, with a user name and
+password as arguments. This procedure can also be executed by a user or role
+to which the database owner has granted sufficient privileges.</li>
+<li>To change a user's own password, any user can call the system procedure
+<codeph>SYSCS_UTIL.SYSCS_MODIFY_PASSWORD</codeph>, which takes only one
+argument, the password. Typically, a user calls this procedure when their
+password is about to expire.</li>
+</ul>
+</section>
+<section><title>Converting an existing database to use NATIVE authentication</title>
+<p>If you wish to apply NATIVE authentication to a database that was created
+without it, the procedure is slightly different depending on whether you specify
+NATIVE:<i>credentialsDB</i> or NATIVE:<i>credentialsDB</i>:LOCAL:</p>
+<ul>
+<li>If you specify NATIVE:<i>credentialsDB</i>, add users of the existing
+database to the <i>credentialsDB</i>. For instance, if the old database was
+created without any authentication, then its default user name is APP, and you
+could do the following:
+<codeblock><b>CALL SYSCS_UTIL.SYSCS_CREATE_USER('app', 'app');</b></codeblock></li>
+<li>If you plan to specify NATIVE:<i>credentialsDB</i>:LOCAL, first connect to
+the existing database as its database owner using its old authentication scheme.
+Call <codeph>SYSCS_UTIL.SYSCS_CREATE_USER</codeph> to add credentials for the
+database owner. For example, if the existing database was created with no
+authentication, the database owner is APP, and you would add credentials for
+APP as shown above.</li>
+</ul>
+</section>
+</conbody>
+</concept>

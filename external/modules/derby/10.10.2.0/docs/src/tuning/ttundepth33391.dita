@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE task PUBLIC "-//OASIS//DTD DITA Task//EN"
+ "../dtd/task.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<task id="ttundepth33391" xml:lang="en-us">
+<title>Analyzing statement execution</title>
+<prolog><metadata>
+<keywords><indexterm>Statement execution<indexterm>analyzing</indexterm></indexterm>
+<indexterm>Index use<indexterm>analyzing</indexterm></indexterm><indexterm>Join
+order<indexterm>analyzing</indexterm></indexterm><indexterm>Application performance<indexterm>analyzing</indexterm></indexterm>
+<indexterm>Checkpoint</indexterm></keywords>
+</metadata></prolog>
+<taskbody>
+<context> After you create indexes, make sure that <ph conref="../conrefs.dita#prod/productshortname"></ph> is
+using them. In addition, you might also want to find out the join order <ph
+conref="../conrefs.dita#prod/productshortname"></ph> is choosing.<p>A general
+plan of attack for analyzing your application's SQL statements:</p></context>
+<steps>
+<step><cmd>Collect your application's most frequently used SQL statements
+and transactions into a single test.</cmd></step>
+<step><cmd>Create a benchmark test suite against which to run the sample queries.
+The first thing the test suite should do is checkpoint data (force <ph conref="../conrefs.dita#prod/productshortname"></ph> to
+flush data to disk). You can do that with the following JDBC code: </cmd>
+<stepxmp><codeblock>CallableStatement cs = conn.prepareCall
+("CALL SYSCS_UTIL.SYSCS_CHECKPOINT_DATABASE()");
+cs.execute();
+cs.close();</codeblock></stepxmp></step>
+<step><cmd>Use performance timings to identify poorly performing queries.
+Try to distinguish between cached and uncached data. Focus on measuring operations
+on uncached data (data not already in memory). For example, the first time
+you run a query, <ph conref="../conrefs.dita#prod/productshortname"></ph> returns
+uncached data. If you run the same query immediately afterward, <ph conref="../conrefs.dita#prod/productshortname"></ph> is
+probably returning cached data. The performance of these two otherwise identical
+statements varies significantly and skews results.</cmd></step>
+<step><cmd>Use RunTimeStatistics to identify tables that are scanned excessively.
+Check that the appropriate indexes are being used to satisfy the query and
+that <ph conref="../conrefs.dita#prod/productshortname"></ph> is choosing
+the best join order.  You can also set <i>derby.language.logQueryPlan</i> to true
+to check whether indexes are being used or not. This property will  is print
+query plans in the <i>derby.log</i> file. See the
+"<ph conref="../conrefs.dita#prod/productshortname"></ph> properties" section of
+the <ph conref="../conrefs.dita#pub/citref"></ph> for details on this property.
+See <xref href="ctundepth13055.dita#ctundepth13055"></xref> for more
+information.</cmd></step>
+<step><cmd>Make any necessary changes and then repeat.</cmd></step>
+<step><cmd>If changing data access does not create significant improvements,
+consider other database design changes, such as denormalizing data to reduce
+the number of joins required. Then review the tips in <xref href="ctundepth21935.dita#ctundepth21935"></xref>.</cmd>
+</step>
+</steps>
+</taskbody>
+</task>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rtoolsoptdbmetadata" xml:lang="en-us">
+<title>Using the databaseMetaData optional tool</title>
+<prolog><metadata>
+<keywords>
+<indexterm>optional tools<indexterm>databaseMetaData</indexterm></indexterm>
+<indexterm>databaseMetaData optional tool</indexterm>
+<indexterm>tools<indexterm>databaseMetaData optional tool</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section>
+<p>The <codeph>databaseMetaData</codeph> optional tool creates functions
+and table functions corresponding to most of the methods in the
+<i>java.sql.DatabaseMetaData</i> interface.</p>
+<p>Before you run the <codeph>databaseMetaData</codeph> optional tool, make sure
+that your classpath contains the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> jar files, including
+<i>derbytools.jar</i>.</p>
+<p>You can load and unload the <codeph>databaseMetaData</codeph> tool by using
+the <codeph>SYSCS_UTIL.SYSCS_REGISTER_TOOL</codeph> system procedure. See the
+<ph conref="../conrefs.dita#pub/citref"></ph> for information about this
+procedure.</p>
+<p>To load the <codeph>databaseMetaData</codeph> tool, use the following
+statement:</p>
+<codeblock><b>call syscs_util.syscs_register_tool( 'databaseMetaData', true )
+</b></codeblock>
+<p>This command creates metadata functions and table functions in the current
+schema. The functions and table functions have the same names as the
+corresponding <i>java.sql.DatabaseMetaData</i> methods which they wrap. Once you
+have loaded this tool, you can filter and join these functions to create
+powerful metadata queries. For instance, the following query lists the column
+names and datatypes for all columns in tables created by users:</p>
+<codeblock><b>select t.table_schem, t.table_name, c.column_name, c.type_name
+from table( getTables( null, '%', '%' ) ) t,
+     table( getColumns( null, '%', '%', '%') ) c
+where c.table_schem = t.table_schem
+and c.table_name = t.table_name
+and t.table_type = 'TABLE'
+order by table_schem, table_name, column_name
+</b></codeblock>
+<p>A few <i>DatabaseMetaData</i> methods take array arguments. Because those
+arguments cannot be represented as
+<ph conref="../conrefs.dita#prod/productshortname"></ph> types, the arguments
+are eliminated. This means that the trailing <i>types</i> arguments to
+<i>getTables()</i> and <i>getUDTs()</i> have been eliminated. In addition, the
+following <i>DatabaseMetaData</i> methods do not have corresponding metadata
+routines:</p>
+<ul>
+<li><i>getRowIdLifetime()</i> is eliminated because
+<ph conref="../conrefs.dita#prod/productshortname"></ph> does not provide an
+implementation of <i>java.sql.RowIdLifetime</i>.</li>
+<li><i>getSchemas()</i> is eliminated because
+<ph conref="../conrefs.dita#prod/productshortname"></ph> does not support
+overloads. The more general <i>getSchemas( String, String )</i> method is
+included.</li>
+<li><i>supportsConvert()</i> is eliminated because
+<ph conref="../conrefs.dita#prod/productshortname"></ph> does not support
+overloads. The more general <i>supportsConvert( int, int )</i> is included.</li>
+</ul>
+<p>When you have finished joining metadata results, you can drop this package of
+functions and table functions as follows:</p>
+<codeblock><b>call syscs_util.syscs_register_tool( 'databaseMetaData', false )
+</b></codeblock>
+</section>
+</refbody>
+</reference>

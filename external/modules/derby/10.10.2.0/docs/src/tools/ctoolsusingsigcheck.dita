@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="ctoolsusingsigcheck" xml:lang="en-us">
+<title>Using SignatureChecker</title>
+<prolog><metadata>
+<keywords><indexterm>SignatureChecker<indexterm>using</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>Before you run the <codeph>SignatureChecker</codeph> tool, make sure that
+your classpath contains the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> jar files, including
+<i>derbytools.jar</i>.</p>
+<p>On a Java SE platform, run the <codeph>SignatureChecker</codeph> tool as
+follows, where <i>connection-url-to-database</i> is the connection URL you would
+use in order to obtain a connection by calling
+<i>DriverManager.getConnection()</i>:</p>
+<codeblock>
+java org.apache.derby.tools.SignatureChecker <i>connection-url-to-database</i>
+</codeblock>
+<p>Alternatively, you can invoke the tool using <i>derbyrun.jar</i>. For
+example:</p>
+<codeblock>
+java -jar derbyrun.jar SignatureChecker "jdbc:derby:myDB"
+</codeblock>
+<p>On a Java ME platform, run the <codeph>SignatureChecker</codeph> tool as
+follows, where <i>database-name</i> is the database name you would set by
+calling <i>EmbeddedSimpleDataSource.setDatabaseName()</i>:</p>
+<codeblock>
+java org.apache.derby.tools.SignatureChecker <i>database-name</i>
+</codeblock>
+<p>The tool examines every routine registered in the database and displays
+results like the following:</p>
+<codeblock>Found a matching method for: "APP"."DOINSERT"( )
+Found a matching method for: "APP"."DOINSERTANDCOMMIT"( )
+Found a matching method for: "APP"."APPENDFOOANDBAR"( VARCHAR )
+Unresolvable routine: "APP"."IDONTEXIST"( VARCHAR , INTEGER ).
+Detailed reason: No method was found that matched the method call
+ z.iDontExist(java.lang.String, int),
+tried all combinations of object and primitive types and any possible
+ type conversion for any parameters the method call may have.
+The method might exist but it is not public and/or static, or the
+ parameter types are not method invocation convertible.
+Found a matching method for: "APP"."RUNDDL"( VARCHAR )
+Unresolvable routine: "APP"."TABFUNCDOESNTEXIST"( VARCHAR , BIGINT ).
+Detailed reason: No method was found that matched the method call
+ org.apache.derbyTesting.functionTests.tests.lang.TableFunctionTest.
+ appendFooAndBar(java.lang.String, long),
+tried all combinations of object and primitive types and any possible
+ type conversion for any parameters the method call may have.
+The method might exist but it is not public and/or static, or the
+ parameter types are not method invocation convertible.
+</codeblock>
+<p>In the example above, the <codeph>SignatureChecker</codeph> tool found
+matches for all routines except for the functions <i>app.iDontExist</i> and
+<i>app.tabFuncDoesntExist</i>. If the tool cannot find a match for one of your
+functions or procedures, it tells you what signature it expected to find. You
+need to adjust your application in one of the following ways:</p>
+<ul>
+<li><b>Method:</b> Change the signature of your Java method to match the
+signature suggested by the <codeph>SignatureChecker</codeph> tool.</li>
+<li><b>Routine:</b> Drop and recreate your function or procedure so that its
+arguments and return type match your Java method according to the SQL Standard
+rules described in "Argument matching" in the
+<ph conref="../conrefs.dita#pub/citref"></ph>.</li>
+</ul>
+</conbody>
+</concept>

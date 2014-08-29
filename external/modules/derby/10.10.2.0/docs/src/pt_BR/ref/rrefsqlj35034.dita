@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<reference id="rrefsqlj35034" xml:lang="pt-br">
+<title>INNER JOIN</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Expressão INNER JOIN</indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>INNER JOIN (junção interna) é uma
+<xref href="rrefsqlj29840.dita#rrefsqlj29840">Operação JOIN</xref>
+que permite especificar uma cláusula de junção explícita.</p>
+</section>
+<refsyn>
+<title>Sintaxe</title>
+<codeblock><b><i><xref href="rreftableexpression.dita#rreftableexpression">ExpressãoTabela</xref></i> [ INNER ] JOIN <i
+><xref href="rreftableexpression.dita#rreftableexpression">ExpressãoTabela</xref></i> { ON <i>ExpressãoBooleana</i> }</b>
+</codeblock>
+<p>A cláusula de junção pode ser especificada utilizando ON com uma expressão
+booleana.</p>
+<p>
+<indexterm>Cláusula ON<indexterm>parte da expressão INNER JOIN</indexterm></indexterm>
+O escopo das expressões na cláusula ON inclui as tabelas correntes, e as
+tabelas nos blocos de consulta externos ao SELECT corrente.
+No exemplo a seguir, a cláusula ON faz referência às tabelas correntes:
+<codeblock><b>SELECT *
+FROM SAMP.EMPREGADOS INNER JOIN SAMP.EQUIPES
+ON EMPREGADOS.SALÁRIO &lt; EQUIPES.SALÁRIO;
+</b>
+</codeblock>
+</p>
+<p>A cláusula ON pode fazer referência a tabelas que não estão sendo juntadas,
+e não é obrigada a fazer referência a nenhuma das tabelas sendo juntadas
+(embora tipicamente o faça).</p>
+</refsyn>
+<example>
+<codeblock><b><ph>-- Junção das tabelas ATIV_EMP e EMPREGADOS
+-- selecionar todas as colunas da tabela ATIV_EMP e
+-- adicionar o sobrenome do empregado (ÚLTIMO_NOME) da tabela
+-- EMPREGADOS a todas as linhas do resultado</ph>
+SELECT SAMP.ATIV_EMP.*, ÚLTIMO_NOME
+     FROM SAMP.ATIV_EMP JOIN SAMP.EMPREGADO
+     ON ATIV_EMP.NUM_EMP = EMPREGADOS.NUM_EMP;
+
+<ph>-- Juntar as tabelas EMPREGADOS e DEPARTAMENTOS,
+-- selecionar o número do empregado (NUM_EMP),
+-- o sobrenome do empregado (ÚLTIMO_NOME),
+-- o número do departamento (DEP_TRAB na tabela EMPREGADOS e
+-- NUM_DEP na tabela DEPARTAMENTOS)
+-- e o nome do departamento (NOME_DEP)
+-- de todos os empregados nascidos (DATA_NASC) antes de 1930.</ph>
+SELECT NUM_EMP, ÚLTIMO_NOME, DEP_TRAB, NOME_DEP
+     FROM SAMP.EMPREGADOS JOIN SAMP.DEPARTAMENTOS
+     ON DEP_TRAB = NUM_DEP
+     AND YEAR(DATA_NASC) &lt; 1930;
+
+<ph>-- Outro exemplo de "gerar" novos valores de dado,
+-- utilizando uma consulta que seleciona da cláusula VALUES
+-- (que é uma forma alternativa de FULLSELECT).</ph>
+SELECT *
+FROM (VALUES (3, 4), (1, 5), (2, 6))
+AS TABELA1_VALORES(C1, C2)
+JOIN (VALUES (3, 2), (1, 2),(0, 3))
+AS TABELA2_VALORES(C1, C2)
+ON TABELA1_VALORES.C1 = TABELA2_VALORES.C1;
+
+O que resulta em:
+<ph>
+C1         |C2         |C1         |2
+-----------------------------------------------
+3          |4          |3          |2
+1          |5          |1          |2
+
+-- Listar todos os departamentos, juntamente com o
+-- número do empregado e o último nome do gerente</ph>
+SELECT NUM_DEP, NOME_DEP, NUM_EMP, ÚLTIMO_NOME
+FROM DEPARTAMENTOS
+     INNER JOIN EMPREGADOS
+     ON NUM_GER = NUM_EMP;
+
+<ph>-- Listar todos os números do empregado e último nome, juntamente
+-- com o número do empregado e último nome de seus gerentes</ph>
+SELECT E.NUM_EMP, E.ÚLTIMO_NOME, M.NUM_EMP, M.ÚLTIMO_NOME
+        FROM EMPREGADOS E INNER JOIN
+        DEPARTAMENTOS INNER JOIN EMPREGADOS M
+        ON NUM_GER = M.NUM_EMP
+        ON E.DEP_TRAB = NUM_DEP;</b>
+</codeblock>
+</example>
+</refbody>
+</reference>

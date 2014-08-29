@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj27781" xml:lang="en-us">
+<title>MAX関数</title>
+<prolog><metadata>
+<keywords><indexterm>MAX aggregate function</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>MAXは行の集合から最大の値を求める集約関数です。(<xref href="rrefsqlj33923.dita#rrefsqlj33923"></xref>を参照してください。)
+MAXは組み込まれたデータ型の式に対してのみ適用することができます。
+(CHAR、VARCHAR、DATE、TIME、CHAR FOR BIT DATA等を含みます。)</p></section>
+<refsyn><title>構文</title> <codeblock><b>MAX ( [ DISTINCT | ALL ] <i>式</i> )</b></codeblock> <p>DISTINCTやALLという限定詞により、重複が除去されたりそのまま残されるか決まりますが、これらの限定詞はMAXの式では意味を持ちません。
+<i><xref href="rrefselectexpression.dita#rrefselectexpression">選択式</xref></i>に置くことのできる、DISTINCTの限定詞は一つだけです。
+例えば、次の問合せは許されていません。
+<codeblock><b>SELECT COUNT (DISTINCT flying_time), MAX (DISTINCT miles)
+FROM Flights</b></codeblock></p> 
+<p><i>式</i>は複数の列への参照や式を含むことができますが、他の集約や副問合せを含むことはできません。
+また組込みのデータ型に評価されなければなりません。
+従って組込みのデータ型と評価されるメソッドを呼ぶことができます。
+(例えば<i>java.lang.Integer</i>や<i>int</i>を返すメソッドはINTEGERと評価されます。)
+もし式がNULLと評価された場合、集約においてその値は無視されます。</p> 
+<p>CHAR、VARCHARについては、値の末尾にある空白文字列は、MAXの振る舞いに影響があります。
+たとえば、'z'と'z 'の両方が列に格納されていた場合、空白は比較にて無視されるので結果は不定ですが、何れか片方の値が返されます。</p> 
+<p>結果のデータ型はMAXが動作する式と同じものとなります。(オーバーフローすることはありません。)</p> </refsyn>
+<example> <codeblock><b><ph>-- FlightAvailabilityという表から最近の日付を探す。</ph>
+SELECT MAX (flight_date) FROM FlightAvailability
+<ph>-- それぞれの空港を出発する最も長距離の便を探す。
+-- なお10時間以上の便のみとする。</ph>
+SELECT MAX(flying_time), orig_airport
+FROM Flights
+GROUP BY orig_airport
+HAVING MAX(flying_time) &gt; 10
+</b></codeblock> </example>
+</refbody>
+</reference>
+

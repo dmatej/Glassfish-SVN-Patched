@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rtoolsoptforeignviews" xml:lang="en-us">
+<title>Using the foreignViews optional tool</title>
+<prolog><metadata>
+<keywords>
+<indexterm>optional tools<indexterm>foreignViews</indexterm></indexterm>
+<indexterm>foreignViews optional tool</indexterm>
+<indexterm>tools<indexterm>foreignViews optional tool</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section>
+<p>The <codeph>foreignViews</codeph> optional tool creates schemas,
+table functions, and convenience views for all user tables in a foreign
+database. This can be useful for bulk-importing foreign data.</p>
+<p>Before you run the <codeph>foreignViews</codeph> optional tool, make sure
+that your classpath contains the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> jar files, including
+<i>derbytools.jar</i>.</p>
+<p>You can load and unload the <codeph>foreignViews</codeph> tool by using
+the <codeph>SYSCS_UTIL.SYSCS_REGISTER_TOOL</codeph> system procedure. See the
+<ph conref="../conrefs.dita#pub/citref"></ph> for information about this
+procedure.</p>
+<p>To load the <codeph>foreignViews</codeph> tool, use a statement like the
+following:</p>
+<codeblock><b>call syscs_util.syscs_register_tool( 'foreignViews', true,
+    '<i>foreignDatabaseURL</i>', 'XYZ_' )
+</b></codeblock>
+<p>The two trailing arguments have the following meanings:</p>
+<ul>
+<li><i>foreignDatabaseURL</i> is a URL suitable for creating a connection to
+the foreign database by calling <i>java.sql.DriverManager.getConnection()</i>.
+For example: 
+<codeblock><b>'jdbc:derby:db3;user=fred;password=fredpassword'</b></codeblock>
+</li>
+<li><codeph>'XYZ_'</codeph> is a string prefixed to the names of all schemas
+created by this tool. This argument may be omitted. If it is omitted, the tool
+will create schemas which have the same names as the schemas in the foreign
+database.</li>
+</ul>
+<p>For example, suppose that the foreign database has two schemas,
+<codeph>S1</codeph> and <codeph>S2</codeph>. <codeph>S1</codeph> contains two
+user tables, <codeph>T1</codeph> and <codeph>T2</codeph>. <codeph>S2</codeph>
+contains two user tables, <codeph>U1</codeph> and <codeph>U2</codeph>. Loading
+the tool as shown above will create the following objects in your
+<ph conref="../conrefs.dita#prod/productshortname"></ph> database:</p>
+<sl>
+<sli>schema <codeph>XYZ_S1</codeph></sli>
+<sli>table function <codeph>XYZ_S1.T1</codeph>, which reads
+<codeph>S1.T1</codeph> from the foreign database</sli>
+<sli>table function <codeph>XYZ_S1.T2</codeph>, which reads
+<codeph>S1.T2</codeph> from the foreign database</sli>
+<sli>view <codeph>XYZ_S1.T1</codeph>, which wraps the corresponding table
+function</sli>
+<sli>view <codeph>XYZ_S1.T2</codeph>, which wraps the corresponding table
+function</sli>
+</sl><sl>
+<sli>schema <codeph>XYZ_S2</codeph></sli>
+<sli>table function<codeph> XYZ_S2.U1</codeph>, which reads
+<codeph>S2.U1</codeph> from the foreign database</sli>
+<sli>table function <codeph>XYZ_S2.U2</codeph>, which reads
+<codeph>S2.U2</codeph> from the foreign database</sli>
+<sli>view <codeph>XYZ_S2.U1</codeph>, which wraps the corresponding table
+function</sli>
+<sli>view <codeph>XYZ_S2.U2</codeph>, which wraps the corresponding table
+function</sli>
+</sl>
+<p>The views hide the arguments to the table functions. You can then populate
+your local schema by using the following SELECT statements:</p>
+<codeblock><b>insert into S1.T1 select * from XYZ_S1.T1
+insert into S1.T2 select * from XYZ_S1.T2
+insert into S2.U1 select * from XYZ_S2.U1
+insert into S2.U2 select * from XYZ_S2.U2 
+</b></codeblock>
+<p>When you have finished bulk-importing the foreign data, you can drop this
+package of schemas, table functions and views as follows:</p>
+<codeblock><b>call syscs_util.syscs_register_tool( 'foreignViews', false,
+    'foreignDatabaseURL', 'XYZ_' )
+</b></codeblock>
+</section>
+</refbody>
+</reference>

@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj33923" xml:lang="ja">
+<title>集約 (集合関数)</title>
+<refbody>
+<section>
+<p>この節は集約(ANSI SQL-92では<i>集合関数</i>、データベースの書籍によっては<i>列関数</i>と呼びます。)について説明します。集約は、行の集合に対して式を評価する方法を提供します。他の組込み関数は単式に対して作用しますが、集約は値の集合に対して作用して一つのスカラー値にまとめられます。組込みの集約により、値の集合に対して、式の最小値、最大値、合計、計数を行い、例えば行を数えるような事ができます。また組込みのものとは別に集約を作って、例えば標準偏差を計算するようなこともできます。</p></section>
+<section><p><indexterm>Aggregates<indexterm>and data types</indexterm></indexterm>
+組込みの集約は、<xref href="rrefsqlj33923.dita#rrefsqlj33923/sqlj92398"></xref>にあるデータ型に作用させることができます。
+  <table frame="all" id="sqlj92398"><title>組込みの集約にて可能なデータ型</title>
+<tgroup cols="3" colsep="1" rowsep="1"><colspec colname="1" colnum="1" colwidth="20*"/>
+<colspec colname="2" colnum="2" colwidth="20*"/><colspec colname="3" colnum="3"
+colwidth="20*"/>
+<thead>
+<row>
+<entry colname="1"></entry>
+<entry align="left" colname="2" valign="bottom">全データ型</entry>
+<entry align="left" colname="3" valign="bottom">組込みの数値型</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">COUNT</entry>
+<entry colname="2">X</entry>
+<entry colname="3">X</entry>
+</row>
+<row>
+<entry colname="1">MIN</entry>
+<entry colname="2"></entry>
+<entry colname="3">X</entry>
+</row>
+<row>
+<entry colname="1">MAX</entry>
+<entry colname="2"></entry>
+<entry colname="3">X</entry>
+</row>
+<row>
+<entry colname="1">AVG</entry>
+<entry colname="2"></entry>
+<entry colname="3">X</entry>
+</row>
+<row>
+<entry colname="1">SUM</entry>
+<entry colname="2"></entry>
+<entry colname="3">X</entry>
+</row>
+</tbody>
+</tgroup>
+</table></p></section>
+<section><p><indexterm>Aggregates<indexterm>requirements for</indexterm></indexterm>
+集約は以下の文脈にのみ置くことができます。<ul>
+<li><i><xref href="rrefselectexpression.dita#rrefselectexpression">選択式</xref></i>の<i>選択項目</i></li>
+<li><xref href="rrefsqlj14854.dita#rrefsqlj14854">HAVING節</xref></li>
+<li>集約がその問合せにあるならば、<xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY 節</xref>(別名を使う)つまり、<i><xref href="rrefselectexpression.dita#rrefselectexpression">選択式</xref></i>の<i>選択項目</i>に集約がある場合に限り、集約への別名を<xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY 節</xref>に置くことができます。</li>
+</ul></p></section>
+<section><p><i><xref href="rrefselectexpression.dita#rrefselectexpression">選択式</xref></i>の<i>選択項目</i>にある全式は、集約か分類列である必要があります。(<xref href="rrefsqlj32654.dita#rrefsqlj32654"></xref>を参照してください。)
+(GROUP BY 節がないにもかかわらず、HAVING節がある場合も同様です。)
+なぜならば、<i><xref href="rrefselectexpression.dita#rrefselectexpression">選択式</xref></i>の<i>ResultSet</i>は、スカラー(単値)かベクトル(副値)のいずれかでなければならず、その混合は許されていないからです。(集約はスカラーの値と評価され、列への参照はベクトルの値と評価されます。)例えば次の問合せはスカラーとベクトルの値が混ざっているので無効です。
+<codeblock><b><ph>-- not valid</ph>
+SELECT MIN(flying_time), flight_id
+FROM Flights</b></codeblock></p></section>
+<section><p>集約にて外部への参照(相関)は無効です。つまり、副問合せが集約を含むならば、その集約が作用する式は、副問合せの外にある問合せの列を参照できません。
+例えば、SUM演算子が外の問合せの列に対して行われているので、次の問合せは有効ではありません。
+<codeblock><b>SELECT c1
+FROM t1
+GROUP BY c1
+HAVING c2 &gt;
+    (SELECT t2.x
+    FROM t2
+    WHERE t2.y = SUM(t1.c3)) </b></codeblock></p></section>
+<section><p>集約が外の問合せにある場合、その<i>ResultSet</i>のカーソルは更新可能ではありません。</p></section>
+<section><p>この節には以下の集約があります。<ul>
+<li><xref href="rrefsqlj32693.dita#rrefsqlj32693"></xref></li>
+<li><xref href="rrefsqlj38716.dita#rrefsqlj38716"></xref></li>
+<li><xref href="rrefsqlj27781.dita#rrefsqlj27781"></xref></li>
+<li><xref href="rrefsqlj33520.dita#rrefsqlj33520"></xref></li>
+<li><xref href="rrefsqlj13083.dita#rrefsqlj13083"></xref></li>
+</ul></p></section>
+</refbody>
+</reference>
+

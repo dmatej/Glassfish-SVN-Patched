@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<reference id="rrefdeclaretemptable" xml:lang="pt-br">
+<title>Instrução DECLARE GLOBAL TEMPORARY TABLE</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Instrução DECLARE GLOBAL TEMPORARY</indexterm>
+<indexterm>Tabelas<indexterm>Temporárias</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>A instrução DECLARE GLOBAL TEMPORARY TABLE define uma tabela
+temporária para a conexão corrente.
+Estas tabelas não residem nos catálogos do sistema, e não são persistentes.
+As tabelas temporárias existem somente durante a conexão em que foram
+declaradas, não podendo ser referenciadas de fora da conexão.
+Ao fechar a conexão, as linhas da tabela são excluídas e a descrição em-memória
+da tabela temporária é removida.</p>
+</section>
+<section>
+<p>As tabelas temporárias são úteis quando:
+<ul>
+<li>a estrutura da tabela não é conhecida antes de utilizar o aplicativo.</li>
+<li>os outros usuários não necessitam da mesma estrutura de tabela.</li>
+<li>os dados da tabela temporária são necessários durante o uso do aplicativo.</li>
+<li>a tabela pode ser declarada e removida sem manter bloqueios no catálogo do sistema.</li>
+</ul>
+</p>
+</section>
+<section>
+<title>Sintaxe</title>
+<codeblock><b>DECLARE GLOBAL TEMPORARY TABLE <i><xref
+href="rrefdeclaretemptable.dita#rrefdeclaretemptable/tempcoltablename">nome-da-tabela</xref></i>
+    { definição-da-coluna [ , definição-da-coluna ] * }
+[ ON COMMIT {DELETE | PRESERVE} ROWS ]
+NOT LOGGED [ON ROLLBACK DELETE ROWS]
+ </b>
+</codeblock>
+</section>
+<section id="tempcoltablename">
+<title>nome-da-tabela</title>
+<p>O nome da tabela temporária.
+Se for especificado um nome-do-esquema diferente de SESSION, ocorrerá um erro
+(SQLState 428EK).
+Se o nome-do-esquema não for especificado, será atribuído SESSION.
+Várias conexões podem definir tabelas temporárias globais declaradas com o mesmo
+nome, porque cada conexão possui seu próprio descritor de tabela único.</p>
+<p>A utilização de SESSION como nome do esquema de uma tabela física não gera
+erro, mas é desestimulado.
+O nome de esquema SESSION deve ser reservado para o esquema de tabelas
+temporárias.</p>
+</section>
+<section id="tempcolcolumndef">
+<title>definição-da-coluna</title>
+<p>Para obter mais informações sobre a <codeph>definição-da-coluna</codeph>
+deve ser consultada <xref href="rrefsqlj30540.dita#rrefsqlj30540"></xref> em
+<codeph>CREATE TABLE</codeph>.
+A instrução <codeph>DECLARE GLOBAL TEMPORARY TABLE</codeph> não permite
+<codeph>especificação-de-coluna-gerada</codeph> na
+<codeph>definição-da-coluna</codeph>.</p>
+</section>
+<section id="rreftemptabledatatype">
+<title>Tipo-de-dado</title>
+<p>Os tipos-de-dado suportados são:
+<ul>
+<li>BIGINT</li>
+<li>CHAR</li>
+<li>DATE</li>
+<li>DECIMAL</li>
+<li>DOUBLE PRECISION</li>
+<li>FLOAT</li>
+<li>INTEGER</li>
+<li>NUMERIC</li>
+<li>REAL</li>
+<li>SMALLINT</li>
+<li>TIME</li>
+<li>TIMESTAMP</li>
+<li>VARCHAR</li>
+</ul>
+</p>
+</section>
+<section id="rreftemptableoncommit">
+<title>ON COMMIT</title>
+<p>Especifica a ação a ser executada na tabela temporária global quando é
+realizada uma operação de COMMIT.</p>
+</section>
+<section>
+<title>DELETE ROWS</title>
+<p>Todas as linhas da tabela serão excluídas, se não houver nenhum cursor com
+possibilidade de HOLD aberto na tabela.
+Este é o valor padrão para ON COMMIT.
+Se for especificado ON ROLLBACK DELETE ROWS, serão excluídas todas as linhas da
+tabela somente se a tabela temporária tiver sido utilizada.
+ON COMMIT DELETE ROWS exclui as linhas da tabela, mesmo que a tabela não tenha
+sido utilizada (se a tabela não possuir nenhum cursor com possibilidade
+de HOLD aberto na mesma).</p>
+</section>
+<section>
+<title>PRESERVE ROWS</title>
+<p>As linhas da tabela são preservadas.</p>
+</section>
+<section id="rreftemptablenotlogged">
+<title>NOT LOGGED</title>
+<p>Especifica a ação realizada na tabela temporária global quando uma operação
+de desfazer é realizada.
+Quando é realizada uma operação de ROLLBACK (ou ROLLBACK TO SAVEPOINT),
+se a tabela foi criada na unidade de trabalho (ou no ponto de salvamento),
+a tabela será removida.
+Se a tabela foi removida na unidade de trabalho (ou no ponto de salvamento),
+a tabela será restaurada sem nenhuma linha.</p>
+</section>
+<section>
+<title>ON ROLLBACK DELETE ROWS</title>
+<p>Este é o valor padrão para NOT LOGGED.
+NOT LOGGED [ON ROLLBACK DELETE ROWS ]] especifica a ação a ser realizada na
+tabela temporária global quando é realizada uma operação de ROLLBACK
+(ou ROLLBACK TO SAVEPOINT).
+Se os dados da tabela foram modificados, todas as linhas serão excluídas.</p>
+</section>
+<section>
+<title>Exemplos</title>
+<codeblock><b>SET SCHEMA MYAPP;
+
+CREATE TABLE T1(C11 INT, C12 DATE);
+
+DECLARE GLOBAL TEMPORARY TABLE SESSION.T1(C11 INT) NOT LOGGED;</b>
+-- A qualificação SESSION é redundante, porque as tabelas temporárias
+-- somente podem existir no esquema SESSION.
+
+<b>DECLARE GLOBAL TEMPORARY TABLE T2(C21 INT) NOT LOGGED;</b>
+-- A tabela temporária não é qualificada neste caso com SESSION, porque
+-- as tabelas temporárias somente podem existir no esquema SESSION.
+
+<b>INSERT INTO SESSION.T1 VALUES (1); </b>
+-- Neste caso a qualificação SESSION é obrigatória para utilizar a
+-- tabela temporária, porque o esquema corrente é MYAPP.
+
+<b>SELECT * FROM T1;</b>
+-- Esta instrução SELECT está fazendo referência à tabela física
+-- "MYAPP.T1", uma vez que a tabela não foi qualificada com SESSION.
+
+</codeblock>
+<p>Deve ser observado que as tabelas temporárias somente podem ser declaradas
+no esquema SESSION.
+Nunca deve ser declarado um esquema físico com o nome SESSION.</p>
+<p>A seguir está mostrada uma lista de funções da instrução
+DECLARE GLOBAL TEMPORARY TABLE do DB2 UDB que não são suportadas pelo
+<ph conref="refconrefs.dita#prod/productshortname"></ph>:
+<ul>
+<li>IDENTITY opções-de-coluna </li>
+<li>IDENTITY atributo nas opções-de-cópia</li>
+<li>AS (<i>FULLSELECT</i>) DEFINITION ONLY</li>
+<li>NOT LOGGED ON ROLLBACK PRESERVE ROWS</li>
+<li> IN nome-do-espaço-de-tabelas</li>
+<li>PARTITIONING KEY</li>
+<li>WITH REPLACE </li>
+</ul>
+</p>
+</section>
+<section>
+<title>Restrições das tabelas temporárias globais declaradas</title>
+<p>As tabelas temporárias não podem ser especificadas nas seguintes instruções:
+<ul>
+<li>ALTER TABLE </li>
+<li>CREATE SYNONYM</li>
+<li>CREATE TRIGGER</li>
+<li>CREATE VIEW</li>
+<li>LOCK</li>
+<li>RENAME</li>
+</ul>
+</p>
+<p>As tabelas temporárias não pode ser especificadas nas restrições
+referenciais.</p>
+<p>Não há suporte para restrição de verificação nas colunas.</p>
+<p>Não podem ser utilizados os seguintes tipos de dado nas
+tabelas temporárias globais declaradas:
+<ul>
+<li>BLOB</li>
+<li>CLOB</li>
+<li>LONG VARCHAR</li>
+</ul>
+</p>
+<p>As tabelas temporárias não podem ser referenciadas por uma
+instrução-SQL-engatilhada.</p>
+<p>Se uma instrução realizando uma inserção, atualização ou exclusão em uma
+tabela temporária encontrar um erro, todas as linhas da tabela serão
+excluídas.</p>
+</section>
+<section>
+<title>Restrições específicas do Derby</title>
+<p>O <ph conref="refconrefs.dita#prod/productshortname"></ph>
+não dá suporte em tabelas temporárias a:</p> <ul>
+<li>índices</li>
+<li>sinônimos, gatilhos e visões em tabelas no esquema SESSION
+(incluindo as tabelas físicas e as tabelas temporárias)</li>
+<li>LOCK TABLE</li>
+<li>restrições e chaves primárias</li>
+<li>especificação-de-coluna-gerada</li>
+<li>importação em tabelas temporárias</li>
+</ul>
+<p>As instruções fazendo referência a tabelas e visões no esquema SESSION
+não ficam no <i>cache</i>.</p>
+</section>
+</refbody>
+</reference>

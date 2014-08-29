@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevconcepts839085" xml:lang="en-us">
+<title>Explicitly closing Statements, ResultSets, and Connections</title>
+<shortdesc>You should explicitly close <codeph><i>Statements</i></codeph>,
+<codeph><i>ResultSets</i></codeph>, and <codeph><i>Connections</i></codeph> when
+you no longer need them, unless you declare them in a
+<codeph><i>try</i></codeph>-with-resources statement (available in JDK 7 and
+after).</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Explicit close of JDBC objects</indexterm></keywords>
+</metadata></prolog>
+<conbody>
+<p>Connections to <ph conref="../conrefs.dita#prod/productshortname"></ph> are
+resources external to an application, and the garbage collector will not close
+them automatically. </p>
+<p>To close a <codeph><i>Statement</i></codeph>,
+<codeph><i>ResultSet</i></codeph>, or <codeph><i>Connection</i></codeph> object
+that is not declared in a <codeph><i>try</i></codeph>-with-resources statement,
+use its <codeph><i>close</i></codeph> method. If auto-commit is disabled, you
+must explicitly commit or roll back active transactions before you close the
+connection.</p>
+<p>Statements, result sets, and connections extend
+<codeph><i>AutoCloseable</i></codeph> in JDK 7 and after. If you declare a
+connection in a <codeph><i>try</i></codeph>-with-resources statement and there
+is an error that the code does not catch, the JRE will attempt to close the
+connection automatically.</p>
+<p>Note that a transaction-severity or higher exception causes
+<ph conref="../conrefs.dita#prod/productshortname"></ph> to abort an in-flight
+transaction. But a statement-severity exception does NOT roll back the
+transaction. Also note that
+<ph conref="../conrefs.dita#prod/productshortname"></ph> throws an exception if
+an attempt is made to close a connection with an in-flight transaction. Suppose
+now that a <codeph><i>Connection</i></codeph> is declared in a 
+<codeph><i>try</i></codeph>-with-resources statement, a transaction is
+in-flight, and an unhandled statement-severity error occurs inside the
+<codeph><i>try</i></codeph>-with-resources block. In this situation,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> will raise a follow-on
+exception as the JRE exits the <i>try</i>-with-resources block. (For details on
+error severity levels, see the documentation of the
+<codeph><i>derby.stream.error.logSeverityLevel</i></codeph> property in the
+<ph conref="../conrefs.dita#pub/citref"></ph>.)</p>
+<p>It is therefore always best to catch errors inside the
+<codeph><i>try</i></codeph>-with-resources block and to either roll back or
+commit, as appropriate, to ensure that there is no pending transaction when
+leaving the <codeph><i>try</i></codeph>-with-resources block. This action also
+improves application portability, since DBMSs differ in their semantics when
+trying to close a connection with a pending transaction.</p>
+</conbody>
+</concept>

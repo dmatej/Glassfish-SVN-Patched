@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctuntransform867201">
+<title>IN/ANY subquery transformation</title>
+<prolog><metadata>
+<keywords>
+<indexterm>IN/ANY subquery transformation</indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>An IN or ANY subquery that is guaranteed to return at most one row can
+be transformed into an equivalent expression subquery (a scalar subquery without
+the IN or ANY). The subquery must not be correlated. Subqueries guaranteed
+to return at most one row are:  
+<ul>
+<li>Simple VALUES clauses</li>
+<li>SELECTs returning a non-grouped aggregate</li>
+</ul></p>
+<p>For example:  
+<codeblock><b>WHERE C1 IN (SELECT MIN(c1) FROM T)</b></codeblock></p>
+<p>can be transformed into  
+<codeblock><b>WHERE C1 = (SELECT MIN(c1) FROM T)</b></codeblock></p>
+<p>This transformation is considered before subquery materialization. If the
+transformation is performed, the subquery becomes materializable. In the example,
+if the IN subquery were not transformed, it would be evaluated anew for each
+row.</p>
+<p>The subquery type transformation is shown in the following table.</p>  
+<table frame="all">
+<title>IN or ANY subquery transformations for subqueries
+that return a single row</title>
+<tgroup cols="2" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="50*"/>
+<colspec colname="2" colnum="2" colwidth="50*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Before Transformation</entry>
+<entry colname="2">After Transformation</entry></row>
+</thead>
+<tbody>
+<row>
+<entry colname="1"><b><codeph>c1 IN (SELECT ...)</codeph></b></entry>
+<entry colname="2"><b><codeph>c1 = (SELECT ...)</codeph></b></entry></row>
+<row>
+<entry colname="1"><b><codeph>c1 = ANY (SELECT ...)</codeph></b></entry>
+<entry colname="2"><b><codeph>c1 = (SELECT ...)</codeph></b></entry></row>
+<row>
+<entry colname="1"><b><codeph>c1 &lt;&gt; ANY (SELECT ...)</codeph></b></entry>
+<entry colname="2"><b><codeph>c1 &lt;&gt; (SELECT ...)</codeph></b></entry></row>
+<row>
+<entry colname="1"><b><codeph>c1 &gt; ANY (SELECT ...)</codeph></b></entry>
+<entry colname="2"><b><codeph>c1 &gt; (SELECT ...)</codeph></b></entry></row>
+<row>
+<entry colname="1"><b><codeph>c1 &gt;= ANY (SELECT ...)</codeph></b></entry>
+<entry colname="2"><b><codeph>c1 &gt;= (SELECT ...)</codeph></b></entry></row>
+<row>
+<entry colname="1"><b><codeph>c1 &lt; ANY (SELECT ...)</codeph></b></entry>
+<entry colname="2"><b><codeph>c1 &lt; (SELECT ...)</codeph></b></entry></row>
+<row>
+<entry colname="1"><b><codeph>c1 &lt;= ANY (SELECT ...)</codeph></b></entry>
+<entry colname="2"><b><codeph>c1 &lt;= (SELECT ...)</codeph></b></entry></row>
+</tbody>
+</tgroup>
+</table>
+</conbody></concept>

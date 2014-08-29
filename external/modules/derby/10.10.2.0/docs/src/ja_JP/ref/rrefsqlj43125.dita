@@ -1,0 +1,140 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj43125" xml:lang="en-us">
+<title>CREATE TRIGGER 文</title>
+<prolog><metadata>
+<keywords><indexterm>CREATE TRIGGER statement</indexterm><indexterm>SQL statements<indexterm>CREATE
+TRIGGER</indexterm></indexterm><indexterm>triggers<indexterm>creating</indexterm></indexterm>
+<indexterm>triggers<indexterm>defining when they fire</indexterm></indexterm>
+<indexterm>triggers<indexterm>database events</indexterm></indexterm><indexterm>triggers<indexterm>referencing
+clause</indexterm><indexterm>referencing old and new values</indexterm></indexterm>
+<indexterm>triggers<indexterm>statement versus row triggers</indexterm></indexterm>
+<indexterm>triggers<indexterm>triggered-SQL-statement</indexterm></indexterm>
+<indexterm>triggers<indexterm>order of execution</indexterm></indexterm><indexterm>triggers<indexterm>recursion</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>トリガによりデータベースのイベントに応じて実行されるアクションの集合を、表に定義することができます。ここで<i>データベースのイベント</i>とは削除、挿入、更新処理のことです。
+例えば表に削除へのトリガを定義した場合、そのトリガのアクションは表から行が削除されるときに実行されます。</p><p>制約と併せて、トリガによる波及的な削除や更新を定義することで、情報の整合性を保つことができます。
+トリガで実現できる機能はこのほかにも、警告の呈示や、他の表の更新、e-mailの送信やその他の処理など、多岐にわたります。</p><p>ひとつの表に定義可能なトリガの数には、それらのトリガが同じイベントへのトリガであるか否かにかかわらず、上限はありません。</p>
+<p>スキーマの所有者であるユーザであれば、そのスキーマにトリガを作成することができます。
+所有していない表にトリガを定義するためには、その表にTRIGGER権限を持っていなければなりません。
+<xref href="rrefattrib26867.dita#rrefattrib26867">データベースの所有者</xref>であるユーザであれば、どのスキーマのどの表に対してもトリガを作成することができます。</p>
+<p>トリガはトリガが定義されている表とは異なるスキーマに定義することも可能です。</p>
+<p>限定されたトリガ名のスキーマ名は、<i>SYS</i>で始まってはなりません。</p></section>
+<refsyn id="syn001"><title>構文</title><codeblock><b>CREATE TRIGGER <i><xref
+href="rreftriggername.dita#rreftriggername">トリガ名</xref></i>
+{ AFTER | NO CASCADE BEFORE } 
+{ INSERT | DELETE | UPDATE [ OF <i>列名</i> [, <i><xref href="rrefcolumnname.dita#rrefcolumnname">列名</xref></i>]* ] }
+ON <i><xref href="rreftablename.dita#rreftablename">表名</xref></i>
+[ <i><xref href="rrefsqlj89752.dita#rrefsqlj89752">参照節</xref></i> ]
+[ FOR EACH { ROW | STATEMENT } ] [ MODE DB2SQL ] 
+<i><xref href="rrefsqlj43125.dita#rrefsqlj43125/i1149821">トリガされるSQL文</xref></i></b></codeblock> </refsyn>
+<section><title>トリガの発火が前か後か</title> <p>トリガは<i>前のトリガ</i>あるいは<i>後のトリガ</i>のいずれかとして定義できます。<ul>
+<li><i>前のトリガ</i>は文による変更が適用され制約による検証が行われる前に発火します。
+前のトリガは、行のトリガあるいは文のトリガのいずれにもなることができます。(詳細は<xref href="rrefsqlj43125.dita#rrefsqlj43125/sqlj54276"></xref>を参照してください。)</li>
+<li><i>後のトリガ</i>は変更が適用され制約による検証が満たされた後に発火します。
+<i>後のトリガ</i>は、行のトリガあるいは文のトリガのいずれにもなることができます。(詳細は<xref href="rrefsqlj43125.dita#rrefsqlj43125/sqlj54276"></xref>を参照してください。)</li>
+</ul></p> </section>
+<section><title>挿入、削除、更新のいずれによりトリガは発火されるのか</title> 
+<p>トリガはどのように定義されたかに従って、次のいずれかのデータベースのイベントにより発火します。(上記の<xref href="rrefsqlj43125.dita#rrefsqlj43125/syn001"></xref>を参照してください。<ul>
+<li>INSERT</li>
+<li>UPDATE</li>
+<li>DELETE</li>
+</ul></p> 
+<p>表のイベントごとに定義できるトリガの数に上限はありません。さらに更新へのトリガであれば、対象となる列を明示することができます。</p> </section>
+<section id="sqlj67748"><title>古い値を参照するのか、新しい値を参照するのか:参照節</title> 
+<p>発火の原因となったイベントで現在変更された情報をトリガされるSQL文から参照することは良くあることです。
+また、トリガされるSQL文が参照しなければならないのは新しい値(変更後、後の値、と言うこともできます)である場合があります。</p> 
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph>にて、発火した原因となったイベントにより変更された情報をトリガから参照する方法はひとつだけではありません。変更された情報はトリガされるSQL文から、<i>遷移変数</i>あるいは<i>遷移表</i>で参照することができます。
+参照節にて遷移変数への相関名や別名を、OLD/NEW AS <i>相関名</i>という書式で記述できます。</p> 
+<p>例えば、次のような節をトリガの定義に記述した場合。<codeblock><b>REFERENCING OLD AS DELETEDROW</b></codeblock></p> 
+<p>トリガされるSQL文でこの相関名を参照できます。<codeblock><b>DELETE FROM HotelAvailability WHERE hotel_id = DELETEDROW.hotel_id</b
+></codeblock></p> <p>遷移変数はOLDかNEWのいずれかに関わらず、単一の行を持つ<i>java.sql.ResultSet</i>にマップされます。<note>遷移変数を使えるのは、行のトリガだけです。(<xref href="rrefsqlj43125.dita#rrefsqlj43125/sqlj54276"></xref>を参照してください。)
+また、挿入イベントの行のトリガではOLDの行を参照できません。削除イベントの行のトリガではNEWの行を参照できません。</note></p> 
+<p>文のトリガでは、遷移<i>表</i>をトリガされるSQL文やトリガの資格で参照可能です。
+参照節にて参照表への相関名や別名を、OLD_TABLE/NEW_TABLE AS 相関名という書式で記述できます。</p>
+<p>例えば、
+  <codeblock><b>REFERENCING OLD_TABLE AS DeletedHotels</b></codeblock></p> 
+<p>と書くことで識別子(<i>DeletedHotels</i>)をトリガされるSQL文で使うことができます。
+  <codeblock><b>DELETE FROM HotelAvailability WHERE hotel_id IN
+    (SELECT hotel_id FROM DeletedHotels)</b></codeblock></p> 
+<p>遷移表は古いか新しいかに関わらず、トリガが着火した原因のイベントで影響を受けた行の数と同じ基数をもつ<i>java.sql.ResultSet</i>にマップされます。
+<note>文のトリガ(<xref href="rrefsqlj43125.dita#rrefsqlj43125/sqlj54276"></xref>を参照してください。)でのみ遷移表は利用可能です。
+INSERT文へのトリガでは、OLDの表は参照できません。DELETE文へのトリガでは、NEWの表は参照できません。</note></p> 
+<p>参照節では、新しいものと古いものにそれぞれ一つまで、相関名あるいは識別子を定義できます。
+また、行のトリガには遷移表の識別子を定義できない一方で、文のトリガには遷移変数の相関名を定義できません。</p> </section>
+<section id="sqlj54276"><title>文のトリガと行のトリガ</title> 
+<p>トリガには、<i>文のトリガ</i>と<i>行のトリガ</i>があります。
+CREATE TRIGGER文のFOR EACH節にて、どちらのトリガであるか明示されなかった場合の既定は、<i>文のトリガ</i>です。
+  <ul>
+<li><i>文のトリガ</i>   <p>文のトリガはトリガのイベント毎に一回発火します。トリガの発火に挿入・更新・削除にて何行が変更されたかは関係ありません。</p></li>
+<li><i>行のトリガ</i>   <p>行のトリガはトリガのイベントが影響する行毎に一回発火します。影響が一行にも及ばなかった場合、トリガは発火しません。</p></li>
+</ul> <note>列の値を元の値と等しい値に変更した場合(例えば、UPDATE T SET C = Cという文を考えてください。)、トリガのイベント前と後で列の値に変化が無くても、行のトリガは発火します。</note></p> </section>
+<section id="i1149821"><title>トリガされるSQL文</title> 
+<p>トリガで定義されるアクションのことを、トリガされるSQL文と呼びます。(上記、<xref href="rrefsqlj43125.dita#rrefsqlj43125/syn001"></xref>の最終行をを参照してください。)
+トリガされるSQL文には以下の制限があります。<ul>
+<li>動的な引数(?)があってはなりません。</li>
+<li>トリガが定義されている表の作成や、変更、破棄を行ってはなりません。</li>
+<li>トリガが定義されている表への索引の作成や破棄を行ってはなりません。</li>
+<li>トリガが定義されている表へのトリガの作成や破棄を行ってはなりません。</li>
+<li>トランザクションのコミットやロールバック、分離レベルの変更を行ってはなりません。</li>
+<li>前のトリガのアクションにINSERT/UPDATE/DELETE文があってはなりません。</li>
+<li>前のトリガのアクションで更新を行う手続きを呼び出してはなりません。</li>
+</ul></p><p>トリガされるSQL文ではトリガが定義された表以外のデータベースの情報を参照することができます。それらのデータベースの情報が破棄されていた場合、トリガは無効となります。
+次回の実行にてトリガの再コンパイルが失敗した場合、呼び出しは例外を投げて、トリガを発火させた文はロールバックされます。</p>
+<p>トリガされるSQL文の詳細については、<cite><ph conref="../conrefs.dita#pub/citdevelop"></ph></cite>を参照してください。</p> </section>
+<section><title>実行の順序</title> <p>トリガを発火させるデータベースのイベントが起きると、<ph conref="../conrefs.dita#prod/productshortname"></ph>は処理を次の順で行います。<ul>
+<li>最初に<i>No Cascade Before</i>なトリガのアクションを実行します。</li>
+<li>次に、制約(主キー、一意キー、外部キー)の検証を行います。</li>
+<li>続いて、更新、変更、削除などの処理を行います。</li>
+<li>最後に<i>After</i>なトリガを発火します。</li>
+</ul></p> <p>同じ表に対して、同じイベントの、発火する時(トリガが前か後かという意味です。)が同じトリガが複数定義されていた場合、トリガは作成された順に実行されます。</p> </section>
+<example> <codeblock><b><ph>-- 文とトリガ
+</ph>
+CREATE TRIGGER t1 NO CASCADE BEFORE UPDATE ON x
+  FOR EACH ROW MODE DB2SQL
+  values app.notifyEmail('Jerry', 'Table x is about to be updated'); 
+
+CREATE TRIGGER FLIGHTSDELETE
+  AFTER DELETE ON FLIGHTS
+  REFERENCING OLD_TABLE AS DELETEDFLIGHTS
+  FOR EACH STATEMENT 
+  DELETE FROM FLIGHTAVAILABILITY WHERE FLIGHT_ID IN
+  (SELECT FLIGHT_ID FROM DELETEDFLIGHTS);
+
+CREATE TRIGGER FLIGHTSDELETE3
+  AFTER DELETE ON FLIGHTS
+  REFERENCING OLD AS OLD
+  FOR EACH ROW 
+  DELETE FROM FLIGHTAVAILABILITY WHERE FLIGHT_ID = OLD.FLIGHT_ID;
+</b></codeblock> <note><cite><ph conref="../conrefs.dita#pub/citdevelop"></ph></cite>にはより多くの例が書かれています。</note> </example>
+<section><title>トリガの再帰</title> <p>トリガの再帰は最大16までです。</p> </section>
+<section><title>関連する情報</title> 
+<p>現在の時刻や現在のユーザを返す特殊システム関数は、トリガを作成したときではなく、トリガが発火したときに評価されます。このような関数には以下のものがあります。<ul>
+<li><xref href="rrefsqlj34177.dita#rrefsqlj34177"></xref></li>
+<li><xref href="rrefsqlj33772.dita#rrefsqlj33772"></xref></li>
+<li><xref href="rrefsqlj15866.dita#rrefsqlj15866"></xref></li>
+<li><xref href="rrefsqlj42324.dita#rrefsqlj42324"></xref></li>
+<li><xref href="rrefsqlj25228.dita#rrefsqlj25228"></xref></li>
+<li><xref href="rrefsqlj42476.dita#rrefsqlj42476"></xref></li>
+</ul></p> </section>
+</refbody>
+</reference>

@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either XMLEXISTSress or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rreffuncxmlexists" xml:lang="ja">
+<title>XMLEXISTS 演算子</title>
+<shortdesc>XMLEXISTSは、SQLにてXMLを問い合わせるときに利用できるSQL/XML演算子です。</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>XMLEXISTS operator</indexterm><indexterm>operators<indexterm>XMLEXISTS</indexterm></indexterm>
+<indexterm>XML<indexterm>operators, XMLEXISTS</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>XMLEXISTS演算子は二つの引数を取ります。XML問合せ式と<ph conref="../conrefs.dita#prod/productshortname"></ph>XML値です。</p> </section>
+<refsyn><title>構文</title><codeblock><b>XMLEXISTS ( <varname>xquery文字列リテラル</varname>
+    PASSING BY REF <varname>XML値式</varname> [ BY REF ] )
+</b></codeblock><dl><dlentry>
+<dt><codeph>xquery文字列リテラル</codeph></dt>
+<dd>文字列のリテラルとして与えられる必要があります。もし引数がパラメータであったり、リテラルでない式であったり、文字列でない(整数のような)リテラルであった場合、<ph conref="../conrefs.dita#prod/productshortname"></ph>はエラーを挙げます。
+<codeph>xquery文字列リテラル</codeph>はApache XalanがサポートしているXPath式でなければなりません。<ph conref="../conrefs.dita#prod/productshortname"></ph>は、XML問合せ式を評価するとき常にApache Xalanを使います。XalanはXQueryを完全にサポートしないので、<ph conref="../conrefs.dita#prod/productshortname"></ph>もその制約を受けます。
+もしXalanが引数に与えられた問合せをコンパイルして実行できなかった場合、Xalanが挙げた例外を<ph conref="../conrefs.dita#prod/productshortname"></ph>は補足してSQLExceptionとして投げなおします。
+XPathおよびXQuery式の詳細については、次のウェブサイトを参照してください。<xref format="html"
+href="http://www.w3.org/TR/xpath">http://www.w3.org/TR/xpath</xref>および、<xref
+format="html" href="http://www.w3.org/TR/xquery/">http://www.w3.org/TR/xquery/</xref>
+</dd>
+</dlentry><dlentry>
+<dt><codeph>XML値式</codeph></dt>
+<dd>XMLのデータ値かつ整形式のSQL/XML文書でなければなりません。
+<codeph>XML値式</codeph>はパラメータであってはなりません。
+ <ph conref="../conrefs.dita#prod/productshortname"></ph>は暗黙の構文解析やXML値の型変換を行いません。従って、文字列やその他のデータタイプを使うとエラーが発生します。
+もし引数が<ph conref="../conrefs.dita#prod/productshortname"></ph> <xref href="rreffuncxmlquery.dita#rreffuncxmlquery"></xref>によって返された並びであった場合、
+その並びが、一つの文書ノードであるノードの並びであった場合にのみ、その引数は許されます。
+そうではなければ、<ph conref="../conrefs.dita#prod/productshortname"></ph>はエラーを挙げます。</dd>
+</dlentry><dlentry>
+<dt>BY REF</dt>
+<dd>省略可能なこのキーワードにて、<ph conref="../conrefs.dita#prod/productshortname"></ph>にて利用可能な引数渡しの方法が記述されます。
+BY REFは既定の引数渡しの方法なので、XMLEXISTS演算子はこのキーワードの有無にかかわらず同様に振舞います。引数渡しの方法の詳細については、SQL/XML仕様を参照してください。</dd>
+</dlentry></dl></refsyn>
+<section><title>演算子の結果と他の演算子との組み合わせ</title>
+<p>XMLEXISTS演算子の結果は、<codeph>xquery文字列リテラル</codeph>を<codeph>XML値式</codeph>に対して評価した結果に基づく、SQL真偽値です。
+XMLEXISTS演算子が返す値は、<dl>
+<dlentry>
+<dt>UNKNOWN</dt>
+<dd><codeph>XML値式</codeph>がnullであった場合です。</dd>
+</dlentry><dlentry>
+<dt>TRUE</dt>
+<dd>問合せの式をxmlの値に対して評価して、空ではないノードや値の並びが返った場合です。</dd>
+</dlentry><dlentry>
+<dt>FALSE</dt>
+<dd>問合せの式をxmlの値に対して評価して、空の並びが返った場合です。</dd>
+</dlentry></dl></p>
+<p>XMLEXISTS演算子は問合せが評価された結果を直接に返しません。問合せが評価された結果を直接に得たい場合、XMLQUERY演算子を使う必要があります。</p>
+<p>XMLEXISTS演算子の結果はSQLの真偽値なので、真偽型の関数を置くことができる場所なら何処でもXMLEXISTS演算子を使うことができます。たとえば、XMLEXISTS演算子を表定義のチェック制約に使うことや、WHERE節の述部に置くこともできます。</p></section>
+<section><title>例</title>
+<p><codeph>x_table</codeph>表にて、各行の<codeph>xcol</codeph>というXMLの列に、<codeph>age</codeph>属性が20の<codeph>student</codeph>という要素があるかを知るには次のように書きます。<codeblock>SELECT id, XMLEXISTS('<varname>//student[@age=20]</varname>' PASSING BY REF <varname>xcol</varname>) 
+    FROM <varname>x_table</varname></codeblock></p>
+
+<p><codeph>x_table</codeph>表から、<codeph>xcol</codeph>というXMLの列がnullでなく、その列の値に<codeph>/roster/student</codeph>という要素を持つ、各行のIDを返すにはこの文を書きます。
+<codeblock>SELECT id FROM <varname>x_table</varname> WHERE XMLEXISTS('<varname
+>/roster/student</varname>' PASSING BY REF <varname>xcol</varname>)</codeblock></p>
+
+<p><codeph>x_table</codeph>という表にて、<codeph>xcol</codeph>というXMLの列に挿入できるXMLの値を制限することもできます。この例では、<codeph>age</codeph>属性が25より小さい<codeph>student</codeph>要素を、少なくとも一つ持たなければならない、という制約を設けます。
+表を作るにはこのように書きます。<codeblock>CREATE TABLE <varname>x_table</varname> ( id INT, <varname>xcol</varname> XML CHECK (XMLEXISTS ('<varname
+>//student[@age &lt; 25]</varname>' PASSING BY REF <varname>xcol</varname>)) )</codeblock></p></section>
+<section><title>使い方の覚書</title><p><ph conref="../conrefs.dita#prod/productshortname"></ph>にてXMLの機能を使う場合、Apache XercesのようなJAXP parserとApache XalanがJavaのクラスパスに記述されている必要があります。
+JAXP parserあるいはXalanがクラスパスに記述されていなかった場合、XMLEXISTS演算子を利用するとエラーになります。</p></section>
+</refbody>
+</reference>

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE task PUBLIC "-//OASIS//DTD DITA Task//EN"
+ "../dtd/task.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<task id="tdevdvlpcustomcollation" xml:lang="en-us">
+<title>Creating a customized collator</title>
+<shortdesc>You may need to define a collation order different from that of the
+strengths provided by the <i>collation=collation</i> attribute.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>customizing collation</indexterm>
+<indexterm>collation <indexterm>customized</indexterm></indexterm></keywords>
+</metadata></prolog>
+<taskbody>
+<context>
+<p>To define a new collation order, follow these steps.</p>
+</context>
+<steps>
+<step>
+<cmd>Create a class that extends the <i>java.text.spi.CollatorProvider</i>
+class and that returns a collator that orders strings the way you want it
+to.</cmd>
+</step>
+<step>
+<cmd>Create a text file named
+<i>META-INF/services/java.text.spi.CollatorProvider</i> that contains one line
+with the name of your collator provider class.</cmd>
+</step>
+<step>
+<cmd>Put the compiled class file and the text file in a jar file that you drop
+into your JRE's <i>lib/ext</i> directory or in one of the directories specified
+by the <i>java.ext.dirs</i> property.</cmd></step>
+</steps>
+<example>
+<p>For example, suppose you want to define a collation order to make Greek
+characters sort near their Latin equivalents ('&#945;' near 'a', ''&#946;' near
+'b', and so on). You could define another locale with a <i>CollatorProvider</i>
+that returns a <i>java.text.RuleBasedCollator</i> with  ever rules you want.
+See the API documentation for the <i>RuleBasedCollator</i> class for details
+about how you specify rules. In its simplest form, a set of rules might look
+like <codeph>"a,A &lt; b,B &lt; c,C"</codeph>, which means more or less that
+'a' and 'A' should be sorted before 'b' and 'B', which should be sorted before
+'c' and 'C'. So to get the Greek characters sorted near similar Latin
+characters, define a <i>CollatorProvider</i> that looks like this one:</p>
+<codeblock>
+public class MyCollatorProvider extends CollatorProvider {
+    public Locale[] getAvailableLocales() {
+        return new Locale[] {
+            new Locale("en", "US", "greek")
+        };
+    }
+    
+    public Collator getInstance(Locale locale) {
+        StringBuilder rules = new StringBuilder();
+        // alpha should go between a and b
+        rules.append("&lt; a,A &lt; \u03b1,\u0391 &lt; b,B");
+        // beta should go between b and c
+        rules.append("&amp; b,B &lt; \u03b2,\u0392 &lt; c,C");
+        // add more rules here ....
+
+        try {
+            return new RuleBasedCollator(rules.toString());
+        } catch (ParseException pe) {
+            throw new Error(pe);
+        }
+    }
+}
+</codeblock>
+<p>Again, put the compiled class and the
+<i>META-INF/services/java.text.spi.CollatorProvider</i> file in a jar file, and
+start the <codeph>ij</codeph> tool with the <codeph>-Djava.ext.dirs=.</codeph>
+option in the directory where the jar file is located. Create a database that
+uses the new locale and insert some data with both Greek and Latin
+characters:</p>
+<codeblock>
+ij> connect 'jdbc:derby:GreekDB;territory=en_US_greek;collation=TERRITORY_BASED;create=true';
+ij> create table t (x varchar(12));
+0 rows inserted/updated/deleted
+ij> insert into t values 'a', 'b', 'c', '&#945;', '&#946;';
+5 rows inserted/updated/deleted
+ij> select * from t order by x;
+X           
+------------
+a
+&#945;
+b
+&#946;
+c 
+
+5 rows selected
+</codeblock>
+<p>The ordering is just as you wanted it, with the Greek characters between the
+Latin ones, and not at the end where they would normally be located.</p>
+<p>One word of caution: If, after you have created a database, you update your
+custom <i>CollatorProvider</i> so that the ordering is changed, you will need
+to recreate the database. You must do this because the indexes in the database
+are ordered, and you may see strange results if the indexes are ordered with a
+different collator from the one your database is currently using.</p>
+</example>
+</taskbody>
+</task>

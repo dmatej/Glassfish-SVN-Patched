@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsysxplain_statement_timings" xml:lang="en-us">
+<title>SYSXPLAIN_STATEMENT_TIMINGS system table</title>
+<shortdesc>The SYSXPLAIN_STATEMENT_TIMINGS table captures information about
+statement timings which occurred during statements that were executed using
+RUNTIMESTATISTICS with XPLAIN style.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>system tables<indexterm>SYSXPLAIN_STATEMENT_TIMINGS</indexterm></indexterm>
+<indexterm>XPLAIN style statistics<indexterm>SYSXPLAIN_STATEMENT_TIMINGS system table</indexterm></indexterm>
+<indexterm>SYSXPLAIN_STATEMENT_TIMINGS system table</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+    <section><p>See "Working with RunTimeStatistics" in
+         <ph conref="../conrefs.dita#pub/cittuning"></ph> for information
+         on how to configure this.
+            Note in particular that you must
+            call SYSCS_UTIL.SYSCS_SET_STATISTICS_TIMING(1) to enable
+            timing information to be captured.
+            Rows in this table are typically joined with rows in
+            SYSXPLAIN_STATEMENTS and SYSXPLAIN_RESULTSETS during analysis.
+        For example:</p>
+<codeblock>select s.stmt_text, st.execute_time
+    from my_stats.sysxplain_statements s,
+         my_stats.sysxplain_statement_timings st
+    where s.timing_id = st.timing_id
+    order by st.execute_time desc</codeblock>
+            <p>Rows in this table are added
+                automatically when 
+                <ph conref="../conrefs.dita#prod/productshortname"></ph>
+                has been configured appropriately. The
+            rows remain in the table until you delete them or drop the table.
+                </p>
+<p>The following table shows the contents of the SYSXPLAIN_STATEMENT_TIMINGS
+system table.</p>
+<table>
+<title>SYSXPLAIN_STATEMENT_TIMINGS system table</title>
+<desc>For each column in the SYSXPLAIN_STATEMENT_TIMINGS system table, this table provides its data type, its length in bytes, whether it is nullable, and a description of its contents.</desc>
+<tgroup cols="5" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="31*"/>
+<colspec colname="2" colnum="2" colwidth="17*"/>
+<colspec colname="3" colnum="3" colwidth="11*"/>
+<colspec colname="4" colnum="4" colwidth="12*"/>
+<colspec colname="5" colnum="5" colwidth="29*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Column Name</entry>
+<entry colname="2">Type</entry>
+<entry colname="3">Length</entry>
+<entry colname="4">Nullable</entry>
+<entry colname="5">Contents</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">TIMING_ID</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">36</entry>
+<entry colname="4">false</entry>
+<entry colname="5">A unique identifier for this particular row. This column
+    can be used to join with the TIMING_ID column in SYSXPLAIN_STATEMENTS
+to match statement timings with their corresponding statements.</entry>
+</row>
+<row>
+<entry colname="1">PARSE_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The time in milliseconds that 
+    <ph conref="../conrefs.dita#prod/productshortname"></ph> took to parse
+this statement.</entry>
+</row>
+<row>
+<entry colname="1">BIND_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The time in milliseconds that 
+    <ph conref="../conrefs.dita#prod/productshortname"></ph> took to bind
+    this statement. Binding a statement is the process of resolving table
+    and column references in the statement against the table and column
+definitions in the system catalogs.</entry>
+</row>
+<row>
+<entry colname="1">OPTIMIZE_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The time in milliseconds that 
+    <ph conref="../conrefs.dita#prod/productshortname"></ph> took to optimize
+    this statement. During optimization, 
+    <ph conref="../conrefs.dita#prod/productshortname"></ph>
+    considers the various possible
+    execution plans that could be used for the statement, and chooses the
+one it thinks will be best.</entry>
+</row>
+<row>
+<entry colname="1">GENERATE_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The time in milliseconds that 
+    <ph conref="../conrefs.dita#prod/productshortname"></ph> took to generate
+    code for this statement.</entry>
+</row>
+<row>
+<entry colname="1">COMPILE_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The time in milliseconds that 
+    <ph conref="../conrefs.dita#prod/productshortname"></ph> took to compile
+    this statement. Overall statement time is divided into compile time and
+    execute time, and the compile time is further sub-divided into parse, bind,
+optimize, and generate time.</entry>
+</row>
+<row>
+<entry colname="1">EXECUTE_TIME</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The time in milliseconds that 
+    <ph conref="../conrefs.dita#prod/productshortname"></ph> took to execute
+this statement.</entry>
+</row>
+<row>
+<entry colname="1">BEGIN_COMP_TIME</entry>
+<entry colname="2">TIMESTAMP</entry>
+<entry colname="3">29</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The time at which 
+    <ph conref="../conrefs.dita#prod/productshortname"></ph>
+    began to compile this statement.</entry>
+</row>
+<row>
+<entry colname="1">END_COMP_TIME</entry>
+<entry colname="2">TIMESTAMP</entry>
+<entry colname="3">29</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The time at which 
+    <ph conref="../conrefs.dita#prod/productshortname"></ph> finished 
+compiling this statement.</entry>
+</row>
+<row>
+<entry colname="1">BEGIN_EXE_TIME</entry>
+<entry colname="2">TIMESTAMP</entry>
+<entry colname="3">29</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The time at which 
+    <ph conref="../conrefs.dita#prod/productshortname"></ph> began to execute
+    this statement.</entry>
+</row>
+<row>
+<entry colname="1">END_EXE_TIME</entry>
+<entry colname="2">TIMESTAMP</entry>
+<entry colname="3">29</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The time at which 
+    <ph conref="../conrefs.dita#prod/productshortname"></ph> finished 
+executing this statement.</entry>
+</row>
+</tbody>
+</tgroup>
+</table></section>
+</refbody>
+</reference>

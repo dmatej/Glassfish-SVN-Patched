@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevspecialtfoptexample" xml:lang="en-us">
+<title>Example VTICosting implementation</title>
+<shortdesc>Once you have measured your table function's cost, you can write
+the <i>VTICosting</i> methods.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Functions<indexterm>VTICosting example</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+
+<p>Optimizer fine-tuning can be added to the <i>EmployeeTable</i>
+table function shown before in
+<xref href="cdevspecialtfexample.dita#cdevspecialtfexample"></xref>:
+</p>
+
+<codeblock>
+package com.example.hrSchema;
+
+import java.io.Serializable;
+import java.sql.*;
+
+import org.apache.derby.vti.VTICosting;
+import org.apache.derby.vti.VTIEnvironment;
+
+/**
+ * Tuned table function.
+ */
+public class TunedEmployeeTable extends EmployeeTable 
+    implements VTICosting
+{
+    public TunedEmployeeTable() {}
+
+    public double getEstimatedRowCount( VTIEnvironment optimizerState ) 
+        throws SQLException
+    {
+        return getRowCount( optimizerState );
+    }
+
+    public double getEstimatedCostPerInstantiation( 
+        VTIEnvironment optimizerState ) throws SQLException
+    {
+        double I = 100.0;  // optimizer imprecision
+        double P = 10.0;   // cost per row in milliseconds
+        double E = 0.0;    // cost of instantiating the external 
+                            //   ResultSet
+        double N = getRowCount( optimizerState );
+
+        return I * ( ( P * N ) + E );
+    }
+    
+    public boolean supportsMultipleInstantiations( 
+        VTIEnvironment optimizerState ) throws SQLException
+    {
+        return true;
+    }
+
+    //////////////////////////////////////////////////////////////////
+
+    private double  getRowCount( VTIEnvironment optimizerState )
+        throws SQLException
+    {
+        String ROW_COUNT_KEY = "rowCountKey";
+        Double estimatedRowCount = (Double) getSharedState( 
+            optimizerState, ROW_COUNT_KEY );
+        
+        if ( estimatedRowCount == null )
+        {
+            Connection        conn = getConnection();
+            PreparedStatement ps = conn.prepareStatement( 
+                "select count(*) from hrSchema.EmployeeTable" );
+            ResultSet         rs = ps.executeQuery();
+
+            rs.next();
+            estimatedRowCount = new Double( rs.getDouble( 1 ) );
+            
+            setSharedState( optimizerState, ROW_COUNT_KEY, 
+                estimatedRowCount );
+
+            rs.close();
+            ps.close();
+            conn.close();
+        }
+
+        return estimatedRowCount.doubleValue();
+    }
+
+    private Serializable getSharedState( 
+        VTIEnvironment optimizerState, String key )
+    { 
+        return (Serializable) optimizerState.getSharedState( key ); 
+    }
+
+    private void setSharedState( VTIEnvironment optimizerState, 
+        String key, Serializable value )
+    { 
+        optimizerState.setSharedState( key, value ); 
+    }
+}
+</codeblock>
+
+</conbody>
+</concept>

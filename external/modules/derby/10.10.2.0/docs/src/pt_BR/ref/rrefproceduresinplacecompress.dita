@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<reference id="rrefproceduresinplacecompress" xml:lang="pt-br">
+<title>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</title>
+<prolog
+><metadata>
+<keywords>
+<indexterm>Recuperação do espaço não utilizado</indexterm>
+<indexterm>Procedimentos do sistema<indexterm>SYSCS_INPLAC E_COMPRESS_TABLE</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>O procedimento do sistema
+<codeph>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</codeph>
+é utilizado para recuperar o espaço alocado, mas não utilizado, de uma
+tabela e seus índices.
+Normalmente, existe espaço alocado mas não utilizado quando uma grande
+quantidade de dados é excluída da tabela, e não ocorrem inserções subseqüentes
+para utilizar o espaço criado pelas exclusões.
+Por padrão, o <ph conref="refconrefs.dita#prod/productshortname"></ph>
+não retorna para o sistema operacional o espaço não utilizado.
+Por exemplo, uma vez que uma página tenha sido alocada para uma tabela ou um
+índice, esta não é devolvida automaticamente para o sistema operacional até
+que a tabela ou o índice tenha sido removido.
+O procedimento do sistema
+<codeph>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</codeph>
+permite devolver para o sistema operacional o espaço não utilizado.</p>
+<p>Este procedimento do sistema pode ser utilizado para ocasionar três níveis de
+compressão <i>in loco</i> de uma tabela SQL:
+<codeph>PURGE_ROWS</codeph>, <codeph>DEFRAGMENT_ROWS</codeph> e
+<codeph>TRUNCATE_END</codeph>.
+Diferentemente de <codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE()</codeph>,
+todo o trabalho é feito <i>in loco</i> na tabela ou índice existente.</p>
+</section>
+<section>
+<title>Sintaxe</title>
+<codeblock><b>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE(
+                IN SCHEMANAME VARCHAR(128),
+                IN TABLENAME VARCHAR(128),
+                IN PURGE_ROWS SMALLINT,
+                IN DEFRAGMENT_ROWS SMALLINT,
+                IN TRUNCATE_END SMALLINT )</b>
+</codeblock> <dl><dlentry>
+<dt>SCHEMANAME</dt>
+<dd>Um argumento de entrada do tipo VARCHAR(128) que especifica o esquema da
+tabela. Passar um argumento nulo resulta em erro.</dd>
+</dlentry>
+<dlentry>
+<dt>TABLENAME</dt>
+<dd>Um argumento de entrada do tipo VARCHAR(128) que especifica o nome da
+tabela.
+A cadeia de caracteres deve corresponder exatamente às letras maiúsculas e
+minúsculas do nome da tabela: um argumento igual a "Fred" é passado para o SQL
+como o identificador delimitado 'Fred'.
+Passar um argumento nulo resulta em erro.</dd>
+</dlentry>
+<dlentry>
+<dt>PURGE_ROWS</dt>
+<dd>Se PURGE_ROWS for definido com um valor diferente de zero, então será feita
+uma única passagem através da tabela para remover as linhas com a exclusão
+efetivada.
+Este espaço se torna disponível para as próximas linhas inseridas, mas permanece
+alocado para a tabela.
+Como esta opção varre todas as páginas da tabela, seu desempenho é linearmente
+proporcional ao tamanho da tabela.</dd>
+</dlentry><dlentry>
+<dt>DEFRAGMENT_ROWS</dt>
+<dd>Se DEFRAGMENT_ROWS for definido com um valor diferente de zero, então será
+feita uma única passagem de desfragmentação para mover as linhas existentes no
+final da tabela em direção ao início da tabela.
+O objetivo da desfragmentação é esvaziar um conjunto de páginas no final da
+tabela, que poderão depois ser devolvidas ao sistema operacional pela opção
+TRUNCATE_END.
+Recomenda-se somente utilizar a opção DEFRAGMENT_ROWS quando a opção
+TRUNCATE_END também é utilizada.
+A opção DEFRAGMENT_ROWS varre toda a tabela, e precisa atualizar as entradas
+dos índices de todas as linhas da tabela base movidas, portanto o tempo de
+execução é linearmente proporcional ao tamanho da tabela.</dd>
+</dlentry>
+<dlentry>
+<dt>TRUNCATE_END</dt>
+<dd>Se TRUNCATE_END for definido com um valor diferente de zero, então todas as
+páginas contíguas no final da tabela serão devolvidas para o sistema operacional.
+A execução das opções PURGE_ROWS e/ou DEFRAGMENT_ROWS pode aumentar o número de
+páginas afetadas.
+Por si só, esta opção não realiza uma varredura na tabela.</dd>
+</dlentry>
+</dl>
+</section>
+<section>
+<title>Exemplo SQL</title>
+<p>Para comprimir a tabela chamada CLIENTE no esquema chamado US,
+utilizando todas as opções de compressão disponíveis:
+<codeblock><b>CALL SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE('US', 'CLIENTE', 1, 1, 1);</b></codeblock>
+</p>
+<p>Para devolver o espaço livre no final da mesma tabela, pode se feita a
+seguinte chamada, que é muito mais rápida do que executar todas as opções,
+mas provavelmente devolve muito menos espaço:
+<codeblock><b>CALL SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE('US', 'CLIENTE', 0, 0, 1);</b></codeblock>
+</p>
+</section>
+<section>
+<title>Exemplo Java</title>
+<p>Para comprimir a tabela chamada CLIENTE no esquema chamado US,
+utilizando todas as opções de compressão disponíveis:
+<codeblock>CallableStatement cs = conn.prepareCall
+("CALL SYSCS_UTIL.SYSCS_COMPRESS_TABLE(?, ?, ?, ?, ?)");
+cs.setString(1, "US");
+cs.setString(2, "CLIENTE");
+cs.setShort(3, (short) 1);
+cs.setShort(4, (short) 1);
+cs.setShort(5, (short) 1);
+cs.execute();</codeblock>
+</p>
+<p>Para devolver o espaço livre no final da mesma tabela, pode se feita a
+seguinte chamada, que é muito mais rápida do que executar todas as opções,
+mas provavelmente devolve muito menos espaço:
+<codeblock>CallableStatement cs = conn.prepareCall
+("CALL SYSCS_UTIL.SYSCS_COMPRESS_TABLE(?, ?, ?, ?, ?)");
+cs.setString(1, "US");
+cs.setString(2, "CLIENTE");
+cs.setShort(3, (short) 0);
+cs.setShort(4, (short) 0);
+cs.setShort(5, (short) 1);
+cs.execute();</codeblock>
+</p>
+</section>
+<section>
+<p>Recomenda-se que o procedimento SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE
+seja executado no modo de auto-efetivação.
+<note>
+Este procedimento obtém um bloqueio exclusivo na tabela sendo comprimida.
+Todos os planos de instrução dependentes da tabela ou de seus índices são
+invalidados.
+Para obter informações sobre como identificar espaço não utilizado deve ser
+consultado o <cite><ph conref="refconrefs.dita#pub/citadmin"></ph></cite>.
+</note>
+</p>
+</section>
+</refbody>
+</reference>

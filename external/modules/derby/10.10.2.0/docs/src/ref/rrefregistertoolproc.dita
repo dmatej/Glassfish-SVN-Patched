@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefregistertoolproc" xml:lang="en-us">
+<title>SYSCS_UTIL.SYSCS_REGISTER_TOOL system procedure</title>
+<shortdesc>The <codeph>SYSCS_UTIL.SYSCS_REGISTER_TOOL</codeph> system procedure
+loads and unloads optional tools packages.</shortdesc>
+<prolog><metadata>
+<keywords>
+<indexterm>system procedures<indexterm>SYSCS_UTIL.SYSCS_REGISTER_TOOL</indexterm></indexterm>
+<indexterm>SYSCS_UTIL.SYSCS_REGISTER_TOOL system procedure</indexterm>
+<indexterm>tools<indexterm>SYSCS_UTIL.SYSCS_REGISTER_TOOL
+system procedure</indexterm></indexterm>
+<indexterm>registering tools<indexterm>SYSCS_UTIL.SYSCS_REGISTER_TOOL
+system procedure</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><title>Syntax</title>
+<codeblock>SYSCS_UTIL.SYSCS_REGISTER_TOOL(IN TOOLNAME VARCHAR(128), 
+                               IN REGISTER BOOLEAN, 
+                               IN OPTIONALARGS VARCHAR(128) ... )</codeblock>
+<p>No result set is returned by this procedure.</p>
+<dl><dlentry>
+<dt>TOOLNAME</dt>
+<dd>The name of the optional tool. Must be either
+<codeph>'databaseMetaData'</codeph> or <codeph>'foreignViews'</codeph>.</dd>
+</dlentry>
+<dlentry>
+<dt>REGISTER</dt>
+<dd>A value of true tells
+<ph conref="../conrefs.dita#prod/productshortname"></ph> to load the tool. A 
+value of false tells <ph conref="../conrefs.dita#prod/productshortname"></ph> to
+unload the tool.</dd>
+</dlentry>
+<dlentry>
+<dt>OPTIONALARGS</dt>
+<dd>Optional arguments specific to each tool.</dd>
+</dlentry></dl>
+</section>
+<section><title>Execute privileges</title>
+<p>If authentication and SQL authorization are both enabled, only the
+<xref href="rrefattrib26867.dita#rrefattrib26867">database owner</xref> has
+execute privileges on this procedure by default. See "Enabling user
+authentication" and "Setting the SQL standard authorization mode" in the
+<ph conref="../conrefs.dita#pub/citdevelop"></ph> for more information. The
+database owner can grant access to other users.</p>
+</section>
+<section><title>Usage</title>
+<p>The following optional tools are supported:</p>
+<ul>
+<li><codeph>databaseMetaData</codeph>
+<p>This optional tool creates functions and table functions to wrap the methods
+in <i>java.sql.DatabaseMetaData</i>, allowing you to use <i>DatabaseMetaData</i>
+methods in queries. For example, you can join and filter the <i>ResultSet</i>s
+returned by <i>DatabaseMetaData</i> methods. This tool does not require any
+optional arguments. To create the metadata functions and table functions, do the
+following:</p>
+<codeblock><b>call syscs_util.syscs_register_tool( 'databaseMetaData', true )
+</b></codeblock>
+<p>To drop the functions and table functions, do the following:</p>
+<codeblock><b>call syscs_util.syscs_register_tool( 'databaseMetaData', false )
+</b></codeblock>
+</li>
+<li><codeph>foreignViews</codeph>
+<p>This optional tool creates schemas, table functions, and convenience views
+for all user tables in a foreign database. The table functions and views are
+useful for bulk-importing foreign data into
+<ph conref="../conrefs.dita#prod/productshortname"></ph>. This tool takes two
+additional arguments:</p>
+<dl><dlentry>
+<dt>CONNECTION_URL</dt>
+<dd>This is a connection URL string suitable for creating a connection to the
+foreign database by calling <i>DriverManager.getConnection()</i>.</dd>
+</dlentry><dlentry>
+<dt>SCHEMA_PREFIX</dt>
+<dd>This is an optional string prefixed to all of the schema names which the
+tool creates. This argument may be omitted. If it is omitted, then the tool will
+create schemas which have the same names as the schemas in the foreign
+database.</dd>
+</dlentry></dl>
+<p>To create views on the foreign data, do the following:</p>
+<codeblock><b>call syscs_util.syscs_register_tool( 'foreignViews', true,
+    'foreignDatabaseURL', 'XYZ_' )
+</b></codeblock>
+<p>To drop the views on the foreign data, do the following:</p>
+<codeblock><b>call syscs_util.syscs_register_tool( 'foreignViews', false,
+    'foreignDatabaseURL', 'XYZ_' )
+</b></codeblock>
+</li>
+</ul>
+<p>See the <ph conref="../conrefs.dita#pub/citutilities"></ph> for more
+information on how to use these tools. Before you run an optional tool, make
+sure that your classpath contains the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> jar files, including
+<i>derbytools.jar</i>.</p>
+</section>
+</refbody>
+</reference>

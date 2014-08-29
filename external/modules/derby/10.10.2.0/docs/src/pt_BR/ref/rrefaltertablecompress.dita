@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<reference id="rrefaltertablecompress" xml:lang="pt-br">
+<title>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Compressão de tabelas</indexterm>
+<indexterm>Procedimentos do sistema<indexterm>SYSCS_COMPRESS_TABLE</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>O procedimento do sistema <codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</codeph>
+é utilizado para recuperar o espaço alocado, mas não utilizado, de uma
+tabela e seus índices.
+Normalmente, existe espaço alocado mas não utilizado quando uma grande
+quantidade de dados é excluída da tabela, ou os índices são atualizados.
+Por padrão, o <ph conref="refconrefs.dita#prod/productshortname"></ph>
+não retorna para o sistema operacional o espaço não utilizado.
+Por exemplo, uma vez que uma página tenha sido alocada para uma tabela ou um
+índice, esta não é devolvida automaticamente para o sistema operacional até
+que a tabela ou o índice tenha sido removido.
+O procedimento do sistema <codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</codeph>
+permite devolver para o sistema operacional o espaço não utilizado.</p>
+</section>
+<section>
+<title>Sintaxe</title>
+<codeblock><b>SYSCS_UTIL.SYSCS_COMPRESS_TABLE (IN SCHEMANAME VARCHAR(128),
+IN TABLENAME VARCHAR(128), IN SEQUENTIAL SMALLINT)</b>
+</codeblock> <dl><dlentry>
+<dt>SCHEMANAME</dt>
+<dd>Um argumento de entrada do tipo VARCHAR(128) que especifica o esquema da
+tabela. Passar um valor nulo resulta em erro.</dd>
+</dlentry>
+<dlentry>
+<dt>TABLENAME</dt>
+<dd>Um argumento de entrada do tipo VARCHAR(128) que especifica o nome da
+tabela.
+A cadeia de caracteres deve corresponder exatamente às letras maiúsculas e
+minúsculas do nome da tabela: um argumento igual a "Fred" é passado para o SQL
+como o identificador delimitado 'Fred'.
+Passar um argumento nulo resulta em erro.</dd>
+</dlentry><dlentry>
+<dt>SEQUENTIAL</dt>
+<dd>Um argumento de entrada diferente de zero do tipo SMALLINT força a operação
+executar no modo seqüencial, enquanto um argumento igual a zero força a operação
+a não executar no modo seqüencial.
+Passar um argumento nulo resulta em um erro.</dd>
+</dlentry>
+</dl>
+</section>
+<section>
+<title>Exemplo SQL</title>
+<p>Para comprimir a tabela chamada CLIENTE no esquema chamado US,
+utilizando a opção SEQUENTIAL:</p>
+<codeblock><b>CALL SYSCS_UTIL.SYSCS_COMPRESS_TABLE('US', 'CLIENTE', 1)</b></codeblock>
+</section>
+<section>
+<title>Exemplo Java</title>
+<p>Para comprimir a tabela chamada CLIENTE no esquema chamado US,
+utilizando a opção SEQUENTIAL:</p>
+<codeblock>CallableStatement cs = conn.prepareCall
+("CALL SYSCS_UTIL.SYSCS_COMPRESS_TABLE(?, ?, ?)");
+cs.setString(1, "US");
+cs.setString(2, "CLIENTE");
+cs.setShort(3, (short) 1);
+cs.execute();</codeblock>
+</section>
+<section>
+<p>Se o parâmetro SEQUENTIAL não for especificado, o
+<ph conref="refconrefs.dita#prod/productshortname"></ph>
+reconstruirá todos os índices simultaneamente com a tabela base.
+Se não for especificado o argumento SEQUENTIAL, este procedimento poderá fazer
+uso intenso da memória e utilizar muito espaço temporário em disco
+(uma quantidade aproximadamente igual a duas vezes o espaço utilizado, mais o
+espaço alocado mas não utilizado).
+Isto acontece porque o
+<ph conref="refconrefs.dita#prod/productshortname"></ph>
+comprime a tabela copiando as linhas ativas para o novo espaço alocado
+(em vez de embaralhar e truncar o espaço existente).
+O espaço extra utilizado é retornado ao sistema operacional no COMMIT.</p>
+</section>
+<section>
+<p>Quando é especificado SEQUENTIAL, o
+<ph conref="refconrefs.dita#prod/productshortname"></ph>
+comprime a tabela base e depois comprime cada um dos índices seqüencialmente.
+Utilizar SEQUENTIAL faz com que seja usado menos memória e espaço em disco,
+mas demora mais tempo.
+Deve ser utilizado o argumento SEQUENTIAL para reduzir a utilização de
+memória e espaço em disco.</p>
+</section>
+<section>
+<p>O procedimento do sistema <codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</codeph>
+não pode devolver espaço em disco para o sistema operacional enquanto o COMMIT
+não for executado.
+Isto significa que o espaço ocupado pela tabela base e seus índices não pode
+ser retornado para o sistema operacional enquanto COMMIT não for executado
+(somente o espaço em disco alocado temporariamente pela classificação externa
+pode ser retornado para o sistema operacional antes de COMMIT).
+Recomenda-se utilizar o procedimento
+<codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</codeph>
+no modo de auto-efetivação.
+<note>
+Este procedimento obtém um bloqueio exclusivo na tabela sendo comprimida.
+Todos os planos de instrução dependentes da tabela e de seus índices são
+invalidados.
+Para obter informações sobre como identificar espaço não utilizado deve ser
+consultado o <cite><ph conref="refconrefs.dita#pub/citadmin"></ph></cite>.
+</note>
+</p>
+</section>
+</refbody>
+</reference>

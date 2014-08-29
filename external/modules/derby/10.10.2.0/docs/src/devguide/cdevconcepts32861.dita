@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevconcepts32861" xml:lang="en-us">
+<title>Programming applications to handle deadlocks</title>
+<shortdesc>When you configure your system for deadlock and lockwait timeouts
+and an application could be chosen as a victim when the transaction times
+out, you should program your application to handle them.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Deadlocks<indexterm>programming an application to handle</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>To do this, test for <i>SQLExceptions</i> with <i>SQLStates</i> of 40001
+(deadlock timeout) or 40XL1 (lockwait timeout).</p>
+<p>In the case of a deadlock you might want to re-try the transaction that
+was chosen as a victim. In the case of a lock wait timeout, you probably do
+not want to do this right away.</p>
+<p>The following code is one example of how to handle a deadlock timeout.</p>
+<codeblock><b>/// if this code might encounter a deadlock, 
+// put the whole thing in a try/catch block
+// then try again if the deadlock victim exception 
+// was thrown</b>
+try {
+    s6.executeUpdate(
+         "UPDATE employee " +
+         "SET bonus = 625 "
+         "WHERE empno='000150'");
+    s6.executeUpdate("UPDATE project " +
+         "SET respemp = '000150' " +
+         "WHERE projno='IF1000'");
+} 
+<b>// note: do not catch such exceptions in database-side methods; 
+// catch such exceptions only at the outermost level of 
+// application code. 
+// See <xref href="cdevspecial41728.dita#cdevspecial41728"></xref>. </b> 
+catch (SQLException se) { 
+    if (se.getSQLState().equals("40001")) { 
+        <b>// it was chosen as a victim of a deadlock. 
+        // try again at least once at this point.</b> 
+        System.out.println( "Will try the transaction again."); 
+        s6.executeUpdate("UPDATE employee " + 
+        "SET bonus = 625 " + 
+        "WHERE empno='000150'"); 
+        s6.executeUpdate("UPDATE project " + 
+        "SET respemp = 000150 " + 
+        "WHERE projno='IF1000'"); 
+    } 
+    else throw se; 
+}
+</codeblock>
+</conbody>
+</concept>

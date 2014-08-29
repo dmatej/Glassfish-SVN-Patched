@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//IBM//DTD DITA Concept//EN"
+ "../../dtd/concept.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<concept id="cadminrollforward" xml:lang="pt-br">
+<title>Recuperação com rolagem para frente</title>
+<shortdesc>O <ph conref="adminconrefs.dita#prod/productshortname"></ph> suporta
+a recuperação com rolagem para frente (<i>roll-forward recovery</i>) para
+restaurar um banco danificado para o estado mais recente anterior à ocorrência
+da falha.</shortdesc>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Logs arquivados em linha</indexterm>
+<indexterm>Logs arquivados em linha<indexterm>habilitação</indexterm></indexterm>
+<indexterm>Logs arquivados em linha<indexterm>desabilitação</indexterm></indexterm>
+<indexterm>Cópia de segurança<indexterm>Recuperação com rolagem para frente</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>O <ph conref="adminconrefs.dita#prod/productshortname"></ph> restaura o
+banco de dados a partir da cópia de segurança completa, e refaz todas as
+transações posteriores à cópia de segurança.
+São necessários todos os arquivos de <i>log</i> posteriores à cópia de
+segurança, para refazer as transações posteriores à cópia de segurança.
+Por padrão, o banco de dados mantém apenas os <i>logs</i> requeridos para a
+recuperação de queda.
+Para a recuperação com rolagem para frente ser bem-sucedida, todos os arquivos
+de <i>log</i> posteriores à cópia de segurança devem ser guardados.
+Os arquivos de <i>log</i> podem ser guardados utilizando chamadas de função de
+cópia de segurança que habilitam guardar o <i>log</i>.</p>
+<p>Na recuperação com rolagem para frente o modo que guarda o <i>log</i> garante
+que todos os arquivos de <i>log</i> antigos ficam disponíveis.
+Os arquivos de <i>log</i> ficam disponíveis somente a partir do momento em que
+o modo que guarda o <i>log</i> é habilitado.</p>
+<p>O <ph conref="adminconrefs.dita#prod/productshortname"></ph> utiliza as
+seguinte informações para restaurar o banco de dados:
+<ul>
+<li>A cópia de segurança do banco de dados</li>
+<li>O conjunto de <i>logs</i> guardados</li>
+<li>O <i>log</i> em linha ativo no momento</li>
+</ul>
+</p>
+<p>A recuperação com rolagem para frente não pode ser utilizada para restaurar
+tabelas individuais.
+A recuperação com rolagem para frente recupera todo o banco de dados.</p>
+<p>Para restaurar um banco de dados utilizando a recuperação com rolagem para
+frente deverá existir uma cópia de segurança do banco de dados, todos os
+<i>logs</i> guardados desde que a cópia de segurança foi criada, e os arquivos
+de <i>log</i> ativos.
+Todos os arquivos de <i>log</i> deverão estar no diretório de <i>log</i> do
+banco de dados.</p>
+<p>Existem dois tipos de arquivo de <i>log</i> no
+<ph conref="adminconrefs.dita#prod/productshortname"></ph>:
+os <i>logs</i> ativos e os <i>logs</i> em linha guardados.</p>
+<dl>
+<dlentry>
+<dt>Logs ativos</dt>
+<dd>Os <i>logs</i> ativos são utilizados durante a recuperação de queda para
+evitar que uma falha que deixe o banco de dados em um estado inconsistente.
+A recuperação com rolagem para frente também pode utilizar os <i>logs</i> ativos
+para recuperar até o final dos arquivos de <i>log</i>.
+Os <i>logs</i> ativos estão localizados no diretório de caminho de <i>log</i>
+do banco de dados.</dd>
+</dlentry>
+<dlentry>
+<dt>Logs em linha guardados</dt>
+<dd>Arquivos de <i>log</i> guardados para uso pela recuperação com rolagem
+para frente, após não serem mais necessários para recuperação de queda.
+Os <i>logs</i> em linha guardados também são mantidos no diretório de caminho
+de <i>log</i> do banco de dados.</dd>
+</dlentry>
+</dl>
+<p><b>Habilitação do modo que guarda o <i>log</i></b></p>
+<p>Os <i>logs</i> em linha guardados estarão disponíveis somente se o banco
+de dados for habilitado para o modo de guarda o <i>log</i>.
+Pode ser utilizado o seguinte procedimento do sistema para habilitar o banco de
+dados no modo que guarda o <i>log</i>:</p>
+<codeblock>SYSCS_UTIL.SYSCS_BACKUP_DATABASE_AND_ENABLE_LOG_ARCHIVE_MODE
+(IN BACKUPDIR VARCHAR(32672), IN SMALLINT DELETE_ARCHIVED_LOG_FILES)</codeblock>
+<p>Os parâmetros de entrada para a chamada do exemplo anterior especificam o
+local onde a cópia de segurança deverá ser armazenada, e especifica se o banco
+de dados deverá manter os <i>logs</i> em linha guardados para a cópia de
+segurança.
+Os arquivos de <i>log</i> em linha guardados existentes, criados antes desta
+cópia de segurança, serão eliminados se o valor do parâmetro de entrada para
+o parâmetro <i>deleteOnlineArchivedLogFiles</i> for diferente de zero.
+Os arquivos de <i>log</i> são eliminados somente após a cópia de segurança ter
+sido bem-sucedida.
+<note>Tenha certeza de armazenar a cópia de segurança do banco de dados em
+um local seguro ao escolher a opção de remoção do arquivo de <i>log</i>.</note>
+</p>
+<p>O procedimento SYSCS_UTIL.SYSCS_BACKUP_DATABASE_AND_ENABLE_LOG_ARCHIVE_MODE
+emite uma mensagem de erro quando existem operações não registradas na mesma
+transação do procedimento de cópia de segurança.</p>
+<p>Caso exista no sistema, quando a cópia de segurança iniciar, operações não
+registradas em andamento em outras transações, este procedimento ficará
+bloqueado até que estas transações completem, antes de realizar a cópia de
+segurança.
+O Derby converte, automaticamente, as operações não registradas para o modo
+registrado, quando estas são iniciadas quando a cópia de segurança está em
+andamento (exceto as operações que fazem manutenção de arquivos <i>jar</i> de
+aplicativo no banco de dados).
+Os procedimentos que instalam, substituem e removem arquivos <i>jar</i> no
+banco de dados são bloqueadas quando a cópia de segurança está em andamento.</p>
+<p>Se não for desejado que a cópia de segurança fique bloqueada até que
+as operações não registradas em outras transações completem, deve ser
+utilizado o procedimento
+SYSCS_UTIL.SYSCS_BACKUP_DATABASE_AND_ENABLE_LOG_ARCHIVE_MODE_NOWAIT.
+Esse procedimento emite um erro logo no início da cópia de segurança caso
+existam transações em andamento com operações não registradas, em vez de
+aguardar estas transações completarem.</p>
+<p><b>Desabilitação do modo que guarda o <i>log</i></b></p>
+<p>Após o modo que guarda o <i>log</i> ter sido habilitado, o banco de dados
+ficará para sempre com o modo que guarda o <i>log</i> habilitado, mesmo que
+posteriormente seja recarregado ou seja feita uma cópia de segurança.
+A única maneira de desabilitar o modo que guarda o <i>log</i> é executar o
+seguinte procedimento:</p>
+<codeblock>SYSCS_UTIL.SYSCS_DISABLE_LOG_ARCHIVE_MODE(IN SMALLINT DELETE_ARCHIVED_LOG_FILES)</codeblock>
+<p>Este procedimento do sistema desabilita o modo que guarda o <i>log</i>, e
+remove todos os arquivos de <i>log</i> guardados existentes, se o parâmetro de
+entrada <i>DELETE_ARCHIVED_LOG_FILES</i> for diferente de zero.</p>
+<p><b>Realização da recuperação com rolagem para frente:</b></p>
+<p>Utilizando a cópia de segurança completa, os <i>logs</i> guardados, e os
+<i>logs</i> ativos, o banco de dados pode ser restaurado até seu estado mais
+recente realizando a recuperação com rolagem para frente.
+A recuperação com rolagem para frente é realizada especificando o atributo da
+URL de conexão <i>rollForwardRecoveryFrom=&lt;caminho-da-cópia-de-segurança&gt;</i>
+em tempo de inicialização.
+Com isto o banco de dados retorna ao seu estado mais recente utilizando a cópia
+de segurança completa, os <i>logs</i> guardados e os <i>logs</i> ativos.
+Todos os arquivos de <i>log</i> deverão estar no diretório do caminho de
+<i>log</i> do banco de dados.</p>
+<p><b>Cópia de segurança do banco de dados:</b></p>
+<p>No exemplo a seguir é realizada a cópia de segurança do banco de dados
+chamado <i>wombat</i> no diretório <i>d:/backup</i> com o modo que guarda
+arquivo de <i>log</i> habilitado:
+<codeblock>connect 'jdbc:derby:wombat;create=true';
+
+create table t1(a int not null primary key);
+------------------DML/DDL Operations
+CALL SYSCS_UTIL.SYSCS_BACKUP_DATABASE_AND_ENABLE_LOG_ARCHIVE_MODE
+('d:/backup', 0);
+insert into t1 values(19);
+create table t2(a int);
+-----------------Operações de DML/DDL
+-----------------Queda do banco de dados (Mídia corrompida nos discos de dado)</codeblock>
+</p>
+<p><b>Restauração do banco de dados utilizando a recuperação com rolagem para frente:</b></p>
+<p>No exemplo a seguir, o banco de dados é restaurado utilizando a recuperação
+com rolagem para frente após uma falha da mídia:
+<codeblock>connect 'jdbc:derby:wombat;rollForwardRecoveryFrom=d:/backup/wombat';
+select * from t1;
+-----------------Operações de DML/DDL</codeblock>
+</p>
+<p>Pode ser especificado o seguinte atributo na URL de conexão em tempo de
+carga do JDBC:</p>
+<p><i>rollForwardRecoveryFrom=caminho</i></p>
+<p>Para obter mais informações deve ser consultada a seção
+<i>rollForwardRecoveryFrom=caminho</i> no
+<ph conref="adminconrefs.dita#pub/citref"></ph>.</p>
+<p>Após o banco de dados ser restaurado a partir da cópia de segurança completa,
+as transações dos <i>logs</i> em linha arquivados e dos <i>logs</i> ativos
+são refeitas.</p>
+</conbody>
+</concept>

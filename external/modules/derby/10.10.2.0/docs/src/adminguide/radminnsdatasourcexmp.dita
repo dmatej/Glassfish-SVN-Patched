@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="radminnsdatasourcexmp" xml:lang="en-us">
+<title>DataSource access examples</title>
+<shortdesc>These examples use
+<codeph>org.apache.derby.jdbc.ClientDataSource</codeph> and
+<codeph>org.apache.derby.jdbc.ClientConnectionPoolDataSource</codeph> to access
+the Network Server.</shortdesc>
+<prolog></prolog>
+<refbody>
+<section>
+<p>The following example uses
+<codeph>org.apache.derby.jdbc.ClientDataSource</codeph> to access the Network
+Server:</p>
+</section>
+<example> <codeblock>org.apache.derby.jdbc.ClientDataSource ds =
+   new org.apache.derby.jdbc.ClientDataSource();
+ds.setDatabaseName("mydb");
+ds.setCreateDatabase("create");  
+ds.setUser("user");  
+ds.setPassword("mypass"); 
+
+// The host on which Network Server is running
+ds.setServerName("localhost");
+
+// The port on which Network Server is listening
+ds.setPortNumber(1527);
+
+Connection conn = ds.getConnection(); 
+</codeblock></example>
+<section id="stmtcacheexmp"><title>Statement caching example</title>
+<p>The following example uses 
+<codeph>org.apache.derby.jdbc.ClientConnectionPoolDataSource</codeph> to
+access the Network Server and use JDBC statement caching:</p></section>
+<example>
+<codeblock>org.apache.derby.jdbc.ClientConnectionPoolDataSource cpds = 
+   new ClientConnectionPoolDataSource();
+
+// Set the number of statements the cache is allowed to cache.
+// Any number greater than zero will enable the cache.
+cpds.setMaxStatements(20);
+
+// Set other DataSource properties
+cpds.setDatabaseName("mydb");
+cpds.setCreateDatabase("create");
+cpds.setUser("user");
+cpds.setPassword("mypass"); 
+cpds.setServerName("localhost");
+cpds.setPortNumber(1527);
+
+// This physical connection will have JDBC statement caching enabled.
+javax.sql.PooledConnection pc = cpds.getPooledConnection();
+
+// Create a logical connection.
+java.sql.Connection con = pc.getConnection();
+
+// Interact with the database.
+java.sql.PreparedStatement ps = con.prepareStatement(
+   "select * from myTable where id = ?");
+...
+ps.close(); // Inserts or returns statement to the cache
+...
+con.close();
+
+// The next logical connection can gain from using the cache.
+con = pc.getConnection();
+
+// This prepare causes a statement to be fetched from the local cache.
+PreparedStatement ps = con.prepareStatement(
+   "select * from myTable where id = ?");
+...
+
+// To dispose of the cache, close the connection.
+pc.close();
+</codeblock></example>
+</refbody>
+</reference>

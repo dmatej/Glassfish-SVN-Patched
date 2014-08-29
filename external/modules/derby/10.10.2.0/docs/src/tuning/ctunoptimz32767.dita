@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctunoptimz32767">
+<title>Join order case study</title>
+<prolog>
+</prolog>
+<conbody>
+<p>For example, consider the following situation:</p>
+<p>The <i>Flights</i> table (as you know) stores information
+about flight segments. It has a primary key on the <i>flight_id</i> and <i>segment_number </i>columns. This primary key
+constraint is backed up by a unique index on those columns.</p>
+<p>The <i>FlightAvailability</i> table, which stores information
+about the availability of flight segments on particular days, can store several
+rows for a particular row in the <i>Flights</i> table (one
+for each date).</p>
+<p>You want to see information about all the flights, and you issue the following
+query:  
+<codeblock><b>SELECT *
+FROM FlightAvailability AS fa, Flights AS fts
+WHERE fa.flight_id = fts.flight_id
+AND fa.segment_number = fts.segment_number</b></codeblock></p>
+<p>First imagine the situation in which there are no useful indexes on the <i>FlightAvailability</i> table.</p>
+<p>Using the join order with <i>FlightAvailability</i> as
+the outer table and <i>Flights</i> as the inner table is
+cheaper because it allows the <i>flight_id</i>/<i>segment_number</i> columns from <i>FlightAvailability</i> to
+be used to probe into and find matching rows in <i>Flights,</i> using the primary key index on <i>Flights.flight_id</i> and <i>Flights.segment_number</i>.</p>
+<p>This is preferable to the opposite join order (with <i>Flights</i> as the outer table and <i>FlightAvailability</i> as the inner table) because in that case, for each row in <i>Flights,</i> the system would have to scan the entire <i>FlightAvailability</i> table to find the matching rows (because there is
+no useful index- an index on the <i>flight_id</i>/<i>segment_number</i> columns).</p>
+<p>Second, imagine the situation in which there is a useful index on the <i>FlightAvailability</i> table (this is actually the case in
+the sample database). <i>FlightAvailability</i> has a primary
+key index on <i>flight_id</i>, <i>segment_number</i>, and <i>booking_date</i>. In that index, the <i>flight_id</i>-<i>segment_number</i> combination is not unique,
+since there is a one-to-many correspondence between the <i>Flights</i> table and the <i>FlightAvailability</i> table.
+However, the index is still very useful for finding rows with particular <i>flight_id</i>/<i>segment_number</i> values.</p>
+<p>You issue the same query:  
+<codeblock><b>SELECT *
+FROM FlightAvailability AS fa, Flights AS fts
+WHERE fa.flight_id = fts.flight_id
+AND fa.segment_number = fts.segment_number</b></codeblock></p>
+<p>Although the difference in cost is smaller, it is still cheaper for the <i>Flights</i> table to be the inner table, because its index
+is unique, whereas <i>FlightAvailability</i>'s index
+is not. That is because it is cheaper for <ph conref="../conrefs.dita#prod/productshortname"></ph> to step through a unique
+index than through a non-unique index.</p>
+</conbody></concept>

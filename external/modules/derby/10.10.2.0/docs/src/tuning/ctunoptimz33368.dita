@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctunoptimz33368">
+<title>What is an index?</title>
+<prolog><metadata>
+<keywords>
+<indexterm>Indexes<indexterm>definition</indexterm></indexterm>
+<indexterm>Indexes<indexterm>when they are useful</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>An index is a database structure that provides quick lookup of data in
+a column or columns of a table.</p>
+<p>For example, a <i>Flights</i> table in a <i>travelDB</i> database has three indexes:  
+<ul>
+<li>An index on the <i>orig_airport</i> column (called <i>OrigIndex</i>)</li>
+<li>An index on the <i>dest_airport</i> column (called <i>DestIndex</i>)</li>
+<li>An index enforcing the <i>primary key</i> constraint
+on the <i>flight_id</i> and <i>segment_number</i> columns (which has a system-generated name)</li>
+</ul></p>
+<p>This means there are three separate structures that provide shortcuts into
+the <i>Flights</i> table. Let's look at one of those
+structures, <i>OrigIndex</i>.</p>
+<p><i>OrigIndex</i> stores every value in the <i>orig_airport</i> column, plus information on how to retrieve the entire corresponding
+row for each value.   
+<ul>
+<li>For every row in <i>Flights</i>, there is an entry in <i>OrigIndex</i> that includes the value of the <i>orig_airport</i> column and the address of the row itself. The entries are
+stored in ascending order by the <i>orig_airport</i> values.</li>
+</ul></p>
+<p>When an index includes more than one column, the first column is the main
+one by which the entries are ordered. For example, the index on (<i>flight_id</i>, <i>segment_number</i>) is ordered first by <i>flight_id</i>. If there is more than one <i>flight_id</i> of the same value, those entries are then ordered by <i>segment_number</i>. An excerpt from the entries in the index might look like
+this:  
+<codeblock>'AA1111' 1
+'AA1111' 2
+'AA1112' 1
+'AA1113' 1
+'AA1113' 2</codeblock></p>
+<p>Indexes are helpful only sometimes. This particular index is useful when
+a statement's WHERE clause is looking for rows for which the value of <i>orig_airport</i> is some specific value or range of values.
+SELECTs, UPDATEs, and DELETEs can all have WHERE clauses.</p>
+<p>For example, <i>OrigIndex</i> is helpful for statements
+such as the following:  
+<codeblock><b>SELECT *
+FROM Flights
+WHERE orig_airport = 'SFO'
+
+SELECT *
+FROM Flights
+WHERE orig_airport &lt; 'BBB'
+
+SELECT *
+FROM Flights
+WHERE orig_airport &gt;= 'MMM'</b></codeblock></p>
+<p><i>DestIndex</i> is helpful for statements such as the
+following:  
+<codeblock><b>SELECT *
+FROM Flights
+WHERE dest_airport = 'SCL'</b></codeblock></p>
+<p>The primary key index (on <i>flight_id</i> and <i>segment_number</i>) is helpful for statements such as the following:  
+<codeblock><b>SELECT *
+FROM Flights
+WHERE flight_id = 'AA1111'
+
+SELECT *
+FROM Flights
+WHERE flight_id BETWEEN 'AA1111' AND 'AA1115'
+
+SELECT *
+FROM FlightAvailability AS fa, Flights AS fts
+WHERE flight_date &gt; CURRENT_DATE
+AND fts.flight_id = fa.flight_id
+AND fts.segment_number = fa.segment_number</b></codeblock></p>
+<p>The next section discusses why the indexes are helpful for these statements
+but not for others.</p>
+</conbody></concept>

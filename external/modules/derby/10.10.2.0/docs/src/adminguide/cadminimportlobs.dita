@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cadminimportlobs" xml:lang="en-us">
+<title>Bulk import and export of large objects</title>
+<shortdesc>You can import and export large objects (LOBs) using the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> system
+procedures.</shortdesc>
+<prolog><metadata><keywords>
+<indexterm>bulk import and export<indexterm>large objects</indexterm></indexterm>
+<indexterm>large objects <indexterm>importing and exporting</indexterm></indexterm>
+<indexterm>importing data<indexterm>large objects</indexterm></indexterm>
+<indexterm>exporting data<indexterm>large objects</indexterm></indexterm>
+<indexterm>CLOB data<indexterm>importing and exporting</indexterm></indexterm>
+<indexterm>BLOB data<indexterm>importing and exporting</indexterm></indexterm>
+<indexterm>CHAR FOR BIT DATA<indexterm>importing and exporting</indexterm></indexterm>
+<indexterm>VARCHAR FOR BIT DATA<indexterm>importing and exporting</indexterm></indexterm>
+<indexterm>LONG VARCHAR FOR BIT DATA<indexterm>importing and exporting</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<section><title>Importing and exporting CLOB and BLOB data</title>
+<p>CLOB and BLOB data can be exported to the same file as the rest of the column
+data, or the LOB column data can be exported to a separate external file. When
+the LOB column data is exported to a separate external file, reference to the
+location of the LOB data is placed in the LOB column in the main export
+file.</p>
+<p>Importing and exporting LOB data using a separate external file might be
+faster than storing the LOB data in the same file as the rest of the column
+data:</p>
+<ul>
+<li>The CLOB data does not have to be scanned for the delimiters inside the
+data</li>
+<li>The BLOB data does not need to be converted to hexadecimal format</li>
+</ul>
+</section>
+<section><title>Importing and exporting other binary data</title>
+<p>When you export columns that contain the data types CHAR FOR BIT DATA,
+VARCHAR FOR BIT DATA, and LONG VARCHAR FOR BIT DATA, the column data is always
+exported to the main export file. The data is written in hexadecimal format. To
+import data into a table that has columns of these data types, the data in the
+import file for those columns must be in hexadecimal format.</p>
+</section>
+<section><title>Importing LOB data from a file that contains all of the
+data</title>
+<p>You can use the <codeph>SYSCS_UTIL.SYSCS_IMPORT_TABLE</codeph> and
+<codeph>SYSCS_UTIL.SYSCS_IMPORT_DATA</codeph> procedures to import data into a
+table that contains a LOB column. The LOB data must be stored in the same file
+as the other column data that you are importing. If you are importing data from
+a file that was exported from a
+non-<ph conref="../conrefs.dita#prod/productshortname"></ph> source, the binary
+data must be in hexadecimal format.</p>
+</section>
+<section><title>Importing LOB data from a separate external file</title>
+<p>You can use the
+<codeph>SYSCS_UTIL.SYSCS_IMPORT_TABLE_LOBS_FROM_EXTFILE</codeph> and
+<codeph>SYSCS_UTIL.SYSCS_IMPORT_DATA_LOBS_FROM_EXTFILE</codeph> procedures to
+import LOB data that is stored in a file that is separate from the main import
+file. These procedures read the LOB data using the reference that is stored in
+the main import file.  If you are importing data from a
+non-<ph conref="../conrefs.dita#prod/productshortname"></ph> source, the
+references to the LOB data must be in the main import file in the format
+<codeph><i>lobsFileName</i>.<i>Offset</i>.<i>length</i>/</codeph>. This is the
+same method that the <ph conref="../conrefs.dita#prod/productshortname"></ph>
+export procedures use to export the LOB data to a separate external file.</p>
+</section>
+<section><title>Exporting LOB data to the same file as the other column
+data</title>
+<p>You can use the <codeph>SYSCS_UTIL.SYSCS_EXPORT_TABLE</codeph> and
+<codeph>SYSCS_UTIL.SYSCS_EXPORT_QUERY</codeph> procedures to write LOB data,
+along with the rest of the column data, to a single export file.</p>
+<p>CLOB column data is treated same as other character data. Character
+delimiters are allowed inside the CLOB data. The export procedures write the
+delimiter inside the data as a double-delimiter.</p>
+<p>BLOB column data is written to the export file in hexadecimal format. For
+each byte of BLOB data, two characters are generated. The first character
+represents the high nibble (4 bits) in hexadecimal and the second character
+represents the low nibble.</p>
+</section>
+<section><title>Exporting LOB data to a separate external file from the other
+column data</title>
+<p>You can use the
+<codeph>SYSCS_UTIL.SYSCS_EXPORT_TABLE_LOBS_TO_EXTFILE</codeph> and
+<codeph>SYSCS_UTIL.SYSCS_EXPORT_QUERY_LOBS_TO_EXTFILE</codeph> procedures to
+write LOB data to a separate external file. These procedures include the
+<codeph>LOBSFILENAME</codeph> parameter, which specifies the name of the
+external file for the LOB data.</p>
+<p>When you use these procedures, the location of the LOB data is written to the
+main export file. The format of the reference to the LOB stored in the main
+export file is
+<codeph><i>lobsFileName</i>.<i>Offset</i>.<i>length</i>/</codeph>.</p>
+<ul>
+<li><i>Offset</i> is the position in the external file in bytes</li>
+<li><i>length</i> is the size of the LOB column data in bytes</li>
+</ul>
+<p>If a LOB column value is NULL, <i>length</i> is written as -1. No data
+conversion is performed when you export LOB data to an external file. BLOB data
+is written in binary format, and CLOB data is written using the codeset that you
+specify.</p>
+<p>See <xref href="radminimport91458.dita#radminimport91458"></xref> for
+examples using each of the import and export procedures.</p></section>
+</conbody>
+</concept>

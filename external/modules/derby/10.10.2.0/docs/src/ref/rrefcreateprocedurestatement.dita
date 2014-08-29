@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefcreateprocedurestatement" xml:lang="en-us">
+<title>CREATE PROCEDURE statement</title>
+<prolog><metadata>
+<keywords><indexterm>CREATE PROCEDURE statement</indexterm><indexterm><indexterm>SQL
+statements</indexterm>CREATE PROCEDURE</indexterm><indexterm>procedures<indexterm>creating</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>The CREATE PROCEDURE statement allows you to create Java stored
+procedures, which you can then call using the CALL PROCEDURE statement.</p><p>The
+procedure owner and the 
+<xref href="rrefattrib26867.dita#rrefattrib26867">database owner</xref>
+automatically gain the EXECUTE privilege
+on the procedure, and are able to grant this privilege to other users. The
+EXECUTE privileges cannot be revoked from the procedure and database owners.</p>
+<p>For details on how <ph conref="../conrefs.dita#prod/productshortname"></ph>
+matches procedures to Java methods, see
+<xref href="rrefsqljargmatching.dita#rrefsqljargmatching"></xref>.</p>
+</section>
+<refsyn><title>Syntax</title>
+<codeblock><b>CREATE PROCEDURE <i><xref
+href="rrefprocedurename.dita#rrefprocedurename.dita">procedureName</xref></i> ( [ <i><xref
+href="rrefcreateprocedurestatement.dita#rrefcreateprocedurestatement/rrefcrproprocedureparameter">procedureParameter</xref></i>
+   [ , <i><xref
+href="rrefcreateprocedurestatement.dita#rrefcreateprocedurestatement/rrefcrproprocedureparameter">procedureParameter</xref></i> ]* [...] ] )
+[ <i><xref href="rrefcreateprocedurestatement.dita#rrefcreateprocedurestatement/rrefcrproprocedureelement">procedureElement</xref></i> ]*</b>
+</codeblock>
+<p>An ellipsis (<codeph>...</codeph>) after the last parameter indicates that
+the Java method supports trailing optional arguments, called
+<term>varargs</term>. The ellipsis indicates that the method may be invoked
+with zero or more trailing values, all having the data type of the last
+argument.</p></refsyn>
+<example id="rrefcrproprocedureparameter"> <title>procedureParameter</title><codeblock><b>[ { IN | OUT | INOUT } ] [ <i>parameterName</i> ] <i>dataType</i
+></b></codeblock></example>
+<section><p>The default value for a parameter is IN. A <i>parameterName</i> must be
+unique within a procedure.</p><p>The syntax of <i>dataType</i> is described
+in <xref href="crefsqlj31068.dita#crefsqlj31068"></xref>.</p><note>The data
+types BLOB, CLOB, LONG VARCHAR, LONG VARCHAR FOR BIT DATA, and XML are not
+allowed as parameters in a CREATE PROCEDURE statement.</note></section>
+<example id="rrefcrproprocedureelement"> <title>procedureElement</title>
+<codeblock><b>{ 
+    [ DYNAMIC ] RESULT SETS <i><xref href="rrefsqlj10696.dita#rrefsqlj10696">integer</xref></i> |
+    LANGUAGE JAVA |
+    { DETERMINISTIC | NOT DETERMINISTIC } |
+    <xref href="rrefsqljexternalname.dita#rrefsqljexternalname">EXTERNAL NAME</xref> <i>singleQuotedString</i> |
+    PARAMETER STYLE { JAVA | DERBY } |
+    EXTERNAL SECURITY { DEFINER | INVOKER } |
+    { NO SQL | MODIFIES SQL DATA | CONTAINS SQL | READS SQL DATA }
+}</b></codeblock></example>
+<section><p>The procedure elements may appear in any order, but each type
+of element can only appear once. A procedure definition must contain these
+elements: <ul>
+<li><b>LANGUAGE</b></li>
+<li><b>EXTERNAL NAME</b></li>
+<li><b>PARAMETER STYLE</b></li>
+</ul></p></section>
+<section><title>DYNAMIC RESULT SETS <i>integer</i></title> <p>Indicates the
+estimated upper bound of returned result sets for the procedure. Default is
+no (zero) dynamic result sets. If the procedure takes varargs, the value must
+be zero.</p></section>
+<section><title>LANGUAGE JAVA</title> <p>The database manager will call the
+procedure as a public static method in a Java class.</p></section>
+<section><title>DETERMINISTIC, NOT DETERMINISTIC</title>
+<p>DETERMINISTIC declares that the procedure is deterministic, meaning that with
+the same set of input values, it always computes the same result. The default is
+NOT DETERMINISTIC. <ph conref="../conrefs.dita#prod/productshortname"></ph>
+cannot recognize whether an operation is actually deterministic, so you must
+take care to specify this element correctly.</p>
+</section>
+<section><title>EXTERNAL NAME <i>singleQuotedString</i></title>
+<p>The <i>singleQuotedString</i> specified by the <xref
+href="rrefsqljexternalname.dita#rrefsqljexternalname"></xref> describes
+the Java method to be called when the procedure is executed.</p></section>
+<section><title>PARAMETER STYLE</title>
+<dl>
+<dlentry>
+<dt>JAVA</dt>
+<dd>The procedure will use a parameter-passing convention that conforms to the
+Java language and SQL Routines specification. INOUT and OUT parameters will be
+passed as single entry arrays to facilitate returning values. Result sets are
+returned through additional parameters to the Java method of type
+<i>java.sql.ResultSet[]</i> that are passed single entry arrays.
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph> does
+not support long column types (for example, LONG VARCHAR, BLOB, and so on).
+An error will occur if you try to use one of these long column types.</p></dd>
+</dlentry>
+<dlentry>
+<dt>DERBY</dt>
+<dd>The PARAMETER STYLE must be DERBY if and only if an ellipsis
+(<codeph>...</codeph>) appears at the end of the argument list.</dd>
+</dlentry>
+</dl>
+</section>
+<section id="rrefcrprodefrts"><title>EXTERNAL SECURITY</title>
+<p>If SQL authorization mode is enabled, a procedure runs by default with the
+privileges specified for the user who invokes the procedure (invoker's rights).
+To specify that the procedure should run with the privileges specified for the
+user who defines the procedure (definer's rights), create the procedure with
+EXTERNAL SECURITY DEFINER. Those privileges include the right to set the current
+role to a role for which the definer has privileges. When the procedure is first
+invoked, no role is set; even if the invoker has set a current role, the
+procedure running with definer's rights has no current role set initially.</p>
+<p>See <i><xref href="rrefpropersqlauth.dita#rrefpropersqlauth"></xref></i> for
+details about setting SQL authorization mode.</p>
+<p>When a procedure with definer's rights is called, the current default schema
+is set to the eponymously named schema of the definer. For example, if the
+defining user is called OWNER, the default schema will also be set to OWNER.</p>
+<p>When a procedure with invoker's rights is called, the current default
+schema and current role are unchanged initially within the procedure. Similarly,
+if SQL authorization mode is not enabled, the current default schema is
+unchanged initially within the procedure.</p>
+<p>When the call returns, any changes made inside the procedure to the default
+current schema (and current role, if relevant) are reset (popped).</p>
+<p>If SQL authorization mode is not enabled, an attempt to create a procedure
+with EXTERNAL SECURITY will result in an error.</p>
+</section>
+<section><title>NO SQL, CONTAINS SQL, READS SQL DATA, MODIFIES SQL DATA </title> <p>Indicates
+        whether the stored procedure issues any SQL statements and, if so, what type.
+    MODIFIES SQL DATA is the default value.
+    A stored procedure which issues a statement which does not conform to
+    the declared SQL statement level will cause Derby to throw an exception.
+        </p> <dl>
+<dlentry>
+<dt>NO SQL</dt>
+<dd>Indicates that the stored procedure cannot execute any SQL statements</dd>
+</dlentry><dlentry>
+<dt>CONTAINS SQL</dt>
+<dd>Indicates that SQL statements that neither read nor modify SQL data can
+    be executed by the stored procedure.
+</dd>
+</dlentry><dlentry>
+<dt>READS SQL DATA </dt>
+<dd>Indicates that SQL statements that do not modify SQL data (for
+    example, SELECT statements) can be included in the stored procedure.
+</dd>
+</dlentry><dlentry>
+<dt>MODIFIES SQL DATA</dt>
+<dd>Indicates that the stored procedure can execute any SQL statement.</dd>
+</dlentry></dl></section>
+<section><title>Examples</title> <codeblock><b>CREATE PROCEDURE SALES.TOTAL_REVENUE(IN S_MONTH INTEGER,
+IN S_YEAR INTEGER, OUT TOTAL DECIMAL(10,2))
+PARAMETER STYLE JAVA READS SQL DATA LANGUAGE JAVA EXTERNAL NAME 
+'com.example.sales.calculateRevenueByMonth'</b></codeblock>
+
+<codeblock><b>
+CREATE PROCEDURE VARARGPROC
+( IN a INT, IN b INT, IN c BIGINT ... )
+LANGUAGE JAVA
+PARAMETER STYLE DERBY
+READS SQL DATA
+EXTERNAL NAME 'Procs.varargProc'
+</b></codeblock>
+</section>
+</refbody>
+</reference>

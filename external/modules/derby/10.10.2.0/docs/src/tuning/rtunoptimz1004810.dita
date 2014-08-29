@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "../dtd/reference.dtd">
+<reference xml:lang="en-us" id="rtunoptimz1004810">
+<title>Multiple-column index example</title>
+<prolog>
+</prolog>
+<refbody>
+<section><p>The following queries do provide start and stop conditions for a scan of
+the primary key index on the <i>flight_id</i> and <i>segment_number</i> columns in <i>Flights</i>:  
+<codeblock><b><ph>-- the where clause compares both columns with valid
+-- operators to constants</ph>
+SELECT *
+FROM Flights
+WHERE flight_id = 'AA1115'
+AND segment_number &lt; 2
+<ph>-- the first column is in a valid comparison</ph>
+SELECT *
+FROM Flights
+WHERE flight_id &lt; 'BB'
+<ph>-- LIKE is transformed into &gt;= and &lt;=, providing
+-- start and stop conditions</ph>
+SELECT *
+FROM Flights
+WHERE flight_id LIKE 'AA%'</b></codeblock></p></section>
+<section><p>The following queries do not:  
+<codeblock><b><ph>-- segment_number is in the index, but it's not the first column;
+-- there's no logical starting and stopping place</ph>
+SELECT *
+FROM Flights
+WHERE segment_number = 2
+<ph>-- <ph conref="../conrefs.dita#prod/productshortname"></ph>  would scan entire table; comparison of first column
+-- is not with a constant or column in another table
+-- and no covering index applies</ph>
+SELECT *
+FROM Flights
+WHERE orig_airport = dest_airport
+AND segment_number &lt; 2</b></codeblock></p></section>
+</refbody></reference>

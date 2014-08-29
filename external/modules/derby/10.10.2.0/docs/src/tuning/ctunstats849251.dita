@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctunstats849251">
+<title>What are cardinality statistics?</title>
+<prolog><metadata>
+<keywords>
+<indexterm>Cardinality statistics<indexterm>definition</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>When <ph conref="../conrefs.dita#prod/productshortname"></ph> creates statistics for a table's index, it calculates
+and stores in the system tables:  
+<ul>
+<li>The number of rows in the table</li>
+<li>The number of unique values for a set of columns for leading columns in
+an index key, also known as <i>cardinality</i>. Leading columns
+refers to the first column, or the first and second column, or the first,
+second, and third column of an index (and so on). <ph conref="../conrefs.dita#prod/productshortname"></ph> cannot compute
+the number of columns for which a combination of the non-leading columns is
+unique. </li>
+</ul></p>
+<p>For example, consider the primary key on the table FlightAvailability:
+ 
+<codeblock><b>CONSTRAINT FLIGHTAVAILABILITY_PK Primary Key (
+      FLIGHT_ID,
+      SEGMENT_NUMBER,
+      FLIGHT_DATE)</b></codeblock></p>
+<p>For this index, <ph conref="../conrefs.dita#prod/productshortname"></ph> keeps the following information:  
+<ul>
+<li>The number of rows in the table <i>FlightAvailability</i></li>
+<li>The number of unique rows for the full key (<i>flight_id</i>, <i>segment_number</i>, <i>flight_date</i>)</li>
+<li>The number of unique rows for the key (<i>flight_id</i>, <i>segment_number</i>)</li>
+<li>The number of unique rows for the key (<i>flight_id</i>)</li>
+</ul></p>
+<p>How does <ph conref="../conrefs.dita#prod/productshortname"></ph> use these two numbers-the number of rows in
+a table and the cardinality of a particular key-to determine the selectivity
+of a query? Take this example:  
+<codeblock><b>SELECT * FROM Flights, FlightAvailability
+WHERE Flights.flight_id = OtherTable.flight_id</b></codeblock></p>
+<p>If the cardinality for flight_id in <i>Flights</i> is
+250, then the selectivity of the predicate is 1/250. The optimizer would estimate
+the number of rows read to be:  
+<codeblock><b>((Rows in Flights) * (Rows in OtherTable))/250</b></codeblock></p>
+</conbody></concept>

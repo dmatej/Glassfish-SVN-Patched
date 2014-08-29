@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefproper13766" xml:lang="en-us">
+<title>derby.authentication.provider</title>
+<prolog><metadata>
+<keywords><indexterm>derby.authentication.provider</indexterm>
+<indexterm>Authentication provider<indexterm>specifying</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section><title>Function</title> <p>Specifies the authentication provider
+for <ph conref="../conrefs.dita#prod/productshortname"></ph> user
+authentication.</p>
+<p>Legal values include:</p>
+<ul>
+<li>NATIVE:<i>credentialsDB</i>
+<p>NATIVE authentication using <i>credentialsDB</i>, a dedicated database, to
+store user credentials. This value must be set by using system-wide Java Virtual
+Machine (JVM) properties or by using the <i>derby.properties</i> file; it cannot
+be set in the database by using the SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY
+system procedure. When this system-wide value is set, <i>credentialsDB</i> is
+used to authenticate all operations. Individual databases can override this
+directive by specifying their own value for
+<i>derby.authentication.provider</i>.</p>
+<p>The value of <i>credentialsDB</i> must be a valid name for a database.</p>
+</li>
+<li>NATIVE:<i>credentialsDB</i>:LOCAL
+<p>NATIVE authentication using <i>credentialsDB</i> for system-wide operations,
+but using an individual database's
+<xref href="rrefsistabssysusers.dita#rrefsistabssysusers"></xref> to
+authenticate connections to that database. This value must be set by using 
+system-wide JVM properties or by using the <i>derby.properties</i> file; it
+cannot be set in the database by using the SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY
+procedure.</p>
+</li>
+<li>LDAP   <p>An external LDAP directory service.</p></li>
+<li>A complete Java class name   <p>A user-defined class that provides user
+authentication.</p></li>
+<li>BUILTIN   <p><ph conref="../conrefs.dita#prod/productshortname"></ph>'s
+simple internal user authentication repository.</p>
+<note type="important"><ph conref="../conrefs.dita#prod/productshortname"></ph>'s
+BUILTIN authentication mechanism is suitable only for development and testing
+purposes, and it will no longer be documented in future releases. It is
+strongly recommended that production systems rely on NATIVE authentication, an
+external directory service such as LDAP, or a user-defined class for
+authentication. It is also strongly recommended that production systems protect
+network connections with SSL/TLS.</note></li>
+</ul>
+<p>For more information about these settings, see "Using NATIVE
+authentication" and "External directory service" in the
+<ph conref="../conrefs.dita#pub/citdevelop"></ph>.</p>
+<p>To enable any <ph conref="../conrefs.dita#prod/productshortname"></ph> user
+authentication setting other than NATIVE, you must set the
+<i><xref href="rrefproper27467.dita#rrefproper27467">derby.connection.requireAuthentication</xref></i>
+property to true. If you specify NATIVE authentication,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> behaves as if the
+<i>derby.connection.requireAuthentication</i> and
+<i><xref href="rrefpropersqlauth.dita#rrefpropersqlauth">derby.database.sqlAuthorization</xref></i>
+properties were also set.</p>
+<p>When using NATIVE authentication, you can also set the following related
+properties:</p>
+<ul>
+<li><i><xref href="rrefproperpasswordmillis.dita#rrefproperpasswordmillis"></xref></i></li>
+<li><i><xref href="rrefproperpasswordthreshold.dita#rrefproperpasswordthreshold"></xref></i></li>
+</ul>
+<p>When using NATIVE authentication, the database owner calls the
+<codeph><xref href="rrefnativecreateuserproc.dita#rrefnativecreateuserproc">SYSCS_UTIL.SYSCS_CREATE_USER</xref></codeph>
+system procedure to create users, and can also call the following additional user
+management procedures:</p>
+<ul>
+<li><codeph><xref href="rrefnativedropuserproc.dita#rrefnativedropuserproc">SYSCS_UTIL.SYSCS_DROP_USER</xref></codeph></li>
+<li><codeph><xref href="rrefnativeresetpasswordproc.dita#rrefnativeresetpasswordproc">SYSCS_UTIL.SYSCS_RESET_PASSWORD</xref></codeph></li>
+</ul>
+<p>When using NATIVE authentication, any user can call the
+<codeph><xref href="rrefnativemodifypasswordproc.dita#rrefnativemodifypasswordproc">SYSCS_UTIL.SYSCS_MODIFY_PASSWORD</xref></codeph>
+system procedure to change that user's password.</p>
+
+<p>For more information about user authentication, see the <ph
+conref="../conrefs.dita#pub/citdevelop"></ph>.</p>
+<p>When using an external authentication service provider (LDAP), you must also
+set:</p>
+<ul>
+<li><i><xref href="rrefproper25581.dita#rrefproper25581">derby.authentication.server</xref></i></li>
+</ul>
+<p>When using LDAP, you can set other LDAP-specific properties. See also:</p>
+<ul>
+<li><i><xref href="rrefproperauthdn.dita#rrefproperauthdn"></xref></i></li>
+<li><i><xref href="rrefproperauthpw.dita#rrefproperauthpw"></xref></i></li>
+<li><i><xref href="rrefproper37341.dita#rrefproper37341"></xref></i></li>
+<li><i><xref href="rrefproper26978.dita#rrefproper26978"></xref></i></li>
+</ul>
+<p>Alternatively, you can write your own class to provide a different external
+authentication service. This class must implement the public interface
+<i>org.apache.derby.authentication.UserAuthenticator</i> and throw exceptions
+of the type <i>java.sql.SQLException</i> where appropriate. Using a user-defined
+class makes <ph conref="../conrefs.dita#prod/productshortname"></ph> adaptable
+to various naming and directory services. For example, the class could allow
+<ph conref="../conrefs.dita#prod/productshortname"></ph> to hook up to an
+existing user authentication service that uses any of the standard directory and
+naming service providers to JNDI.</p>
+</section>
+<refsyn><title>Syntax</title>
+<codeblock><b>derby.authentication.provider={ NATIVE:<i>credentialsDB</i> | 
+                                NATIVE:<i>credentialsDB</i>:LOCAL |
+                                LDAP | 
+                                BUILTIN | 
+                                <b><i>classProviderName</i></b> }</b></codeblock>
+</refsyn>
+<section><title>Default</title> <p>No authentication.</p> </section>
+<example><title>Example</title> <codeblock><b>-- system-wide property
+derby.authentication.provider=NATIVE:MyCredsDB:LOCAL
+-- database-wide property
+CALL SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY(
+    'derby.authentication.provider',
+    'LDAP')</b></codeblock>
+</example>
+<section><title>Dynamic or static</title>
+<p>Static. For system-wide properties, you must reboot
+<ph conref="../conrefs.dita#prod/productshortname"></ph> for the change to take
+effect. For database-wide properties, you must reboot the database for the
+change to take effect.</p>
+</section>
+</refbody>
+</reference>
+

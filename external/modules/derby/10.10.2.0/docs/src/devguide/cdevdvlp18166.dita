@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevdvlp18166" xml:lang="en-us">
+<title>Storage and recovery</title>
+<shortdesc>A <ph conref="../conrefs.dita#prod/productshortname"></ph> database
+(unless it is an in-memory database)
+provides persistent storage and recovery. <ph conref="../conrefs.dita#prod/productshortname"></ph> ensures
+that all committed transactions are durable, even if the system fails, through
+the use of a database transaction log.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Recovery</indexterm><indexterm>Start-up<indexterm>description</indexterm></indexterm>
+<indexterm>Shutdown<indexterm>description</indexterm></indexterm></keywords>
+</metadata></prolog>
+<conbody>
+<p>Whereas inserts, updates, and deletes may be cached before being written
+to disk, log entries tracking all those changes are never cached but always
+forced to disk when a transaction commits. If the system or operating system
+fails unexpectedly, when <ph conref="../conrefs.dita#prod/productshortname"></ph> next
+starts up it can use the log to perform recovery, recovering the "lost" transactions
+from the log and rolling back uncommitted transactions. <i>Recovery</i> ensures
+that all committed transactions at the time the system failed are applied
+to the database, and all transactions that were active are rolled back. Thus
+the databases are left in a consistent, valid state.</p>
+<p>In normal operation, <ph conref="../conrefs.dita#prod/productshortname"></ph> keeps
+the log small through periodic checkpoints. Checkpointing marks the portions
+of the log that are no longer useful, writes changed pages to disk, then truncates
+the log.</p>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph> checkpoints the
+log file as it fills. It also checkpoints the log when a shutdown command
+is issued. Shutting down the JVM in which <ph conref="../conrefs.dita#prod/productshortname"></ph> is
+running without issuing the proper shutdown command is equivalent to a system
+failure from <ph conref="../conrefs.dita#prod/productshortname"></ph>'s point
+of view.</p>
+<p>Booting a database means that <ph conref="../conrefs.dita#prod/productshortname"></ph> checks
+to see if recovery needs to be run on a database. Recovery can be costly,
+so using the proper shutdown command improves connection or startup performance.</p>
+</conbody>
+</concept>

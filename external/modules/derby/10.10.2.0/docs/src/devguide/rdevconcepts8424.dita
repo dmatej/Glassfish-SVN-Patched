@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rdevconcepts8424" xml:lang="en-us">
+<title>Scope of locks</title>
+<shortdesc>The amount of data locked by a statement can vary.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>locks<indexterm>table-level</indexterm></indexterm><indexterm>locks<indexterm>row-level</indexterm></indexterm>
+<indexterm>locks<indexterm>range</indexterm></indexterm><indexterm>table-level
+locks</indexterm><indexterm>row-level locks</indexterm><indexterm>range locks</indexterm>
+<indexterm>isolation levels<indexterm>REPEATABLE_READ</indexterm></indexterm>
+<indexterm>isolation levels<indexterm>READ_COMMITTED</indexterm></indexterm>
+<indexterm>isolation levels<indexterm>SERIALIZABLE</indexterm></indexterm>
+<indexterm>isolation levels<indexterm>READ_UNCOMMITTED</indexterm></indexterm>
+<indexterm>transactions<indexterm>isolation levels</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><title>Table locks</title><p>A statement can lock the <i>entire table</i>.</p><p>Table-level
+locking systems always lock entire tables.</p><p>Row-level locking systems
+can lock entire tables if the WHERE clause of a statement cannot use an index.
+For example, UPDATES that cannot use an index lock the entire table.</p><p>Row-level
+locking systems can lock entire tables if a high number of single-row locks
+would be less efficient than a single table-level lock. Choosing table-level
+locking instead of row-level locking for performance reasons is called <i>lock
+escalation</i>. For more information about this topic, see "About the system's
+selection of lock granularity" and "Transaction-based lock escalation" in
+<ph conref="../conrefs.dita#pub/cittuning"></ph>.</p></section>
+<section><title>Single-row locks</title><p>A statement can lock only <i>a
+single row</i> at a time.</p><p>For row-level locking systems:<ul>
+<li>For TRANSACTION_REPEATABLE_READ isolation, the locks are released at the
+end of the transaction.</li>
+<li>For TRANSACTION_READ_COMMITTED isolation, <ph conref="../conrefs.dita#prod/productshortname"></ph> locks
+rows only as the application steps through the rows in the result. The current
+row is locked. The row lock is released when the application goes to the next
+row.</li>
+<li>For TRANSACTION_SERIALIZABLE isolation, however, <ph conref="../conrefs.dita#prod/productshortname"></ph> locks
+the whole set before the application begins stepping through.</li>
+<li>For TRANSACTION_READ_UNCOMMITTED, no row locks are requested.</li>
+</ul> </p><p><ph conref="../conrefs.dita#prod/productshortname"></ph> locks
+single rows for INSERT statements, holding each row until the transaction
+is committed. If there is an index associated with the table, the previous
+key is also locked.</p></section>
+<section><title>Range locks</title><p>A statement can lock <i>a range of rows</i> (range
+lock).</p><p>For row-level locking systems: <ul>
+<li>For <i>any</i> isolation level, <ph conref="../conrefs.dita#prod/productshortname"></ph> locks <i>all
+the rows in the result</i> plus an entire range of rows for updates or deletes.</li>
+<li>For the TRANSACTION_SERIALIZABLE isolation level, <ph conref="../conrefs.dita#prod/productshortname"></ph> locks
+all the rows in the result plus an entire range of rows in the table for SELECTs
+to prevent nonrepeatable reads and phantoms.</li>
+</ul></p><p>For example, if a SELECT statement specifies rows in the <i>Employee</i> table
+where the <i>salary</i> is BETWEEN two values, the system can lock more than
+just the actual rows it returns in the result. It also must lock the entire <i>range</i> of
+rows between those two values to prevent another transaction from inserting,
+deleting, or updating a row within that range.</p><p>An index must be available
+for a range lock. If one is not available, <ph conref="../conrefs.dita#prod/productshortname"></ph> locks
+the entire table.</p>
+<p>The following table summarizes the types and scopes of locking.</p>
+<table frame="all">
+<title>Types and scopes of locking</title>
+<desc>This table shows the behavior of table-level locking and row-level locking for each transaction level.</desc>
+<tgroup cols="3" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="60*"/>
+<colspec colname="2" colnum="2" colwidth="20*"/>
+<colspec colname="3" colnum="3" colwidth="20*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Transaction Isolation Level</entry>
+<entry colname="2">Table-Level Locking</entry>
+<entry colname="3">Row-Level Locking</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">Connection.TRANSACTION_READ_UNCOMMITTED (SQL: UR)</entry>
+<entry colname="2">For SELECT statements, table-level locking is never requested
+using this isolation level. For other statements, same as for TRANSACTION_READ_COMMITTED.</entry>
+<entry colname="3">SELECT statements get no locks. For other statements, same
+as for TRANSACTION_READ_COMMITTED.</entry>
+</row>
+<row>
+<entry colname="1">Connection.TRANSACTION_READ_COMMITTED (SQL: CS) </entry>
+<entry colname="2">SELECT statements get a shared lock on the entire table.
+The locks are released when the user closes the <i>ResultSet</i>. Other statements
+get exclusive locks on the entire table, which are released when the transaction
+commits.</entry>
+<entry colname="3">SELECTs lock and release single rows as the user steps
+through the <i>ResultSet</i>. UPDATEs and DELETEs get exclusive locks on a
+range of rows. INSERT statements get exclusive locks on single rows (and sometimes
+on the preceding rows).</entry>
+</row>
+<row>
+<entry colname="1">Connection.TRANSACTION_REPEATABLE_READ (SQL: RS)</entry>
+<entry colname="2">Same as for TRANSACTION_SERIALIZABLE</entry>
+<entry colname="3">SELECT statements get shared locks on the rows that satisfy
+the WHERE clause (but do not prevent inserts into this range). UPDATEs and
+DELETEs get exclusive locks on a range of rows. INSERT statements get exclusive
+locks on single rows (and sometimes on the preceding rows).</entry>
+</row>
+<row>
+<entry colname="1">Connection.TRANSACTION_SERIALIZABLE (SQL: RR)</entry>
+<entry colname="2">SELECT statements get a shared lock on the entire table.
+Other statements get exclusive locks on the entire table, which are released
+when the transaction commits.</entry>
+<entry colname="3">SELECT statements get shared locks on a range of rows.
+UPDATE and DELETE statements get exclusive locks on a range of rows. INSERT
+statements get exclusive locks on single rows (and sometimes on the preceding
+rows).</entry>
+</row>
+</tbody>
+</tgroup>
+</table></section>
+</refbody>
+</reference>

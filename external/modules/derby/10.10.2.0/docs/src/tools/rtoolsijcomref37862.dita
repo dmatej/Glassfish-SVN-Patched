@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "../dtd/reference.dtd">
+<reference xml:lang="en-us" id="rtoolsijcomref37862">
+<title>Async command</title>
+<prolog><metadata>
+<keywords><indexterm>Async command</indexterm>
+</keywords>
+</metadata>
+</prolog><refbody>
+<refsyn><title>Syntax</title>
+<codeblock><b>ASYNC <b><i><xref href="rtoolsijcomref40155.dita#rtoolsijcomref40155">Identifier</xref>&nbsp;<xref href="rtoolsijcomref34110.dita#rtoolsijcomref34110">String</xref></i></b></b></codeblock>
+</refsyn>
+<section><title>Description</title>
+<p>The ASYNC command lets you execute
+an SQL statement in a separate thread. It is used in conjunction with the <xref href="rtoolsijcomref17631.dita#rtoolsijcomref17631">Wait For</xref> command to get the results.</p>
+<p>You supply the SQL statement, which is any valid SQL statement, as a <i>String</i>. The <i>Identifier</i> you must
+supply for the async SQL statement is used in the
+<xref href="rtoolsijcomref17631.dita#rtoolsijcomref17631">Wait For</xref>
+command and is a case-insensitive <codeph>ij</codeph> identifier. An identifier
+that does not specify a <i>connectionName</i> must not be the same as any other
+identifier for an async statement on the current connection; an identifier that
+specifies a <i>connectionName</i> must not be the same as any other identifier
+for an async statement on the designated connection. You cannot reference a
+statement previously prepared and named by the
+<codeph>ij</codeph>&nbsp;<xref href="rtoolsijcomref12333.dita#rtoolsijcomref12333">Prepare</xref>
+command in this command.</p>
+<p><codeph>ij</codeph> creates a new thread in the current or designated connection to issue the
+SQL statement. The separate thread is closed once the statement completes.</p>
+</section>
+<example><title>Examples</title>
+<codeblock>ij&gt; <b>async aInsert 'INSERT into menu values (''entree'',''chicken'',11)';</b>
+ij&gt; <b>INSERT INTO menu VALUES ('dessert','ice cream',3);</b>
+1 rows inserted/updated/deleted.
+ij&gt; <b>wait for aInsert;</b>
+1 rows inserted/updated/deleted.
+-- the result of the asynchronous insert
+</codeblock>
+<codeblock>ij&gt; <b>connect 'jdbc:derby:memory:dummy;create=true;user=john'
+    as john_conn;</b>
+ij&gt; <b>create table john_tbl (c int);</b>
+0 rows inserted/updated/deleted
+ij&gt; <b>insert into john_tbl values(1),(2),(3);</b>
+3 rows inserted/updated/deleted
+ij&gt; <b>connect 'jdbc:derby:memory:dummy;user=fred' as fred_conn;</b>
+ij(FRED_CONN)&gt; <b>async john_async @ john_conn 'select * from john_tbl';</b>
+ij(FRED_CONN)&gt; <b>wait for john_async @ john_conn;</b>
+C          
+-----------
+1          
+2          
+3          
+
+3 rows selected
+ij(FRED_CONN)&gt; 
+</codeblock>
+</example></refbody></reference>

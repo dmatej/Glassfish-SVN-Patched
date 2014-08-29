@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "../dtd/reference.dtd">
+<reference xml:lang="en-us" id="rdevconcepts38274">
+<title>Extended updatable result set example</title>
+<shortdesc>The following code example shows how to program updatable result
+sets.</shortdesc>
+<prolog>
+</prolog>
+<refbody><example>
+<codeblock>
+Connection conn = DriverManager.getConnection("jdbc:derby:sample");
+conn.setAutoCommit(false);
+
+<b>// Create the statement with concurrency mode CONCUR_UPDATABLE</b>
+<b>// to allow result sets to be updatable</b>
+Statement stmt = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, 
+                                      ResultSet.CONCUR_UPDATABLE,
+                                      ResultSet.CLOSE_CURSORS_AT_COMMIT);
+<b>// Updatable statements have some requirements</b>
+<b>// for example, select must be on a single table</b>
+ResultSet uprs = stmt.executeQuery(
+    "SELECT FIRSTNME, LASTNAME, WORKDEPT, BONUS " +
+    "FROM EMPLOYEE FOR UPDATE of BONUS"); // Only bonus can be updated
+
+String theDept="E21";
+
+while (uprs.next()) {
+    String firstnme = uprs.getString("FIRSTNME");
+    String lastName = uprs.getString("LASTNAME");
+    String workDept = uprs.getString("WORKDEPT");
+    BigDecimal bonus = uprs.getBigDecimal("BONUS");
+    if (workDept.equals(theDept)) {
+      <b>  // if the current row meets our criteria,
+        // update the updatable column in the row</b>
+        uprs.updateBigDecimal("BONUS", bonus.add(BigDecimal.valueOf(250L)));
+        uprs.updateRow();
+        System.out.println("Updating bonus for employee:" +
+                           firstnme + lastName);
+    } 
+}
+conn.commit(); // commit the transaction
+<b>// close object </b>
+uprs.close();
+stmt.close();
+<b>// Close connection if the application does not need it any more</b>
+conn.close();
+</codeblock>
+</example>
+</refbody></reference>

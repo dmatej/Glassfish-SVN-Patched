@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<concept id="crefjavbclobnot" xml:lang="ja">
+<title>java.sql.Blobとjava.sql.Clobの対応に関する但し書き</title>
+<conbody>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph>のロック機構(共有ロック)にて、<i>java.sql.Blob</i>や<i>java.sql.Clob</i>が指し示すデータベース上の情報の更新や削除は防がれています。
+しかしながら、<ph conref="../conrefs.dita#prod/productshortname"></ph>の即時ロックの機構は、<i>java.sql.Blob</i>や<i>java.sql.Clob</i>に対応する列が守られていない瞬間の存在を許すことがあります。
+引き続く<i>getBlob/getClob</i>および<i>java.sql.Blob</i>/<i>java.sql.Clob</i>の呼び出しは未定義な振る舞いを起こす可能性があります。</p>
+<p>さらに<i>java.sql.Blob</i>/<i>java.sql.Clob</i>を持つトランザクションが、(他のトランザクションに対して)、対応行を更新することを防ぐ機構はありません。(この問題は<i>getXXXStream</i>メソッドにも存在しています。)
+<i>java.sql.Blob</i>/<i>java.sql.Clob</i>が開いていており、アプリケーションプログラムにて対応する情報の更新が妨げられた場合、失敗したことにより予期せぬ振る舞いが起きる可能性があります。</p>
+<p><i>ResultSet getXXX</i>メソッドのうち以下の何れかに該当するメソッドは、それらを同一のカラムに対して複数回呼び出してははなりません。<ul>
+<li><i>getBlob</i></li>
+<li><i>getClob</i></li>
+<li><i>getAsciiStream</i></li>
+<li><i>getBinaryStream</i></li>
+<li><i>getUnicodeStream</i></li>
+</ul></p>
+<p>これ等のメソッドは同一の対応するストリームを共有します。これらのメソッドを複数回呼び出すことにより、予期せぬ振る舞いを起こす可能性があります。
+例を挙げます。
+<codeblock expanse="column"><b>ResultSet rs = s.executeQuery("SELECT text FROM CLOBS WHERE i = 1");
+while (rs.next()) {
+    aclob=rs.getClob(1);
+    ip = rs.getAsciiStream(1);
+}</b></codeblock></p>
+<p>サイズの大きな列の情報を扱うストリームはスレッドセーフではありません。従って、もしユーザが複数のスレッドを作成して、それらスレッドからストリームにアクセスした場合、未定義の動作を起こします。</p>
+<p>Clobにはロケールによる振る舞いの違いがありません。</p>
+</conbody>
+</concept>
+

@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqlj20937" xml:lang="ja">
+<title>CREATE INDEX 文</title>
+<prolog><metadata>
+<keywords><indexterm>CREATE INDEX statement</indexterm><indexterm>Descending
+indexes</indexterm><indexterm>Indexes<indexterm>created in descending order</indexterm></indexterm>
+<indexterm>Backing indexes<indexterm>created automatically to enforce primary
+key, unique, and foreign key constraints</indexterm></indexterm><indexterm>Indexes<indexterm>automatic
+creation of for primary key, unique, and foreign key constraints</indexterm></indexterm>
+<indexterm>Indexes<indexterm>specifying page size for</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section id="i1013640"> <p id="sqlj31027">CREATE INDEX文により表に索引を作成できます。
+索引は表のひとつ以上の列に作成できます。</p></section>
+<refsyn><title>構文</title><codeblock><b>CREATE [UNIQUE] INDEX <i><xref
+href="rrefindexname.dita#rrefindexname">索引名</xref></i>
+ON <i><xref href="rreftablename.dita#rreftablename">表名</xref></i> ( <i><xref
+href="rrefsimplecolumnname.dita#rrefsimplecolumnname">単純列名</xref></i> [ ASC | DESC ]
+    [ , <i><xref href="rrefsimplecolumnname.dita#rrefsimplecolumnname">単純列名</xref></i> [ ASC | DESC ]] * )</b></codeblock><p>The
+<ph conref="../conrefs.dita#prod/productshortname"></ph>にて索引に可能な列の最大数は16です。</p><p>索引名は128文字を超えてはなりません。</p><p>同じ列が単一のCREATE INDEX文に2つ以上あってはなりません。なお異なる索引であれば、同じ列をもってかまいません。</p><p><ph conref="../conrefs.dita#prod/productshortname"></ph>は索引を使って、情報の操作を行う文の効率を向上します。(<cite><ph
+conref="../conrefs.dita#pub/cittuning"></ph></cite>を参照してください。)。 さらにUNIQUEの索引により、情報が整合性を保っているか検証する事ができます。</p><p>索引名はスキーマにて一意です。(データベースシステムによっては、同じスキーマの異なるテーブルに同じ名前の索引を持つことができますが、<ph conref="../conrefs.dita#prod/productshortname"></ph>は違います。)
+索引と表の片方にスキーマ名が明示されて、もう片方に明示されなかった場合、索引と表は同じスキーマにあるものとされます。索引と表の両方にスキーマ名が明示されて、それぞれのスキーマ名が異なっていた場合、例外が発生します。表にも索引にもスキーマ名が明示されなかった場合、現在のスキーマが使われます。</p>
+<p>既定で<ph conref="../conrefs.dita#prod/productshortname"></ph>は索引をそれぞれの列に対して昇順で作成します。列名の後にASCと書いても既定の振る舞いと同じように動作します。
+列名の後にDESCと書くと、索引を作るときに<ph conref="../conrefs.dita#prod/productshortname"></ph>はその列を降順で扱います。
+降順を列に指定することで、昇順と降順が混ざった並び順あるいは降順の問い合わせや、索引のある列の最大値や最小値を選択する問い合わせが、効率よく実行されることを期待できます。</p>
+<p>限定された索引名を指定する場合、スキーマ名は<codeph>SYS</codeph>で始まってはなりません。</p> </refsyn>
+<section id="sqlj27363"><title>索引と制約</title><p>一意性・主キー・外部キー制約を作成すると、制約を適用または支援する索引が作成されます。(このような索引のことを支援索引と呼びます。)もし列や列の集合に、UNIQUEないしPRIMARY KEYの制約が存在している場合、それらの列に索引を作成することはできません。<ph conref="../conrefs.dita#prod/productshortname"></ph>は既にその索引をシステムが決めた名前で作成しています。制約を支援する索引にシステムが与えた名前は、索引の名前でシステム表に問い合わせれば、簡単に見つけることができるでしょう。
+既にUNIQUEの索引が存在している列の集合に、主キーまたは一意性制約を追加すると、同じ列の集合に複数の索引が造られることとなります。一つがもともとあったUNIQUEの制約でもう一つが、制約に併せて作成された支援索引です。</p>
+<p>FLIGHTS_PKという名前の制約を支援する索引を見つけるには次のようにします。</p><codeblock><b>SELECT CONGLOMERATENAME FROM SYS.SYSCONGLOMERATES,
+SYS.SYSCONSTRAINTS WHERE
+SYS.SYSCONGLOMERATES.TABLEID = SYSCONSTRAINTS.TABLEID 
+AND CONSTRAINTNAME = 'FLIGHTS_PK'</b></codeblock> </section>
+<example> <codeblock><b>CREATE INDEX OrigIndex ON Flights(orig_airport);
+<b>-- 金額は通常大きな値から小さな値の順で並べられるので、
+-- 索引を降順で作成します。</b>
+CREATE INDEX PAY_DESC ON SAMP.EMPLOYEE (SALARY);
+<ph>-- 索引をより大きいページサイズで作成します。</ph>
+call SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY('derby.storage.pageSize','8192');
+CREATE INDEX IXSALE ON SAMP.SALES (SALES);
+call SYSCS_UTIL.SYSCS_SET_DATABASE_PROPERTY('derby.storage.pageSize',NULL);
+</b></codeblock> </example>
+<section><title>ページサイズとキーサイズ</title>
+<note>索引にあるキーの列サイズの合計は、ページサイズの半分以下で無ければなりません。もし既存行に作成しようとしている索引のキー列の合計が索引のページサイズの半分より大きな行があるならば、索引の作成は失敗します。このエラーは索引を作成したとき、表の既存行が基準に合わないときのみ発生します。索引が作成された後は、基準のキーサイズを超えた行の挿入が失敗します。</note> </section>
+<section><title>文の依存</title><p>SELECT、INSERT、UPDATE、UPDATE WHERE CURRENT、DELETEやDELETEの準備済み文は、その表がCREATE INDEX文の対象となった場合、索引の作成とともに無効になります。一方表について開いているカーソルは影響を受けません。</p> </section>
+</refbody>
+</reference>

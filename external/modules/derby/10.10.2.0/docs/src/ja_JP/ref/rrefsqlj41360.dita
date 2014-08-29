@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj41360" xml:lang="ja">
+<title>SELECT 文</title>
+<prolog><metadata>
+<keywords><indexterm>SELECT statement</indexterm><indexterm>ORDER BY clause<indexterm>needed
+to guarantee order of results</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<refsyn><title>構文</title> <codeblock><b><i><xref href="rrefsqlj21571.dita#rrefsqlj21571">問合せ</xref></i>
+[<i><xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY 節</xref></i>]
+[<i><xref href="rrefsqlj31783.dita#rrefsqlj31783">FOR UPDATE 節</xref></i>]
+WITH {RR|RS|CS|UR}</b></codeblock></refsyn>
+<section> <p>SELECT文は問合せと、省略可能な<xref
+href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY 節</xref>と<xref href="rrefsqlj31783.dita#rrefsqlj31783">FOR UPDATE 節</xref>から構成されます。
+SELECT文は、問合せの最初の単語が一般的にSELECTなので、この名前が与えられています。(<i>問合せ</i>は選択式以外にも、VALUES式、UNION、INTERSECT、EXCEPT式である場合があります。)</p>
+ <p><xref href="rrefsqlj13658.dita#rrefsqlj13658">ORDER BY 節</xref>により、<i>ResultSet</i>の並び順が明示されます。<xref href="rrefsqlj31783.dita#rrefsqlj31783">FOR UPDATE 節</xref>により、結果のカーソルを更新可能にすることができます。SELECT文にはFOR EACH ONLY 節を置くことができます。FOR EACH ONLY 節とFOR READ ONLY節は同じものです。</p> 
+<p>SELECT文にてWITH {RR|RS|CS|UR}という書き方で分離レベルを指定することができます。</p></section>
+
+<example><title>例</title> 
+<codeblock><b>
+<ph>-- SAL+BONUS+COMMと名前を並べて、TOTAL_PAYという名前をつけ、
+-- その名前で並び替える。</ph>
+SELECT FIRSTNME, SALARY+BONUS+COMM AS TOTAL_PAY
+     FROM EMPLOYEE
+     ORDER BY TOTAL_PAY
+<ph>-- FOR UPDATE節を指定することで、
+-- PROJECTという表にある、開始日時(PRSTDATE)、終了日時(PRENDATE)という列を更新する、
+-- 更新可能なカーソルを作成する</ph>
+SELECT PROJNO, PRSTDATE, PRENDATE
+      FROM PROJECT
+      FOR UPDATE OF PRSTDATE, PRENDATE
+<ph>-- この文に限り分離レベルをRRにする。</ph>
+SELECT * 
+FROM Flights 
+WHERE flight_id BETWEEN 'AA1111' AND 'AA1112' 
+WITH RR</b></codeblock> 
+<p>SELECT文は<i>ResultSet</i>を返します。
+<i>カーソル</i>は<i>ResultSet</i>にある行へのポインタです。Javaのアプリケーションでは、<i>ResultSets</i>には対応したSQLのカーソルがあります。カーソルは更新可能とすることができます。したがって、問合せが後に述べる更新可能の条件に適合するのであれば、<i>ResultSet</i>を通して行の更新や削除が可能です。FOR UPDATE 節により、SQLのコンパイル時にSELECT文が更新可能なカーソルの要件に適合するかを確かめる事や、あるいは列を更新可能なもののみに限定する事ができます。
+<note>
+ORDER BY節によりSELECTの結果を並び替えることができます。ORDER BY節がない場合、結果は無作為な並び順です。</note></p> </example>
+<section id="sqlj15384"><title>更新可能なカーソルおよびResultSetの要件</title>
+<p>更新可能なカーソルは、単表への単純なSELECT文によるものでなければなりません。
+更新可能なResultSetを得るためのSELECT文は、更新可能なカーソルと同じ制限を受けます。更新可能なカーソルとするためには、:   <ul>
+<li>SELECT文にはORDER BY節があってはなりません。</li>
+<li><i>問合せ</i>は<i><xref href="rrefselectexpression.dita#rrefselectexpression">選択式</xref></i>でなければなりません。</li>
+<li><i><xref href="rrefselectexpression.dita#rrefselectexpression">選択式</xref></i>には以下があってはなりません。<ul>
+<li>DISTINCT</li>
+<li>集約</li>
+<li>GROUP BY 節</li>
+<li>HAVING 節</li>
+<li>ORDER BY 節</li>
+</ul></li>
+<li><i>問合せ</i>のFROM節には以下があってはなりません。<ul>
+<li>二つ目以降の表</li>
+<li>表以外の名前</li>
+<li><i><xref href="rrefselectexpression.dita#rrefselectexpression">選択式</xref>s</i></li>
+<li>副問い合わせ</li>
+</ul></li>
+</ul></p> 
+<note>既定でカーソルは読み取り専用です。更新可能なカーソルを得るためには、上記の要件を満たすことに加えて、ResultSetの同時並行モードを<codeph>ResultSet.CONCUR_UPDATABLE</codeph>とするか、SELECT文のFOR節にFOR UPDATEを記述しなくてはなりません。(<xref href="rrefsqlj31783.dita#rrefsqlj31783"></xref>を参照してください。)</note>
+<p>SQL言語ではカーソルに名前を与える事ができません。そのかわりにJDBC APIによりカーソルに名前を与えたり、システムがカーソルに与えた名前を取得することができます。詳細については<cite><ph conref="../conrefs.dita#pub/citdevelop"></ph></cite>のカーソルへの命名および名前の利用を参照して下さい。</p>  </section>
+<section><title>文の依存</title> 
+<p>SELECTは、問合せの表やビュー、それらの表へのアクセスパスにて選択されたコングロマリット(ヒープやインデックスなどの記憶の単位です。)に依存します。
+CREATE INDEXでは準備されたSELECT文が無効になることはありません。
+DROP INDEX文ではもし破棄される索引が文にてアクセスパスなら、準備されたSELECT文は破棄されます。
+もしSELECTにビューが含まれていれば、ビューが依存するディクショナリの情報にも依存します。(<xref href="rrefsqlj15446.dita#rrefsqlj15446"></xref>を参照してください。)</p> 
+<p>SELECTのカーソルに対して、準備されたUPDATE WHERE CURRENTあるいはDELETE WHERE CURRENT文はSELECTに依存します。<i>java.sql.Statement.close </i>によりSELECTを取り除くと、UPDATE WHERE CURRENT および DELETE WHERE CURRENTは無効となります。</p> 
+<p>SELECTは問合せにあるあらゆる別名に依存します。別名を破棄することにより、もし準備されたSELECT文にて別名が使われているなら、その文は無効になります。</p> </section>
+</refbody>
+</reference>
+

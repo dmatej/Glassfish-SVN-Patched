@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevconcepts89498" xml:lang="en-us">
+<title>Pitfalls of sharing a connection among threads</title>
+<shortdesc>Here is a review of the potential pitfalls of sharing a single <i>Connection</i> among
+multiple threads.</shortdesc>
+<prolog></prolog>
+<conbody>
+<ul>
+<li>Committing or rolling back a transaction closes all open <i>ResultSet</i> objects
+and currently executing <i>Statements</i>, unless you are using held cursors. <p>If
+one thread commits, it closes the <i>Statements</i> and <i>ResultSets</i> of
+all other threads using the same connection.</p></li>
+<li>Executing a <i>Statement</i> automatically closes any existing open <i>ResultSet</i> generated
+by an earlier execution of that <i>Statement</i>. <p>If threads share <i>Statements</i>,
+one thread could close another's <i>ResultSet.</i></p></li>
+</ul>
+<p>In many cases, it is easier to assign each thread to a distinct <i>Connection</i>.
+If thread <i>A</i> does database work that is not transactionally related
+to thread <i>B</i>, assign them to different <i>Connections</i>. For example,
+if thread <i>A</i> is associated with a user input window that allows users
+to delete hotels and thread <i>B</i> is associated with a user window that
+allows users to view city information, assign those threads to different <i>Connections</i>.
+That way, when thread <i>A</i> commits, it does not affect any <i>ResultSets</i> or <i>Statements</i> of
+thread B.</p>
+<p>Another strategy is to have one thread do queries and another thread do
+updates. Queries hold shared locks until the transaction commits in SERIALIZABLE
+isolation mode; use READ_COMMITTED instead.</p>
+<p>Yet another strategy is to have only one thread do database access. Have
+other threads get information from the database access thread.</p>
+<p>Multiple threads are permitted to share a <i>Connection</i>, <i>Statement</i>,
+or <i>ResultSet</i>. However, the application programmer must ensure that
+one thread does not affect the behavior of the others.</p>
+<section><title>Recommended Practices</title><p>Here are some tips for avoiding
+unexpected behavior:</p><ul>
+<li>Avoid sharing <i>Statements</i> (and their <codeph><i>ResultSets</i></codeph>)
+among threads.</li>
+<li>Each time a thread executes a<i> Statement</i>, it should process the
+results before relinquishing the <codeph><i>Connection</i></codeph>.</li>
+<li>Each time a thread accesses the <i>Connection</i>, it should consistently
+commit or not, depending on application protocol.</li>
+<li>Have one thread be the "managing" database <i>Connection</i> thread that
+should handle the higher-level tasks, such as establishing the <codeph><i>Connection</i></codeph>,
+committing, rolling back, changing <codeph><i>Connection</i></codeph> properties
+such as auto-commit, closing the <codeph><i>Connection</i></codeph>, shutting
+down the database (in an embedded environment), and so on.</li>
+<li>Close <i>ResultSets</i> and <codeph><i>Statements</i></codeph> that are
+no longer needed in order to release resources.</li>
+</ul></section>
+</conbody>
+</concept>

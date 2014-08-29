@@ -1,0 +1,242 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefcreatefunctionstatement" xml:lang="en-us">
+<title>CREATE FUNCTION statement</title>
+<shortdesc>The CREATE FUNCTION statement allows you to create Java functions,
+which you can then use in an expression.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>CREATE FUNCTION statement</indexterm><indexterm><indexterm>SQL
+statements</indexterm>CREATE FUNCTION</indexterm><indexterm>functions<indexterm>creating</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>The function owner and the 
+<xref href="rrefattrib26867.dita#rrefattrib26867">database owner</xref>
+automatically gain the
+EXECUTE privilege on the function, and are able to grant this privilege to
+other users. The EXECUTE privileges cannot be revoked from the function and
+database owners.</p>
+<p>For details on how <ph conref="../conrefs.dita#prod/productshortname"></ph>
+matches procedures to Java methods, see
+<xref href="rrefsqljargmatching.dita#rrefsqljargmatching"></xref>.</p>
+</section>
+<refsyn><title>Syntax</title> <codeblock><b>CREATE FUNCTION <i><xref
+href="rreffunctionname.dita#rreffunctionname">functionName</xref></i> ( [ <i><xref
+href="rrefcreatefunctionstatement.dita#rrefcreatefunctionstatement/rrefcrprofunctionparameter">functionParameter</xref></i> 
+   [ , <i><xref
+href="rrefcreatefunctionstatement.dita#rrefcreatefunctionstatement/rrefcrprofunctionparameter">functionParameter</xref></i> ]* [...] ] ) RETURNS <i><xref href="rrefcreatefunctionstatement.dita#rrefcreatefunctionstatement/rrefcrfunctionreturntype">returnDataType</xref></i>
+[ <i><xref href="rrefcreatefunctionstatement.dita#rrefcreatefunctionstatement/rrefcrprofunctionelement">functionElement</xref></i> ]*</b></codeblock>
+<p>An ellipsis (<codeph>...</codeph>) after the last parameter indicates that
+the Java method supports trailing optional arguments, called
+<term>varargs</term>. The ellipsis indicates that the method may be invoked
+with zero or more trailing values, all having the data type of the last
+argument.</p></refsyn>
+<example id="rrefcrprofunctionparameter"><title>functionParameter</title>
+<codeblock><b>[ <i>parameterName</i> ] <i>dataType</i></b></codeblock></example>
+<section><p>A <i>parameterName</i> must be unique within a function.</p><p>The syntax
+of <i>dataType</i> is described in <xref href="crefsqlj31068.dita#crefsqlj31068"></xref>.</p>
+<note>The data types BLOB, CLOB, LONG VARCHAR, LONG VARCHAR FOR BIT DATA, and
+XML are not allowed as parameters in a CREATE FUNCTION statement.</note></section>
+
+<example id="rrefcrfunctionreturntype"><title>returnDataType</title>
+<codeblock><b><i><xref
+href="rrefcreatefunctionstatement.dita#rrefcreatefunctionstatement/rrefcrfunctiontabletype">tableType</xref></i> | <i>dataType</i></b></codeblock></example>
+<section><p>The syntax
+of <i>dataType</i> is described in <xref href="crefsqlj31068.dita#crefsqlj31068"></xref>.</p></section>
+
+<example id="rrefcrfunctiontabletype"><title>tableType</title>
+<codeblock><b>TABLE( <i><xref
+href="rrefcreatefunctionstatement.dita#rrefcreatefunctionstatement/rrefcrfunctioncolelement">columnElement</xref></i> [, <i>columnElement</i> ]* )</b></codeblock></example>
+<section><p>This is the return type of a table function. Currently, only
+<ph conref="../conrefs.dita#prod/productshortname"></ph>-style table functions
+are supported. They are functions which return JDBC <i>ResultSet</i>s. For more
+information, see "Programming
+<ph conref="../conrefs.dita#prod/productshortname"></ph>-style table functions"
+in the <cite><ph conref="../conrefs.dita#pub/citdevelop"></ph></cite>.
+</p>
+
+<p>
+At runtime, as values are read out of the user-supplied <i>ResultSet</i>,  Derby coerces those values
+to the data types declared in the CREATE FUNCTION statement. This affects values typed as
+CHAR, VARCHAR, LONG VARCHAR, CHAR FOR BIT DATA, VARCHAR FOR BIT DATA,
+LONG VARCHAR FOR BIT DATA, and DECIMAL/NUMERIC. Values which are too long are truncated
+to the maximum length declared in the CREATE FUNCTION statement. In addition,
+if a <i>String</i> value is returned in the <i>ResultSet</i> for a column of CHAR type
+and the <i>String</i> is shorter than the declared length of the CHAR column, Derby
+pads the end of the <i>String</i> with blanks in order to stretch it out to the declared
+length.
+</p>
+
+</section>
+
+<example id="rrefcrfunctioncolelement"><title>columnElement</title>
+<codeblock><b><i><xref href="crefsqlj34834.dita#crefsqlj34834">SQL92Identifier</xref></i> <i>dataType</i></b></codeblock></example>
+<section><p>The syntax of <i>dataType</i> is described in
+<xref href="crefsqlj31068.dita#crefsqlj31068"></xref>.</p><note>XML is not
+allowed as the type of a column in the dataset returned by a table function.</note></section>
+
+<example id="rrefcrprofunctionelement"> <title>functionElement</title>
+<codeblock><b>{
+    LANGUAGE JAVA |
+    { DETERMINISTIC | NOT DETERMINISTIC } |
+    <xref href="rrefsqljexternalname.dita#rrefsqljexternalname">EXTERNAL NAME</xref> <i>singleQuotedString</i> |
+    PARAMETER STYLE { JAVA | DERBY_JDBC_RESULT_SET | DERBY } |
+    EXTERNAL SECURITY { DEFINER | INVOKER } |
+    { NO SQL | CONTAINS SQL | READS SQL DATA } |
+    { RETURNS NULL ON NULL INPUT | CALLED ON NULL INPUT }
+}</b></codeblock></example>
+<section><p>The function elements may appear in any order, but each type of
+element can only appear once. A function definition must contain these elements:
+<ul>
+<li><b>LANGUAGE</b></li>
+<li><b>EXTERNAL NAME</b></li>
+<li><b>PARAMETER STYLE</b></li>
+</ul></p></section>
+<section><title>LANGUAGE JAVA</title><p>The database manager will call the
+function as a public static method in a Java class.</p></section>
+<section><title>DETERMINISTIC, NOT DETERMINISTIC</title>
+<p>DETERMINISTIC declares that the function is deterministic, meaning that with
+the same set of input values, it always computes the same result. The default is
+NOT DETERMINISTIC. <ph conref="../conrefs.dita#prod/productshortname"></ph>
+cannot recognize whether an operation is actually deterministic, so you must
+take care to specify this element correctly.</p></section>
+<section><title>EXTERNAL NAME <i>singleQuotedString</i></title>
+<p>The <i>singleQuotedString</i> specified by the <xref
+href="rrefsqljexternalname.dita#rrefsqljexternalname"></xref> describes
+the Java method to be called when the function is executed.</p></section>
+<section><title>PARAMETER STYLE</title>
+<dl>
+<dlentry>
+<dt>JAVA</dt>
+<dd>The function will use a parameter-passing convention that conforms to the
+Java language and SQL Routines specification. INOUT and OUT parameters will be
+passed as single entry arrays to facilitate returning values. Result sets can be
+returned through additional parameters to the Java method of type
+<i>java.sql.ResultSet[]</i> that are passed single entry arrays.
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph> does
+not support long column types (for example, LONG VARCHAR, BLOB, and so on).
+An error will occur if you try to use one of these long column types.</p></dd>
+</dlentry>
+<dlentry>
+<dt>DERBY_JDBC_RESULT_SET</dt>
+<dd>The PARAMETER STYLE is DERBY_JDBC_RESULT_SET if and only if this is a
+<ph conref="../conrefs.dita#prod/productshortname"></ph>-style table function,
+that is, a function which returns
+<i><xref href="rrefcreatefunctionstatement.dita#rrefcreatefunctionstatement/rrefcrfunctiontabletype">tableType</xref></i>
+and which is mapped to a method which returns a JDBC <i>ResultSet</i>.</dd>
+</dlentry>
+<dlentry>
+<dt>DERBY</dt>
+<dd>The PARAMETER STYLE must be DERBY if and only if an ellipsis
+(<codeph>...</codeph>) appears at the end of the argument list.</dd>
+</dlentry>
+</dl>
+</section>
+<section><title>EXTERNAL SECURITY</title>
+<p>If SQL authorization mode is enabled, a function runs by default with the
+privileges specified for the user who invokes the function (invoker's rights).
+To specify that the function should run with the privileges specified for the
+user who defines the function (definer's rights), create the function with
+EXTERNAL SECURITY DEFINER. Those privileges include the right to set the current
+role to a role for which the definer has privileges. When the function is first
+invoked, no role is set; even if the invoker has set a current role, the
+function running with definer's rights has no current role set initially.</p>
+<p>See <i><xref href="rrefpropersqlauth.dita#rrefpropersqlauth"></xref></i> for
+details about setting SQL authorization mode.</p>
+<p>When a function with definer's rights is invoked, the current default schema
+is set to the eponymously named schema of the definer. For example, if the
+defining user is called OWNER, the default schema will also be set to OWNER.</p>
+<p>When a function with invoker's rights is called, the current default
+schema and current role are unchanged initially within the function. Similarly,
+if SQL authorization mode is not enabled, the current default schema is
+unchanged initially within the function.</p>
+<p>When the call returns, any changes made inside the function to the default
+current schema (and current role, if relevant) are reset (popped).</p>
+<p>If SQL authorization mode is not enabled, an attempt to create a function
+with EXTERNAL SECURITY will result in an error.</p>
+</section>
+<section><title>NO SQL, CONTAINS SQL, READS SQL DATA</title> <p>Indicates
+whether the function issues any SQL statements and, if so, what type.</p> <dl>
+<dlentry>
+<dt>CONTAINS SQL</dt>
+<dd>Indicates that SQL statements that neither read nor modify SQL data can
+be executed by the function. Statements that are not supported in any function
+return a different error.</dd>
+</dlentry><dlentry>
+<dt>NO SQL</dt>
+<dd>Indicates that the function cannot execute any SQL statements</dd>
+</dlentry><dlentry>
+<dt>READS SQL DATA </dt>
+<dd>Indicates that some SQL statements that do not modify SQL data can be
+included in the function. Statements that are not supported in any stored
+function return a different error. This is the default value.</dd>
+</dlentry></dl></section>
+<section><title>RETURNS NULL ON NULL INPUT or CALLED ON NULL INPUT</title><p>Specifies
+whether the function is called if any of the input arguments is null. The
+result is the null value. <dl><dlentry>
+<dt>RETURNS NULL ON NULL INPUT</dt>
+<dd>Specifies that the function is not invoked if any of the input arguments
+is null. The result is the null value.</dd>
+</dlentry><dlentry>
+<dt>CALLED ON NULL INPUT</dt>
+<dd>Specifies that the function is invoked if any or all input arguments are
+null. This specification means that the function must be coded to test for
+null argument values. The function can return a null or non-null value. This
+is the default setting.</dd>
+</dlentry></dl></p></section>
+<section><title>Example of declaring a scalar function</title>
+<codeblock><b>
+CREATE FUNCTION TO_DEGREES
+( RADIANS DOUBLE )
+RETURNS DOUBLE
+PARAMETER STYLE JAVA
+NO SQL LANGUAGE JAVA
+EXTERNAL NAME 'java.lang.Math.toDegrees'
+</b></codeblock>
+</section>
+<section><title>Example of declaring a table function</title>
+<codeblock><b>
+CREATE FUNCTION PROPERTY_FILE_READER
+( FILENAME VARCHAR( 32672 ) )
+RETURNS TABLE
+  (
+     KEY_COL     VARCHAR( 10 ),
+     VALUE_COL VARCHAR( 1000 )
+  )
+LANGUAGE JAVA
+PARAMETER STYLE DERBY_JDBC_RESULT_SET
+NO SQL
+EXTERNAL NAME 'vtis.example.PropertyFileVTI.propertyFileVTI'
+</b></codeblock>
+</section>
+<section><title>Example of declaring a function that takes varargs</title>
+<codeblock><b>
+CREATE FUNCTION maximum
+( a INT ... )
+RETURNS INT
+LANGUAGE JAVA
+PARAMETER STYLE DERBY
+NO SQL
+EXTERNAL NAME 'IntFunctions.maximum'
+</b></codeblock>
+</section>
+</refbody>
+</reference>

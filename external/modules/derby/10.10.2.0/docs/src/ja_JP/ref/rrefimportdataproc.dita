@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefimportdataproc" xml:lang="ja">
+<title>SYSCS_UTIL.SYSCS_IMPORT_DATAシステム手続き</title>
+<refbody>
+<section><p><codeph>SYSCS_UTIL.SYSCS_IMPORT_DATA</codeph>システム手続きは、表にある一部の列に情報をインポートします。これらの一部の列は、情報を挿入する時に指定します。
+またこの手続きにて、列の番号を指定して、ファイルから一部の列をインポートできます。</p></section>
+<section><title>構文</title><codeblock>SYSCS_UTIL.SYSCS_IMPORT_DATA (IN SCHEMANAME VARCHAR(128),
+IN TABLENAME VARCHAR(128), IN INSERTCOLUMNS VARCHAR(32672),
+IN COLUMNINDEXES VARCHAR(32672), IN FILENAME VARCHAR(32672),
+IN COLUMNDELIMITER CHAR(1), IN CHARACTERDELIMITER CHAR(1),
+IN CODESET VARCHAR(128), IN REPLACE SMALLINT)</codeblock> <p>この手続きは結果を返しません。</p> <dl><dlentry>
+<dt>SCHEMANAME</dt>
+<dd>この引数の型はVARCHAR(128)で、値により表のあるスキーマを指定します。空の値を渡すと、既定のスキーマ名が用いられます。</dd>
+</dlentry><dlentry>
+<dt>TABLENAME</dt>
+<dd>この引数の型はVARCHAR (128)で、値により情報のインポート先となる表の表名を指定します。この表にはシステム表や一時表を指定することはできません。空の値を渡すと、エラーとなります。</dd>
+</dlentry><dlentry>
+<dt>INSERTCOLUMNS</dt>
+<dd>この引数の型はVARCHAR (32762)で、表にある列から情報のインポート先となる列の名称を(コンマで区切られた)値で指定します。</dd>
+</dlentry><dlentry>
+<dt>COLUMNINDEXES</dt>
+<dd>この引数の型はVARCHAR (32762)で、インポートする入力情報フィールドの(1からはじまり、コンマで区切られる)番号を指定します。空の値を渡すと入力ファイルの全入力情報フィールドが用いられます。</dd>
+</dlentry><dlentry>
+<dt>FILENAME</dt>
+<dd>この引数の型はVARCHAR(32672)で、インポートする情報のあるファイルを指定します。
+もしパスが指定されない場合、現在の作業ディレクトリが用いられます。空の値を渡すとエラーとなります。</dd>
+</dlentry><dlentry>
+<dt>COLUMNDELIMITER</dt>
+<dd>この引数の型はCHAR(1)で、列のデリミタを指定します。指定した文字はコンマの代わりに列の終わりを表すために用いられます。空の値を渡すと既定値が用いられます。既定値はコンマ(,)です。</dd>
+</dlentry><dlentry>
+<dt>CHARACTERDELIMITER</dt>
+<dd>この引数の型はCHAR(1)で、文字のデリミタを指定します。指定した文字は二重引用符の代わりに文字列を囲います。空の値を渡すと既定値が用いられます。既定値は二重引用符(")です。</dd>
+</dlentry><dlentry>
+<dt>CODESET</dt>
+<dd>この引数の型はVARCHAR(128)で、入力ファイルにある情報のコードセットを指定します。コードセットの名前はJavaのサポートする文字エンコーディングのうちの一つでなければなりません。　
+情報は個々で指定したコードセットからデータベースのコードセット(utf-8)に変換されます。空の値を渡すとデータベースは処理中のJVMと同じコードセットで解釈されます。</dd>
+</dlentry><dlentry>
+<dt>REPLACE</dt>
+<dd>この引数の型はSMALLINTです。値が零でなければREPLACEモードとなり、零ならINSERTモードとなります。REPLACEモードでは、表は切り捨てられて存在する全情報が削除され、それからインポートする情報が挿入されます。
+なお表の定義や索引の定義は変わりませ年。表が存在するときにのみ、REPLACEモードは可能です。INSERTモードでは、表にある既存の情報を変更せずに、インポートする情報が表に追加されます。空の値を渡すとエラーとなります。</dd>
+</dlentry></dl>
+<p>
+スキーマ、表や列の名前がデリミトされない識別子で作成されていた場合、インポートの手続きに渡す名前は全て大文字でなければなりません。
+スキーマ、表や列の名前がデリミトされた識別子で作成されていた場合、インポートの手続きに渡す名前の大文字小文字は、作成時に指定した値と同じでなければなりません。
+</p>
+</section>
+<section><title>使い方</title>
+<p>この手続きの使い方に関しては、<ph conref="../conrefs.dita#pub/citutilities"></ph>の「バルクインポートとエクスポートの手続きを使う」の章も読んでください。</p></section>
+<section><title>例</title>
+<p>次の例では、<codeph>data.del</codeph>というデリミトされたデータファイルにある一部のフィールドを、<codeph>staff</codeph>表にインポートします。     <codeblock>CALL SYSCS_UTIL.SYSCS_IMPORT_DATA
+(NULL, 'STAFF', null, '1,3,4', 'data.del', null, null, null,0)</codeblock></p></section>
+
+</refbody>
+</reference>

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//IBM//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="rdevconceptsfor" xml:lang="en-us">
+<title>Forward only updatable result sets</title>
+<shortdesc>A forward only updatable result set maintains a cursor
+which can only move in one direction (forward), and also update rows.
+</shortdesc>
+<prolog></prolog>
+<conbody>
+<section>
+<p>To create a forward only updatable result set, the
+statement has to be created with concurrency mode
+<codeph>ResultSet.CONCUR_UPDATABLE</codeph> and type
+<codeph>ResultSet.TYPE_FORWARD_ONLY</codeph>. 
+<note> The default type is
+<codeph>ResultSet.TYPE_FORWARD_ONLY</codeph>.</note>
+</p>
+
+<p>Example of using <codeph>ResultSet.updateXXX() +
+ResultSet.updateRow()</codeph> to update a row: </p>
+
+<codeblock>
+  Statement stmt = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, 
+                                        ResultSet.CONCUR_UPDATABLE);
+  ResultSet uprs = stmt.executeQuery(
+    "SELECT FIRSTNAME, LASTNAME, WORKDEPT, BONUS " +
+    "FROM EMPLOYEE");
+
+  while (uprs.next()) {
+      int newBonus = uprs.getInt("BONUS") + 100;
+      uprs.updateInt("BONUS", newBonus);
+      uprs.updateRow();
+  }
+</codeblock>
+
+<p>Example of using <codeph>ResultSet.deleteRow()</codeph> to delete a row: </p>
+
+<codeblock>
+  Statement stmt = conn.createStatement(ResultSet.TYPE_FORWARD_ONLY, 
+                                        ResultSet.CONCUR_UPDATABLE);
+  ResultSet uprs = stmt.executeQuery(
+    "SELECT FIRSTNAME, LASTNAME, WORKDEPT, BONUS " +
+    "FROM EMPLOYEE");
+
+  while (uprs.next()) {
+      if (uprs.getInt("WORKDEPT")==300) {
+         uprs.deleteRow();
+      }
+  }
+</codeblock>
+
+</section>
+
+<section>
+
+<title>Visibility of changes </title>
+<ul>
+<li>After an update or delete is made on a forward only result set,
+the result set's cursor is no longer on the row just updated or
+deleted, but immediately before the next row in the result set (it is
+necessary to move to the next row before any further row operations
+are allowed). This means that changes made by
+<codeph>ResultSet.updateRow()</codeph> and
+<codeph>ResultSet.deleteRow()</codeph> are never visible.  
+</li>
+<li>If a row has been inserted, i.e using
+<codeph>ResultSet.insertRow()</codeph> it may be visible in a forward
+only result set.</li>
+</ul>
+</section>
+
+<section>
+<title>Conflicting operations</title>
+<p> The current row of the result set cannot be changed by other
+transactions, since it will be locked with an update lock. 
+Result sets held open after a commit have to move to the next row
+before allowing any operations on it. </p>
+
+Some conflicts may prevent the result set from doing updates/deletes:
+<ul>
+<li>If the current row is deleted by a statement in the same transaction, calls to
+<codeph>ResultSet.updateRow()</codeph> will cause an exception, since
+the cursor is no longer positioned on a valid row. </li>
+</ul>
+</section>
+
+</conbody>
+</concept>

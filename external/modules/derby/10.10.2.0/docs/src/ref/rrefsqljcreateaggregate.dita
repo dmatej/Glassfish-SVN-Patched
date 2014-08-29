@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at  
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsqljcreateaggregate" xml:lang="en-us">
+<title>CREATE DERBY AGGREGATE statement</title>
+<prolog><metadata>
+<keywords><indexterm>CREATE DERBY AGGREGATE statement</indexterm>
+<indexterm>SQL statements<indexterm>CREATE DERBY AGGREGATE</indexterm></indexterm>
+<indexterm>user-defined aggregates<indexterm>creating</indexterm></indexterm>
+<indexterm>aggregates<indexterm>user-defined</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>The CREATE DERBY AGGREGATE statement creates a user-defined
+aggregate (UDA). A UDA is a custom aggregate operator.</p></section>
+<refsyn><title>Syntax</title>
+<codeblock><b>CREATE DERBY AGGREGATE <i><xref 
+href="rrefaggregatename.dita#rrefaggregatename">aggregateName</xref></i> FOR <i>valueDataType</i>
+[ RETURNS <i>returnDataType</i> ]
+<xref href="rrefsqljexternalname.dita#rrefsqljexternalname">EXTERNAL NAME</xref> <i>singleQuotedString</i></b></codeblock>
+<p>The aggregate name is composed of an optional <i><xref
+href="rrefschemaname.dita#rrefschemaname">schemaName</xref></i>
+and a <i>SQL92Identifier</i>. If a <i>schemaName</i> is not provided, the
+current schema is the default schema. If a qualified aggregate name is
+specified, the schema name cannot begin with SYS.</p>
+<p>In general, UDAs live in the same namespace as one-argument user-defined
+functions (see
+<xref href="rrefcreatefunctionstatement.dita#rrefcreatefunctionstatement"></xref>).
+A schema-qualified UDA name may not be the schema-qualified name of a
+one-argument user-defined function.</p>
+<p>An unqualified UDA name (that is, the UDA name without its schema name) may
+not be the name of an aggregate defined in part 2 of the SQL Standard,
+section 10.9:</p>
+<codeblock>ANY
+AVG
+COLLECT
+COUNT
+EVERY
+FUSION
+INTERSECTION
+MAX
+MIN
+SOME
+STDDEV_POP
+STDDEV_SAMP
+SUM
+VAR_POP
+VAR_SAMP</codeblock>
+<p>In addition, an unqualified UDA name may not be the name of any of the
+<ph conref="../conrefs.dita#prod/productshortname"></ph> built-in functions
+which take one argument.</p>
+<p>The <i>valueDataType</i> can be any valid nullable
+<ph conref="../conrefs.dita#prod/productshortname"></ph> data type except for
+XML, including user-defined types.</p>
+<p>The <i>returnDataType</i> can be any valid nullable
+<ph conref="../conrefs.dita#prod/productshortname"></ph> data type except for
+XML. If the <i>returnDataType</i> is omitted, it defaults to be the same as
+<i>valueDataType</i>.</p>
+<p>The <i>singleQuotedString</i> specified by the <xref
+href="rrefsqljexternalname.dita#rrefsqljexternalname"></xref> is the full name
+of a Java class which implements the <i>org.apache.derby.agg.Aggregator</i>
+interface. That contract is not checked until a statement is compiled which
+invokes the UDA.</p>
+<p>The <i>org.apache.derby.agg.Aggregator</i> interface extends
+<i>java.io.Serializable</i>, so you must make sure that all of the state of your
+UDA is serializable. A UDA may be serialized to disk when it performs grouped
+aggregation over a large number of groups. That is, intermediate results may be
+serialized to disk for a query like the following:</p>
+<codeblock>SELECT a, myAggregate( b ) FROM myTable GROUP BY a</codeblock>
+<p>The serialization will fail if the UDA contains non-serializable fields.</p>
+<p>The owner of the schema where the UDA lives automatically gains the USAGE
+privilege on the UDA and can grant this privilege to other users and roles. Only
+the <xref href="rrefattrib26867.dita#rrefattrib26867">database owner</xref> and
+the owner of the UDA can grant these USAGE privileges. The USAGE privilege
+cannot be revoked from the schema owner. See
+<xref href="rrefsqljgrant.dita#rrefsqljgrant"></xref> and
+<xref href="rrefsqljrevoke.dita#rrefsqljrevoke"></xref> for more
+information.</p>
+</refsyn>
+<example><title>Examples</title>
+<codeblock><b>CREATE DERBY AGGREGATE mode FOR INT
+EXTERNAL NAME 'com.example.myapp.aggs.Mode';
+
+CREATE DERBY AGGREGATE types.maxPrice FOR PRICE
+EXTERNAL NAME 'com.example.myapp.types.PriceMaxer';
+
+CREATE DERBY AGGREGATE types.avgLength FOR VECTOR
+RETURNS DOUBLE
+EXTERNAL NAME 'com.example.myapp.types.VectorLength';</b></codeblock>
+<p>See "Programming user-defined aggregates" in the
+<ph conref="../conrefs.dita#pub/citdevelop"></ph> for more details about
+creating and using user-defined aggregates.</p>
+</example>
+</refbody>
+</reference>

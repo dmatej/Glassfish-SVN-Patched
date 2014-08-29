@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<reference id="rrefsqlj32268" xml:lang="pt-br">
+<title>Instrução SET SCHEMA</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Instrução SET SCHEMA</indexterm>
+<indexterm>Esquemas<indexterm>alteração da sessão padrão</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>A instrução SET SCHEMA define o esquema padrão para a sessão da conexão
+como sendo o esquema designado.
+O esquema padrão é utilizado como esquema de destino por todas as instruções
+emitidas pela conexão que não especificam explicitamente o nome do esquema.</p>
+<p>Para a instrução SET SCHEMA ser bem-sucedida, o esquema de destino deve
+existir.
+Se o esquema não existir, retornará um erro.
+Consulte a <xref href="rrefsqlj31580.dita#rrefsqlj31580"></xref>.</p>
+<p>A instrução SET SCHEMA não é transacional: Se a instrução SET SCHEMA for
+parte de uma transação desfeita, a mudança de esquema permanecerá aplicada.</p>
+</section>
+<refsyn>
+<title>Sintaxe</title>
+<codeblock><b>SET [CURRENT] SCHEMA [=]
+{ <i><xref href="rrefschemaname.dita#rrefschemaname">nome-do-esquema</xref> </i>|
+USER | ? | '&lt;constante-cadeia-de-caracteres&gt;' } | SET CURRENT SQLID [=]
+{
+<i><xref href="rrefschemaname.dita#rrefschemaname">nome-do-esquema</xref> </i>| USER | ? | '&lt;constante-cadeia-de-caracteres&gt;' }</b>
+</codeblock>
+<p>O <i><xref href="rrefschemaname.dita#rrefschemaname">nome-do-esquema</xref></i>
+é um identificador com comprimento máximo igual a 128.
+Não diferencia letras maiúsculas de minúsculas, a menos que esteja entre aspas
+(Por exemplo, SYS é equivalente a sYs, SYs, sys, etc.).</p>
+<p>USER é o usuário corrente.
+Se não houver usuário corrente definido, o esquema corrente padrão será o
+esquema <i>APP</i> (Se for especificado um nome de usuário na conexão, o nome
+de usuário será o esquema padrão para a conexão, caso exista um esquema com este
+nome).</p>
+<p>? é a especificação de um parâmetro dinâmico que pode ser utilizado em
+instruções preparadas.
+A instrução SET SCHEMA pode ser preparada uma vez e executada com valores de
+esquema diferentes.
+Os valores do esquema são tratados como constantes cadeia de caracteres,
+portanto diferenciando letras maiúsculas e minúsculas.
+Por exemplo, para designar o esquema <i>APP</i> deve ser utilizada a cadeia
+de caracteres "APP", em vez de "app".</p>
+</refsyn>
+<example> <codeblock><b><ph>-- os comandos a seguir são todos equivalentes,
+-- e funcionam assumindo que exista um esquema chamado HOTEL </ph>
+SET SCHEMA HOTEL
+SET SCHEMA hotel
+SET CURRENT SCHEMA hotel
+SET CURRENT SQLID hotel
+SET SCHEMA = hotel
+SET CURRENT SCHEMA = hotel
+SET CURRENT SQLID = hotel
+SET SCHEMA "HOTEL" <ph>-- identificador entre aspas</ph>
+SET SCHEMA 'HOTEL' <ph>-- cadeia de caracteres entre apóstrofos</ph>
+
+<ph>-- Este exemplo produz um erro, porque
+-- hotel em minúsculas não será encontrado</ph>
+SET SCHEMA = 'hotel'
+
+<ph>-- Este exemplo produz um erro, porque SQLID
+-- não é permitido sem CURRENT</ph>
+SET SQLID hotel
+
+<ph>-- Este exemplo define o esquema como o ID do usuário corrente</ph>
+SET CURRENT SCHEMA USER
+
+<ph>// Abaixo está um exemplo da utilização de SET SCHEMA em um programa Java</ph>
+PreparedStatement ps = conn.PrepareStatement("set schema ?");
+ps.setString(1,"HOTEL");
+ps.executeUpdate();
+... fazer alguma coisa
+ps.setString(1,"APP");
+ps.executeUpdate();
+
+ps.setString(1,"app"); <ph>//erro - a cadeia de caracteres diferencia
+// letras maiúsculas e minúsculas; app não será encontrado</ph>
+ps.setNull(1, Types.VARCHAR); <ph>//erro - não é permitido nulo</ph></b>
+</codeblock>
+</example>
+</refbody>
+</reference>

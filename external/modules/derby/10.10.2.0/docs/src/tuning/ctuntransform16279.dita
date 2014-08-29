@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="ctuntransform16279" xml:lang="en-us">
+<title>DISTINCT elimination based on a uniqueness condition</title>
+<prolog><metadata>
+<keywords><indexterm>DISTINCT<indexterm>eliminated for uniqueness condition</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>A DISTINCT (and the corresponding sort) can be eliminated from a query
+if a uniqueness condition exists that ensures that no duplicate values will
+be returned. If no duplicate values are returned, the DISTINCT node is superfluous,
+and <ph conref="../conrefs.dita#prod/productshortname"></ph> transforms the
+statement internally into one without the DISTINCT keyword.</p>
+<p>The requirements are:   <ul>
+<li>No GROUP BY list. </li>
+<li>SELECT list contains at least one <xref href="ctuntransform13966.dita#ctuntransform13966/rtuntransform13785">simple
+column reference</xref>. </li>
+<li>Every <xref href="ctuntransform13966.dita#ctuntransform13966/rtuntransform13785">simple
+column reference</xref> is from the same table. </li>
+<li>Every table in the FROM list is a <xref href="ctuntransform13966.dita#ctuntransform13966/rtuntransform41494">base
+table</xref>. </li>
+<li id="i828502"><i id="rtuntransform29680">Primary table</i>   <p>There is
+at least one unique index on one table in the FROM list for which <i>all</i> the
+columns appear in one of the following:</p>  <ul>
+<li><xref href="ctuntransform13966.dita#ctuntransform13966/rtuntransform24389">equality
+predicate</xref>s with expressions that do not include any column references</li>
+<li><xref href="ctuntransform13966.dita#ctuntransform13966/rtuntransform13785">simple
+column reference</xref>s in the SELECT list</li>
+</ul></li>
+<li id="i828529"><i id="rtuntransform16930">Secondary table(s)</i>   <p>All
+the other tables in the FROM list also have at least one unique index for
+which all the columns appear in one of the following:</p>  <ul>
+<li><xref href="ctuntransform13966.dita#ctuntransform13966/rtuntransform24389">equality
+predicate</xref>s with expressions that do not include columns from the same
+table</li>
+<li><xref href="ctuntransform13966.dita#ctuntransform13966/rtuntransform13785">simple
+column reference</xref>s in the SELECT list</li>
+</ul></li>
+</ul></p>
+<p>For example:   <codeblock><b>CREATE TABLE tab1 (c1 INT NOT NULL, 
+    c2 INT NOT NULL, 
+    c3 INT NOT NULL, 
+    c4 CHAR(2), 
+    PRIMARY KEY (c1, c2, c3))
+CREATE TABLE tab2 (c1 INT NOT NULL,  
+    c2 INT NOT NULL, 
+    PRIMARY KEY (c1, c2))
+INSERT INTO tab1 VALUES (1, 2, 3, 'WA'), 
+    (1, 2, 5, 'WA'), 
+    (1, 2, 4, 'CA'), 
+    (1, 3, 5, 'CA'), 
+    (2, 3, 1, 'CA')
+INSERT INTO tab2 VALUES (1, 2), 
+    (1, 3), 
+    (2, 2), 
+    (2, 3)
+<b>-- all the columns in the index on the only table (tab1) appear
+-- in the way required for the <xref href="ctuntransform16279.dita#ctuntransform16279/rtuntransform29680">Primary table</xref> (simple column references)</b
+>
+SELECT DISTINCT c1, c2, c3, c4
+FROM tab1
+<b>-- all the columns in the index on the only table (tab1) appear
+-- in the way required for the <xref href="ctuntransform16279.dita#ctuntransform16279/rtuntransform29680">Primary table</xref> (equality predicates) </b
+>
+SELECT DISTINCT c3, c4
+FROM tab1
+WHERE c1 = 1
+AND c2 = 2
+AND c4 = 'WA'
+<b>-- all the columns in the index on tab1 appear
+-- in the way required for the <xref href="ctuntransform16279.dita#ctuntransform16279/rtuntransform29680">Primary table</xref>,
+-- and all the columns in the
+-- other tables appear in the way required
+-- for a <xref href="ctuntransform16279.dita#ctuntransform16279/rtuntransform16930">Secondary table</xref></b>
+SELECT DISTINCT tab1.c1, tab1.c3, tab1.c4
+FROM tab1, tab2
+WHERE tab1.c2 = 2
+AND tab2.c2 = tab1.c2
+AND tab2.c1 = tab1.c1</b></codeblock></p>
+</conbody>
+</concept>

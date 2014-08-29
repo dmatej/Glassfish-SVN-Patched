@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevcsecureprivileges" xml:lang="en-us">
+<title>Privileges on views, triggers, and constraints</title>
+<shortdesc>Views, triggers, and constraints operate with the privileges of the
+owner of the view, trigger, or constraint.</shortdesc>
+<prolog><metadata>
+<keywords>
+<indexterm>privileges<indexterm>on views, triggers, and constraints</indexterm></indexterm>
+<indexterm>permissions<indexterm>on views, triggers, and constraints</indexterm></indexterm>
+<indexterm>views<indexterm>privileges on</indexterm></indexterm>
+<indexterm>triggers<indexterm>privileges on</indexterm></indexterm>
+<indexterm>constraints statement<indexterm>privileges on</indexterm></indexterm>
+<indexterm>invoker rights<indexterm>versus definer rights</indexterm></indexterm>
+<indexterm>definer rights<indexterm>versus invoker rights</indexterm></indexterm>
+<indexterm>SQL standard authorization mode</indexterm></keywords>
+</metadata></prolog>
+<conbody>
+<p>For example, suppose that user <codeph>anita</codeph> wants to create a view
+using the following statement:</p>
+<codeblock>CREATE VIEW s.v(vc1,vc2,vc3)
+	AS SELECT t1.c1,t1.c2,f(t1.c3)
+  FROM t1 JOIN t2 ON t1.c1 = t2.c1 
+	WHERE t2.c2 = 5</codeblock>
+<p>User <codeph>anita</codeph> needs the following privileges to create the
+view:</p>
+<ul>
+<li>Ownership of the schema <codeph>s</codeph>, so that she can create something
+in the schema</li>
+<li>Ownership of the table <codeph>t1</codeph>, so that she can allow others
+to see columns in the table</li>
+<li>SELECT privilege on column <codeph>t2.c1</codeph> and column
+<codeph>t2.c2</codeph></li>
+<li>EXECUTE privilege on function <codeph>f</codeph></li>
+</ul>
+<p>When the view is created, only user <codeph>anita</codeph> has the SELECT
+privilege on it. User <codeph>anita</codeph> can grant the SELECT privilege on
+any or all of the columns of view <codeph>s.v</codeph> to anyone, even to users
+that do not have the SELECT privilege on <codeph>t1</codeph> or
+<codeph>t2</codeph>, or the EXECUTE privilege on <codeph>f</codeph>. User
+<codeph>anita</codeph> then grants the SELECT privilege on view
+<codeph>s.v</codeph> to user <codeph>harry</codeph>. When user
+<codeph>harry</codeph> issues a SELECT statement on the view
+<codeph>s.v</codeph>, <ph conref="../conrefs.dita#prod/productshortname"></ph>
+checks to determine if user <codeph>harry</codeph> has the SELECT privilege on
+view <codeph>s.v</codeph>.
+<ph conref="../conrefs.dita#prod/productshortname"></ph> does not check to
+determine if user <codeph>harry</codeph> has the SELECT privilege on
+<codeph>t1</codeph> or <codeph>t2</codeph>, or the EXECUTE privilege on
+<codeph>f</codeph>.</p>
+<p>Privileges on triggers and constraints work the same way as privileges on
+views. When a view, trigger, or constraint is created,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> checks that the owner
+has the required privileges. Other users do not need to have those privileges
+to perform actions on a view, trigger, or constraint.</p>
+<p>If the required privileges are revoked from the owner of a view, trigger,
+or constraint, the object is dropped as part of the REVOKE statement.</p>
+<p>Another way of saying that privileges on objects belong to the owner is to
+call them <term>definer rights</term>, as opposed to <term>invoker rights</term>.
+This is the terminology used by the SQL standard.</p>
+</conbody>
+</concept>

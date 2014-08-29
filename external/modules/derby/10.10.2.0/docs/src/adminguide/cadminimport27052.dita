@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cadminimport27052" xml:lang="en-us">
+<title>Bulk import and export requirements and considerations</title>
+<shortdesc>There are requirements and limitations that you must consider before
+you use the <ph conref="../conrefs.dita#prod/productshortname"></ph> import
+and export procedures.</shortdesc>
+<prolog><metadata><keywords>
+<indexterm>bulk import and export<indexterm>requirements</indexterm></indexterm>
+<indexterm>import procedures<indexterm>requirements</indexterm></indexterm>
+<indexterm>import procedures<indexterm>limitations</indexterm></indexterm>
+<indexterm>export procedures<indexterm>requirements</indexterm></indexterm>
+<indexterm>export procedures<indexterm>limitations</indexterm></indexterm>
+<indexterm>system procedures<indexterm>import and export, requirements</indexterm></indexterm>
+</keywords></metadata></prolog>
+<conbody>
+<dl><dlentry>
+<dt>Database transactions</dt>
+<dd><ph conref="../conrefs.dita#prod/productshortname"></ph> issues a COMMIT or
+a ROLLBACK statement after each import and export procedure is run (a COMMIT if
+the procedure completes successfully, a ROLLBACK if it fails). For this reason,
+you should issue either a COMMIT or ROLLBACK statement to complete all
+transactions and release all table-level locks before you invoke an import or
+export procedure. An error in an import or export procedure and the ensuing
+ROLLBACK would throw away any changes performed before the procedure was called,
+and vice versa: any unsound changes before the import or export procedure call
+that should not be committed could be committed automatically.</dd>
+</dlentry><dlentry>
+<dt>Database connections</dt>
+<dd>To invoke a <ph conref="../conrefs.dita#prod/productshortname"></ph> import
+or export procedure, you must be connected to the database into which the
+data is imported or from which the data is exported. Other user applications
+that access the table with a separate connection do not need to disconnect.</dd>
+</dlentry><dlentry>
+<dt>Classpath</dt>
+<dd>You must have the <filepath>derbytools.jar</filepath> file in your classpath
+before you can use the import or export procedures from
+<codeph>ij</codeph>.</dd>
+</dlentry><dlentry>
+<dt>The table must exist</dt>
+<dd>To import data into a table, the table must already exist in
+<ph conref="../conrefs.dita#prod/productshortname"></ph>. The table does not
+have to be empty. If the table is not empty, bulk import performs single row
+inserts, which result in slower performance.</dd>
+</dlentry><dlentry>
+<dt>Create indexes, keys, and unique constraints before you import</dt>
+<dd>To avoid a separate step, create the indexes, keys (primary and foreign),
+and unique constraints on tables before you import data. However, if your
+memory and disk space resources are limited, you can build the indexes and
+primary keys after importing data.</dd>
+</dlentry><dlentry>
+<dt>Data types</dt>
+<dd><ph conref="../conrefs.dita#prod/productshortname"></ph> implicitly converts
+the strings to the data type of the receiving column. If any of the implicit
+conversions fail, the whole import is aborted. For example, "3+7" cannot be
+converted into an integer. An export that encounters a runtime error stops.
+<note>You cannot import or export the XML data type.</note></dd>
+</dlentry><dlentry>
+<dt>Locking during import</dt>
+<dd>Import procedures use the same isolation level as the connection in which
+they are executed to insert data into tables. During import, the entire table
+is exclusively locked irrespective of the isolation level.</dd>
+</dlentry><dlentry>
+<dt>Locking during export</dt>
+<dd>Export procedures use the same isolation level as the connection in which
+they are executed to fetch data from tables.</dd>
+</dlentry><dlentry>
+<dt>Import behavior on tables with triggers</dt>
+<dd>The import procedures enable INSERT triggers when data is appended to the
+table. The REPLACE parameter is not allowed when triggers are enabled on the
+table.</dd>
+</dlentry><dlentry>
+<dt>Restrictions on the REPLACE parameter</dt>
+<dd>If you import data into a table that already contains data, you can either
+replace or append to the existing data. You can use the REPLACE parameter
+on tables that have dependent tables. The replaced data must maintain
+referential integrity; otherwise, the import operation will be rolled back. You
+cannot use the REPLACE parameter if the table has triggers enabled.</dd>
+</dlentry><dlentry>
+<dt>Restrictions on tables</dt>
+<dd>You cannot use import procedures to import data into a system table or a
+declared temporary table.</dd>
+</dlentry></dl>
+</conbody>
+</concept>

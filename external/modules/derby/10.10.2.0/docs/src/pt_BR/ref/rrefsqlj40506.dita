@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<reference id="rrefsqlj40506" xml:lang="pt-br">
+<title>Instrução LOCK TABLE</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Instrução LOCK TABLE</indexterm>
+<indexterm>Tabelas<indexterm>bloqueio</indexterm></indexterm>
+<indexterm>Escalada de bloqueio<indexterm>pelo usuário</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>Permite ao usuário obter explicitamente um bloqueio de tabela, exclusivo ou
+compartilhado, na tabela especificada.
+O bloqueio da tabela permanece até o término da transação corrente.</p>
+<p>O bloqueio explícito da tabela é útil para:
+<ul>
+<li>evitar a sobrecarga devido a vários bloqueios na tabela (em outras palavras,
+escalada de bloqueio iniciada pelo usuário)</li>
+<li>evitar impasses (<i>deadlocks</i>)</li>
+</ul>
+</p>
+<p>Não é possível bloquear tabelas do sistema com esta instrução.</p>
+</section>
+<refsyn>
+<title>Sintaxe</title>
+<codeblock><b>LOCK TABLE <i><xref href="rreftablename.dita#rreftablename">nome-da-tabela</xref></i> IN { SHARE | EXCLUSIVE } MODE</b></codeblock>
+<p>Uma vez que alguma tabela esteja bloqueada em um dos modos, a transação
+não obterá bloqueios subseqüentes no nível-de-linha.
+Por exemplo, se uma transação bloquear toda a tabela VÔOS no modo compartilhado
+para ler os dados, e uma determinada instrução desta transação necessitar
+bloquear uma determinada linha no modo exclusivo para poder atualizar a linha,
+o bloqueio anterior no nível-de-tabela força o bloqueio no modo exclusivo ser
+no nível-de-tabela também.</p>
+<p>Se o bloqueio especificado não puder ser obtido porque outra conexão já
+possui um bloqueio na tabela, será lançada uma excessão no nível-de-instrução
+(<i>SQLState</i> X0X02) após ser esgotado o tempo limite de impasse.</p>
+</refsyn>
+<example><codeblock><b><ph>-- bloquear toda a tabela no modo compartilhado
+-- para evitar um número grande de bloqueios de linha</ph>
+LOCK TABLE VÔOS IN SHARE MODE;
+
+SELECT *
+FROM VÔOS
+WHERE AEROPORTO_ORIGEM &gt; 'OOO';
+
+<ph>-- bloquear toda a tabela no modo exclusivo
+-- para uma transação que irá atualizar muitas linhas,
+-- mas onde nenhuma instrução atualizará isoladamente um
+-- número suficiente de linhas para obter um bloqueio
+-- da tabela no modo exclusivo.
+-- No sistema de bloqueio no nível-de-linha, a transação
+-- iria requerer um número grande de bloqueios e poderia
+-- causar um impasse.</ph>
+LOCK TABLE DISPONIBILIDADE_HOTEL IN EXCLUSIVE MODE;
+
+UPDATE DISPONIBILIDADE_HOTEL
+SET QUARTOS_RESERVADOS = (QUARTOS_RESERVADOS + 2)
+WHERE ID_HOTEL = 194 AND DATA_DE_RESERVA = DATE('1998-04-10');
+
+UPDATE DISPONIBILIDADE_HOTEL
+SET QUARTOS_RESERVADOS = (QUARTOS_RESERVADOS + 2)
+WHERE ID_HOTEL = 194 AND DATA_DE_RESERVA = DATE('1998-04-11');
+
+UPDATE DISPONIBILIDADE_HOTEL
+SET QUARTOS_RESERVADOS = (QUARTOS_RESERVADOS + 2)
+WHERE ID_HOTEL = 194 AND DATA_DE_RESERVA = DATE('1998-04-12');
+
+UPDATE DISPONIBILIDADE_HOTEL
+SET QUARTOS_RESERVADOS = (QUARTOS_RESERVADOS + 2)
+WHERE ID_HOTEL = 194 AND DATA_DE_RESERVA = DATE('1998-04-12');
+
+<ph>-- se a transação necessitar bloquear a tabela antes de
+-- atualizá-la, deverá obter um bloqueio exclusivo antes
+-- de selecionar para evitar impasses.</ph>
+LOCK TABLE PESSOAS IN EXCLUSIVE MODE;
+
+SELECT MAX(ID_PESSOA) + 1 FROM PESSOAS;
+-- INSERT INTO PESSOAS . . .</b>
+</codeblock>
+</example>
+</refbody>
+</reference>

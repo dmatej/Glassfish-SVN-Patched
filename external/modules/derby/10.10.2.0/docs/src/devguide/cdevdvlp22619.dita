@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevdvlp22619" xml:lang="en-us">
+<title>Working with database threads in an embedded environment</title>
+<shortdesc>As a rule, do not use <i>Thread.interrupt()</i> calls to signal
+possibly waiting threads that are also accessing a database, because
+<ph conref="../conrefs.dita#prod/productshortname"></ph> may catch the
+interrupt and close the connection to the database. Use <i>wait</i>
+and <i>notify</i> calls instead.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>threads<indexterm>interrupt calls</indexterm><indexterm>notifying</indexterm></indexterm>
+<indexterm>interrupt calls<indexterm>caught by Derby</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>There are also special considerations when working with more than one
+database thread in an application, as described in
+<xref href="cdevconcepts23499.dita#cdevconcepts23499"></xref>.</p>
+<p>When queries, batches, and statements that wait for database locks run longer
+than expected, you can use interrupts to stop them. If you do, the
+connection will be closed and an exception will be thrown.</p>
+<p>If you design an application whose database threads may see interrupts, you
+should plan for the following behavior:</p>
+<ul>
+<li>If a thread is interrupted and the interrupt status flag is not
+cleared before entering a
+<ph conref="../conrefs.dita#prod/productshortname"></ph> JDBC call, or if the
+thread is interrupted while inside a
+<ph conref="../conrefs.dita#prod/productshortname"></ph> JDBC call, the
+connection that is experiencing the interrupt will be terminated in the
+following situations:
+<ul>
+<li>If a query fetches rows from a database table after the interrupt has 
+occurred</li>
+<li>If the execution of a new element in a batched statement is attempted
+after the interrupt has occurred</li>
+<li>If an interrupt is received while a transaction is waiting for a lock</li>
+</ul>
+<p>If the connection is terminated, the application thread will experience the
+following consequences:</p>
+<ul>
+<li>The JDBC call will raise an <i>SQLException</i> with state "08000"
+("Connection closed by unknown interrupt").</li>
+<li>Outstanding transactional work on that connection will be rolled
+back, and all of its locks will be released.</li>
+<li>The connection cannot be used to execute any further JDBC calls.</li>
+</ul>
+<p>On return from the JDBC call, the <i>Thread.isInterrupted()</i> method
+of the thread will return <i>true</i>, whether or not an exception terminating
+the connection was thrown. That is, even if
+<ph conref="../conrefs.dita#prod/productshortname"></ph> does not heed an
+interrupt, the flag will remain set on exit from the JDBC call.</p></li>
+<li>All other connections will remain open. This includes other
+connections which the interrupted thread may be using. These
+connections will remain open at least until the thread tries to
+use one of its other connections. If the thead has neglected to
+clear its interrupted status flag, this connection is also subject to
+termination as described above.</li>
+<li>The application should normally be prepared to catch the 08000 exceptions,
+discard the dead connection, clear the interrupted status of the thread, and
+then restart the transaction in a new connection.</li>
+</ul>
+</conbody>
+</concept>

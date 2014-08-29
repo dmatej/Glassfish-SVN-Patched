@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<reference id="rrefsqlj26498" xml:lang="pt-br">
+<title>Instrução UPDATE</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>UPDATE statement</indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>A instrução UPDATE define o valor na coluna.</p>
+<p>Pode ser atualizada a linha corrente de um cursor atualizável aberto.
+Se não houver linha corrente, ou a linha corrente não satisfizer mais a
+consulta do cursor, será lançada um exceção.</p>
+</section>
+<refsyn>
+<title>Sintaxe</title>
+<codeblock><b>{
+    UPDATE <i><xref href="rreftablename.dita#rreftablename">nome-da-tabela</xref></i>
+        SET <i><xref href="rrefcolumnname.dita#rrefcolumnname">nome-da-coluna</xref></i> = <i><xref
+href="rrefsqlj76354.dita#rrefsqlj76354">Valor</xref></i>
+        [ , <i><xref href="rrefcolumnname.dita#rrefcolumnname">nome-da-coluna</xref></i> = <i><xref
+href="rrefsqlj76354.dita#rrefsqlj76354">Valor</xref></i>} ]*
+        [<i><xref href="rrefsqlj33602.dita#rrefsqlj33602">Cláusula WHERE</xref></i>] |
+    UPDATE <i><xref href="rreftablename.dita#rreftablename">nome-da-tabela</xref></i>
+        SET <i><xref href="rrefcolumnname.dita#rrefcolumnname">nome-da-coluna</xref></i> = <i><xref
+href="rrefsqlj76354.dita#rrefsqlj76354">Valor</xref></i>
+        [ , <i><xref href="rrefcolumnname.dita#rrefcolumnname">nome-da-coluna</xref></i> = <i><xref
+href="rrefsqlj76354.dita#rrefsqlj76354">Valor</xref></i> ]*
+        <i><xref href="rrefsqlj15309.dita#rrefsqlj15309">WHERE CURRENT OF</xref></i>
+}</b>
+</codeblock>
+<p>A primeira forma sintática é chamada de atualização procurada.
+A segunda forma sintática é chamada de atualização posicionada.</p>
+<p>Nas atualizações procuradas, são atualizadas todas as linhas da tabela para
+as quais a cláusula WHERE é avaliada como TRUE.</p>
+<p>Nas atualizações posicionadas, somente podem ser atualizadas as colunas
+incluídas na
+<xref href="rrefsqlj31783.dita#rrefsqlj31783">Cláusula FOR UPDATE</xref>
+da instrução SELECT que criou o cursor.
+Se a instrução SELECT não incluir a cláusula FOR UPDATE, o cursor será
+apenas-de-leitura, não podendo ser utilizado para atualizações.</p>
+<p>A especificação de DEFAULT para o valor atualizado, define o valor da coluna
+como o valor padrão definido nesta tabela.</p>
+</refsyn>
+<example> <codeblock><b><ph>-- Todos os empregados, exceto o gerente,
+-- do departamento (DEP_TRAB) 'E21' foram temporariamente
+-- reatribuídos. Indique isto alterando seus cargos (CARGO)
+-- para NULL, e os valores de seus pagamentos (SALÁRIO, BÔNUS, COMISS)
+-- para zero, na tabela EMPREGADOS.</ph>
+UPDATE EMPREGADOS
+  SET CARGO=NULL, SALÁRIO=0, BÔNUS=0, COMISS=0
+  WHERE DEP_TRAB = 'E21' AND CARGO &lt;&gt; 'GERENTE'
+
+-- Promover o cargo (CARGO) de determinado empregado para GERENTE
+UPDATE EMPREGADOS
+        SET CARGO = 'GERENTE'
+        WHERE CURRENT OF CURS1;
+
+<ph>-- Multiplicar a equipe do projeto (PROJ_EQUIPE) por 1.5</ph>
+stmt.executeUpdate("UPDATE PROJETO SET PROJ_EQUIPE = "
+"PROJ_EQUIPE * 1.5" +
+"WHERE CURRENT OF" + ResultSet.getCursorName());
+
+<ph>-- Alterar o cargo (CARGO) do empregado número (NUM_EMP) '000290'
+-- na tabela EMPREGADOS para o seu valor DEFAULT que é NULL</ph>
+UPDATE EMPREGADOS
+  SET CARGO = DEFAULT
+  WHERE NUM_EMP = '000290';
+</b>
+</codeblock>
+</example>
+<section>
+<title>Sistema de dependência de instrução</title>
+<p>A instrução de atualização procurada depende da tabela sendo atualizada, de
+todos os seus conglomerados (unidades de armazenamento como <i>heaps</i> e
+índices), todas as suas restrições, e de todas as outras tabelas referenciadas
+na cláusula WHERE e nas expressões SET.
+A execução de uma instrução CREATE ou DROP INDEX, ou de uma instrução
+ALTER TABLE, na tabela de destino de uma instrução de atualização procurada
+preparada, invalida a instrução de atualização procurada preparada.</p>
+<p>A instrução de atualização posicionada depende do cursor e de todas as
+tabelas que o cursor faz referência.
+A atualização posicionada pode ser compilada mesmo se o cursor ainda não tiver
+sido aberto.
+Entretanto, a remoção do cursor aberto através do método <i>close</i> do JDBC
+invalida a atualização posicionada.</p>
+<p>A execução de uma instrução CREATE ou DROP INDEX, ou de uma instrução
+ALTER TABLE, na tabela de destino de uma instrução de atualização posicionada
+preparada, invalida a instrução de atualização posicionada preparada.</p>
+<p>A remoção de um aliás invalida a instrução de atualização preparada, se a
+instrução utilizar o aliás.</p>
+<p>Remover ou adicionar gatilhos na tabela de destino da atualização
+invalida a instrução de atualização.</p>
+</section>
+</refbody>
+</reference>

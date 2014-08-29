@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "../../dtd/reference.dtd">
+<reference xml:lang="pt-br" id="rreftablesubquery">
+<title>SubconsultaTabela</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>SubconsultaTabela</indexterm>
+</keywords>
+</metadata>
+</prolog><refbody>
+<section>
+<p>A <i>SubconsultaTabela</i> é uma subconsulta que retorna várias linhas.</p>
+<p>Diferentemente da
+<i><xref href="rrefscalarsubquery.dita#rrefscalarsubquery">SubconsultaEscalar</xref></i>,
+a <i>SubconsultaTabela</i> é permitida apenas:
+<ul>
+<li>como uma
+<i><xref href="rreftableexpression.dita#rreftableexpression">ExpressãoTabela</xref></i>
+em uma <xref href="rrefsqlj21583.dita#rrefsqlj21583">Cláusula FROM</xref></li>
+<li>com EXISTS, IN, ou comparações quantificadas.</li>
+</ul>
+</p>
+<p>Quando utilizada como uma
+<i><xref href="rreftableexpression.dita#rreftableexpression">ExpressãoTabela</xref></i>
+em uma <xref href="rrefsqlj21583.dita#rrefsqlj21583">Cláusula FROM</xref>,
+pode retornar várias colunas.
+Quando utilizada com EXISTS, pode retornar várias colunas somente se for
+utilizado o * para retornar várias colunas.</p>
+<p>Quando utilizada com IN ou comparações quantificadas, deve retornar uma
+única coluna.</p>
+</section>
+<refsyn>
+<title>Sintaxe</title>
+<codeblock><b>(<i><xref href="rrefsqlj21571.dita#rrefsqlj21571">Consulta</xref></i>)</b>
+</codeblock>
+</refsyn>
+<example>
+<codeblock><b><ph>-- subconsulta utilizada como ExpressãoTabela na cláusula FROM</ph>
+SELECT TABELA_VÔOS_VIRTUAL.ID_VÔO
+FROM
+    (SELECT ID_VÔO, AEROPORTO_ORIGEM, AEROPORTO_DESTINO
+    FROM VÔOS
+    WHERE (AEROPORTO_ORIGEM = 'SFO' OR AEROPORTO_DESTINO = 'SCL') )
+AS TABELA_VÔOS_VIRTUAL
+
+<ph>-- subconsulta (VALUES expressão) utilizada como uma ExpressãoTabela
+-- na cláusula FROM</ph>
+SELECT MINHA_COLUNA1
+FROM
+    (VALUES (1, 2), (3, 4))
+AS MINHA_TABELA (MINHA_COLUNA1, MINHA_COLUNA2)
+
+<ph>-- subconsulta com EXISTS</ph>
+SELECT *
+FROM VÔOS
+WHERE EXISTS
+    (SELECT * FROM VÔOS WHERE AEROPORTO_DESTINO = 'SFO'
+    AND AEROPORTO_ORIGEM = 'GRU')
+
+<ph>-- subconsulta usada com IN</ph>
+SELECT ID_VÔO, NÚMERO_SEGMENTO
+FROM VÔOS
+WHERE ID_VÔO IN
+    (SELECT ID_VÔO
+    FROM VÔOS WHERE AEROPORTO_ORIGEM = 'SFO'
+    OR AEROPORTO_DESTINO = 'SCL')
+
+<ph>-- subconsulta utilizada com uma comparação quantificada</ph>
+SELECT NOME, COMISS
+FROM EQUIPES
+WHERE COMISS &gt;
+(SELECT AVG(BÔNUS + 800)
+     FROM EMPREGADOS
+     WHERE COMISS &lt; 5000);</b>
+</codeblock>
+</example>
+</refbody>
+</reference>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsyscsdiagspacetable" xml:lang="en-us">
+<title>SYSCS_DIAG.SPACE_TABLE diagnostic table function</title>
+<prolog><metadata>
+<keywords>
+<indexterm>diagnostic table functions<indexterm>SYSCS_DIAG.SPACE_TABLE</indexterm></indexterm>
+<indexterm>SYSCS_DIAG.SPACE_TABLE diagnostic table function</indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section>
+<p>The SYSCS_DIAG.SPACE_TABLE diagnostic table function shows the space usage of
+a particular table and its indexes. You can use this diagnostic table function
+to determine if space might be saved by compressing the table and indexes.</p>
+<p>All users can access this diagnostic table function, whether or not the
+database has authentication and SQL authorization enabled.</p>
+<p>To access the SYSCS_DIAG.SPACE_TABLE diagnostic table function, you must use
+the SQL table function syntax. You can invoke the table function in the
+following ways:
+<ul>
+<li>If invoked with no arguments, the table function retrieves space information
+for all tables and indexes in the database.</li>
+<li>If invoked with one argument, a <parmname>tableName</parmname>, the table
+function retrieves information for the specified table in the current
+schema.</li>
+<li>If invoked with two arguments, a <parmname>schemaName</parmname> followed by
+a <parmname>tableName</parmname>, the table function retrieves information for
+the specified schema and table.</li>
+</ul></p>
+<p>The returned table has the columns shown in the following table.</p>
+<table frame="all">
+<title>Columns returned by the SYSCS_DIAG.SPACE_TABLE table function</title>
+<desc>For each column returned by the SYSCS_DIAG.SPACE_TABLE table function, this table provides its data type, its length in bytes, whether it is nullable, and a description of its contents.</desc><tgroup cols="5" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="31*"/>
+<colspec colname="2" colnum="2" colwidth="17*"/>
+<colspec colname="3" colnum="3" colwidth="11*"/>
+<colspec colname="4" colnum="4" colwidth="12*"/>
+<colspec colname="5" colnum="5" colwidth="29*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Column Name</entry>
+<entry colname="2">Type</entry>
+<entry colname="3">Length</entry>
+<entry colname="4">Nullable</entry>
+<entry colname="5">Contents</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">CONGLOMERATENAME</entry>
+<entry colname="2">VARCHAR</entry>
+<entry colname="3">128</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The name of the conglomerate, which is either the table name or the index name. (Unlike the SYSCONGLOMERATES column of the same name, table ID's do not appear here).</entry>
+</row>
+<row>
+<entry colname="1">ISINDEX</entry>
+<entry colname="2">SMALLINT</entry>
+<entry colname="3">5</entry>
+<entry colname="4">false</entry>
+<entry colname="5">Is not zero if the conglomerate is an index, 0 otherwise.</entry>
+</row>
+<row>
+<entry colname="1">NUMALLOCATEDPAGES</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The number of pages actively linked into the table. The total number of pages in the file is the sum of NUMALLOCATEDPAGES + NUMFREEPAGES.</entry>
+</row>
+<row>
+<entry colname="1">NUMFREEPAGES</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The number of free pages that belong to the table. When a new page is to be linked into the table the system will move a page from the NUMFREEPAGES list to the NUMALLOCATEDPAGES list. The total number of pages in the file is the sum of NUMALLOCATEDPAGES + NUMFREEPAGES.</entry>
+</row>
+<row>
+<entry colname="1">NUMUNFILLEDPAGES</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The number of unfilled pages that belong to the table. Unfilled pages are allocated pages that are not completely full. Note that the number of unfilled pages is an estimate and is not exact. Running the same query twice can give different results on this column.</entry>
+</row>
+<row>
+<entry colname="1">PAGESIZE</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The size of the page in bytes for that conglomerate.</entry>
+</row>
+<row>
+<entry colname="1">ESTIMSPACESAVING</entry>
+<entry colname="2">BIGINT</entry>
+<entry colname="3">20</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The estimated space which could possibly be saved by compressing the conglomerate, in bytes.</entry>
+</row>
+<row>
+<entry colname="1">TABLEID</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">36</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The id of the table to which the conglomerate belongs. </entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+<p>For example, use the following query to return the space usage for all of the
+user tables and indexes in the database:
+<codeblock>SELECT sysschemas.schemaname, T2.*
+    FROM
+        SYS.SYSTABLES systabs, SYS.SYSSCHEMAS sysschemas,
+        TABLE (SYSCS_DIAG.SPACE_TABLE()) AS T2
+    WHERE systabs.tabletype = 'T'
+    AND sysschemas.schemaid = systabs.schemaid
+    AND systabs.tableid = T2.tableid;</codeblock>
+where T2 is a user-specified table name that is any valid identifier.</p>
+<p>Both the <parmname>schemaName</parmname> and
+the <parmname>tableName</parmname> arguments must be expressions whose data
+types map to Java strings. If the <parmname>schemaName</parmname> and the <parmname>tableName</parmname> are
+non-delimited identifiers, you must specify the names in upper case.</p><p>For
+example: <codeblock>SELECT * 
+    FROM TABLE (SYSCS_DIAG.SPACE_TABLE('MYSCHEMA', 'MYTABLE')) 
+    AS T2</codeblock></p>
+</section>
+</refbody>
+</reference>

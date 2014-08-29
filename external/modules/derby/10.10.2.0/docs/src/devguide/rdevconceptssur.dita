@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//IBM//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="rdevconceptssur" xml:lang="en-us">
+<title>Scrollable updatable result sets</title>
+<shortdesc>A scrollable updatable result set maintains a cursor which
+can both scroll and update rows.
+</shortdesc>
+<prolog></prolog>
+<conbody>
+
+<section>
+<p>
+<ph conref="../conrefs.dita#prod/productshortname"></ph> only supports
+<xref href="cdevconcepts22641.dita">scrollable insensitive result sets.</xref>
+To create a scrollable insensitive result set which is updatable, the
+statement has to be created with concurrency mode
+<codeph>ResultSet.CONCUR_UPDATABLE</codeph> and type
+<codeph>ResultSet.TYPE_SCROLL_INSENSITIVE</codeph>. 
+</p>
+
+<p>Example of using result set update methods to update a row: </p>
+
+<codeblock>
+  Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, 
+                                        ResultSet.CONCUR_UPDATABLE);
+  ResultSet uprs = stmt.executeQuery(
+    "SELECT FIRSTNAME, LASTNAME, WORKDEPT, BONUS " +
+    "FROM EMPLOYEE");
+
+  uprs.absolute(5); // update the fifth row
+  int newBonus = uprs.getInt("BONUS") + 100;
+  uprs.updateInt("BONUS", newBonus);
+  uprs.updateRow();
+</codeblock>
+
+<p>Example of using <codeph>ResultSet.deleteRow()</codeph> to delete a row: </p>
+
+<codeblock>
+  Statement stmt = conn.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, 
+                                        ResultSet.CONCUR_UPDATABLE);
+  ResultSet uprs = stmt.executeQuery(
+    "SELECT FIRSTNAME, LASTNAME, WORKDEPT, BONUS " +
+    "FROM EMPLOYEE");
+  
+  uprs.last();
+  uprs.relative(-5); // moves to the 5th from the last row
+  uprs.deleteRow(); 
+</codeblock>
+</section>
+
+<section id="visibility">
+<title>Visibility of changes </title>
+<ul>
+<li>Changes caused by other statements, triggers and other
+transactions (others) are considered as other changes, and are not visible in
+scrollable insensitive result sets. </li>
+<li>Own updates and deletes are visible in Derby's scrollable
+insensitive result sets. <note> <ph
+conref="../conrefs.dita#prod/productshortname"></ph> handles changes
+made using positioned updates and deletes as own changes, so when made
+via a result set's cursor such changes are also visible in that result
+set.
+</note> 
+</li>
+<li>Rows inserted to the table may become visible in the result set.</li>
+
+<li><codeph>ResultSet.rowDeleted()</codeph> returns true if the row
+has been deleted using the cursor or result set.  It does not detect
+deletes made by other statements or transactions.  Note that the
+method will also work for result sets with concurrency
+CONCUR_READ_ONLY if the underlying result set is FOR UPDATE and a
+cursor was used to delete the row.
+</li>
+<li><codeph>ResultSet.rowUpdated()</codeph> returns true if the row
+has been updated using the cursor or result set. It does not detect
+updates made by other statements or transactions.  Note that the
+method will also work for result sets with concurrency
+CONCUR_READ_ONLY if the underlying result set is FOR UPDATE and a
+cursor was used to update the row.
+</li>
+<li> <note>Both <codeph>ResultSet.rowUpdated()</codeph> and
+<codeph>ResultSet.rowDeleted()</codeph> return true if the row
+first is updated and later deleted. </note> </li>
+</ul>
+
+Please be aware that even if changes caused by others are not visible
+in the result set, SQL operations, including positioned updates, 
+which access the current row will read and use the row data as it is
+in the database, not as it is reflected in the result set.
+
+</section>
+
+<section>
+<title>Conflicting operations</title>
+<p>A conflict may occur in scrollable insensitive result sets if a row is
+updated/deleted by another committed transaction, or if a row is
+updated by another statement in the same transaction. The row which
+the cursor is positioned on is locked, however once it moves 
+to another row, the lock may be released depending on transaction
+isolation level. This means that rows in the scrollable insensitive result
+set may have been updated/deleted by other transactions after they
+were fetched.</p>
+
+<p>Since the result set is <b>insensitive</b>, it will not detect the
+changes made by others.  When doing updates using the result set,
+conflicting changes on the columns being changed will be overwritten. </p>
+
+Some conflicts may prevent the result set from doing updates/deletes:
+<ul>
+<li> The row has been deleted after it was read into the result set: 
+Scrollable insensitive result sets will give a warning with <codeph>
+<i>SQLState</i> 01001 </codeph>. </li>
+<li> The table has been compressed: Scrollable insensitive
+result sets will give a warning with <codeph> <i>SQLState</i>
+01001</codeph>.  A compress conflict may happen if the cursor is held
+over a commit. This is because the table intent lock is released on
+commit, and not reclaimed until the cursor moves to another row.
+</li>
+</ul>
+
+To avoid conflicts with other transactions, you may increase the
+transaction isolation level to repeatable read or serializable.  This
+will make the transaction hold locks on the rows which have been read
+until it commits.
+
+<note>When you use holdable result sets, be aware that the locks will
+be released on commit, and conflicts may occur regardless of isolation level.
+You should probably avoid using holdable result sets if your
+application relies on transactional behavior for the result set.
+</note>
+
+</section>
+
+</conbody>
+</concept>

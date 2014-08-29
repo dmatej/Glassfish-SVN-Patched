@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN" "../dtd/reference.dtd">
+<reference xml:lang="ja" id="rreftablesubquery">
+<title>表副問合せ</title>
+<prolog><metadata>
+<keywords><indexterm>TableSubquery</indexterm>
+</keywords>
+</metadata>
+</prolog><refbody>
+<section>
+<p><i>表副問合せ</i>は複数の行を返す副問合せです。</p> 
+<p><i><xref href="rrefscalarsubquery.dita#rrefscalarsubquery">スカラー副問合せ</xref></i>とは異なり、<i>表副問合せ</i>は以下の文脈にてのみ可能です。
+<ul>
+<li><xref href="rrefsqlj21583.dita#rrefsqlj21583">FROM 節</xref>の<i><xref href="rreftableexpression.dita#rreftableexpression">表式</xref></i></li>
+<li>EXISTSやIN、量の比較</li>
+</ul></p> 
+<p><xref href="rrefsqlj21583.dita#rrefsqlj21583">FROM 節</xref>の<i><xref href="rreftableexpression.dita#rreftableexpression">表式</xref></i>にて使われた場合、複数の列を返すことができます。</p>
+<p>EXISTSでは、*を使う場合のみ複数の列を返すことができます。</p>
+<p>INや限定条件では、単列のみ返すことができます。</p></section>
+<refsyn><title>構文</title>
+<codeblock><b>(<i><xref href="rrefsqlj21571.dita#rrefsqlj21571">問合せ</xref></i>)</b></codeblock>
+</refsyn>
+<example><title>例</title><codeblock><b><ph>-- FROM節の表式として、副問合せを使う。</ph>
+SELECT VirtualFlightTable.flight_ID
+FROM
+    (SELECT flight_ID, orig_airport, dest_airport
+    FROM Flights
+    WHERE (orig_airport = 'SFO' OR dest_airport = 'SCL') )
+AS VirtualFlightTable
+<ph>-- FROM節の表式として、副問合せ(values式)を使う。</ph>
+SELECT mycol1
+FROM
+    (VALUES (1, 2), (3, 4))
+AS mytable (mycol1, mycol2)
+<ph>-- EXISTSにて副問合せを使う</ph>
+SELECT *
+FROM Flights
+WHERE EXISTS
+    (SELECT * FROM Flights WHERE dest_airport = 'SFO'
+    AND orig_airport = 'GRU')
+<ph>-- INにて副問合せを使う</ph>
+SELECT flight_id, segment_number
+FROM Flights
+WHERE flight_id IN
+    (SELECT flight_ID
+    FROM Flights WHERE orig_airport = 'SFO'
+    OR dest_airport = 'SCL')
+<ph>-- 定量比較にて副問合せを使う</ph>
+SELECT NAME, COMM 
+FROM STAFF 
+WHERE COMM &gt; 
+(SELECT AVG(BONUS + 800)
+     FROM EMPLOYEE
+     WHERE COMM &lt; 5000)</b></codeblock>
+</example></refbody></reference>

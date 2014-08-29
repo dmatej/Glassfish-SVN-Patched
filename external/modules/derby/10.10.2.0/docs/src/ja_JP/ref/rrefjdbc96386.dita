@@ -1,0 +1,152 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefjdbc96386" xml:lang="ja">
+<title>java.sql.Blobインターフェイスとjava.sql.Clobインターフェイスの対応</title>
+<prolog><metadata>
+<keywords><indexterm>java.sql.Blob interface</indexterm><indexterm>java.sql.Clob interface</indexterm>
+<indexterm>BLOB data type</indexterm><indexterm>CLOB data type</indexterm>
+</keywords>
+</metadata></prolog>
+<refbody>
+<section><p>JDBC 2.0では<i>java.sql.Blob</i>はSQLのBLOB(binary large object)型に対応して、<i>java.sql.Clob</i>はSQLのCLOB(character large object)型に対応します。</p></section>
+<section><p>java.sql.Blobとjava.sql.Clobは情報(large object)全体ではなく、それへの論理的なポインタを表します。<ph conref="../conrefs.dita#prod/productshortname"></ph>では一時に唯一つのデータページだけがメモリ上で処理されます。BLOBの情報の最初の数バイトを読み書きするのに、LOB全体が処理される必要はありません。</p></section>
+<section><p>現在の<ph conref="../conrefs.dita#prod/productshortname"></ph>に組み込まれた型には、BLOBとCLOBが用意されています。
+また<ph conref="../conrefs.dita#prod/productshortname"></ph>はこれらのデータ型に対して以下の機能を提供します。
+<ul>
+<li><b>BLOBの機能</b> 
+<ph conref="../conrefs.dita#prod/productshortname"></ph>では<i>java.sql.Blob</i>インターフェイスと<i><xref
+href="rrefjdbc99392.dita#rrefjdbc99392"></xref></i>および<i><xref href="rrefjdbc77156.dita#rrefjdbc77156"></xref></i>のBLOBに関連したメソッドが用意されています。
+<i>CallableStatement</i>の<i>getBlob</i>メソッドは実装されていません。</li>
+<li><b>CLOBの機能</b> 
+<ph conref="../conrefs.dita#prod/productshortname"></ph>ではjava.sql.Clobインターフェイスと<i><xref href="rrefjdbc99392.dita#rrefjdbc99392"></xref></i>と<i><xref
+href="rrefjdbc77156.dita#rrefjdbc77156"></xref></i>のCLOBに関連したメソッドが用意されています。
+<i>CallableStatement</i>の<i>getClob</i>メソッドは実装されていません。</li>
+</ul></p></section>
+
+<section><p>java.sql.Blobとjava.sql.Clobの機能を使うには以下のようにします。
+<ul>
+<li>情報をSQLのBLOB型で記録します。LONG VARCHAR FOR BIT DATA、BINARYおよびVARCHAR FOR BIT DATA型でも可能です。</li>
+<li>情報をSQLのCLOB型で記録します。LONG VARCHAR、CHARおよびVARCHAR型でも可能です。</li>
+<li><i>java.sql.ResultSet</i>インターフェイスの<i>getBlob</i>あるいは<i>getClob</i>メソッドを使って、参照される情報を扱う<i>BLOB</i>や<i>CLOB</i>を取得します。</li>
+<li>LOBの列に対して静的なメソッドを呼ぶことはできません。</li>
+</ul></p></section>
+<section><p>加えて文字列とBLOBの間で型変換を行うことは推奨されません。なぜなら型変換はプラットフォーム・データベースに依存するからです。</p></section>
+<section><p><ph conref="../conrefs.dita#prod/productshortname"></ph>はユニコード文字列(1文字2バイト)を使いますが、他のデータベース製品はASCII文字(1文字あたり1バイト)を使うかもしれません。使われる文字コードの種類によっては一文字が数バイトを必要とすることも考えられます。文字列を記録する為に、<ph conref="../conrefs.dita#prod/productshortname"></ph>では他より大きなBLOBの型を必要とする場合があります。
+文字列を記録する場合はCLOB型を利用するべきです。</p></section>
+<section><p><b>BLOB、CLOB、(LOB型)の制約</b>   <ul>
+<li>LOB型は等号(=)や不等号(!=、 &lt;&gt;. で比較できません。</li>
+<li>LOB型で順序付けることはできません。また&lt;、 &lt;=、 &gt;、 &gt;=による比較も不可能です。</li>
+<li>LOB型への索引やLOB型の主キー列は不可能です。</li>
+<li>LOB型について、DISTINCT、GROUP BY、ORDER BY節は利用できません。</li>
+<li>他の基本型と違い、LOB型では暗黙の型変換を行えません。</li>
+</ul></p></section>
+<section><p><ph conref="../conrefs.dita#prod/productshortname"></ph>では、<i>CallableStatement</i>のsetおよびgetメソッドを除いた、以下のJDBC 2.0のインターフェイスのメソッドが実装されています。</p></section>
+<section><p><b>推奨事項:</b> <i>java.sql.Blob</i>と<i>java.sql.Clob</i>の生存期間はトランザクションがコミットされるとき終了するので、<i>java.sql.Blob</i>および<i>java.sql.Clob</i>を利用するときは自動コミットを切って下さい。</p></section>
+
+<section><p> <table frame="all" pgwide="1"><title>提供されるJDBC 2.0 java.sql.Blobのメソッド</title>
+<tgroup cols="3" colsep="1" rowsep="1"><colspec colname="1" colnum="1" colwidth="13*"/>
+<colspec colname="2" colnum="2" colwidth="32*"/><colspec colname="3" colnum="3"
+colwidth="55*"/>
+<thead>
+<row>
+<entry align="left" colname="1" valign="bottom">返り値</entry>
+<entry align="left" colname="2" valign="bottom">シグネチャ</entry>
+<entry align="left" colname="3" valign="bottom">実装の覚書</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1"><i>InputStream</i></entry>
+<entry colname="2"><i>getBinaryStream()</i></entry>
+<entry colname="3"></entry>
+</row>
+<row>
+<entry colname="1"><i>byte[]</i></entry>
+<entry colname="2"><i>getBytes(long pos, int length)</i></entry>
+<entry colname="3"><i>pos</i> &lt; 1だったり、<i>pos</i>がlengthより大きかったり、<i>length</i> &lt;= 0であった場合、例外が発生します。</entry>
+</row>
+<row>
+<entry colname="1"><i>long</i></entry>
+<entry colname="2"><i>length()</i></entry>
+<entry colname="3"></entry>
+</row>
+<row>
+<entry colname="1"><i>long</i></entry>
+<entry colname="2"><i>position(byte[] pattern, long start)</i></entry>
+<entry colname="3"><i>pattern</i> == nullであったり、<i>start</i> &lt;
+1であったり、<i>pattern</i>の配列長が0であった場合、例外が発生します。</entry>
+</row>
+<row>
+<entry colname="1"><i>long</i></entry>
+<entry colname="2"><i>position(Blob pattern, long start)</i></entry>
+<entry colname="3"><i>pattern</i> == nullだったり、<i>start</i> &lt;
+1だったり、<i>pattern</i>の長さが0であったり、<i>pattern</i>の最初の数バイトを読むとき例外が起きると、例外が発生します。</entry>
+</row>
+</tbody>
+</tgroup>
+</table>  <table frame="all" pgwide="1"><title>提供されるJDBC 2.0 java.sql.Clob のメソッド</title>
+<tgroup cols="3" colsep="1" rowsep="1"><colspec colname="1" colnum="1" colwidth="14*"/>
+<colspec colname="2" colnum="2" colwidth="36*"/><colspec colname="3" colnum="3"
+colwidth="50*"/>
+<thead>
+<row>
+<entry align="left" colname="1" valign="bottom">返り値</entry>
+<entry align="left" colname="2" valign="bottom">シグネチャ</entry>
+<entry align="left" colname="3" valign="bottom">実装上の覚書</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1"><i>InputStream</i></entry>
+<entry colname="2"><i>getAsciiStream()</i></entry>
+<entry colname="3"></entry>
+</row>
+<row>
+<entry colname="1"><i>Reader</i></entry>
+<entry colname="2"><i>getCharacterStream()</i></entry>
+<entry colname="3"></entry>
+</row>
+<row>
+<entry colname="1"><i>String</i></entry>
+<entry colname="2"><i>getSubString(long pos, int length)</i></entry>
+<entry colname="3"><i>pos</i> &lt; 1だったり、<i>pos</i>が<i> Clob</i>の長さより大きかったり、length &lt;= 0であった場合、例外が発生します。</entry>
+</row>
+<row>
+<entry colname="1"><i>long</i></entry>
+<entry colname="2"><i>length()</i></entry>
+<entry colname="3"></entry>
+</row>
+<row>
+<entry colname="1"><i>long</i></entry>
+<entry colname="2"><i>position(Clob searchstr, long start) </i></entry>
+<entry colname="3"><i>searchStr</i> == nullだったり<i>start</i> &lt;
+1だったり、<i>searchStr </i>の長さが0だったり、<i>searchStr</i>の最初の数バイトを読むとき例外が起きると、例外が発生します。</entry>
+</row>
+<row>
+<entry colname="1"><i>long</i></entry>
+<entry colname="2"><i>position(String searchstr, long start) </i></entry>
+<entry colname="3"><i>searchStr</i> == nullだったり、start &lt;
+1だったり、patternが空文字列であった場合、例外が発生します。</entry>
+</row>
+</tbody>
+</tgroup>
+</table></p></section>
+</refbody>
+</reference>

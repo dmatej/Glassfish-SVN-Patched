@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevspecialuda" xml:lang="en-us">
+<title>Programming user-defined aggregates</title>
+<shortdesc><ph conref="../conrefs.dita#prod/productshortname"></ph> allows
+you to create custom aggregate operators, called user-defined aggregates (UDAs).
+</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>aggregates<indexterm>user-defined</indexterm></indexterm>
+<indexterm>user-defined aggregates<indexterm>programming</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<section><p>A UDA is a Java class that implements the
+<i>org.apache.derby.agg.Aggregator</i> interface.</p>
+<p>The <i>org.apache.derby.agg.Aggregator</i> interface extends
+<i>java.io.Serializable</i>, so you must make sure that all of the state of your
+UDA is serializable. A UDA may be serialized to disk when it performs grouped
+aggregation over a large number of groups. That is, intermediate results may be
+serialized to disk for a query like the following:</p>
+<codeblock>SELECT a, myAggregate( b ) FROM myTable GROUP BY a</codeblock>
+<p>The serialization will fail if the UDA contains non-serializable fields.</p>
+<p>The following class provides an aggregate that computes the
+median value from a list of objects. This is a generic class. Its parameter must
+be a linear (<i>Comparable</i>) type.</p>
+<codeblock>import java.util.ArrayList;
+import java.util.Collections;
+import org.apache.derby.agg.Aggregator;
+
+public class Median&lt;V extends Comparable&lt;V>> 
+        implements Aggregator&lt;V,V,Median&lt;V>>
+{
+    private ArrayList&lt;V> _values;
+
+    public Median() {}
+
+    public void init() { _values = new ArrayList&lt;V>(); }
+
+    public void accumulate( V value ) { _values.add( value ); }
+
+    public void merge( Median&lt;V> other )
+    { 
+        _values.addAll( other._values ); 
+    }
+
+    public V terminate()
+    {
+        Collections.sort( _values );
+
+        int count = _values.size();
+        
+        if ( count == 0 ) { return null; }
+        else { return _values.get( count/2 ); }
+    }
+}</codeblock>
+<p>Using this generic class, we can declare UDAs for all of the sortable
+<ph conref="../conrefs.dita#prod/productshortname"></ph> data types. For
+example:</p>
+<codeblock><b>create derby aggregate intMedian for int external name 'Median';
+create derby aggregate varcharMedian for varchar( 32672 ) external name
+  'Median';</b>
+</codeblock>
+<p>We can then use these UDAs just like built-in
+<ph conref="../conrefs.dita#prod/productshortname"></ph> aggregates:</p>
+<codeblock><b>create table intValues( a int, b int );
+create table varcharValues( a int, b varchar( 32672 ) );
+insert into intValues values ( 1, 1 ), ( 1, 10 ), ( 1, 100 ), 
+  ( 1, 1000 ), ( 2, 5 ), ( 2, 50 ), ( 2, 500 ), ( 2, 5000 );
+insert into varcharValues values ( 1, 'a' ), ( 1, 'ab' ), ( 1, 'abc' ), 
+  ( 2, 'a' ), ( 2, 'aa' ), ( 2, 'aaa' );
+
+select a, intMedian( b ) from intValues group by a;</b>
+<systemoutput>A          |2
+-----------------------
+1          |100
+2          |500
+</systemoutput>
+<b>select varcharMedian( b ) from varcharValues;</b>
+<systemoutput>1
+---
+aaa</systemoutput>
+</codeblock>
+<p>See "CREATE DERBY AGGREGATE statement" in the
+<ph conref="../conrefs.dita#pub/citref"></ph> for more information.</p>
+</section>
+</conbody>
+</concept>

@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefsysxplain_scan_props" xml:lang="en-us">
+<title>SYSXPLAIN_SCAN_PROPS system table</title>
+<shortdesc>The SYSXPLAIN_SCAN_PROPS table captures information about table/index
+accesses which occurred during statements that were executed using
+RUNTIMESTATISTICS with XPLAIN style.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>system tables<indexterm>SYSXPLAIN_SCAN_PROPS</indexterm></indexterm>
+<indexterm>XPLAIN style statistics<indexterm>SYSXPLAIN_SCAN_PROPS system table</indexterm></indexterm>
+<indexterm>SYSXPLAIN_SCAN_PROPS system table</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+    <section><p>See "Working with RunTimeStatistics" in
+         <ph conref="../conrefs.dita#pub/cittuning"></ph> for information
+         on how to configure this.</p>
+<p>Each row in this table describes a single table/index scan for
+            a particular result set used by a particular statement. Rows
+            in this table are typically joined with rows in
+            SYSXPLAIN_STATEMENTS and SYSXPLAIN_RESULTSETS during analysis:</p>
+<codeblock>select st.stmt_text, sp.no_visited_rows 
+    from my_stats.sysxplain_scan_props sp, 
+         my_stats.sysxplain_resultsets rs, 
+         my_stats.sysxplain_statements st 
+    where st.stmt_id = rs.stmt_id and 
+          rs.scan_rs_id = sp.scan_rs_id and 
+          rs.op_identifier = 'TABLESCAN' and 
+          sp.scan_object_name = 'COUNTRIES'</codeblock>
+            <p>Rows in this table are added
+                automatically when 
+                <ph conref="../conrefs.dita#prod/productshortname"></ph>
+                has been configured appropriately. The
+            rows remain in the table until you delete them or drop the table.
+                </p>
+<p>The following table shows the contents of the SYSXPLAIN_SCAN_PROPS system
+table.</p>
+<table>
+<title>SYSXPLAIN_SCAN_PROPS system table</title>
+<desc>For each column in the SYSXPLAIN_SCAN_PROPS system table, this table provides its data type, its length in bytes, whether it is nullable, and a description of its contents.</desc>
+<tgroup cols="5" colsep="1" rowsep="1">
+<colspec colname="1" colnum="1" colwidth="31*"/>
+<colspec colname="2" colnum="2" colwidth="17*"/>
+<colspec colname="3" colnum="3" colwidth="11*"/>
+<colspec colname="4" colnum="4" colwidth="12*"/>
+<colspec colname="5" colnum="5" colwidth="29*"/>
+<thead>
+<row valign="bottom">
+<entry colname="1">Column Name</entry>
+<entry colname="2">Type</entry>
+<entry colname="3">Length</entry>
+<entry colname="4">Nullable</entry>
+<entry colname="5">Contents</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="1">SCAN_RS_ID</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">36</entry>
+<entry colname="4">false</entry>
+<entry colname="5">A unique identifer for this particular row. Referenced
+by the foreign key SCAN_RS_ID in SYSXPLAIN_RESULTSETS.</entry>
+</row>
+<row>
+<entry colname="1">SCAN_OBJECT_NAME</entry>
+<entry colname="2">VARCHAR</entry>
+<entry colname="3">128</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The name of the object being scanned. If this is a
+    scan of a table or index, the table name or index name appears here.
+    If this is a scan of the internal index created for a constraint, the
+    constraint name appears here.
+    For complex join queries, the object being scanned may be an intermediate
+    result, in which case a description such as <i>'Temporary HashTable'</i>
+    appears.</entry>
+</row>
+<row>
+<entry colname="1">SCAN_OBJECT_TYPE</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">1</entry>
+<entry colname="4">false</entry>
+<entry colname="5">A code indicating the type of object being scanned.
+Codes include <i>'T'</i> for Table, <i>'I'</i> for Index, and <i>'C'</i> for
+Constraint.</entry>
+</row>
+<row>
+<entry colname="1">SCAN_TYPE</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">8</entry>
+<entry colname="4">false</entry>
+<entry colname="5">The type of scan being performed. Scan types include
+<i>'HEAP'</i>, <i>'BTREE'</i>, and <i>'SORT'</i>.</entry>
+</row>
+<row>
+<entry colname="1">ISOLATION_LEVEL</entry>
+<entry colname="2">CHAR</entry>
+<entry colname="3">3</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The isolation level being used for this scan.
+    Isolation levels are identified by a code: <i>'RU'</i> for Read Uncommitted,
+    <i>'RC'</i> for Read Committed, <i>'RR'</i> for Repeatable Read,
+    and <i>'SE'</i> for Serializable.</entry>
+</row>
+<row>
+<entry colname="1">NO_VISITED_PAGES</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Number of database pages that this scan touched.
+For btree scans this number only includes the leaf pages visited.</entry>
+</row>
+<row>
+<entry colname="1">NO_VISITED_ROWS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Number of database rows that were examined by this scan.
+    This number includes all rows, including those rows marked deleted,
+    those rows that don't meet qualification, and those rows which were
+returned by the scan.</entry>
+</row>
+<row>
+<entry colname="1">NO_QUALIFIED_ROWS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Number of rows that satisfied the qualifiers for this scan.</entry>
+</row>
+<row>
+<entry colname="1">NO_VISITED_DELETED_ROWS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Number of the database rows that were examined by this
+scan which were found to be rows that were marked deleted.</entry>
+</row>
+<row>
+<entry colname="1">NO_FETCHED_COLUMNS</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Number of columns that were fetched from each qualifying
+row.</entry>
+</row>
+<row>
+<entry colname="1">BITSET_OF_FETCHED_COLUMNS</entry>
+<entry colname="2">VARCHAR</entry>
+<entry colname="3">32,672</entry>
+<entry colname="4">true</entry>
+<entry colname="5">Description of the columns which were fetched from each
+qualifying row.</entry>
+</row>
+<row>
+<entry colname="1">BTREE_HEIGHT</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">For a scan of type BTREE, this column holds the height
+    of the BTREE index. The typical height of a BTREE is 2-4; BTREE heights
+    larger than this should only be seen with very large indexes. A tree
+    with one page has a height of 1. Total number of pages visited in a
+    scan of a BTREE should be (BTREE_HEIGHT - 1 + NO_VISITED_PAGES). For an
+    extremely small BTREE, the btree height may be negative (-1).
+    For other types of scans, this column is NULL.</entry>
+</row>
+<row>
+<entry colname="1">FETCH_SIZE</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">The number of pages fetched at a time
+    when the scan is retrieving pages from disk.</entry>
+</row>
+<row>
+<entry colname="1">START_POSITION</entry>
+<entry colname="2">VARCHAR</entry>
+<entry colname="3">32,672</entry>
+<entry colname="4">true</entry>
+<entry colname="5">For index and constraint scans, a
+    textual representation of the operator, if any, which was used to position
+    the beginning of the index/constraint scan.</entry>
+</row>
+<row>
+<entry colname="1">STOP_POSITION</entry>
+<entry colname="2">VARCHAR</entry>
+<entry colname="3">32,672</entry>
+<entry colname="4">true</entry>
+<entry colname="5">For index and constraint scans, a
+    textual representation of the operator, if any, which was used to position
+    the end of the index/constraint scan.</entry>
+</row>
+<row>
+<entry colname="1">SCAN_QUALIFIERS</entry>
+<entry colname="2">VARCHAR</entry>
+<entry colname="3">32,672</entry>
+<entry colname="4">true</entry>
+<entry colname="5">If the query specified values which are to be used to
+    limit the rows that are scanned, information about those values is
+captured in this column.</entry>
+</row>
+<row>
+<entry colname="1">NEXT_QUALIFIERS</entry>
+<entry colname="2">VARCHAR</entry>
+<entry colname="3">32,672</entry>
+<entry colname="4">true</entry>
+<entry colname="5">If the query specified values which are to be used to
+limit the rows that are scanned, information about those values is
+captured in this column.</entry>
+</row>
+<row>
+<entry colname="1">HASH_KEY_COLUMN_NUMBERS</entry>
+<entry colname="2">VARCHAR</entry>
+<entry colname="3">32,672</entry>
+<entry colname="4">true</entry>
+<entry colname="5">For hash joins, this column contains information about which
+column is being used to hash the rows that are joined.</entry>
+</row>
+<row>
+<entry colname="1">HASH_TABLE_SIZE</entry>
+<entry colname="2">INTEGER</entry>
+<entry colname="3">10</entry>
+<entry colname="4">true</entry>
+<entry colname="5">For hash joins, this column contains information about
+    the size of the hash table that will be used to hold the rows being
+    joined. This hash table is an intermediate result, and will be
+    discarded at the end of the query. If the hash table cannot fit in
+    memory, it will automatically spill over to disk. Since the
+    spillover to disk can have significant performance implications,
+    this value can provide a clue that the hash table was
+    unexpectedly too large to fit in memory.</entry>
+</row>
+</tbody>
+</tgroup>
+</table></section>
+</refbody>
+</reference>

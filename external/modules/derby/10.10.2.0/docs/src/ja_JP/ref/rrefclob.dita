@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rrefclob" xml:lang="ja">
+<title>CLOBデータ型</title>
+<prolog><metadata>
+<keywords><indexterm>CLOB data type</indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>CLOB(キャラクタラージオブジェクト)の値は、最大で2,147,483,647の文字長とすることができます。CLOBはユニコードの文字情報を記録するとき使うことができます。このような情報には様々な文字からなるサイズの大きな文書などが考えられます。</p>
+<p>CLOBの長さは数で与えられます。もしK、MやGが数のサフィックスに与えられた場合は、それぞれ1024、1024*1024、1024*1024*1024を意味します。</p>
+CLOBの長さは(ユニコードの)文字数をあらわします。</section>
+<refsyn><title>構文</title><codeblock><b>{CLOB |CHARACTER LARGE OBJECT} [ ( 長さ [{K |M |G}] ) ]</b></codeblock> </refsyn>
+<section><title>既定の設定</title><p>長さを指定しない場合、CLOBの長さは2ギガ(2,147,483,647)バイトとなります。</p> </section>
+<section><title>対応する実行時のJavaの型</title><p><i>java.sql.Clob</i></p> </section>
+<section><title>JDBC メタデータの型(java.sql.Types)</title><p>CLOB</p>
+<p>CLOBへのハンドルを取得するには、<i>java.sql.ResultSet</i>にある<i>getClob</i>メソッドを使ってください。</p> </section>
+<section><title>関連する情報</title>
+<p><xref href="rrefjdbc96386.dita#rrefjdbc96386"></xref>を参照してください。</p> </section>
+<example> <codeblock>import java.sql.*;
+
+public class clob
+{
+	public static void main(String[] args) {
+		try {
+			String url = "jdbc:derby:clobberyclob;create=true";
+
+			Class.forName("org.apache.derby.jdbc.EmbeddedDriver").newInstance();
+			Connection conn = DriverManager.getConnection(url);
+
+            Statement s = conn.createStatement();
+            s.executeUpdate("CREATE TABLE documents (id INT, text CLOB(64 K))");
+            conn.commit();
+
+            // --- ファイルを追加する。
+            java.io.File file = new java.io.File("asciifile.txt");
+            int fileLength = (int) file.length();
+
+            // - 最初に入力ストリームを作成する。
+            java.io.InputStream fin = new java.io.FileInputStream(file);
+            PreparedStatement ps = conn.prepareStatement("INSERT
+            INTO documents VALUES (?, ?)");
+            ps.setInt(1, 1477);
+
+            // - 入力パラメータの値を入力ストリームにする。
+            ps.setAsciiStream(2, fin, fileLength);
+            ps.execute();
+            conn.commit();
+
+            // --- 列を読む。
+            ResultSet rs = s.executeQuery("SELECT text FROM documents
+             WHERE id = 1477");
+            while (rs.next()) {
+                java.sql.Clob aclob = rs.getClob(1);
+                java.io.InputStream ip = rs.getAsciiStream(1);
+                int c = ip.read();
+                while (c &gt; 0) {
+                    System.out.print((char)c);
+                    c = ip.read();
+                }
+                System.out.print("\n");
+                // ...
+            }
+        } catch (Exception e) {
+            System.out.println("Error! "+e);
+        }
+    }
+}</codeblock> </example>
+</refbody>
+</reference>

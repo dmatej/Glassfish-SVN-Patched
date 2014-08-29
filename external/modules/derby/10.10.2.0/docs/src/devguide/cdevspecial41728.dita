@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevspecial41728" xml:lang="en-us">
+<title>Database-side JDBC routines and SQLExceptions</title>
+<shortdesc>It is possible to code database-side routines, like application-side
+methods, to catch <i>SQLExceptions</i>. SQLExceptions that are caught within
+a routine are hidden from the calling application code.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>SQLExceptions<indexterm>importance of not catching within
+database-side routines</indexterm></indexterm><indexterm>Database-side JDBC
+routines<indexterm>and SQLExceptions</indexterm></indexterm></keywords>
+</metadata></prolog>
+<conbody>
+<p>When such <i>SQLExceptions</i> are of transaction severity
+(such as deadlocks), this "hiding" of the exception causes unexpected problems.</p>
+<p>This is because errors of transaction severity roll back work already done
+by a transaction (not just the piece executed by the called method) and silently
+begin a new transaction. When the method execution is complete, <ph conref="../conrefs.dita#prod/productshortname"></ph> detects
+that the outer statement was invalidated by a deadlock and rolls back any
+work done<i> in the new transaction</i> as well. This is the expected behavior,
+because all the statements in between explicit commits should be treated atomically;
+the new transaction implicitly begun by <ph conref="../conrefs.dita#prod/productshortname"></ph>'s
+rollback was not intended by the application designer.</p>
+<p>However, this is not the same behavior that would happen if the method
+were invoked in the application. In that situation, <ph conref="../conrefs.dita#prod/productshortname"></ph> would
+roll back the work done by the transaction and silently begin a new transaction.
+Work in the new transaction would not be rolled back when the method returned.
+However, coding the application in that way means that the transaction did
+not end where you expected it to and is probably a programming mistake. Coding
+in this manner is not recommended.</p>
+<p>A method that catches a deadlock exception and then continues is probably
+making a mistake. Errors of transaction severity should be caught not by nested
+code, but only by the outermost application code. That is the only way to
+ensure that transactions begin and end where you expect them to.</p>
+<p>Not all database vendors handle nested deadlocks the same way. For this
+and other reasons, it is not possible to write portable SQL-invoking methods.
+However, it is possible to write SQL-invoking methods that behave identically <i>regardless
+of whether you invoke them in the application or as a routine in the database</i>.</p>
+<p>In order to ensure identical application- and database-side handling of
+nested errors, code try-catch blocks to check for the severity of exceptions
+as follows:</p>
+<codeblock>try {
+    preparedStatement.execute();
+} catch (SQLException se ) {
+    String SQLState = se.getSQLState();
+    if ( SQLState.equals( "23505" ) ) {
+        correctDuplicateKey();
+    } else if ( SQLState.equals( "22003" ) ) {    
+        correctArithmeticOverflow();
+    } else {
+        throw se;
+    }
+}</codeblock>
+<p>Of course, users also have the choice of not wrapping SQL statements in
+try-catch blocks within methods. In that case, <i>SQLExceptions</i> are caught
+higher up in their applications, which is the desired behavior.</p>
+</conbody>
+</concept>

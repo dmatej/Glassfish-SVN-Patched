@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+ 
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either XMLEXISTSress or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<reference id="rreffuncxmlparse" xml:lang="ja">
+<title>XMLPARSE演算子</title>
+<shortdesc>XMLPARSEは、文字列式を構文解析して<ph conref="../conrefs.dita#prod/productshortname"></ph>XML値にするSQL/XML演算子です。</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>XMLPARSE operator</indexterm><indexterm>operators<indexterm>XMLPARSE</indexterm></indexterm>
+<indexterm>XML<indexterm>operators, XMLPARSE</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> 
+<p>この演算子の結果を一時的な値として使うこともできますし、<ph conref="../conrefs.dita#prod/productshortname"></ph>のXML列に値を格納することもできます。
+一時的か永続的かにかかわらず、XMLの値を<xref href="rreffuncxmlexists.dita#rreffuncxmlexists">XMLEXISTS</xref>や<xref
+href="rreffuncxmlquery.dita#rreffuncxmlquery">XMLQUERY</xref>のような、他の<ph conref="../conrefs.dita#prod/productshortname"></ph>XML演算子の入力とすることができます。</p> </section>
+<refsyn><title>構文</title>
+<codeblock><b>XMLPARSE (DOCUMENT <varname>文字列値式</varname> PRESERVE WHITESPACE)</b></codeblock><dl>
+<dlentry>
+<dt>DOCUMENT </dt>
+<dd> <p>この省略できないキーワードにより、<ph conref="../conrefs.dita#prod/productshortname"></ph>が構文解析できるXMLの入力のタイプが記述されます。
+<ph conref="../conrefs.dita#prod/productshortname"></ph>が構文解析可能な文字列式は、整形式のXML文書を構成するものに限られます。
+これは、<ph conref="../conrefs.dita#prod/productshortname"></ph>がJAXP構文解析器を使って文字列を構文解析しているからです。
+JAXP構文解析器は、文字列値式が整形式のXML文書を構成することを期待します。
+もし文字列が整形式のXML文書を構成しない場合、JAXPはエラーを挙げます。
+<ph conref="../conrefs.dita#prod/productshortname"></ph>はそのエラーを補足して、SQLExceptionとしてエラーを挙げなおします。</p></dd>
+</dlentry><dlentry>
+<dt><codeph>文字列値式</codeph></dt>
+<dd>CHAR、VARCHAR、LONGVARCHAR、CLOB等の、SQLの文字型と評価されるあらゆる式を置くことができます。<codeph>文字列値式</codeph>の引数はパラメータであってもかまいません。パラメータに型をあたえるために、CAST関数を使う必要があります。<ph conref="../conrefs.dita#prod/productshortname"></ph>は、XML文書として構文解析する前に、パラメータが正しい型であるかを検証する必要があります。
+もしパラメータがCAST関数なしで指定されたり、CAST関数で文字のデータ型以外の型が与えられた場合、<ph conref="../conrefs.dita#prod/productshortname"></ph>はエラーを挙げます。</dd>
+</dlentry><dlentry>
+<dt>PRESERVE WHITESPACE</dt>
+<dd>省略できないこのキーワードは、<ph conref="../conrefs.dita#prod/productshortname"></ph>が連続したXMLの節の間にある空白文字をどのように扱うかを記述します。
+PRESERVE WHITESPACEキーワードが指定されると、空白文字をそのままとするSQL/XMLの規則にそって、<ph conref="../conrefs.dita#prod/productshortname"></ph>は空白文字をそのままにします。</dd>
+</dlentry></dl>
+<p>整形式のXML文書については、次の仕様を参照してください。<xref format="html" href="http://www.w3.org/TR/REC-xml/#sec-well-formed">http://www.w3.org/TR/REC-xml/#sec-well-formed </xref
+>.</p><p><note type="restriction">SQL/XMLの標準に拠れば、XMLPARSE演算子の引数はバイナリの列でも可能です。しかし、<ph conref="../conrefs.dita#prod/productshortname"></ph>でXMLPARSE演算子の引数にとることができるのは文字列のみです。</note></p></refsyn>
+<section><title>例</title>
+<p>次の文で、<codeph>x_table</codeph>表の<codeph>xcol</codeph>XML列に単純なXML文書を挿入すします。: <codeblock>INSERT INTO <varname>x_table</varname> VALUES 
+    (<varname>1</varname>, 
+    XMLPARSE(DOCUMENT '
+        &lt;roster>
+          &lt;student age="18">AB&lt;/student>
+          &lt;student age="23">BC&lt;/student>
+          &lt;student>NOAGE&lt;/student>
+        &lt;/roster>'
+      PRESERVE WHITESPACE)
+    )
+</codeblock></p>
+<p>JDBCにより、<codeph>x_table</codeph>表の<codeph>xcol</codeph>XML列に、大きなXML文書を挿入するには、次の文を書きます。
+<codeblock>INSERT INTO <varname>x_table</varname> VALUES 
+    (<varname>2</varname>, 
+    XMLPARSE (DOCUMENT CAST (? AS CLOB) PRESERVE WHITESPACE)
+    )
+</codeblock>この文には、setCharacterStream()メソッドや、型変換した対照型に可能なJDBCの他のsetXXXメソッドを使って、値を与える必要があります。</p></section>
+<section><title>利用上の覚書</title>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph>のXML機能が動作するためには、Apache XercesのようなJAXP構文解析器およびApache XalanがJavaのクラスパスに記述されている必要があります。もしどちらかが欠けていると、XMLPARSE演算子を使おうとしたときエラーが発生します。</p></section>
+</refbody>
+</reference>

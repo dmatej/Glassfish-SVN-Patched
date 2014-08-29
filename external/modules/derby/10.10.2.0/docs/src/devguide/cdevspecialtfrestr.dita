@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevspecialtfrestr" xml:lang="en-us">
+<title>Writing restricted table functions</title>
+<shortdesc>Restricted table functions are
+<ph conref="../conrefs.dita#prod/productshortname"></ph>-style table functions
+which perform more efficiently because they can be told in advance which columns
+they will be asked to fetch along with simple limits on those columns. This
+feature exploits the expressiveness of the Java programming language and does
+not require any extensions to SQL.
+</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Functions<indexterm>programming table functions</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>A table function returns a rectangular chunk of data. If you use a restricted
+table function, <ph conref="../conrefs.dita#prod/productshortname"></ph> can
+tell the table function to return a shorter and  narrower rectangle.</p>
+<p>
+Consider the following scan of a table in a foreign database:</p>
+<codeblock>    select id, firstName, lastName
+    from table( foreignDatabaseEmployeeTable() ) s
+    where lastName = 'Stone'
+</codeblock>
+<p>
+If <i>foreignDatabaseEmployeeTable</i> is a restricted table function,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> can tell the table
+function to fetch only the <i>id</i>, <i>firstName</i>, and <i>lastName</i>
+columns. In addition, <ph conref="../conrefs.dita#prod/productshortname"></ph>
+can tell the table function that it does not need to scan the entire
+foreign table; instead, the table function only needs to retrieve information
+for employees whose last name is "Stone".</p>
+<p>
+Depending on the table function and query, this feature can support 1000X, 
+1000000X, or even greater performance improvements.</p>
+<section><title>How to use restricted table functions</title>
+<p>
+Creating and using a restricted table function involves the following steps:</p>
+<ol>
+<li><b>Implement</b> - You must write a class which implements both
+<i>java.sql.ResultSet</i> and the
+<ph conref="../conrefs.dita#prod/productshortname"></ph>-specific interface
+<i>org.apache.derby.vti.RestrictedVTI</i>. This interface defines an
+<i>initScan()</i> method. When executing a query,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> uses that method to
+tell the table function what columns it will have to fetch and what bounds
+should be applied to those columns in order to reduce the number of rows
+returned. For the rest of this discussion, this user-written class will be
+referred to as <i>MyVTIClass</i>.</li>
+<li><b>Publish</b> - You must publish the table function by creating a public
+static method which returns a <i>MyVTIClass</i>. This is important. The
+<ph conref="../conrefs.dita#prod/productshortname"></ph> compiler must be able
+to see that the table function returns an object which implements both
+<i>java.sql.ResultSet</i> and <i>org.apache.derby.vti.RestrictedVTI</i>.</li>
+<li><b>Declare</b> - You declare the table function to
+<ph conref="../conrefs.dita#prod/productshortname"></ph> using the same CREATE
+FUNCTION syntax you are already familiar with. This syntax does not change.</li>
+<li><b>Invoke</b> - You then use the table function in a query. When
+<ph conref="../conrefs.dita#prod/productshortname"></ph> compiles the query, it
+sees that the return type of the table function implements
+<i>org.apache.derby.vti.RestrictedVTI</i>. Armed with this information, at
+runtime <ph conref="../conrefs.dita#prod/productshortname"></ph> calls the
+<i>initScan()</i> method once before calling any of the <i>ResultSet</i> methods.
+</li>
+</ol>
+<p>For example, you would declare the function as follows:</p>
+<codeblock>
+public class MyVTIClass implements ResultSet, RestrictedVTI
+{
+    ...
+
+    public void initScan(java.lang.String[] columnNames, 
+        org.apache.derby.vti.Restriction restriction ) 
+        throws SQLException {
+         ... 
+    }
+}
+</codeblock>
+<p>Then you publish the table function method:</p>
+<codeblock>
+public static MyVTIClass foreignDatabaseEmployeeTable() 
+    throws SQLException {
+    ... 
+}
+</codeblock>
+<p>Then you declare the table function to
+<ph conref="../conrefs.dita#prod/productshortname"></ph>:</p>
+<codeblock>
+create function foreignDatabaseEmployeeTable()
+returns table
+(
+    id int,
+    birthday date,
+    taxPayerID varchar( 50 ),
+    firstName varchar( 50 ),
+    lastName varchar( 50 )
+)
+language java
+parameter style DERBY_JDBC_RESULT_SET
+no sql
+external name 'com.example.portal.ForeignQueries.foreignDatabaseEmployeeTable'
+</codeblock>
+<p>Finally, you invoke the table function in a query:</p>
+<codeblock>
+select id, firstName, lastName
+from table( foreignDatabaseEmployeeTable() ) s
+where lastName = 'Stone'
+</codeblock>
+<p>When you invoke this query,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> does the following:</p>
+<ul>
+<li><b>Prepare</b> - When
+<ph conref="../conrefs.dita#prod/productshortname"></ph> prepares the query,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> sees that the
+<i>foreignDatabaseEmployeeTable()</i> method returns an object which implements
+<i>org.apache.derby.vti.RestrictedVTI</i>. This is all that
+<ph conref="../conrefs.dita#prod/productshortname"></ph> needs to know in order
+to compile a plan which takes advantage of this feature.</li>
+<li><b>Execute</b> - When
+<ph conref="../conrefs.dita#prod/productshortname"></ph> executes the query,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> calls
+<i>initScan()</i>. In this example,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> calls
+<i>initScan()</i> with the following arguments:
+<codeblock>
+initScan( new String[] { "ID", null, null, "FIRSTNAME", "LASTNAME" }, 
+    new Restriction.ColumnQualifier(
+        "LASTNAME", ORDER_OP_EQUALS, "Stone" ) )
+</codeblock>
+<p>This, in turn, causes the following to happen:</p>
+  <ul>
+  <li><i>Width</i> - The call to <i>initScan()</i> told the table function what
+   columns should be fetched.</li>
+  <li><i>Length</i> - The call to <i>initScan()</i> told the table function how
+   to filter the rows it returns.</li>
+  <li><i>Loop</i> - <ph conref="../conrefs.dita#prod/productshortname"></ph> then
+   calls <i>MyVTIClass.next()</i> and retrieves rows until
+   <i>MyVTIClass.next()</i> returns false. For each row,
+   <ph conref="../conrefs.dita#prod/productshortname"></ph> calls:
+     <ul>
+     <li><i>MyVTIClass.getInt( 1 )</i> to get the <i>id</i> column.</li>
+     <li><i>MyVTIClass.getString( 4 )</i> to get the <i>firstName</i>
+      column.</li>
+     <li><i>MyVTIClass.getString( 5 )</i> to get the <i>lastName</i>
+      column.</li>
+     </ul>
+  </li>
+  </ul>
+</li>
+</ul>
+</section>
+<section><title>Contract</title>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph> calls
+<i>initScan()</i> before calling any other method on the <i>ResultSet</i>. The
+call to <i>initScan()</i> merely passes hints, which the restricted table
+function can exploit in order to perform better.
+<ph conref="../conrefs.dita#prod/productshortname"></ph> enforces the
+restriction outside the table function. Therefore, a restricted table function
+can still fetch extra columns and can ignore part or all of the restriction set
+by the call to <i>initScan()</i>.</p>
+</section>
+<section><title>Affected Operations</title>
+<p>Compared to ordinary table functions, a restricted table function can perform
+better in queries involving the following comparisons of its columns to
+constants:</p>
+<codeblock>
+&lt;
+&lt;=
+=
+!=
+&lt;&gt;
+&gt;
+&gt;=
+IS NULL
+IS NOT NULL
+</codeblock>
+<p>In addition, performance gains can be realized for queries involving the
+following operators on the columns of the restricted table function:</p>
+<codeblock>
+LIKE
+BETWEEN
+</codeblock>
+<p>However, this feature does not boost performance either for the IN operator,
+or in situations where <ph conref="../conrefs.dita#prod/productshortname"></ph>
+transforms OR lists into IN lists. See "Or transformations" in
+<ph conref="../conrefs.dita#pub/cittuning"></ph> for more information.</p>
+</section>
+</conbody>
+</concept>

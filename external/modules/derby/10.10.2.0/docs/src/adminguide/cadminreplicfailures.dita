@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cadminreplicfailures" xml:lang="en-us">
+<title>Replication failure handling</title>
+<shortdesc>Replication can encounter several failure situations. The following
+table lists these situations and describes the actions that
+<ph conref="../conrefs.dita#prod/productshortname"></ph> takes as a
+result.</shortdesc>
+<prolog><metadata><keywords>
+<indexterm>replicating databases<indexterm>failure handling</indexterm></indexterm>
+<indexterm>database replication<indexterm>failure handling</indexterm></indexterm>
+</keywords></metadata></prolog>
+<conbody>
+<table>
+<title>Replication failure handling</title>
+<desc>This table lists the possible replication failure situations and describes the actions taken as a result.</desc>
+<tgroup cols="2" colsep="1" rowsep="1">
+<colspec colname="col1" colnum="1" colwidth="30*"/>
+<colspec colname="col2" colnum="2" colwidth="70*"/>
+<thead>
+<row valign="bottom">
+<entry colname="col1">Failure Situation</entry>
+<entry colname="col2">Action Taken</entry>
+</row>
+</thead>
+<tbody>
+<row>
+<entry colname="col1">Master loses connection with slave.</entry>
+<entry colname="col2">Transactions are allowed to continue processing while the
+master tries to reconnect with the slave. Log records generated while the
+connection is down are buffered in main memory. If the log buffer reaches its
+size limit before the connection can be reestablished, the master replication
+functionality is stopped. You can use the property
+<codeph>derby.replication.logBufferSize</codeph> to configure the size limit of
+the buffer; see the <ph conref="../conrefs.dita#pub/citref"></ph> for
+details.</entry>
+</row>
+<row>
+<entry colname="col1">Slave loses connection with master.</entry>
+<entry colname="col2">The slave tries to reestablish the connection with the
+master by listening on the specified host and port. It will not give up until it
+is explicitly requested to do so by either the <codeph>failover=true</codeph> or
+<codeph>stopSlave=true</codeph> connection URL attribute. If a failover is
+requested, the slave applies all received log records and boots the database as
+described in
+<xref href="cadminreplicfailover.dita#cadminreplicfailover"></xref>. If the
+<codeph>stopSlave=true</codeph> attribute is specified, the slave database is
+shut down without further actions.</entry>
+</row>
+<row>
+<entry colname="col1">Two different masters of database D try to replicate to
+the same slave.</entry>
+<entry colname="col2">The slave will only accept the connection from the first
+master attempting to connect. Note that authentication is required to start
+both the slave and the master, as described in 
+<xref href="cadminreplicsecurity.dita#cadminreplicsecurity"></xref>.</entry>
+</row>
+<row>
+<entry colname="col1">The master and slave
+<ph conref="../conrefs.dita#prod/productshortname"></ph> instances are not at
+the same <ph conref="../conrefs.dita#prod/productshortname"></ph> version.
+</entry>
+<entry colname="col2">An exception is raised and replication does not start.
+</entry>
+</row>
+<row>
+<entry colname="col1">The master
+<ph conref="../conrefs.dita#prod/productshortname"></ph> instance crashes, then
+restarts.</entry>
+<entry colname="col2">Replication must be restarted, as described in
+<xref href="cadminreplicstartrun.dita#cadminreplicstartrun"></xref>.</entry>
+</row>
+<row>
+<entry colname="col1">The master
+<ph conref="../conrefs.dita#prod/productshortname"></ph> instance is not able to
+send log data to the slave at the same pace as the log is generated. The main
+memory log buffer gradually fills up and eventually becomes full.</entry>
+<entry colname="col2">The master notices that the main memory log buffer is
+filling up. It first tries to increase the speed of the log shipment to keep
+the amount of log in the buffer below the maximum. If that is not enough to
+keep the buffer from getting full, the response time of transactions may
+increase for as long as log shipment has trouble keeping up with the amount of
+generated log records. You can use properties to tune both the log buffer size
+and the minimum and maximum interval between consecutive log shipments. See
+"derby.replication.logBufferSize", "derby.replication.maxLogShippingInterval",
+and "derby.replication.minLogShippingInterval" in
+the <ph conref="../conrefs.dita#pub/citref"></ph> for details.</entry>
+</row>
+<row>
+<entry colname="col1">The slave
+<ph conref="../conrefs.dita#prod/productshortname"></ph> instance
+crashes.</entry>
+<entry colname="col2">The master sees this as a lost connection to the slave.
+The master tries to reestablish the connection until the replication log buffer
+is full. Replication is then stopped on the master. Replication must be
+restarted, as described in
+<xref href="cadminreplicstartrun.dita#cadminreplicstartrun"></xref>.</entry>
+</row>
+<row>
+<entry colname="col1">An unexpected failure is encountered.</entry>
+<entry colname="col2">Replication is stopped. The other
+<ph conref="../conrefs.dita#prod/productshortname"></ph> instance of the
+replication pair is notified of the decision if the network connection is still
+alive.</entry>
+</row>
+</tbody>
+</tgroup>
+</table>
+</conbody>
+</concept>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN" "../dtd/concept.dtd">
+<concept xml:lang="en-us" id="ctunoptimz19357">
+<title>About the system's selection of lock granularity</title>
+<prolog><metadata>
+<keywords>
+<indexterm>Lock granularity<indexterm>how optimizer chooses</indexterm></indexterm>
+<indexterm>Lock escalation<indexterm>chosen by optimizer</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<conbody>
+<p>When a system is configured for row-level locking, it decides whether to
+use table-level locking or row-level locking for each table in each DML statement.
+The system bases this decision on the number of rows read or written for each
+table, and on whether a full conglomerate scan is done for each table.   
+<note>When you have turned off row-level locking for your system, <ph conref="../conrefs.dita#prod/productshortname"></ph> always
+uses table-level locking.</note></p>
+<p>The first goal of the system's decision is concurrency; wherever possible,
+the system chooses row-level locking. However, row-level locking uses a lot
+of resources and might have a negative impact on performance. Sometimes row-level
+locking does not provide much more concurrency than table-level locking. In
+those situations, the system might choose to escalate the locking scheme from
+row-level locking to table-level locking to improve performance. For example,
+if a connection is configured for TRANSACTION_SERIALIZABLE isolation, the
+system chooses table-level locking for the following statement:  
+<codeblock><b>SELECT *
+FROM FlightAvailability AS fa, Flights AS fts
+WHERE fts.flight_id = fa.flight_id
+AND fts.segment_number = fa.segment_number</b></codeblock></p>
+<p>To satisfy the isolation requirements, <ph conref="../conrefs.dita#prod/productshortname"></ph> would have to lock all
+the rows in both the<i> FlightAvailability</i> and the <i>Flights</i> tables. Locking both the tables would be cheaper,
+would provide the same isolation, and would allow the same concurrency.  
+<note>You can force lock escalation for specific tables when you alter
+them with the LOCKSIZE clause. For these tables, <ph conref="../conrefs.dita#prod/productshortname"></ph> always chooses
+table-level locking. For more information, see the <cite><ph conref="../conrefs.dita#pub/citref"></ph></cite>.</note><indexterm>Table-level locking<indexterm>forcing for a specific table at creation time</indexterm></indexterm></p>
+</conbody></concept>

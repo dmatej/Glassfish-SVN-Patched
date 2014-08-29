@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevadvjdbc41138" xml:lang="en-us">
+<title>Offering connection choices to the user</title>
+<shortdesc>JDBC's <i>java.sql.Driver.getPropertyInfo</i> method allows a generic
+GUI tool to determine the properties for which it should prompt a user in
+order to get enough information to connect to a database. Depending on the
+values the user has supplied so far, additional values might become necessary.
+It might be necessary to iterate though several calls to <i>getPropertyInfo</i>.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>java.sql.Driver.getPropertyInfo</indexterm><indexterm>Available
+databases<indexterm>list of provided by databaseName attribute</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>If no more properties are necessary, the call returns an array of zero
+length.</p>
+<p>In a <ph conref="../conrefs.dita#prod/productshortname"></ph> system, do
+not use the method against an instance of <i>org.apache.derby.jdbc.EmbeddedDriver</i>.
+Instead, request the JDBC driver from the driver manager:</p>
+<codeblock>java.sql.DriverManager.getDriver(
+    "jdbc:derby:").getPropertyInfo(<i>URL</i>, <i>Prop</i>)</codeblock>
+<p>In a <ph conref="../conrefs.dita#prod/productshortname"></ph> system, the
+properties returned in the <i>DriverPropertyInfo</i> object are connection
+URL attributes, including a list of booted databases in a system (the <i>databaseName</i> attribute).</p>
+<p>Databases in a system are not automatically booted until you connect with
+them. You can configure your system to retain the former behavior, in which
+case the steps described in this section will continue to work. See "<i>derby.system.bootAll</i>" in
+the <ph conref="../conrefs.dita#pub/citref"></ph>.</p>
+<p><i>getPropertyInfo</i> requires a connection URL and a <i>Properties</i> object
+as parameters. Typically, what you pass are values that you will use in a
+future call to <i>java.sql.DriverManager.getConnection</i> when
+you actually connect to the database.</p>
+<p>A call to <i>getPropertyInfo</i> with parameters that contain sufficient
+information to connect successfully returns an array of zero length. (Receiving
+this zero-length array does not <i>guarantee</i> that the <i>getConnection</i> call
+will succeed, because something else could go wrong.)</p>
+<p>Repeat calls to <i>getPropertyInfo</i> until it returns a zero-length array
+or none of the properties remaining are desired.</p>
+</conbody>
+</concept>

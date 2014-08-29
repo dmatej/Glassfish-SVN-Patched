@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cdevcsecure876908" xml:lang="en-us">
+<title>Guest access to search for DNs</title>
+<shortdesc>In an LDAP system, users are hierarchically organized in the directory
+as a set of entries. An <i>entry</i> is a set of name-attribute pairs identified
+by a unique name, called a DN (distinguished name).</shortdesc>
+<prolog></prolog>
+<conbody>
+<p>An entry is unambiguously identified by a DN, which is the concatenation
+of selected attributes from each entry in the tree along a path leading from
+the root down to the named entry, ordered from right to left. For example,
+a DN for a user might look like this:</p>
+<codeblock>cn=mary,ou=People,o=example.com
+
+uid=mary,ou=People,o=example.com</codeblock>
+<p>The allowable entries for the name are defined by the entry's <i>objectClass</i>. </p>
+<p>An LDAP client can bind to the directory (successfully log in) if it provides
+a user ID and password. The user ID must be a DN, the fully qualified list
+of names and attributes. This means that the user must provide a very long
+name.</p>
+<p>Typically, the user knows only a simple user name (e.g., the first part
+of the DN above, <i>mary</i>). With <ph conref="../conrefs.dita#prod/productshortname"></ph>,
+you do not need the full DN, because an LDAP client (<ph conref="../conrefs.dita#prod/productshortname"></ph>)
+can go to the directory first as a guest or even an anonymous user, search
+for the full DN, then rebind to the directory using the full DN (and thus
+authenticate the user).</p>
+<p><ph conref="../conrefs.dita#prod/productshortname"></ph> typically initiates
+a search for a full DN before binding to the directory using the full DN for
+user authentication. <ph conref="../conrefs.dita#prod/productshortname"></ph> does
+not initiate a search in the following cases:</p>
+<ul>
+<li>You have set <i>derby.authentication.ldap.searchFilter</i> to <i>derby.user</i>.</li>
+<li>A user DN has been cached locally for the specific user with the <i>derby.user.UserName</i> property.</li>
+</ul>
+<p>For more information, see "<i>derby.authentication.ldap.searchFilter</i>" in
+the <ph conref="../conrefs.dita#pub/citref"></ph>.</p>
+<p>Some systems permit anonymous searches; other require a user DN and password.
+You can specify a user's DN and password for the search with the properties
+listed below. In addition, you can limit the scope of the search by specifying
+a filter (definition of the object class for the user) and a base (directory
+from which to begin the search) with the properties listed below. </p>
+<ul>
+<li><i>derby.authentication.ldap.searchAuthDN (optional)</i>   <p>Specifies
+the DN with which to bind (authenticate) to the server when searching for
+user DNs. This parameter is optional if anonymous access is supported by your
+server. If specified, this value must be a DN recognized by the directory
+service, and it must also have the authority to search for the entries.</p> <p>If
+not set, it defaults to an anonymous search using the root DN specified by
+the <i>derby.authentication.ldap.searchBase</i> property. For example:</p> <codeblock>uid=guest,o=example.com</codeblock></li>
+<li><i>derby.authentication.ldap.searchAuthPW (optional)</i>   <p>Specifies
+the password to use for the guest user configured above to bind to the directory
+service when looking up the DN. If not set, it defaults to an anonymous search
+using the root DN specified by the <i>derby.authentication.ldap.searchBase</i> property.</p> <codeblock>myPassword</codeblock></li>
+<li><i>derby.authentication.ldap.searchBase (optional)</i>   <p>Specifies
+the root DN of the point in your hierarchy from which to begin a guest search
+for the user's DN. For example:</p> <codeblock>ou=people,o=example.com</codeblock><p>When
+using Netscape Directory Server, set this property to the root DN, the special
+entry to which access control does not apply (optional).</p></li>
+</ul>
+<p>To narrow the search, you can specify a user's <i>objectClass</i>.</p>
+<ul>
+<li><i>derby.authentication.ldap.searchFilter (optional)</i>   <p>Set <i>derby.authentication.ldap.searchFilter</i> to
+a logical expression that specifies what constitutes a user for your LDAP
+directory service. The default value of this property is <codeph>objectClass=inetOrgPerson</codeph>.
+For example:</p><codeblock>objectClass=person</codeblock></li>
+</ul>
+<p>See the <ph conref="../conrefs.dita#pub/citref"></ph> for details on all
+these properties.</p>
+</conbody>
+</concept>

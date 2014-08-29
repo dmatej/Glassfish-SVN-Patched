@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE task PUBLIC "-//IBM//DTD DITA Task//EN"
+ "../../dtd/task.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<task id="tadminnetservrun" xml:lang="pt-br">
+<title>Execução do Network Server sob o gerenciador de segurança</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Network Server<indexterm>execução sob o gerenciador de segurança</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<taskbody>
+<context>
+<p>O <i>Network Server</i> deve ser executado sob o gerenciador de segurança do
+Java.
+Os próximos exemplos mostram a utilização de um arquivo de política de segurança
+exemplo.
+Deve ser feito um ajuste fino nesta política de segurança para adequá-la às
+próprias necessidades.</p>
+<note othertype="" type="caution">Abrir o servidor para todos os clientes,
+sem limitar o acesso utilizando uma política de segurança semelhante a do
+exemplo a seguir, é um sério risco de segurança.</note>
+<codeblock>// Conjunto de permissões recomendadas para inicializar o Network Server,
+// assumindo que o diretório 'd:/<ph conref="adminconrefs.dita#prod/productlowercase"></ph>/lib' seja seguro.
+// Deve ser feito um ajuste fino baseado no próprio ambiente.
+grant codeBase "file:d:/<ph conref="adminconrefs.dita#prod/productlowercase"></ph>/lib/-" {
+permission java.io.FilePermission "${derby.system.home}${/}-",
+        "read, write, delete";
+permission java.io.FilePermission "${derby.system.home}","read";
+permission java.io.FilePermission "${user.dir}${/}-", "read, write, delete";
+permission java.util.PropertyPermission "derby.*", "read";
+permission java.util.PropertyPermission "user.dir", "read";
+permission java.lang.RuntimePermission "createClassLoader";
+permission java.net.SocketPermission "minhamaquinacliente", "accept";
+};
+
+// Conjunto de permissões requerido para parar o Network Server, assumindo
+// que o diretório 'd:/<ph conref="adminconrefs.dita#prod/productlowercase"></ph>/lib' seja seguro.
+// Deve ser feito um ajuste fino baseado no próprio ambiente.
+grant codeBase "file:d:/<ph conref="adminconrefs.dita#prod/productlowercase"></ph>/lib/-"  {
+// O que vem a seguir é requerido quando o servidor é inicializado com
+// "-h localhost", ou sem a opção -h.
+permission java.net.SocketPermission "localhost", "accept, connect, resolve";
+permission java.net.SocketPermission "127.0.0.1", "accept, connect, resolve";
+// O que vem a seguir é requerido apenas quando o servidor é inicializado com a
+// opção -h &lt;hospedeiro&gt; (senão o acesso para "shutdown" será negado).
+permission java.net.SocketPermission "&lt;hospedeiro&gt;:*", "accept, connect, resolve";
+};</codeblock>
+</context>
+<example>
+<ul>
+<li>O exemplo a seguir mostra como inicializar o <i>Network Server</i> no
+gerenciador de segurança padrão (escutando apenas os clientes no
+<codeph>localhost</codeph>, que é o comportamento padrão quando a opção
+<codeph>-h</codeph> não é utilizada para inicializar o servidor).
+Este exemplo assume que o arquivo de política de segurança se encontra em
+<filepath>d:/nwsvr.policy</filepath>.
+<codeblock>java -Djava.security.manager -Djava.security.policy=d:/nwsvr.policy
+org.apache.derby.drda.NetworkServerControl start </codeblock>
+</li>
+<li>O mesmo comportamento pode ser obtido utilizando a opção <codeph>-h</codeph>
+ao inicializar o servidor, conforme mostrado no exemplo a seguir:
+<codeblock>java -Djava.security.manager -Djava.security.policy=d:/nwsvr.policy
+org.apache.derby.drda.NetworkServerControl start -h localhost</codeblock>
+</li>
+<li>O exemplo a seguir mostra como inicializar o <i>Network Server</i>
+(assumindo que o servidor será inicializado na máquina hospedeira
+<i>meuservidor</i>) no gerenciador de segurança padrão (escutando requisições de
+clientes originadas a partir de outras máquinas apenas).
+Este exemplo assume que o arquivo de política de segurança se encontra em
+<filepath>d:/nwsvr.policy</filepath>.
+<codeblock>java -Djava.security.manager -Djava.security.policy=d:/nwsvr.policy
+org.apache.derby.drda.NetworkServerControl start -h <i>meuservidor</i></codeblock>
+</li>
+</ul>
+</example>
+</taskbody>
+</task>

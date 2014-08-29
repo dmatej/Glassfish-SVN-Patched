@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<reference id="rrefsqlj21571" xml:lang="pt-br">
+<title>Consulta</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>UNION</indexterm>
+<indexterm>UNION ALL</indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>A consulta cria uma tabela virtual baseada em tabelas existentes ou
+constantes transformadas em tabelas.</p>
+</section>
+<refsyn>
+<title>Sintaxe</title>
+<codeblock><b>{
+    ( <i>Consulta</i> ) |
+<i>    Consulta</i> INTERSECT [ ALL | DISTINCT ] <i>Consulta</i> |
+<i>    Consulta</i> EXCEPT [ ALL | DISTINCT ] <i>Consulta</i> |
+<i>    Consulta</i> UNION [ ALL | DISTINCT ] <i>Consulta</i> |
+<i>    <xref href="rrefselectexpression.dita#rrefselectexpression">ExpressãoSeleção</xref></i> | <i><xref
+href="rrefsqlj11277.dita#rrefsqlj11277">VALUES Expressão</xref></i>
+}</b>
+</codeblock>
+<p>Pode-se colocar parênteses arbitrariamente em torno das consultas, ou
+utilizar parênteses para controlar a ordem de avaliação das operações
+INTERSECT, EXCEPT e UNION.
+Estas operações são avaliadas da esquerda para a direita quando não existem
+parênteses presentes, com exceção das operações INTERSECT, que são avaliadas
+antes das operações de UNION e EXCEPT.</p>
+</refsyn>
+<section>
+<title>Linhas duplicadas nos resultados de UNION, INTERSECT e EXCEPT ALL</title>
+<p>As palavras chave ALL e DISTINCT determinam se as linhas duplicadas são
+eliminadas do resultado da operação.
+Se for especificada a palavra chave DISTINCT, então o resultado não terá linhas
+duplicadas.
+Se for especificada a palavra chave ALL, então poderão existir linhas duplicadas
+no resultado, dependendo da existência de linhas duplicadas na entrada.
+DISTINCT é o padrão, portanto se não for especificado nem ALL nem DISTINCT
+as linhas duplicadas serão eliminadas.
+Por exemplo, UNION constrói um <i>ResultSet</i> intermediário com todas as
+linhas das duas consultas, e elimina as linhas duplicadas antes de retornar as
+linhas remanescentes.
+UNION ALL retorna todas as linhas das duas consultas como resultado.</p>
+<p>Dependendo da operação especificada, se o número de cópias de uma
+determinada linha na tabela à esquerda for L, e o número de cópias desta linha
+na tabela à direita for R, então o número de linhas duplicadas desta
+determinada linha contidas na tabela de saída será (assumindo que a palavra
+chave ALL foi especificada):
+<ul>
+<li>UNION: ( L + R ).</li>
+<li>EXCEPT: o maior entre ( L – R ) e 0 (zero).</li>
+<li>INTERSECT: o menor entre L e R.</li>
+</ul>
+</p>
+</section>
+<example>
+<title>Exemplos</title>
+<codeblock><b><ph>-- Uma expressão de seleção</ph>
+SELECT *
+FROM ORG;
+
+<ph>-- uma subconsulta</ph>
+SELECT *
+FROM (SELECT COD_CLASSE FROM CLASSE_AGENDA) AS CS;
+
+<ph>-- uma subconsulta</ph>
+SELECT *
+FROM (SELECT COD_CLASSE FROM CLASSE_AGENDA) AS CS (COD_CLASSE);
+
+<ph>-- uma união
+-- retornar todas as linhas das colunas NUM_DEP e GERENTE
+-- da tabela ORG
+-- e (1,2) e (3,4)
+-- NUM_DEP e GERENTE são colunas do tipo SMALLINT.</ph>
+SELECT NUM_DEP, GERENTE
+FROM ORG
+UNION ALL
+VALUES (1,2), (3,4);
+
+<ph>-- uma expressão de valores</ph>
+VALUES (1,2,3);
+
+<ph>-- Listar os números dos empregados (NUM_EMP)
+-- de todos os empregados na tabela EMPREGADOS
+-- cujo número do departamento (DEP_TRAB) começa por 'E', ou
+-- quem está alocado a projetos na tabela ATIV_EMP
+-- cujo número do projetor (NUM_PROJ) é igual a
+-- 'MA2100', 'MA2110' ou 'MA2112'.</ph>
+SELECT NUM_EMP
+FROM EMPREGADOS
+WHERE DEP_TRAB LIKE 'E%'
+UNION
+SELECT NUM_EMP
+FROM ATIV_EMP
+WHERE NUM_PROJ IN('MA2100', 'MA2110', 'MA2112');
+
+<ph>-- Realizar a mesma consulta do exemplo anterior
+-- e "marcar" as linhas da tabela EMPREGADOS com 'emp' e
+-- as linhas da tabela ATIV_EMP com 'ativ_emp'.
+-- Diferentemente do resultado do exemplo anterior,
+-- esta consulta pode retornar o mesmo NUM_EMP mais de uma vez,
+-- identificando de que tabela veio pela "marca" associada.</ph>
+SELECT NUM_EMP, 'emp'
+FROM EMPREGADOS
+WHERE DEP_TRAB LIKE 'E%'
+UNION
+SELECT NUM_EMP, 'ativ_emp'
+FROM ATIV_EMP
+WHERE NUM_PROJ IN('MA2100', 'MA2110', 'MA2112');
+
+<ph>-- Realizar a mesma consulta do exemplo anterior,
+-- porém utilizando UNION ALL para que as linhas
+-- duplicadas não sejam eliminadas.</ph>
+SELECT NUM_EMP
+FROM EMPREGADOS
+WHERE DEP_TRAB LIKE 'E%'
+UNION ALL
+SELECT NUM_EMP
+FROM ATIV_EMP
+WHERE NUM_PROJ IN('MA2100', 'MA2110', 'MA2112');
+
+<ph>-- Realizar a mesma consulta do exemplo anterior,
+-- incluindo dois empregados adicionais que no
+-- momento não se encontram em nenhuma tabela,
+-- e marcar estas linhas como "nova".</ph>
+SELECT NUM_EMP, 'emp'
+FROM EMPREGADOS
+WHERE DEP_TRAB LIKE 'E%'
+UNION
+SELECT NUM_EMP, 'ativ_emp'
+FROM ATIV_EMP
+WHERE NUM_PROJ IN('MA2100', 'MA2110', 'MA2112')
+UNION
+VALUES ('NEWAAA', 'nova'), ('NEWBBB', 'nova');</b>
+</codeblock>
+</example>
+</refbody>
+</reference>

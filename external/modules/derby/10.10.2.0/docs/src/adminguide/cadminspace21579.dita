@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!DOCTYPE concept PUBLIC "-//OASIS//DTD DITA Concept//EN"
+ "../dtd/concept.dtd">
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+   http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+<concept id="cadminspace21579" xml:lang="en-us">
+<title>Reclaiming unused space</title>
+<shortdesc>A <ph conref="../conrefs.dita#prod/productshortname"></ph> table or
+index (sometimes called a <i>conglomerate</i>) can contain unused space after
+large amounts of data have been deleted or updated.</shortdesc>
+<prolog><metadata>
+<keywords><indexterm>Compressing tables and indexes</indexterm>
+<indexterm>conglomerate<indexterm>description</indexterm></indexterm>
+</keywords>
+</metadata></prolog>
+<conbody>
+<p>This happens because, by default,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> does not return unused
+space to the operating system. After a page has been allocated to a table or
+index, <ph conref="../conrefs.dita#prod/productshortname"></ph> does not
+automatically return the page to the operating system until the table or index
+is dropped, even if the space is no longer needed. However,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> does provide a way to
+reclaim unused space in tables and associated indexes.</p>
+<p>If you determine that a table and its indexes have a significant amount
+of unused space, use either the <codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</codeph>
+or <codeph>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</codeph> procedure to reclaim
+that space. <codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</codeph> is guaranteed to
+recover the maximum amount of free space, at the cost of temporarily creating
+new tables and indexes before the statement is committed.
+<codeph>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</codeph> attempts to reclaim
+space within the same table, but cannot guarantee it will recover all available
+space. The difference between the two procedures is that unlike
+<codeph>SYSCS_UTIL.SYSCS_COMPRESS_TABLE</codeph>, the
+<codeph>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</codeph> procedure uses no
+temporary files and moves rows around within the same conglomerate.</p>
+<p>
+You can use the <codeph>SYSCS_DIAG.SPACE_TABLE</codeph> diagnostic table to
+estimate the amount of unused space in a table or index by examining, in
+particular, the values of the NUMFREEPAGES and ESTIMSPACESAVING columns. For
+example:</p>
+<codeblock><b>SELECT * FROM TABLE(SYSCS_DIAG.SPACE_TABLE('APP', 'FLIGHTAVAILABILITY')) AS T</b></codeblock>
+<p>For more information about
+<codeph>SYSCS_DIAG.SPACE_TABLE</codeph> see "SYSCS_DIAG diagnostic tables and
+functions" in the <ph conref="../conrefs.dita#pub/citref"></ph>.</p>
+<example>
+<p>As an example, after you have determined that the
+<codeph>FlightAvailability</codeph> table and its related indexes have too much
+unused space, you could reclaim that space with the following command:</p>
+<codeblock><b>call SYSCS_UTIL.SYSCS_COMPRESS_TABLE('APP', 'FLIGHTAVAILABILITY', 0);</b></codeblock>
+<p>The third parameter in the
+<codeph>SYSCS_UTIL.SYSCS_INPLACE_COMPRESS_TABLE</codeph> procedure determines
+whether the operation will run in sequential or non-sequential mode. If you
+specify <codeph>0</codeph> for the third argument in the procedure, the
+operation will run in non-sequential mode. In sequential mode,
+<ph conref="../conrefs.dita#prod/productshortname"></ph> compresses the table
+and indexes sequentially, one at a time. Sequential compression uses less memory
+and disk space but is slower. To force the operation to run in sequential mode,
+substitute a non-zero SMALLINT value for the third argument. The following
+example shows how to force the procedure to run in sequential mode:</p>
+<codeblock><b>call SYSCS_UTIL.SYSCS_COMPRESS_TABLE('APP', 'FLIGHTAVAILABILITY', 1);</b></codeblock>
+</example>
+<section>For more information about this command, see the
+<ph conref="../conrefs.dita#pub/citref"></ph>.</section>
+</conbody>
+</concept>

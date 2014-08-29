@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at      
+
+http://www.apache.org/licenses/LICENSE-2.0  
+
+Unless required by applicable law or agreed to in writing, software  
+distributed under the License is distributed on an "AS IS" BASIS,  
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+See the License for the specific language governing permissions and  
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../dtd/reference.dtd">
+<reference id="rrefsqlj32268" xml:lang="ja">
+<title>SET SCHEMA 文</title>
+<prolog><metadata>
+<keywords><indexterm>SET SCHEMA statement</indexterm><indexterm>Schemas<indexterm>changing
+default for session</indexterm></indexterm></keywords>
+</metadata></prolog>
+<refbody>
+<section> <p>SET SCHEMA 文により、接続の既定スキーマを指定したスキーマに設定できます。
+接続から発行される文にて対象のスキーマ名を明示的に指定しなかった場合、既定スキーマが対象のスキーマとなります。</p> 
+<p>SET SCHEMA文を成功裏に実行するためには、設定するスキーマが存在していなければなりません。
+スキーマが存在していなければ、エラーとなります。<xref
+href="rrefsqlj31580.dita#rrefsqlj31580"></xref>を参照してください。</p> 
+<p>SET SCHEMA 文はトランザクション処理されません。それゆえSET SCHEMA 文が実行されると、トランザクションがロールバックされても、SET SCHEMA 文により変更されたスキーマのままです。</p></section>
+<refsyn><title>構文</title> <codeblock><b>SET [CURRENT] SCHEMA [=]
+{ <i><xref href="rrefschemaname.dita#rrefschemaname">スキーマ名</xref> </i>|
+USER | ? | '&lt;文字列定数&gt;' } | SET CURRENT SQLID [=]
+{
+<i><xref href="rrefschemaname.dita#rrefschemaname">スキーマ名</xref> </i>| USER | ? | '&lt;文字列定数&gt;' }</b></codeblock> 
+<p><i><xref href="rrefschemaname.dita#rrefschemaname">スキーマ名</xref></i>は最大で128文字からなる識別子です。スキーマ名は二重引用符で囲まれない限り、大文字小文字を区別しません。(例を挙げると、SYSはsYs、SYs、sysのいずれとも等価です。)</p> 
+<p>USERは現在のユーザです。現在のユーザが定義されていない場合、現在のスキーマは既定で<i>APP</i>です。(接続にユーザ名が定義されている場合、そのユーザ名に対応したスキーマがあるなら、それが接続の既定のスキーマとなります。</p> 
+<p>? は準備された文で利用できる動的な引数です。SET SCHEMA文を準備して、異なるスキーマを値にとって実行することができます。このときスキーマの値は文字列定数と扱われ、大文字小文字が区別されます。例えば、<i>APP</i>を指定するには、"app"ではなく"APP"を使います。</p> </refsyn>
+<example> <codeblock><b><ph>-- 以下の例は全て等価で、
+-- HOTELというスキーマがあれば動作します。</ph>
+SET SCHEMA HOTEL
+SET SCHEMA hotel
+SET CURRENT SCHEMA hotel
+SET CURRENT SQLID hotel
+SET SCHEMA = hotel
+SET CURRENT SCHEMA = hotel
+SET CURRENT SQLID = hotel
+SET SCHEMA "HOTEL" <ph>-- クォートされた識別子</ph>
+SET SCHEMA 'HOTEL' <ph>-- クォートされた文字列</ph>
+ <ph>--小文字のhotelは存在しないので、
+ --この例はエラーとなります。</ph>
+SET SCHEMA = 'hotel'
+<ph> --SQLIDはCURRENTとともに使わなければならないので、
+ --この例は失敗します。</ph>
+SET SQLID hotel
+<ph> -- これによりスキーマは現在のユーザIDに設定されます。</ph>
+SET CURRENT SCHEMA USER
+<ph>// Javaのプログラムでset schemaを使う例です。</ph>
+PreparedStatement ps = conn.PrepareStatement("set schema ?");
+ps.setString(1,"HOTEL");
+ps.executeUpdate();
+... do some work
+ps.setString(1,"APP");
+ps.executeUpdate();
+
+ps.setString(1,"app"); <ph>//error - string is case sensitive
+// no app will be found </ph>
+ps.setNull(1, Types.VARCHAR); <ph>//error - null is not allowed</ph> </b></codeblock> </example>
+</refbody>
+</reference>
+

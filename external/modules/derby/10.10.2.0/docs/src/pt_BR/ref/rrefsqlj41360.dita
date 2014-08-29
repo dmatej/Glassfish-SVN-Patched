@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Licensed to the Apache Software Foundation (ASF) under one or more
+contributor license agreements.  See the NOTICE file distributed with
+this work for additional information regarding copyright ownership.
+The ASF licenses this file to You under the Apache License, Version 2.0
+(the "License"); you may not use this file except in compliance with
+the License.  You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+
+<!DOCTYPE reference PUBLIC "-//OASIS//DTD DITA Reference//EN"
+ "../../dtd/reference.dtd">
+<reference id="rrefsqlj41360" xml:lang="pt-br">
+<title>Instrução SELECT</title>
+<prolog>
+<metadata>
+<keywords>
+<indexterm>Instrução SELECT</indexterm>
+<indexterm>Cláusula ORDER BY<indexterm>necessária para garantir a ordem dos resultados</indexterm></indexterm>
+</keywords>
+</metadata>
+</prolog>
+<refbody>
+<section>
+<p>A instrução SELECT consiste de uma consulta com uma
+<xref href="rrefsqlj13658.dita#rrefsqlj13658">Cláusula ORDER BY</xref> opcional,
+e uma <xref href="rrefsqlj31783.dita#rrefsqlj31783">Cláusula FOR UPDATE</xref>
+opcional.
+A instrução SELECT possui este nome porque tipicamente a primeira palavra da
+construção da consulta é SELECT (A <i>consulta </i> inclui a expressão VALUES,
+as expressões UNION, INTERSECT e EXCEPT, além de expressões SELECT).</p>
+<p>A <xref href="rrefsqlj13658.dita#rrefsqlj13658">Cláusula ORDER BY</xref>
+garante a ordem do <i>ResultSet</i>.
+A <xref href="rrefsqlj31783.dita#rrefsqlj31783">Cláusula FOR UPDATE</xref>
+torna o resultado um cursor atualizável.
+A instrução SELECT suporta a cláusula FOR FETCH ONLY.
+A cláusula FOR FETCH ONLY é sinônimo da cláusula FOR READ ONLY.</p>
+<note type="remember">Para se obter um <i>ResultSet</i> atualizável, deve ser
+incluída a cláusula FOR UPDATE com a cláusula SELECT.</note>
+</section>
+<refsyn>
+<title>Sintaxe</title>
+<codeblock><b><i><xref href="rrefsqlj21571.dita#rrefsqlj21571">Consulta</xref></i>
+[<i><xref href="rrefsqlj13658.dita#rrefsqlj13658">Cláusula ORDER BY</xref></i>]
+[<i><xref href="rrefsqlj31783.dita#rrefsqlj31783">Cláusula FOR UPDATE</xref></i>]
+WITH {RR|RS|CS|UR}</b>
+</codeblock>
+<p>Pode ser definido o nível de isolamento da instrução SELECT utilizando
+a sintaxe WITH {RR|RS|CS|UR}.</p>
+</refsyn>
+<example>
+<codeblock><b><ph>-- listar o nome da expressão SALÁRIO+BÔNUS+COMISS
+-- como PAGAMENTO_TOTAL,
+-- e ordenar pelo novo nome PAGAMENTO_TOTAL</ph>
+SELECT PRIMEIRO_NOME, SALÁRIO+BÔNUS+COMISS AS PAGAMENTO_TOTAL
+FROM EMPREGADOS
+ORDER BY PAGAMENTO_TOTAL;
+
+<ph>-- criar um cursor atualizável através da cláusula FOR UPDATE
+-- para atualizar as colunas data de início (PROJ_DATA_INÍCIO) e
+-- data de término (PROJ_DATA_FIM) da tabela PROJETO</ph>
+SELECT NUM_PROJ, PROJ_DATA_INÍCIO, PROJ_DATA_FIM
+FROM PROJETO
+FOR UPDATE OF PROJ_DATA_INÍCIO, PROJ_DATA_FIM;
+
+<ph>-- definir o nível de isolamento como RR apenas para esta instrução</ph>
+SELECT *
+FROM VÔOS
+WHERE ID_VÔO BETWEEN 'AA1111' AND 'AA1112'
+WITH RR;</b>
+</codeblock>
+<p>A instrução SELECT retorna um <i>ResultSet</i>.
+O <i>cursor</i> é um ponteiro para uma linha específica do <i>ResultSet</i>.
+Nos aplicativos Java, todos os <i>ResultSets</i> são cursores.
+O cursor é atualizável, ou seja, podem ser atualizadas e excluídas linhas ao
+se caminhar através do <i>ResultSet</i>, se a instrução SELECT que gerou o
+cursor e sua consulta subjacente atenderem aos requisitos de poder ser
+atualizável, conforme detalhado abaixo.
+Deve ser utilizada a cláusula FOR UPDATE quando se deseja gerar um cursor
+atualizável.
+<note>A cláusula ORDER BY permite ordenar os resultados do SELECT.
+Sem a cláusula ORDER BY, os resultados são retornados em ordem aleatória.</note>
+</p>
+<p>Se a instrução SELECT atender aos requisitos listados abaixo, os cursores
+serão atualizáveis apenas se for especificado FOR UPDATE na cláusula FOR
+(consulte a <xref href="rrefsqlj31783.dita#rrefsqlj31783"></xref>).</p>
+</example>
+<section id="sqlj15384">
+<title>Requisitos para cursores atualizáveis e ResultSets atualizáveis</title>
+<p>Somente os cursores simples, com SELECT em uma única tabela, e os
+<i>ResultSets</i> FORWARD_ONLY, podem ser atualizáveis.
+A instrução SELECT para <i>ResultSet</i> atualizável possui a mesma sintaxe
+que a instrução SELECT para cursor atualizável.
+Para gerar cursores atualizáveis:
+<ul>
+<li>A instrução SELECT não pode incluir a cláusula ORDER BY.</li>
+<li>A <i>Consulta</i> subjacente deve ser uma
+<i><xref href="rrefselectexpression.dita#rrefselectexpression">ExpressãoSeleção</xref>.</i></li>
+<li>A <i><xref href="rrefselectexpression.dita#rrefselectexpression">ExpressãoSeleção</xref></i>
+da Consulta subjacente não pode incluir:
+<ul>
+<li>DISTINCT</li>
+<li>Agregações</li>
+<li>Cláusula GROUP BY</li>
+<li>Cláusula HAVING</li>
+</ul>
+</li>
+<li>A cláusula FROM na <i>Consulta</i> subjacente não pode ter:
+<ul>
+<li>mais de uma tabela</li>
+<li>qualquer outra coisa além de um nome de tabela</li>
+<li><i><xref href="rrefselectexpression.dita#rrefselectexpression">ExpressãoSeleção</xref></i></li>
+<li>subconsultas</li>
+</ul>
+</li>
+</ul>
+</p>
+<p>Não existe instrução na linguagem SQL para <i>atribuir</i> nome a um
+cursor.
+Em vez disso, deve ser utilizada a API do JDBC para atribuir nomes a cursores
+ou obter os nomes gerados pelo sistema.
+Para obter mais informações, deve ser consultado "Atribuir nome ou acessar o
+nome do cursor" no capítulo 5 do
+<cite><ph conref="refconrefs.dita#pub/citdevelop"></ph></cite>.</p>
+<p>Os cursores são apenas-de-leitura por padrão.
+Para um cursor ser atualizável, deve ser especificado FOR UPDATE na cláusula
+FOR (consulte a <xref href="rrefsqlj31783.dita#rrefsqlj31783"></xref>).</p>
+</section>
+<section>
+<title>Sistema de dependência de instrução</title>
+<p>A instrução SELECT depende de todas as tabelas e visões especificadas na
+consulta, e dos conglomerados (unidades de armazenamento, como <i>heaps</i> e
+índices) escolhidos como caminho de acesso para estas tabelas.
+A instrução CREATE INDEX não invalida a instrução SELECT preparada.
+A instrução DROP INDEX invalida a instrução SELECT preparada, se o índice for
+um caminho de acesso na instrução.
+Quando o SELECT inclui visões, também depende dos objetos do dicionário dos
+quais as visões dependem (consulte a
+<xref href="rrefsqlj15446.dita#rrefsqlj15446"></xref>).</p>
+<p>Toda instrução UPDATE WHERE CURRENT ou DELETE WHERE CURRENT preparada
+sobre cursor de SELECT depende do SELECT.
+A remoção do SELECT através de uma instrução <i>java.sql.Statement.close</i>
+invalida UPDATE WHERE CURRENT e DELETE WHERE CURRENT.</p>
+<p>O SELECT depende de todos os aliases utilizados na consulta.
+Remover um aliás invalida a instrução SELECT preparada, se a instrução utilizar
+o aliás.</p>
+</section>
+</refbody>
+</reference>
