@@ -335,6 +335,8 @@ public class NexusClientImpl implements NexusClient {
             throw new NexusResponseException(r.getStatus());
         }
 
+        // TODO throw exception if content type isn't application/json
+
         if (c != null) {
             try {
                 return r.readEntity(c);
