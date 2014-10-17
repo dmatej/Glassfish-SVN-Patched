@@ -15,6 +15,8 @@ import java.lang.annotation.ElementType;
  * @deprecated  As of JSR-181 2.0 with no replacement.
  *
  * @author Copyright (c) 2004 by BEA Systems, Inc. All Rights Reserved.
+ *
+ * @since 1.6
  */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.TYPE})

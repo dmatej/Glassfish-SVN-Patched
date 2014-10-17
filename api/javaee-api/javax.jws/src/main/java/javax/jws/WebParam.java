@@ -9,6 +9,8 @@ import java.lang.annotation.ElementType;
  * Customizes the mapping of an individual parameter to a Web Service message part and XML element.
  *
  * @author Copyright (c) 2004 by BEA Systems, Inc. All Rights Reserved.
+ *
+ * @since 1.6
  */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.PARAMETER})
