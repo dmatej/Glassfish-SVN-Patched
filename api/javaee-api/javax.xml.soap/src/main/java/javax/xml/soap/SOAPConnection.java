@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2004-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -60,6 +60,8 @@ package javax.xml.soap;
  * directly to a URL following the request/response paradigm.  That is,
  * messages are sent using the method <code>call</code>, which sends the
  * message and then waits until it gets a reply.
+ *
+ * @since 1.6
  */
 public abstract class SOAPConnection {
 
@@ -93,7 +95,7 @@ public abstract class SOAPConnection {
      * @return the <code>SOAPMessage</code> object that is the response to the
      *                  get message request
      * @throws SOAPException if there is a SOAP error
-     * @since SAAJ 1.3
+     * @since 1.6, SAAJ 1.3
      */
     public SOAPMessage get(Object to)
                                 throws SOAPException {

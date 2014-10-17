@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2004-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -55,6 +55,8 @@ import javax.xml.namespace.QName;
  * objects of the correct type. See {@link #getChildElements()} and 
  * {@link <a HREF="package-summary.html#package_description">javax.xml.soap<a>}
  * for details.
+ *
+ * @since 1.6
  */
 public interface SOAPElement extends Node, org.w3c.dom.Element {
 
@@ -89,7 +91,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      * @exception SOAPException if there is an error in creating the
      *                          <code>SOAPElement</code> object
      * @see SOAPElement#addChildElement(Name)
-     * @since SAAJ 1.3
+     * @since 1.6, SAAJ 1.3
      */
     public SOAPElement addChildElement(QName qname) throws SOAPException;
 
@@ -188,7 +190,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      * is also useful for recycling portions of a document within a SOAP 
      * message.
      * 
-     * @since SAAJ 1.2
+     * @since 1.6, SAAJ 1.2
      */
     public abstract void removeContents();
 
@@ -239,7 +241,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
                                 an attribute with <code>QName</code> 
                                 <code>qname</code> on this SOAPElement.
      * @see SOAPElement#addAttribute(Name, String)
-     * @since SAAJ 1.3
+     * @since 1.6, SAAJ 1.3
      */
     public SOAPElement addAttribute(QName qname, String value)
         throws SOAPException;
@@ -276,7 +278,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      * @return a <code>String</code> giving the value of the specified
      *         attribute, Null if there is no such attribute
      * @see SOAPElement#getAttributeValue(Name)
-     * @since SAAJ 1.3
+     * @since 1.6, SAAJ 1.3
      */
     public String getAttributeValue(QName qname);
 
@@ -302,7 +304,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      *
      * @return an iterator over the QNames of the attributes
      * @see SOAPElement#getAllAttributes()
-     * @since SAAJ 1.3
+     * @since 1.6, SAAJ 1.3
      */
     public Iterator getAllAttributesAsQNames();
 
@@ -337,7 +339,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      * @return an iterator over the namespace prefixes are within scope of this
      *         <code>SOAPElement</code> object
      * 
-     * @since SAAJ 1.2
+     * @since 1.6, SAAJ 1.2
      */
     public Iterator getVisibleNamespacePrefixes();
     
@@ -362,8 +364,8 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      *          <code>prefix</code> as it's parameter.
      * 
      * @exception SOAPException if the <code>QName</code> cannot be created.
-     * 
-     * @since SAAJ 1.3 
+     *
+     * @since 1.6, SAAJ 1.3
      */
     public QName createQName(String localName, String prefix)
         throws SOAPException;
@@ -381,7 +383,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      * @return a <code>QName</code> object with the qname of this
      *         <code>SOAPElement</code> object
      * @see SOAPElement#getElementName()
-     * @since SAAJ 1.3
+     * @since 1.6, SAAJ 1.3
      */
     public QName getElementQName();
 
@@ -401,7 +403,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
     *                          is not allowed.
     * @return The renamed Node
     * 
-    * @since SAAJ 1.3
+    * @since 1.6, SAAJ 1.3
     */
    public SOAPElement setElementQName(QName newName) throws SOAPException;
     
@@ -424,7 +426,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      * @return <code>true</code> if the attribute was
      *         removed successfully; <code>false</code> if it was not
      * @see SOAPElement#removeAttribute(Name)
-     * @since SAAJ 1.3
+     * @since 1.6, SAAJ 1.3
      */
     public boolean removeAttribute(QName qname);
 
@@ -511,7 +513,7 @@ public interface SOAPElement extends Node, org.w3c.dom.Element {
      *         in this <code>SOAPElement</code> object with the
      *         specified qname
      * @see SOAPElement#getChildElements(Name)
-     * @since SAAJ 1.3     
+     * @since 1.6, SAAJ 1.3
      */
     public Iterator getChildElements(QName qname);
 
