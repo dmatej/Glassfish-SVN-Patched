@@ -48,6 +48,7 @@ import java.net.Proxy;
 import java.net.URL;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.net.ssl.SSLContext;
 import javax.ws.rs.client.Client;
@@ -106,8 +107,6 @@ public class RestClient {
             }));
         }
 
-        this.client = ClientFactory.newClient(cc);
-
         if(useSsl){
             SSLContext context = null;
             try {
@@ -116,7 +115,7 @@ public class RestClient {
             } catch (NoSuchAlgorithmException ex) {
             } catch (KeyManagementException ex) {
             }
-            this.client.configuration().setProperty(ClientProperties.SSL_CONFIG, new SslConfig(context));
+            cc.setProperty(ClientProperties.SSL_CONFIG, new SslConfig(context));
         }
 
         if(username != null
@@ -125,17 +124,19 @@ public class RestClient {
                 && password.length > 0){
             HttpBasicAuthFilter authFilter =
                     new HttpBasicAuthFilter(new String(username), new String(password));
-            this.client.configuration().register(authFilter);
+            cc.register(authFilter);
         }
-        this.client.configuration().register(new MoxyJsonFeature()).register(new JsonMoxyConfigurationContextResolver());
+        cc.register(new MoxyJsonFeature()).register(new JsonMoxyConfigurationContextResolver());
 
         Logger logger = Logger.getLogger(RestClient.class.getSimpleName());
+        logger.setLevel(Level.ALL);
         if(handler != null){
             logger.setUseParentHandlers(false);
             logger.addHandler(handler);
         }
-        this.client.configuration().register(new LoggingFilter(logger, true));
-        System.setProperty("https.protocols", "SSLv3,SSLv2Hello");
+        cc.register(new LoggingFilter(logger, true));
+        
+        this.client = ClientFactory.newClient(cc);
     }
 
     public RestClient() {
@@ -219,4 +220,19 @@ public class RestClient {
         this.handler = new CustomHandler(logger);
         initClient();
     }
+
+  @Override
+  public String toString() {
+    StringBuilder sb = new StringBuilder("RestClient{");
+    sb.append("useSsl=");
+    sb.append(useSsl);
+    sb.append(", proxyHost=");
+    sb.append(proxyHost);
+    sb.append(", proxyPort=");
+    sb.append(proxyPort);
+    sb.append(", username=");
+    sb.append(username);
+    sb.append(", password=****}");
+    return sb.toString();
+  }
 }
