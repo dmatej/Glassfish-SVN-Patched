@@ -9,6 +9,8 @@ import java.lang.annotation.ElementType;
  * Customizes the mapping of the return value to a WSDL part and XML element.
  *
  * @author Copyright (c) 2004 by BEA Systems, Inc. All Rights Reserved.
+ *
+ * @since 1.6
  */
 @Retention(value = RetentionPolicy.RUNTIME)
     @Target(value = {ElementType.METHOD})

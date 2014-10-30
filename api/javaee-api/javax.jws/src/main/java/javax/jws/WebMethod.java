@@ -13,6 +13,8 @@ import java.lang.annotation.RetentionPolicy;
  *  The method is not required to throw java.rmi.RemoteException.
  *
  * @author Copyright (c) 2004 by BEA Systems, Inc. All Rights Reserved.
+ *
+ * @since 1.6
  */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target({ElementType.METHOD})

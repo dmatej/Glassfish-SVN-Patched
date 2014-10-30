@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2004-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -45,6 +45,8 @@ package javax.xml.soap;
  * This interface extnends the standard DOM Node interface with methods for 
  * getting and setting the value of a node, for
  * getting and setting the parent of a node, and for removing a node.
+ *
+ * @since 1.6
  */
 public interface Node extends org.w3c.dom.Node {    
     /**
@@ -76,7 +78,7 @@ public interface Node extends org.w3c.dom.Node {
      *              node and either has more than one child node or has a child 
      *              node that is not a <code>Text</code> node.
      * 
-     * @since SAAJ 1.2
+     * @since 1.6, SAAJ 1.2
      */
     public void setValue(String value);
 

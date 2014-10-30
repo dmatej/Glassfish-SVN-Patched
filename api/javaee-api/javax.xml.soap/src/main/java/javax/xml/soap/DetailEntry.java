@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2004-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -45,6 +45,8 @@ package javax.xml.soap;
  * a <code>SOAPFault</code> object.  A <code>DetailEntry</code> object,
  * which carries information about errors related to the <code>SOAPBody</code>
  * object that contains it, is application-specific.
+ *
+ * @since 1.6
  */
 public interface DetailEntry extends SOAPElement {
 

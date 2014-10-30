@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2004-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -71,6 +71,8 @@ import javax.xml.namespace.QName;
  *    d.addDetailEntry(name);
  *    Iterator it = d.getDetailEntries();
  * </PRE>
+ *
+ * @since 1.6
  */
 public interface Detail extends SOAPFaultElement {
 
@@ -100,7 +102,7 @@ public interface Detail extends SOAPFaultElement {
      * DetailEntry object to this Detail object.
      *
      * @see Detail#addDetailEntry(Name name)
-     * @since SAAJ 1.3
+     * @since 1.6, SAAJ 1.3
      */
     public DetailEntry addDetailEntry(QName qname) throws SOAPException;
 

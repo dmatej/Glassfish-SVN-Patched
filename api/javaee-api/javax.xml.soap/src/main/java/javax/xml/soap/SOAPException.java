@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2004-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -54,6 +54,8 @@ package javax.xml.soap;
  * the provider.  Reasons for embedding a <code>Throwable</code>
  * object include problems such as input/output errors or a parsing
  * problem, such as an error in parsing a header.
+ *
+ * @since 1.6
  */
 public class SOAPException extends Exception {
     private Throwable cause;

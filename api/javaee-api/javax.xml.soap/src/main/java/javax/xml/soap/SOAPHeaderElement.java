@@ -1,7 +1,7 @@
 /*
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- * Copyright (c) 2004-2012 Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2004-2014 Oracle and/or its affiliates. All rights reserved.
  *
  * The contents of this file are subject to the terms of either the GNU
  * General Public License Version 2 only ("GPL") or the Common Development
@@ -48,6 +48,8 @@ package javax.xml.soap;
  * <P>
  * A <code>SOAPHeaderElement</code> object can have other
  * <code>SOAPElement</code> objects as its children.
+ *
+ * @since 1.6
  */
 public interface SOAPHeaderElement extends SOAPElement {
 
@@ -80,7 +82,7 @@ public interface SOAPHeaderElement extends SOAPElement {
      * @exception UnsupportedOperationException if this message does not 
      *      support the SOAP 1.2 concept of Fault Role. 
      * 
-     * @since SAAJ 1.3
+     * @since 1.6, SAAJ 1.3
      */
     public void setRole(String uri) throws SOAPException;
 
@@ -104,7 +106,7 @@ public interface SOAPHeaderElement extends SOAPElement {
      * @exception UnsupportedOperationException if this message does not 
      *      support the SOAP 1.2 concept of Fault Role. 
      * 
-     * @since SAAJ 1.3
+     * @since 1.6, SAAJ 1.3
      */
     public String getRole();
 
@@ -158,7 +160,7 @@ public interface SOAPHeaderElement extends SOAPElement {
      * @see #setMustUnderstand 
      * @see #getRelay
      * 
-     * @since SAAJ 1.3
+     * @since 1.6, SAAJ 1.3
      */
     public void setRelay(boolean relay) throws SOAPException;
 
@@ -175,7 +177,7 @@ public interface SOAPHeaderElement extends SOAPElement {
      * @see #getMustUnderstand 
      * @see #setRelay
      * 
-     * @since SAAJ 1.3
+     * @since 1.6, SAAJ 1.3
      */
     public boolean getRelay();    
 }

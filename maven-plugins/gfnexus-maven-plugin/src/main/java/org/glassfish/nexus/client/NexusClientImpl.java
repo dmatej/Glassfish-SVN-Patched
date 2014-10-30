@@ -83,7 +83,7 @@ import org.glassfish.nexus.client.logging.DefaultRestClientPrinter;
  *
  * @author Romain Grecourt
  */
-public class NexusClientImpl implements NexusClient {
+public final class NexusClientImpl implements NexusClient {
 
     private final RestClient restClient;
     private final String nexusUrl;
@@ -95,8 +95,8 @@ public class NexusClientImpl implements NexusClient {
     private static final String PROFILES_REPOS_PATH = "/service/local/staging/profile_repositories";
     private static final String SEARCH_PATH = "service/local/lucene/search";
 
-    private static final Logger LOGGER = Logger.getLogger(NexusClientImpl.class.getSimpleName());
-    private static final CustomHandler LOGGER_HANDLER = new CustomHandler();
+    private static final Logger LOGGER;
+    private static final CustomHandler LOGGER_HANDLER;
     private final SyncedClose syncedClose = new SyncedClose();
     private final SyncedDrop syncedDrop = new SyncedDrop();
     private final SyncedPromote syncedPromote = new SyncedPromote();
@@ -106,7 +106,11 @@ public class NexusClientImpl implements NexusClient {
     private static HashMap<String,StagingProfileRepo> stagingProfileRepositoriesMap;
 
     static {
+        LOGGER = Logger.getLogger(NexusClientImpl.class.getSimpleName());
+        LOGGER_HANDLER = new CustomHandler();
         LOGGER.addHandler(LOGGER_HANDLER);
+        LOGGER.setUseParentHandlers(false);
+        LOGGER.setLevel(Level.ALL);
     }
 
     public static NexusClient init(
@@ -114,9 +118,9 @@ public class NexusClientImpl implements NexusClient {
             String nexusUrl,
             CustomPrinter p){
 
-        LOGGER.setUseParentHandlers(false);
         LOGGER_HANDLER.setPrinter(p);
         instance = new NexusClientImpl(restClient, nexusUrl);
+        LOGGER.log(Level.FINE, instance.toString());
         return instance;
     }
 
@@ -724,6 +728,17 @@ public class NexusClientImpl implements NexusClient {
             }
         }
         return null;
+    }
+    
+    @Override
+    public String toString(){
+      StringBuilder sb = new StringBuilder("NexusClient{");
+      sb.append("URL=");
+      sb.append(nexusUrl);
+      sb.append(", ");
+      sb.append(restClient.toString());
+      sb.append("}");
+      return sb.toString();
     }
 
     public static void main(String[] args) {

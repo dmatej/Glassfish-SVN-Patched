@@ -9,6 +9,8 @@ import java.lang.annotation.ElementType;
  * Marks a Java class as implementing a Web Service, or a Java interface as defining a Web Service interface.
  *
  * @author Copyright (c) 2004 by BEA Systems, Inc. All Rights Reserved.
+ *
+ * @since 1.6
  */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.TYPE})

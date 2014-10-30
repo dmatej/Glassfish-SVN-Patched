@@ -14,6 +14,8 @@ import java.lang.annotation.ElementType;
  * It is an error to combine this annotation with the @SOAPMessageHandlers annotation.
  *
  * @author Copyright (c) 2004 by BEA Systems, Inc. All Rights Reserved.
+ *
+ * @since 1.6
  */
 @Retention(value = RetentionPolicy.RUNTIME)
 @Target(value = {ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
